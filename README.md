@@ -29,8 +29,10 @@ All additional licenses are specified at the beginning of every source code file
 ### Dependencies: ###
 - Python 3
 - PyQt4 version 4.11 or higher
-##### Optional dependencies: #####
+
+__Optional dependencies:__
 - Cython (ONLY FOR BUILDING SPECIAL LEXERS)
+
 
 ### Starting Ex&#46;Co&#46;: ###
 ```sh
