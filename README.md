@@ -36,6 +36,7 @@ All additional licenses are specified at the beginning of every source code file
 ### Dependencies: ###
 - Python 3
 - PyQt4 version 4.11 or higher
+- QScintilla 2.9 or higher (is bundled in the PyQt4 installer on Windows)
 
 __Optional dependencies:__
 - Cython (ONLY FOR BUILDING SPECIAL LEXERS)
