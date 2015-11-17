@@ -13,18 +13,18 @@ All additional licenses are specified at the beginning of every source code file
 
 
 ### Some features: ###
-  - Three window editing system with window spinning, moving, copying, ...
-  - All standard text editor functionality (copy, cut, paste, ...)
-  - 'Function wheel' for quick access to most of Ex&#46;Co&#46;'s functionality
+- Three window editing system with window spinning, moving, copying, ...
+- All standard text editor functionality (copy, cut, paste, ...)
+- 'Function wheel' for quick access to most of Ex&#46;Co&#46;'s functionality
 - Integrated Python single/multi-line REPL (Read-Eval-Print Loop) for direct access/manipulation of each editor window text and all other functionality
 - Text diffing (also between editor windows)
 - Execute Terminal shell commands directly from the REPL (Windows or GNU-Linux)
 - Ability to add your custom Python functions
 - Language syntax highlighting: Python, Nim, C/C++, JavaScript, C#, Ruby, ...
 - Code tree displaying for: 
-  * Python 3
-  * Nim
-  * C (very simplistic)
+    - Python 3
+    - Nim
+    - C (very simplistic)
 
 ### Dependencies: ###
 - Python 3
