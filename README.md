@@ -18,13 +18,20 @@ All additional licenses are specified at the beginning of every source code file
 - 'Function wheel' for quick access to most of Ex&#46;Co&#46;'s functionality
 - Integrated Python single/multi-line REPL (Read-Eval-Print Loop) for direct access/manipulation of each editor window text and all other functionality
 - Text diffing (also between editor windows)
-- Execute Terminal shell commands directly from the REPL (Windows or GNU-Linux)
+- Execute Terminal shell commands directly from the REPL (Windows or GNU/Linux)
 - Ability to add your custom Python functions
 - Language syntax highlighting: Python, Nim, C/C++, JavaScript, C#, Ruby, ...
 - Code tree displaying for: 
     - Python 3
     - Nim
     - C (very simplistic)
+
+### Supported platforms: ###
+- __Windows__
+- __GNU/Linux__ (tested on Lubuntu)
+
+#### Untested on: ####
+- __Mac OS X__ (should work, would appreciate if someone tried it)
 
 ### Dependencies: ###
 - Python 3
