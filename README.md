@@ -18,7 +18,7 @@ All additional licenses are specified at the beginning of every source code file
 - 'Function wheel' for quick access to most of Ex&#46;Co&#46;'s functionality
 - Integrated Python single/multi-line REPL (Read-Eval-Print Loop) for direct access/manipulation of each editor window text and all other functionality
 - Text diffing (also between editor windows)
-- Execute Terminal shell commands directly from the REPL (Windows or GNU/Linux)
+- Execute Terminal/Shell commands directly from the REPL (Windows or GNU/Linux)
 - Ability to add your custom Python functions
 - Language syntax highlighting: Python, Nim, C/C++, JavaScript, C#, Ruby, ...
 - Code tree displaying for: 
@@ -49,7 +49,7 @@ $ python main.py
 For more startup options add the ```--help``` or ```-h``` flag.
 
 ### Quick examples: ###
-1. Basic text manipulation with the REPL (very detailed example):
+__1. Basic text manipulation with the REPL (very detailed example):__
    - start Ex&#46;Co&#46; by executing ```python main.py```
    - focus the main editor window (the big one) with one of the following options:
      - click on it the mouse
@@ -69,11 +69,11 @@ For more startup options add the ```--help``` or ```-h``` flag.
    - the main editor window should now contain the three new lines with each line containing the text from the corresponding line_list position
    - __line_list__ is a shorthand for __cmain.line_list__, the same can be done with __cupper.line_list__ for the upper window and __clower.line_list__ for the lower window
    - __NOTES:__ 
-     - All commands in the REPL must be valid Python 3 code!
-     - ```line_list``` is implemented as a python list so most list operations apply to it: append, insert, sort, ...
+     - __All commands in the REPL must be valid Python 3 code!__
+     - ```line_list``` __is implemented as a python list so most list operations apply to it: append, insert, sort, ...__
 
 
-2. Manipulate editor lines using the REPL:
+__2. Manipulate editor lines using the REPL:__
    - create a new document in the main editor window (look at previous example for details)
    - focus the REPL (```Ctrl+R```)
    - write __line_list.append("My new line!")__ and press ```Enter```
@@ -97,7 +97,7 @@ For more startup options add the ```--help``` or ```-h``` flag.
       - _ten new lines were added, from "0" to "9"_
 
 
-3. Text diffing example
+__3. Text diffing example:__
    - open the first text document in the main editor window by first focusing the main window and pressing ```Ctrl+O```
    - find and open the file using the popup dialog
    - open another document using the same two steps as above
@@ -111,7 +111,7 @@ For more startup options add the ```--help``` or ```-h``` flag.
       - green button: got to the next similar line
 
 
-4. Moving tabs from window to window:
+__4. Moving tabs from window to window:__
    - focus the main editor window
    - create a new document (```Ctrl+N```)
    - press ```Shift``` and left click-and-hold on the new documents tab
@@ -120,24 +120,36 @@ For more startup options add the ```--help``` or ```-h``` flag.
    - __Copying is the same except you hold down the__ ```Ctrl``` __button__
 
 
-5. Adding your custom Python functions
+__5. Adding your custom Python functions:__
    - open the __user_functions__ file by:
      - use the menubar by selecting ```File -> Edit User Functions```
      - use the 'Function Wheel' by pressing ```F1``` and selection the ```Edit User Functions``` icon
    - the __user_functions__ file will open in the main editor window
    - add your Python (Python 3) function to the file and add the custom autocompletion for the function:
    - Example:
-```python
-        def my_custom_function():
-            ...
-        my_custom_function.autocompletion = "my_custom_function()"
-```
+    ```python
+              def my_custom_function():
+                  ...
+              my_custom_function.autocompletion = "my_custom_function()"
+    ```
    - reload user functions by:
      - use the menubar by selecting ```File -> Reload User Functions```
      - use the 'Function Wheel' by pressing ```F1``` and selection the ```Reload User Functions``` icon
    - try your newly added function by focusing the REPL (```Ctrl+R```) and start typing the name of your added function, it should automatically add the rest of the function text into the REPL
    - __NOTE:__
      - __if your function name is similar to another already defined function, press__ ```Tab``` __to scroll through all of the similar named function until you reach the newly added one__
+
+
+__6. Run a terminal/shell command from Ex&#46;Co&#46;:__
+   - focus the REPL (```Ctrl+R```)
+   - select the run command by:
+     - use the menubar by selecting ```System -> Run command```
+     - use the 'Function Wheel' by pressing ```F1``` and selection the ```Run Console Command``` icon
+   - the REPL should now have the text ```run("",show_console=True)``` in it
+   - run the command like ```dir``` by entering it into the REPL text: ```run("dir",show_console=True)``` and press ```Enter```
+   - a new terminal window will popup and show the output of the ```dir``` command
+   - __NOTE:__
+     - __insted of the menubar or function wheel shortcuts, you can also use the shorthand for running terminal commands with the REPL command__ ```rc: ```. __The above example using the shorthand would be:__ ```rc: dir``` __(note that there should be no quotes or double-quotes)__
 
 ### Todo: ###
 - add a curses version of Ex&#46;Co&#46; (only an idea at the moment)
