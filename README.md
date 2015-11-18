@@ -9,7 +9,7 @@ __GNU General Public License v3.0__
 Copyright (c) 2013-2015 Matic Kukovec. All rights reserved.
   
 #### Additional licenses: ####
-All additional licenses are specified at the beginning of every source code file. If I made any mistakes, please open an issue.
+All additional licenses are specified at the beginning of every source code file and in text file format in the ```additional_licenses``` directory. If I made any mistakes, please open an issue.
 
 
 ### Some features: ###
@@ -91,8 +91,8 @@ __2. Manipulate editor lines using the REPL:__
    - focus the multi-line REPL (```Ctrl+5```)
    - write the text below into the multi-line REPL and press ```Ctrl+Enter```:
       ```python
+      
             for i in range(10):
-            
                 line_list.append(str(i))
       ```
       - _ten new lines were added, from "0" to "9"_
@@ -129,10 +129,9 @@ __5. Adding your custom Python functions:__
    - add your Python (Python 3) function to the file and add the custom autocompletion for the function:
    - Example: 
       ```python
+      
           def my_custom_function():
-          
               # custom function code
-          
           my_custom_function.autocompletion = 'my_custom_function()'
       ```
    - save the file with one of the following options:
