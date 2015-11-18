@@ -1117,7 +1117,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_find():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'find("{:s}",'.format(focused_tab.selectedText())
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    temp_string = 'find("{:s}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
@@ -1138,7 +1139,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_regex_find():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'regex_find(r"{:s}",'.format(focused_tab.selectedText())
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    temp_string = 'regex_find(r"{:s}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
@@ -1160,7 +1162,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_find_and_replace():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'find_and_replace("{:s}","",'.format(focused_tab.selectedText())
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    temp_string = 'find_and_replace("{:s}","",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
@@ -1183,7 +1186,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_regex_find_and_replace():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'regex_find_and_replace(r"{:s}",r"",'.format(focused_tab.selectedText())
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    temp_string = 'regex_find_and_replace(r"{:s}",r"",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
@@ -1205,7 +1209,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_highlight():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'highlight("{:s}",'.format(focused_tab.selectedText())
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    temp_string = 'highlight("{:s}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
@@ -1224,7 +1229,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_regex_highlight():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'regex_highlight(r"{:s}",'.format(focused_tab.selectedText())
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    temp_string = 'regex_highlight(r"{:s}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
@@ -1304,7 +1310,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_replace_all():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'replace_all("{:s}","",'.format(focused_tab.selectedText())
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    temp_string = 'replace_all("{:s}","",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
@@ -1325,7 +1332,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_regex_replace_all():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'regex_replace_all(r"{:s}",r"",'.format(focused_tab.selectedText())
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    temp_string = 'regex_replace_all(r"{:s}",r"",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
@@ -1457,9 +1465,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_find_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    repl_text = 'find_in_open_documents("{:s}"'.format(
-                                     focused_tab.selectedText()
-                                 )
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    repl_text = 'find_in_open_documents("{:s}"'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
                     repl_text += ',window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(repl_text)
@@ -1483,9 +1490,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_find_replace_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    repl_text = 'find_replace_in_open_documents("{:s}",""'.format(
-                                     focused_tab.selectedText()
-                                 )
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    repl_text = 'find_replace_in_open_documents("{:s}",""'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
                     repl_text += ',window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(repl_text)
@@ -1509,9 +1515,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_replace_all_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    repl_text = 'replace_all_in_open_documents("{:s}",""'.format(
-                                     focused_tab.selectedText()
-                                 )
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\")
+                    repl_text = 'replace_all_in_open_documents("{:s}",""'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
                     repl_text += ',window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(repl_text)
