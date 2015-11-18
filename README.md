@@ -135,7 +135,11 @@ __5. Adding your custom Python functions:__
           
           my_custom_function.autocompletion = 'my_custom_function()'
       ```
-   - reload user functions by:
+   - save the file with one of the following options:
+     - press ```Ctrl+S```
+     - use the menubar by selecting ```File -> Save```
+     - use the 'Function Wheel' by pressing ```F1``` and selection the ```Save``` icon
+   - reload user functions with one of the following options:
      - use the menubar by selecting ```File -> Reload User Functions```
      - use the 'Function Wheel' by pressing ```F1``` and selection the ```Reload User Functions``` icon
    - try your newly added function by focusing the REPL (```Ctrl+R```) and start typing the name of your added function, it should automatically add the rest of the function text into the REPL
@@ -145,7 +149,7 @@ __5. Adding your custom Python functions:__
 
 __6. Run a terminal/shell command from Ex&#46;Co&#46;:__
    - focus the REPL (```Ctrl+R```)
-   - select the run command by:
+   - select the run command with one of the following options:
      - use the menubar by selecting ```System -> Run command```
      - use the 'Function Wheel' by pressing ```F1``` and selection the ```Run Console Command``` icon
    - the REPL should now have the text ```run("",show_console=True)``` in it
