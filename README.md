@@ -90,10 +90,11 @@ __2. Manipulate editor lines using the REPL:__
      - _the lines in the new document should now be sorted alphabetically_
    - focus the multi-line REPL (```Ctrl+5```)
    - write the text below into the multi-line REPL and press ```Ctrl+Enter```:
-        ```python
-        for i in range(10):
-            line_list.append(str(i))
-        ```
+      ```python
+            for i in range(10):
+            
+                line_list.append(str(i))
+      ```
       - _ten new lines were added, from "0" to "9"_
 
 
@@ -126,12 +127,14 @@ __5. Adding your custom Python functions:__
      - use the 'Function Wheel' by pressing ```F1``` and selection the ```Edit User Functions``` icon
    - the __user_functions__ file will open in the main editor window
    - add your Python (Python 3) function to the file and add the custom autocompletion for the function:
-   - Example:
-    ```python
-              def my_custom_function():
-                  ...
-              my_custom_function.autocompletion = "my_custom_function()"
-    ```
+   - Example: 
+      ```python
+          def my_custom_function():
+          
+              # custom function code
+          
+          my_custom_function.autocompletion = 'my_custom_function()'
+      ```
    - reload user functions by:
      - use the menubar by selecting ```File -> Reload User Functions```
      - use the 'Function Wheel' by pressing ```F1``` and selection the ```Reload User Functions``` icon
