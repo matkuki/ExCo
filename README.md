@@ -43,9 +43,15 @@ __Optional dependencies:__
 
 
 ### Starting Ex&#46;Co&#46;: ###
+On Windows and GNU/Linux where Python 3 is the default interpreter, use the shell/command-line command:
 ```sh
 $ python main.py
 ```
+On GNU/Linux with Python 3 as the non-default interpreter, use the shell/command-line command:
+```sh
+$ python3 main.py
+```
+
 For more startup options add the ```--help``` or ```-h``` flag.
 
 ### Quick examples: ###
