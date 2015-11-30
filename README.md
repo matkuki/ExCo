@@ -1,8 +1,9 @@
 # Ex&#46;Co&#46; #
 ### Descripton: ###
 Ex&#46;Co&#46; (Extensible Coder) is a GUI text editor written in Python that uses PyQt/QScintilla libraries with some lexers available in Cython for more efficient text highlighting.
-I developed it with simplicity of use and extensibility in mind.
-
+I developed it with simplicity of use and extensibility in mind.<br>
+For precompiled bundles for Windows see https://github.com/matkuki/Ex-Co-Windows-Compiled
+<br><br>
 ### License: ###
 __GNU General Public License v3.0__
 
@@ -10,7 +11,7 @@ Copyright (c) 2013-2015 Matic Kukovec. All rights reserved.
   
 #### Additional licenses: ####
 All additional licenses are specified at the beginning of every source code file and in text file format in the ```additional_licenses``` directory. If I made any mistakes, please open an issue.
-
+<br><br>
 
 ### Some features: ###
 - Three window editing system with window spinning, moving, copying, ...
@@ -25,13 +26,15 @@ All additional licenses are specified at the beginning of every source code file
     - Python 3
     - Nim
     - C (very simplistic)
+<br><br>
 
 ### Supported platforms: ###
-- __Windows__
+- __Windows__ ([precompiled binaries available](https://github.com/matkuki/Ex-Co-Windows-Compiled))
 - __GNU/Linux__ (tested on Lubuntu)
 
 #### Untested on: ####
 - __Mac OS X__ (should work, would appreciate if someone tried it)
+<br><br>
 
 ### Dependencies: ###
 - Python 3
@@ -40,7 +43,7 @@ All additional licenses are specified at the beginning of every source code file
 
 __Optional dependencies:__
 - Cython (ONLY FOR BUILDING SPECIAL LEXERS)
-
+<br><br>
 
 ### Starting Ex&#46;Co&#46;: ###
 On Windows and GNU/Linux where Python 3 is the default interpreter, use the shell/command-line command:
@@ -53,6 +56,7 @@ $ python3 main.py
 ```
 
 For more startup options add the ```--help``` or ```-h``` flag.
+<br><br>
 
 ### Quick examples: ###
 __1. Basic text manipulation with the REPL (very detailed example):__
@@ -162,6 +166,8 @@ __6. Run a terminal/shell command from Ex&#46;Co&#46;:__
    - a new terminal window will popup and show the output of the ```dir``` command
    - __NOTE:__
      - __insted of the menubar or function wheel shortcuts, you can also use the shorthand for running terminal commands with the REPL command__ ```rc: ```. __The above example using the shorthand would be:__ ```rc: dir``` __(note that there should be no quotes or double-quotes)__
+
+<br><br>
 
 ### Todo: ###
 - add a curses version of Ex&#46;Co&#46; (only an idea at the moment)
