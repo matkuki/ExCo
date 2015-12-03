@@ -3601,6 +3601,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Set a flag for the first document
             first_document = True
             for i in in_deque:
+                #Skip the current widget if it's not an editor
+                if isinstance(basic_widget.widget(i), CustomEditor) == False:
+                    continue
                 #Place the cursor to the top of the document if it is not the current document
                 if first_document == True:
                     first_document = False
