@@ -523,9 +523,13 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                             "discard", "distinct", "do", "echo", "elif", "else", "end",
                             "enum", "except", "finally", "for", "from", 
                             "if", "interface", "iterator", "macro", "method", "mixin", 
-                            "of", "out", "proc", "func", 
-                            "raise", "ref", "result", "return", "template", "try",
+                            "of", "out", "proc", "func", "raise", "ref", "result", 
+                            "return", "template", "try", "inc", "dec", "new", 
                             "while", "with", "without", "yield", "true", "false", 
+                            "openarray", "assert", "min", "max", "newSeq", "len", 
+                            "contains", "cmp", "add", "del","deepCopy", "shallowCopy", 
+                            "abs", "clamp", "isNil", "open", "reopen", "close","readAll", 
+                            "readFile", "writeFile", "endOfFile", "readLine", "writeLine", 
                         ]
     #Custom keyword created with templates/macros
     user_keyword_list   = [
