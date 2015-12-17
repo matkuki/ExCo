@@ -6234,7 +6234,9 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     def append_to_lines(self, *args, **kwds):
         """Add text to the back of the line range"""
         #Check the arguments and keyword arguments
-        if len(args) == 1 and isinstance(args[0], str):
+        appending_text = ""
+        sel_line_from, sel_index_from, sel_line_to, sel_index_to = self.getSelection()
+        if len(args) == 1 and isinstance(args[0], str) and (sel_line_from == sel_line_to):
             #Append text to all lines
             appending_text = args[0]
             line_from = 1
@@ -6247,6 +6249,11 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             appending_text  = args[0]
             line_from       = args[1]
             line_to         = args[2]
+        elif sel_line_from != sel_line_to:
+            #Append text to selected lines
+            appending_text  = args[0]
+            line_from       = sel_line_from + 1
+            line_to         = sel_line_to + 1
         else:
             self.main_form.display.write_to_statusbar("Wrong arguments to 'append' function!", 1000)
             return
@@ -6283,7 +6290,9 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     def prepend_to_lines(self, *args, **kwds):
         """Add text to the front of the line range"""
         #Check the arguments and keyword arguments
-        if len(args) == 1 and isinstance(args[0], str):
+        prepending_text = ""
+        sel_line_from, sel_index_from, sel_line_to, sel_index_to = self.getSelection()
+        if len(args) == 1 and isinstance(args[0], str) and (sel_line_from == sel_line_to):
             #Prepend text to all lines
             prepending_text = args[0]
             line_from = 1
@@ -6296,6 +6305,11 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             prepending_text = args[0]
             line_from       = args[1]
             line_to         = args[2]
+        elif sel_line_from != sel_line_to:
+            #Prepend text to selected lines
+            prepending_text  = args[0]
+            line_from       = sel_line_from + 1
+            line_to         = sel_line_to + 1
         else:
             self.main_form.display.write_to_statusbar("Wrong arguments to 'prepend' function!", 1000)
             return

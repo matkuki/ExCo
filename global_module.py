@@ -61,7 +61,7 @@
 ##      Module that holds objects that will be used across modules.
 
 
-APPLICATION_VERSION     = "4.0"
+APPLICATION_VERSION     = "4.1"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
