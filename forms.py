@@ -168,7 +168,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
     bookmarks               = None
     
 
-    def __init__(self, logging=False, file_arguments=None):
+    def __init__(self, new_document=False, logging=False, file_arguments=None):
         """Initialization routine for the main form"""
         #Initialize superclass, from which the main form is inherited
         super().__init__()
@@ -209,10 +209,6 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.view.set_log_window(True)
         global_module.print_log("Main window displayed successfully")
         self.settings.restore()
-        #Open the file passed as an argument to the QMainWindow initialization
-        if file_arguments != None:
-            for file in file_arguments:
-                self.open_file(file=file, basic_widget=self.main_window)
         #Initialize repl interpreter
         self._init_interpreter()
         #Set the main window icon if it exists
@@ -220,6 +216,15 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.setWindowIcon(PyQt4.QtGui.QIcon(global_module.application_icon))
         #Set the repl type to a single line
         self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+        #Open the file passed as an argument to the QMainWindow initialization
+        if file_arguments != None:
+            for file in file_arguments:
+                self.open_file(file=file, basic_widget=self.main_window)
+        else:
+            #Create a new document in the main window if the flag was set and
+            #the file_arguments is None
+            if new_document == True:
+                self.create_new()
     
     def _init_statusbar(self):
         self.statusbar  = PyQt4.QtGui.QStatusBar(self)
@@ -7801,7 +7806,10 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
                     found_list.append(ref.replace(previous_sequence + "." + current_sequence, ""))
         else:
             #Test if autocompletion is a path or an object
-            if "/" in current_sequence:
+            if "/" in current_sequence or "\\" in current_sequence:
+                #Replace the windows path backslashes to forwardslashes
+                if "\\" in current_sequence:
+                    current_sequence = current_sequence.replace("\\", "/")
                 #Path (all path searches are done case sensetively)
                 path_items = self._get_path_list(current_sequence)
                 for item in path_items:

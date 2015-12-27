@@ -100,11 +100,23 @@ def parse_arguments():
         action  = "store_true",
         default = False, 
         dest    = "logging_mode",
-        help    = 'Start Ex.Co. with the logging window shown'
+        help    = 'Show the logging window on startup.'
+    )
+    #Logging mode
+    arg_parser.add_argument(
+        "-n", 
+        "--new", 
+        action  = "store_true",
+        default = False, 
+        dest    = "new_document",
+        help    = """
+                  Create a new document in the main window on startup.
+                  This flag can be overriden with the --files flag.
+                  """
     )
     #Add a file group to the argument parser
     file_group = arg_parser.add_argument_group(
-        "Input file options"
+        "input file options"
     )
     #Input files
     file_group.add_argument(
@@ -113,7 +125,7 @@ def parse_arguments():
         type    = parse_file_list,
         help    =   """
                     List of files to open on startup, separated
-                    by semicolons (';')
+                    by semicolons (';'). This flag overrides the --new flag.
                     """
     )
     #Single file argument
@@ -168,6 +180,7 @@ def main():
     global_module.application = app
     #Create the main window, pass the filename that may have been passed as an argument
     wnd =   forms.MainWindow(
+                new_document = options.new_document, 
                 logging=global_module.logging_mode, 
                 file_arguments=file_arguments
             )
