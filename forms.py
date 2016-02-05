@@ -2658,10 +2658,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     return
             #Create lists of files in each window
             try:
-#                main_files = [m_w.widget(i).save_name for i in range(m_w.count()) if m_w.widget(i).save_name != "" and m_w.widget(i).savable == global_module.CanSave.YES]
                 main_files = self.get_window_documents("main")
-#                upper_files = [u_w.widget(i).save_name for i in range(u_w.count()) if u_w.widget(i).save_name != "" and u_w.widget(i).savable == global_module.CanSave.YES]
                 upper_files = self.get_window_documents("upper")
+                lower_files = self.get_window_documents("lower")
                 if (main_files != [] or upper_files != []):
                     #Check if the session is already stored
                     session_found = False
@@ -2675,7 +2674,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                         session_group,
                         main_files,
                         upper_files,
-                        []
+                        lower_files
                     )
                     #Session added successfully
                     if session_group == None or session_group == "":
@@ -2737,6 +2736,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 for file in session.upper_files:
                     try:
                         self.parent.open_file(file, self.parent.upper_window)
+                    except:
+                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=global_module.MessageType.ERROR)
+                #Add files to lower window
+                for file in session.lower_files:
+                    try:
+                        self.parent.open_file(file, self.parent.lower_window)
                     except:
                         self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=global_module.MessageType.ERROR)
                 #Add files to main window
