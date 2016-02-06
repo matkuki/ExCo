@@ -509,13 +509,15 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                     "CHAR_LITERAL",     #15
                     "CASE_OF",     #16
                     "USER_KEYWORD",  #17
+                    "MULTILINE_COMMENT",  #18
                 ]
             )
     
     #Class variables
     default_color       = PyQt4.QtGui.QColor(0, 0, 0)
     default_font        = PyQt4.QtGui.QFont('Courier', 10)
-    styles              = Style(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
+    styles              = Style(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18)
+    NUMBER_OF_STYLES    = 18
     #Basic keywords and built-in procedures and templates
     basic_keyword_list  = [
                             "as", "atomic", "bind",
@@ -526,10 +528,10 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                             "of", "out", "proc", "func", "raise", "ref", "result", 
                             "return", "template", "try", "inc", "dec", "new", 
                             "while", "with", "without", "yield", "true", "false", 
-                            "openarray", "assert", "min", "max", "newSeq", "len", 
+                            "openarray", "assert", "min", "max", "newseq", "len", 
                             "contains", "cmp", "add", "del","deepCopy", "shallowCopy", 
-                            "abs", "clamp", "isNil", "open", "reopen", "close","readAll", 
-                            "readFile", "writeFile", "endOfFile", "readLine", "writeLine", 
+                            "abs", "clamp", "isnil", "open", "reopen", "close","readall", 
+                            "readfile", "writefile", "endoffile", "readline", "writeline", 
                         ]
     #Custom keyword created with templates/macros
     user_keyword_list   = [
@@ -544,8 +546,10 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                         ]
     #Keywords that might be unsafe/dangerous
     unsafe_keyword_list = [
-                            "asm", "addr", "cast", "ptr", "pointer", "alloc",
-                            "dealloc", "realloc", "nil", 
+                            "asm", "addr", "cast", "ptr", "pointer", "alloc", "alloc0",
+                            "allocshared0", "dealloc", "realloc", "nil", "gc_ref", 
+                            "gc_unref", "copymem", "zeromem", "equalmem", "movemem", 
+                            "gc_disable", "gc_enable", 
                         ]
     #Built-in types
     type_keyword_list   = [
@@ -584,13 +588,14 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         self.setColor(PyQt4.QtGui.QColor(120, 120, 120), 8)
         self.setColor(PyQt4.QtGui.QColor(192, 0, 0), 9)
         self.setColor(PyQt4.QtGui.QColor(110, 110, 0), 10)
-        self.setColor(PyQt4.QtGui.QColor(127, 0, 0), 11)
+        self.setColor(PyQt4.QtGui.QColor(127, 10, 10), 11)
         self.setColor(PyQt4.QtGui.QColor(0, 127, 127), 12)
         self.setColor(PyQt4.QtGui.QColor(0, 0, 255), 13)
         self.setColor(PyQt4.QtGui.QColor(150, 60, 200), 14)
         self.setColor(PyQt4.QtGui.QColor(0, 200, 255), 15)
         self.setColor(PyQt4.QtGui.QColor(128, 0, 255), 16)
         self.setColor(PyQt4.QtGui.QColor(255, 128, 64), 17)
+        self.setColor(PyQt4.QtGui.QColor(0, 108, 108), 18)
         #Set style fonts
         self.setFont(self.default_font, 0)
         self.setFont(self.default_font, 1)
@@ -610,6 +615,7 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         self.setFont(PyQt4.QtGui.QFont('Courier', 10), 15)
         self.setFont(PyQt4.QtGui.QFont('Courier', 10), 16)
         self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 17)
+        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 18)
         #Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultFont(self.default_font)
@@ -618,7 +624,7 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         return "Nim"
     
     def description(self, style):
-        if style <= 17:
+        if style <= self.NUMBER_OF_STYLES:
             description = "Custom lexer for the Nim programming languages"
         else:
             description = ""
@@ -675,9 +681,11 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         CHAR    = self.styles.CHAR_LITERAL
         OF      = self.styles.CASE_OF
         U_KWD   = self.styles.USER_KEYWORD
+        M_COM   = self.styles.MULTILINE_COMMENT
         #Initialize comment state and split the text into tokens
         commenting      = False
         doc_commenting  = False
+        new_commenting  = False
         stringing       = False
         long_stringing  = False
         char_literal    = False
@@ -692,6 +700,8 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                 long_stringing = True
             elif previous_style == MAC:
                 macroing = True
+            elif previous_style == M_COM:
+                new_commenting = True
         #Style the tokens accordingly
         for i, token in enumerate(tokens):
 #            print(str(token) + "  " + str(i))
@@ -707,6 +717,12 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                 #Check if comment ends
                 if "\n" in token[0]:
                     doc_commenting = False
+            elif new_commenting == True:
+                #Continuation of comment
+                setStyling(token[1], M_COM)
+                #Check if comment ends
+                if "#" in token[0] and "]" in tokens[i-1][0]:
+                    new_commenting = False
             elif stringing == True:
                 #Continuation of a string
                 setStyling(token[1], STR)
@@ -805,6 +821,9 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                 if len(tokens) > i+1 and tokens[i+1][0] == "#":
                     setStyling(token[1], D_COM)
                     doc_commenting = True
+                elif len(tokens) > i+1 and tokens[i+1][0] == "[":
+                    setStyling(token[1], M_COM)
+                    new_commenting = True
                 else:
                     setStyling(token[1], COM)
                     commenting = True
