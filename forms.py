@@ -8548,11 +8548,29 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         self.setStyleSheet(
             "QGroupBox {" +
                 "background-color: rgb(238, 238, 236);" +
-                #"background-image: url(" + global_module.resources_directory.replace("\\", "/") +
                 "border-image: url(" + global_module.resources_directory.replace("\\", "/") +
-                "/various/function-wheel.png);"
+                "/various/function-wheel.png);" +
             "}"
         )
+        self.setStyleSheet("background-color:transparent;")
+        self.setStyleSheet("border:0;")
+        #Setup the picture
+        exco_picture    = PyQt4.QtGui.QPixmap(
+                                    os.path.join(
+                                        global_module.resources_directory, 
+                                        global_module.function_wheel_image
+                                    )
+                                )
+        self.picture    = PyQt4.QtGui.QLabel(self)
+        self.picture.setPixmap(exco_picture)
+        self.picture.setGeometry(self.frameGeometry())
+        self.picture.setScaledContents(True)
+        self.layout = PyQt4.QtGui.QGridLayout()
+        self.layout.setSpacing(0)
+        self.layout.setMargin(0)
+        self.layout.addWidget(self.picture)
+        self.setLayout(self.layout)
+        
         #Initialize the display label that will display the function names
         #when the mouse cursor is over a function button
         self.display_label = PyQt4.QtGui.QLabel(self)

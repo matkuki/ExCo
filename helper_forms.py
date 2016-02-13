@@ -2612,6 +2612,8 @@ class ExCoInfo(PyQt4.QtGui.QDialog):
         #Initialize layout
         self.layout = PyQt4.QtGui.QGridLayout()
         self.layout.addWidget(self.picture)
+        self.layout.setSpacing(0)
+        self.layout.setMargin(0)
         self.setLayout(self.layout)
         #Set the log window icon
         if os.path.isfile(global_module.application_icon) == True:
@@ -2629,6 +2631,9 @@ class ExCoInfo(PyQt4.QtGui.QDialog):
         my_top = parent_top + (parent_height/2) - (my_height/2)
         self.setGeometry(PyQt4.QtCore.QRect(my_left, my_top, my_width, my_height))
         self.setFixedSize(my_width, my_height)
+#        self.setStyleSheet("background-color:transparent;")
+#        self.setWindowFlags(PyQt4.QtCore.Qt.WindowStaysOnTopHint | PyQt4.QtCore.Qt.Dialog | PyQt4.QtCore.Qt.FramelessWindowHint)
+#        self.setAttribute(PyQt4.QtCore.Qt.WA_TranslucentBackground)
 
     def _close(self, event):
         """Close the widget"""
