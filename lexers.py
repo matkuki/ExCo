@@ -682,7 +682,7 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         OF      = self.styles.CASE_OF
         U_KWD   = self.styles.USER_KEYWORD
         M_COM   = self.styles.MULTILINE_COMMENT
-        #Initialize comment state and split the text into tokens
+        #Initialize various states and split the text into tokens
         commenting      = False
         doc_commenting  = False
         new_commenting  = False
