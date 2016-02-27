@@ -40,9 +40,9 @@ All additional licenses are specified at the beginning of every source code file
 - Python 3
 - PyQt4 version 4.11 or higher
 - QScintilla 2.9 or higher (is bundled in the PyQt4 installer on Windows)
-- XTerm terminal editor is used by default on GNU/Linux (Can be changed in source code)
 
 __Optional dependencies:__
+- XTerm terminal editor is used by default on GNU/Linux (can be changed in source code)
 - Cython (ONLY FOR BUILDING SPECIAL LEXERS)
 <br><br>
 
