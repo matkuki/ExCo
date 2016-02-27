@@ -88,7 +88,7 @@ import textwrap
 import PyQt4.QtCore
 import PyQt4.QtGui
 import PyQt4.Qsci
-import global_module
+import data
 import helper_forms
 import functions
 import interpreter
@@ -139,20 +139,20 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
     #Attribute for signaling the state of the save buttons in the "File" menubar
     save_state              = False
     #Supported Ex.Co. file extension types
-    exco_file_exts          =  (['*' + x for x in global_module.ext_python] +
-                                ['*' + x for x in global_module.ext_cpython] +
-                                ['*' + x for x in global_module.ext_c] +
-                                ['*' + x for x in global_module.ext_cpp] +
-                                ['*' + x for x in global_module.ext_pascal] +
-                                ['*' + x for x in global_module.ext_oberon] +
-                                ['*' + x for x in global_module.ext_ada] +
-                                ['*' + x for x in global_module.ext_json] +
-                                ['*' + x for x in global_module.ext_d] +
-                                ['*' + x for x in global_module.ext_nim] +
-                                ['*' + x for x in global_module.ext_perl] +
-                                ['*' + x for x in global_module.ext_xml] +
-                                ['*' + x for x in global_module.ext_text] +
-                                ['*' + x for x in global_module.ext_ini])
+    exco_file_exts          =  (['*' + x for x in data.ext_python] +
+                                ['*' + x for x in data.ext_cpython] +
+                                ['*' + x for x in data.ext_c] +
+                                ['*' + x for x in data.ext_cpp] +
+                                ['*' + x for x in data.ext_pascal] +
+                                ['*' + x for x in data.ext_oberon] +
+                                ['*' + x for x in data.ext_ada] +
+                                ['*' + x for x in data.ext_json] +
+                                ['*' + x for x in data.ext_d] +
+                                ['*' + x for x in data.ext_nim] +
+                                ['*' + x for x in data.ext_perl] +
+                                ['*' + x for x in data.ext_xml] +
+                                ['*' + x for x in data.ext_text] +
+                                ['*' + x for x in data.ext_ini])
     #Dictionary for storing the menubar special functions
     menubar_functions       = {}
     #Last focused widget and tab needed by the function wheel overlay
@@ -181,9 +181,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         self.display    = self.Display(self)
         self.bookmarks  = self.Bookmarks(self)
         #Initialize the main window 
-        self.setWindowTitle("Ex.Co. " + global_module.APPLICATION_VERSION)
+        self.setWindowTitle("Ex.Co. " + data.APPLICATION_VERSION)
         #Initialize the log dialog window
-        global_module.log_window = helper_forms.MessageLogger(self)
+        data.log_window = helper_forms.MessageLogger(self)
         #Initialize basic window widgets(main, side_up, side_down)
         self._init_basic_widgets()
         #Initialize statusbar
@@ -207,15 +207,15 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         if logging == True:
             #Show log dialog window
             self.view.set_log_window(True)
-        global_module.print_log("Main window displayed successfully")
+        data.print_log("Main window displayed successfully")
         self.settings.restore()
         #Initialize repl interpreter
         self._init_interpreter()
         #Set the main window icon if it exists
-        if os.path.isfile(global_module.application_icon) == True:
-            self.setWindowIcon(PyQt4.QtGui.QIcon(global_module.application_icon))
+        if os.path.isfile(data.application_icon) == True:
+            self.setWindowIcon(PyQt4.QtGui.QIcon(data.application_icon))
         #Set the repl type to a single line
-        self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+        self.view.set_repl_type(data.ReplType.SINGLE_LINE)
         #Open the file passed as an argument to the QMainWindow initialization
         if file_arguments != None:
             for file in file_arguments:
@@ -246,15 +246,15 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     main        = self.main_window, 
                     upper       = self.upper_window, 
                     lower       = self.lower_window,
-                    print_log   = global_module.print_log, 
+                    print_log   = data.print_log, 
                     quit        = self.exit, 
                     exit        = self.exit, 
                     new         = self.create_new, 
                     open        = self.open_files,
                     open_d      = self.open_file_with_dialog, 
                     save        = functions.write_to_file, 
-                    log         = global_module.log_window, 
-                    version     = global_module.APPLICATION_VERSION,
+                    log         = data.log_window, 
+                    version     = data.APPLICATION_VERSION,
                     run         = self.run_process, 
                     set_cwd         = self.set_cwd, 
                     get_cwd         = self.get_cwd, 
@@ -365,7 +365,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         def display(message):
             self.display.repl_display_message(
                 message, 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
             self.display.write_to_statusbar(message)
         #Check if there is a document in the main basic widget
@@ -386,7 +386,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
 
     def leaveEvent(self,  event):
         """Event that fires when you leave the main form"""
-        global_module.print_log("Left Main form")
+        data.print_log("Left Main form")
         
     def closeEvent(self, event):
         """Event that fires when the main window is closed"""
@@ -505,7 +505,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         """The function name says it all"""
         focused_tab = self.get_tab_by_focus()
         if isinstance(focused_tab, CustomEditor) == True:
-            if focused_tab != None and focused_tab.savable == global_module.CanSave.YES:
+            if focused_tab != None and focused_tab.savable == data.CanSave.YES:
                 focused_tab.save_document(
                     saveas=False, 
                     last_dir=self.last_browsed_dir, 
@@ -540,8 +540,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 if isinstance(tab, CustomEditor) == False:
                     continue
                 #Test if the tab is modified and savable
-                if (tab.savable == global_module.CanSave.YES and 
-                    tab.save_status == global_module.FileStatus.MODIFIED):
+                if (tab.savable == data.CanSave.YES and 
+                    tab.save_status == data.FileStatus.MODIFIED):
                     #Save the file
                     tab.save_document(saveas=False, last_dir=None, encoding=encoding)
                     #Set the icon if it was set by the lexer
@@ -553,12 +553,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         if saved_something == False:
             self.display.repl_display_message(
                 "No modified documents to save", 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
         else:
             self.display.repl_display_message(
                 "'Save all' executed successfully", 
-                message_type=global_module.MessageType.SUCCESS
+                message_type=data.MessageType.SUCCESS
             )
 
     def _init_menubar(self):
@@ -691,12 +691,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             load_settings_action.triggered.connect(self.settings.restore)
             #Add the editing option for the user_functions file
             def open_user_func_file():
-                user_definitions_file = global_module.application_directory + "/user_functions.cfg"
+                user_definitions_file = data.application_directory + "/user_functions.cfg"
                 #Test if user_functions file exists
                 if os.path.isfile(user_definitions_file) == False:
                     self.display.repl_display_message(
                         "User functions file does not exist!", 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
                     return
                 self.open_file(user_definitions_file)
@@ -1129,7 +1129,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('find("",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find"] = special_find
@@ -1151,7 +1151,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_find(r"",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_find"] = special_regex_find
@@ -1174,7 +1174,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('find_and_replace("","",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_and_replace"] = special_find_and_replace
@@ -1198,7 +1198,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_find_and_replace(r"",r"",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_find_and_replace"] = special_regex_find_and_replace
@@ -1221,7 +1221,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('highlight("",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_highlight"] = special_highlight
@@ -1241,7 +1241,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_highlight(r"",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_highlight"] = special_regex_highlight
@@ -1259,7 +1259,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText('clear_highlights(window_name="{:s}")'.format(focused_tab.parent.name))
                 except:
                     self.repl.setText('clear_highlights()')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(len(self.repl.text()))
             self.menubar_functions["special_clear_highlights"] = special_clear_highlights
@@ -1277,7 +1277,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('replace_in_selection("","",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('","",case_sensitive'))
             self.menubar_functions["special_replace_in_selection"] = special_replace_in_selection
@@ -1297,7 +1297,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_replace_in_selection(r"",r"",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",r"",case_sensitive'))
             self.menubar_functions["special_regex_replace_in_selection"] = special_regex_replace_in_selection
@@ -1322,7 +1322,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('replace_all("","",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_replace_all"] = special_replace_all
@@ -1344,7 +1344,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_replace_all(r"",r"",case_sensitive=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_replace_all"] = special_regex_replace_all
@@ -1404,7 +1404,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     message += "the document is not an editor!"
                     self.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
             self.menubar_functions["create_node_tree"] = create_node_tree
             node_tree_action    = PyQt4.QtGui.QAction('Create/reload node tree (C / Nim / Python3)', self)
@@ -1419,7 +1419,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 try:
                     focused_tab = self.get_used_tab()
                     self.repl.setText('goto_line(,window_name="{:s}")'.format(focused_tab.parent.name))
-                    self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                    self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                     self.repl.setCursorPosition(self.repl.text().find(',window_name'))
                 except:
                     self.repl.setText('goto_line()')
@@ -1477,7 +1477,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('find_in_open_documents("",case_sensitive=False,regular_expression=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             self.menubar_functions["special_find_in_open_documents"] = special_find_in_open_documents
@@ -1502,7 +1502,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('find_replace_in_open_documents("","",case_sensitive=False,regular_expression=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             self.menubar_functions["special_find_replace_in_open_documents"] = special_find_replace_in_open_documents
@@ -1527,7 +1527,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('replace_all_in_open_documents("","",case_sensitive=False,regular_expression=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             self.menubar_functions["special_replace_all_in_open_documents"] = special_replace_all_in_open_documents
@@ -1569,13 +1569,13 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_find_in():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_in_files("",r"directory",case_sensitive=False,search_subdirs=True,break_on_find=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
             def special_find_in_with_dialog():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_in_files("",case_sensitive=False,search_subdirs=True,break_on_find=False)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_in"]               = special_find_in
@@ -1591,13 +1591,13 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_find_file():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_files("",r"directory",case_sensitive=False,search_subdirs=True)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
             def special_find_file_with_dialog():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_files("",case_sensitive=False,search_subdirs=True)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_file"]             = special_find_file
@@ -1615,7 +1615,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 temp_string = 'replace_in_files("search_text","replace_text",'
                 temp_string += 'r"directory",case_sensitive=False,search_subdirs=True)'
                 self.repl.setText(temp_string)
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
             def special_replace_in_files_with_dialog():
@@ -1623,7 +1623,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 temp_string = 'replace_in_files("search_text","replace_text",'
                 temp_string += 'case_sensitive=False,search_subdirs=True)'
                 self.repl.setText(temp_string)
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_replace_in_files"]              = special_replace_in_files
@@ -1639,7 +1639,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             replace_in_files_action.triggered.connect(special_replace_in_files)
             def special_run_command():
                 self.repl.setText('run("",show_console=True)')
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",show_'))
             self.menubar_functions["special_run_command"] = special_run_command
@@ -1683,7 +1683,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     message += "Select a window widget with an opened document first."
                     self.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
                     self.display.write_to_statusbar(message)
             lexers_menu = parent.addMenu("Change lexer")
@@ -1958,15 +1958,15 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.get_window_by_child_tab().move_tab(direction)
                 except:
                     pass
-            self.menubar_functions["move_tab_right"] = functools.partial(move_tab, direction=global_module.Direction.RIGHT)
-            self.menubar_functions["move_tab_left"] = functools.partial(move_tab, direction=global_module.Direction.LEFT)
+            self.menubar_functions["move_tab_right"] = functools.partial(move_tab, direction=data.Direction.RIGHT)
+            self.menubar_functions["move_tab_left"] = functools.partial(move_tab, direction=data.Direction.LEFT)
             move_tab_right_action       = PyQt4.QtGui.QAction('Move tab right', self)
             move_tab_right_action.setShortcut('Ctrl+.')
             move_tab_right_action.setStatusTip('Move the current tab in the currently selected window one position to the right')
             temp_icon = helper_forms.set_icon('tango_icons/view-move-tab-right.png')
             move_tab_right_action.setIcon(temp_icon)
             move_tab_right_action.triggered.connect(
-                functools.partial(move_tab, direction=global_module.Direction.RIGHT)
+                functools.partial(move_tab, direction=data.Direction.RIGHT)
             )
             move_tab_left_action        = PyQt4.QtGui.QAction('Move tab left', self)
             move_tab_left_action.setShortcut('Ctrl+,')
@@ -1974,7 +1974,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             temp_icon = helper_forms.set_icon('tango_icons/view-move-tab-left.png')
             move_tab_left_action.setIcon(temp_icon)
             move_tab_left_action.triggered.connect(
-                functools.partial(move_tab, direction=global_module.Direction.LEFT)
+                functools.partial(move_tab, direction=data.Direction.LEFT)
             )
             def show_edge():
                 try:
@@ -2094,7 +2094,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             temp_icon = helper_forms.set_icon('tango_icons/repl-repeat-command.png')
             repeat_eval_action.setIcon(temp_icon)
             def repl_single_focus():
-                self.view.set_repl_type(global_module.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
             self.menubar_functions["repl_single_focus"] = repl_single_focus
             repl_focus_action = PyQt4.QtGui.QAction('Focus REPL(Single)', self)   
@@ -2104,7 +2104,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             temp_icon = helper_forms.set_icon('tango_icons/repl-focus-single.png')
             repl_focus_action.setIcon(temp_icon)
             def repl_multi_focus():
-                self.view.set_repl_type(global_module.ReplType.MULTI_LINE)
+                self.view.set_repl_type(data.ReplType.MULTI_LINE)
                 self.repl_helper.setFocus()
             self.menubar_functions["repl_multi_focus"] = repl_multi_focus
             repl_focus_multi_action = PyQt4.QtGui.QAction('Focus REPL(Multi)', self)
@@ -2214,7 +2214,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
     def import_user_functions(self):
         """Import the user defined functions form the user_functions.cfg file"""
         self.repl.skip_next_repl_focus()
-        user_file_path = os.path.join(global_module.application_directory, "user_functions.cfg")
+        user_file_path = os.path.join(data.application_directory, "user_functions.cfg")
         #Test if user_functions file exists
         if os.path.isfile(user_file_path) == False:
             message = "User functions file does not exist!\n"
@@ -2223,7 +2223,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             message += "to make this error dissappear."
             self.display.repl_display_message(
                 message, 
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
             return
         user_file = open(user_file_path)
@@ -2233,7 +2233,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         if result != None:
             self.display.repl_display_message(
                 "ERROR IN USER FUNCTIONS FILE:\n" + result, 
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
             return
         #Update the REPL autocompletions
@@ -2312,7 +2312,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         if file != None and file != "":
             #Check if file exists
             if os.path.isfile(file) == False:
-                self.display.repl_display_message("File: {:s}\ndoesn't exist!".format(file), message_type=global_module.MessageType.ERROR)
+                self.display.repl_display_message("File: {:s}\ndoesn't exist!".format(file), message_type=data.MessageType.ERROR)
                 return
             #Check the file size
             file_size = functions.get_file_size_Mb(file)
@@ -2353,13 +2353,13 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     new_tab.setText(file_text)
                 except MemoryError:
                     message = "Insufficient memory to open the file!"
-                    self.display.repl_display_message(message, message_type=global_module.MessageType.ERROR)
+                    self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
                     self.display.write_to_statusbar(message)
                     basic_widget.removeTab(basic_widget.currentIndex())
                     return
                 except:
                     message = "Unexpected error occured while opening file!"
-                    self.display.repl_display_message(message, message_type=global_module.MessageType.ERROR)
+                    self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
                     self.display.write_to_statusbar(message)
                     basic_widget.removeTab(basic_widget.currentIndex())
                     return
@@ -2371,7 +2371,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 #Update the current working directory
                 path = os.path.dirname(file)
                 self.set_cwd(path)
-                global_module.print_log("Opened file: " + str(file))
+                data.print_log("Opened file: " + str(file))
                 #Set focus to the newly opened document
                 basic_widget.currentWidget().setFocus()
                 #Update the Save/SaveAs buttons in the menubar
@@ -2379,7 +2379,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             else:
                 message = "File cannot be read!\n"
                 message += "It's probably not a text file!"
-                self.display.repl_display_message(message, message_type=global_module.MessageType.ERROR)
+                self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
                 self.display.write_to_statusbar("File cannot be read!", 3000)
     
     def check_open_file(self, file_with_path, basic_widget):
@@ -2547,8 +2547,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         def check_documents_in_window(window):
             if window.count() > 0:
                 for i in range(0, window.count()):
-                    if window.widget(i).savable == global_module.CanSave.YES:
-                        if window.widget(i).save_status == global_module.FileStatus.MODIFIED:
+                    if window.widget(i).savable == data.CanSave.YES:
+                        if window.widget(i).save_status == data.FileStatus.MODIFIED:
                             return True
             return False
         #Check all widget in all three windows for changes
@@ -2582,8 +2582,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.parent = parent
             #Initialize the Ex.Co. settings object with the current working directory
             self.manipulator   =   settings.SettingsFileManipulator(
-                                        global_module.application_directory, 
-                                        global_module.resources_directory
+                                        data.application_directory, 
+                                        data.resources_directory
                                     )
         
         def update_recent_list(self, new_file=None):
@@ -2650,14 +2650,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if len(session_name) < 3:
                 self.parent.display.repl_display_message(
                     "Session name is too short!", 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
                 return
             if session_group != None:
                 if isinstance(session_group, str) == False:
                     self.parent.display.repl_display_message(
                         "Group name must be a string!", 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
                     return
             #Create lists of files in each window
@@ -2691,12 +2691,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                         message = "Session '{:s}{:s}' added!".format(session_group, session_name)
                     self.parent.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.SUCCESS
+                        message_type=data.MessageType.SUCCESS
                     )
                 else:
                     self.parent.display.repl_display_message(
                         "No documents to store!", 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
                     self.parent.display.write_to_statusbar("No documents to store!", 1500)
                 #Refresh the sessions menu in the menubar
@@ -2706,7 +2706,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message = "Invalid document types in the main or upper window!"
                 self.parent.display.repl_display_message(
                     message, 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
                 self.parent.display.write_to_statusbar(message, 1500)
 
@@ -2741,19 +2741,19 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     try:
                         self.parent.open_file(file, self.parent.upper_window)
                     except:
-                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=global_module.MessageType.ERROR)
+                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
                 #Add files to lower window
                 for file in session.lower_files:
                     try:
                         self.parent.open_file(file, self.parent.lower_window)
                     except:
-                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=global_module.MessageType.ERROR)
+                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
                 #Add files to main window
                 for file in session.main_files:
                     try:
                         self.parent.open_file(file, self.parent.main_window)
                     except:
-                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=global_module.MessageType.ERROR)
+                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
             else:
                 #Session was not found
                 if session_group == None or session_group == "":
@@ -2763,7 +2763,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message = "Session '{:s}{:s}' was not found!".format(session_group, session_name)
                 self.parent.display.repl_display_message(
                     message, 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
                 self.parent.display.write_to_statusbar(message, 1500)
         
@@ -2822,7 +2822,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message = "Session '{:s}{:s}' was not found!".format(session_group, session_name)
                 self.parent.display.repl_display_message(
                     message, 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
                 self.parent.display.write_to_statusbar(message, 1500)
             else:
@@ -2830,7 +2830,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message = "Session '{:s}{:s}' was removed!".format(session_group, session_name)
                 self.parent.display.repl_display_message(
                     message, 
-                    message_type=global_module.MessageType.WARNING
+                    message_type=data.MessageType.WARNING
                 )
             #Refresh the sessions menu in the menubar
             self.update_menu()
@@ -2902,7 +2902,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             window = self.parent.get_window_by_name(window_name)
             documents = [window.widget(i).save_name 
                             for i in range(window.count()) 
-                                if  window.widget(i).savable == global_module.CanSave.YES and
+                                if  window.widget(i).savable == data.CanSave.YES and
                                     window.widget(i).save_name != ""]
             return documents
         
@@ -2920,9 +2920,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         horizontal_width_1      = 2/3
         horizontal_width_2      = 1/3
         #Window mode: ONE or THREE
-        window_mode             = global_module.WindowMode.THREE
+        window_mode             = data.WindowMode.THREE
         #Attribute that stores which side the main window is on
-        main_window_side        = global_module.MainWindowSide.LEFT
+        main_window_side        = data.MainWindowSide.LEFT
         #Overlay helper widget that will be displayed on top of the main groupbox
         function_wheel_overlay  = None
         #Last executed functions text on the function wheel
@@ -2939,8 +2939,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Get the function wheel overlay image size
             function_wheel_size =   PyQt4.QtGui.QPixmap(
                                         os.path.join(
-                                            global_module.resources_directory, 
-                                            global_module.function_wheel_image
+                                            data.resources_directory, 
+                                            data.function_wheel_image
                                         )
                                     ).size()
             self.FUNCTION_WHEEL_BOUNDS =    (
@@ -2954,9 +2954,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         def refresh_layout(self, window_mode, main_window_side):
             """Refresh all widgets to the initial dimensions"""
             #Check which window mode is active
-            if window_mode == global_module.WindowMode.THREE:
+            if window_mode == data.WindowMode.THREE:
                 #Set vertical and horizontal splitter heights
-                if main_window_side == global_module.MainWindowSide.LEFT:
+                if main_window_side == data.MainWindowSide.LEFT:
                     self.parent.vertical_splitter.setSizes(
                         [self.parent.vertical_splitter.width()*self.vertical_width_1, 
                          self.parent.vertical_splitter.width()*self.vertical_width_2]
@@ -2965,7 +2965,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                         [self.parent.horizontal_splitter.width()*self.horizontal_width_1, 
                          self.parent.horizontal_splitter.width()*self.horizontal_width_2]
                     )
-                elif main_window_side   == global_module.MainWindowSide.RIGHT:
+                elif main_window_side   == data.MainWindowSide.RIGHT:
                     self.parent.vertical_splitter.setSizes(
                         [self.parent.vertical_splitter.width()*self.vertical_width_1, 
                          self.parent.vertical_splitter.width()*self.vertical_width_2]
@@ -2986,7 +2986,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if self.parent.vertical_splitter.count() < 2 or self.parent.horizontal_splitter.count() < 2:
                 return
             #Check which window mode is active
-            if (self.parent.window_mode == global_module.WindowMode.THREE and
+            if (self.parent.window_mode == data.WindowMode.THREE and
                 self.parent.vertical_splitter.height() > 0 and
                 self.parent.horizontal_splitter.width() > 0):
                 self.vertical_width_1   = (self.parent.vertical_splitter.sizes()[0] / 
@@ -2994,12 +2994,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.vertical_width_2   = (self.parent.vertical_splitter.sizes()[1] / 
                                            self.parent.vertical_splitter.height())
                 #Save the horizontal positions according to the main window side
-                if self.main_window_side    == global_module.MainWindowSide.LEFT:
+                if self.main_window_side    == data.MainWindowSide.LEFT:
                     self.horizontal_width_1     = (self.parent.horizontal_splitter.sizes()[0] / 
                                                    self.parent.horizontal_splitter.width())
                     self.horizontal_width_2     = (self.parent.horizontal_splitter.sizes()[1] / 
                                                    self.parent.horizontal_splitter.width())
-                elif self.main_window_side  == global_module.MainWindowSide.RIGHT:
+                elif self.main_window_side  == data.MainWindowSide.RIGHT:
                     self.horizontal_width_1     = (self.parent.horizontal_splitter.sizes()[1] / 
                                                    self.parent.horizontal_splitter.width())
                     self.horizontal_width_2     = (self.parent.horizontal_splitter.sizes()[0] / 
@@ -3043,17 +3043,17 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             vertical_splitter.addWidget(upper_widget)
             vertical_splitter.addWidget(lower_widget)
             #Horizontally split editing and vertical splitter according to main window side attribute
-            if self.main_window_side == global_module.MainWindowSide.LEFT:
+            if self.main_window_side == data.MainWindowSide.LEFT:
                 horizontal_splitter.addWidget(main_widget)
                 horizontal_splitter.addWidget(vertical_splitter)
-            elif self.main_window_side == global_module.MainWindowSide.RIGHT:
+            elif self.main_window_side == data.MainWindowSide.RIGHT:
                 horizontal_splitter.addWidget(vertical_splitter)
                 horizontal_splitter.addWidget(main_widget)
             #Vertically split edit fields with the REPL
             main_splitter.addWidget(horizontal_splitter)
             main_splitter.addWidget(self.parent.repl_box)
             #Set the window mode attribute to one
-            self.parent.window_mode = global_module.WindowMode.THREE
+            self.parent.window_mode = data.WindowMode.THREE
             #Initialize the main groupbox
             main_groupbox = PyQt4.QtGui.QGroupBox(self.parent)
             main_groupbox_layout = PyQt4.QtGui.QVBoxLayout(main_groupbox)
@@ -3077,7 +3077,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if focused_widget != None:
                 #Store the last focused widget
                 self.parent.last_focused_widget = focused_widget
-                global_module.print_log(
+                data.print_log(
                     "Stored \"{:s}\" as last focused widget".format(focused_widget.name)
                 )
                 #Set focus to the last focused widget
@@ -3099,15 +3099,15 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         def set_log_window(self, show=True):
             """Show or hide the log window"""
             if show == True:
-                global_module.logging_mode = True
-                global_module.log_window.show()
+                data.logging_mode = True
+                data.log_window.show()
             else:
-                global_module.log_window.hide()
+                data.log_window.hide()
             self.parent.activateWindow()
                 
         def toggle_log_window(self):
             """Toggle the display of the log window"""
-            if global_module.log_window.isVisible():
+            if data.log_window.isVisible():
                 self.set_log_window(False)
             else:
                 self.set_log_window(True)
@@ -3129,7 +3129,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 lower_widget=self.parent.lower_window
             )
         
-        def spin_basic_widgets(self, direction=global_module.SpinDirection.CLOCKWISE):
+        def spin_basic_widgets(self, direction=data.SpinDirection.CLOCKWISE):
             """
             Spin the three basic widgets clockwise or counter-clockwise using the splitters.
             
@@ -3137,15 +3137,15 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 direction:  0 - clockwise,  1 - counter-clockwise
             """
             #Only spin the widgets if in THREE window mode
-            if self.window_mode != global_module.WindowMode.THREE:
+            if self.window_mode != data.WindowMode.THREE:
                 return
             #Check which side the main window is on and adjust the direction accordigly
-            if self.main_window_side == global_module.MainWindowSide.RIGHT:
+            if self.main_window_side == data.MainWindowSide.RIGHT:
                 #The main window is on the right side, reverse the spin direction
-                if direction == global_module.SpinDirection.CLOCKWISE:
-                    direction = global_module.SpinDirection.COUNTER_CLOCKWISE
+                if direction == data.SpinDirection.CLOCKWISE:
+                    direction = data.SpinDirection.COUNTER_CLOCKWISE
                 else:
-                    direction = global_module.SpinDirection.CLOCKWISE
+                    direction = data.SpinDirection.CLOCKWISE
                 #Save current positioning
                 temp_widget_main    = self.parent.horizontal_splitter.widget(1)
                 temp_widget_upper   = self.parent.vertical_splitter.widget(0)
@@ -3156,7 +3156,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 temp_widget_upper   = self.parent.vertical_splitter.widget(0)
                 temp_widget_lower   = self.parent.vertical_splitter.widget(1)
             #Spin according to direction
-            if direction == global_module.SpinDirection.CLOCKWISE:
+            if direction == data.SpinDirection.CLOCKWISE:
                 self.set_basic_widgets(
                     main_widget=temp_widget_lower,
                     upper_widget=temp_widget_main,
@@ -3174,47 +3174,47 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.parent.upper_window, 
                 self.parent.lower_window
             )
-            if direction == global_module.SpinDirection.CLOCKWISE:
-                global_module.print_log("Span view clockwise")
+            if direction == data.SpinDirection.CLOCKWISE:
+                data.print_log("Span view clockwise")
             else:
-                global_module.print_log("Span view counter-clockwise")
+                data.print_log("Span view counter-clockwise")
         
         def spin_widgets_clockwise(self):
             """Convenience function for use with the menubar and REPL"""
-            self.spin_basic_widgets(global_module.SpinDirection.CLOCKWISE)
+            self.spin_basic_widgets(data.SpinDirection.CLOCKWISE)
 
         def spin_widgets_counterclockwise(self):
             """Convenience function for use with the menubar and REPL"""
-            self.spin_basic_widgets(global_module.SpinDirection.COUNTER_CLOCKWISE)
+            self.spin_basic_widgets(data.SpinDirection.COUNTER_CLOCKWISE)
         
         def toggle_window_mode(self):
             """Toggle one/three window mode"""
-            if self.window_mode     == global_module.WindowMode.THREE:
+            if self.window_mode     == data.WindowMode.THREE:
                 self.parent.upper_window.hide()
                 self.parent.lower_window.hide()
-                self.window_mode = global_module.WindowMode.ONE
+                self.window_mode = data.WindowMode.ONE
                 #Focus on the main window as the other two windows are hidden
                 self.set_window_focus("main")
                 self.parent.display.write_to_statusbar("Window mode changed to: ONE", 1000)
-            elif self.window_mode   == global_module.WindowMode.ONE:
+            elif self.window_mode   == data.WindowMode.ONE:
                 self.parent.upper_window.show()
                 self.parent.lower_window.show()
-                self.window_mode = global_module.WindowMode.THREE
+                self.window_mode = data.WindowMode.THREE
                 self.parent.display.write_to_statusbar("Window mode changed to: THREE", 1000)
         
         def toggle_main_window_side(self):
             """Toggle main window side"""
-            if self.window_mode == global_module.WindowMode.THREE:
-                if self.main_window_side == global_module.MainWindowSide.LEFT:
-                    self.set_main_window_side(global_module.MainWindowSide.RIGHT)
-                elif self.main_window_side == global_module.MainWindowSide.RIGHT:
-                    self.set_main_window_side(global_module.MainWindowSide.LEFT)
+            if self.window_mode == data.WindowMode.THREE:
+                if self.main_window_side == data.MainWindowSide.LEFT:
+                    self.set_main_window_side(data.MainWindowSide.RIGHT)
+                elif self.main_window_side == data.MainWindowSide.RIGHT:
+                    self.set_main_window_side(data.MainWindowSide.LEFT)
         
         def set_window_focus(self, window):
             """Set focus to one of the editing windows"""
             window = window.lower()
             #Choose a window based on the string argument
-            if window == "main" or self.window_mode == global_module.WindowMode.ONE:
+            if window == "main" or self.window_mode == data.WindowMode.ONE:
                 window  = self.parent.main_window
             elif window == "upper":
                 window  = self.parent.upper_window
@@ -3243,14 +3243,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 #Store the last focused widget
                 self.parent.last_focused_widget = window
         
-        def set_repl_type(self, type=global_module.ReplType.SINGLE_LINE):
+        def set_repl_type(self, type=data.ReplType.SINGLE_LINE):
             """Set REPL input as a one line ReplLineEdit or a multiline ReplHelper"""
             #Check if the REPL type needs to be updated
-            if (type == global_module.ReplType.SINGLE_LINE and 
-                self.repl_state == global_module.ReplType.SINGLE_LINE):
+            if (type == data.ReplType.SINGLE_LINE and 
+                self.repl_state == data.ReplType.SINGLE_LINE):
                 return
-            elif (type == global_module.ReplType.MULTI_LINE and 
-                self.repl_state == global_module.ReplType.MULTI_LINE):
+            elif (type == data.ReplType.MULTI_LINE and 
+                self.repl_state == data.ReplType.MULTI_LINE):
                 return
             #Initialize the groupbox that the REPL will be in, and place the REPL widget into it
             self.parent.repl_box = PyQt4.QtGui.QGroupBox("Python Interactive Interpreter (REPL)")
@@ -3259,14 +3259,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             repl_layout.addWidget(self.parent.repl)
             repl_layout.addWidget(self.parent.repl_helper)
             #Set which REPL widget will be displayed
-            if type == global_module.ReplType.SINGLE_LINE:
+            if type == data.ReplType.SINGLE_LINE:
                 self.parent.repl.setVisible(True)
                 self.parent.repl_helper.setVisible(False)
-                self.repl_state = global_module.ReplType.SINGLE_LINE
+                self.repl_state = data.ReplType.SINGLE_LINE
             else:
                 self.parent.repl.setVisible(False)
                 self.parent.repl_helper.setVisible(True)
-                self.repl_state = global_module.ReplType.MULTI_LINE
+                self.repl_state = data.ReplType.MULTI_LINE
             self.parent.repl_box.setLayout(repl_layout)
             #Refresh the layout
             self.parent.view.set_basic_widgets(
@@ -3437,7 +3437,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 #Check if directory is valid
                 self.parent.display.repl_display_message(
                     "Invalid search directory!", 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
                 self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
                 return
@@ -3445,7 +3445,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 #Check if any files were found
                 self.parent.display.repl_display_message(
                     "No files found!", 
-                    message_type=global_module.MessageType.WARNING
+                    message_type=data.MessageType.WARNING
                 )
                 self.parent.display.write_to_statusbar("No files found!", 2000)
                 return
@@ -3484,7 +3484,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     #Check if directory is valid
                     self.parent.display.repl_display_message(
                         "Invalid search directory!", 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
                     self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
                     return
@@ -3492,7 +3492,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     #Check if any files were found
                     self.parent.display.repl_display_message(
                         "No files found!", 
-                        message_type=global_module.MessageType.WARNING
+                        message_type=data.MessageType.WARNING
                     )
                     self.parent.display.write_to_statusbar("No files found!", 2000)
                     return
@@ -3505,7 +3505,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             except Exception as ex:
                 self.parent.display.repl_display_message(
                     str(ex), 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
         
         def replace_in_files(self, 
@@ -3553,7 +3553,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if len(result) == 0:
                 self.parent.display.repl_display_message(
                     "No files with '{:s}' in its text were found!".format(search_text), 
-                    message_type=global_module.MessageType.WARNING
+                    message_type=data.MessageType.WARNING
                 )
             elif isinstance(result, dict):
                 self.parent.display.show_replaced_text_in_files_in_tree(
@@ -3565,7 +3565,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             else:
                 self.parent.display.repl_display_message(
                     "Unknown error!", 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
     
     class Editing():
@@ -3601,7 +3601,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message += " editing window"
                 self.parent.display.repl_display_message(
                     message, 
-                    message_type=global_module.MessageType.WARNING
+                    message_type=data.MessageType.WARNING
                 )
                 return
             #Save the current index to reset focus to it if no instances of search string are found
@@ -3630,7 +3630,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                              regular_expression  
                          )
                 #If a replace was done, return success
-                if result == global_module.SearchResult.FOUND:
+                if result == data.SearchResult.FOUND:
                     return True
             #Nothing found
             basic_widget.setCurrentIndex(saved_index)
@@ -3638,7 +3638,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             message += basic_widget.name.lower() + " editing window"
             self.parent.display.repl_display_message(
                 message, 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
             return False
         
@@ -3663,7 +3663,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message += " editing window"
                 self.parent.display.repl_display_message(
                     message, 
-                    message_type=global_module.MessageType.WARNING
+                    message_type=data.MessageType.WARNING
                 )
                 return
             #Save the current index to reset focus to it if no instances of search string are found
@@ -3694,7 +3694,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             message += basic_widget.name.lower() + " editing window"
             self.parent.display.repl_display_message(
                 message, 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
             return False
         
@@ -3723,7 +3723,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             message = "Replacing all in open documents completed"
             self.parent.display.repl_display_message(
                 message, 
-                message_type=global_module.MessageType.SUCCESS
+                message_type=data.MessageType.SUCCESS
             )
         
         """
@@ -3748,7 +3748,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message = "No document in {:s} window!".format(window_name)
                 self.parent.display.repl_display_message(
                     message, 
-                    message_type=global_module.MessageType.WARNING
+                    message_type=data.MessageType.WARNING
                 )
         
         def find(self, search_text, case_sensitive=False, window_name=None):
@@ -3871,7 +3871,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         #Class varibles
         parent          = None
         #Attribute for storing which type of tab is used for dispaying node trees
-        node_view_type  = global_module.NodeDisplayType.TREE
+        node_view_type  = data.NodeDisplayType.TREE
         
         def __init__(self, parent):
             """Initialization of the Display object instance"""
@@ -3983,17 +3983,17 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 elif end < start:
                     end = start
                 #THE MESSAGE COLORS ARE: 0xBBGGRR (BB-blue,GG-green,RR-red)
-                if message_type == global_module.MessageType.ERROR:
+                if message_type == data.MessageType.ERROR:
                     style_repl_text(start, end, 0x0000FF, 1)
-                elif message_type == global_module.MessageType.WARNING:
+                elif message_type == data.MessageType.WARNING:
                     style_repl_text(start, end, 0xFF0000, 2)
-                elif message_type == global_module.MessageType.SUCCESS:
+                elif message_type == data.MessageType.SUCCESS:
                     style_repl_text(start, end, 0x007F00, 3)
-                elif message_type == global_module.MessageType.DIFF_UNIQUE_1:
+                elif message_type == data.MessageType.DIFF_UNIQUE_1:
                     style_repl_text(start, end, 0xcf9f72, 4)
-                elif message_type == global_module.MessageType.DIFF_UNIQUE_2:
+                elif message_type == data.MessageType.DIFF_UNIQUE_2:
                     style_repl_text(start, end, 0xa87fad, 5)
-                elif message_type == global_module.MessageType.DIFF_SIMILAR:
+                elif message_type == data.MessageType.DIFF_SIMILAR:
                     style_repl_text(start, end, 0x069a4e, 6)
             else:
                 #Add REPL message to the REPL message tab
@@ -4036,9 +4036,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             """
             Function for selecting which type of node tree will be displayed
             """
-            if self.node_view_type == global_module.NodeDisplayType.DOCUMENT:
+            if self.node_view_type == data.NodeDisplayType.DOCUMENT:
                 self.show_nodes_in_document(custom_editor, parser)
-            elif self.node_view_type == global_module.NodeDisplayType.TREE:
+            elif self.node_view_type == data.NodeDisplayType.TREE:
                 self.show_nodes_in_tree(custom_editor, parser)
         
         def show_nodes_in_tree(self, custom_editor, parser):
@@ -4052,7 +4052,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if custom_editor == None:
                 parent.display.repl_display_message(
                         "No document selected for node tree creation!", 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
                 return
@@ -4061,7 +4061,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message = "Document is not C, Nim or Python 3!"
                 parent.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar(message, 5000)
                 return
@@ -4121,7 +4121,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if custom_editor == None:
                 parent.display.repl_display_message(
                         "No document selected for node tree creation!", 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
                 return
@@ -4129,7 +4129,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if parser != "PYTHON" and parser != "C":
                 parent.display.repl_display_message(
                         "Document is not Python or C!", 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar("Document is not Python or C", 5000)
                 return
@@ -4180,7 +4180,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 message = "The editor is not valid!"
                 parent.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar(message,  2000)
                 return
@@ -4252,9 +4252,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             """
             Function for selecting which type of node tree will be displayed
             """
-            if self.node_view_type == global_module.NodeDisplayType.DOCUMENT:
+            if self.node_view_type == data.NodeDisplayType.DOCUMENT:
                 self.show_found_files_in_document(file_list, directory)
-            elif self.node_view_type == global_module.NodeDisplayType.TREE:
+            elif self.node_view_type == data.NodeDisplayType.TREE:
                 self.show_found_files_in_tree(search_text, file_list, directory)
     
         def show_found_files_in_document(self, file_list, directory):
@@ -4467,13 +4467,13 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.marks[i] = (editor, line)
                     self.parent.display.repl_display_message(
                         "Bookmark '{:d}' was added!".format(i), 
-                        message_type=global_module.MessageType.SUCCESS
+                        message_type=data.MessageType.SUCCESS
                     )
                     return i
             else:
                 self.parent.display.repl_display_message(
                     "All ten bookmarks are occupied!", 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
                 return None
         
@@ -4492,7 +4492,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             editor.bookmarks.add_marker_at_line(line)
             self.parent.display.repl_display_message(
                 "Bookmark '{:d}' was added!".format(mark_number), 
-                message_type=global_module.MessageType.SUCCESS
+                message_type=data.MessageType.SUCCESS
             )
         
         def clear(self):
@@ -4505,7 +4505,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if cleared_any == False:
                 self.parent.display.repl_display_message(
                     "Bookmarks are clear.", 
-                    message_type=global_module.MessageType.WARNING
+                    message_type=data.MessageType.WARNING
                 )
                 return
         
@@ -4520,13 +4520,13 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.marks[i] = (None, None)
                     self.parent.display.repl_display_message(
                         "Bookmark '{:d}' was removed!".format(i), 
-                        message_type=global_module.MessageType.SUCCESS
+                        message_type=data.MessageType.SUCCESS
                     )
                     break
             else:
                 self.parent.display.repl_display_message(
                     "Bookmark not found!", 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
         
         def remove_editor_all(self, editor):
@@ -4542,7 +4542,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 close_message += "\nwere removed."
                 self.parent.display.repl_display_message(
                     close_message, 
-                    message_type=global_module.MessageType.SUCCESS
+                    message_type=data.MessageType.SUCCESS
                 )
         
         def check(self, editor, line):
@@ -4556,7 +4556,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if mark_number < 0 or mark_number > 9:
                 self.parent.display.repl_display_message(
                     "Bookmarks only go from 0 to 9!", 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
                 return False
             else:
@@ -4568,7 +4568,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if self.marks[mark_number] == (None, None):
                 self.parent.display.repl_display_message(
                     "Bookmark '{:d}' is empty!".format(mark_number), 
-                    message_type=global_module.MessageType.WARNING
+                    message_type=data.MessageType.WARNING
                 )
             else:
                 editor = self.marks[mark_number][0]
@@ -4685,14 +4685,14 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                          isinstance(compare_tab_1, PlainEditor) == False):
                         main_form.display.repl_display_message(
                             "First tab is not a text document!", 
-                            message_type=global_module.MessageType.ERROR
+                            message_type=data.MessageType.ERROR
                         )
                         return
                     elif (isinstance(compare_tab_2, CustomEditor) == False and
                          isinstance(compare_tab_2, PlainEditor) == False):
                         main_form.display.repl_display_message(
                             "Second tab is not a text document!", 
-                            message_type=global_module.MessageType.ERROR
+                            message_type=data.MessageType.ERROR
                         )
                         return
                     #Initialize the compare parameters
@@ -4739,7 +4739,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                     message = "Document path is not valid!"
                     main_form.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.WARNING
+                        message_type=data.MessageType.WARNING
                     )
                     return
                 main_form.set_cwd(path)
@@ -4973,7 +4973,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         """Qt Drop event"""
         if self.drag_dropped_file != None:
             #Displays the file name with path
-            global_module.print_log("Drag&Dropped: " + str(self.drag_dropped_file))
+            data.print_log("Drag&Dropped: " + str(self.drag_dropped_file))
             #Open file in a new scintilla tab
             self.parent.open_file(self.drag_dropped_file,  self)
             event.accept()
@@ -4985,10 +4985,10 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             if (key_modifiers == PyQt4.QtCore.Qt.ControlModifier or
                 key_modifiers == PyQt4.QtCore.Qt.AltModifier):
                 self.copy_editor_in(self.drag_source, index)
-                global_module.print_log("Drag&Drop copied tab {:d} from the {:s} widget".format(index, name))
+                data.print_log("Drag&Drop copied tab {:d} from the {:s} widget".format(index, name))
             else:
                 self.move_editor_in(self.drag_source, index)
-                global_module.print_log("Drag&Drop moved tab {:d} from the {:s} widget".format(index, name))
+                data.print_log("Drag&Drop moved tab {:d} from the {:s} widget".format(index, name))
             event.accept()
         #Reset the drag&drop data attributes
         self.drag_dropped_file  = None
@@ -5005,7 +5005,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             else:
                 #Display only the QTextEdit name
                 self.parent.display.write_to_statusbar(cw.name)
-        global_module.print_log("Entered BasicWidget: " + str(self.name))
+        data.print_log("Entered BasicWidget: " + str(self.name))
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -5015,18 +5015,18 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         self._set_save_status()
         #Store the last focused widget to the parent
         self.parent.last_focused_widget = self
-        global_module.print_log("Stored \"{:s}\" as last focused widget".format(self.name))
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self.name))
         #Hide the function wheel if it is shown
         if self.parent.view.function_wheel_overlay != None:
             self.parent.view.hide_function_wheel()
         #Display the tab name in the log window
         if self.currentWidget() != None:
             tab_name = self.currentWidget().name
-            global_module.print_log("Mouse click in: \"" + str(tab_name) + "\"")
+            data.print_log("Mouse click in: \"" + str(tab_name) + "\"")
         else:
             #Clear the cursor positions in the statusbar
             self.parent.display.update_cursor_position()
-            global_module.print_log("Mouse click in: \"" + self.name + "\"")
+            data.print_log("Mouse click in: \"" + self.name + "\"")
     
 #    def mouseReleaseEvent(self, event):
 #        super().mouseReleaseEvent(event)
@@ -5043,12 +5043,12 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         """QScintilla mouse wheel rotate event"""
         key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers() 
         if wheel_event.delta() < 0:
-            global_module.print_log("Mouse rotate down event")
+            data.print_log("Mouse rotate down event")
             if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.zoom_out()
         else:
-            global_module.print_log("Mouse rotate up event")
+            data.print_log("Mouse rotate up event")
             if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.zoom_in()
@@ -5082,7 +5082,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         #Check if there is a tab in the tab widget
         current_tab = self.currentWidget()
         if current_tab:
-            global_module.print_log("Selected tab: " + str(self.currentWidget().name))
+            data.print_log("Selected tab: " + str(self.currentWidget().name))
         #Update the icons of the tabs
         for i in range(self.count()):
             if self.tabText(i) == "NODE TREE/LIST":
@@ -5127,10 +5127,10 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Check if bookmarks need to be cleared
             if isinstance(self.widget(emmited_tab_number), CustomEditor):
                 self.parent.bookmarks.remove_editor_all(self.widget(emmited_tab_number))
-        global_module.print_log("Closing tab: " + str(self.tabText(emmited_tab_number)))
+        data.print_log("Closing tab: " + str(self.tabText(emmited_tab_number)))
         #Check if the document is modified
-        if self.widget(emmited_tab_number).savable == global_module.CanSave.YES:
-            if self.widget(emmited_tab_number).save_status == global_module.FileStatus.MODIFIED:
+        if self.widget(emmited_tab_number).savable == data.CanSave.YES:
+            if self.widget(emmited_tab_number).save_status == data.FileStatus.MODIFIED:
                 #Close the log window if it is displayed
                 self.parent.view.set_log_window(False)
                 #Display the close notification
@@ -5175,7 +5175,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                 #Display only the QTextEdit name
                 self.parent.display.write_to_statusbar(cw.name)
             #Set the Save/SaveAs status of the menubar
-            if cw.savable == global_module.CanSave.YES:
+            if cw.savable == data.CanSave.YES:
                 self.parent.set_save_file_state(True)
             else:
                 self.parent.set_save_file_state(False)
@@ -5188,9 +5188,9 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         if self.currentWidget() == None:
             return
         #Update the save status of the current widget
-        if self.currentWidget().savable == global_module.CanSave.YES:
+        if self.currentWidget().savable == data.CanSave.YES:
             #Set document as modified
-            self.currentWidget().save_status = global_module.FileStatus.MODIFIED
+            self.currentWidget().save_status = data.FileStatus.MODIFIED
             #Check if special character is already in the name of the tab
             if not "*" in self.tabText(self.currentIndex()):
                 #Add the special character to the tab name
@@ -5202,12 +5202,12 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         """Reset the changed status of the current widget (remove the * symbols from the tab name)"""
         #Update the save status of the current widget
         if index == None:
-            if self.currentWidget().savable == global_module.CanSave.YES:
-                self.currentWidget().save_status = global_module.FileStatus.OK
+            if self.currentWidget().savable == data.CanSave.YES:
+                self.currentWidget().save_status = data.FileStatus.OK
                 self.setTabText(self.currentIndex(), self.tabText(self.currentIndex()).strip("*"))
         else:
-            if self.widget(index).savable == global_module.CanSave.YES:
-                self.widget(index).save_status = global_module.FileStatus.OK
+            if self.widget(index).savable == data.CanSave.YES:
+                self.widget(index).save_status = data.FileStatus.OK
                 self.setTabText(index, self.tabText(index).strip("*"))
 
     def close_tab(self, tab=None):
@@ -5297,7 +5297,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         new_editor_tab_index = self.addTab(new_editor_tab, document_name)
         #Make new tab visible
         self.setCurrentIndex(new_editor_tab_index)
-        global_module.print_log("Added new empty tab: " + document_name)
+        data.print_log("Added new empty tab: " + document_name)
         #Return the reference to the new added scintilla tab widget
         return self.widget(new_editor_tab_index)
     
@@ -5320,7 +5320,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                 if functions.test_text_file(document_name) == None:
                     self.parent.display.repl_display_message(
                         "Testing for TEXT file failed!", 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
                     #File cannot be read
                     return None
@@ -5332,11 +5332,11 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                 new_editor_tab_index = self.addTab(new_editor_tab, os.path.basename(document_name))
                 #Make the new tab visible
                 self.setCurrentIndex(new_editor_tab_index)              
-                global_module.print_log("Added file: " + document_name)
+                data.print_log("Added file: " + document_name)
                 #Return the reference to the new added scintilla tab widget
                 return self.widget(new_editor_tab_index)
             else:
-                global_module.print_log("!! Document is not a text file or has an unsupported format")
+                data.print_log("!! Document is not a text file or has an unsupported format")
                 self.parent.display.write_to_statusbar("Document is not a text file, doesn't exist or has an unsupported format!", 1500)
                 return None
         else:           #New tab is an empty tab
@@ -5346,7 +5346,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             new_editor_tab_index = self.addTab(new_editor_tab, document_name)
             #Make new tab visible
             self.setCurrentIndex(new_editor_tab_index)
-            global_module.print_log("Added new empty tab: " + document_name)
+            data.print_log("Added new empty tab: " + document_name)
             #Return the reference to the new added scintilla tab widget
             return self.widget(new_editor_tab_index)
     
@@ -5357,7 +5357,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         #Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
         new_tree_tab.parent    = self
         new_tree_tab.name      = tree_tab_name
-        new_tree_tab.savable   = global_module.CanSave.NO
+        new_tree_tab.savable   = data.CanSave.NO
         #Return the reference to the new added tree tab widget
         return new_tree_tab
     
@@ -5385,7 +5385,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                 self.setTabText(i, new_text)
                 break
 
-    def move_tab(self, direction=global_module.Direction.RIGHT):
+    def move_tab(self, direction=data.Direction.RIGHT):
         """
         Change the position of the current tab in the basic widget,
         according to the selected direction
@@ -5393,7 +5393,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         #Store the current index and widget
         current_index   = self.currentIndex()
         #Check the move direction
-        if direction == global_module.Direction.RIGHT:
+        if direction == data.Direction.RIGHT:
             #Check if the widget is already at the far right
             if current_index < self.tabBar().count()-1:
                 new_index = current_index + 1
@@ -5421,7 +5421,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         if isinstance(source_widget, CustomEditor) == False:
             self.parent.display.repl_display_message(
                 "Only custom editor tabs can be copied!", 
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
             return
         #Check if the source file already exists in the target basic widget
@@ -5488,7 +5488,7 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
     name            = None
     parent          = None
     main_form       = None
-    savable         = global_module.CanSave.NO
+    savable         = data.CanSave.NO
     default_font    = PyQt4.QtGui.QFont('Courier', 10)
     """Namespace references for grouping functionality"""
     hotspots    = None
@@ -5517,7 +5517,7 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
         self.setFocus()
         #Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self.parent
-        global_module.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
         #Hide the function wheel if it is shown
         if self.main_form.view.function_wheel_overlay != None:
             self.main_form.view.hide_function_wheel()
@@ -5580,10 +5580,10 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     main_form               = None
     name                    = ""
     save_name               = ""
-    save_status             = global_module.FileStatus.OK
-    savable                 = global_module.CanSave.NO
+    save_status             = data.FileStatus.OK
+    savable                 = data.CanSave.NO
     last_browsed_dir        = ""
-    default_tab_width       = 4
+#    _tab_width              = 4
     #Default fonts
     default_font            = PyQt4.QtGui.QFont('Courier', 10)
     default_comment_font    = b'Courier'
@@ -5939,7 +5939,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         #Set tab space indentation width
-        self.setTabWidth(self.default_tab_width)
+        self.setTabWidth(data.tab_width)
         #Set backspace to delete by tab widths
         self.setBackspaceUnindents(True)
         #Scintilla widget must not accept drag/drop events, the cursor freezes if it does!!!
@@ -5968,9 +5968,9 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         else:
             self.last_browsed_dir = self.save_name
         #Reset the file save status 
-        self.save_status = global_module.FileStatus.OK
+        self.save_status = data.FileStatus.OK
         #Enable saving of the scintilla document
-        self.savable = global_module.CanSave.YES
+        self.savable = data.CanSave.YES
         #Initialize instance variables
         self._init_special_functions()
         #Make second margin (the one to the right of the line number margin),
@@ -6014,7 +6014,6 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         """Initialize the methods for document manipulation"""
         #Set references to the special functions
         self.find           = self.find_text
-        self.replace_line   = self.replace_line
         self.save           = self.save_document
         self.clear          = self.clear_editor
         self.highlight      = self.highlight_text
@@ -6098,7 +6097,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.main_form.display.update_cursor_position(self.getCursorPosition()[0], self.getCursorPosition()[1])
         #Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self.parent
-        global_module.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
         #Hide the function wheel if it is shown
         if self.main_form.view.function_wheel_overlay != None:
             self.main_form.view.hide_function_wheel()
@@ -6480,12 +6479,41 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         selection = self.getSelection()
         if selection == (-1, -1, -1, -1):
             #Execute the superclasses key event with the "tab key" event as the parameter
-            event = PyQt4.QtGui.QKeyEvent(
-                PyQt4.QtCore.QEvent.KeyPress, 
-                PyQt4.QtCore.Qt.Key_Tab, 
-                PyQt4.QtCore.Qt.KeyboardModifiers()
-            )
-            super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
+#            event = PyQt4.QtGui.QKeyEvent(
+#                PyQt4.QtCore.QEvent.KeyPress, 
+#                PyQt4.QtCore.Qt.Key_Tab, 
+#                PyQt4.QtCore.Qt.KeyboardModifiers()
+#            )
+#            super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
+            line_number, position = self.getCursorPosition()
+            #Adjust index to the line list indexing
+            line_number += 1
+            line_text = self.line_list[line_number]
+            #Check if there is no text before the cursor position in the current line
+            if line_text[:position].strip() == "":
+                for i, ch in enumerate(line_text):
+                    #Find the first none space character
+                    if ch != " ":
+                        diff = (data.tab_width - (i % data.tab_width))
+                        adding_text = diff * " "
+                        new_line = adding_text + line_text
+                        self.line_list[line_number] = new_line
+                        self.setCursorPosition(line_number-1, i+diff)
+                        break
+                else:
+                    #No text in the current line
+                    diff = (data.tab_width - (position % data.tab_width))
+                    adding_text = diff * " "
+                    new_line = line_text[:position] + adding_text + line_text[position:]
+                    self.line_list[line_number] = new_line
+                    self.setCursorPosition(line_number-1, len(new_line))
+            else:
+                #There is text before the cursor
+                diff = (data.tab_width - (position % data.tab_width))
+                adding_text = diff * " "
+                new_line = line_text[:position] + adding_text + line_text[position:]
+                self.line_list[line_number] = new_line
+                self.setCursorPosition(line_number-1, position+diff)
         else:
             #MULTILINE INDENT
             selected_line = self.getCursorPosition()[0]
@@ -6498,7 +6526,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             #Get the selected line list
             lines = self.line_list[line_from:line_to]
             #Set the indentation width
-            indentation_string = self.default_tab_width * " "
+            indentation_string = data.tab_width * " "
             #Indent the line list in place
             for i, line in enumerate(lines):
                 lines[i] = textwrap.indent(line, indentation_string)
@@ -6538,13 +6566,45 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         """
         selection = self.getSelection()
         if selection == (-1, -1, -1, -1):
-            #Execute the superclasses key event with the "shift+tab key" event as the parameter
-            event = PyQt4.QtGui.QKeyEvent(
-                PyQt4.QtCore.QEvent.KeyPress, 
-                PyQt4.QtCore.Qt.Key_Tab, 
-                PyQt4.QtCore.Qt.KeyboardModifiers(PyQt4.QtCore.Qt.ShiftModifier)
-            )
-            super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
+            line_number, position = self.getCursorPosition()
+            #Adjust index to the line list indexing
+            line_number += 1
+            line_text = self.line_list[line_number]
+            if line_text == "":
+                return
+            elif line_text.strip() == "":
+                #The line contains only spaces
+                diff = len(line_text) % data.tab_width
+                if diff == 0:
+                    diff = data.tab_width
+                new_length = len(line_text) - diff
+                self.line_list[line_number] = self.line_list[line_number][:new_length]
+                self.setCursorPosition(line_number-1, new_length)
+            else:
+                if line_text[0] != " ":
+                    #Do not indent, just move the cursor back
+                    if position == 0:
+                        return
+                    diff = position % data.tab_width
+                    if diff == 0:
+                        diff = data.tab_width
+                    self.setCursorPosition(line_number-1, position-diff)
+                elif line_text[:position].strip() == "":
+                    #The line has spaces in the beginning
+                    for i, ch in enumerate(line_text):
+                        if ch != " ":
+                            diff = i % data.tab_width
+                            if diff == 0:
+                                diff = data.tab_width
+                            self.line_list[line_number] = self.line_list[line_number][diff:]
+                            self.setCursorPosition(line_number-1, i-diff)
+                            break
+                else:
+                    #Move the cursor to the first none space character then repeat above code
+                    diff = position % data.tab_width
+                    if diff == 0:
+                        diff = data.tab_width
+                    self.setCursorPosition(line_number-1, position-diff)
         else:
             #MULTILINE UNINDENT
             selected_line = self.getCursorPosition()[0]
@@ -6558,7 +6618,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             lines = self.line_list[line_from:line_to]
             #Unindent the line list in place
             for i in range(0, len(lines)):
-                for j in range(0, self.default_tab_width):
+                for j in range(0, data.tab_width):
                     if lines[i].startswith(" "):
                         lines[i] = lines[i].replace(" ", "", 1)
             #Set the new line list in one operation
@@ -6683,7 +6743,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
 #                #Disable REPL focus after the REPL evaluation
 #                self._skip_next_repl_focus()
                 #Return successful find
-                return global_module.SearchResult.FOUND
+                return data.SearchResult.FOUND
             else:
                 #Begin a new search from the top of the document
                 search_result = re.search(compiled_search_re, self.text())
@@ -6697,24 +6757,24 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
 #                    #Disable REPL focus after the REPL evaluation
 #                    self._skip_next_repl_focus()
                     #Return cycled find
-                    return global_module.SearchResult.CYCLED
+                    return data.SearchResult.CYCLED
                 else:
                     self.main_form.display.write_to_statusbar("Text was not found!")
-                    return global_module.SearchResult.NOT_FOUND
+                    return data.SearchResult.NOT_FOUND
         else:
             #"findFirst" is the QScintilla function for finding text in a document
             if self.findFirst(search_text, False, case_sensitive, False, False) == False:
                 #Try to find text again from the top of the scintilla document
                 if self.findFirst(search_text, False, case_sensitive, False, False, line=0, index=0) == False:
                     self.main_form.display.write_to_statusbar("Text was not found!")
-                    return global_module.SearchResult.NOT_FOUND
+                    return data.SearchResult.NOT_FOUND
                 else:
                     self.main_form.display.write_to_statusbar("Reached end of document, started from the top again!")
                     focus_entire_found_text()
 #                    #Disable REPL focus after the REPL evaluation
 #                    self._skip_next_repl_focus()
                     #Return cycled find
-                    return global_module.SearchResult.CYCLED
+                    return data.SearchResult.CYCLED
             else:
                 #Found text
                 self.main_form.display.write_to_statusbar("Found text: \"" + search_text + "\"")
@@ -6722,7 +6782,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
 #                #Disable REPL focus after the REPL evaluation
 #                self._skip_next_repl_focus()
                 #Return successful find
-                return global_module.SearchResult.FOUND
+                return data.SearchResult.FOUND
     
     def find_all(self,
                  search_text, 
@@ -6749,7 +6809,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         if regular_expression == True:
             #Check if expression exists in the document
             search_result = self.find_text(search_text, case_sensitive, regular_expression)
-            if search_result != global_module.SearchResult.NOT_FOUND:
+            if search_result != data.SearchResult.NOT_FOUND:
                 if case_sensitive == True:
                     compiled_search_re = re.compile(search_text)
                 else:
@@ -6778,7 +6838,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         else:
             #Check if string exists in the document
             search_result = self.find_text(search_text, case_sensitive)
-            if search_result != global_module.SearchResult.NOT_FOUND:
+            if search_result != data.SearchResult.NOT_FOUND:
                 #Save the found selected text line/index information
                 saved_selection = self.getSelection()
                 #Replace selected text with replace text
@@ -6827,11 +6887,11 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             search_result = re.search(compiled_search_re, self.text())
         else:
             search_result = self.find_text(search_text, case_sensitive)
-        if search_result == global_module.SearchResult.NOT_FOUND:
+        if search_result == data.SearchResult.NOT_FOUND:
             message = "No matches were found in '{:s}'!".format(file_name)
             self.main_form.display.repl_display_message(
                 message, 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
             return
         #Use the re module to replace the text
@@ -6863,11 +6923,11 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                         )
                     )
                 #Display the replacements in the REPL tab
-                if len(corrected_matches) < global_module.MAXIMUM_HIGHLIGHTS:
+                if len(corrected_matches) < data.MAXIMUM_HIGHLIGHTS:
                     message = "{:s} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.SUCCESS
+                        message_type=data.MessageType.SUCCESS
                     )
                     for match in corrected_matches:
                         line    = self.lineIndexFromPosition(match[1])[0] + 1
@@ -6875,7 +6935,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                         message = "    replacement made in line:{:d}".format(line)
                         self.main_form.display.repl_display_message(
                             message, 
-                            message_type=global_module.MessageType.SUCCESS
+                            message_type=data.MessageType.SUCCESS
                         )
                 else:
                     message = "{:d} replacements made in {:s}!\n".format(
@@ -6885,17 +6945,17 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                     message += "Too many to list individually!"
                     self.main_form.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.WARNING
+                        message_type=data.MessageType.WARNING
                     )
                 #Highlight and display the line difference between the old and new texts
                 self.highlight_raw(corrected_matches)
             else:
                 #Display the replacements in the REPL tab
-                if len(matches) < global_module.MAXIMUM_HIGHLIGHTS:
+                if len(matches) < data.MAXIMUM_HIGHLIGHTS:
                     message = "{:s} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.SUCCESS
+                        message_type=data.MessageType.SUCCESS
                     )
                     for match in matches:
                         line    = self.lineIndexFromPosition(match[1])[0] + 1
@@ -6907,7 +6967,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                                                                             )
                         self.main_form.display.repl_display_message(
                             message, 
-                            message_type=global_module.MessageType.SUCCESS
+                            message_type=data.MessageType.SUCCESS
                         )
                 else:
                     message = "{:d} replacements made in {:s}!\n".format(
@@ -6917,7 +6977,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                     message += "Too many to list individually!"
                     self.main_form.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.WARNING
+                        message_type=data.MessageType.WARNING
                     )
                 #Highlight and display the replaced text
                 self.highlight_raw(matches)
@@ -6928,7 +6988,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             message += "Change the search/replace string or change the case sensitivity!"
             self.main_form.display.repl_display_message(
                 message,
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
     
     def replace_in_selection(self, 
@@ -6959,7 +7019,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             message = "No replacements were made!"
             self.main_form.display.repl_display_message(
                 message,
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )    
     
     def replace_entire_text(self, new_text):
@@ -7017,7 +7077,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         else:
             self.main_form.display.repl_display_message(
                 "No matches found!",
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
     
     def highlight_raw(self, highlight_list):
@@ -7159,7 +7219,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             if isinstance(line_ending, str) == False:
                 self.main_form.display.repl_display_message(
                     "Line ending has to be a string!", 
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
                 return
             else:
@@ -7182,7 +7242,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             error_message += str(save_result)
             self.main_form.display.repl_display_message(
                 error_message, 
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
             self.main_form.display.write_to_statusbar(
                 "Saving to file failed, check path and disk space!"
@@ -7282,7 +7342,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         else:
             self.main_form.display.repl_display_message(
                 "Error while setting the lexer!",
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
     
     def set_lexer(self, lexer, file_type):
@@ -7334,7 +7394,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     def tabs_to_spaces(self):
         """Convert all tab(\t) characters to spaces"""
         spaces = ""
-        for i in range(0, self.default_tab_width):
+        for i in range(0, data.tab_width):
             spaces = spaces + " "
         self.setText(self.text().replace("\t", spaces))
 
@@ -7359,7 +7419,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Set the marker color to blue
         marker_color        = PyQt4.QtGui.QColor(180, 180, 180, alpha=255)
         #Set the column number where the marker will be shown
-        marker_column   = global_module.EDGE_MARKER_COLUMN 
+        marker_column   = data.EDGE_MARKER_COLUMN 
         #Set the marker options
         self.setEdgeColor(marker_color)
         self.setEdgeColumn(marker_column)
@@ -7385,7 +7445,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             self.main_form.display.write_to_statusbar("Document has no file on disk!", 3000)
             return
         #Check the file status
-        if self.save_status == global_module.FileStatus.MODIFIED:
+        if self.save_status == data.FileStatus.MODIFIED:
             #Close the log window if it is displayed
             self.main_form.view.set_log_window(False)
             #Display the close notification
@@ -7455,7 +7515,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             message = "Autocompletions DISABLED in {:s}".format(document_name)
             self.main_form.display.repl_display_message(
                 message, 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
             self.main_form.display.write_to_statusbar("Autocompletions DISABLED")
         else:
@@ -7463,7 +7523,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             message = "Autocompletions ENABLED in {:s}".format(document_name)
             self.main_form.display.repl_display_message(
                 message, 
-                message_type=global_module.MessageType.SUCCESS
+                message_type=data.MessageType.SUCCESS
             )
             self.main_form.display.write_to_statusbar("Autocompletions ENABLED")
     
@@ -7630,7 +7690,7 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
 
     def _repl_eval(self, external_string=None, display_action=True):
         """Evaluate string entered into the REPL widget"""
-        global_module.print_log("REPL evaluated")
+        data.print_log("REPL evaluated")
         #Check if an external evaluation string was specified
         if external_string == None:
             #No external evaluation string, evaluate the REPL text
@@ -7670,16 +7730,16 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
             self.setFocus()
         #Check evaluation return message and display it in the "REPL Messages" tab
         if eval_return != None:
-            global_module.print_log(eval_return)
+            data.print_log(eval_return)
             if display_action == True:
                 self.parent.display.repl_display_message(
                     eval_return,
-                    message_type=global_module.MessageType.ERROR
+                    message_type=data.MessageType.ERROR
                 )
             else:
                 return eval_return
         else:
-            global_module.print_log("EVALUATION/EXECUTION SUCCESS")
+            data.print_log("EVALUATION/EXECUTION SUCCESS")
         return None
 
 
@@ -7869,10 +7929,10 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
         self.setFocus()
         #Clear the cursor position from the statusbar
         self.parent.display.update_cursor_position()
-        global_module.print_log("Entered REPL")
+        data.print_log("Entered REPL")
         #Reset the main forms last focused widget
         self.parent.last_focused_widget = None
-        global_module.print_log("Reset last focused widget attribute")
+        data.print_log("Reset last focused widget attribute")
         #Hide the function wheel if it is shown
         if self.parent.view.function_wheel_overlay != None:
             self.parent.view.hide_function_wheel()
@@ -7891,7 +7951,7 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
     def focusOutEvent(self, event):
         """Event that fires when the REPL loses focus"""
         self.parent._key_events_unlock()
-        global_module.print_log("Left REPL")
+        data.print_log("Left REPL")
         #Ignore the event
         event.ignore()
         #Return the focus event
@@ -7993,8 +8053,7 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
     #Class variables
     parent          = None
     repl_master     = None
-    default_tab_width   = 4
-    lexer               = None
+    lexer           = None
     #The scintilla api object(PyQt4.Qsci.QsciAPIs) must be an instace variable, or the underlying c++
     #mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
     api             = None
@@ -8023,7 +8082,7 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         #Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         #Set tab space indentation width
-        self.setTabWidth(self.default_tab_width)
+        self.setTabWidth(data.tab_width)
         #Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         #Set brace matching
@@ -8084,7 +8143,7 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         super().mousePressEvent(event)
         #Reset the main forms last focused widget
         self.parent.last_focused_widget = None
-        global_module.print_log("Reset last focused widget attribute")
+        data.print_log("Reset last focused widget attribute")
         #Set focus to the clicked helper
         self.setFocus()
         #Hide the function wheel if it is shown
@@ -8162,7 +8221,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                      input_font=PyQt4.QtGui.QFont(
                                     'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                     input_focus_last_widget=global_module.HexButtonFocus.NONE, 
+                     input_focus_last_widget=data.HexButtonFocus.NONE, 
                      input_no_tab_focus_disable=False, 
                      input_no_document_focus_disable=True, 
                      input_check_last_tab_type=False, 
@@ -8218,7 +8277,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                      input_font=PyQt4.QtGui.QFont(
                                     'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                     input_focus_last_widget=global_module.HexButtonFocus.NONE, 
+                     input_focus_last_widget=data.HexButtonFocus.NONE, 
                      input_no_tab_focus_disable=False, 
                      input_no_document_focus_disable=True, 
                      input_check_last_tab_type=False, 
@@ -8238,7 +8297,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             #Store the hex edge image
             self.stored_hex =   PyQt4.QtGui.QPixmap(
                                     os.path.join(
-                                        global_module.resources_directory, 
+                                        data.resources_directory, 
                                         "various/hex-button-edge.png"
                                     )
                                 )
@@ -8322,9 +8381,9 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             if self.function != None:
                 try:
                     #Set focus to the last focused widget stored on the main form
-                    if self.focus_last_widget == global_module.HexButtonFocus.TAB:
+                    if self.focus_last_widget == data.HexButtonFocus.TAB:
                         self.main_form.last_focused_widget.currentWidget().setFocus()
-                    elif self.focus_last_widget == global_module.HexButtonFocus.WINDOW:
+                    elif self.focus_last_widget == data.HexButtonFocus.WINDOW:
                         self.main_form.last_focused_widget.setFocus()
                     #Store the executed function for next cursor placement
                     self.main_form.view.last_executed_function_text = self.function_text
@@ -8335,7 +8394,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                     message = "You need to focus one of the editor windows first!"
                     self.main_form.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
                 #Close the function wheel
                 self.parent.hide()
@@ -8437,9 +8496,9 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             if self.extra_button_function != None:
                 try:
                     #Set focus to the last focused widget stored on the main form
-                    if self.focus_last_widget == global_module.HexButtonFocus.TAB:
+                    if self.focus_last_widget == data.HexButtonFocus.TAB:
                         self.main_form.last_focused_widget.currentWidget().setFocus()
-                    elif self.focus_last_widget == global_module.HexButtonFocus.WINDOW:
+                    elif self.focus_last_widget == data.HexButtonFocus.WINDOW:
                         self.main_form.last_focused_widget.setFocus()
                     #Store the executed function for next cursor placement
                     self.main_form.view.last_executed_function_text = self.function_text
@@ -8450,7 +8509,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                     message = "You need to focus one of the editor windows first!"
                     self.main_form.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.ERROR
+                        message_type=data.MessageType.ERROR
                     )
                 #Close the function wheel
                 self.parent.hide()
@@ -8544,15 +8603,15 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         #Store the background image for sizing details
         self.background_image = PyQt4.QtGui.QPixmap(
                                     os.path.join(
-                                        global_module.resources_directory, 
-                                        global_module.function_wheel_image
+                                        data.resources_directory, 
+                                        data.function_wheel_image
                                     )
                                 )
         #Set the background color
         self.setStyleSheet(
             "QGroupBox {" +
                 "background-color: rgb(238, 238, 236);" +
-                "border-image: url(" + global_module.resources_directory.replace("\\", "/") +
+                "border-image: url(" + data.resources_directory.replace("\\", "/") +
                 "/various/function-wheel.png);" +
             "}"
         )
@@ -8561,8 +8620,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         #Setup the picture
         exco_picture    = PyQt4.QtGui.QPixmap(
                                     os.path.join(
-                                        global_module.resources_directory, 
-                                        global_module.function_wheel_image
+                                        data.resources_directory, 
+                                        data.function_wheel_image
                                     )
                                 )
         self.picture    = PyQt4.QtGui.QLabel(self)
@@ -8613,7 +8672,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-line-cut.png", 
                 form.menubar_functions["line_cut"], 
                 "Line Cut", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
             self.ButtonInfo(
                 "button_1", 
@@ -8621,7 +8680,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-line-copy.png", 
                 form.menubar_functions["line_copy"], 
                 "Line Copy", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
             self.ButtonInfo(
                 "button_2", 
@@ -8629,7 +8688,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-line-delete.png", 
                 form.menubar_functions["line_delete"], 
                 "Line Delete", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_3", 
@@ -8637,7 +8696,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-line-transpose.png", 
                 form.menubar_functions["line_transpose"], 
                 "Line\nTranspose", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_4", 
@@ -8645,7 +8704,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-line-duplicate.png", 
                 form.menubar_functions["line_duplicate"], 
                 "Line\nDuplicate", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_5", 
@@ -8653,7 +8712,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-redo.png", 
                 form.menubar_functions["redo"], 
                 "Redo", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
             self.ButtonInfo(
                 "button_6", 
@@ -8661,7 +8720,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-undo.png", 
                 form.menubar_functions["undo"], 
                 "Undo", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
             self.ButtonInfo(
                 "button_7", 
@@ -8669,7 +8728,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/delete-end-line_32x32.png", 
                 form.menubar_functions["delete_end_of_line"], 
                 "Delete line\nending", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
             self.ButtonInfo(
                 "button_8", 
@@ -8677,7 +8736,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/delete-start-line_32x32.png", 
                 form.menubar_functions["delete_start_of_line"], 
                 "Delete line\nbeginning", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
             self.ButtonInfo(
                 "button_goto_start", 
@@ -8685,7 +8744,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/goto-start.png", 
                 form.menubar_functions["goto_to_start"], 
                 "Goto Start", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
             self.ButtonInfo(
                 "button_goto_end", 
@@ -8693,7 +8752,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/goto-end.png", 
                 form.menubar_functions["goto_to_end"], 
                 "Goto End", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
             self.ButtonInfo(
                 "button_select_all", 
@@ -8701,7 +8760,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-select-all.png", 
                 form.menubar_functions["select_all"], 
                 "Select All", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ), 
         ]
         self._create_hex_buttons_from_list(hex_button_list)
@@ -8717,7 +8776,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-find.png", 
                 form.menubar_functions["special_find"], 
                 "Find", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_check_text_differ=True, 
             ), 
             self.ButtonInfo(
@@ -8726,7 +8785,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-find-re.png", 
                 form.menubar_functions["special_regex_find"], 
                 "Regex Find", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_check_text_differ=True, 
             ),
             self.ButtonInfo(
@@ -8735,7 +8794,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-find-replace.png", 
                 form.menubar_functions["special_find_and_replace"], 
                 "Find and\nReplace", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_14", 
@@ -8743,7 +8802,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-find-replace-re.png", 
                 form.menubar_functions["special_regex_find_and_replace"], 
                 "Regex Find\nand Replace", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_goto_line", 
@@ -8751,7 +8810,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-goto.png", 
                 form.menubar_functions["special_goto_line"], 
                 "Goto Line", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_check_text_differ=True, 
             ),
             self.ButtonInfo(
@@ -8760,7 +8819,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-indent-to-cursor.png", 
                 form.menubar_functions["special_indent_to_cursor"], 
                 "Indent to\ncursor", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_17", 
@@ -8768,7 +8827,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-highlight.png", 
                 form.menubar_functions["special_highlight"], 
                 "Highlight", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_18", 
@@ -8776,7 +8835,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-highlight-re.png", 
                 form.menubar_functions["special_regex_highlight"], 
                 "Regex\nHighlight", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_19", 
@@ -8784,7 +8843,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-clear-highlights.png", 
                 form.menubar_functions["special_clear_highlights"], 
                 "Clear\nHighlights", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_20", 
@@ -8792,7 +8851,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-replace-in-selection.png", 
                 form.menubar_functions["special_replace_in_selection"], 
                 "Replace in\nselection", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_21", 
@@ -8803,7 +8862,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 11, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_22", 
@@ -8811,7 +8870,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-comment-uncomment.png", 
                 form.menubar_functions["comment_uncomment"], 
                 "Comment\nUncomment", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_23", 
@@ -8819,7 +8878,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-replace-all.png", 
                 form.menubar_functions["special_replace_all"], 
                 "Replace All", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_24", 
@@ -8827,7 +8886,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-replace-all-re.png", 
                 form.menubar_functions["special_regex_replace_all"], 
                 "Regex\nReplace All", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_25", 
@@ -8838,7 +8897,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 10, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_26", 
@@ -8849,7 +8908,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_27", 
@@ -8860,7 +8919,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_node_tree", 
@@ -8871,7 +8930,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 11, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB,  
+                input_focus_last_widget=data.HexButtonFocus.TAB,  
                 input_tool_tip=("Create a node tree from the currently\n" +
                                 "selected document and display it in the\n" +
                                 "upper window.\nSupported programming languages:\n" +
@@ -8883,7 +8942,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/view-refresh.png", 
                 form.menubar_functions["reload_file"], 
                 "Reload File", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_30", 
@@ -8894,7 +8953,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_31", 
@@ -8905,7 +8964,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 9, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_replace_all_in_open_documents", 
@@ -8916,7 +8975,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 10, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_bookmark_toggle", 
@@ -8927,7 +8986,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
         ]
         self._create_hex_buttons_from_list(hex_button_list)
@@ -8943,7 +9002,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/document-new.png", 
                 form.file_create_new, 
                 "Create new\ndocument", 
-                input_focus_last_widget=global_module.HexButtonFocus.WINDOW, 
+                input_focus_last_widget=data.HexButtonFocus.WINDOW, 
                 input_no_document_focus_disable=False, 
             ),
             self.ButtonInfo(
@@ -8952,7 +9011,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/document-open.png", 
                 form.file_open, 
                 "Open\ndocument", 
-                input_focus_last_widget=global_module.HexButtonFocus.WINDOW, 
+                input_focus_last_widget=data.HexButtonFocus.WINDOW, 
                 input_no_document_focus_disable=False, 
             ),
             self.ButtonInfo(
@@ -8977,7 +9036,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/document-save.png", 
                 form.file_save, 
                 "Save", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_no_document_focus_disable=True, 
                 input_check_last_tab_type=True, 
             ),
@@ -8987,7 +9046,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/document-save-as.png", 
                 form.file_saveas, 
                 "Save As", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_no_document_focus_disable=True, 
                 input_check_last_tab_type=True, 
             ),
@@ -8997,7 +9056,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/file-save-all.png", 
                 form.file_save_all, 
                 "Save All", 
-                input_focus_last_widget=global_module.HexButtonFocus.WINDOW, 
+                input_focus_last_widget=data.HexButtonFocus.WINDOW, 
                 input_no_document_focus_disable=True, 
                 input_check_last_tab_type=True, 
             ),
@@ -9153,7 +9212,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/view-move-tab-left.png", 
                 form.menubar_functions["move_tab_left"], 
                 "Move Tab\nLeft",
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_no_tab_focus_disable=True,
                 input_no_document_focus_disable=False, 
             ),
@@ -9163,7 +9222,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/view-move-tab-right.png", 
                 form.menubar_functions["move_tab_right"], 
                 "Move Tab\nRight", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_no_tab_focus_disable=True,
                 input_no_document_focus_disable=False, 
             ),
@@ -9176,7 +9235,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 11, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_no_tab_focus_disable=True,
                 input_no_document_focus_disable=False, 
             ),
@@ -9186,7 +9245,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/view-edge-marker.png", 
                 form.menubar_functions["show_edge"], 
                 "Show/Hide\nEdge Marker", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_zoom_reset", 
@@ -9194,7 +9253,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/view-zoom-reset.png", 
                 form.menubar_functions["reset_zoom"], 
                 "Zoom Reset", 
-                input_focus_last_widget=global_module.HexButtonFocus.TAB, 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
             self.ButtonInfo(
                 "button_find_files", 
@@ -9252,7 +9311,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 10, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.NONE, 
+                input_focus_last_widget=data.HexButtonFocus.NONE, 
                 input_tool_tip=("Create a file/directory tree for the " + 
                                 "current working directory (CWD)"), 
                 input_no_document_focus_disable=False,
@@ -9266,7 +9325,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
-                input_focus_last_widget=global_module.HexButtonFocus.NONE, 
+                input_focus_last_widget=data.HexButtonFocus.NONE, 
                 input_no_document_focus_disable=False,
             ),
         ]

@@ -67,7 +67,7 @@ import PyQt4.QtGui
 import sys
 import os
 import argparse
-import global_module
+import data
 import forms
 
 def parse_arguments():
@@ -82,7 +82,7 @@ def parse_arguments():
         "-v", 
         "--version", 
         action  = "version",
-        version = "Ex.Co. Version: {:s}".format(global_module.APPLICATION_VERSION)
+        version = "Ex.Co. Version: {:s}".format(data.APPLICATION_VERSION)
     )
     #Debug mode
     arg_parser.add_argument(
@@ -146,9 +146,9 @@ def main():
     #Check arguments
     options = parse_arguments()
     if options.debug_mode == True:
-        global_module.debug_mode = True
+        data.debug_mode = True
     if options.logging_mode == True:
-        global_module.logging_mode = True
+        data.logging_mode = True
     file_arguments = options.files
     if options.single_file != None:
         if file_arguments != None:
@@ -158,30 +158,30 @@ def main():
         else:
             file_arguments = [options.single_file]
     #Get the application directory
-    global_module.application_directory = os.path.dirname(os.path.realpath(__file__))
+    data.application_directory = os.path.dirname(os.path.realpath(__file__))
     #Check if Ex.Co. is run as a cxfreeze executable (the path will contain library.zip)
-    if "library.zip" in global_module.application_directory:
-        global_module.application_directory = global_module.application_directory.replace("library.zip", "")
+    if "library.zip" in data.application_directory:
+        data.application_directory = data.application_directory.replace("library.zip", "")
     #Set the resources directory
-    global_module.resources_directory   = os.path.join(global_module.application_directory,  "resources")
+    data.resources_directory   = os.path.join(data.application_directory,  "resources")
     #Combine the application path with the Ex.Co. icon file name (the icon file name is set in the global module)
-    global_module.application_icon =    os.path.join(
-                                            global_module.resources_directory,
-                                            global_module.application_icon
+    data.application_icon =    os.path.join(
+                                            data.resources_directory,
+                                            data.application_icon
                                         )
     #Combine the application path with the Ex.Co. information file name (the information file name is set in the global module)
-    global_module.about_image = os.path.join(
-                                    global_module.resources_directory,
-                                    global_module.about_image
+    data.about_image = os.path.join(
+                                    data.resources_directory,
+                                    data.about_image
                                 )
     #Create QT application, needed to use QT forms
     app = PyQt4.QtGui.QApplication(sys.argv)
     #Save the Qt application to the global reference
-    global_module.application = app
+    data.application = app
     #Create the main window, pass the filename that may have been passed as an argument
     wnd =   forms.MainWindow(
                 new_document = options.new_document, 
-                logging=global_module.logging_mode, 
+                logging=data.logging_mode, 
                 file_arguments=file_arguments
             )
     wnd.show()

@@ -71,7 +71,7 @@ import PyQt4.QtGui
 import settings
 import functions
 import forms
-import global_module
+import data
 
 
 """
@@ -85,7 +85,7 @@ def set_icon(icon_name):
     """
     return   PyQt4.QtGui.QIcon(
                 os.path.join(
-                    global_module.resources_directory, 
+                    data.resources_directory, 
                     icon_name
                 )
             )
@@ -96,7 +96,7 @@ def set_pixmap(pixmap_name):
     """
     return   PyQt4.QtGui.QPixmap(
                 os.path.join(
-                    global_module.resources_directory, 
+                    data.resources_directory, 
                     pixmap_name
                 )
             )
@@ -191,7 +191,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
     main_form               = None
     settings_manipulator    = None
     name                    = ""
-    savable                 = global_module.CanSave.NO
+    savable                 = data.CanSave.NO
     last_clicked_session    = None
     tree_model              = None
     session_nodes           = None
@@ -296,7 +296,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
                                                                 group_name, 
                                                                 new_item_name
                                                             ), 
-                    message_type=global_module.MessageType.SUCCESS
+                    message_type=data.MessageType.SUCCESS
                 )
                 #Refresh the session tree
                 self.refresh_display()
@@ -326,7 +326,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
                                                                 old_group_name, 
                                                                 new_group_name
                                                             ), 
-                    message_type=global_module.MessageType.SUCCESS
+                    message_type=data.MessageType.SUCCESS
                 )
                 #Refresh the session tree
                 self.refresh_display()
@@ -363,7 +363,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
                     message += "be deleted on the next refresh!"
                     self.main_form.display.repl_display_message(
                         message, 
-                        message_type=global_module.MessageType.WARNING
+                        message_type=data.MessageType.WARNING
                     )
                     #Set the refresh lock, so it won't delete the empty group node
                     self.refresh_lock = True
@@ -491,7 +491,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             #Display successful group deletion
             self.main_form.display.repl_display_message(
                 "Group '{:s}' was deleted!".format(remove_group_name), 
-                message_type=global_module.MessageType.SUCCESS
+                message_type=data.MessageType.SUCCESS
             )
             #Refresh the tree
             self.refresh_display()
@@ -526,7 +526,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             #Display successful group deletion
             self.main_form.display.repl_display_message(
                 "Empty session was deleted!", 
-                message_type=global_module.MessageType.SUCCESS
+                message_type=data.MessageType.SUCCESS
             )
             #Refresh the tree
             self.refresh_display()
@@ -534,7 +534,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             #Display successful group deletion
             self.main_form.display.repl_display_message(
                 "Empty group was deleted!", 
-                message_type=global_module.MessageType.SUCCESS
+                message_type=data.MessageType.SUCCESS
             )
             #Refresh the tree
             self.refresh_display()
@@ -553,7 +553,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             #Show message that groups cannot be overwritten
             self.main_form.display.repl_display_message(
                 "Groups cannot be overwritten!", 
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
             return
         elif selected_item.type == self.ItemType.SESSION:
@@ -732,7 +732,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
     parent                  = None
     main_form               = None
     name                    = ""
-    savable                 = global_module.CanSave.NO
+    savable                 = data.CanSave.NO
     tree_display_type       = None
     #Attributes specific to the display data
     bound_node_tab          = None
@@ -816,11 +816,11 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
     def _item_double_click(self, model_index):
         """Function connected to the doubleClicked signal of the tree display"""
         #Use the item text according to the tree display type
-        if self.tree_display_type == global_module.TreeDisplayType.NODES:
+        if self.tree_display_type == data.TreeDisplayType.NODES:
             #Get the text of the double clicked item
             item = self.model().itemFromIndex(model_index)
             self._node_item_parse(item)
-        elif self.tree_display_type == global_module.TreeDisplayType.FILES:
+        elif self.tree_display_type == data.TreeDisplayType.FILES:
             #Get the double clicked item
             item = self.model().itemFromIndex(model_index)
             #Test if the item has the 'full_name' attribute
@@ -834,7 +834,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             elif hasattr(item, "full_name") == True:
                 #Open the file
                 self.main_form.open_file(file=item.full_name)
-        elif self.tree_display_type == global_module.TreeDisplayType.FILES_WITH_LINES:
+        elif self.tree_display_type == data.TreeDisplayType.FILES_WITH_LINES:
             #Get the double clicked item
             item = self.model().itemFromIndex(model_index)
             #Test if the item has the 'full_name' attribute
@@ -901,7 +901,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         #Store the custom editor tab that for quicker navigation
         self.bound_tab = custom_editor
         #Set the tree display type to NODE
-        self.set_display_type(global_module.TreeDisplayType.NODES)
+        self.set_display_type(data.TreeDisplayType.NODES)
         #Define the document name, type
         document_name       = os.path.basename(custom_editor.save_name)
         document_name_text  = "DOCUMENT: {:s}".format(document_name)
@@ -1069,7 +1069,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         #Store the custom editor tab that for quicker navigation
         self.bound_tab = custom_editor
         #Set the tree display type to NODE
-        self.set_display_type(global_module.TreeDisplayType.NODES)
+        self.set_display_type(data.TreeDisplayType.NODES)
         #Define the document name, type
         document_name       = os.path.basename(custom_editor.save_name)
         document_name_text  = "DOCUMENT: {:s}".format(document_name)
@@ -1132,7 +1132,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         #Store the custom editor tab that for quicker navigation
         self.bound_tab = custom_editor
         #Set the tree display type to NODE
-        self.set_display_type(global_module.TreeDisplayType.NODES)
+        self.set_display_type(data.TreeDisplayType.NODES)
         #Define the document name, type
         document_name       = os.path.basename(custom_editor.save_name)
         document_name_text  = "DOCUMENT: {:s}".format(document_name)
@@ -1710,14 +1710,14 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         Display the selected directory in a tree view structure
         """
         #Set the tree display type to FILES
-        self.set_display_type(global_module.TreeDisplayType.FILES)
+        self.set_display_type(data.TreeDisplayType.FILES)
         #Create the walk generator that returns all files/subdirectories
         try:
             walk_generator = os.walk(directory)
         except:
             self.main_form.display.repl_display_message(
                 "Invalid directory!", 
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
             return
         #Initialize and display the search options
@@ -1746,11 +1746,11 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         if found_files == None:
             self.main_form.display.repl_display_message(
                 "Error in finding files!", 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
             return
         #Set the tree display type to FILES
-        self.set_display_type(global_module.TreeDisplayType.FILES)
+        self.set_display_type(data.TreeDisplayType.FILES)
         #Initialize and display the search options
         tree_model = self._init_found_files_options(search_text, directory)
         #Sort the found file list
@@ -1767,11 +1767,11 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         if found_files == None:
             self.main_form.display.repl_display_message(
                 "Error in finding files!", 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
             return
         #Set the tree display type to NODE
-        self.set_display_type(global_module.TreeDisplayType.FILES_WITH_LINES)
+        self.set_display_type(data.TreeDisplayType.FILES_WITH_LINES)
         #Initialize and display the search options
         tree_model = self._init_found_files_options(search_text, directory)
         #Add the items with lines to the treeview
@@ -1790,11 +1790,11 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         if replaced_files == None:
             self.main_form.display.repl_display_message(
                 "Error in finding files!", 
-                message_type=global_module.MessageType.WARNING
+                message_type=data.MessageType.WARNING
             )
             return
         #Set the tree display type to NODE
-        self.set_display_type(global_module.TreeDisplayType.FILES_WITH_LINES)
+        self.set_display_type(data.TreeDisplayType.FILES_WITH_LINES)
         #Initialize and display the search options
         tree_model = self._init_replace_in_files_options(search_text, replace_text, directory)
         #Add the items with lines to the treeview
@@ -1814,7 +1814,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
     parent                  = None
     main_form               = None
     name                    = ""
-    savable                 = global_module.CanSave.NO
+    savable                 = data.CanSave.NO
     focused_editor          = None
     text_1                  = None
     text_2                  = None
@@ -2025,7 +2025,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         def uniplemented_function(*args, **kwargs):
             self.main_form.display.repl_display_message(
                 "Function '{:s}' is not implemented by the TextDiffer!".format(args[0]), 
-                message_type=global_module.MessageType.ERROR
+                message_type=data.MessageType.ERROR
             )
         all_editor_functions  = inspect.getmembers(
                                     forms.CustomEditor, 
@@ -2077,7 +2077,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         self.setFocus()
         #Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self.parent
-        global_module.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
         #Hide the function wheel if it is shown
         if self.main_form.view.function_wheel_overlay != None:
             self.main_form.view.hide_function_wheel()
@@ -2191,7 +2191,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         editor.setAcceptDrops(False)
         editor.setEolMode(PyQt4.Qsci.QsciScintilla.EolUnix)
         editor.setReadOnly(True)
-        editor.savable = global_module.CanSave.NO
+        editor.savable = data.CanSave.NO
     
     def set_margin_text(self, editor, line, text):
         """Set the editor's margin text at the selected line"""
@@ -2364,7 +2364,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         if (any(line_styling_1) == False and any(line_styling_2) == False):
             self.main_form.display.repl_display_message(
                 "No differences between texts.", 
-                message_type=global_module.MessageType.SUCCESS
+                message_type=data.MessageType.SUCCESS
             )
         else:
             #Count the number of differences
@@ -2388,15 +2388,15 @@ class TextDiffer(PyQt4.QtGui.QWidget):
             #Display the differences/similarities messages
             self.main_form.display.repl_display_message(
                 "{:d} differences found in '{:s}'!".format(difference_counter_1, self.text_1_name), 
-                message_type=global_module.MessageType.DIFF_UNIQUE_1
+                message_type=data.MessageType.DIFF_UNIQUE_1
             )
             self.main_form.display.repl_display_message(
                 "{:d} differences found in '{:s}'!".format(difference_counter_2, self.text_2_name), 
-                message_type=global_module.MessageType.DIFF_UNIQUE_2
+                message_type=data.MessageType.DIFF_UNIQUE_2
             )
             self.main_form.display.repl_display_message(
                 "{:d} similarities found between documents!".format(similarity_counter, self.text_2_name), 
-                message_type=global_module.MessageType.DIFF_SIMILAR
+                message_type=data.MessageType.DIFF_SIMILAR
             )
         self._update_margins()
     
@@ -2413,7 +2413,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
                 "Scrolled back to the start of the document!", 
-                message_type=global_module.MessageType.DIFF_UNIQUE_1
+                message_type=data.MessageType.DIFF_UNIQUE_1
             )
             self.main_form.display.write_to_statusbar(
                 "Scrolled back to the start of the document!"
@@ -2432,7 +2432,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
                 "Scrolled back to the start of the document!", 
-                message_type=global_module.MessageType.DIFF_UNIQUE_2
+                message_type=data.MessageType.DIFF_UNIQUE_2
             )
             self.main_form.display.write_to_statusbar(
                 "Scrolled back to the start of the document!"
@@ -2451,7 +2451,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
                 "Scrolled back to the start of the document!", 
-                message_type=global_module.MessageType.DIFF_SIMILAR
+                message_type=data.MessageType.DIFF_SIMILAR
             )
             self.main_form.display.write_to_statusbar(
                 "Scrolled back to the start of the document!"
@@ -2544,8 +2544,8 @@ class MessageLogger(PyQt4.QtGui.QWidget):
         self.parent = parent
         
         #Set the log window icon
-        if os.path.isfile(global_module.application_icon) == True:
-            self.setWindowIcon(PyQt4.QtGui.QIcon(global_module.application_icon))
+        if os.path.isfile(data.application_icon) == True:
+            self.setWindowIcon(PyQt4.QtGui.QIcon(data.application_icon))
     
     def _event_mouse_doubleclick(self, mouse_event):
         """Rereferenced/overloaded displaybox doubleclick event"""
@@ -2571,7 +2571,7 @@ class MessageLogger(PyQt4.QtGui.QWidget):
         if isinstance(message, str) == False:
             message = str(message)
         #Check if logging mode is enabled
-        if global_module.logging_mode == True:
+        if data.logging_mode == True:
             self.displaybox.append(message)
         #Bring cursor to the current message (this is in a QTextEdit not QScintilla)
         cursor = self.displaybox.textCursor()
@@ -2589,7 +2589,7 @@ ExCo Information Widget for displaying the license, used languages and libraries
 class ExCoInfo(PyQt4.QtGui.QDialog):
     #Class variables
     name    = "Ex.Co. Info"
-    savable = global_module.CanSave.NO
+    savable = data.CanSave.NO
     
     #Class functions(methods)
     def __init__(self, parent, app_dir=""):
@@ -2601,7 +2601,7 @@ class ExCoInfo(PyQt4.QtGui.QDialog):
         self.setWindowTitle("About Ex.Co.")
         self.setWindowFlags(PyQt4.QtCore.Qt.WindowStaysOnTopHint)
         #Setup the picture
-        exco_picture    = PyQt4.QtGui.QPixmap(global_module.about_image)
+        exco_picture    = PyQt4.QtGui.QPixmap(data.about_image)
         self.picture    = PyQt4.QtGui.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())
@@ -2616,8 +2616,8 @@ class ExCoInfo(PyQt4.QtGui.QDialog):
         self.layout.setMargin(0)
         self.setLayout(self.layout)
         #Set the log window icon
-        if os.path.isfile(global_module.application_icon) == True:
-            self.setWindowIcon(PyQt4.QtGui.QIcon(global_module.application_icon))
+        if os.path.isfile(data.application_icon) == True:
+            self.setWindowIcon(PyQt4.QtGui.QIcon(data.application_icon))
         #Save the info window geometry, the values were gotten by showing a dialog with the label containing
         #the Exco_Info.png image with the size set to (50, 50), so it would automatically resize to the label image size
         my_width    = 610

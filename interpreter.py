@@ -68,7 +68,7 @@ import subprocess
 import threading
 import platform
 import traceback
-import global_module
+import data
 
 
 class CustomInterpreter(code.InteractiveInterpreter):
@@ -95,15 +95,15 @@ class CustomInterpreter(code.InteractiveInterpreter):
     eval_error      = None
     #Dictionary of constants
     dict_const_references = dict(
-        OK          = global_module.FileStatus.OK, 
-        MODIFIED    = global_module.FileStatus.MODIFIED, 
-        FOUND       = global_module.SearchResult.FOUND, 
-        NOT_FOUND   = global_module.SearchResult.NOT_FOUND, 
-        CYCLED      = global_module.SearchResult.CYCLED, 
-        ONE         = global_module.WindowMode.ONE, 
-        THREE       = global_module.WindowMode.THREE, 
-        LEFT        = global_module.MainWindowSide.LEFT, 
-        RIGHT       = global_module.MainWindowSide.RIGHT, 
+        OK          = data.FileStatus.OK, 
+        MODIFIED    = data.FileStatus.MODIFIED, 
+        FOUND       = data.SearchResult.FOUND, 
+        NOT_FOUND   = data.SearchResult.NOT_FOUND, 
+        CYCLED      = data.SearchResult.CYCLED, 
+        ONE         = data.WindowMode.ONE, 
+        THREE       = data.WindowMode.THREE, 
+        LEFT        = data.MainWindowSide.LEFT, 
+        RIGHT       = data.MainWindowSide.RIGHT, 
     )
     #The escape sequence for built in functions
     re_escape_sequence = "lit#"
@@ -238,28 +238,28 @@ class CustomInterpreter(code.InteractiveInterpreter):
             filtered_command = self.replace_keywords(self.dict_keywords, filtered_command)
             #Remove the literal sequences from the command
             filtered_command = filtered_command.replace(self.re_escape_sequence, "")
-            global_module.print_log("------------------")
-            global_module.print_log(">>> " + command)
-            global_module.print_log(">> " + filtered_command)
+            data.print_log("------------------")
+            data.print_log(">>> " + command)
+            data.print_log(">> " + filtered_command)
             #Execute the filtered command string with the custom InteractiveInterpreter
             #First try to evaluate the command string, to see if it's an expression
             try:
                 #Try to EVALUATE the command
-                global_module.print_log("Trying to EVALUATE the command.")
+                data.print_log("Trying to EVALUATE the command.")
                 eval_return = eval(filtered_command, self.locals)
                 self.repl_print(eval_return)
-                global_module.print_log(eval_return)
-                global_module.print_log("Evaluation succeeded!")
+                data.print_log(eval_return)
+                data.print_log("Evaluation succeeded!")
                 return None
             except:
                 #EXECUTE
                 self.eval_error = None
-                global_module.print_log("Evaluation failed! EXECUTING the command.")
+                data.print_log("Evaluation failed! EXECUTING the command.")
                 #Execute and return the error message
                 return self._custom_runcode(filtered_command)
         except Exception as ex:
-            global_module.print_log("!! Cannot run code: \"" + str(command) + "\"")
-            global_module.print_log(str(ex))
+            data.print_log("!! Cannot run code: \"" + str(command) + "\"")
+            data.print_log(str(ex))
             return "REPL evaluation error!"
     
     def _custom_runcode(self, code):

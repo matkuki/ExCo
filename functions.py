@@ -69,7 +69,7 @@ import ast
 import codecs
 import itertools
 import operator
-import global_module
+import data
 
 def get_file_size_Mb(file_with_path):
     """Get the file size in Mb"""
@@ -1078,61 +1078,61 @@ def get_file_type(file_with_path):
     if file.lower() == "user_functions.cfg":
         #First check to see if the user functions file has been opened
         file_type = "python"
-    elif file_extension.lower() in global_module.ext_python:
+    elif file_extension.lower() in data.ext_python:
         file_type = "python"
-    elif file_extension.lower() in global_module.ext_cpython:
+    elif file_extension.lower() in data.ext_cpython:
         file_type = "cython"
-    elif file_extension.lower() in global_module.ext_c:
+    elif file_extension.lower() in data.ext_c:
         file_type = "c"
-    elif file_extension.lower() in global_module.ext_cpp:
+    elif file_extension.lower() in data.ext_cpp:
         file_type = "c++"
-    elif file_extension.lower() in global_module.ext_pascal:
+    elif file_extension.lower() in data.ext_pascal:
         file_type = "pascal"
-    elif file_extension.lower() in global_module.ext_oberon:
+    elif file_extension.lower() in data.ext_oberon:
         file_type = "oberon/modula"
-    elif file_extension.lower() in global_module.ext_ada:
+    elif file_extension.lower() in data.ext_ada:
         file_type = "ada"
-    elif file_extension.lower() in global_module.ext_xml:
+    elif file_extension.lower() in data.ext_xml:
         file_type = "xml"
-    elif file_extension.lower() in global_module.ext_d:
+    elif file_extension.lower() in data.ext_d:
         file_type = "d"
-    elif file_extension.lower() in global_module.ext_nim:
+    elif file_extension.lower() in data.ext_nim:
         file_type = "nim"
-    elif file_extension.lower() in global_module.ext_json:
+    elif file_extension.lower() in data.ext_json:
         file_type = "json"
-    elif file_extension.lower() in global_module.ext_perl:
+    elif file_extension.lower() in data.ext_perl:
         file_type = "perl"
-    elif file_extension.lower() in global_module.ext_ini:
+    elif file_extension.lower() in data.ext_ini:
         file_type = "ini"
-    elif file_extension.lower() in global_module.ext_batch:
+    elif file_extension.lower() in data.ext_batch:
         file_type = "batch"
-    elif file_extension.lower() in global_module.ext_bash:
+    elif file_extension.lower() in data.ext_bash:
         file_type = "bash"
     elif file_name.lower() == "makefile":
         file_type = "makefile"
-    elif file_extension.lower() in global_module.ext_lua:
+    elif file_extension.lower() in data.ext_lua:
         file_type = "lua"
-    elif file_extension.lower() in global_module.ext_coffeescript:
+    elif file_extension.lower() in data.ext_coffeescript:
         file_type = "coffeescript"
-    elif file_extension.lower() in global_module.ext_csharp:
+    elif file_extension.lower() in data.ext_csharp:
         file_type = "c#"
-    elif file_extension.lower() in global_module.ext_java:
+    elif file_extension.lower() in data.ext_java:
         file_type = "java"
-    elif file_extension.lower() in global_module.ext_javascript:
+    elif file_extension.lower() in data.ext_javascript:
         file_type = "javascript"
-    elif file_extension.lower() in global_module.ext_octave:
+    elif file_extension.lower() in data.ext_octave:
         file_type = "octave"
-    elif file_extension.lower() in global_module.ext_sql:
+    elif file_extension.lower() in data.ext_sql:
         file_type = "sql"
-    elif file_extension.lower() in global_module.ext_postscript:
+    elif file_extension.lower() in data.ext_postscript:
         file_type = "postscript"
-    elif file_extension.lower() in global_module.ext_fortran:
+    elif file_extension.lower() in data.ext_fortran:
         file_type = "fortran"
-    elif file_extension.lower() in global_module.ext_fortran77:
+    elif file_extension.lower() in data.ext_fortran77:
         file_type = "fortran77"
-    elif file_extension.lower() in global_module.ext_idl:
+    elif file_extension.lower() in data.ext_idl:
         file_type = "idl"
-    elif file_extension.lower() in global_module.ext_ruby:
+    elif file_extension.lower() in data.ext_ruby:
         file_type = "ruby"
     else:
         #The file extension was not recognized, 

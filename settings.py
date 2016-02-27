@@ -63,7 +63,7 @@
 import os
 import os.path
 import platform
-import global_module
+import data
 import functions
 
 
@@ -104,7 +104,7 @@ class SettingsFileManipulator():
     level_spacing                   = "    "
     recent_files                    = []
     stored_sessions                 = []
-    main_window_side                = global_module.MainWindowSide.RIGHT
+    main_window_side                = data.MainWindowSide.RIGHT
     
     empty_settings_list         =   [   
                                         "[General Settings]", 
@@ -147,7 +147,7 @@ class SettingsFileManipulator():
         settings_lines = ["[General Settings]"]
         #Save the main window side
         self.main_window_side = main_window_side
-        if self.main_window_side == global_module.MainWindowSide.RIGHT:
+        if self.main_window_side == data.MainWindowSide.RIGHT:
             settings_lines.append("{:s}Main_Window_Side{:s}Right".format(self.level_spacing, self.level_spacing))
         else:
             settings_lines.append("{:s}Main_Window_Side{:s}Left".format(self.level_spacing, self.level_spacing))
@@ -196,9 +196,9 @@ class SettingsFileManipulator():
             if "Main_Window_Side" in line:
                 #Load main window side
                 if split_line[1].lower() == "right":
-                    self.main_window_side = global_module.MainWindowSide.RIGHT
+                    self.main_window_side = data.MainWindowSide.RIGHT
                 else:
-                    self.main_window_side = global_module.MainWindowSide.LEFT
+                    self.main_window_side = data.MainWindowSide.LEFT
             #Test if the first recent files line has been reached
             elif "[Recent Files]" in line:
                 #Store the line that is the beggining of the recent file list
@@ -279,22 +279,22 @@ class SettingsFileManipulator():
                     if (ln.startswith(self.level_spacing) == False or
                         j == len(settings_file_lines)-1):
                         for s in self.stored_sessions:
-                            global_module.print_log("Session: " + s.name)
-                            global_module.print_log("    Window: Main")
+                            data.print_log("Session: " + s.name)
+                            data.print_log("    Window: Main")
                             for f in s.main_files:
-                                global_module.print_log("        File: " + f)
-                            global_module.print_log("    Window: Upper")
+                                data.print_log("        File: " + f)
+                            data.print_log("    Window: Upper")
                             for f in s.upper_files:
-                                global_module.print_log("        File: " + f)
-                            global_module.print_log("    Window: Lower")
+                                data.print_log("        File: " + f)
+                            data.print_log("    Window: Lower")
                             for f in s.lower_files:
-                                global_module.print_log("        File: " + f)
+                                data.print_log("        File: " + f)
                         #Break from the loop
                         break
         #Show the recent files in the log window
-        global_module.print_log("Found recent files:")
+        data.print_log("Found recent files:")
         for file in self.recent_files:
-            global_module.print_log("{:s}{:s}".format(self.level_spacing, file))
+            data.print_log("{:s}{:s}".format(self.level_spacing, file))
 
     def add_session(self, session_name, session_group, main_files, upper_files, lower_files):
         """Add a new session to the stored session list"""
