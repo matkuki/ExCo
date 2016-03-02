@@ -89,7 +89,7 @@ EDGE_MARKER_COLUMN      = 90
 #Global width of tabs
 tab_width = 4
 #Terminal console program used on GNU/Linux
-linux_terminal = "xterm"
+terminal = "xterm"
 
 
 """

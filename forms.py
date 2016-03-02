@@ -77,6 +77,7 @@
 ##        they all mean the same thing: an instance of a BasicWidget class
 
 import os
+import sys
 import platform
 import itertools
 import inspect
@@ -6478,13 +6479,6 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         """
         selection = self.getSelection()
         if selection == (-1, -1, -1, -1):
-            #Execute the superclasses key event with the "tab key" event as the parameter
-#            event = PyQt4.QtGui.QKeyEvent(
-#                PyQt4.QtCore.QEvent.KeyPress, 
-#                PyQt4.QtCore.Qt.Key_Tab, 
-#                PyQt4.QtCore.Qt.KeyboardModifiers()
-#            )
-#            super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
             line_number, position = self.getCursorPosition()
             #Adjust index to the line list indexing
             line_number += 1
@@ -6527,9 +6521,18 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             lines = self.line_list[line_from:line_to]
             #Set the indentation width
             indentation_string = data.tab_width * " "
+            #Select the indentation function
+            if sys.version_info.minor <= 2:
+                def nested_indent(line, indent_string):
+                    if line.strip() != " ":
+                        line = indent_string + line
+                    return line
+                indent_func = nested_indent
+            else:
+                indent_func = textwrap.indent
             #Indent the line list in place
             for i, line in enumerate(lines):
-                lines[i] = textwrap.indent(line, indentation_string)
+                lines[i] = indent_func(line, indentation_string)
             #Set the new line list in one operation
             self.line_list[line_from:line_to] = lines
             #Set the selection again according to which line was selected before the indent
