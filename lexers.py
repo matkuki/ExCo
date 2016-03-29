@@ -135,12 +135,16 @@ class Python(PyQt4.Qsci.QsciLexerPython):
 class Cython(PyQt4.Qsci.QsciLexerPython):
     """Cython - basically Python with added keywords"""
     #Class variables
-    _kwrds          = None
-    _c_kwrds        = ["void", "char",  "int", "long", "short", "double", "float", 
-                       "const", "unsigned", "inline"]
-    _cython_kwrds   = ["by", "cdef", "cimport", "cpdef", "ctypedef", "enum", "except?", 
-                       "extern", "gil", "include", "nogil", "property", "public", 
-                       "readonly", "struct", "union", "DEF", "IF", "ELIF", "ELSE"]
+    _kwrds = None
+    _c_kwrds = [
+        "void", "char",  "int", "long", "short", "double", "float", 
+        "const", "unsigned", "inline"
+    ]
+    _cython_kwrds = [
+        "by", "cdef", "cimport", "cpdef", "ctypedef", "enum", "except?", 
+        "extern", "gil", "include", "nogil", "property", "public", 
+        "readonly", "struct", "union", "DEF", "IF", "ELIF", "ELSE"
+    ]
     
     def __init__(self,  parent=None):
         """Overridden initialization"""
@@ -173,9 +177,9 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
     """Custom lexer for the Oberon/Oberon-2/Modula/Modula-2 programming languages"""
     #Class custom objects/types
     Style = collections.namedtuple(
-                "Style",
-                "DEFAULT COMMENT KEYWORD STRING PROCEDURE MODULE NUMBER TYPE"
-            )
+        "Style",
+        "DEFAULT COMMENT KEYWORD STRING PROCEDURE MODULE NUMBER TYPE"
+    )
     
     #Class variables
     default_color       = PyQt4.QtGui.QColor(0, 0, 0)
@@ -329,34 +333,34 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
     """Custom lexer for the Ada programming languages"""
     #Class custom objects/types
     Style = collections.namedtuple(
-                "Style",  
-                "DEFAULT COMMENT KEYWORD STRING PROCEDURE NUMBER TYPE PACKAGE"
-            )
+        "Style",  
+        "DEFAULT COMMENT KEYWORD STRING PROCEDURE NUMBER TYPE PACKAGE"
+    )
     
     #Class variables
     default_color       = PyQt4.QtGui.QColor(0, 0, 0)
     default_font        = PyQt4.QtGui.QFont('Courier', 10)
     styles              = Style(0, 1, 2, 3, 4, 5, 6, 7)
     keyword_list        =   [ 
-                            "abort", "else", "new", "return",
-                            "abs", "elsif", "not", "reverse",
-                            "abstract", "end", "null", "accept",
-                            "entry", "select", "access","exception",
-                            "of", "separate", "aliased","exit",
-                            "or", "some", "all", "others", "subtype",
-                            "and", "for", "out", "synchronized",
-                            "array", "function", "overriding", "at",
-                            "tagged", "generic", "package", "task",
-                            "begin", "goto", "pragma", "terminate",
-                            "body", "private", "then", "if",
-                            "procedure", "type", "case", "in", "protected",
-                            "constant", "interface", "until",
-                            "is", "raise", "use", "declare",
-                            "range", "delay", "limited", "record",
-                            "when", "delta", "loop", "rem",
-                            "while", "digits", "renames","with", "do",
-                            "mod", "requeue", "xor",
-                        ]
+        "abort", "else", "new", "return",
+        "abs", "elsif", "not", "reverse",
+        "abstract", "end", "null", "accept",
+        "entry", "select", "access","exception",
+        "of", "separate", "aliased","exit",
+        "or", "some", "all", "others", "subtype",
+        "and", "for", "out", "synchronized",
+        "array", "function", "overriding", "at",
+        "tagged", "generic", "package", "task",
+        "begin", "goto", "pragma", "terminate",
+        "body", "private", "then", "if",
+        "procedure", "type", "case", "in", "protected",
+        "constant", "interface", "until",
+        "is", "raise", "use", "declare",
+        "range", "delay", "limited", "record",
+        "when", "delta", "loop", "rem",
+        "while", "digits", "renames","with", "do",
+        "mod", "requeue", "xor",
+    ]
     splitter            = re.compile(r"(\-\-|\s+|\w+|\W)")
     
     def __init__(self,  parent=None):
@@ -489,29 +493,29 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
     """Custom lexer for the Nim programming languages"""
     #Class custom objects/types
     Style = collections.namedtuple(
-                "Style", 
-                [
-                    "DEFAULT" , #0
-                    "COMMENT" , #1
-                    "BASIC_KEYWORD" ,   #2
-                    "TOP_KEYWORD" , #3
-                    "STRING" ,  #4
-                    "LONG_STRING" , #5
-                    "NUMBER" ,  #6
-                    "MACRO" ,   #7
-                    "OPERATOR" ,    #8
-                    "UNSAFE",   #9
-                    "TYPE", #10
-                    "DOCUMENTATION_COMMENT",    #11
-                    "DEFINITION",   #12
-                    "CLASS",    #13
-                    "KEYWORD_OPERATOR",    #14
-                    "CHAR_LITERAL",     #15
-                    "CASE_OF",     #16
-                    "USER_KEYWORD",  #17
-                    "MULTILINE_COMMENT",  #18
-                ]
-            )
+        "Style", 
+        [
+            "DEFAULT" , #0
+            "COMMENT" , #1
+            "BASIC_KEYWORD" ,   #2
+            "TOP_KEYWORD" , #3
+            "STRING" ,  #4
+            "LONG_STRING" , #5
+            "NUMBER" ,  #6
+            "MACRO" ,   #7
+            "OPERATOR" ,    #8
+            "UNSAFE",   #9
+            "TYPE", #10
+            "DOCUMENTATION_COMMENT",    #11
+            "DEFINITION",   #12
+            "CLASS",    #13
+            "KEYWORD_OPERATOR",    #14
+            "CHAR_LITERAL",     #15
+            "CASE_OF",     #16
+            "USER_KEYWORD",  #17
+            "MULTILINE_COMMENT",  #18
+        ]
+    )
     
     #Class variables
     default_color       = PyQt4.QtGui.QColor(0, 0, 0)
@@ -520,56 +524,76 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
     NUMBER_OF_STYLES    = 18
     #Basic keywords and built-in procedures and templates
     basic_keyword_list  = [
-                            "as", "atomic", "bind",
-                            "break", "case", "continue", "converter",
-                            "discard", "distinct", "do", "echo", "elif", "else", "end",
-                            "enum", "except", "finally", "for", "from", "defined", 
-                            "if", "interface", "iterator", "macro", "method", "mixin", 
-                            "of", "out", "proc", "func", "raise", "ref", "result", 
-                            "return", "template", "try", "inc", "dec", "new", "quit", 
-                            "while", "with", "without", "yield", "true", "false", 
-                            "openarray", "assert", "min", "max", "newseq", "len", 
-                            "contains", "cmp", "add", "del","deepCopy", "shallowCopy", 
-                            "abs", "clamp", "isnil", "open", "reopen", "close","readall", 
-                            "readfile", "writefile", "endoffile", "readline", "writeline", 
-                        ]
+        "as", "atomic", "bind",
+        "break", "case", "continue", "converter",
+        "discard", "distinct", "do", "echo", "elif", "else", "end",
+        "except", "finally", "for", "from", "defined", 
+        "if", "interface", "iterator", "macro", "method", "mixin", 
+        "of", "out", "proc", "func", "raise", "ref", "result", 
+        "return", "template", "try", "inc", "dec", "new", "quit", 
+        "while", "with", "without", "yield", "true", "false", 
+        "assert", "min", "max", "newseq", "len", "pred", "succ", 
+        "contains", "cmp", "add", "del","deepcopy", "shallowcopy", 
+        "abs", "clamp", "isnil", "open", "reopen", "close","readall", 
+        "readfile", "writefile", "endoffile", "readline", "writeline", 
+    ]
     #Custom keyword created with templates/macros
     user_keyword_list   = [
-                            "heap_object", "namespace", "property", "stack_object"
-                        ]
+        "heap_object", "namespace", "property", "stack_object"
+    ]
     #Keywords that define a proc-like definition
     def_keyword_list    = ["proc", "method", "template", "macro", "converter", "iterator"]
     #Keywords that can define blocks
     top_keyword_list    = [
-                            "block", "const", "export", "import", "include", "let", 
-                            "static", "type", "using", "var", "when", 
-                        ]
+        "block", "const", "export", "import", "include", "let", 
+        "static", "type", "using", "var", "when", 
+    ]
     #Keywords that might be unsafe/dangerous
     unsafe_keyword_list = [
-                            "asm", "addr", "cast", "ptr", "pointer", "alloc", "alloc0",
-                            "allocshared0", "dealloc", "realloc", "nil", "gc_ref", 
-                            "gc_unref", "copymem", "zeromem", "equalmem", "movemem", 
-                            "gc_disable", "gc_enable", 
-                        ]
+        "asm", "addr", "cast", "ptr", "pointer", "alloc", "alloc0",
+        "allocshared0", "dealloc", "realloc", "nil", "gc_ref", 
+        "gc_unref", "copymem", "zeromem", "equalmem", "movemem", 
+        "gc_disable", "gc_enable", 
+    ]
     #Built-in types
     type_keyword_list   = [
-                            "bool", "int", "int8", "int16", "int32", "int64",
-                            "uint", "uint8", "uint16", "uint32", "uint64", "object", 
-                            "range", "float", "float32", "float64", "char", "concept",  
-                            "enum", "string", "array", "seq", "tuple", "set", "byte",
-                            "cstring", "cint", "cuint", "cchar", "cfloat", "cdouble", 
-                            "void", 
-                        ]
+        "int", "int8", "int16", "int32", "int64",
+        "uint", "uint8", "uint16", "uint32", "uint64",
+        "float", "float32", "float64", "bool", "char",
+        "string", "cstring", "pointer", "ordinal", "ptr",
+        "ref", "expr", "stmt", "typedesc", "void",
+        "auto", "any", "untyped", "typed", "somesignedint",
+        "someunsignedint", "someinteger", "someordinal", "somereal", "somenumber",
+        "range", "array", "openarray", "varargs", "seq",
+        "set", "slice", "shared", "guarded", "byte",
+        "natural", "positive", "rootobj", "rootref", "rooteffect",
+        "timeeffect", "ioeffect", "readioeffect", "writeioeffect", "execioeffect",
+        "exception", "systemerror", "ioerror", "oserror", "libraryerror",
+        "resourceexhaustederror", "arithmeticerror", "divbyzeroerror", "overflowerror", 
+        "accessviolationerror", "assertionerror", "valueerror", "keyerror", 
+        "outofmemerror", "indexerror", "fielderror", "rangeerror", "stackoverflowerror", 
+        "reraiseerror", "objectassignmenterror", "objectconversionerror", "floatingpointerror", 
+        "floatinvalidoperror", "floatdivbyzeroerror", "floatoverflowerror",
+        "floatunderflowerror", "floatinexacterror", "deadthreaderror", "tresult", "endianness",
+        "taintedstring", "libhandle", "procaddr", "byteaddress", "biggestint",
+        "biggestfloat", "clong", "culong", "cchar", "cschar",
+        "cshort", "cint", "csize", "clonglong", "cfloat",
+        "cdouble", "clongdouble", "cuchar", "cushort", "cuint",
+        "culonglong", "cstringarray", "pfloat32", "pfloat64", "pint64",
+        "pint32", "gc_strategy", "pframe", "tframe", "file",
+        "filemode", "filehandle", "thinstance", "aligntype", "refcount",
+        "object", "tuple", "enum",
+    ]
     #Sign operators
     operator_list       = [
-                            "=", "+", "-", "*", "/", "<", ">", "@", "$", ".",
-                            "~", "&", "%", "|", "!", "?", "^", ".", ":", "\"",
-                        ]
+        "=", "+", "-", "*", "/", "<", ">", "@", "$", ".",
+        "~", "&", "%", "|", "!", "?", "^", ".", ":", "\"",
+    ]
     #Keyword operators
     keyword_operator_list = [
-                                "and", "or", "not", "xor", "shl", "shr", "div", "mod", 
-                                "in", "notin", "is", "isnot",
-                            ]
+        "and", "or", "not", "xor", "shl", "shr", "div", "mod", 
+        "in", "notin", "is", "isnot",
+    ]
     splitter            = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
 
     def __init__(self, parent=None):

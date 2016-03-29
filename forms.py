@@ -6223,6 +6223,10 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.setSelection(0,0,self.lines(),0)
         #Replace it with the new text
         self.replaceSelectedText(text)
+    
+    def get_line_number(self):
+        """return the line on which the cursor is"""
+        return self.getCursorPosition()[0] + 1
 
     def get_line(self, line_number):
         """Return the text of the selected line in the scintilla document"""
@@ -6477,6 +6481,10 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         Scintila indents line-by-line, which is very slow for a large amount of lines. Try indenting 20000 lines.
         This is a custom indentation function that indents all lines in one operation.
         """
+        #Check QScintilla's tab width
+        if self.tabWidth() != data.tab_width:
+            self.setTabWidth(data.tab_width)
+        #Indent according to selection
         selection = self.getSelection()
         if selection == (-1, -1, -1, -1):
             line_number, position = self.getCursorPosition()
@@ -6567,6 +6575,10 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         Scintila unindents line-by-line, which is very slow for a large amount of lines. Try unindenting 20000 lines.
         This is a custom unindentation function that unindents all lines in one operation.
         """
+        #Check QScintilla's tab width
+        if self.tabWidth() != data.tab_width:
+            self.setTabWidth(data.tab_width)
+        #Unindent according to selection
         selection = self.getSelection()
         if selection == (-1, -1, -1, -1):
             line_number, position = self.getCursorPosition()
@@ -6694,12 +6706,11 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         else:
             #Text is selected 
             start_line_number   = self.getSelection()[0] + 1
-#            start_line_text     = self.get_line(start_line_number)
-            first_selected_char = self.selectedText()[0]
+            first_selected_chars = self.selectedText()[0:len(self.comment_string)]
             end_line_number     = self.getSelection()[2] + 1
+            print(first_selected_chars)
             #Choose un/commenting according to the first line in selection
-#            if start_line_text.lstrip().startswith(self.comment_string):
-            if first_selected_char == self.comment_string:
+            if first_selected_chars == self.comment_string:
                 self.uncomment_lines(start_line_number, end_line_number)
             else:
                 self.comment_lines(start_line_number, end_line_number)
