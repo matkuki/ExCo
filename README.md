@@ -4,6 +4,9 @@ Ex&#46;Co&#46; (Extensible Coder) is a GUI text editor written in Python that us
 I developed it with simplicity of use and extensibility in mind.<br>
 For precompiled bundles for Windows see https://github.com/matkuki/Ex-Co-Windows-Compiled
 <br><br>
+### Screenshot: ###
+<img src="https://github.com/matkuki/ExCo/blob/master/screenshot.png" align="top" width="600" height="480">
+<br>
 ### License: ###
 __GNU General Public License v3.0__
 
