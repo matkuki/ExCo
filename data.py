@@ -89,7 +89,9 @@ EDGE_MARKER_COLUMN      = 90
 #Global width of tabs
 tab_width = 4
 #Terminal console program used on GNU/Linux
-terminal = "xterm"
+terminal = "lxterminal"
+#Zoom factor when a new editor is created (default is 0)
+zoom_factor = 0
 
 
 """

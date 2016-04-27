@@ -5584,7 +5584,6 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     save_status             = data.FileStatus.OK
     savable                 = data.CanSave.NO
     last_browsed_dir        = ""
-#    _tab_width              = 4
     #Default fonts
     default_font            = PyQt4.QtGui.QFont('Courier', 10)
     default_comment_font    = b'Courier'
@@ -5947,6 +5946,8 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.setAcceptDrops(False)
         #Set line endings to be Unix style ("\n")
         self.setEolMode(PyQt4.Qsci.QsciScintilla.EolUnix)
+        #Set the initial zoom factor
+        self.zoomTo(data.zoom_factor)
         #Correct the file name if it is unspecified
         if file_with_path == None:
             file_with_path = ""
