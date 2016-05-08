@@ -2229,7 +2229,10 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         )
     
     def compare(self, text_1, text_2):
-        """Compare two text strings and display the difference"""
+        """
+        Compare two text strings and display the difference
+        !! This function uses Python's difflib which is not 100% accurate !!
+        """
         #Store the original text
         self.text_1 = text_1
         self.text_2 = text_2
@@ -2248,8 +2251,11 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         line_numbering_2    = []
         line_styling_2      = []
         #Flow control flags
-        skip_next       = False
+        skip_next     = False
         store_next    = False
+#        with open("temp_diff.txt", "w") as f:
+#            f.write("\n".join(list_sum))
+#            f.close()
         for i, line in enumerate(list_sum):
             if store_next == True:
                 store_next = False

@@ -307,7 +307,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
             command = re.sub(references[key][0],  references[key][1],  command)
         return command
     
-    def replace_keywords(self,  keywords, command):
+    def replace_keywords(self, keywords, command):
         """Replace keywords with actual forms module methods and attributes"""
         for key in keywords:
             #Replace keyword with actual function from the forms module MainWindow class

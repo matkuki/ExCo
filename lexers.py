@@ -109,7 +109,7 @@ class Python(PyQt4.Qsci.QsciLexerPython):
     #Class variables
     _kwrds              = None
     
-    def __init__(self,  parent=None):
+    def __init__(self, parent=None):
         """Overridden initialization"""
         #Initialize superclass
         super().__init__()
@@ -125,12 +125,11 @@ class Python(PyQt4.Qsci.QsciLexerPython):
         Overridden method for determining keywords,
         read the QScintilla QsciLexer class documentation on the Riverbank website.
         """
-        keywrds= None
+        keywords = None
         #Only state 1 returns keywords, don't know why? Check the C++ Scintilla lexer source files.
         if state == 1:
-            keywrds = self._kwrds
-        return keywrds
-
+            keywords = self._kwrds
+        return keywords
 
 class Cython(PyQt4.Qsci.QsciLexerPython):
     """Cython - basically Python with added keywords"""
@@ -595,6 +594,8 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         "in", "notin", "is", "isnot",
     ]
     splitter            = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
+    #Characters that autoindent one level on pressing Return/Enter
+    autoindent_characters = [":", "="]
 
     def __init__(self, parent=None):
         """Overridden initialization"""

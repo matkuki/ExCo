@@ -2932,6 +2932,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         FUNCTION_WHEEL_BOUNDS   = (0, 0)
         #Stored REPL single/multi line state
         repl_state              = None
+        #Lock used when spinning widgets, so the layout does not get saved mid-spin
+        layout_save_block       = False
         
         def __init__(self, parent):
             """Initialization of the View object instance"""
@@ -2984,6 +2986,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         def save_layout(self):
             """Save the widths of the splitters"""
             #Check if the splitters are filled correctly
+            if self.layout_save_block == True:
+                return
             if self.parent.vertical_splitter.count() < 2 or self.parent.horizontal_splitter.count() < 2:
                 return
             #Check which window mode is active
@@ -3088,9 +3092,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     focused_widget.setFocus()
             #Initialize the function wheel overlay over the QMainWindows central widget, if needed
             self.function_wheel_overlay = FunctionWheelOverlay(
-                                            parent=self.parent.main_groupbox, 
-                                            main_form=self.parent, 
-                                          )
+                parent=self.parent.main_groupbox, 
+                main_form=self.parent, 
+            )
             self.function_wheel_overlay.setObjectName("Function_Wheel")
             if show_overlay == True:
                 self.function_wheel_overlay.show()
@@ -3137,6 +3141,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             Parameters:
                 direction:  0 - clockwise,  1 - counter-clockwise
             """
+            self.layout_save_block = True
             #Only spin the widgets if in THREE window mode
             if self.window_mode != data.WindowMode.THREE:
                 return
@@ -3175,6 +3180,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.parent.upper_window, 
                 self.parent.lower_window
             )
+            self.layout_save_block = False
             if direction == data.SpinDirection.CLOCKWISE:
                 data.print_log("Span view clockwise")
             else:
@@ -6069,11 +6075,25 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Filter out TAB and SHIFT+TAB key combinations to override
         #the default indent/unindent functionality
         key = event.key()
+#        char = event.text()
 #        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers()
         if key == PyQt4.QtCore.Qt.Key_Tab:
             self.custom_indent()
         elif key == PyQt4.QtCore.Qt.Key_Backtab:
             self.custom_unindent()
+        elif (key == PyQt4.QtCore.Qt.Key_Enter or
+              key == PyQt4.QtCore.Qt.Key_Return):
+            super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
+            #Check for autoindent character list
+            if hasattr(self.current_lexer, "autoindent_characters"):
+                line = self.get_line_number()
+                #Check that the last line is valid
+                if len(self.line_list[line-1]) == 0:
+                    return
+                last_character = self.line_list[line-1][-1]
+                if last_character in self.current_lexer.autoindent_characters:
+                    self.line_list[line] = self.line_list[line] + " " * data.tab_width
+                    self.setCursorPosition(line-1, len(self.line_list[line]))
         else:
             #Execute the superclass method first, the same trick as in __init__ !
             super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
@@ -7363,7 +7383,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     def set_lexer(self, lexer, file_type):
         """Function that actually sets the lexer"""
         #Store the lexer instance, so that it doesn't get garbage collected
-        self.current_lexer      = lexer
+        self.current_lexer = lexer
         #Save the current file type to a string
         self.current_file_type  = file_type.upper()
         #Set the lexer default font family
@@ -7876,6 +7896,7 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
         if not [x for x in raw_text if x in self._comparison_list]:
             #None of the separator characters were found in current text
             current_sequence = self.text()
+        data.print_log(previous_sequence + "  " + current_sequence)
         return [current_sequence, previous_sequence]
     
     def _find_autocompletions(self, current_sequences_list):
