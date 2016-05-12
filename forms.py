@@ -7992,6 +7992,43 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
         event.ignore()
         #Return the focus event
         return PyQt4.QtGui.QLineEdit.focusOutEvent(self, event)
+    
+    def wheelEvent(self, wheel_event):
+        """Overridden mouse wheel rotate event"""
+        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers() 
+        if wheel_event.delta() < 0:
+            data.print_log("REPL helper mouse rotate down event")
+            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+                #Zoom out the scintilla tab view
+                self.decrease_text_size()
+        else:
+            data.print_log("REPL helper mouse rotate up event")
+            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+                #Zoom in the scintilla tab view
+                self.increase_text_size()
+        #Handle the event
+        if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+            #Accept the event, the event will not be propageted(sent forward) to the parent
+            wheel_event.accept()
+        else:
+            #Propagate(send forward) the wheel event to the parent
+            wheel_event.ignore()
+    
+    def increase_text_size(self):
+        """Increase size of the REPL text"""
+        new_font = self.font()
+        if new_font.pointSize() > 32:
+            return
+        new_font.setPointSize(new_font.pointSize() + 1)
+        self.setFont(new_font)
+    
+    def decrease_text_size(self):
+        """Decrease size of the REPL text"""
+        new_font = self.font()
+        if new_font.pointSize() < 12:
+            return
+        new_font.setPointSize(new_font.pointSize() - 1)
+        self.setFont(new_font)
 
     """
     REPL interactive interpreter functions
@@ -8132,6 +8169,8 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         self.setAcceptDrops(False)
         #Set line endings to be Unix style ("\n")
         self.setEolMode(PyQt4.Qsci.QsciScintilla.EolUnix)
+        #Set the initial zoom factor
+        self.zoomTo(data.zoom_factor)
         #Set the lexer to python and set the initial autocompletions
         self.update_autocompletions()
 
@@ -8195,6 +8234,27 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         super().setFocus()
         #Check indication
         self.parent.view.indication_check()
+    
+    def wheelEvent(self, wheel_event):
+        """Overridden mouse wheel rotate event"""
+        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers() 
+        if wheel_event.delta() < 0:
+            data.print_log("REPL helper mouse rotate down event")
+            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+                #Zoom out the scintilla tab view
+                self.zoomOut()
+        else:
+            data.print_log("REPL helper mouse rotate up event")
+            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+                #Zoom in the scintilla tab view
+                self.zoomIn()
+        #Handle the event
+        if key_modifiers != PyQt4.QtCore.Qt.ControlModifier:
+            #Execute the superclass method
+            super(PyQt4.Qsci.QsciScintilla, self).wheelEvent(wheel_event)
+        else:
+            #Propagate(send forward) the wheel event to the parent
+            wheel_event.ignore()
 
     """
     ReplHelper autocompletion functions
