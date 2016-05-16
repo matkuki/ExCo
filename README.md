@@ -37,10 +37,7 @@ All additional licenses are specified at the beginning of every source code file
 ### Supported platforms: ###
 - __Windows__ ([precompiled binaries available](https://github.com/matkuki/Ex-Co-Windows-Compiled))
 - __GNU/Linux__ (tested on Lubuntu, Raspbian (Raspberry pi and pi 2))
-
-#### Untested on: ####
-- __Mac OS X__ (should work, would appreciate if someone tried it)
-<br><br>
+- __Mac OS__ (Many thanks to __zenlc2000__ for testing this on Mac OS 10.11)
 
 ### Dependencies: ###
 - Python 3
@@ -51,6 +48,26 @@ __Optional dependencies:__
 - XTerm terminal editor is used by default on GNU/Linux (can be changed in source code)
 - Cython (ONLY FOR BUILDING SPECIAL LEXERS)
 <br><br>
+
+### Installation notes: ###
+- __Windows__:<br>
+  Install the latest [PyQt4](https://www.riverbankcomputing.com/software/pyqt/download) library for
+  your version of Python3 and run it using the command described below in the 'Starting Ex&#46;Co&#46;' section.
+- __GNU/Linux__:<br>
+  If you are on Lubuntu, Raspbian or probably most Debian derivatives, install the following libraries using __apt-get__:
+  - python3.x (Probably already installed on the system)
+  - python3-pyqt4
+  - python3-pyqt4.qsci
+    (If this library is outdated, you will get a 'missing QsciLexerCoffeeScript' or similar exception.
+     Update the repositories and try again. If that still doesn't help, try using Ubuntu's 'Universe' repositories.)<br>
+
+  Otherwise you can install PyQt4 and QScintilla2 (you'll also need the SIP library) from source from their official [website](https://www.riverbankcomputing.com/software/pyqt/download). Download the source code and follow the instructions in the readme/install files. You'll also need the [Qt4 C++ source code](https://wiki.qt.io/Get_the_Source#Qt_4.x).
+- __Mac OS__:<br>
+  Try using Anaconda Python 3 and it's package manager to install all dependencies. Here is the more [information](https://github.com/matkuki/ExCo/issues/1).<br>
+  I don't know much about Mac's, but you can try using the default Mac package manager to find the PyQt4 and QScintilla2
+  libraries or install the libraries from source, same as on GNU/Linux.<br>
+  
+
 
 ### Starting Ex&#46;Co&#46;: ###
 On Windows and GNU/Linux where Python 3 is the default interpreter, use the shell/command-line command:
