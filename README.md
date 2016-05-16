@@ -47,7 +47,7 @@ All additional licenses are specified at the beginning of every source code file
 __Optional dependencies:__
 - XTerm terminal editor is used by default on GNU/Linux (can be changed in source code)
 - Cython (ONLY FOR BUILDING SPECIAL LEXERS)
-<br><br>
+<br>
 
 ### Installation notes: ###
 - __Windows__:<br>
@@ -65,7 +65,7 @@ __Optional dependencies:__
 - __Mac OS__:<br>
   Try using Anaconda Python 3 and it's package manager to install all dependencies. Here is the more [information](https://github.com/matkuki/ExCo/issues/1).<br>
   I don't know much about Mac's, but you can try using the default Mac package manager to find the PyQt4 and QScintilla2
-  libraries or install the libraries from source, same as on GNU/Linux.<br>
+  libraries or install the libraries from source, same as on GNU/Linux.<br><br>
   
 
 
