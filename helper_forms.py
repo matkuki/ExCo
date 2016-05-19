@@ -268,12 +268,11 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
                 #Item is a session
                 old_item_name = item.session.name
                 new_item_name = self.indexWidget(item.index()).text()
-                #Rename all of the session with the group name and store them in a new list
+                #Rename all of the sessions with the group name and store them in a new list
                 new_session_list = []
                 for session in self.settings_manipulator.stored_sessions:
                     if session.name == old_item_name and session.group == item.session.group:
                         session.name = new_item_name
-                        
                     new_session_list.append(session)
                 #Replace the old list with the new
                 self.settings_manipulator.stored_sessions = new_session_list
@@ -436,6 +435,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
                 if selected_item.session.group != None:
                     attachment_item = selected_item.parent()
                     self.expand(attachment_item.index())
+                    has_group = True
             elif (selected_item.type == self.ItemType.GROUP or 
                   selected_item.type == self.ItemType.EMPTY_GROUP):
                 has_group = True
