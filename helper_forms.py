@@ -1827,11 +1827,11 @@ class TextDiffer(PyQt4.QtGui.QWidget):
     MARGIN_BACK_COLOR       = PyQt4.QtGui.QColor(0xd7, 0xd3, 0xcf, 255)
     MARGIN_FORE_COLOR       = PyQt4.QtGui.QColor(0x2e, 0x34, 0x36, 255)
     MARGIN_STYLE            = PyQt4.Qsci.QsciScintilla.STYLE_LINENUMBER
-    INDICATOR_UNIQUE_1          = 0
+    INDICATOR_UNIQUE_1          = 1
     INDICATOR_UNIQUE_1_COLOR    = PyQt4.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
-    INDICATOR_UNIQUE_2          = 1
+    INDICATOR_UNIQUE_2          = 2
     INDICATOR_UNIQUE_2_COLOR    = PyQt4.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
-    INDICATOR_SIMILAR           = 2
+    INDICATOR_SIMILAR           = 3
     INDICATOR_SIMILAR_COLOR     = PyQt4.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
     GET_X_OFFSET    = PyQt4.Qsci.QsciScintillaBase.SCI_GETXOFFSET
     SET_X_OFFSET    = PyQt4.Qsci.QsciScintillaBase.SCI_SETXOFFSET
@@ -1974,7 +1974,6 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         if self.focused_editor == self.editor_1:
             #Update the cursor position on the opposite editor
             cursor_line, cursor_index = self.editor_1.getCursorPosition()
-            print(cursor_line)
             #Check if the opposite editor line is long enough
             if self.editor_2.lineLength(cursor_line) > cursor_index:
                 self.editor_2.setCursorPosition(cursor_line, cursor_index)
@@ -2253,9 +2252,6 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         #Flow control flags
         skip_next     = False
         store_next    = False
-#        with open("temp_diff.txt", "w") as f:
-#            f.write("\n".join(list_sum))
-#            f.close()
         for i, line in enumerate(list_sum):
             if store_next == True:
                 store_next = False
