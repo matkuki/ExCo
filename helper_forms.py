@@ -1907,6 +1907,9 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         #Add a new attribute to the CustomEditor that will hold the TextDiffer reference
         self.editor_1.actual_parent = self
         self.editor_2.actual_parent = self
+        #Set the embedded flag
+        self.editor_1.embedded = True
+        self.editor_2.embedded = True
         #Add decorators to each editors mouse clicks and mouse wheel scrolls
         def focus_decorator(function_to_decorate, focused_editor):
             def decorated_function(*args, **kwargs):

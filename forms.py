@@ -4437,6 +4437,11 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                                         self.parent.upper_window, 
                                         self.parent
                                     )
+            #Find the old "SESSIONS" tab in the basic widgets and close it
+            sessions_tab_name = "SESSIONS"
+            sessions_tab = self.parent.get_tab_by_name(sessions_tab_name)
+            if sessions_tab:
+                sessions_tab.parent.close_tab(sessions_tab_name)
             #Show the sessions in the manipulator
             sessions_manipulator.show_sessions()
             #Add the created session manipulator to the upper window
@@ -4469,6 +4474,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.marks[i] = (None, None)
         
         def add(self, editor, line):
+            #Bookmarks should only work in editors
+            if (isinstance(editor, CustomEditor) == False or editor.embedded == True):
+                return
             for i in range(10):
                 if self.marks[i] == (None, None):
                     self.marks[i] = (editor, line)
@@ -4485,6 +4493,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 return None
         
         def add_mark_by_number(self, editor, line, mark_number):
+            #Bookmarks should only work in editors
+            if (isinstance(editor, CustomEditor) == False or editor.embedded == True):
+                return
             #Clear the selected marker if it is not empty
             if self.marks[mark_number] != (None, None):
                 self.marks[mark_number][0].bookmarks.toggle_at_line(self.marks[mark_number][1])
@@ -5589,6 +5600,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     save_name               = ""
     save_status             = data.FileStatus.OK
     savable                 = data.CanSave.NO
+    embedded                = False
     last_browsed_dir        = ""
     #Default fonts
     default_font            = PyQt4.QtGui.QFont('Courier', 10)
@@ -6086,14 +6098,32 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
             #Check for autoindent character list
             if hasattr(self.current_lexer, "autoindent_characters"):
-                line = self.get_line_number()
+                line_number = self.get_line_number()
                 #Check that the last line is valid
-                if len(self.line_list[line-1]) == 0:
+                if len(self.line_list[line_number-1]) == 0:
                     return
-                last_character = self.line_list[line-1][-1]
+                last_character = self.line_list[line_number-1].rstrip()[-1]
                 if last_character in self.current_lexer.autoindent_characters:
-                    self.line_list[line] = self.line_list[line] + " " * data.tab_width
-                    self.setCursorPosition(line-1, len(self.line_list[line]))
+                    line = self.line_list[line_number]
+                    stripped_line = self.line_list[line_number].strip()
+                    if stripped_line == "":
+                        self.line_list[line_number] = (self.line_list[line_number] +
+                                                       " " * data.tab_width)
+                        self.setCursorPosition(
+                            line_number-1, 
+                            len(self.line_list[line_number])
+                        )
+                    else:
+                        whitespace = len(line) - len(line.lstrip())
+                        self.line_list[line_number] = (" " * whitespace + 
+                                                       " " * data.tab_width + 
+                                                       stripped_line)
+                        #The line is not empty, move the cursor to the first
+                        #non-whitespace character
+                        self.setCursorPosition(
+                            line_number-1, 
+                            whitespace + data.tab_width
+                        )
         else:
             #Execute the superclass method first, the same trick as in __init__ !
             super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
@@ -7428,9 +7458,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     
     def tabs_to_spaces(self):
         """Convert all tab(\t) characters to spaces"""
-        spaces = ""
-        for i in range(0, data.tab_width):
-            spaces = spaces + " "
+        spaces = " " * data.tab_width
         self.setText(self.text().replace("\t", spaces))
 
     def undo_all(self):

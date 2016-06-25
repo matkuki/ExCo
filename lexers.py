@@ -513,17 +513,18 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
             "CASE_OF",     #16
             "USER_KEYWORD",  #17
             "MULTILINE_COMMENT",  #18
+            "MULTILINE_DOCUMENTATION", #19
         ]
     )
     
     #Class variables
     default_color       = PyQt4.QtGui.QColor(0, 0, 0)
     default_font        = PyQt4.QtGui.QFont('Courier', 10)
-    styles              = Style(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18)
-    NUMBER_OF_STYLES    = 18
+    styles              = Style(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
+    NUMBER_OF_STYLES    = 19
     #Basic keywords and built-in procedures and templates
     basic_keyword_list  = [
-        "as", "atomic", "bind",
+        "as", "atomic", "bind", "sizeof", 
         "break", "case", "continue", "converter",
         "discard", "distinct", "do", "echo", "elif", "else", "end",
         "except", "finally", "for", "from", "defined", 
@@ -621,6 +622,7 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         self.setColor(PyQt4.QtGui.QColor(128, 0, 255), 16)
         self.setColor(PyQt4.QtGui.QColor(255, 128, 64), 17)
         self.setColor(PyQt4.QtGui.QColor(0, 108, 108), 18)
+        self.setColor(PyQt4.QtGui.QColor(110, 50, 150), 19)
         #Set style fonts
         self.setFont(self.default_font, 0)
         self.setFont(self.default_font, 1)
@@ -641,6 +643,7 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         self.setFont(PyQt4.QtGui.QFont('Courier', 10), 16)
         self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 17)
         self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 18)
+        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 19)
         #Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultFont(self.default_font)
@@ -707,16 +710,18 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         OF      = self.styles.CASE_OF
         U_KWD   = self.styles.USER_KEYWORD
         M_COM   = self.styles.MULTILINE_COMMENT
+        M_DOC   = self.styles.MULTILINE_DOCUMENTATION
         #Initialize various states and split the text into tokens
-        commenting      = False
-        doc_commenting  = False
-        new_commenting  = False
-        stringing       = False
-        long_stringing  = False
-        char_literal    = False
-        macroing        = False
-        case_of         = False
-        cls_descrition  = False
+        commenting          = False
+        doc_commenting      = False
+        m_doc_commenting    = False
+        new_commenting      = False
+        stringing           = False
+        long_stringing      = False
+        char_literal        = False
+        macroing            = False
+        case_of             = False
+        cls_descrition      = False
         tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
         #Check if there is a style(comment, string, ...) stretching on from the previous line
         if start != 0:
@@ -727,6 +732,8 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                 macroing = True
             elif previous_style == M_COM:
                 new_commenting = True
+            elif previous_style == M_DOC:
+                m_doc_commenting = True
         #Style the tokens accordingly
         for i, token in enumerate(tokens):
 #            print(str(token) + "  " + str(i))
@@ -748,6 +755,12 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                 #Check if comment ends
                 if "#" in token[0] and "]" in tokens[i-1][0]:
                     new_commenting = False
+            elif m_doc_commenting == True:
+                #Continuation of comment
+                setStyling(token[1], M_DOC)
+                #Check if comment ends
+                if "#" in token[0] and "#" in tokens[i-1][0] and "]" in tokens[i-2][0]:
+                    m_doc_commenting = False
             elif stringing == True:
                 #Continuation of a string
                 setStyling(token[1], STR)
@@ -843,7 +856,10 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                 setStyling(token[1], TYP)
             elif token[0] == "#":
                 #Start of a comment or documentation comment
-                if len(tokens) > i+1 and tokens[i+1][0] == "#":
+                if len(tokens) > i+2 and tokens[i+1][0] == "#" and tokens[i+2][0] == "[":
+                    setStyling(token[1], M_DOC)
+                    m_doc_commenting = True
+                elif len(tokens) > i+1 and tokens[i+1][0] == "#":
                     setStyling(token[1], D_COM)
                     doc_commenting = True
                 elif len(tokens) > i+1 and tokens[i+1][0] == "[":

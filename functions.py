@@ -361,7 +361,7 @@ def get_nim_node_tree(nim_code):
                     line_list, 
                     previous_offset=0):
         #Reset the procedure's starting line adjustment variable
-        body_starting_line_number   = None
+        body_starting_line_number = None
         #Reset the local skip line variable
         local_skip_to_line = None
         #Parse procedure name according to the line characters
@@ -400,16 +400,16 @@ def get_nim_node_tree(nim_code):
                     for i in range(current_line_number+1, body_starting_line_number+1):
                         if ")" in line_list[i] and (line_list[i].count(")") == (line_list[i].count("(") + 1)):
                             close_index = line_list[i].find(")")
-                            current_parameter = line_list[i][:close_index]
+                            current_parameter = line_list[i][:close_index].strip()
                             #Filter out the parameter initialization
                             if "=" in current_parameter:
-                                current_parameter = current_parameter[:current_parameter.find("=")] 
+                                current_parameter = current_parameter[:current_parameter.find("=")]
                             parameter_string += current_parameter
                         else:
-                            current_parameter = line_list[i]
+                            current_parameter = line_list[i].strip()
                             #Filter out the parameter initialization
                             if "=" in current_parameter:
-                                current_parameter = current_parameter[:current_parameter.find("=")] 
+                                current_parameter = current_parameter[:current_parameter.find("=")]
                             parameter_string += current_parameter
                     parameters = [par.strip() for par in parameter_string.split(",") if par.strip() != ""]
                     #Check the return type
@@ -444,8 +444,11 @@ def get_nim_node_tree(nim_code):
         #Parse node
         if "=" in current_line and current_line.strip().endswith("="):
             #Check if the declaration is a one-liner
-            if ((len(current_line.split("=")) == 2 and current_line.split("=")[1].strip() != "") or
-                (len(current_line.split("=")) > 2 and current_line[current_line.rfind(")"):].split("=")[1] != "")):
+            if ((current_line.strip().endswith("=") == False) and
+                ((len(current_line.split("=")) == 2 and 
+                    current_line.split("=")[1].strip() != "") or
+                 (len(current_line.split("=")) > 2 and 
+                    current_line[current_line.rfind(")"):].split("=")[1] != ""))):
                 #One-liner
                 pass
             else:
@@ -602,9 +605,10 @@ def get_nim_node_tree(nim_code):
                     else:
                         const_node.name = line.split("=")[0].strip()
                         const_node.type = None
-                    const_node.description  = "const"
-                    const_node.line         = line_count + line_offset
-                    input_node.consts.append(const_node)
+                    if const_node.name[0].isalpha():
+                        const_node.description  = "const"
+                        const_node.line         = line_count + line_offset
+                        input_node.consts.append(const_node)
                 elif current_indentation < compare_indentation:
                     const_statement = False
             elif let_statement == True:
@@ -616,9 +620,10 @@ def get_nim_node_tree(nim_code):
                     else:
                         let_node.name = line.split("=")[0].strip()
                         let_node.type = None
-                    let_node.description  = "let"
-                    let_node.line         = line_count + line_offset
-                    input_node.lets.append(let_node)
+                    if let_node.name[0].isalpha():
+                        let_node.description  = "let"
+                        let_node.line         = line_count + line_offset
+                        input_node.lets.append(let_node)
                 elif current_indentation < compare_indentation:
                     let_statement = False
             elif var_statement == True:
@@ -634,7 +639,7 @@ def get_nim_node_tree(nim_code):
                         line = line.split("=")[0].strip()
                     for var in line.split(","):
                         var_name = var.strip()
-                        if var_name != "":
+                        if var_name != "" and var_name[0].isalpha():
                             var_node = NimNode()
                             var_node.name           = var.strip()
                             var_node.description    = "var"
