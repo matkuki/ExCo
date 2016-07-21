@@ -36,7 +36,7 @@ All additional licenses are specified at the beginning of every source code file
 
 ### Supported platforms: ###
 - __Windows__ ([precompiled binaries available](https://github.com/matkuki/Ex-Co-Windows-Compiled))
-- __GNU/Linux__ (tested on Lubuntu, Raspbian (Raspberry pi and pi 2))
+- __GNU/Linux__ (tested on Lubuntu, Raspbian (Raspberry pi, pi2 and pi3))
 - __Mac OS__ (Many thanks to __zenlc2000__ for testing this on Mac OS 10.11)
 
 ### Dependencies: ###
