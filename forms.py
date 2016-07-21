@@ -7399,6 +7399,11 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             self.oberon_comment_style = True
             self.comment_string     = "<!--"
             self.end_comment_string = "-->"
+        elif file_type  == "css":
+            lexer   = PyQt4.Qsci.QsciLexerCSS()
+            self.oberon_comment_style = True
+            self.comment_string     = "/*"
+            self.end_comment_string = "*/"
         else:
             #No lexer was chosen, set file type to text and lexer to plain text
             self.current_file_type  = "TEXT"

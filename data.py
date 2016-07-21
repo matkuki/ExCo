@@ -126,6 +126,7 @@ ext_fortran77           = [".f", ".for"]
 ext_idl                 = [".idl"]
 ext_ruby                = [".rb", ".rbw"]
 ext_html                = [".html", ".htm"]
+ext_css                 = [".css"]
 
 
 """

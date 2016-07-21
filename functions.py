@@ -1141,6 +1141,8 @@ def get_file_type(file_with_path):
         file_type = "ruby"
     elif file_extension.lower() in data.ext_html:
         file_type = "html"
+    elif file_extension.lower() in data.ext_css:
+        file_type = "css"
     else:
         #The file extension was not recognized, 
         #try the file contents for more information
