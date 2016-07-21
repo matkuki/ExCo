@@ -7394,6 +7394,11 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         elif file_type  == "ruby":
             lexer   = PyQt4.Qsci.QsciLexerRuby()
             self.comment_string = "#"
+        elif file_type  == "html":
+            lexer   = PyQt4.Qsci.QsciLexerHTML()
+            self.oberon_comment_style = True
+            self.comment_string     = "<!--"
+            self.end_comment_string = "-->"
         else:
             #No lexer was chosen, set file type to text and lexer to plain text
             self.current_file_type  = "TEXT"

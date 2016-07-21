@@ -1139,6 +1139,8 @@ def get_file_type(file_with_path):
         file_type = "idl"
     elif file_extension.lower() in data.ext_ruby:
         file_type = "ruby"
+    elif file_extension.lower() in data.ext_html:
+        file_type = "html"
     else:
         #The file extension was not recognized, 
         #try the file contents for more information
