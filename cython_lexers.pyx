@@ -56,63 +56,67 @@
         Nuitka is licensed under the Apache license.
 """
 
+
 ##  FILE DESCRIPTION:
-##      Setup file for the Cython module
+##      Cython implementation module for Ex.Co., 
+##      used for various lexers in the lexers.py module.
 ##      NOTES:
-##          Build the Cython module with:
-##              "python cython_setup.py build_ext --build-lib=cython_build/"
+##          Cython build command:
+##              python cython_setup.py build_ext --build-lib=cython_build/
 
-import shutil
-import os
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Build import build_ext
 
-# Clean-up
-print("Pre-build clean-up started ...")
-if os.path.exists('cython_build'):
-    shutil.rmtree('cython_build')
-if os.path.exists('build'):
-    shutil.rmtree('build')
-filelist = [f for f in os.listdir(".") if f.endswith(".c")]
-for f in filelist:
-    os.remove(f)
-print("Pre-build clean-up completed.")
+# Cython libraries
+from libc.stdlib cimport malloc, free
+from libc.string cimport strcmp, strstr, strlen, strcpy, strchr, strtok
+from cpython.unicode cimport PyUnicode_AsEncodedString
 
-source_files = [
-    "cython_lexers.pyx"
+# Include the various lexer implementations
+include "cython_lexer_ada.pxi"
+include "cython_lexer_nim.pxi"
+include "cython_lexer_oberon.pxi"
+
+"""
+Common functions and variables
+"""
+# Separator list
+cdef char* extended_separators = [
+    ' ', '\t', '(', ')', '.', ';', 
+    '+', '-', '/', '*', ':', ',', 
+    '\n', '[', ']', '{', '}'
 ]
 
-ext_modules = [
-    Extension(  
-        "cython_lexers",
-        source_files,
-        include_dirs = [],
-        libraries = [],
-        library_dirs = []
-    )
-]
+# Separator list length
+cdef int separator_list_length = strlen(extended_separators)
 
-setup(
-    name = 'Ex.Co. Cython extensions',
-    cmdclass = {
-        'build_ext':    build_ext,
-    },
-    ext_modules = ext_modules
-)
 
-# Clean-up
-print("Post-build clean-up started ...")
-if os.path.exists('build'):
-    shutil.rmtree('build')
-filelist = [f for f in os.listdir(".") if f.endswith(".c")]
-for f in filelist:
-    os.remove(f)
-print("Post-build clean-up completed.")
+cdef inline char** to_cstring_array(string_list):
+    """C function that transforms a Python list into a C array of strings(char arrays)"""
+    # Allocate the array of C strings on the heap
+    cdef char **return_array = <char **>malloc(len(string_list) * sizeof(char *))
+    # Loop through the python list of strings
+    for i in range(len(string_list)):
+        # Decode the python string to a byte array
+        temp_value = PyUnicode_AsEncodedString(string_list[i], 'utf-8', "strict")
+        # Allocate the current C string on the heap
+        temp_str = <char*>malloc(len(temp_value))
+        # Copy the decoded string into the allocated C string
+        strcpy(temp_str, temp_value)
+        # Set the reference of the C string in the allocated array at the current index
+        return_array[i] = temp_str
+    return return_array
 
-#print("Kopiranje cython_lexers.pyd datoteke ...")
-#shutil.copyfile(
-#    'D:/Domaci_Projekti/ExCoEdit/cython_build/cython_lexers.pyd', 
-#    "D:/Domaci_Projekti/razno_za_exco/Testiranje/cython_lexers.pyd"
-#)
+cdef inline free_cstring_array(char** cstring_array, int list_length):
+    """C function for cleaning up a C array of characters"""
+    for i in range(list_length):
+        free(cstring_array[i])
+    free(cstring_array)
+
+cdef inline char check_extended_separators(char character) nogil:
+    cdef int cnt
+    for cnt in range(0, separator_list_length):
+        if character == extended_separators[cnt]:
+            return character
+    return 0
+
+
 

@@ -2795,6 +2795,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     file_extension == ".pyw" or
                     file_extension == ".pyx" or
                     file_extension == ".pxd" or
+                    file_extension == ".pxi" or
                     file_extension == ".cfg"):
                     file =  os.path.join(
                                 self.parent.settings.manipulator.application_directory, 
@@ -6101,6 +6102,8 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                 line_number = self.get_line_number()
                 #Check that the last line is valid
                 if len(self.line_list[line_number-1]) == 0:
+                    return
+                elif len(self.line_list[line_number-1].rstrip()) == 0:
                     return
                 last_character = self.line_list[line_number-1].rstrip()[-1]
                 if last_character in self.current_lexer.autoindent_characters:

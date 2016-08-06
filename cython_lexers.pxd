@@ -56,63 +56,23 @@
         Nuitka is licensed under the Apache license.
 """
 
+
 ##  FILE DESCRIPTION:
-##      Setup file for the Cython module
+##      Cython definition module for Ex.Co.,
+##      used for various lexers in the lexers.py module
 ##      NOTES:
-##          Build the Cython module with:
-##              "python cython_setup.py build_ext --build-lib=cython_build/"
+##          Cython build command:
+##              python cython_setup.py build_ext --build-lib=cython_build/
 
-import shutil
-import os
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Build import build_ext
 
-# Clean-up
-print("Pre-build clean-up started ...")
-if os.path.exists('cython_build'):
-    shutil.rmtree('cython_build')
-if os.path.exists('build'):
-    shutil.rmtree('build')
-filelist = [f for f in os.listdir(".") if f.endswith(".c")]
-for f in filelist:
-    os.remove(f)
-print("Pre-build clean-up completed.")
+#Array for holding data to help with styling the END keyword in the Ada programming language
+cdef struct EndData:
+    int     length
+    char    file_type
+    char    data[1024]
 
-source_files = [
-    "cython_lexers.pyx"
-]
+cdef inline char** to_cstring_array(object)
+cdef inline char check_extended_separators(char) nogil
 
-ext_modules = [
-    Extension(  
-        "cython_lexers",
-        source_files,
-        include_dirs = [],
-        libraries = [],
-        library_dirs = []
-    )
-]
 
-setup(
-    name = 'Ex.Co. Cython extensions',
-    cmdclass = {
-        'build_ext':    build_ext,
-    },
-    ext_modules = ext_modules
-)
-
-# Clean-up
-print("Post-build clean-up started ...")
-if os.path.exists('build'):
-    shutil.rmtree('build')
-filelist = [f for f in os.listdir(".") if f.endswith(".c")]
-for f in filelist:
-    os.remove(f)
-print("Post-build clean-up completed.")
-
-#print("Kopiranje cython_lexers.pyd datoteke ...")
-#shutil.copyfile(
-#    'D:/Domaci_Projekti/ExCoEdit/cython_build/cython_lexers.pyd', 
-#    "D:/Domaci_Projekti/razno_za_exco/Testiranje/cython_lexers.pyd"
-#)
 

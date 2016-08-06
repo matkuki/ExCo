@@ -65,7 +65,7 @@
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "4.3"
+APPLICATION_VERSION     = "4.4"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
@@ -98,7 +98,7 @@ zoom_factor = 0
 File extension lists
 """
 ext_python              = [".py", ".pyw"]
-ext_cpython             = [".pyx", ".pxd"]
+ext_cpython             = [".pyx", ".pxd", ".pxi"]
 ext_c                   = [".c", ".h"]
 ext_cpp                 = [".c++", ".h++", ".cc", ".hh", ".cpp", ".hpp", ".cxx", ".hxx"]
 ext_pascal              = [".pas", ".pp", ".lpr", ".cyp"]
