@@ -110,9 +110,9 @@ for f in filelist:
     os.remove(f)
 print("Post-build clean-up completed.")
 
-#print("Kopiranje cython_lexers.pyd datoteke ...")
-#shutil.copyfile(
-#    'D:/Domaci_Projekti/ExCoEdit/cython_build/cython_lexers.pyd', 
-#    "D:/Domaci_Projekti/razno_za_exco/Testiranje/cython_lexers.pyd"
-#)
+print("Kopiranje cython_lexers.pyd datoteke ...")
+shutil.copyfile(
+    'D:/Domaci_Projekti/ExCoEdit/cython_build/cython_lexers.pyd', 
+    "D:/Domaci_Projekti/razno_za_exco/Testiranje/cython_lexers.pyd"
+)
 

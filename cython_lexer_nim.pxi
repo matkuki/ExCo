@@ -243,7 +243,7 @@ def style_nim(int start,
     while i < text_length:
         if (((c_text[i] == '{' and c_text[i+1] == '.') and pragmaing == 0) or
             (pragmaing == 1)):
-            """ Macro statement """
+            """ Pragma statement """
             temp_state = i - temp_state
             # Style the currently accumulated token
             if temp_state > 0:
@@ -264,7 +264,7 @@ def style_nim(int start,
                 # Check for end of macro
                 if c_text[i] == '.' and c_text[i+1] == '}':
                     break
-                # Increment the text index only if comment count is non zero
+                # Increment the text index only if end of pragma is reached
                 i += 1
             # Only style the '.}' characters if it's not the end of the text
             if i < text_length:
@@ -441,19 +441,27 @@ def style_nim(int start,
                   strcmp(current_token, "macro") == 0 or
                   strcmp(current_token, "template") == 0):
                 """ 'proc'/'macro'/'template' name """
-                # Adjust the index
-                i -= 1
-                temp_state = i
-                if c_text[i] != '(':
+                if c_text[i-1] != '(':
                     # Skip the whitespaces
                     while c_text[i] == ' ':
                         i += 1
+                    temp_state = i - temp_state
+                    if temp_state > 0:
+                        setStyling(temp_state, NIM_DEFAULT)
                     temp_state = i
                     # Style the procedure/macro/template name
-                    while c_text[i] != '(' and c_text[i] != '\n' and i < text_length:
+                    while (c_text[i] != '(' and 
+                           c_text[i] != ')' and 
+                           c_text[i] != '\n' and 
+                           i < text_length):
                         i += 1
                     temp_state = i - temp_state
-                    setStyling(temp_state, NIM_DEFINITION)
+                    if temp_state > 0:
+                        setStyling(temp_state, NIM_DEFINITION)
+                else:
+                    temp_state = i - temp_state
+                    if temp_state > 0:
+                        setStyling(temp_state, NIM_DEFINITION)
             # Save the token
             strcpy(previous_token, current_token)
             # Set the new index and reset the token lenght
