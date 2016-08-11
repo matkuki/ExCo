@@ -220,7 +220,7 @@ def style_nim(int start,
     cdef int        temp_state = 0
     # Scintilla works with bytes, so we have to adjust the start and end boundaries
     c_text      = NULL
-    py_text     = editor.text()
+    py_text     = editor.text().lower()
     text        = bytearray(py_text, "utf-8")[start:end]
     c_text      = text
     text_length = len(text)
@@ -385,6 +385,25 @@ def style_nim(int start,
             # Skip to the next iteration, because the index is already
             # at the position at the end of the string
             continue
+        elif c_text[i] == '#':
+            """ One line comment """
+            temp_state = i - temp_state
+            # Style the currently accumulated token
+            if temp_state > 0:
+                setStyling(temp_state, NIM_DEFAULT)
+            temp_state = i
+            # Skip the already counted '#' character
+            i += 1
+            while c_text[i] != '\n' and i < text_length:
+                i += 1
+            # Style the comment
+            temp_state = i - temp_state
+            setStyling(temp_state, NIM_COMMENT)
+            temp_state = i
+            token_length = 0
+            # Skip to the next iteration, because the index is already
+            # at the position at the end of the string
+            continue
         elif c_text[i] == '"':
             temp_state = i - temp_state
             #Style the currently accumulated token
@@ -439,6 +458,7 @@ def style_nim(int start,
                 setStyling(temp_state, NIM_CASE_OF)
             elif (strcmp(current_token, "proc") == 0 or
                   strcmp(current_token, "macro") == 0 or
+                  strcmp(current_token, "converter") == 0 or
                   strcmp(current_token, "template") == 0):
                 """ 'proc'/'macro'/'template' name """
                 if c_text[i-1] != '(':
