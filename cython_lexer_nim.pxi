@@ -355,6 +355,44 @@ def style_nim(int start,
             # Skip to the next iteration, because the index is already
             # at the position at the end of the string
             continue
+        elif ((c_text[i] == '"' and c_text[i+1] == '"' and c_text[i+2] == '"' and long_stringing == 0) or
+              (long_stringing == 1)):
+            """ Long string """
+            temp_state = i - temp_state
+            # Style the currently accumulated token
+            if temp_state > 0:
+                current_token[token_length] = 0
+                check_nim_token(
+                    current_token,
+                    previous_token,
+                    c_text[i],
+                    temp_state,
+                    setStyling
+                )
+            temp_state = i
+            # Skip the already counted '"','"','"' characters
+            if long_stringing == 0:
+                i += 3
+            # Loop until the comment ends
+            while i < text_length:
+                # Check for end of comment
+                if c_text[i] == '"' and c_text[i+1] == '"' and c_text[i+2] == '"':
+                    break
+                # Increment the text index only if comment count is non zero
+                i += 1
+            # Only style the '"""' characters if it's not the end of the text
+            if i < text_length:
+                i += 3
+            # Style the long string
+            temp_state = i - temp_state
+            setStyling(temp_state, NIM_LONG_STRING)
+            # Set the states and reset the flags
+            temp_state = i
+            long_stringing = 0
+            token_length = 0
+            # Skip to the next iteration, because the index is already
+            # at the position at the end of the string
+            continue
         elif c_text[i] == '#' and c_text[i+1] != '[' and c_text[i+2] != '[':
             """ One line comment/documentation comment """
             temp_state = i - temp_state
@@ -405,6 +443,7 @@ def style_nim(int start,
             # at the position at the end of the string
             continue
         elif c_text[i] == '"':
+            """ String """
             temp_state = i - temp_state
             #Style the currently accumulated token
             if temp_state > 0:

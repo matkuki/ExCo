@@ -92,6 +92,8 @@ tab_width = 4
 terminal = "lxterminal"
 #Zoom factor when a new editor is created (default is 0)
 zoom_factor = 0
+#Default tree display(file-tree, node-tree, ...)
+tree_display_font_size = 10
 
 
 """

@@ -896,7 +896,8 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                              import_nodes, 
                              class_nodes,
                              function_nodes,
-                             global_vars):
+                             global_vars, 
+                             parse_error=False):
         """Display the input python data in the tree display"""
         #Store the custom editor tab that for quicker navigation
         self.bound_tab = custom_editor
@@ -916,10 +917,12 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.setHorizontalHeaderLabels([document_name])
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
-        self.set_font_size(10)
+        self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
-        description_font    = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        description_font    = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
         item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
@@ -933,7 +936,22 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         #Set the label properties
         label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
-        label_font  = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        label_font  = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
+        #Check if there was a parsing error
+        if parse_error == True:
+            error_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(180, 0, 0))
+            error_font  = PyQt4.QtGui.QFont(
+                "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+            )
+            item_error  = PyQt4.QtGui.QStandardItem("ERROR PARSING FILE!")
+            item_error.setEditable(False)
+            item_error.setForeground(error_brush)
+            item_error.setFont(error_font)
+            item_error.setIcon(self.node_icon_nothing)
+            tree_model.appendRow(item_error)
+            return
         """Imported module filtering"""
         item_imports = PyQt4.QtGui.QStandardItem(import_text)
         item_imports.setEditable(False)
@@ -1082,10 +1100,12 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.setHorizontalHeaderLabels([document_name])
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
-        self.set_font_size(10)
+        self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
-        description_font    = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        description_font    = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
         item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
@@ -1099,7 +1119,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         #Set the label properties
         label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
-        label_font  = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        label_font  = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
         """Function nodes filtering"""
         item_functions = PyQt4.QtGui.QStandardItem(function_text)
         item_functions.setEditable(False)
@@ -1143,10 +1165,12 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.setHorizontalHeaderLabels([document_name])
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
-        self.set_font_size(10)
+        self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
-        description_font    = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        description_font    = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
         item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
@@ -1160,7 +1184,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         """Add the nodes"""
         label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
-        label_font  = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        label_font  = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
         #Nested function for creating a tree node
         def create_tree_node(node_text, 
                              node_text_brush, 
@@ -1424,19 +1450,21 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         """Define the description details"""
         #Font
         description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
-        description_font    = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        description_font    = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
         #Directory item
         item_directory  = PyQt4.QtGui.QStandardItem(
-                            "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
-                          )
+            "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
+        )
         item_directory.setEditable(False)
         item_directory.setForeground(description_brush)
         item_directory.setFont(description_font)
         #Search item, display according to the custom text parameter
         if custom_text == None:
             item_search_text = PyQt4.QtGui.QStandardItem(
-                                "FILE HAS: {:s}".format(search_text)
-                               )
+                "FILE HAS: {:s}".format(search_text)
+            )
         else:
             item_search_text = PyQt4.QtGui.QStandardItem(custom_text)
         item_search_text.setEditable(False)
@@ -1455,11 +1483,13 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.header().hide()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
-        self.set_font_size(10)
+        self.set_font_size(data.tree_display_font_size)
         """Define the description details"""
         #Font
-        description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
-        description_font    = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        description_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
+        description_font = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
         #Directory item
         item_directory  = PyQt4.QtGui.QStandardItem(
                             "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
@@ -1517,7 +1547,10 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             directory = directory.replace("\\", "/")
             """Adding the files"""
             label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
-            label_font  = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+            label_font = PyQt4.QtGui.QFont(
+                "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+            )
+            item_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
             #Create the base directory item that will hold all of the found files
             item_base_directory = PyQt4.QtGui.QStandardItem(directory)
             item_base_directory.setEditable(False)
@@ -1542,6 +1575,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                     #Initialize the file item
                     item_file = PyQt4.QtGui.QStandardItem(file_name)
                     item_file.setEditable(False)
+                    item_file.setFont(item_font)
                     file_type = functions.get_file_type(file_name)
                     item_file.setIcon(get_language_file_icon(file_type))
                     #Add an atribute that will hold the full file name to the QStandartItem.
@@ -1580,13 +1614,14 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                             item_new_directory = PyQt4.QtGui.QStandardItem(dir)
                             item_new_directory.setEditable(False)
                             item_new_directory.setIcon(self.folder_icon)
+                            item_new_directory.setFont(item_font)
                             #Add an indicating attribute that shows the item is a directory.
                             #It's a python object, attributes can be added dynamically!
                             item_new_directory.is_dir = True
                             current_directory = current_directory.add_directory(
-                                                    dir, 
-                                                    item_new_directory
-                                                )
+                                dir, 
+                                item_new_directory
+                            )
             #Add the base level files from the stored dictionary, first sort them
             for file_key in sorted(base_files, key=str.lower):
                 base_directory.add_file(file_key, base_files[file_key])
@@ -1599,6 +1634,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             item_no_files_found = PyQt4.QtGui.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
             item_no_files_found.setIcon(self.node_icon_nothing)
+            item_no_files_found.setFont(label_font)
             tree_model.appendRow(item_no_files_found)
     
     def _add_items_with_lines_to_tree(self, tree_model, directory, items):
@@ -1609,7 +1645,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             directory = directory.replace("\\", "/")
             """Adding the files"""
             label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
-            label_font  = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+            label_font  = PyQt4.QtGui.QFont(
+                "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+            )
             #Create the base directory item that will hold all of the found files
             item_base_directory = PyQt4.QtGui.QStandardItem(directory)
             item_base_directory.setEditable(False)

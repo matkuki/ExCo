@@ -82,7 +82,9 @@ Common functions and variables
 cdef char* extended_separators = [
     ' ', '\t', '(', ')', '.', ';', 
     '+', '-', '/', '*', ':', ',', 
-    '\n', '[', ']', '{', '}'
+    '\n', '[', ']', '{', '}', '<', 
+    '>', '|', '=', '@', '&', '%',
+    '!', '?', '^', '~', '\"'
 ]
 
 # Separator list length

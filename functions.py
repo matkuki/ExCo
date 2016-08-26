@@ -944,7 +944,7 @@ def get_python_node_tree(python_code):
     #Other nodes
     class_nodes         = [node for node in nodes if isinstance(node, ast.ClassDef)]
     function_nodes      = [node for node in nodes if isinstance(node, ast.FunctionDef)]
-    global_vars         = [node for node in nodes if isinstance(node, ast.Global)]
+    global_vars         = [node for node in nodes if isinstance(node, ast.Name)]
     #Get child nodes for all of the classes
     children         = []
     class_tree_nodes = []

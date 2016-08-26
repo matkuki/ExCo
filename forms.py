@@ -525,6 +525,10 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         focused_tab = self.get_tab_by_focus()
         if focused_tab != None:
             focused_tab.save_document(saveas=True, last_dir=self.last_browsed_dir, encoding=encoding)
+            #Set the icon if it was set by the lexer
+            if focused_tab.current_icon != None:
+                parent = focused_tab.parent
+                parent.setTabIcon(parent.indexOf(focused_tab), focused_tab.current_icon)
             #Save the last browsed directory from the editor widget to the main form
             self.last_browsed_dir = focused_tab.last_browsed_dir
     
@@ -4092,14 +4096,24 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Display the nodes according to file type
             if parser == "PYTHON":
                 #Get all the file information
-                import_nodes, class_nodes, function_nodes, global_vars = functions.get_python_node_tree(custom_editor.text())
+                try:
+                    import_nodes, class_nodes, function_nodes, global_vars = functions.get_python_node_tree(custom_editor.text())
+                    parser_error = False
+                except:
+                    # Exception, probably an error in the file's syntax
+                    import_nodes = []
+                    class_nodes = []
+                    function_nodes = []
+                    global_vars = []
+                    parser_error = True
                 #Display the information in the tree tab
                 parent.node_tree_tab.display_python_nodes(
                     custom_editor,
                     import_nodes,  
                     class_nodes, 
                     function_nodes, 
-                    global_vars
+                    global_vars, 
+                    parser_error
                 )
             elif parser == "C":
                 #Get all the file information
