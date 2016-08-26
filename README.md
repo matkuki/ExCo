@@ -2,7 +2,7 @@
 ### Descripton: ###
 Ex&#46;Co&#46; (Extensible Coder) is a GUI text editor written in Python that uses PyQt/QScintilla libraries with some lexers available in Cython for more efficient text highlighting.
 I developed it with simplicity of use and extensibility in mind.<br>
-For precompiled bundles for Windows see https://github.com/matkuki/Ex-Co-Windows-Compiled
+For precompiled bundles for Windows see https://github.com/matkuki/ExCo-Windows-Compiled
 <br><br>
 ### Video: ###
 https://www.youtube.com/watch?v=v-7fqJGv7Ts&feature
