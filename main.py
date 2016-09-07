@@ -165,15 +165,15 @@ def main():
     #Set the resources directory
     data.resources_directory   = os.path.join(data.application_directory,  "resources")
     #Combine the application path with the Ex.Co. icon file name (the icon file name is set in the global module)
-    data.application_icon =    os.path.join(
-                                            data.resources_directory,
-                                            data.application_icon
-                                        )
+    data.application_icon = os.path.join(
+        data.resources_directory,
+        data.application_icon
+    )
     #Combine the application path with the Ex.Co. information file name (the information file name is set in the global module)
     data.about_image = os.path.join(
-                                    data.resources_directory,
-                                    data.about_image
-                                )
+        data.resources_directory,
+        data.about_image
+    )
     #Create QT application, needed to use QT forms
     app = PyQt4.QtGui.QApplication(sys.argv)
     #Save the Qt application to the global reference

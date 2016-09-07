@@ -62,12 +62,12 @@
 
 import keyword
 import builtins
-import collections
 import re
 import PyQt4.QtCore
 import PyQt4.QtGui
 import PyQt4.Qsci
 import functions
+import data
 #Try importing the Cython module
 try:
     import cython_lexers
@@ -75,20 +75,38 @@ try:
 except Exception as ex:
     print(ex)
     cython_found = False
+    
 
 class Text(PyQt4.Qsci.QsciLexerCustom):
     """Lexer for styling normal text documents"""
     #Class variables
-    default_color       = PyQt4.QtGui.QColor(0, 0, 0)
-    default_font        = PyQt4.QtGui.QFont('Courier', 10)
+    default_font    = PyQt4.QtGui.QFont('Courier', 10)
+    styles = {
+        "Default" : 0
+    }
     
-    def __init__(self,  parent=None):
+    def __init__(self, parent=None):
         """Overridden initialization"""
         #Initialize superclass
         super().__init__()
         #Set the font colors
-        self.setColor(self.default_color, 0)
         self.setFont(self.default_font, 0)
+        #Set the theme
+        self.set_theme(data.theme)
+    
+    def set_theme(self, theme):
+        def set_color(color, style):
+            self.setColor(
+                color, 
+                self.styles[style]
+            )
+        # Papers
+        self.setPaper(
+            PyQt4.QtGui.QColor(theme.Paper.Python.Default), 
+            self.styles["Default"]
+        )
+        # Fonts
+        set_color(PyQt4.QtGui.QColor(theme.Font.Python.Default), "Default")
     
     def language(self):
         return "Plain text"
@@ -108,7 +126,25 @@ class Text(PyQt4.Qsci.QsciLexerCustom):
 class Python(PyQt4.Qsci.QsciLexerPython):
     """Standard Python lexer with added keywords from built-in functions"""
     #Class variables
-    _kwrds              = None
+    _kwrds = None
+    styles = {
+        "Default" : 0,
+        "Comment" : 1,
+        "Number" : 2,
+        "DoubleQuotedString" : 3,
+        "SingleQuotedString" : 4,
+        "Keyword" : 5,
+        "TripleSingleQuotedString" : 6,
+        "TripleDoubleQuotedString" : 7,
+        "ClassName" : 8,
+        "FunctionMethodName" : 9,
+        "Operator" : 10,
+        "Identifier" : 11,
+        "CommentBlock" : 12,
+        "UnclosedString" : 13,
+        "HighlightedIdentifier" : 14,
+        "Decorator" : 15
+    }
     
     def __init__(self, parent=None):
         """Overridden initialization"""
@@ -120,6 +156,23 @@ class Python(PyQt4.Qsci.QsciLexerPython):
         self._kwrds.extend([bi for bi in builtins.__dict__.keys()])
         #Transform list into a single string with spaces between list items
         self._kwrds = " ".join(self._kwrds)
+        #Set the theme
+        self.set_theme(data.theme)
+    
+    def set_theme(self, theme):
+        def set_color(color, style):
+            self.setColor(
+                color, 
+                self.styles[style]
+            )
+        # Papers
+        for style in self.styles:
+            paper = PyQt4.QtGui.QColor(getattr(theme.Paper.Python, style))
+            self.setPaper(paper, self.styles[style])
+        # Fonts
+        for style in self.styles:
+            color = PyQt4.QtGui.QColor(getattr(theme.Font.Python, style))
+            set_color(color, style)
     
     def keywords(self, state):
         """
@@ -132,10 +185,29 @@ class Python(PyQt4.Qsci.QsciLexerPython):
             keywords = self._kwrds
         return keywords
 
+
 class Cython(PyQt4.Qsci.QsciLexerPython):
     """Cython - basically Python with added keywords"""
     #Class variables
     _kwrds = None
+    styles = {
+        "Default" : 0,
+        "Comment" : 1,
+        "Number" : 2,
+        "DoubleQuotedString" : 3,
+        "SingleQuotedString" : 4,
+        "Keyword" : 5,
+        "TripleSingleQuotedString" : 6,
+        "TripleDoubleQuotedString" : 7,
+        "ClassName" : 8,
+        "FunctionMethodName" : 9,
+        "Operator" : 10,
+        "Identifier" : 11,
+        "CommentBlock" : 12,
+        "UnclosedString" : 13,
+        "HighlightedIdentifier" : 14,
+        "Decorator" : 15
+    }
     _c_kwrds = [
         "void", "char",  "int", "long", "short", "double", "float", 
         "const", "unsigned", "inline"
@@ -145,6 +217,7 @@ class Cython(PyQt4.Qsci.QsciLexerPython):
         "extern", "gil", "include", "nogil", "property", "public", 
         "readonly", "struct", "union", "DEF", "IF", "ELIF", "ELSE"
     ]
+    
     
     def __init__(self,  parent=None):
         """Overridden initialization"""
@@ -160,6 +233,25 @@ class Cython(PyQt4.Qsci.QsciLexerPython):
         self._kwrds.extend(self._cython_kwrds)
         #Transform list into a single string with spaces between list items
         self._kwrds = " ".join(self._kwrds)
+        #Set the theme
+        self.set_theme(data.theme)
+    
+    def set_theme(self, theme):
+        def set_color(color, style):
+            self.setColor(
+                color, 
+                self.styles[style]
+            )
+        # Papers
+        for i in self.styles:
+            self.setPaper(
+                PyQt4.QtGui.QColor(theme.Paper.Python.Default), 
+                self.styles[i]
+            )
+        # Fonts
+        for style in self.styles:
+            color = PyQt4.QtGui.QColor(getattr(theme.Font.Python, style))
+            set_color(color, style)
     
     def keywords(self, state):
         """
@@ -174,20 +266,26 @@ class Cython(PyQt4.Qsci.QsciLexerPython):
 
 
 class Oberon(PyQt4.Qsci.QsciLexerCustom):
-    """Custom lexer for the Oberon/Oberon-2/Modula/Modula-2 programming languages"""
-    #Class custom objects/types
-    Style = collections.namedtuple(
-        "Style",
-        "DEFAULT COMMENT KEYWORD STRING PROCEDURE MODULE NUMBER TYPE"
-    )
+    """
+    Custom lexer for the Oberon/Oberon-2/Modula/Modula-2 programming languages
+    """
+    styles = {
+        "Default" : 0,
+        "Comment" : 1,
+        "Keyword" : 2,
+        "String" : 3,
+        "Procedure" : 4,
+        "Module" : 5,
+        "Number" : 6,
+        "Type" : 7
+    }
     
     #Class variables
-    default_color       = PyQt4.QtGui.QColor(0, 0, 0)
+    default_color       = PyQt4.QtGui.QColor(data.theme.Font.Oberon.Default)
     default_font        = PyQt4.QtGui.QFont('Courier', 10)
-    styles              = Style(0, 1, 2, 3, 4, 5, 6, 7)
     keyword_list        = [
         'ARRAY', 'IMPORT', 'RETURN', 'BEGIN', 'IN',
-        'THEN', 'BY', 'IS', 'TO', 'CASE', 'LOOP', 'TYPE', 
+        'THEN', 'BY', 'IS', 'TO', 'CASE', 'LOOP', 'Type', 
         'CONST', 'MOD', 'UNTIL', 'DIV', 'MODULE', 'VAR', 
         'DO', 'NIL', 'WHILE', 'ELSE', 'OF', 'WITH', 
         'ELSIF', 'OR', 'END', 'POINTER', 'EXIT',
@@ -203,27 +301,11 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
         """Overridden initialization"""
         #Initialize superclass
         super().__init__()
-        #Set style colors
-        self.setColor(self.default_color, 0)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 0), 1)
-        self.setColor(PyQt4.QtGui.QColor(0, 0, 127), 2)
-        self.setColor(PyQt4.QtGui.QColor(127, 0, 127), 3)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 127), 4)
-        self.setColor(PyQt4.QtGui.QColor(127, 0, 0), 5)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 127), 6)
-        self.setColor(PyQt4.QtGui.QColor(127, 127, 0), 7)
-        #Set style fonts
-        self.setFont(self.default_font, 0)
-        self.setFont(self.default_font, 1)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 2)
-        self.setFont(self.default_font, 3)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 4)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 5)
-        self.setFont(self.default_font, 6)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 7)
         #Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultFont(self.default_font)
+        #Set the theme
+        self.set_theme(data.theme)
     
     def language(self):
         return "Oberon/Modula-2/Component Pascal"
@@ -234,6 +316,32 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
         else:
             description = ""
         return description
+    
+    def set_theme(self, theme):
+        def set_color(color, style, bold=False):
+            self.setColor(
+                color, 
+                self.styles[style]
+            )
+            if bold == True:
+                self.setFont(
+                    PyQt4.QtGui.QFont(
+                        'Courier', 
+                        10, 
+                        weight=PyQt4.QtGui.QFont.Bold
+                    ), 
+                    self.styles[style]
+                )
+        # Papers
+        for i in self.styles:
+            self.setPaper(
+                PyQt4.QtGui.QColor(theme.Paper.Oberon.Default), 
+                self.styles[i]
+            )
+        # Fonts
+        for style in self.styles:
+            color = PyQt4.QtGui.QColor(getattr(theme.Font.Oberon, style))
+            set_color(color, style)
 
     def styleText(self, start, end):
         """
@@ -262,14 +370,14 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
             setStyling  = self.setStyling
             kw_list     = self.keyword_list
             types_list  = self.types_list
-            DEF = self.styles.DEFAULT
-            KWD = self.styles.KEYWORD
-            COM = self.styles.COMMENT
-            STR = self.styles.STRING
-            PRO = self.styles.PROCEDURE
-            MOD = self.styles.MODULE
-            NUM = self.styles.NUMBER
-            TYP = self.styles.TYPE
+            DEF = self.styles["Default"]
+            KWD = self.styles["Keyword"]
+            COM = self.styles["Comment"]
+            STR = self.styles["String"]
+            PRO = self.styles["Procedure"]
+            MOD = self.styles["Module"]
+            NUM = self.styles["Number"]
+            TYP = self.styles["Type"]
             #Initialize comment state and split the text into tokens
             commenting  = False
             stringing           = False
@@ -331,16 +439,20 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
 
 class Ada(PyQt4.Qsci.QsciLexerCustom):
     """Custom lexer for the Ada programming languages"""
-    #Class custom objects/types
-    Style = collections.namedtuple(
-        "Style",  
-        "DEFAULT COMMENT KEYWORD STRING PROCEDURE NUMBER TYPE PACKAGE"
-    )
+    styles = {
+        "Default" : 0,
+        "Comment" : 1,
+        "Keyword" : 2,
+        "String" : 3,
+        "Procedure" : 4,
+        "Number" : 5,
+        "Type" : 6, 
+        "Package" : 7
+    }
     
     #Class variables
-    default_color       = PyQt4.QtGui.QColor(0, 0, 0)
+    default_color       = PyQt4.QtGui.QColor(data.theme.Font.Ada.Default)
     default_font        = PyQt4.QtGui.QFont('Courier', 10)
-    styles              = Style(0, 1, 2, 3, 4, 5, 6, 7)
     keyword_list        =   [ 
         "abort", "else", "new", "return",
         "abs", "elsif", "not", "reverse",
@@ -367,27 +479,11 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
         """Overridden initialization"""
         #Initialize superclass
         super().__init__()
-        #Set style colors
-        self.setColor(self.default_color, 0)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 0), 1)
-        self.setColor(PyQt4.QtGui.QColor(0, 0, 127), 2)
-        self.setColor(PyQt4.QtGui.QColor(127, 0, 127), 3)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 127), 4)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 127), 5)
-        self.setColor(PyQt4.QtGui.QColor(127, 0, 0), 6)
-        self.setColor(PyQt4.QtGui.QColor(127, 48, 48), 7)
-        #Set style fonts
-        self.setFont(self.default_font, 0)
-        self.setFont(self.default_font, 1)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 2)
-        self.setFont(self.default_font, 3)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 4)
-        self.setFont(self.default_font, 5)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 6)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 7)
         #Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultFont(self.default_font)
+        #Set the theme
+        self.set_theme(data.theme)
     
     def language(self):
         return "Ada"
@@ -398,6 +494,32 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
         else:
             description = ""
         return description
+    
+    def set_theme(self, theme):
+        def set_color(color, style, bold=False):
+            self.setColor(
+                color, 
+                self.styles[style]
+            )
+            if bold == True:
+                self.setFont(
+                    PyQt4.QtGui.QFont(
+                        'Courier', 
+                        10, 
+                        weight=PyQt4.QtGui.QFont.Bold
+                    ), 
+                    self.styles[style]
+                )
+        # Papers
+        for style in self.styles:
+            self.setPaper(
+                PyQt4.QtGui.QColor(theme.Paper.Ada.Default), 
+                self.styles[style]
+            )
+        # Fonts
+        for style in self.styles:
+            color = PyQt4.QtGui.QColor(getattr(theme.Font.Ada, style))
+            set_color(color, style)
 
     def styleText(self, start, end):
         """
@@ -427,12 +549,12 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
             #Loop optimizations
             setStyling  = self.setStyling
             kw_list     = self.keyword_list
-            DEF = self.styles.DEFAULT
+            DEF = self.styles.Default
             KWD = self.styles.KEYWORD
-            COM = self.styles.COMMENT
-            STR = self.styles.STRING
+            COM = self.styles.Comment
+            STR = self.styles.String
             PRO = self.styles.PROCEDURE
-            NUM = self.styles.NUMBER
+            NUM = self.styles.Number
             PAC = self.styles.PACKAGE
             #Initialize comment state and split the text into tokens
             commenting  = False
@@ -491,38 +613,33 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
 
 class Nim(PyQt4.Qsci.QsciLexerCustom):
     """Custom lexer for the Nim programming languages"""
-    #Class custom objects/types
-    Style = collections.namedtuple(
-        "Style", 
-        [
-            "DEFAULT" , #0
-            "COMMENT" , #1
-            "BASIC_KEYWORD" ,   #2
-            "TOP_KEYWORD" , #3
-            "STRING" ,  #4
-            "LONG_STRING" , #5
-            "NUMBER" ,  #6
-            "PRAGMA" ,   #7
-            "OPERATOR" ,    #8
-            "UNSAFE",   #9
-            "TYPE", #10
-            "DOCUMENTATION_COMMENT",    #11
-            "DEFINITION",   #12
-            "CLASS",    #13
-            "KEYWORD_OPERATOR",    #14
-            "CHAR_LITERAL",     #15
-            "CASE_OF",     #16
-            "USER_KEYWORD",  #17
-            "MULTILINE_COMMENT",  #18
-            "MULTILINE_DOCUMENTATION", #19
-        ]
-    )
+    styles = {
+        "Default" : 0,
+        "Comment" : 1,
+        "BasicKeyword" : 2,
+        "TopKeyword" : 3,
+        "String" :  4,
+        "LongString" : 5,
+        "Number" :  6,
+        "Pragma" : 7,
+        "Operator" : 8,
+        "Unsafe" : 9,
+        "Type" : 10,
+        "DocumentationComment" : 11,
+        "Definition" : 12,
+        "Class" : 13,
+        "KeywordOperator" : 14,
+        "CharLiteral" :  15,
+        "CaseOf" :  16,
+        "UserKeyword" :  17,
+        "MultilineComment" :  18,
+        "MultilineDocumentation" : 19
+    }
     
     #Class variables
-    default_color       = PyQt4.QtGui.QColor(0, 0, 0)
+    default_color       = PyQt4.QtGui.QColor(data.theme.Font.Nim.Default)
     default_font        = PyQt4.QtGui.QFont('Courier', 10)
-    styles              = Style(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
-    NUMBER_OF_STYLES    = 19
+    Number_OF_STYLES    = 19
     #Basic keywords and built-in procedures and templates
     basic_keyword_list  = [
         "as", "atomic", "bind", "sizeof", 
@@ -603,61 +720,48 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         """Overridden initialization"""
         #Initialize superclass
         super().__init__()
-        #Set style colors
-        self.setColor(self.default_color, 0)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 0), 1)
-        self.setColor(PyQt4.QtGui.QColor(0, 0, 127), 2)
-        self.setColor(PyQt4.QtGui.QColor(64, 127, 192), 3)
-        self.setColor(PyQt4.QtGui.QColor(127, 0, 127), 4)
-        self.setColor(PyQt4.QtGui.QColor(127, 0, 0), 5)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 127), 6)
-        self.setColor(PyQt4.QtGui.QColor(192, 127, 64), 7)
-        self.setColor(PyQt4.QtGui.QColor(120, 120, 120), 8)
-        self.setColor(PyQt4.QtGui.QColor(192, 0, 0), 9)
-        self.setColor(PyQt4.QtGui.QColor(110, 110, 0), 10)
-        self.setColor(PyQt4.QtGui.QColor(127, 10, 10), 11)
-        self.setColor(PyQt4.QtGui.QColor(0, 127, 127), 12)
-        self.setColor(PyQt4.QtGui.QColor(0, 0, 255), 13)
-        self.setColor(PyQt4.QtGui.QColor(150, 60, 200), 14)
-        self.setColor(PyQt4.QtGui.QColor(0, 200, 255), 15)
-        self.setColor(PyQt4.QtGui.QColor(128, 0, 255), 16)
-        self.setColor(PyQt4.QtGui.QColor(255, 128, 64), 17)
-        self.setColor(PyQt4.QtGui.QColor(0, 108, 108), 18)
-        self.setColor(PyQt4.QtGui.QColor(110, 50, 150), 19)
-        #Set style fonts
-        self.setFont(self.default_font, 0)
-        self.setFont(self.default_font, 1)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 2)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 3)
-        self.setFont(self.default_font, 4)
-        self.setFont(self.default_font, 5)
-        self.setFont(self.default_font, 6)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 7)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 8)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 9)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 10)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 11)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10), 12)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10), 13)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 14)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10), 15)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10), 16)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 17)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 18)
-        self.setFont(PyQt4.QtGui.QFont('Courier', 10, weight=PyQt4.QtGui.QFont.Bold), 19)
         #Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultFont(self.default_font)
+        #Set the theme
+        self.set_theme(data.theme)
     
     def language(self):
         return "Nim"
     
     def description(self, style):
-        if style <= self.NUMBER_OF_STYLES:
+        if style <= self.Number_OF_STYLES:
             description = "Custom lexer for the Nim programming languages"
         else:
             description = ""
         return description
+    
+    def set_theme(self, theme):
+        def set_color(color, style, bold=False):
+            self.setColor(
+                color, 
+                self.styles[style]
+            )
+            if bold == True:
+                self.setFont(
+                    PyQt4.QtGui.QFont(
+                        'Courier', 
+                        10, 
+                        weight=PyQt4.QtGui.QFont.Bold
+                    ), 
+                    self.styles[style]
+                )
+        # Papers
+        for i in self.styles:
+            self.setPaper(
+                PyQt4.QtGui.QColor(theme.Paper.Nim.Default), 
+                self.styles[i]
+            )
+        # Fonts
+        for style in self.styles:
+            color = PyQt4.QtGui.QColor(getattr(theme.Font.Nim, style))
+            set_color(color, style)
+        
     
     def styleText(self, start, end):
         """
@@ -692,26 +796,26 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
             operator_list   = self.operator_list
             keyword_operator_list = self.keyword_operator_list
             type_kw_list    = self.type_keyword_list
-            DEF     = self.styles.DEFAULT
-            B_KWD   = self.styles.BASIC_KEYWORD
-            T_KWD   = self.styles.TOP_KEYWORD
-            COM     = self.styles.COMMENT
-            STR     = self.styles.STRING
-            L_STR   = self.styles.LONG_STRING
-            NUM     = self.styles.NUMBER
-            MAC     = self.styles.PRAGMA
-            OPE     = self.styles.OPERATOR
-            UNS     = self.styles.UNSAFE
-            TYP     = self.styles.TYPE
-            D_COM   = self.styles.DOCUMENTATION_COMMENT
-            DEFIN   = self.styles.DEFINITION
-            CLS     = self.styles.CLASS
-            KOP     = self.styles.KEYWORD_OPERATOR
-            CHAR    = self.styles.CHAR_LITERAL
-            OF      = self.styles.CASE_OF
-            U_KWD   = self.styles.USER_KEYWORD
-            M_COM   = self.styles.MULTILINE_COMMENT
-            M_DOC   = self.styles.MULTILINE_DOCUMENTATION
+            DEF     = self.styles["Default"]
+            B_KWD   = self.styles["BasicKeyword"]
+            T_KWD   = self.styles["TopKeyword"]
+            COM     = self.styles["Comment"]
+            STR     = self.styles["String"]
+            L_STR   = self.styles["LongString"]
+            NUM     = self.styles["Number"]
+            MAC     = self.styles["Pragma"]
+            OPE     = self.styles["Operator"]
+            UNS     = self.styles["Unsafe"]
+            TYP     = self.styles["Type"]
+            D_COM   = self.styles["DocumentationComment"]
+            DEFIN   = self.styles["Definition"]
+            CLS     = self.styles["Class"]
+            KOP     = self.styles["KeywordOperator"]
+            CHAR    = self.styles["CharLiteral"]
+            OF      = self.styles["CaseOf"]
+            U_KWD   = self.styles["UserKeyword"]
+            M_COM   = self.styles["MultilineComment"]
+            M_DOC   = self.styles["MultilineDocumentation"]
             #Initialize various states and split the text into tokens
             commenting          = False
             doc_commenting      = False
@@ -887,3 +991,50 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
                     setStyling(token[1], DEFIN)
                 else:
                     setStyling(token[1], DEF)
+
+
+"""
+Set colors for all other lexers by dynamically creating
+derived classes and adding styles to them.
+"""
+predefined_lexers = [
+    "QsciLexerPython",
+]
+
+for i in PyQt4.Qsci.__dict__:
+    if i.startswith("QsciLexer") and len(i) > len("QsciLexer"):
+        if not(i in predefined_lexers):
+            lexer_name = i.replace("QsciLexer", "")
+            styles = {}
+            cls = getattr(PyQt4.Qsci, i)
+            for j in dir(cls):
+                att_value = getattr(cls, j)
+                if j[0].isupper() == True and isinstance(att_value, int):
+                    styles[j] = att_value
+            cls_text = "class {0}(PyQt4.Qsci.{1}):\n".format(lexer_name, i)
+            cls_text += "    styles = {\n"
+            for style in styles:
+                cls_text += "        \"{0}\" : {1},\n".format(style, styles[style])
+            cls_text += "    }\n"
+            cls_text += "    \n"
+            cls_text += "    def __init__(self, parent=None):\n"
+            cls_text += "        super().__init__()\n"
+            cls_text += "        self.set_theme(data.theme)\n"
+            cls_text += "    \n"
+            cls_text += "    def set_theme(self, theme):\n"
+            cls_text += "        def set_color(color, style):\n"
+            cls_text += "            self.setColor(\n"
+            cls_text += "                color, \n"
+            cls_text += "                self.styles[style]\n"
+            cls_text += "            )\n"
+            for style in styles:
+                cls_text += "        for style in self.styles:\n"
+                cls_text += "            self.setPaper(\n"
+                cls_text += "                PyQt4.QtGui.QColor(theme.Paper.{0}.Default), \n".format(lexer_name)
+                cls_text += "                self.styles[style]\n"
+                cls_text += "            )\n"
+                cls_text += "        for style in self.styles:\n"
+                cls_text += "            color = PyQt4.QtGui.QColor(getattr(theme.Font.{0}, style))\n".format(lexer_name)
+                cls_text += "            set_color(color, style)\n"
+#            print(cls_text)
+            exec(cls_text)

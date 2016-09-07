@@ -90,6 +90,7 @@ import PyQt4.QtCore
 import PyQt4.QtGui
 import PyQt4.Qsci
 import data
+import themes
 import helper_forms
 import functions
 import interpreter
@@ -140,20 +141,22 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
     #Attribute for signaling the state of the save buttons in the "File" menubar
     save_state              = False
     #Supported Ex.Co. file extension types
-    exco_file_exts          =  (['*' + x for x in data.ext_python] +
-                                ['*' + x for x in data.ext_cpython] +
-                                ['*' + x for x in data.ext_c] +
-                                ['*' + x for x in data.ext_cpp] +
-                                ['*' + x for x in data.ext_pascal] +
-                                ['*' + x for x in data.ext_oberon] +
-                                ['*' + x for x in data.ext_ada] +
-                                ['*' + x for x in data.ext_json] +
-                                ['*' + x for x in data.ext_d] +
-                                ['*' + x for x in data.ext_nim] +
-                                ['*' + x for x in data.ext_perl] +
-                                ['*' + x for x in data.ext_xml] +
-                                ['*' + x for x in data.ext_text] +
-                                ['*' + x for x in data.ext_ini])
+    exco_file_exts =  (
+        ['*' + x for x in data.ext_python] +
+        ['*' + x for x in data.ext_cpython] +
+        ['*' + x for x in data.ext_c] +
+        ['*' + x for x in data.ext_cpp] +
+        ['*' + x for x in data.ext_pascal] +
+        ['*' + x for x in data.ext_oberon] +
+        ['*' + x for x in data.ext_ada] +
+        ['*' + x for x in data.ext_json] +
+        ['*' + x for x in data.ext_d] +
+        ['*' + x for x in data.ext_nim] +
+        ['*' + x for x in data.ext_perl] +
+        ['*' + x for x in data.ext_xml] +
+        ['*' + x for x in data.ext_text] +
+        ['*' + x for x in data.ext_ini]
+    )
     #Dictionary for storing the menubar special functions
     menubar_functions       = {}
     #Last focused widget and tab needed by the function wheel overlay
@@ -181,6 +184,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         self.editing    = self.Editing(self)
         self.display    = self.Display(self)
         self.bookmarks  = self.Bookmarks(self)
+        #Set the name of the main window
+        self.setObjectName("Form")
         #Initialize the main window 
         self.setWindowTitle("Ex.Co. " + data.APPLICATION_VERSION)
         #Initialize the log dialog window
@@ -217,6 +222,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.setWindowIcon(PyQt4.QtGui.QIcon(data.application_icon))
         #Set the repl type to a single line
         self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+        self.view.indication_check()
         #Open the file passed as an argument to the QMainWindow initialization
         if file_arguments != None:
             for file in file_arguments:
@@ -226,6 +232,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #the file_arguments is None
             if new_document == True:
                 self.create_new()
+        #Initialize the theme indicator
+        self.display.init_theme_indicator()
     
     def _init_statusbar(self):
         self.statusbar  = PyQt4.QtGui.QStatusBar(self)
@@ -305,11 +313,11 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
     def get_references_autocompletions(self):
         """Get the form references and autocompletions"""
         new_references  =   dict(
-                                itertools.chain(
-                                    self.get_form_references().items(), 
-                                    self.repl.get_repl_references().items()
-                                )
-                            )
+            itertools.chain(
+                self.get_form_references().items(), 
+                self.repl.get_repl_references().items()
+            )
+        )
         #Create auto completion list for the REPL
         ac_list_prim    = [x for x in new_references]
         #Add Python/custom keywords to the primary level autocompletions
@@ -412,7 +420,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         self.view.save_layout()
         #Refresh the size relation between the basic widgets and the REPL,
         #so that the REPL height is always the same
-        self.main_splitter.setSizes([self.height() - 30 ,  30])
+        self.view.refresh_main_splitter()
         #Hide the function whell if it is displayed
         if self.view.function_wheel_overlay != None:
             self.view.function_wheel_overlay.hide()
@@ -1705,54 +1713,54 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             )
             BASH_action = PyQt4.QtGui.QAction('Bash', self)
             BASH_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerBash, 'Bash')
+                functools.partial(set_lexer, lexers.Bash, 'Bash')
             )
             BATCH_action = PyQt4.QtGui.QAction('Batch', self)
             BATCH_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerBatch, 'Batch')
+                functools.partial(set_lexer, lexers.Batch, 'Batch')
             )
             CMAKE_action = PyQt4.QtGui.QAction('CMake', self)
             CMAKE_action.setIcon(helper_forms.set_icon('language_icons/logo_cmake.png'))
             CMAKE_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerCMake, 'CMake')
+                functools.partial(set_lexer, lexers.CMake, 'CMake')
             )
             C_CPP_action = PyQt4.QtGui.QAction('C / C++', self)
             C_CPP_action.setIcon(helper_forms.set_icon('language_icons/logo_c_cpp.png'))
             C_CPP_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerCPP, 'C / C++')
+                functools.partial(set_lexer, lexers.CPP, 'C / C++')
             )
             CSS_action = PyQt4.QtGui.QAction('CSS', self)
             CSS_action.setIcon(helper_forms.set_icon('language_icons/logo_css.png'))
             CSS_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerCSS, 'CSS')
+                functools.partial(set_lexer, lexers.CSS, 'CSS')
             )
             D_action = PyQt4.QtGui.QAction('D', self)
             D_action.setIcon(helper_forms.set_icon('language_icons/logo_d.png'))
             D_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerD, 'D')
+                functools.partial(set_lexer, lexers.D, 'D')
             )
             FORTRAN_action = PyQt4.QtGui.QAction('Fortran', self)
             FORTRAN_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerFortran, 'Fortran')
+                functools.partial(set_lexer, lexers.Fortran, 'Fortran')
             )
             HTML_action = PyQt4.QtGui.QAction('HTML', self)
             HTML_action.setIcon(helper_forms.set_icon('language_icons/logo_html.png'))
             HTML_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerHTML, 'HTML')
+                functools.partial(set_lexer, lexers.HTML, 'HTML')
             )
             LUA_action = PyQt4.QtGui.QAction('Lua', self)
             LUA_action.setIcon(helper_forms.set_icon('language_icons/logo_lua.png'))
             LUA_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerLua, 'Lua')
+                functools.partial(set_lexer, lexers.Lua, 'Lua')
             )
             MAKEFILE_action = PyQt4.QtGui.QAction('MakeFile', self)
             MAKEFILE_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerMakefile, 'MakeFile')
+                functools.partial(set_lexer, lexers.Makefile, 'MakeFile')
             )
             MATLAB_action = PyQt4.QtGui.QAction('Matlab', self)
             MATLAB_action.setIcon(helper_forms.set_icon('language_icons/logo_matlab.png'))
             MATLAB_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerMatlab, 'Matlab')
+                functools.partial(set_lexer, lexers.Matlab, 'Matlab')
             )
             NIM_action = PyQt4.QtGui.QAction('Nim', self)
             NIM_action.setIcon(helper_forms.set_icon('language_icons/logo_nim.png'))
@@ -1766,12 +1774,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             )
             PASCAL_action = PyQt4.QtGui.QAction('Pascal', self)
             PASCAL_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerPascal, 'Pascal')
+                functools.partial(set_lexer, lexers.Pascal, 'Pascal')
             )
             PERL_action = PyQt4.QtGui.QAction('Perl', self)
             PERL_action.setIcon(helper_forms.set_icon('language_icons/logo_perl.png'))
             PERL_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerPerl, 'Perl')
+                functools.partial(set_lexer, lexers.Perl, 'Perl')
             )
             PYTHON_action = PyQt4.QtGui.QAction('Python', self)
             PYTHON_action.setIcon(helper_forms.set_icon('language_icons/logo_python.png'))
@@ -1781,76 +1789,76 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             RUBY_action = PyQt4.QtGui.QAction('Ruby', self)
             RUBY_action.setIcon(helper_forms.set_icon('language_icons/logo_ruby.png'))
             RUBY_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerRuby, 'Ruby')
+                functools.partial(set_lexer, lexers.Ruby, 'Ruby')
             )
             SQL_action = PyQt4.QtGui.QAction('SQL', self)
             SQL_action.setIcon(helper_forms.set_icon('language_icons/logo_sql.png'))
             SQL_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerSQL, 'SQL')
+                functools.partial(set_lexer, lexers.SQL, 'SQL')
             )
             TCL_action = PyQt4.QtGui.QAction('TCL', self)
             TCL_action.setIcon(helper_forms.set_icon('language_icons/logo_tcl.png'))
             TCL_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerTCL, 'TCL')
+                functools.partial(set_lexer, lexers.TCL, 'TCL')
             )
             TEX_action = PyQt4.QtGui.QAction('TeX', self)
             TEX_action.setIcon(helper_forms.set_icon('language_icons/logo_tex.png'))
             TEX_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerTeX, 'TeX')
+                functools.partial(set_lexer, lexers.TeX, 'TeX')
             )
             VERILOG_action = PyQt4.QtGui.QAction('Verilog', self)
             VERILOG_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerVerilog, 'Verilog')
+                functools.partial(set_lexer, lexers.Verilog, 'Verilog')
             )
             VHDL_action = PyQt4.QtGui.QAction('VHDL', self)
             VHDL_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerVHDL, 'VHDL')
+                functools.partial(set_lexer, lexers.VHDL, 'VHDL')
             )
             XML_action = PyQt4.QtGui.QAction('XML', self)
             XML_action.setIcon(helper_forms.set_icon('language_icons/logo_xml.png'))
             XML_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerXML, 'XML')
+                functools.partial(set_lexer, lexers.XML, 'XML')
             )
             YAML_action = PyQt4.QtGui.QAction('YAML', self)
             YAML_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerYAML, 'YAML')
+                functools.partial(set_lexer, lexers.YAML, 'YAML')
             )
             CoffeeScript_action = PyQt4.QtGui.QAction('CoffeeScript', self)
             CoffeeScript_action.setIcon(helper_forms.set_icon('language_icons/logo_coffeescript.png'))
             CoffeeScript_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerCoffeeScript, 'CoffeeScript')
+                functools.partial(set_lexer, lexers.CoffeeScript, 'CoffeeScript')
             )
             CSharp_action = PyQt4.QtGui.QAction('C#', self)
             CSharp_action.setIcon(helper_forms.set_icon('language_icons/logo_csharp.png'))
             CSharp_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerCSharp, 'C#')
+                functools.partial(set_lexer, lexers.CPP, 'C#')
             )
             Java_action = PyQt4.QtGui.QAction('Java', self)
             Java_action.setIcon(helper_forms.set_icon('language_icons/logo_java.png'))
             Java_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerJava, 'Java')
+                functools.partial(set_lexer, lexers.Java, 'Java')
             )
             JavaScript_action = PyQt4.QtGui.QAction('JavaScript', self)
             JavaScript_action.setIcon(helper_forms.set_icon('language_icons/logo_javascript.png'))
             JavaScript_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerJavaScript, 'JavaScript')
+                functools.partial(set_lexer, lexers.JavaScript, 'JavaScript')
             )
             Octave_action = PyQt4.QtGui.QAction('Octave', self)
             Octave_action.setIcon(helper_forms.set_icon('language_icons/logo_octave.png'))
             Octave_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerOctave, 'Octave')
+                functools.partial(set_lexer, lexers.Octave, 'Octave')
             )
             PostScript_action = PyQt4.QtGui.QAction('PostScript', self)
             PostScript_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerPostScript, 'PostScript')
+                functools.partial(set_lexer, lexers.PostScript, 'PostScript')
             )
             Fortran77_action = PyQt4.QtGui.QAction('Fortran77', self)
             Fortran77_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerFortran77, 'Fortran77')
+                functools.partial(set_lexer, lexers.Fortran77, 'Fortran77')
             )
             IDL_action = PyQt4.QtGui.QAction('IDL', self)
             IDL_action.triggered.connect(
-                functools.partial(set_lexer, PyQt4.Qsci.QsciLexerIDL, 'IDL')
+                functools.partial(set_lexer, lexers.IDL, 'IDL')
             )
             lexers_menu.addAction(NONE_action)
             lexers_menu.addSeparator()
@@ -2193,7 +2201,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         """Initialize everything that concerns the REPL"""
         #Initialize the Python REPL widget
         self.repl           = ReplLineEdit(self, interpreter_references=self.get_form_references())
+        self.repl.setObjectName("REPL_line")
         self.repl_helper    = ReplHelper(self, self.repl)
+        self.repl_helper.setObjectName("REPL_multiline")
         #Initialize the groupbox that the REPL will be in, and place the REPL widget into it
         self.repl_box       = PyQt4.QtGui.QGroupBox("Python Interactive Interpreter (REPL)")
         repl_layout         = PyQt4.QtGui.QVBoxLayout()
@@ -2925,6 +2935,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         vertical_width_2        = 1/3
         horizontal_width_1      = 2/3
         horizontal_width_2      = 1/3
+        main_relation           = 65
         #Window mode: ONE or THREE
         window_mode             = data.WindowMode.THREE
         #Attribute that stores which side the main window is on
@@ -2986,7 +2997,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.parent.repl.setFont(PyQt4.QtGui.QFont("Arial", 12, PyQt4.QtGui.QFont.Bold))
             #Refresh the size relation between the basic widgets and the REPL,
             #so that the REPL height is always the same
-            self.parent.main_splitter.setSizes([self.parent.height() - 30 ,  30])
+            self.refresh_main_splitter()
         
         def save_layout(self):
             """Save the widths of the splitters"""
@@ -3275,10 +3286,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.parent.repl.setVisible(True)
                 self.parent.repl_helper.setVisible(False)
                 self.repl_state = data.ReplType.SINGLE_LINE
+                self.main_relation = 65
             else:
                 self.parent.repl.setVisible(False)
                 self.parent.repl_helper.setVisible(True)
                 self.repl_state = data.ReplType.MULTI_LINE
+                self.main_relation = 120
             self.parent.repl_box.setLayout(repl_layout)
             #Refresh the layout
             self.parent.view.set_basic_widgets(
@@ -3330,40 +3343,174 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if self.function_wheel_overlay != None:
                 self.function_wheel_overlay.hide()
         
-        def indicate_repl(self):
-            """Indicate that the REPL is focused by coloring the border"""
-            self.parent.setStyleSheet(
+        def reset_style_sheet(self):            
+            style_sheet = (
+                "#Form {" +
+                "   background-color: {0};".format(data.theme.Form) +
+                "}" + 
+                "QSplitter::handle {" +
+                "   background: {0};".format(data.theme.Form) +
+                "}"
+            )
+            self.parent.setStyleSheet(style_sheet)
+            return style_sheet
+        
+        def reset_window_colors(self):
+            windows = ["Main", "Upper", "Lower"]
+            style_sheet = self.parent.styleSheet()
+            for window in windows:
+                style_sheet += self.generate_window_colors(
+                    window, 
+                    data.theme.Indication.PassiveBorder, 
+                    data.theme.Indication.PassiveBackGround
+                )  
+            style_sheet += self.generate_treedisplay_colors("TreeDisplay")
+            style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
+            self.parent.setStyleSheet(style_sheet)
+        
+        def reset_repl_colors(self):
+            style_sheet = self.parent.styleSheet()
+            style_sheet += self.generate_repl_colors(
+                data.theme.Indication.PassiveBorder, 
+                data.theme.Indication.PassiveBackGround
+            )
+            self.parent.setStyleSheet(style_sheet)
+        
+        def generate_window_colors(self, window_name, border, background):
+            style_sheet = (
+                "#" + window_name + "::pane {" + 
+                    "border: 2px solid {0};".format(border) +
+                    "background-color: {0};".format(background)  +
+                "}"
+            )
+            return style_sheet
+        
+        def generate_repl_colors(self, border, background):
+            style_sheet = (
                 "#REPL_Box {" + 
-                    "border: 2px solid #204a87;" +
+                    "font-size: 8pt; font-weight: bold;" +
+                    "color: {0};".format(border) +
+                    "background-color: {0};".format(data.theme.Indication.PassiveBackGround) +
+                    "border: 2px solid {0};".format(border) +
                     "border-radius: 5px;" +
                     "margin-top: 5px;" +
                     "margin-bottom: 0px;" +
                     "margin-left: 0px;" +
                     "margin-right: 0px;" +
-                    "padding-top: 5px;" +
+                    "padding-top: 0px;" +
                     "padding-bottom: 0px;" +
                     "padding-left: 0px;" +
                     "padding-right: 0px;" +
                 "}" + 
-                "#REPL_Box::title {" + 
+                "#REPL_Box::title {" +
+                    "color: {0};".format(data.theme.Indication.ActiveBorder) +
                     "subcontrol-position: top left;" +
-                    "padding: 0 0px;" + 
+                    "padding: 0px;" + 
                     "left: 8px;" +
                     "top: -6px;" +
                 "}"
             )
+            # REPL and REPL helper have to be set directly
+            self.parent.repl.setStyleSheet(
+                "color: rgb({0}, {1}, {2});".format(
+                    data.theme.Font.Default.red(), 
+                    data.theme.Font.Default.green(), 
+                    data.theme.Font.Default.blue()
+                ) +
+                "background-color: {0};".format(background)
+            )
+            return style_sheet
+        
+        def generate_treedisplay_colors(self, type):
+            style_sheet =  type + " {"
+            style_sheet += "color: rgb({0},{1},{2});".format(
+                data.theme.Font.Default.red(), 
+                data.theme.Font.Default.green(), 
+                data.theme.Font.Default.blue() 
+            )
+            style_sheet += "background-color: rgb({0},{1},{2});".format(
+                data.theme.Paper.Default.red(), 
+                data.theme.Paper.Default.green(), 
+                data.theme.Paper.Default.blue() 
+            )
+            style_sheet += "}"
+            if data.theme != themes.Air:
+                shrink_icon = expand_icon = os.path.join(
+                    data.resources_directory, 
+                    "tango_icons/shrink-negative.png"
+                ).replace("\\", "/")
+                expand_icon = os.path.join(
+                    data.resources_directory, 
+                    "tango_icons/expand-negative.png"
+                ).replace("\\", "/")
+            else:
+                shrink_icon = expand_icon = os.path.join(
+                    data.resources_directory, 
+                    "tango_icons/shrink-positive.png"
+                ).replace("\\", "/")
+                expand_icon = os.path.join(
+                    data.resources_directory, 
+                    "tango_icons/expand-positive.png"
+                ).replace("\\", "/")
+            style_sheet += (
+                type + "::branch:closed:has-children:!has-siblings," +
+                type + "::branch:closed:has-children:has-siblings {" +
+                "    border-image: none;" +
+                "    image: url({0});".format(expand_icon) +
+                "}" +
+                type + "::branch:open:has-children:!has-siblings," +
+                type + "::branch:open:has-children:has-siblings {" +
+                "    border-image: none;" +
+                "    image: url({0});".format(shrink_icon) +
+                "}"
+            )
+            
+            return style_sheet
+        
+        def indicate_repl(self):
+            """Indicate that the REPL is focused by coloring the border"""
+            style_sheet = self.reset_style_sheet()
+            style_sheet += self.generate_repl_colors(
+                data.theme.Indication.ActiveBorder, 
+                data.theme.Indication.ActiveBackGround
+            )
+            windows = ["Main", "Upper", "Lower"]
+            for window in windows:
+                style_sheet += self.generate_window_colors(
+                    window, 
+                    data.theme.Indication.PassiveBorder, 
+                    data.theme.Indication.PassiveBackGround
+                )
+            style_sheet += self.generate_treedisplay_colors("TreeDisplay")
+            style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
+            self.parent.setStyleSheet(style_sheet)
         
         def indicate_window(self, window_name):
             if (window_name != "Main" and 
                 window_name != "Upper" and 
                 window_name != "Lower"):
                 return
-            self.parent.setStyleSheet(
-                "#" + window_name + "::pane {" + 
-                    "border: 2px solid #204a87;" +
-                    "background-color: rgb(255, 255, 255);" +
-                "}"
+            style_sheet = self.reset_style_sheet()
+            style_sheet += self.generate_window_colors(
+                window_name, 
+                data.theme.Indication.ActiveBorder, 
+                data.theme.Indication.ActiveBackGround
             )
+            windows = ["Main", "Upper", "Lower"]
+            windows.remove(window_name)
+            for window in windows:
+                style_sheet += self.generate_window_colors(
+                    window, 
+                    data.theme.Indication.PassiveBorder, 
+                    data.theme.Indication.PassiveBackGround
+                )
+            style_sheet += self.generate_repl_colors(
+                data.theme.Indication.PassiveBorder, 
+                data.theme.Indication.PassiveBackGround
+            )
+            style_sheet += self.generate_treedisplay_colors("TreeDisplay")
+            style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
+            self.parent.setStyleSheet(style_sheet)
         
         def indication_check(self):
             """
@@ -3409,7 +3556,31 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.indicate_repl()
                 return
             #If no widget has focus, reset the QMainWindows stylesheet
-            self.parent.setStyleSheet("")
+            self.reset_style_sheet()
+            self.reset_window_colors()
+            self.reset_repl_colors()
+        
+        def refresh_main_splitter(self):
+            #Refresh the size relation between the basic widgets and the REPL,
+            #so that the REPL height is always the same
+            self.parent.main_splitter.setSizes(
+                [self.parent.height() - self.main_relation, self.main_relation]
+            )
+        
+        def refresh_theme(self):
+            windows = [
+                self.parent.main_window, 
+                self.parent.upper_window, 
+                self.parent.lower_window
+            ]
+            for window in windows:
+                for i in range(window.count()):
+                    if hasattr(window.widget(i), "set_theme") == True:
+                        print(window.widget(i))
+                        window.widget(i).set_theme(data.theme)
+                    if hasattr(window.widget(i), "refresh_lexer") == True:
+                        window.widget(i).refresh_lexer()
+            self.indication_check()
     
     class System():
         """
@@ -3880,19 +4051,147 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         show_nodes, find_in_open_documents, ...
         (namespace/nested class to MainWindow)
         """
-        #Class varibles
-        parent          = None
-        #Attribute for storing which type of tab is used for dispaying node trees
-        node_view_type  = data.NodeDisplayType.TREE
+        # Class varibles
+        parent              = None
+        # Attribute for storing which type of tab is used for dispaying node trees
+        node_view_type      = data.NodeDisplayType.TREE
+        # Theme indicator label
+        theme_indicatore    = None
+        # Theme menu
+        theme_menu          = None
+        # Theme actions
+        action_air          = None
+        action_earth        = None
+        action_water        = None
         
         def __init__(self, parent):
-            """Initialization of the Display object instance"""
-            #Get the reference to the MainWindow parent object instance
+            """ Initialization of the Display object instance """
+            # Get the reference to the MainWindow parent object instance
             self.parent = parent
+            # Initialize the theme menu
+            self.init_theme_menu()
+        
+        def init_theme_indicator(self):
+            """ Initialization of the theme indicator in the statusbar """
+            class ThemeIndicator(PyQt4.QtGui.QLabel):
+                def __init__(self, parent):
+                    # Initialize superclass
+                    super().__init__()
+                    # Store the reference to the parent
+                    self.parent = parent
+                
+                def mouseReleaseEvent(self, event):
+                    # Execute the superclass event method
+                    super().mouseReleaseEvent(event)
+                    cursor = PyQt4.QtGui.QCursor.pos()
+                    self.parent.theme_menu.popup(cursor)
+            
+            if data.theme == themes.Air:
+                tooltip = "Air"
+                image = "tango_icons/theme-air.png"
+            elif data.theme == themes.Earth:
+                tooltip = "Earth"
+                image = "tango_icons/theme-earth.png"
+            elif data.theme == themes.Water:
+                tooltip = "Water"
+                image = "tango_icons/theme-water.png"
+            raw_picture = PyQt4.QtGui.QPixmap(
+                os.path.join(
+                    data.resources_directory, image
+                )
+            )
+            picture = raw_picture.scaled(16, 16, PyQt4.QtCore.Qt.KeepAspectRatio)
+            self.theme_indicatore = ThemeIndicator(self)
+            self.theme_indicatore.setPixmap(picture)
+            self.theme_indicatore.setToolTip(tooltip)
+            self.theme_indicatore.setStyleSheet(
+                    "ThemeIndicator {" + 
+                    "    color: black;" + 
+                    "    padding-top: 0px;" +
+                    "    padding-bottom: 0px;" +
+                    "    padding-left: 0px;" +
+                    "    padding-right: 4px;" +
+                    "}" +
+                    "QToolTip {" + 
+                    "    color: black;" + 
+                    "    padding-top: 0px;" +
+                    "    padding-bottom: 0px;" +
+                    "    padding-left: 0px;" +
+                    "    padding-right: 0px;" + 
+                    "}"
+            )
+            self.parent.statusbar.addPermanentWidget(self.theme_indicatore)
+        
+        def init_theme_menu(self):
+            """ Initialization of the theme menu used by the theme indicator """
+            def choose_theme(theme):
+                data.theme = theme
+                self.parent.view.refresh_theme()
+                if data.theme == themes.Air:
+                    tooltip = "Air"
+                    image = "tango_icons/theme-air.png"
+                elif data.theme == themes.Earth:
+                    tooltip = "Earth"
+                    image = "tango_icons/theme-earth.png"
+                elif data.theme == themes.Water:
+                    tooltip = "Water"
+                    image = "tango_icons/theme-water.png"
+                raw_picture = PyQt4.QtGui.QPixmap(
+                    os.path.join(
+                        data.resources_directory, image
+                    )
+                )
+                picture = raw_picture.scaled(16, 16, PyQt4.QtCore.Qt.KeepAspectRatio)
+                self.theme_indicatore.setPixmap(picture)
+                self.theme_indicatore.setToolTip(tooltip)
+                self.theme_indicatore.setStyleSheet(
+                    "ThemeIndicator {" + 
+                    "    color: black;" + 
+                    "    padding-top: 0px;" +
+                    "    padding-bottom: 0px;" +
+                    "    padding-left: 0px;" +
+                    "    padding-right: 4px;" +
+                    "}" +
+                    "QToolTip {" + 
+                    "    color: black;" + 
+                    "    padding-top: 0px;" +
+                    "    padding-bottom: 0px;" +
+                    "    padding-left: 0px;" +
+                    "    padding-right: 0px;" + 
+                    "}"
+                )
+            self.theme_menu = PyQt4.QtGui.QMenu()
+            # Air
+            action_air = PyQt4.QtGui.QAction("Air", self.theme_menu)
+            action_air.triggered.connect(
+                functools.partial(choose_theme, themes.Air)
+            )
+            icon = helper_forms.set_icon('tango_icons/theme-air.png')
+            action_air.setIcon(icon)
+            self.theme_menu.addAction(action_air)
+            # Earth
+            action_earth = PyQt4.QtGui.QAction("Earth", self.theme_menu)
+            action_earth.triggered.connect(
+                functools.partial(choose_theme, themes.Earth)
+            )
+            icon = helper_forms.set_icon('tango_icons/theme-earth.png')
+            action_earth.setIcon(icon)
+            self.theme_menu.addAction(action_earth)
+            # Water
+            action_water = PyQt4.QtGui.QAction("Water", self.theme_menu)
+            action_water.triggered.connect(
+                functools.partial(choose_theme, themes.Water)
+            )
+            icon = helper_forms.set_icon('tango_icons/theme-water.png')
+            action_water.setIcon(icon)
+            self.theme_menu.addAction(action_water)
         
         def write_to_statusbar(self,  message,  msec=0):
             """Write a message to the statusbar"""
-            self.parent.statusbar.showMessage(message,  msec)
+            self.parent.statusbar.setStyleSheet(
+                "color: {0};".format(data.theme.Indication.Font)
+            )
+            self.parent.statusbar.showMessage(message, msec)
         
         def update_cursor_position(self, cursor_line=None, cursor_column=None):
             """Update the position of the cursor in the current widget to the statusbar"""
@@ -3947,6 +4246,11 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETFORE,
                     lexer_number,
                     color
+                )
+                parent.repl_messages_tab.SendScintilla(
+                    PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK,
+                    lexer_number,
+                    data.theme.Paper.Default
                 )
                 parent.repl_messages_tab.SendScintilla(
                     PyQt4.Qsci.QsciScintillaBase.SCI_STARTSTYLING,
@@ -4033,6 +4337,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if self.parent.repl_messages_tab != None:
                 self.parent.repl_messages_tab.setText("")
                 self.parent.repl_messages_tab.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STYLECLEARALL)
+                self.parent.repl_messages_tab.set_theme(data.theme)
                 #Bring the REPL tab to the front
                 self.parent.repl_messages_tab.parent.setCurrentWidget(self.parent.repl_messages_tab)
         
@@ -4933,7 +5238,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
     indicated               = False
     
     
-    def __init__(self,  parent):
+    def __init__(self, parent):
         """Initialization"""
         #Initialize superclass, from which the current class is inherited,
         #THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
@@ -5541,6 +5846,10 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
         self.setEolMode(PyQt4.Qsci.QsciScintilla.EolUnix)
         #Initialize the namespace references
         self.hotspots = self.Hotspots(self)
+        #Set the initial zoom factor
+        self.zoomTo(data.zoom_factor)
+        #Set the theme
+        self.set_theme(data.theme)
     
     def mousePressEvent(self, event):
         """Overloaded mouse click event"""
@@ -5570,6 +5879,34 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
         self.SendScintilla(
             PyQt4.Qsci.QsciScintillaBase.SCI_GOTOLINE, 
             line_number
+        )
+    
+    def set_theme(self, theme):
+        #Set the lexer
+        self.setLexer(lexers.Text(self))
+        #Now the theme
+        if theme == themes.Air:
+            self.resetFoldMarginColors()
+        else:
+            self.setFoldMarginColors(
+                theme.FoldMargin.ForeGround, 
+                theme.FoldMargin.BackGround
+            )
+        self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
+        self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            PyQt4.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+            theme.Paper.Default
+        )
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            PyQt4.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+            theme.LineMargin.BackGround
+        )
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+            theme.Cursor
         )
     
     class Hotspots():
@@ -6015,6 +6352,8 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.cursorPositionChanged.connect(self.parent._signal_editor_cursor_change)
         self.marginClicked.connect(self._margin_clicked)
         self.linesChanged.connect(self._lines_changed)
+        #Set the lexer to the default Plain Text
+        self.choose_lexer("text")
         #Setup autocompletion
         self.init_autocompletions()
         #Setup the LineList object that will hold the custom editor text as a list of lines
@@ -6291,6 +6630,31 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.setSelection(0,0,self.lines(),0)
         #Replace it with the new text
         self.replaceSelectedText(text)
+    
+    def set_theme(self, theme):
+        if theme == themes.Air:
+            self.resetFoldMarginColors()
+        else:
+            self.setFoldMarginColors(
+                theme.FoldMargin.ForeGround, 
+                theme.FoldMargin.BackGround
+            )
+        self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
+        self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            PyQt4.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+            theme.Paper.Default
+        )
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            PyQt4.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+            theme.LineMargin.BackGround
+        )
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+            theme.Cursor
+        )
     
     def get_line_number(self):
         """return the line on which the cursor is"""
@@ -7330,6 +7694,10 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                 "Saving to file failed, check path and disk space!"
             )
     
+    def refresh_lexer(self):
+        """ Refresh the current lexer (used by themes) """
+        self.choose_lexer(self.current_file_type.lower())
+    
     def choose_lexer(self, file_type):
         """Choose the lexer from the file type parameter for the scintilla document"""
         #Set the lexer for syntax highlighting according to file type
@@ -7341,13 +7709,13 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             lexer   = lexers.Cython()
             self.comment_string = "#"
         elif file_type  == "c":
-            lexer   = PyQt4.Qsci.QsciLexerCPP()
+            lexer   = lexers.CPP()
             self.comment_string = "//"
         elif file_type  == "c++":
-            lexer   = PyQt4.Qsci.QsciLexerCPP()
+            lexer   = lexers.CPP()
             self.comment_string = "//"
         elif file_type  == "pascal":
-            lexer   = PyQt4.Qsci.QsciLexerPascal()
+            lexer   = lexers.Pascal()
             self.comment_string = "//"
         elif file_type  == "oberon/modula":
             lexer   = lexers.Oberon()
@@ -7358,66 +7726,66 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             lexer   = lexers.Ada()
             self.comment_string = "--"
         elif file_type  == "d":
-            lexer   = PyQt4.Qsci.QsciLexerD()
+            lexer   = lexers.D()
             self.comment_string = "//"
         elif file_type  == "nim":
             lexer   = lexers.Nim()
             self.comment_string = "#"
         elif file_type  == "makefile":
-            lexer   = PyQt4.Qsci.QsciLexerMakefile()
+            lexer   = lexers.Makefile()
             self.comment_string = "#"
         elif file_type  == "xml":
-            lexer   = PyQt4.Qsci.QsciLexerXML()
+            lexer   = lexers.XML()
             self.comment_string = None
         elif file_type  == "batch":
-            lexer   = PyQt4.Qsci.QsciLexerBatch()
+            lexer   = lexers.Batch()
             self.comment_string = "::"
         elif file_type  == "bash":
-            lexer   = PyQt4.Qsci.QsciLexerBash()
+            lexer   = lexers.Bash()
             self.comment_string = "#"
         elif file_type  == "lua":
-            lexer   = PyQt4.Qsci.QsciLexerLua()
+            lexer   = lexers.Lua()
             self.comment_string = "--"
         elif file_type  == "coffeescript":
-            lexer   = PyQt4.Qsci.QsciLexerCoffeeScript()
+            lexer   = lexers.CoffeeScript()
             self.comment_string = "#"
         elif file_type  == "c#":
-            lexer   = PyQt4.Qsci.QsciLexerCSharp()
+            lexer   = lexers.CPP()
             self.comment_string = "//"
         elif file_type  == "java":
-            lexer   = PyQt4.Qsci.QsciLexerJava()
+            lexer   = lexers.Java()
             self.comment_string = "//"
         elif file_type  == "javascript":
-            lexer   = PyQt4.Qsci.QsciLexerJavaScript()
+            lexer   = lexers.JavaScript()
             self.comment_string = "//"
         elif file_type  == "octave":
-            lexer   = PyQt4.Qsci.QsciLexerOctave()
+            lexer   = lexers.Octave()
             self.comment_string = "#"
         elif file_type  == "sql":
-            lexer   = PyQt4.Qsci.QsciLexerSQL()
+            lexer   = lexers.SQL()
             self.comment_string = "#"
         elif file_type  == "postscript":
-            lexer   = PyQt4.Qsci.QsciLexerPostScript()
+            lexer   = lexers.PostScript()
             self.comment_string = "%"
         elif file_type  == "fortran":
-            lexer   = PyQt4.Qsci.QsciLexerFortran()
+            lexer   = lexers.Fortran()
             self.comment_string = "c "
         elif file_type  == "fortran77":
-            lexer   = PyQt4.Qsci.QsciLexerFortran77()
+            lexer   = lexers.Fortran77()
             self.comment_string = "c "
         elif file_type  == "idl":
-            lexer   = PyQt4.Qsci.QsciLexerIDL()
+            lexer   = lexers.IDL()
             self.comment_string = "//"
         elif file_type  == "ruby":
-            lexer   = PyQt4.Qsci.QsciLexerRuby()
+            lexer   = lexers.Ruby()
             self.comment_string = "#"
         elif file_type  == "html":
-            lexer   = PyQt4.Qsci.QsciLexerHTML()
+            lexer   = lexers.HTML()
             self.oberon_comment_style = True
             self.comment_string     = "<!--"
             self.end_comment_string = "-->"
         elif file_type  == "css":
-            lexer   = PyQt4.Qsci.QsciLexerCSS()
+            lexer   = lexers.CSS()
             self.oberon_comment_style = True
             self.comment_string     = "/*"
             self.end_comment_string = "*/"
@@ -7455,14 +7823,6 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETFONT, 1, self.default_comment_font)
         #Enable code folding for the file type
         self.setFolding(PyQt4.Qsci.QsciScintilla.PlainFoldStyle)
-        #Remove the weird "inactive preprocessor hue/saturation" from the C/C++ lexer.
-        #This is easier than making a new C/C++ lexer from scratch.
-        #This has to be done AFTER the lexer was applied to the document, don't know why?
-        #The "Inactive" colors start at 64 and go to 88, look at the "QsciLexerCPP" documentation at the top of:
-        #http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciLexerCPP.html
-        if isinstance(lexer, PyQt4.Qsci.QsciLexerCPP):
-            for i in range(64, 89):
-                self.lexer().setColor(self.lexer().color(i-64), i)
         #Set all fonts in the current lexer to the default style
         #and set the keyword styles to bold
         if (isinstance(lexer, lexers.Ada) == False and
@@ -7478,6 +7838,8 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         else:
             #Set the margin font for the lexers in the lexers.py module
             self.setMarginsFont(lexer.default_font)
+        #Set the theme
+        self.set_theme(data.theme)
 
     def clear_editor(self):
         """Clear the text from the scintilla document"""
@@ -7720,9 +8082,9 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
         self.parent = parent
         #Initialize the interpreter
         self.interpreter = interpreter.CustomInterpreter(
-                            interpreter_references, 
-                            parent.display.repl_display_message
-                        )
+            interpreter_references, 
+            parent.display.repl_display_message
+        )
         #Initialize interpreter reference list that will be used for autocompletions
         self._list_repl_references  = [str_ref for str_ref in interpreter_references]
 
@@ -8076,6 +8438,9 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
             return
         new_font.setPointSize(new_font.pointSize() + 1)
         self.setFont(new_font)
+        new_font_metric = PyQt4.QtGui.QFontMetrics(new_font)
+        self.parent.view.main_relation = new_font_metric.height() + 48
+        self.parent.view.refresh_main_splitter()
     
     def decrease_text_size(self):
         """Decrease size of the REPL text"""
@@ -8084,6 +8449,10 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
             return
         new_font.setPointSize(new_font.pointSize() - 1)
         self.setFont(new_font)
+        new_font_metric = PyQt4.QtGui.QFontMetrics(new_font)
+        self.parent.view.main_relation = new_font_metric.height() + 48
+        self.parent.view.refresh_main_splitter()
+    
 
     """
     REPL interactive interpreter functions
@@ -8269,25 +8638,25 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         self._filter_keyrelease(event)
     
     def mousePressEvent(self, event):
-        #Execute the superclass mouse click event
+        # Execute the superclass mouse click event
         super().mousePressEvent(event)
-        #Reset the main forms last focused widget
+        # Reset the main forms last focused widget
         self.parent.last_focused_widget = None
         data.print_log("Reset last focused widget attribute")
-        #Set focus to the clicked helper
+        # Set focus to the clicked helper
         self.setFocus()
-        #Hide the function wheel if it is shown
+        # Hide the function wheel if it is shown
         if self.parent.view.function_wheel_overlay != None:
             self.parent.view.hide_function_wheel()
-            #Need to set focus to self or the repl helper doesn't get focused,
-            #don't know why?
+            # Need to set focus to self or the repl helper doesn't get focused,
+            # don't know why?
             self.setFocus()
     
     def setFocus(self):
         """Overridden focus event"""
-        #Execute the supeclass focus function
+        # Execute the supeclass focus function
         super().setFocus()
-        #Check indication
+        # Check indication
         self.parent.view.indication_check()
     
     def wheelEvent(self, wheel_event):
@@ -8310,6 +8679,31 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         else:
             #Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
+    
+    def set_theme(self, theme):
+        if theme == themes.Air:
+            self.resetFoldMarginColors()
+        else:
+            self.setFoldMarginColors(
+                theme.FoldMargin.ForeGround, 
+                theme.FoldMargin.BackGround
+            )
+        self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
+        self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            PyQt4.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+            theme.Paper.Default
+        )
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            PyQt4.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+            theme.LineMargin.BackGround
+        )
+        self.SendScintilla(
+            PyQt4.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+            theme.Cursor
+        )
 
     """
     ReplHelper autocompletion functions
@@ -8317,7 +8711,7 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
     def update_autocompletions(self, new_autocompletions=[]):
         """Function for updating the ReplHelper autocompletions"""
         #Set the lexer to python and set the initial autocompletions
-        self.lexer = PyQt4.Qsci.QsciLexerPython()
+        self.lexer = lexers.Python(self)
         #Set the lexers default font
         self.lexer.setDefaultFont(self.default_font)
         #Set the scintilla api for the autocompletions (MUST BE AN INSTANCE VARIABLE)
@@ -8330,6 +8724,8 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         self.api.prepare()
         #Set the lexer with the initial autocompletions
         self.setLexer(self.lexer)
+        #Set the theme
+        self.set_theme(data.theme)
         #Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         #Set the source from where the autocompletions will be fetched
@@ -8446,12 +8842,12 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             #Store the main function image
             self.stored_pixmap = input_pixmap
             #Store the hex edge image
-            self.stored_hex =   PyQt4.QtGui.QPixmap(
-                                    os.path.join(
-                                        data.resources_directory, 
-                                        "various/hex-button-edge.png"
-                                    )
-                                )
+            self.stored_hex = PyQt4.QtGui.QPixmap(
+                os.path.join(
+                    data.resources_directory, 
+                    "various/hex-button-edge.png"
+                )
+            )
             #Store the function that will be executed on the click event
             self.function = input_function
             #Store the function text
@@ -8753,11 +9149,11 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         self.main_form = main_form
         #Store the background image for sizing details
         self.background_image = PyQt4.QtGui.QPixmap(
-                                    os.path.join(
-                                        data.resources_directory, 
-                                        data.function_wheel_image
-                                    )
-                                )
+            os.path.join(
+                data.resources_directory, 
+                data.function_wheel_image
+            )
+        )
         #Set the background color
         self.setStyleSheet(
             "QGroupBox {" +
@@ -8770,11 +9166,11 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         self.setStyleSheet("border:0;")
         #Setup the picture
         exco_picture    = PyQt4.QtGui.QPixmap(
-                                    os.path.join(
-                                        data.resources_directory, 
-                                        data.function_wheel_image
-                                    )
-                                )
+            os.path.join(
+                data.resources_directory, 
+                data.function_wheel_image
+            )
+        )
         self.picture    = PyQt4.QtGui.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())

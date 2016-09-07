@@ -60,40 +60,7 @@
 ##  FILE DESCRIPTION:
 ##      Module that holds objects that will be used across modules.
 
-"""
--------------------------------------------
-Various stored settings for global use
--------------------------------------------
-"""
-APPLICATION_VERSION     = "4.4"
-#Global variable that holds state of logging mode
-logging_mode            = False
-#Global referenc to the log display window, so it can be used anywhere
-log_window              = None
-#Global reference to the Qt application
-application             = None
-#Global string with the application directory
-application_directory   = ""
-#Global string with the resources directory
-resources_directory     = "resources"
-#Application icon image that will be displayed on all Qt widgets
-application_icon        = "Exco_Icon.png"
-#Ex.Co. information image displayed when "About Ex.Co" action is clicked in the menubar "Help" menu
-about_image             = "ExCo_Info.png"
-#Funcion wheel background image
-function_wheel_image    = "various/function-wheel.png"
-#Maximum limit of highlighting instances
-MAXIMUM_HIGHLIGHTS      = 300
-#Column at which the edge marker is shown in documents
-EDGE_MARKER_COLUMN      = 90
-#Global width of tabs
-tab_width = 4
-#Terminal console program used on GNU/Linux
-terminal = "lxterminal"
-#Zoom factor when a new editor is created (default is 0)
-zoom_factor = 0
-#Default tree display(file-tree, node-tree, ...)
-tree_display_font_size = 10
+import themes
 
 
 """
@@ -193,9 +160,47 @@ class TreeDisplayType:
 
 
 """
------------------------------
+-------------------------------------------
+Various stored settings for global use
+-------------------------------------------
+"""
+APPLICATION_VERSION     = "5.0"
+#Global variable that holds state of logging mode
+logging_mode            = False
+#Global referenc to the log display window, so it can be used anywhere
+log_window              = None
+#Global reference to the Qt application
+application             = None
+#Global string with the application directory
+application_directory   = ""
+#Global string with the resources directory
+resources_directory     = "resources"
+#Application icon image that will be displayed on all Qt widgets
+application_icon        = "Exco_Icon.png"
+#Ex.Co. information image displayed when "About Ex.Co" action is clicked in the menubar "Help" menu
+about_image             = "ExCo_Info.png"
+#Funcion wheel background image
+function_wheel_image    = "various/function-wheel.png"
+#Maximum limit of highlighting instances
+MAXIMUM_HIGHLIGHTS      = 300
+#Column at which the edge marker is shown in documents
+EDGE_MARKER_COLUMN      = 90
+#Global width of tabs
+tab_width = 4
+#Terminal console program used on GNU/Linux
+terminal = "lxterminal"
+#Zoom factor when a new editor is created (default is 0)
+zoom_factor = 0
+#Default tree display(file-tree, node-tree, ...)
+tree_display_font_size = 10
+#Current theme
+theme = themes.Air
+
+
+"""
+--------------------------------------
 Various global functions and routines
------------------------------
+--------------------------------------
 """
 def print_log(message):
     """Internal module function that runs the append_message method of the log window"""

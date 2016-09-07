@@ -72,6 +72,7 @@ import settings
 import functions
 import forms
 import data
+import themes
 
 
 """
@@ -919,8 +920,10 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
-        description_font    = PyQt4.QtGui.QFont(
+        description_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword)
+        )
+        description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
         item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
@@ -935,7 +938,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         #Set the label properties
-        label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
+        label_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+        )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
@@ -1102,7 +1107,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
+        description_brush   = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword)
+        )
         description_font    = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
@@ -1118,7 +1125,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         #Set the label properties
-        label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
+        label_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+        )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
@@ -1167,8 +1176,10 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
-        description_font    = PyQt4.QtGui.QFont(
+        description_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword)
+        )
+        description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
         item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
@@ -1183,7 +1194,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         """Add the nodes"""
-        label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
+        label_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+        )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
@@ -1449,7 +1462,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(10)
         """Define the description details"""
         #Font
-        description_brush   = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
+        description_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword)
+        )
         description_font    = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
@@ -1486,14 +1501,16 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         """Define the description details"""
         #Font
-        description_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(0, 0, 128))
+        description_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.BASIC_KEYWORD)
+        )
         description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
         #Directory item
         item_directory  = PyQt4.QtGui.QStandardItem(
-                            "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
-                          )
+            "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
+        )
         item_directory.setEditable(False)
         item_directory.setForeground(description_brush)
         item_directory.setFont(description_font)
@@ -1546,7 +1563,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             #Set the UNIX file format to the directory
             directory = directory.replace("\\", "/")
             """Adding the files"""
-            label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
+            label_brush = PyQt4.QtGui.QBrush(
+                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+            )
             label_font = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
             )
@@ -1644,7 +1663,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             #Set the UNIX file format to the directory
             directory = directory.replace("\\", "/")
             """Adding the files"""
-            label_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(128, 0, 128))
+            label_brush = PyQt4.QtGui.QBrush(
+                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+            )
             label_font  = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
             )
@@ -1927,6 +1948,8 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         self.init_editor(self.editor_1)
         self.editor_2 = forms.CustomEditor(self, main_form)
         self.init_editor(self.editor_2)
+        self.editor_1.choose_lexer("text")
+        self.editor_2.choose_lexer("text")
         self.splitter.addWidget(self.editor_1)
         self.splitter.addWidget(self.editor_2)
         self.layout = PyQt4.QtGui.QVBoxLayout()
@@ -1975,6 +1998,8 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         self.focused_editor.setFocus()
         #Initialize markers
         self.init_markers()
+        #Set the theme
+        self.set_theme(data.theme)
         #Set editor functions that have to be propagated from the TextDiffer
         #to the child editor
         self._init_editor_functions()
@@ -2067,29 +2092,35 @@ class TextDiffer(PyQt4.QtGui.QWidget):
                 "Function '{:s}' is not implemented by the TextDiffer!".format(args[0]), 
                 message_type=data.MessageType.ERROR
             )
-        all_editor_functions  = inspect.getmembers(
-                                    forms.CustomEditor, 
-                                    predicate=inspect.isfunction
-                                )
+        all_editor_functions = inspect.getmembers(
+            forms.CustomEditor, 
+            predicate=inspect.isfunction
+        )
+        skip_functions = [
+            "set_theme",
+        ]
         enabled_functions = [
-                                "find_text", 
-                            ]
-        disabled_functions =  [
-                                "__init__",
-                                "__setattr__",
-                                "_filter_keypress",
-                                "_filter_keyrelease",
-                                "_init_special_functions",
-                                "_set_indicator",
-                                "find_text",
-                                "keyPressEvent",
-                                "keyReleaseEvent",
-                                "mousePressEvent",
-                                "setFocus",
-                                "wheelEvent",
-                            ]
+            "find_text",
+        ]
+        disabled_functions = [
+            "__init__",
+            "__setattr__",
+            "_filter_keypress",
+            "_filter_keyrelease",
+            "_init_special_functions",
+            "_set_indicator",
+            "find_text",
+            "keyPressEvent",
+            "keyReleaseEvent",
+            "mousePressEvent",
+            "setFocus",
+            "wheelEvent",
+        ]
         #Check methods
         for function in all_editor_functions:
+            if function[0] in skip_functions:
+                #Use the TextDiffer implementation of this function
+                continue
             if function[0] in enabled_functions:
                 #Find text is enabled
                 setattr(
@@ -2544,6 +2575,41 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         find_toolbar.show()
         #Set the corner widget of the parent
         parent.setCornerWidget(find_toolbar)
+    
+    def set_theme(self, theme):
+#        self.DEFAULT_FONT_BACK_COLOR    = PyQt4.QtGui.QColor(0xd7, 0xd3, 0xcf, 255)
+#        self.MARGIN_BACK_COLOR          = PyQt4.QtGui.QColor(0xd7, 0xd3, 0xcf, 255)
+#        self.MARGIN_FORE_COLOR          = PyQt4.QtGui.QColor(0x2e, 0x34, 0x36, 255)
+#        self.INDICATOR_UNIQUE_1_COLOR   = PyQt4.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
+#        self.INDICATOR_UNIQUE_2_COLOR   = PyQt4.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
+#        self.INDICATOR_SIMILAR_COLOR    = PyQt4.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
+        def set_editor_theme(editor):
+            if theme == themes.Air:
+                editor.resetFoldMarginColors()
+            elif theme == themes.Earth:
+                editor.setFoldMarginColors(
+                    theme.FoldMargin.ForeGround, 
+                    theme.FoldMargin.BackGround
+                )
+            editor.setMarginsForegroundColor(theme.LineMargin.ForeGround)
+            editor.setMarginsBackgroundColor(theme.LineMargin.BackGround)
+            editor.SendScintilla(
+                PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+                PyQt4.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+                theme.Paper.Default
+            )
+            editor.SendScintilla(
+                PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+                PyQt4.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+                theme.LineMargin.BackGround
+            )
+            editor.SendScintilla(
+                PyQt4.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+                theme.Cursor
+            )
+            editor.choose_lexer("text")
+        set_editor_theme(self.editor_1)
+        set_editor_theme(self.editor_2)
 
 
 
