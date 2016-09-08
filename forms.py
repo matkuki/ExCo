@@ -2589,17 +2589,17 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         #Class varibles
         parent = None
         #Custom object for manipulating the settings of Ex.Co.
-        manipulator    = None
+        manipulator = None
         
         def __init__(self, parent):
             """Initialization of the Settings object instance"""
             #Get the reference to the MainWindow parent object instance
             self.parent = parent
             #Initialize the Ex.Co. settings object with the current working directory
-            self.manipulator   =   settings.SettingsFileManipulator(
-                                        data.application_directory, 
-                                        data.resources_directory
-                                    )
+            self.manipulator = settings.SettingsFileManipulator(
+                data.application_directory, 
+                data.resources_directory
+            )
         
         def update_recent_list(self, new_file=None):
             """Update the settings manipulator with the new file"""
@@ -2632,7 +2632,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Load the settings from the initialization file
             self.manipulator.load_settings()
             #Set main window side
-            self.parent.view.set_main_window_side(self.manipulator.main_window_side)
+            self.parent.view.set_main_window_side(
+                self.manipulator.main_window_side
+            )
+            #Update the theme
+            data.theme = self.manipulator.theme
+            self.parent.view.refresh_theme()
             #Update recent files list in the menubar
             self.update_recent_list()
             #Update sessions list in the menubar
@@ -2642,7 +2647,10 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         
         def save(self):
             """Save the current settings"""
-            self.manipulator.save_settings(self.parent.view.main_window_side)
+            self.manipulator.save_settings(
+                self.parent.view.main_window_side, 
+                data.theme
+            )
             #Display message in statusbar
             self.parent.display.write_to_statusbar("Saved settings", 1000)
     
@@ -3581,6 +3589,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     if hasattr(window.widget(i), "refresh_lexer") == True:
                         window.widget(i).refresh_lexer()
             self.indication_check()
+            self.parent.statusbar.setStyleSheet(
+                "color: {0};".format(data.theme.Indication.Font)
+            )
     
     class System():
         """
@@ -4186,7 +4197,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             action_water.setIcon(icon)
             self.theme_menu.addAction(action_water)
         
-        def write_to_statusbar(self,  message,  msec=0):
+        def write_to_statusbar(self, message, msec=0):
             """Write a message to the statusbar"""
             self.parent.statusbar.setStyleSheet(
                 "color: {0};".format(data.theme.Indication.Font)

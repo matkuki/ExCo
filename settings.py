@@ -64,6 +64,7 @@ import os
 import os.path
 import platform
 import data
+import themes
 import functions
 
 
@@ -105,10 +106,12 @@ class SettingsFileManipulator():
     recent_files                    = []
     stored_sessions                 = []
     main_window_side                = data.MainWindowSide.RIGHT
+    theme                           = themes.Air
     
     empty_settings_list         =   [   
                                         "[General Settings]", 
                                         "    Main_Window_Side    Left", 
+                                        "    Theme    Air",
                                         "",  
                                         "[Recent Files]", 
                                         "", 
@@ -142,15 +145,29 @@ class SettingsFileManipulator():
         #Close the file handle
         file.close()
     
-    def save_settings(self, main_window_side):
+    def save_settings(self, main_window_side, theme=themes.Air):
         """Save all settings to the settings file"""
         settings_lines = ["[General Settings]"]
         #Save the main window side
         self.main_window_side = main_window_side
-        if self.main_window_side == data.MainWindowSide.RIGHT:
-            settings_lines.append("{:s}Main_Window_Side{:s}Right".format(self.level_spacing, self.level_spacing))
+        if main_window_side == data.MainWindowSide.RIGHT:
+            settings_lines.append("{:s}Main_Window_Side{:s}Right".format(
+                    self.level_spacing, self.level_spacing
+                )
+            )
         else:
-            settings_lines.append("{:s}Main_Window_Side{:s}Left".format(self.level_spacing, self.level_spacing))
+            settings_lines.append("{:s}Main_Window_Side{:s}Left".format(
+                    self.level_spacing, self.level_spacing
+                )
+            )
+        #Save the theme
+        self.theme = theme
+        settings_lines.append("{0}Theme{1}{2}".format(
+                self.level_spacing, 
+                self.level_spacing, 
+                theme.__name__.split(".")[1]
+            )
+        )
         settings_lines.append("")
         #Save the recent files to list
         settings_lines.append("[Recent Files]")
@@ -188,8 +205,10 @@ class SettingsFileManipulator():
     
     def load_settings(self):
         """Load all setting from the settings file"""
-        settings_file_lines         = functions.read_file_to_list(self.settings_filename_with_path)
-        recent_files_start_line     = 0
+        settings_file_lines = functions.read_file_to_list(
+            self.settings_filename_with_path
+        )
+        recent_files_start_line = 0
         sessions_start_line     = 0
         for i, line in enumerate(settings_file_lines):
             split_line = line.split()
@@ -199,6 +218,15 @@ class SettingsFileManipulator():
                     self.main_window_side = data.MainWindowSide.RIGHT
                 else:
                     self.main_window_side = data.MainWindowSide.LEFT
+            elif  "Theme" in line:
+                #Set the theme
+                theme_string = split_line[1].lower()
+                if theme_string == "air":
+                    self.theme = themes.Air
+                elif theme_string == "earth":
+                    self.theme = themes.Earth
+                elif theme_string == "water":
+                    self.theme = themes.Water
             #Test if the first recent files line has been reached
             elif "[Recent Files]" in line:
                 #Store the line that is the beggining of the recent file list
