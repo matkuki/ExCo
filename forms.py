@@ -1405,7 +1405,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["toggle_wordwrap"] = toggle_wordwrap
             toggle_wrap_action = PyQt4.QtGui.QAction('Enable/Disable Line Wrapping', self)
-            toggle_wrap_action.setShortcut('Ctrl+R')
+            toggle_wrap_action.setShortcut('Ctrl+P')
             temp_string = 'Enable/Disable line wrapping '
             temp_string += 'for the currently selected document'
             toggle_wrap_action.setStatusTip(temp_string)
