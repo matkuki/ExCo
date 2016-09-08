@@ -145,7 +145,7 @@ class SettingsFileManipulator():
         #Close the file handle
         file.close()
     
-    def save_settings(self, main_window_side, theme=themes.Air):
+    def save_settings(self, main_window_side, theme):
         """Save all settings to the settings file"""
         settings_lines = ["[General Settings]"]
         #Save the main window side
@@ -403,6 +403,6 @@ class SettingsFileManipulator():
             #The new file is not in the list, append it to the end of the list
             self.recent_files.append(new_file)
         #Save the new settings
-        self.save_settings(self.main_window_side)
+        self.save_settings(self.main_window_side, data.theme)
 
 

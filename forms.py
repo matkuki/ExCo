@@ -215,6 +215,10 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.view.set_log_window(True)
         data.print_log("Main window displayed successfully")
         self.settings.restore()
+        
+        #Initialize the theme indicator
+        self.display.init_theme_indicator()
+        
         #Initialize repl interpreter
         self._init_interpreter()
         #Set the main window icon if it exists
@@ -232,8 +236,6 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #the file_arguments is None
             if new_document == True:
                 self.create_new()
-        #Initialize the theme indicator
-        self.display.init_theme_indicator()
     
     def _init_statusbar(self):
         self.statusbar  = PyQt4.QtGui.QStatusBar(self)
@@ -1396,6 +1398,20 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             temp_icon = helper_forms.set_icon('tango_icons/edit-autocompletion.png')
             toggle_autoc_action.setIcon(temp_icon)
             toggle_autoc_action.triggered.connect(toggle_autocompletions)
+            def toggle_wordwrap():
+                try:
+                    self.get_tab_by_focus().toggle_wordwrap()
+                except:
+                    pass
+            self.menubar_functions["toggle_wordwrap"] = toggle_wordwrap
+            toggle_wrap_action = PyQt4.QtGui.QAction('Enable/Disable Line Wrapping', self)
+            toggle_wrap_action.setShortcut('Ctrl+R')
+            temp_string = 'Enable/Disable line wrapping '
+            temp_string += 'for the currently selected document'
+            toggle_wrap_action.setStatusTip(temp_string)
+            temp_icon = helper_forms.set_icon('tango_icons/wordwrap.png')
+            toggle_wrap_action.setIcon(temp_icon)
+            toggle_wrap_action.triggered.connect(toggle_wordwrap)
             def reload_file():
                 try:
                     self.get_tab_by_focus().reload_file()
@@ -1568,6 +1584,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             edit_menu.addAction(regex_replace_all_action)
             edit_menu.addAction(toggle_comment_action)
             edit_menu.addAction(toggle_autoc_action)
+            edit_menu.addAction(toggle_wrap_action)
             edit_menu.addAction(to_uppercase_action)
             edit_menu.addAction(to_lowercase_action)
             edit_menu.addAction(node_tree_action)
@@ -7944,6 +7961,40 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         new_editor.setLexer(self.lexer())
         new_editor.setText(self.text())
     
+    def toggle_wordwrap(self):
+        """ 
+        Toggle word wrap on/off.
+        Wrap modes:
+            PyQt4.Qsci.QsciScintilla.WrapNone - Lines are not wrapped.
+            PyQt4.Qsci.QsciScintilla.WrapWord - Lines are wrapped at word boundaries.
+            PyQt4.Qsci.QsciScintilla.WrapCharacter - Lines are wrapped at character boundaries.
+            PyQt4.Qsci.QsciScintilla.WrapWhitespace - Lines are wrapped at whitespace boundaries. 
+        Wrap visual flags:
+            PyQt4.Qsci.QsciScintilla.WrapFlagNone - No wrap flag is displayed.
+            PyQt4.Qsci.QsciScintilla.WrapFlagByText - A wrap flag is displayed by the text.
+            PyQt4.Qsci.QsciScintilla.WrapFlagByBorder - A wrap flag is displayed by the border.
+            PyQt4.Qsci.QsciScintilla.WrapFlagInMargin - A wrap flag is displayed in the line number margin. 
+        Wrap indentation:
+            PyQt4.Qsci.QsciScintilla.WrapIndentFixed - Wrapped sub-lines are indented by the amount set by setWrapVisualFlags().
+            PyQt4.Qsci.QsciScintilla.WrapIndentSame - Wrapped sub-lines are indented by the same amount as the first sub-line.
+            PyQt4.Qsci.QsciScintilla.WrapIndentIndented - Wrapped sub-lines are indented by the same amount as the first sub-line plus one more level of indentation. 
+        """
+        if self.wrapMode() == PyQt4.Qsci.QsciScintilla.WrapNone:
+            self.setWrapMode(PyQt4.Qsci.QsciScintilla.WrapWord)
+            self.setWrapVisualFlags(PyQt4.Qsci.QsciScintilla.WrapFlagByText)
+            self.setWrapIndentMode(PyQt4.Qsci.QsciScintilla.WrapIndentSame)
+            self.main_form.display.repl_display_message(
+                "Line wrapping ON", 
+                message_type=data.MessageType.WARNING
+            )
+        else:
+            self.setWrapMode(PyQt4.Qsci.QsciScintilla.WrapNone)
+            self.setWrapVisualFlags(PyQt4.Qsci.QsciScintilla.WrapFlagNone)
+            self.main_form.display.repl_display_message(
+                "Line wrapping OFF", 
+                message_type=data.MessageType.WARNING
+            )
+    
 
     """
     CustomEditor autocompletion functions
@@ -9541,6 +9592,17 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/bookmark.png", 
                 form.menubar_functions["bookmark_toggle"], 
                 "Toggle\nBookmark", 
+                input_font=PyQt4.QtGui.QFont(
+                                    'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
+                                ), 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
+            ),
+            self.ButtonInfo(
+                "button_toggle_wordwrap", 
+                (424, 0, 68, 60), 
+                "tango_icons/wordwrap.png", 
+                form.menubar_functions["toggle_wordwrap"], 
+                "Toggle\nWord Wrap", 
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
                                 ), 

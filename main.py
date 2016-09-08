@@ -163,7 +163,7 @@ def main():
     if "library.zip" in data.application_directory:
         data.application_directory = data.application_directory.replace("library.zip", "")
     #Set the resources directory
-    data.resources_directory   = os.path.join(data.application_directory,  "resources")
+    data.resources_directory = os.path.join(data.application_directory,  "resources")
     #Combine the application path with the Ex.Co. icon file name (the icon file name is set in the global module)
     data.application_icon = os.path.join(
         data.resources_directory,
@@ -179,11 +179,11 @@ def main():
     #Save the Qt application to the global reference
     data.application = app
     #Create the main window, pass the filename that may have been passed as an argument
-    wnd =   forms.MainWindow(
-                new_document = options.new_document, 
-                logging=data.logging_mode, 
-                file_arguments=file_arguments
-            )
+    wnd = forms.MainWindow(
+        new_document = options.new_document, 
+        logging=data.logging_mode, 
+        file_arguments=file_arguments
+    )
     wnd.show()
     sys.exit(app.exec_())
     
