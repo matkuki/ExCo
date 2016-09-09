@@ -279,7 +279,8 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
                 self.settings_manipulator.stored_sessions = new_session_list
                 #Save the the new session list by saving the settings
                 self.settings_manipulator.save_settings(
-                    self.settings_manipulator.main_window_side
+                    self.settings_manipulator.main_window_side, 
+                    data.theme
                 )
                 #Update the main forms session menu
                 self.main_form.sessions.update_menu()
@@ -316,7 +317,8 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
                 self.settings_manipulator.stored_sessions = new_session_list
                 #Save the the new session list by saving the settings
                 self.settings_manipulator.save_settings(
-                    self.settings_manipulator.main_window_side
+                    self.settings_manipulator.main_window_side, 
+                    data.theme
                 )
                 #Update the main forms session menu
                 self.main_form.sessions.update_menu()

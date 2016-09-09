@@ -342,14 +342,14 @@ class SettingsFileManipulator():
                 #Replace the session
                 self.stored_sessions[i] = session
                 #Save the new settings
-                self.save_settings(self.main_window_side)
+                self.save_settings(self.main_window_side, self.theme)
                 session_found = True
         #Check if the session was already found
         if session_found == False:
             #Add the session to the list
             self.stored_sessions.append(session)
             #Save the new settings
-            self.save_settings(self.main_window_side)
+            self.save_settings(self.main_window_side, self.theme)
 
     def remove_session(self, session_name, session_group=None):
         """Remove a session from the stored session list"""
@@ -360,7 +360,7 @@ class SettingsFileManipulator():
                 #Remove the session from the stored session list
                 self.stored_sessions.remove(session)
                 #Save the new settings
-                self.save_settings(self.main_window_side)
+                self.save_settings(self.main_window_side, self.theme)
                 return True
         #Signal that the session was not removed
         return False
