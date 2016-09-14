@@ -773,8 +773,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.name = "Tree display"
         #Disable node expansion on double click
         self.setExpandsOnDoubleClick(False)
-        #Connect the doubleclick signal
+        #Connect the click and doubleclick signal
         self.doubleClicked.connect(self._item_double_click)
+#        self.clicked.connect(self._item_click)
         #Connect the doubleclick signal
         self.expanded.connect(self._check_contents)
         #Initialize the icons
@@ -815,6 +816,76 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.setFocus()
         #Set Save/SaveAs buttons in the menubar
         self.parent._set_save_status()
+        
+        if event.button() == PyQt4.QtCore.Qt.RightButton:
+            index = self.indexAt(event.pos())
+            self._item_click(index)
+    
+    def _item_click(self, model_index):
+        if self.tree_display_type == data.TreeDisplayType.FILES:
+            item = self.model().itemFromIndex(model_index)
+            if (hasattr(item, "is_dir") == True or 
+                hasattr(item, "is_base") == True):
+                def update_cwd():
+                    self.main_form.set_cwd(item.full_name)
+                cursor = PyQt4.QtGui.QCursor.pos()
+                self.tree_menu = PyQt4.QtGui.QMenu()
+                action_update_cwd = PyQt4.QtGui.QAction("Update CWD", self.tree_menu)
+                action_update_cwd.triggered.connect(update_cwd)
+                icon = set_icon('tango_icons/update-cwd.png')
+                action_update_cwd.setIcon(icon)
+                self.tree_menu.addAction(action_update_cwd)
+                if hasattr(item, "is_base") == True:
+                    def update_to_parent():
+                        parent_directory = os.path.abspath(
+                            os.path.join(item.full_name, os.pardir)
+                        )
+                        self.main_form.set_cwd(parent_directory)
+                    action_update_to_parent = PyQt4.QtGui.QAction(
+                        "Update CWD to parent", self.tree_menu
+                    )
+                    action_update_to_parent.triggered.connect(update_to_parent)
+                    icon = set_icon('tango_icons/update-cwd.png')
+                    action_update_to_parent.setIcon(icon)
+                    self.tree_menu.addAction(action_update_to_parent)
+                    self.tree_menu.addSeparator()
+                    def one_dir_up():
+                        parent_directory = os.path.abspath(
+                            os.path.join(item.full_name, os.pardir)
+                        )
+                        self.main_form.display.show_directory_tree(
+                            parent_directory
+                        )
+                    action_one_dir_up = PyQt4.QtGui.QAction(
+                        "One directory up ..", self.tree_menu
+                    )
+                    action_one_dir_up.triggered.connect(one_dir_up)
+                    icon = set_icon('tango_icons/one-dir-up.png')
+                    action_one_dir_up.setIcon(icon)
+                    self.tree_menu.addAction(action_one_dir_up)
+                self.tree_menu.popup(cursor)
+            elif hasattr(item, "full_name") == True:
+                def open_file():
+                    self.main_form.open_file(item.full_name)
+                cursor = PyQt4.QtGui.QCursor.pos()
+                self.tree_menu = PyQt4.QtGui.QMenu()
+                action_open_file = PyQt4.QtGui.QAction("Open", self.tree_menu)
+                action_open_file.triggered.connect(open_file)
+                icon = set_icon('tango_icons/document-open.png')
+                action_open_file.setIcon(icon)
+                self.tree_menu.addAction(action_open_file)
+                self.tree_menu.addSeparator()
+                def update_to_parent():
+                    directory = os.path.dirname(item.full_name)
+                    self.main_form.set_cwd(directory)
+                action_update_to_parent = PyQt4.QtGui.QAction(
+                    "Update CWD", self.tree_menu
+                )
+                action_update_to_parent.triggered.connect(update_to_parent)
+                icon = set_icon('tango_icons/update-cwd.png')
+                action_update_to_parent.setIcon(icon)
+                self.tree_menu.addAction(action_update_to_parent)
+                self.tree_menu.popup(cursor)
     
     def _item_double_click(self, model_index):
         """Function connected to the doubleClicked signal of the tree display"""
@@ -952,7 +1023,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             error_font  = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
             )
-            item_error  = PyQt4.QtGui.QStandardItem("ERROR PARSING FILE!")
+            item_error = PyQt4.QtGui.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
             item_error.setForeground(error_brush)
             item_error.setFont(error_font)
@@ -971,8 +1042,15 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             item_import_node.setEditable(False)
             item_import_node.setIcon(self.node_icon_import)
             item_imports.appendRow(item_import_node)
+        if import_nodes == []:
+            item_no_imports = PyQt4.QtGui.QStandardItem("No imports found")
+            item_no_imports.setEditable(False)
+            item_no_imports.setIcon(self.node_icon_nothing)
+            item_imports.appendRow(item_no_imports)
         #Append the import node to the model
         tree_model.appendRow(item_imports)
+        if import_nodes == []:
+            self.expand(item_imports.index())
         """Class nodes filtering"""
         item_classes = PyQt4.QtGui.QStandardItem(class_text)
         item_classes.setEditable(False)
@@ -1578,6 +1656,10 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             item_base_directory.setForeground(label_brush)
             item_base_directory.setFont(label_font)
             item_base_directory.setIcon(self.folder_icon)
+            #Add an indicating attribute that shows the item is a directory.
+            #It's a python object, attributes can be added dynamically!
+            item_base_directory.is_base = True
+            item_base_directory.full_name = directory
             #Create the base directory object that will hold everything else
             base_directory = self.Directory(item_base_directory)
             #Create the files that will be added last directly to the base directory
@@ -1639,6 +1721,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                             #Add an indicating attribute that shows the item is a directory.
                             #It's a python object, attributes can be added dynamically!
                             item_new_directory.is_dir = True
+                            item_new_directory.full_name = item_with_path
                             current_directory = current_directory.add_directory(
                                 dir, 
                                 item_new_directory
@@ -1980,21 +2063,21 @@ class TextDiffer(PyQt4.QtGui.QWidget):
                 function_to_decorate(*args, **kwargs)
             return decorated_function
         self.editor_1.mousePressEvent = focus_decorator(
-                                            self.editor_1.mousePressEvent,
-                                            self.editor_1
-                                        )
-        self.editor_1.wheelEvent =  focus_decorator(
-                                        self.editor_1.wheelEvent,
-                                        self.editor_1
-                                    )
+            self.editor_1.mousePressEvent,
+            self.editor_1
+        )
+        self.editor_1.wheelEvent = focus_decorator(
+            self.editor_1.wheelEvent,
+            self.editor_1
+        )
         self.editor_2.mousePressEvent = focus_decorator(
-                                            self.editor_2.mousePressEvent,
-                                            self.editor_2
-                                        )
-        self.editor_2.wheelEvent =  focus_decorator(
-                                        self.editor_2.wheelEvent,
-                                        self.editor_2
-                                    )
+            self.editor_2.mousePressEvent,
+            self.editor_2
+        )
+        self.editor_2.wheelEvent = focus_decorator(
+            self.editor_2.wheelEvent,
+            self.editor_2
+        )
         #Focus the first editor on initialization
         self.focused_editor = self.editor_1
         self.focused_editor.setFocus()

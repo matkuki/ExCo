@@ -1681,7 +1681,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def create_cwd_tree():
                 self.display.show_directory_tree(os.getcwd())
             self.menubar_functions["create_cwd_tree"] = create_cwd_tree
-            cwd_tree_action    = PyQt4.QtGui.QAction('Show current working directory tree', self)
+            cwd_tree_action = PyQt4.QtGui.QAction('Show current working directory tree', self)
             cwd_tree_action.setShortcut('F7')
             temp_string = 'Create a node tree for the current working directory (CWD)'
             cwd_tree_action.setStatusTip(temp_string)
@@ -3605,6 +3605,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                         window.widget(i).set_theme(data.theme)
                     if hasattr(window.widget(i), "refresh_lexer") == True:
                         window.widget(i).refresh_lexer()
+            self.parent.repl_helper.set_theme(data.theme)
             self.indication_check()
             self.parent.statusbar.setStyleSheet(
                 "color: {0};".format(data.theme.Indication.Font)
