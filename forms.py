@@ -2960,7 +2960,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         vertical_width_2        = 1/3
         horizontal_width_1      = 2/3
         horizontal_width_2      = 1/3
-        main_relation           = 65
+        main_relation           = 55
         #Window mode: ONE or THREE
         window_mode             = data.WindowMode.THREE
         #Attribute that stores which side the main window is on
@@ -3311,12 +3311,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.parent.repl.setVisible(True)
                 self.parent.repl_helper.setVisible(False)
                 self.repl_state = data.ReplType.SINGLE_LINE
-                self.main_relation = 65
+                self.main_relation = 55
             else:
                 self.parent.repl.setVisible(False)
                 self.parent.repl_helper.setVisible(True)
                 self.repl_state = data.ReplType.MULTI_LINE
-                self.main_relation = 120
+                self.main_relation = 100
             self.parent.repl_box.setLayout(repl_layout)
             #Refresh the layout
             self.parent.view.set_basic_widgets(
@@ -3521,6 +3521,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 data.theme.Indication.ActiveBorder, 
                 data.theme.Indication.ActiveBackGround
             )
+            self.parent.setStyleSheet(style_sheet)
             windows = ["Main", "Upper", "Lower"]
             windows.remove(window_name)
             for window in windows:
@@ -3529,10 +3530,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     data.theme.Indication.PassiveBorder, 
                     data.theme.Indication.PassiveBackGround
                 )
+                self.parent.setStyleSheet(style_sheet)
             style_sheet += self.generate_repl_colors(
                 data.theme.Indication.PassiveBorder, 
                 data.theme.Indication.PassiveBackGround
             )
+            self.parent.setStyleSheet(style_sheet)
             style_sheet += self.generate_treedisplay_colors("TreeDisplay")
             style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
             self.parent.setStyleSheet(style_sheet)

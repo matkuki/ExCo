@@ -886,6 +886,37 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                 action_update_to_parent.setIcon(icon)
                 self.tree_menu.addAction(action_update_to_parent)
                 self.tree_menu.popup(cursor)
+        
+        elif self.tree_display_type == data.TreeDisplayType.NODES:
+            def goto_item():
+                #Parse the node
+                self._node_item_parse(item)
+            
+            def open_document():
+                #Focus the bound tab in its parent window
+                self.bound_tab.parent.setCurrentWidget(self.bound_tab)
+            
+            item = self.model().itemFromIndex(model_index)
+            item_text = item.text()
+            cursor = PyQt4.QtGui.QCursor.pos()
+            self.tree_menu = PyQt4.QtGui.QMenu()
+            
+            if (hasattr(item, "line_number") == True or "line:" in item_text):
+                action_goto_line = PyQt4.QtGui.QAction("Goto node item", self.tree_menu)
+                action_goto_line.triggered.connect(goto_item)
+                icon = set_icon('tango_icons/edit-goto.png')
+                action_goto_line.setIcon(icon)
+                self.tree_menu.addAction(action_goto_line)
+            elif "DOCUMENT" in item_text:
+                action_open = PyQt4.QtGui.QAction("Focus document", self.tree_menu)
+                action_open.triggered.connect(open_document)
+                icon = set_icon('tango_icons/document-open.png')
+                action_open.setIcon(icon)
+                self.tree_menu.addAction(action_open)
+            
+            
+            
+            self.tree_menu.popup(cursor)
     
     def _item_double_click(self, model_index):
         """Function connected to the doubleClicked signal of the tree display"""
