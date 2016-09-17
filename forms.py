@@ -3368,7 +3368,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if self.function_wheel_overlay != None:
                 self.function_wheel_overlay.hide()
         
-        def reset_style_sheet(self):            
+        def init_style_sheet(self):            
             style_sheet = (
                 "#Form {" +
                 "   background-color: {0};".format(data.theme.Form) +
@@ -3377,28 +3377,33 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 "   background: {0};".format(data.theme.Form) +
                 "}"
             )
-            self.parent.setStyleSheet(style_sheet)
             return style_sheet
         
-        def reset_window_colors(self):
+        def reset_window_colors(self, in_sheet):
             windows = ["Main", "Upper", "Lower"]
-            style_sheet = self.parent.styleSheet()
+            style_sheet = in_sheet
             for window in windows:
                 style_sheet += self.generate_window_colors(
                     window, 
                     data.theme.Indication.PassiveBorder, 
                     data.theme.Indication.PassiveBackGround
-                )  
+                )
             style_sheet += self.generate_treedisplay_colors("TreeDisplay")
             style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
-            self.parent.setStyleSheet(style_sheet)
+            return style_sheet
         
-        def reset_repl_colors(self):
-            style_sheet = self.parent.styleSheet()
+        def reset_repl_colors(self, in_sheet):
+            style_sheet = in_sheet
             style_sheet += self.generate_repl_colors(
                 data.theme.Indication.PassiveBorder, 
                 data.theme.Indication.PassiveBackGround
             )
+            return style_sheet
+        
+        def reset_entire_style_sheet(self):
+            style_sheet = self.init_style_sheet()
+            style_sheet = self.reset_window_colors(style_sheet)
+            style_sheet = self.reset_repl_colors(style_sheet)
             self.parent.setStyleSheet(style_sheet)
         
         def generate_window_colors(self, window_name, border, background):
@@ -3494,7 +3499,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         
         def indicate_repl(self):
             """Indicate that the REPL is focused by coloring the border"""
-            style_sheet = self.reset_style_sheet()
+            style_sheet = self.init_style_sheet()
             style_sheet += self.generate_repl_colors(
                 data.theme.Indication.ActiveBorder, 
                 data.theme.Indication.ActiveBackGround
@@ -3515,7 +3520,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 window_name != "Upper" and 
                 window_name != "Lower"):
                 return
-            style_sheet = self.reset_style_sheet()
+            style_sheet = self.init_style_sheet()
             style_sheet += self.generate_window_colors(
                 window_name, 
                 data.theme.Indication.ActiveBorder, 
@@ -3584,9 +3589,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.indicate_repl()
                 return
             #If no widget has focus, reset the QMainWindows stylesheet
-            self.reset_style_sheet()
-            self.reset_window_colors()
-            self.reset_repl_colors()
+            self.reset_entire_style_sheet()
         
         def refresh_main_splitter(self):
             #Refresh the size relation between the basic widgets and the REPL,
