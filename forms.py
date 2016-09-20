@@ -3691,12 +3691,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             try:
                 #Execute the find function
                 found_files = functions.find_files_with_text_enum(
-                                  search_text, 
-                                  search_dir, 
-                                  case_sensitive, 
-                                  search_subdirs, 
-                                  break_on_find
-                              )
+                    search_text, 
+                    search_dir, 
+                    case_sensitive, 
+                    search_subdirs, 
+                    break_on_find
+                )
                 #Check of the function return is valid
                 if found_files == None:
                     #Check if directory is valid

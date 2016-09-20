@@ -163,7 +163,10 @@ def find_files_with_text_enum(search_text,
                 text_file_list.append(full_with_path)
     #Search for the text in found files
     return_file_dict = {}
+    break_out = False
     for file in text_file_list:
+        if break_out == True:
+            break
         try:
             file_lines = read_file_to_list(file)
             #Set the comparison according to case sensitivity
@@ -182,7 +185,7 @@ def find_files_with_text_enum(search_text,
                         return_file_dict[file] = [i]
                     #Check if break option on first find is true
                     if break_on_find == True:
-                        break
+                        break_out = True
         except:
             continue
     #Return the generated list
