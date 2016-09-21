@@ -164,7 +164,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "5.0"
+APPLICATION_VERSION     = "5.1"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
@@ -196,6 +196,14 @@ tree_display_font_size = 10
 #Current theme
 theme = themes.Air
 
+
+#Compatibility mode test for PyQt versions lower than 4.11
+try:
+    import PyQt4.Qsci
+    PyQt4.Qsci.QsciLexerCoffeeScript
+    compatibility_mode = False
+except:
+    compatibility_mode = True
 
 """
 --------------------------------------

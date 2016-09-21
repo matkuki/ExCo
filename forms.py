@@ -1840,11 +1840,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             YAML_action.triggered.connect(
                 functools.partial(set_lexer, lexers.YAML, 'YAML')
             )
-            CoffeeScript_action = PyQt4.QtGui.QAction('CoffeeScript', self)
-            CoffeeScript_action.setIcon(helper_forms.set_icon('language_icons/logo_coffeescript.png'))
-            CoffeeScript_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CoffeeScript, 'CoffeeScript')
-            )
+            if data.compatibility_mode == False:
+                CoffeeScript_action = PyQt4.QtGui.QAction('CoffeeScript', self)
+                CoffeeScript_action.setIcon(helper_forms.set_icon('language_icons/logo_coffeescript.png'))
+                CoffeeScript_action.triggered.connect(
+                    functools.partial(set_lexer, lexers.CoffeeScript, 'CoffeeScript')
+                )
             CSharp_action = PyQt4.QtGui.QAction('C#', self)
             CSharp_action.setIcon(helper_forms.set_icon('language_icons/logo_csharp.png'))
             CSharp_action.triggered.connect(
@@ -1884,7 +1885,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             lexers_menu.addAction(BATCH_action)
             lexers_menu.addAction(CMAKE_action)
             lexers_menu.addAction(C_CPP_action)
-            lexers_menu.addAction(CoffeeScript_action)
+            if data.compatibility_mode == False:
+                lexers_menu.addAction(CoffeeScript_action)
             lexers_menu.addAction(CSharp_action)
             lexers_menu.addAction(CSS_action)
             lexers_menu.addAction(D_action)
@@ -7782,8 +7784,12 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             lexer   = lexers.Lua()
             self.comment_string = "--"
         elif file_type  == "coffeescript":
-            lexer   = lexers.CoffeeScript()
-            self.comment_string = "#"
+            if data.compatibility_mode == False:
+                lexer = lexers.CoffeeScript()
+                self.comment_string = "#"
+            else:
+                lexer = lexers.Text()
+                self.comment_string = None
         elif file_type  == "c#":
             lexer   = lexers.CPP()
             self.comment_string = "//"
@@ -7826,9 +7832,9 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             self.end_comment_string = "*/"
         else:
             #No lexer was chosen, set file type to text and lexer to plain text
-            self.current_file_type  = "TEXT"
+            self.current_file_type = "TEXT"
             lexer = lexers.Text()
-            self.comment_string     = None
+            self.comment_string = None
         #Get the icon according to the file type
         self.current_icon = helper_forms.get_language_file_icon(file_type)
         #Check if a lexer was chosen
