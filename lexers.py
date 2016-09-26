@@ -91,6 +91,8 @@ class Text(PyQt4.Qsci.QsciLexerCustom):
         super().__init__()
         #Set the font colors
         self.setFont(self.default_font, 0)
+        #Reset autoindentation style
+        self.setAutoIndentStyle(0)
         #Set the theme
         self.set_theme(data.theme)
     
@@ -233,6 +235,8 @@ class Cython(PyQt4.Qsci.QsciLexerPython):
         self._kwrds.extend(self._cython_kwrds)
         #Transform list into a single string with spaces between list items
         self._kwrds = " ".join(self._kwrds)
+        #Reset autoindentation style
+        self.setAutoIndentStyle(0)
         #Set the theme
         self.set_theme(data.theme)
     
@@ -304,6 +308,8 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
         #Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultFont(self.default_font)
+        #Reset autoindentation style
+        self.setAutoIndentStyle(0)
         #Set the theme
         self.set_theme(data.theme)
     
@@ -482,6 +488,8 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
         #Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultFont(self.default_font)
+        #Reset autoindentation style
+        self.setAutoIndentStyle(0)
         #Set the theme
         self.set_theme(data.theme)
     
@@ -723,6 +731,8 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         #Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultFont(self.default_font)
+        #Reset autoindentation style
+        self.setAutoIndentStyle(0)
         #Set the theme
         self.set_theme(data.theme)
     
