@@ -2096,6 +2096,20 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 bookmark_store_action.setIcon(temp_icon)
                 bookmark_store_action.triggered.connect(functools.partial(bookmark_store, i))
                 bookmark_store_menu.addAction(bookmark_store_action)
+            def toggle_line_endings():
+                try:
+                    self.get_tab_by_focus().toggle_line_endings()
+                except:
+                    pass
+            self.menubar_functions["toggle_line_endings"] = toggle_line_endings
+            toggle_lineend_action = PyQt4.QtGui.QAction('Toggle EOL visibility', self)
+#            toggle_lineend_action.setShortcut('Ctrl+')
+            temp_string = 'Toggle the visibility of the End-Of-Line characters '
+            temp_string += 'for the currently selected document'
+            toggle_lineend_action.setStatusTip(temp_string)
+            temp_icon = helper_forms.set_icon('tango_icons/view-line-end.png')
+            toggle_lineend_action.setIcon(temp_icon)
+            toggle_lineend_action.triggered.connect(toggle_line_endings)
             #Add all actions and menus
             view_menu.addAction(function_wheel_toggle_action)
             view_menu.addSeparator()
@@ -2116,6 +2130,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             view_menu.addAction(move_tab_left_action)
             view_menu.addAction(toggle_edge_action)
             view_menu.addAction(reset_zoom_action)
+            view_menu.addAction(toggle_lineend_action)
         #REPL menu
         def construct_repl_menu():
             repl_menu = self.menubar.addMenu("&REPL")
@@ -2376,7 +2391,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 basic_widget.setCurrentIndex(index)
                 return
             #Add new scintilla document tab to the basic widget
-            new_tab = basic_widget.editor_add_document(file ,"file" , bypass_check=False)
+            new_tab = basic_widget.editor_add_document(file, "file", bypass_check=False)
             #Set the icon if it was set by the lexer
             if new_tab.current_icon != None:
                 basic_widget.setTabIcon(basic_widget.indexOf(new_tab), new_tab.current_icon)
@@ -5880,7 +5895,7 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
         #Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         #Set line endings to be Unix style ("\n")
-        self.setEolMode(PyQt4.Qsci.QsciScintilla.EolUnix)
+        self.setEolMode(data.default_eol)
         #Initialize the namespace references
         self.hotspots = self.Hotspots(self)
         #Set the initial zoom factor
@@ -6352,7 +6367,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Scintilla widget must not accept drag/drop events, the cursor freezes if it does!!!
         self.setAcceptDrops(False)
         #Set line endings to be Unix style ("\n")
-        self.setEolMode(PyQt4.Qsci.QsciScintilla.EolUnix)
+        self.setEolMode(data.default_eol)
         #Set the initial zoom factor
         self.zoomTo(data.zoom_factor)
         #Correct the file name if it is unspecified
@@ -7684,7 +7699,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                 return
             #Replace back-slashes to forward-slashes on Windows
             if platform.system() == "Windows":
-                temp_save_name = temp_save_name .replace("\\", "/")
+                temp_save_name = temp_save_name.replace("\\", "/")
             #Save the chosen file name to the document "save_name" attribute
             self.save_name = temp_save_name
         #Update the last browsed directory to the class/instance variable
@@ -7707,7 +7722,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                 return
             else:
                 #Convert the text into a list and join it together with the specified line ending
-                text_list = self.text_to_list(self.text())
+                text_list = self.line_list
                 converted_text = line_ending.join(text_list)
                 save_result = functions.write_to_file(converted_text, self.save_name, encoding)
         #Check result of the functions.write_to_file function
@@ -8005,6 +8020,21 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             self.setWrapVisualFlags(PyQt4.Qsci.QsciScintilla.WrapFlagNone)
             self.main_form.display.repl_display_message(
                 "Line wrapping OFF", 
+                message_type=data.MessageType.WARNING
+            )
+    
+    def toggle_line_endings(self):
+        """Set the visibility of the End-Of-Line character"""
+        if self.eolVisibility() == True:
+            self.setEolVisibility(False)
+            self.main_form.display.repl_display_message(
+                "EOL characters hidden", 
+                message_type=data.MessageType.WARNING
+            )
+        else:
+            self.setEolVisibility(True)
+            self.main_form.display.repl_display_message(
+                "EOL characters shown", 
                 message_type=data.MessageType.WARNING
             )
     
@@ -8667,7 +8697,7 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         #Disable drops
         self.setAcceptDrops(False)
         #Set line endings to be Unix style ("\n")
-        self.setEolMode(PyQt4.Qsci.QsciScintilla.EolUnix)
+        self.setEolMode(data.default_eol)
         #Set the initial zoom factor
         self.zoomTo(data.zoom_factor)
         #Set the lexer to python and set the initial autocompletions
@@ -9618,6 +9648,17 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "Toggle\nWord Wrap", 
                 input_font=PyQt4.QtGui.QFont(
                                     'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
+                                ), 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
+            ),
+            self.ButtonInfo(
+                "button_toggle_lineendings", 
+                (378, 26, 68, 60), 
+                "tango_icons/view-line-end.png", 
+                form.menubar_functions["toggle_line_endings"], 
+                "Toggle\nLine Ending\nVisibility", 
+                input_font=PyQt4.QtGui.QFont(
+                                    'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),

@@ -60,6 +60,7 @@
 ##  FILE DESCRIPTION:
 ##      Module that holds objects that will be used across modules.
 
+import PyQt4.Qsci
 import themes
 
 
@@ -193,13 +194,14 @@ terminal = "lxterminal"
 zoom_factor = 0
 #Default tree display(file-tree, node-tree, ...)
 tree_display_font_size = 10
+#Default EOL style (EolWindows-CRLF, EolUnix-LF, EolMac-CR)
+default_eol = PyQt4.Qsci.QsciScintilla.EolUnix
 #Current theme
 theme = themes.Air
 
 
 #Compatibility mode test for PyQt versions lower than 4.11
 try:
-    import PyQt4.Qsci
     PyQt4.Qsci.QsciLexerCoffeeScript
     compatibility_mode = False
 except:

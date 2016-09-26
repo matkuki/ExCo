@@ -1182,6 +1182,10 @@ def test_file_content_for_type(file_with_path):
             file_type = "perl"
         elif "#!" in first_line and "ruby" in first_line:
             file_type = "ruby"
+        elif (("#!" in first_line and "bash" in first_line) or
+              ("#!" in first_line and "dash" in first_line) or
+              ("#!" in first_line and "sh" in first_line)):
+            file_type = "bash"
         #Return the file type
         return file_type
     except:

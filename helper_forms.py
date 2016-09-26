@@ -2376,7 +2376,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         editor.setBraceMatching(PyQt4.Qsci.QsciScintilla.SloppyBraceMatch)
         editor.setMatchedBraceBackgroundColor(PyQt4.QtGui.QColor(255, 153, 0))
         editor.setAcceptDrops(False)
-        editor.setEolMode(PyQt4.Qsci.QsciScintilla.EolUnix)
+        editor.setEolMode(data.default_eol)
         editor.setReadOnly(True)
         editor.savable = data.CanSave.NO
     
