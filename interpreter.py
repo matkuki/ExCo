@@ -76,21 +76,21 @@ class CustomInterpreter(code.InteractiveInterpreter):
     #Class variables (class variables >> this means that these variables are shared accross instances of this class)
     #Modules that will be used by default by the interactive interpreter
     modules =   [
-                    "sys", 
-                    "os", 
-                    "os.path", 
-                    "re", 
-                    "subprocess",
-                    "threading", 
-                    "functools", 
-                    "itertools", 
-                    "inspect", 
-                    "collections", 
-                    "PyQt4.QtCore", 
-                    "PyQt4.QtGui", 
-                    "PyQt4.Qsci", 
-                    "global_module", 
-                ]
+        "sys", 
+        "os", 
+        "os.path", 
+        "re", 
+        "subprocess",
+        "threading", 
+        "functools", 
+        "itertools", 
+        "inspect", 
+        "collections", 
+        "PyQt4.QtCore", 
+        "PyQt4.QtGui", 
+        "PyQt4.Qsci", 
+        "global_module", 
+    ]
     #Not None if an exception occurs during the eval_command function
     eval_error      = None
     #Dictionary of constants
@@ -232,7 +232,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
         """
         try:
             #Reset the error message
-            self.eval_error     = None
+            self.eval_error = None
             #Replace certain strings with methods
             filtered_command = self.replace_references(self.dict_re_references, command)
             filtered_command = self.replace_keywords(self.dict_keywords, filtered_command)

@@ -4326,8 +4326,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Check if message is a string class, if not then make it a string
             if message == None:
                 return
-            elif isinstance(message, bytes) == True:
-                message = message.decode("utf-8")
+#            elif isinstance(message, bytes) == True:
+#                # Convert a byte string to utf-8 string
+#                message = message.decode("utf-8")
             elif isinstance(message, str) == False:
                 message = str(message)
             #Check if the message should be error colored

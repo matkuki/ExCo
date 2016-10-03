@@ -63,6 +63,7 @@
 import os
 import os.path
 import platform
+import imp
 import data
 import themes
 import functions
@@ -98,7 +99,7 @@ Object for manipulating settings/sessions
 class SettingsFileManipulator():
     """Object that will be used for saving, loading, ... all of the Ex.Co. settings """
     #Class variables
-    settings_filename               = "exco_init.ini"
+    settings_filename               = "exco.ini"
     settings_filename_with_path     = ""
     application_directory           = ""
     resources_directory             = "resources/"
@@ -118,12 +119,15 @@ class SettingsFileManipulator():
                                         "[Sessions]", 
                                     ]
     
-    def __init__(self,  app_dir, res_dir):
+    def __init__(self, app_dir, res_dir):
         #Assign the application directory
         self.application_directory  = app_dir
         self.resources_directory    = res_dir
         #Join the application directory with the settings filename
-        self.settings_filename_with_path    = os.path.join(self.application_directory, self.settings_filename)
+        self.settings_filename_with_path = os.path.join(
+            self.application_directory, 
+            self.settings_filename
+        )
         #Check if the settings file exists
         if self.check_settings_file() == None:
             #Create the settings file
@@ -147,182 +151,64 @@ class SettingsFileManipulator():
     
     def save_settings(self, main_window_side, theme):
         """Save all settings to the settings file"""
-        settings_lines = ["[General Settings]"]
-        #Save the main window side
-        self.main_window_side = main_window_side
-        if main_window_side == data.MainWindowSide.RIGHT:
-            settings_lines.append("{:s}Main_Window_Side{:s}Right".format(
-                    self.level_spacing, self.level_spacing
-                )
-            )
-        else:
-            settings_lines.append("{:s}Main_Window_Side{:s}Left".format(
-                    self.level_spacing, self.level_spacing
-                )
-            )
-        #Save the theme
-        self.theme = theme
-        settings_lines.append("{0}Theme{1}{2}".format(
-                self.level_spacing, 
-                self.level_spacing, 
-                theme.__name__.split(".")[1]
-            )
-        )
+        settings_lines = []
+        settings_lines.append("# Needed imports")
+        settings_lines.append("import themes")
         settings_lines.append("")
-        #Save the recent files to list
-        settings_lines.append("[Recent Files]")
+        settings_lines.append("# General Settings")
+        settings_lines.append("main_window_side = {}".format(main_window_side))
+        settings_lines.append("theme = {}".format(data.theme.__name__))
+        settings_lines.append("")
+        settings_lines.append("# Recent files")
+        settings_lines.append("recent_files = [")
         for file in self.recent_files:
-            settings_lines.append("{:s}{:s}".format(self.level_spacing, file))
+            settings_lines.append("    '{}',".format(file))
+        settings_lines.append("]")
         settings_lines.append("")
-        #Save the sessions to list
-        settings_lines.append("[Sessions]")
+        settings_lines.append("# Sessions")
+        settings_lines.append("sessions = {")
         for session in self.stored_sessions:
-            settings_lines.append("{:s}[{:s}]".format(self.level_spacing, session.name))
-            #Store the group name if specified
-            if session.group != None:
-                settings_lines.append("{:s}{:s}".format(2*self.level_spacing, "[Group]"))
-                settings_lines.append("{:s}{:s}".format(3*self.level_spacing, session.group))
-            #Check if there are any main window files
-            if session.main_files != []:
-                #Add main window tag
-                settings_lines.append("{:s}{:s}".format(2*self.level_spacing, "[Main]"))
-                for file in session.main_files:
-                    settings_lines.append("{:s}{:s}".format(3*self.level_spacing, file))
-            #Check if there are any upper window files
-            if session.upper_files != []:
-                #Add upper window tag
-                settings_lines.append("{:s}{:s}".format(2*self.level_spacing, "[Upper]"))
-                for file in session.upper_files:
-                    settings_lines.append("{:s}{:s}".format(3*self.level_spacing, file))
-            #Check if there are any lower window files
-            if session.lower_files != []:
-                #Add lower window tag
-                settings_lines.append("{:s}{:s}".format(2*self.level_spacing, "[Lower]"))
-                for file in session.lower_files:
-                    settings_lines.append("{:s}{:s}".format(3*self.level_spacing, file))
+            settings_lines.append("    '{}': {{".format(session.name))
+            settings_lines.append("        'Group': {},".format(repr(session.group)))
+            settings_lines.append("        'Main window files': [")
+            for file in session.main_files:
+                settings_lines.append("            '{}',".format(file))
+            settings_lines.append("        ],")
+            settings_lines.append("        'Upper window files': [")
+            for file in session.upper_files:
+                settings_lines.append("            '{}',".format(file))
+            settings_lines.append("        ],")
+            settings_lines.append("        'Lower window files': [")
+            for file in session.lower_files:
+                settings_lines.append("            '{}',".format(file))
+            settings_lines.append("        ],")
+            settings_lines.append("    },")
+        settings_lines.append("}")
         #Save the file to disk
         self.create_settings_file(settings_lines)
     
     def load_settings(self):
         """Load all setting from the settings file"""
-        settings_file_lines = functions.read_file_to_list(
+        # Import the init file as a python module
+        init_module = imp.load_source(
+            self.settings_filename, 
             self.settings_filename_with_path
         )
-        recent_files_start_line = 0
-        sessions_start_line     = 0
-        for i, line in enumerate(settings_file_lines):
-            split_line = line.split()
-            if "Main_Window_Side" in line:
-                #Load main window side
-                if split_line[1].lower() == "right":
-                    self.main_window_side = data.MainWindowSide.RIGHT
-                else:
-                    self.main_window_side = data.MainWindowSide.LEFT
-            elif  "Theme" in line:
-                #Set the theme
-                theme_string = split_line[1].lower()
-                if theme_string == "air":
-                    self.theme = themes.Air
-                elif theme_string == "earth":
-                    self.theme = themes.Earth
-                elif theme_string == "water":
-                    self.theme = themes.Water
-            #Test if the first recent files line has been reached
-            elif "[Recent Files]" in line:
-                #Store the line that is the beggining of the recent file list
-                recent_files_start_line = i + 1
-                #Reset the recent file list
-                self.recent_files = []
-                #Loop to the line that doesn't have a indentation
-                for j in range(recent_files_start_line, len(settings_file_lines)):
-                    #Test if the last element was reached
-                    if settings_file_lines[j].startswith(self.level_spacing) == False:
-                        #Break from the loop
-                        break
-                    #Save the recent file
-                    file = settings_file_lines[j]
-                    file = file.lstrip()
-                    file = file.replace("\n", "")
-                    self.recent_files.append(file)
-                    #Test if end of the file reached
-                    if j == len(settings_file_lines)-1:
-                        #Break from the loop
-                        break
-            #Test if the sessions line has been reached
-            elif  "[Sessions]" in line:
-                #Reset the stored sessions list
-                self.stored_sessions = []
-                #Store the line that is the beggining of the stored sessions list
-                sessions_start_line     = i + 1
-                current_session         = None
-                #Read all of the stored sessions
-                for j in range(sessions_start_line, len(settings_file_lines)):
-                    ln = settings_file_lines[j]
-                    #Test is the line contains a session name
-                    if ln.startswith(self.level_spacing + "[") and "]" in ln:
-                        #Save session name
-                        current_session = Session(ln.strip().replace("[", "").replace("]", ""))
-                        #Loop through the current session element, break if you reach the end of the file
-                        loop_start = j + 1
-                        group                   = False
-                        current_window_name     = None
-                        current_window_files    = None
-                        for k in range(loop_start, len(settings_file_lines)):
-                            ln_2 = settings_file_lines[k]
-                            #Test if there is a 2-level indent and a window name
-                            if ln_2.startswith(2*self.level_spacing + "[") and "]" in ln_2:
-                                #Save the current window name to a reference
-                                current_window_name = ln_2.strip().replace("[", "").replace("]", "")
-                                if current_window_name.lower() == "main":
-                                    current_window_files = current_session.main_files
-                                    group = False
-                                elif current_window_name.lower() == "upper":
-                                    current_window_files = current_session.upper_files
-                                    group = False
-                                elif current_window_name.lower() == "lower":
-                                    current_window_files = current_session.lower_files
-                                    group = False
-                                elif current_window_name.lower() == "group":
-                                    group = True 
-                                else:
-                                    #Found an invalid window name, skip to the next session
-                                    break
-                            #Test if group name is active
-                            elif group == True:
-                                #Test if there is a 3-level indent
-                                if 3*self.level_spacing in ln_2:
-                                    current_session.group = ln_2.strip()
-                            elif group == False:
-                                #Test if there is a 3-level indent
-                                if 3*self.level_spacing in ln_2:
-                                    current_window_files.append(ln_2.strip())
-                            #Test if we reached a new session or end of the file
-                            if (ln_2.startswith(2*self.level_spacing) == False or
-                                k == len(settings_file_lines)-1):
-                                #Store the session to the list
-                                self.stored_sessions.append(current_session)
-                                #Break from the loop
-                                break
-                    #Test if we reached the last element or end of the file
-                    if (ln.startswith(self.level_spacing) == False or
-                        j == len(settings_file_lines)-1):
-                        for s in self.stored_sessions:
-                            data.print_log("Session: " + s.name)
-                            data.print_log("    Window: Main")
-                            for f in s.main_files:
-                                data.print_log("        File: " + f)
-                            data.print_log("    Window: Upper")
-                            for f in s.upper_files:
-                                data.print_log("        File: " + f)
-                            data.print_log("    Window: Lower")
-                            for f in s.lower_files:
-                                data.print_log("        File: " + f)
-                        #Break from the loop
-                        break
-        #Show the recent files in the log window
-        data.print_log("Found recent files:")
-        for file in self.recent_files:
-            data.print_log("{:s}{:s}".format(self.level_spacing, file))
+        # Main window side
+        self.main_window_side = init_module.main_window_side
+        # Theme
+        self.theme = init_module.theme
+        # Recent files
+        self.recent_files = init_module.recent_files
+        # Sessions
+        self.stored_sessions = []
+        for session in init_module.sessions:
+            current_session = Session(session)
+            current_session.group = init_module.sessions[session]['Group']
+            current_session.main_files = init_module.sessions[session]['Main window files']
+            current_session.upper_files = init_module.sessions[session]['Upper window files']
+            current_session.lower_files = init_module.sessions[session]['Lower window files']
+            self.stored_sessions.append(current_session)
 
     def add_session(self, session_name, session_group, main_files, upper_files, lower_files):
         """Add a new session to the stored session list"""
