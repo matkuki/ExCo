@@ -1083,7 +1083,8 @@ def get_file_type(file_with_path):
     path, file = os.path.split(file_with_path)
     #Split file name and extension
     file_name, file_extension   = os.path.splitext(file)
-    if file.lower() == "user_functions.cfg":
+    if (file.lower() == "user_functions.cfg" or 
+        file.lower() == "exco.ini"):
         #First check to see if the user functions file has been opened
         file_type = "python"
     elif file_extension.lower() in data.ext_python:

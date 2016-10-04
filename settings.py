@@ -109,15 +109,20 @@ class SettingsFileManipulator():
     main_window_side                = data.MainWindowSide.RIGHT
     theme                           = themes.Air
     
-    empty_settings_list         =   [   
-                                        "[General Settings]", 
-                                        "    Main_Window_Side    Left", 
-                                        "    Theme    Air",
-                                        "",  
-                                        "[Recent Files]", 
-                                        "", 
-                                        "[Sessions]", 
-                                    ]
+    empty_settings_list = [   
+        "# Needed imports", 
+        "import themes", 
+        "",
+        "# General Settings",  
+        "main_window_side = 0", 
+        "theme = themes.air", 
+        "", 
+        "# Recent files", 
+        "recent_files = []", 
+        "", 
+        "# Sessions", 
+        "sessions = {}", 
+    ]
     
     def __init__(self, app_dir, res_dir):
         #Assign the application directory

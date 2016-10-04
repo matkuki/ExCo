@@ -56,6 +56,6 @@
         Nuitka is freely available under the open source Apache License.
 """
 
-import themes.Air
-import themes.Earth
-import themes.Water
+import themes.air as Air
+import themes.earth as Earth
+import themes.water as Water
