@@ -86,6 +86,7 @@ import keyword
 import re
 import collections
 import textwrap
+import importlib
 import PyQt4.QtCore
 import PyQt4.QtGui
 import PyQt4.Qsci
@@ -732,6 +733,15 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             temp_icon = helper_forms.set_icon('tango_icons/file-user-funcs-reload.png')
             reload_functions_action.setIcon(temp_icon)
             reload_functions_action.triggered.connect(self.import_user_functions)
+            #Add reload themes function
+            self.menubar_functions["themes_reload"] = self.view.reload_themes
+            themes_reload_action = PyQt4.QtGui.QAction('Reload themes', self)
+            temp_string = 'Reload themes from modules to update '
+            temp_string += 'any changes made in the theme files'
+            themes_reload_action.setStatusTip(temp_string)
+            temp_icon = helper_forms.set_icon('tango_icons/themes-reload.png')
+            themes_reload_action.setIcon(temp_icon)
+            themes_reload_action.triggered.connect(self.view.reload_themes)
             #Add recent file list in the file menu
             self.recent_files_menu = PyQt4.QtGui.QMenu("Recent Files")
             temp_icon = helper_forms.set_icon('tango_icons/file-recent-files.png')
@@ -752,6 +762,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             file_menu.addSeparator()
             file_menu.addAction(edit_functions_action)
             file_menu.addAction(reload_functions_action)
+            file_menu.addSeparator()
+            file_menu.addAction(themes_reload_action)
             file_menu.addSeparator()
             file_menu.addMenu(self.recent_files_menu)
             file_menu.addSeparator()
@@ -3636,6 +3648,17 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.parent.statusbar.setStyleSheet(
                 "color: {0};".format(data.theme.Indication.Font)
             )
+        
+        def reload_themes(self):
+            global lexers, themes
+            current_theme_name = data.theme.__name__.split(".")[1]
+            importlib.reload(themes.air)
+            importlib.reload(themes.earth)
+            importlib.reload(themes.water)
+            importlib.reload(themes.mc)
+            importlib.reload(lexers)
+            data.theme = getattr(themes, current_theme_name)
+            self.refresh_theme()
     
     class System():
         """
@@ -4118,6 +4141,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         action_air          = None
         action_earth        = None
         action_water        = None
+        action_mc           = None
         
         def __init__(self, parent):
             """ Initialization of the Display object instance """
@@ -4150,6 +4174,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             elif data.theme == themes.Water:
                 tooltip = "Water"
                 image = "tango_icons/theme-water.png"
+            elif data.theme == themes.MC:
+                tooltip = "MC"
+                image = "tango_icons/theme-mc.png"
             raw_picture = PyQt4.QtGui.QPixmap(
                 os.path.join(
                     data.resources_directory, image
@@ -4191,6 +4218,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 elif data.theme == themes.Water:
                     tooltip = "Water"
                     image = "tango_icons/theme-water.png"
+                elif data.theme == themes.MC:
+                    tooltip = "Midnight Commander"
+                    image = "tango_icons/theme-mc.png"
                 raw_picture = PyQt4.QtGui.QPixmap(
                     os.path.join(
                         data.resources_directory, image
@@ -4240,6 +4270,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             icon = helper_forms.set_icon('tango_icons/theme-water.png')
             action_water.setIcon(icon)
             self.theme_menu.addAction(action_water)
+            # Midnight Commander
+            action_mc = PyQt4.QtGui.QAction("MC", self.theme_menu)
+            action_mc.triggered.connect(
+                functools.partial(choose_theme, themes.MC)
+            )
+            icon = helper_forms.set_icon('tango_icons/theme-mc.png')
+            action_mc.setIcon(icon)
+            self.theme_menu.addAction(action_mc)
         
         def write_to_statusbar(self, message, msec=0):
             """Write a message to the statusbar"""
@@ -9777,6 +9815,14 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/system-log-out.png", 
                 form.exit, 
                 "Exit Ex.Co.", 
+                input_no_document_focus_disable=False, 
+            ),
+            self.ButtonInfo(
+                "button_40", 
+                (19, 338, 68, 60), 
+                "tango_icons/themes-reload.png", 
+                form.view.reload_themes, 
+                "Reload\nThemes", 
                 input_no_document_focus_disable=False, 
             ),
         ]

@@ -88,7 +88,7 @@ class Font:
     Default = PyQt4.QtGui.QColor(0xff000000)
     
     class Ada:
-        Default = (0xff000000, None)
+        Default = (0xffff0000, None)
         Comment = (0xff007f00, None)
         Keyword = (0xff00007f, None)
         String = (0xff7f007f, None)
@@ -98,7 +98,7 @@ class Font:
         Package = (0xff7f0000, None)
     
     class Nim:
-        Default = (0xff000000, None)
+        Default = (0xffff0000, None)
         Comment = (0xff007f00, None)
         BasicKeyword = (0xff00007f, True)
         TopKeyword = (0xff407fc0, True)
@@ -151,15 +151,15 @@ class Font:
         Backticks = (0xffadad00, None)
         Comment = (0xff007f00, None)
         Default = (0xff808080, None)
-        DoubleQuotedString = (0xff7f007f, None)
-        Error = (0xffff6f72, None)
+        DoubleQuotedString = (0xff7f007f, True)
+        Error = (0xffaa0000, True)
         HereDocumentDelimiter = (0xff000000, None)
         Identifier = (0xff000000, None)
         Keyword = (0xff00007f, None)
         Number = (0xff007f7f, None)
         Operator = (0xff000000, None)
         ParameterExpansion = (0xff000000, None)
-        Scalar = (0xff000000, None)
+        Scalar = (0xffadad00, True)
         SingleQuotedHereDocument = (0xff7f007f, None)
         SingleQuotedString = (0xff7f007f, None)
     
