@@ -2844,24 +2844,28 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.parent.main_window.clear()
             self.parent.upper_window.clear()
             #Loop through the aplication directory and add the relevant files
-            exco_files = []
-            for item in os.listdir(self.parent.settings.manipulator.application_directory):
-                file_extension = os.path.splitext(item)[1].lower()
-                if (file_extension == ".py" or
-                    file_extension == ".pyw" or
-                    file_extension == ".pyx" or
-                    file_extension == ".pxd" or
-                    file_extension == ".pxi" or
-                    file_extension == ".cfg"):
-                    file =  os.path.join(
-                                self.parent.settings.manipulator.application_directory, 
-                                item
-                            )
-                    exco_files.append(file)
+            exco_main_files = []
+            exco_dir = self.parent.settings.manipulator.application_directory
+            exco_dirs = [
+                exco_dir,
+                os.path.join(exco_dir, "themes"),
+                os.path.join(exco_dir, "cython"),
+            ]
+            for directory in exco_dirs:
+                for item in os.listdir(directory):
+                    file_extension = os.path.splitext(item)[1].lower()
+                    if (file_extension == ".py" or
+                        file_extension == ".pyw" or
+                        file_extension == ".pyx" or
+                        file_extension == ".pxd" or
+                        file_extension == ".pxi" or
+                        file_extension == ".cfg"):
+                        file = os.path.join(directory, item)
+                        exco_main_files.append(file)
             #Sort the files by name
-            exco_files.sort()
+            exco_main_files.sort()
             #Add the files to the main window
-            for file in exco_files:
+            for file in exco_main_files:
                 self.parent.open_file(file, self.parent.main_window)
 
         def remove(self, session_name, session_group=None):
@@ -3624,7 +3628,6 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             for window in windows:
                 for i in range(window.count()):
                     if hasattr(window.widget(i), "set_theme") == True:
-                        print(window.widget(i))
                         window.widget(i).set_theme(data.theme)
                     if hasattr(window.widget(i), "refresh_lexer") == True:
                         window.widget(i).refresh_lexer()

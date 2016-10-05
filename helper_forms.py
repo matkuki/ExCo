@@ -1025,7 +1025,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword)
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[0])
         )
         description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1043,7 +1043,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         #Set the label properties
         label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
         )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1219,7 +1219,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush   = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword)
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[0])
         )
         description_font    = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1237,7 +1237,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         #Set the label properties
         label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
         )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1288,7 +1288,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword)
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[0])
         )
         description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1306,7 +1306,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         """Add the nodes"""
         label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
         )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1574,7 +1574,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         """Define the description details"""
         #Font
         description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword)
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[0])
         )
         description_font    = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1613,7 +1613,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         """Define the description details"""
         #Font
         description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.BASIC_KEYWORD)
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Default[0])
         )
         description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1675,7 +1675,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             directory = directory.replace("\\", "/")
             """Adding the files"""
             label_brush = PyQt4.QtGui.QBrush(
-                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
             )
             label_font = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1780,7 +1780,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             directory = directory.replace("\\", "/")
             """Adding the files"""
             label_brush = PyQt4.QtGui.QBrush(
-                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString)
+                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
             )
             label_font  = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
