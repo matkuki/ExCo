@@ -88,7 +88,7 @@ class Font:
     Default = PyQt4.QtGui.QColor(0xff000000)
     
     class Ada:
-        Default = (0xffff0000, None)
+        Default = (0xff000000, None)
         Comment = (0xff007f00, None)
         Keyword = (0xff00007f, None)
         String = (0xff7f007f, None)
@@ -98,7 +98,7 @@ class Font:
         Package = (0xff7f0000, None)
     
     class Nim:
-        Default = (0xffff0000, None)
+        Default = (0xff000000, None)
         Comment = (0xff007f00, None)
         BasicKeyword = (0xff00007f, True)
         TopKeyword = (0xff407fc0, True)
