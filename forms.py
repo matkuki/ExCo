@@ -735,7 +735,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             reload_functions_action.triggered.connect(self.import_user_functions)
             #Add reload themes function
             self.menubar_functions["themes_reload"] = self.view.reload_themes
-            themes_reload_action = PyQt4.QtGui.QAction('Reload themes', self)
+            themes_reload_action = PyQt4.QtGui.QAction('Reload Themes', self)
             temp_string = 'Reload themes from modules to update '
             temp_string += 'any changes made in the theme files'
             themes_reload_action.setStatusTip(temp_string)
@@ -5323,7 +5323,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
     #Custom tab bar
     custom_tab_bar          = None
     #Default font for textboxes
-    default_editor_font    = PyQt4.QtGui.QFont('Courier', 10)
+    default_editor_font     = PyQt4.QtGui.QFont('Courier', 10)
     #Stored icon for the node tree tab
     node_tree_icon          = None
     #Stored icon for the repl messages tab
@@ -7923,17 +7923,9 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.setFolding(PyQt4.Qsci.QsciScintilla.PlainFoldStyle)
         #Set all fonts in the current lexer to the default style
         #and set the keyword styles to bold
-        if (isinstance(lexer, lexers.Ada) == False and
-            isinstance(lexer, lexers.Oberon) == False and
-            isinstance(lexer, lexers.Nim) == False):
-            for i in range(100):
-                new_font = self.default_font
-                if "keyword" in lexer.description(i).lower():
-                    new_font.setBold(True)
-                else:
-                    new_font.setBold(False)
-                lexer.setFont(new_font, i)
-        else:
+        if (isinstance(lexer, lexers.Ada) or
+            isinstance(lexer, lexers.Oberon) or
+            isinstance(lexer, lexers.Nim)):
             #Set the margin font for the lexers in the lexers.py module
             self.setMarginsFont(lexer.default_font)
         #Set the theme

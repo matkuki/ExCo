@@ -166,7 +166,9 @@ def get_language_file_icon(language_name):
 
 
 """
-Module structures
+-------------------------------------------------
+Module objects
+-------------------------------------------------
 """
 class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
     """
