@@ -380,7 +380,7 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
             TYP = self.styles["Type"]
             #Initialize comment state and split the text into tokens
             commenting  = False
-            stringing           = False
+            stringing   = False
             tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
             #Check if there is a style(comment, string, ...) stretching on from the previous line
             if start != 0:

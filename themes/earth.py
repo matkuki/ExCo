@@ -83,9 +83,27 @@ class Indication:
     PassiveBackGround = "#585a55"
     PassiveBorder = "#b3935c"
 
+
+class TextDifferColors:
+    Indicator_Unique_1_Color = PyQt4.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
+    Indicator_Unique_2_Color = PyQt4.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
+    Indicator_Similar_Color = PyQt4.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
+
     
 class Font:
     Default = PyQt4.QtGui.QColor(0xfff7f1c1)
+    
+    class Repl:
+        """
+        THE MESSAGE COLORS ARE: 0xBBGGRR (BB-blue,GG-green,RR-red)
+        """
+        Error = 0x0000ff
+        Warning = 0xe4761f
+        Success = 0x007f00
+        Diff_Unique_1 = 0xcf9f72
+        Diff_Unique_2 = 0xa87fad
+        Diff_Similar = 0x069a4e
+        
     
     class Ada:
         Default = ('Courier', 0xfff7f1c1, 10, None)
@@ -99,7 +117,7 @@ class Font:
     
     class Nim:
         Default = ('Courier', 0xfff7f1c1, 10, None)
-        Comment = (0xff679d47, False)
+        Comment = ('Courier', 0xff679d47, 10, None)
         BasicKeyword = ('Courier', 0xff519872, 10, True)
         TopKeyword = ('Courier', 0xff407fc0, 10, True)
         String = ('Courier', 0xff7ca563, 10, None)

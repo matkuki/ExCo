@@ -1027,7 +1027,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[0])
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1045,7 +1045,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         #Set the label properties
         label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1221,7 +1221,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush   = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[0])
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font    = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1239,7 +1239,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         #Set the label properties
         label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1290,7 +1290,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
         description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[0])
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1308,7 +1308,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_type)
         """Add the nodes"""
         label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
         label_font  = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1576,7 +1576,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         """Define the description details"""
         #Font
         description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[0])
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font    = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1615,7 +1615,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         """Define the description details"""
         #Font
         description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Default[0])
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Default[1])
         )
         description_font = PyQt4.QtGui.QFont(
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1677,7 +1677,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             directory = directory.replace("\\", "/")
             """Adding the files"""
             label_brush = PyQt4.QtGui.QBrush(
-                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
+                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
             )
             label_font = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1782,7 +1782,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             directory = directory.replace("\\", "/")
             """Adding the files"""
             label_brush = PyQt4.QtGui.QBrush(
-                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[0])
+                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
             )
             label_font  = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -2000,16 +2000,13 @@ class TextDiffer(PyQt4.QtGui.QWidget):
     diff_text               = None
     #Class constants
     DEFAULT_FONT            = PyQt4.QtGui.QFont('Courier', 10)
-    DEFAULT_FONT_BACK_COLOR = PyQt4.QtGui.QColor(0xd7, 0xd3, 0xcf, 255)
-    MARGIN_BACK_COLOR       = PyQt4.QtGui.QColor(0xd7, 0xd3, 0xcf, 255)
-    MARGIN_FORE_COLOR       = PyQt4.QtGui.QColor(0x2e, 0x34, 0x36, 255)
     MARGIN_STYLE            = PyQt4.Qsci.QsciScintilla.STYLE_LINENUMBER
     INDICATOR_UNIQUE_1          = 1
-    INDICATOR_UNIQUE_1_COLOR    = PyQt4.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
+    Indicator_Unique_1_Color    = PyQt4.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
     INDICATOR_UNIQUE_2          = 2
-    INDICATOR_UNIQUE_2_COLOR    = PyQt4.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
+    Indicator_Unique_2_Color    = PyQt4.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
     INDICATOR_SIMILAR           = 3
-    INDICATOR_SIMILAR_COLOR     = PyQt4.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
+    Indicator_Similar_Color     = PyQt4.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
     GET_X_OFFSET    = PyQt4.Qsci.QsciScintillaBase.SCI_GETXOFFSET
     SET_X_OFFSET    = PyQt4.Qsci.QsciScintillaBase.SCI_SETXOFFSET
     UPDATE_H_SCROLL = PyQt4.Qsci.QsciScintillaBase.SC_UPDATE_H_SCROLL
@@ -2043,6 +2040,10 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         """Initialization"""
         #Initialize the superclass
         super().__init__(parent)
+        #Initialize colors according to theme
+        self.Indicator_Unique_1_Color = data.theme.TextDifferColors.Indicator_Unique_1_Color
+        self.Indicator_Unique_2_Color = data.theme.TextDifferColors.Indicator_Unique_2_Color
+        self.Indicator_Similar_Color = data.theme.TextDifferColors.Indicator_Similar_Color
         #Store the reference to the parent
         self.parent = parent
         #Store the reference to the main form
@@ -2324,8 +2325,8 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         self.marker_similar_1           = self.editor_1.markerDefine(PyQt4.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
         self.marker_similar_symbol_1    = self.editor_1.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
-        self.editor_1.setMarkerBackgroundColor(self.INDICATOR_UNIQUE_1_COLOR, self.marker_unique_1)
-        self.editor_1.setMarkerBackgroundColor(self.INDICATOR_SIMILAR_COLOR, self.marker_similar_1)
+        self.editor_1.setMarkerBackgroundColor(self.Indicator_Unique_1_Color, self.marker_unique_1)
+        self.editor_1.setMarkerBackgroundColor(self.Indicator_Similar_Color, self.marker_similar_1)
         #Margins for editor 1
         self.init_margin(
             self.editor_1, 
@@ -2340,8 +2341,8 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         self.marker_similar_2           = self.editor_2.markerDefine(PyQt4.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
         self.marker_similar_symbol_2    = self.editor_2.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
-        self.editor_2.setMarkerBackgroundColor(self.INDICATOR_UNIQUE_2_COLOR, self.marker_unique_2)
-        self.editor_2.setMarkerBackgroundColor(self.INDICATOR_SIMILAR_COLOR, self.marker_similar_2)
+        self.editor_2.setMarkerBackgroundColor(self.Indicator_Unique_2_Color, self.marker_unique_2)
+        self.editor_2.setMarkerBackgroundColor(self.Indicator_Similar_Color, self.marker_similar_2)
         #Margins for editor 2
         self.init_margin(
             self.editor_2, 
@@ -2393,19 +2394,19 @@ class TextDiffer(PyQt4.QtGui.QWidget):
             self.init_indicator(
                 editor, 
                 self.INDICATOR_UNIQUE_1, 
-                self.INDICATOR_UNIQUE_1_COLOR
+                self.Indicator_Unique_1_Color
             )
         elif indicator_index == self.INDICATOR_UNIQUE_2:
             self.init_indicator(
                 editor, 
                 self.INDICATOR_UNIQUE_2, 
-                self.INDICATOR_UNIQUE_2_COLOR
+                self.Indicator_Unique_2_Color
             )
         elif indicator_index == self.INDICATOR_SIMILAR:
             self.init_indicator(
                 editor, 
                 self.INDICATOR_SIMILAR, 
-                self.INDICATOR_SIMILAR_COLOR
+                self.Indicator_Similar_Color
             )
         #Color the line background
         scintilla_command = PyQt4.Qsci.QsciScintillaBase.SCI_INDICATORFILLRANGE
@@ -2695,12 +2696,6 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         parent.setCornerWidget(find_toolbar)
     
     def set_theme(self, theme):
-#        self.DEFAULT_FONT_BACK_COLOR    = PyQt4.QtGui.QColor(0xd7, 0xd3, 0xcf, 255)
-#        self.MARGIN_BACK_COLOR          = PyQt4.QtGui.QColor(0xd7, 0xd3, 0xcf, 255)
-#        self.MARGIN_FORE_COLOR          = PyQt4.QtGui.QColor(0x2e, 0x34, 0x36, 255)
-#        self.INDICATOR_UNIQUE_1_COLOR   = PyQt4.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
-#        self.INDICATOR_UNIQUE_2_COLOR   = PyQt4.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
-#        self.INDICATOR_SIMILAR_COLOR    = PyQt4.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
         def set_editor_theme(editor):
             if theme == themes.Air:
                 editor.resetFoldMarginColors()

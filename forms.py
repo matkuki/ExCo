@@ -254,64 +254,64 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         that will be used by the REPL interpreter
         """
         return  dict(
-                    form        = self,                 
-                    main        = self.main_window, 
-                    upper       = self.upper_window, 
-                    lower       = self.lower_window,
-                    print_log   = data.print_log, 
-                    quit        = self.exit, 
-                    exit        = self.exit, 
-                    new         = self.create_new, 
-                    open        = self.open_files,
-                    open_d      = self.open_file_with_dialog, 
-                    save        = functions.write_to_file, 
-                    log         = data.log_window, 
-                    version     = data.APPLICATION_VERSION,
-                    run         = self.run_process, 
-                    set_cwd         = self.set_cwd, 
-                    get_cwd         = self.get_cwd, 
-                    update_cwd      = self.update_cwd, 
-                    close_all       = self.close_all_tabs, 
-                    #Settings functions
-                    settings        = self.settings.manipulator,
-                    save_settings   = self.settings.save, 
-                    load_settings   = self.settings.restore, 
-                    #Session functions
-                    session_add     = self.sessions.add, 
-                    session_restore = self.sessions.restore, 
-                    session_remove  = self.sessions.remove, 
-                    #View functions
-                    spin                    = self.view.spin_basic_widgets, 
-                    toggle_main_window_side = self.view.toggle_main_window_side, 
-                    #System function
-                    find_files       = self.system.find_files, 
-                    find_in_files    = self.system.find_in_files, 
-                    replace_in_files = self.system.replace_in_files, 
-                    #Document editing references
-                    find                    = self.editing.find, 
-                    regex_find              = self.editing.regex_find, 
-                    find_and_replace        = self.editing.find_and_replace, 
-                    regex_find_and_replace  = self.editing.regex_find_and_replace, 
-                    goto_line               = self.editing.line.goto, 
-                    replace_all             = self.editing.replace_all, 
-                    regex_replace_all       = self.editing.regex_replace_all, 
-                    replace_in_selection    = self.editing.replace_in_selection, 
-                    regex_replace_in_selection  = self.editing.regex_replace_in_selection, 
-                    highlight               = self.editing.highlight, 
-                    regex_highlight         = self.editing.regex_highlight, 
-                    clear_highlights        = self.editing.clear_highlights, 
-                    find_in_open_documents          = self.editing.find_in_open_documents, 
-                    find_replace_in_open_documents  = self.editing.find_replace_in_open_documents, 
-                    replace_all_in_open_documents   = self.editing.replace_all_in_open_documents,
-                    replace_line            = self.editing.line.replace, 
-                    remove_line             = self.editing.line.remove, 
-                    get_line                = self.editing.line.get,
-                    set_line                = self.editing.line.set, 
-                    #Display functions
-                    print           = self.display.repl_display_message,
-                    clear_repl_tab  = self.display.repl_clear_tab, 
-                    show_node_tree  = self.display.show_nodes,
-                )
+            form        = self,                 
+            main        = self.main_window, 
+            upper       = self.upper_window, 
+            lower       = self.lower_window,
+            print_log   = data.print_log, 
+            quit        = self.exit, 
+            exit        = self.exit, 
+            new         = self.create_new, 
+            open        = self.open_files,
+            open_d      = self.open_file_with_dialog, 
+            save        = functions.write_to_file, 
+            log         = data.log_window, 
+            version     = data.APPLICATION_VERSION,
+            run         = self.run_process, 
+            set_cwd         = self.set_cwd, 
+            get_cwd         = self.get_cwd, 
+            update_cwd      = self.update_cwd, 
+            close_all       = self.close_all_tabs, 
+            #Settings functions
+            settings        = self.settings.manipulator,
+            save_settings   = self.settings.save, 
+            load_settings   = self.settings.restore, 
+            #Session functions
+            session_add     = self.sessions.add, 
+            session_restore = self.sessions.restore, 
+            session_remove  = self.sessions.remove, 
+            #View functions
+            spin                    = self.view.spin_basic_widgets, 
+            toggle_main_window_side = self.view.toggle_main_window_side, 
+            #System function
+            find_files       = self.system.find_files, 
+            find_in_files    = self.system.find_in_files, 
+            replace_in_files = self.system.replace_in_files, 
+            #Document editing references
+            find                    = self.editing.find, 
+            regex_find              = self.editing.regex_find, 
+            find_and_replace        = self.editing.find_and_replace, 
+            regex_find_and_replace  = self.editing.regex_find_and_replace, 
+            goto_line               = self.editing.line.goto, 
+            replace_all             = self.editing.replace_all, 
+            regex_replace_all       = self.editing.regex_replace_all, 
+            replace_in_selection    = self.editing.replace_in_selection, 
+            regex_replace_in_selection  = self.editing.regex_replace_in_selection, 
+            highlight               = self.editing.highlight, 
+            regex_highlight         = self.editing.regex_highlight, 
+            clear_highlights        = self.editing.clear_highlights, 
+            find_in_open_documents          = self.editing.find_in_open_documents, 
+            find_replace_in_open_documents  = self.editing.find_replace_in_open_documents, 
+            replace_all_in_open_documents   = self.editing.replace_all_in_open_documents,
+            replace_line            = self.editing.line.replace, 
+            remove_line             = self.editing.line.remove, 
+            get_line                = self.editing.line.get,
+            set_line                = self.editing.line.set, 
+            #Display functions
+            print           = self.display.repl_display_message,
+            clear_repl_tab  = self.display.repl_clear_tab, 
+            show_node_tree  = self.display.show_nodes,
+        )
     
     def get_references_autocompletions(self):
         """Get the form references and autocompletions"""
@@ -4245,6 +4245,11 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     "    padding-right: 0px;" + 
                     "}"
                 )
+                self.repl_display_message(
+                    "Changed theme to: {}".format(tooltip), 
+                    message_type=data.MessageType.SUCCESS
+                )
+                
             self.theme_menu = PyQt4.QtGui.QMenu()
             # Air
             action_air = PyQt4.QtGui.QAction("Air", self.theme_menu)
@@ -4394,17 +4399,17 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     end = start
                 #THE MESSAGE COLORS ARE: 0xBBGGRR (BB-blue,GG-green,RR-red)
                 if message_type == data.MessageType.ERROR:
-                    style_repl_text(start, end, 0x0000FF, 1)
+                    style_repl_text(start, end, data.theme.Font.Repl.Error, 1)
                 elif message_type == data.MessageType.WARNING:
-                    style_repl_text(start, end, 0xFF0000, 2)
+                    style_repl_text(start, end, data.theme.Font.Repl.Warning, 2)
                 elif message_type == data.MessageType.SUCCESS:
-                    style_repl_text(start, end, 0x007F00, 3)
+                    style_repl_text(start, end, data.theme.Font.Repl.Success, 3)
                 elif message_type == data.MessageType.DIFF_UNIQUE_1:
-                    style_repl_text(start, end, 0xcf9f72, 4)
+                    style_repl_text(start, end, data.theme.Font.Repl.Diff_Unique_1, 4)
                 elif message_type == data.MessageType.DIFF_UNIQUE_2:
-                    style_repl_text(start, end, 0xa87fad, 5)
+                    style_repl_text(start, end, data.theme.Font.Repl.Diff_Unique_2, 5)
                 elif message_type == data.MessageType.DIFF_SIMILAR:
-                    style_repl_text(start, end, 0x069a4e, 6)
+                    style_repl_text(start, end, data.theme.Font.Repl.Diff_Similar, 6)
             else:
                 #Add REPL message to the REPL message tab
                 parent.repl_messages_tab.append("{:s}\n".format(message))
@@ -7234,12 +7239,65 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             start_line_number   = self.getSelection()[0] + 1
             first_selected_chars = self.selectedText()[0:len(self.comment_string)]
             end_line_number     = self.getSelection()[2] + 1
-            print(first_selected_chars)
             #Choose un/commenting according to the first line in selection
             if first_selected_chars == self.comment_string:
                 self.uncomment_lines(start_line_number, end_line_number)
             else:
                 self.comment_lines(start_line_number, end_line_number)
+    
+    def for_each_line(self, in_func):
+        """Apply function 'in_func' to lines"""
+        #Check that in_func is really a function
+        if callable(in_func) == False:
+            self.main_form.display.repl_display_message(
+                "'for_each_line' argument has to be a function!", 
+                message_type=data.MessageType.ERROR
+            )
+            return
+        #Check there is only one argument
+        arguments = inspect.getargspec(in_func).args
+        if len(arguments) != 1:
+            self.main_form.display.repl_display_message(
+                "'for_each_line' function has to have only one argument!", 
+                message_type=data.MessageType.ERROR
+            )
+            return
+        #
+        if (self.getSelection() == (-1, -1, -1, -1) or
+            self.getSelection()[0] == self.getSelection()[2]):
+            #No selected text, apply function to the every line
+            try:
+                new_line_list = []
+                for line in self.line_list:
+                    new_line = in_func(line)
+                    new_line_list.append(new_line)
+                #Assign the new list over the old one
+                self.line_list = new_line_list
+            except Exception as ex:
+                self.main_form.display.repl_display_message(
+                    "'for_each_line' has an error:\n" +str(ex), 
+                    message_type=data.MessageType.ERROR
+                )
+                return
+        else:
+            #Selected text, apply function to the selected lines
+            try:
+                #Get the starting and end line
+                start_line_number   = self.getSelection()[0] + 1
+                end_line_number     = self.getSelection()[2] + 1
+                #Apply the function to the lines
+                new_line_list = []
+                for i in self.line_list[start_line_number:end_line_number]:
+                    new_line = in_func(self.line_list[i])
+                    new_line_list.append(new_line)
+                #Assign the new list over the old one
+                self.line_list[start_line_number:end_line_number] = new_line_list
+            except Exception as ex:
+                self.main_form.display.repl_display_message(
+                    "'for_each_line' has an error:\n" +str(ex), 
+                    message_type=data.MessageType.ERROR
+                )
+                return
 
     """
     Search and replace functions
@@ -7332,12 +7390,12 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         """Find all instances of a string and return a list of (line, index_start, index_end)"""
         #Find all instances of the search string and return the list
         matches = functions.index_strings_in_text(
-                      search_text, 
-                      self.text(), 
-                      case_sensitive, 
-                      regular_expression, 
-                      text_to_bytes
-                  )
+            search_text, 
+            self.text(), 
+            case_sensitive, 
+            regular_expression, 
+            text_to_bytes
+        )
         return matches
     
     def find_and_replace(self, 
