@@ -66,6 +66,7 @@ import ast
 import inspect
 import functools
 import difflib
+import re
 import PyQt4.QtCore
 import PyQt4.QtGui
 import settings
@@ -1051,7 +1052,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
         )
         #Check if there was a parsing error
-        if parse_error == True:
+        if parse_error != False:
             error_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(180, 0, 0))
             error_font  = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
@@ -1062,6 +1063,15 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             item_error.setFont(error_font)
             item_error.setIcon(self.node_icon_nothing)
             tree_model.appendRow(item_error)
+            #Show the error message
+            error_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
+            item_error_msg = PyQt4.QtGui.QStandardItem(str(parse_error))
+            item_error_msg.setEditable(False)
+            item_error_msg.setForeground(error_brush)
+            item_error_msg.setFont(error_font)
+            line_number = int(re.search(r"line (\d+)",str(parse_error)).group(1))
+            item_error_msg.line_number = line_number
+            tree_model.appendRow(item_error_msg)
             return
         """Imported module filtering"""
         item_imports = PyQt4.QtGui.QStandardItem(import_text)
@@ -1143,7 +1153,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                     while parent_node == None and parent_level >= 0:
                         parent_node = base_node_items[parent_level]
                         level_retraction += 1
-                        parent_level        = child_level - level_retraction
+                        parent_level = child_level - level_retraction
                     #Add the child node to the parent node
                     parent_node.appendRow(child_tree_node)
                     #Sort the base node children

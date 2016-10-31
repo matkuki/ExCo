@@ -4503,13 +4503,13 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 try:
                     import_nodes, class_nodes, function_nodes, global_vars = functions.get_python_node_tree(custom_editor.text())
                     parser_error = False
-                except:
+                except Exception as ex:
                     # Exception, probably an error in the file's syntax
                     import_nodes = []
                     class_nodes = []
                     function_nodes = []
                     global_vars = []
-                    parser_error = True
+                    parser_error = ex
                 #Display the information in the tree tab
                 parent.node_tree_tab.display_python_nodes(
                     custom_editor,
