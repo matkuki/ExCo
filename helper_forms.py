@@ -1692,6 +1692,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             label_font = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
             )
+            item_brush = PyQt4.QtGui.QBrush(
+                PyQt4.QtGui.QColor(data.theme.Font.Python.Default[1])
+            )
             item_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
             #Create the base directory item that will hold all of the found files
             item_base_directory = PyQt4.QtGui.QStandardItem(directory)
@@ -1721,6 +1724,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                     #Initialize the file item
                     item_file = PyQt4.QtGui.QStandardItem(file_name)
                     item_file.setEditable(False)
+                    item_file.setForeground(item_brush)
                     item_file.setFont(item_font)
                     file_type = functions.get_file_type(file_name)
                     item_file.setIcon(get_language_file_icon(file_type))
@@ -1760,6 +1764,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                             item_new_directory = PyQt4.QtGui.QStandardItem(dir)
                             item_new_directory.setEditable(False)
                             item_new_directory.setIcon(self.folder_icon)
+                            item_new_directory.setForeground(item_brush)
                             item_new_directory.setFont(item_font)
                             #Add an indicating attribute that shows the item is a directory.
                             #It's a python object, attributes can be added dynamically!
@@ -1781,6 +1786,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             item_no_files_found = PyQt4.QtGui.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
             item_no_files_found.setIcon(self.node_icon_nothing)
+            item_no_files_found.setForeground(label_brush)
             item_no_files_found.setFont(label_font)
             tree_model.appendRow(item_no_files_found)
     
@@ -1797,6 +1803,10 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             label_font  = PyQt4.QtGui.QFont(
                 "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
             )
+            item_brush = PyQt4.QtGui.QBrush(
+                PyQt4.QtGui.QColor(data.theme.Font.Python.Default[1])
+            )
+            item_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
             #Create the base directory item that will hold all of the found files
             item_base_directory = PyQt4.QtGui.QStandardItem(directory)
             item_base_directory.setEditable(False)
@@ -1824,6 +1834,8 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                     item_file.setEditable(False)
                     file_type = functions.get_file_type(file_name)
                     item_file.setIcon(get_language_file_icon(file_type))
+                    item_file.setForeground(item_brush)
+                    item_file.setFont(item_font)
                     #Add an atribute that will hold the full file name to the QStandartItem.
                     #It's a python object, attributes can be added dynamically!
                     item_file.full_name = item_with_path
@@ -1834,6 +1846,8 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                         item_line = PyQt4.QtGui.QStandardItem("line {:d}".format(line))
                         item_line.setEditable(False)
                         item_line.setIcon(self.goto_icon)
+                        item_line.setForeground(item_brush)
+                        item_line.setFont(item_font)
                         #Add the file name and line number as attributes
                         item_line.full_name     = item_with_path
                         item_line.line_number   = line
@@ -1871,6 +1885,8 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                             item_new_directory = PyQt4.QtGui.QStandardItem(dir)
                             item_new_directory.setEditable(False)
                             item_new_directory.setIcon(self.folder_icon)
+                            item_new_directory.setForeground(item_brush)
+                            item_new_directory.setFont(item_font)
                             #Add an indicating attribute that shows the item is a directory.
                             #It's a python object, attributes can be added dynamically!
                             item_new_directory.is_dir = True
@@ -1890,6 +1906,8 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             item_no_files_found = PyQt4.QtGui.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
             item_no_files_found.setIcon(self.node_icon_nothing)
+            item_no_files_found.setForeground(item_brush)
+            item_no_files_found.setFont(item_font)
             tree_model.appendRow(item_no_files_found)
     
     def display_directory_tree(self, directory):

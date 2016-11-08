@@ -1489,6 +1489,19 @@ def regex_replace_text(input_string,
             replaced_text   = re.sub(compiled_re, replace_text, input_string)
     return replaced_text
 
+def is_config_file(file_with_path):
+    file_with_path = file_with_path.replace("\\", "/")
+    if os.path.isfile(file_with_path) == False:
+        return False
+    file = os.path.basename(file_with_path)
+    path = os.path.dirname(file_with_path)
+    data.config_file = data.config_file.replace("\\", "/")
+    data.application_directory = data.application_directory.replace("\\", "/")
+    if file == data.config_file and path == data.application_directory:
+        return True
+    else:
+        return False
+
 def right_replace(string, search_str, replace_str, occurrence=1):
     """
     Replace the instance of substring in string,

@@ -166,7 +166,8 @@ class CustomInterpreter(code.InteractiveInterpreter):
         hide_edge_marker            = (r"^hide_edge_marker\(\)$|^hide_edge_marker$", r"main.currentWidget().hide_edge_marker()"),
         reload_file                 = (r"^reload_file|^reload_file\(\)", r"main.currentWidget().reload_file()"),
         show_node_tree              = (r"^show_node_tree|^show_node_tree\(\)", r"show_node_tree(main.currentWidget())"),
-        for_each_line               = (r"for_each_line\(", r"cmain.for_each_line("),
+        for_each_line               = (r"(?<!\.)(?<!{:s})for_each_line\(".format(re_escape_sequence), r"cmain.for_each_line("),
+        remove_empty_lines          = (r"(?<!\.)(?<!{:s})remove_empty_lines\(".format(re_escape_sequence), r"cmain.remove_empty_lines("),
     )
     #Keywords that can appear anywhere in the REPL command and need to be replaced
     #The exco standard abbreviation for a function is a character/characters followed by a colon ":". E.G.: "p:('something')" is replaced by "print('something') "

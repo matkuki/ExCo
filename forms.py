@@ -530,18 +530,30 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     parent.setTabIcon(parent.indexOf(focused_tab), focused_tab.current_icon)
                 #Save the last browsed directory from the editor widget to the main form
                 self.last_browsed_dir = focused_tab.last_browsed_dir
+                #Reimport the user configuration file and update the menubar
+                if functions.is_config_file(focused_tab.save_name) == True:
+                    self.import_user_functions()
+                    self.update_menubar()
     
     def file_saveas(self, encoding="utf-8"):
         """The function name says it all"""
         focused_tab = self.get_tab_by_focus()
         if focused_tab != None:
-            focused_tab.save_document(saveas=True, last_dir=self.last_browsed_dir, encoding=encoding)
+            focused_tab.save_document(
+                saveas=True, 
+                last_dir=self.last_browsed_dir, 
+                encoding=encoding
+            )
             #Set the icon if it was set by the lexer
             if focused_tab.current_icon != None:
                 parent = focused_tab.parent
                 parent.setTabIcon(parent.indexOf(focused_tab), focused_tab.current_icon)
             #Save the last browsed directory from the editor widget to the main form
             self.last_browsed_dir = focused_tab.last_browsed_dir
+            #Reimport the user configuration file and update the menubar
+            if functions.is_config_file(focused_tab.save_name) == True:
+                self.import_user_functions()
+                self.update_menubar()
     
     def file_save_all(self, encoding="utf-8"):
         """Save all open modified files"""
@@ -576,13 +588,23 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 "'Save all' executed successfully", 
                 message_type=data.MessageType.SUCCESS
             )
+    
+    def update_menubar(self):
+        """
+        Update the Menubar in case any keyboard shortcuts
+        were changed in the configuration file
+        """
+        self._init_menubar()
+        self.settings.update_recent_list()
+        self.sessions.update_menu()
 
     def _init_menubar(self):
         """
-        Initialize the menubar ("QAction.triggered.connect" signals first parameter is always "bool checked").
+        Initialize the menubar ("QAction.triggered.connect" signals 
+        first parameter is always "checked: bool").
         This is a very long function that should be trimmed sometime!
         """
-        self.menubar        = PyQt4.QtGui.QMenuBar(self)
+        self.menubar = PyQt4.QtGui.QMenuBar(self)
         #Nested function for writing text to the REPL
         def repl_text_input(text,  cursor_position):
             self.repl.setText(text)
@@ -594,7 +616,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_create_new_file():
                 self.file_create_new()
             new_file_action     = PyQt4.QtGui.QAction('New', self)
-            new_file_action.setShortcut('Ctrl+N')
+            new_file_action.setShortcut(data.new_file_keys)
             new_file_action.setStatusTip('Create new empty file')
             temp_icon = helper_forms.set_icon('tango_icons/document-new.png')
             new_file_action.setIcon(temp_icon)
@@ -603,7 +625,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_open_file():
                 self.file_open()
             open_file_action = PyQt4.QtGui.QAction('Open', self)
-            open_file_action.setShortcut('Ctrl+O')  
+            open_file_action.setShortcut(data.open_file_keys)  
             open_file_action.setStatusTip('Open File')
             temp_icon = helper_forms.set_icon('tango_icons/document-open.png')
             open_file_action.setIcon(temp_icon)
@@ -613,7 +635,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_save_file():
                 self.file_save()
             self.save_file_action = PyQt4.QtGui.QAction('Save', self)
-            self.save_file_action.setShortcut('Ctrl+S')
+            self.save_file_action.setShortcut(data.save_file_keys)
             self.save_file_action.setStatusTip('Save current file in the UTF-8 encoding')
             self.save_file_action.setEnabled(False)
             temp_icon = helper_forms.set_icon('tango_icons/document-save.png')
@@ -623,7 +645,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def special_saveas_file():
                 self.file_saveas()
             self.saveas_file_action = PyQt4.QtGui.QAction('Save As', self)
-            self.saveas_file_action.setShortcut('Ctrl+Shift+S')
+            self.saveas_file_action.setShortcut(data.saveas_file_keys)
             self.saveas_file_action.setStatusTip('Save current file as a new file in the UTF-8 encoding')
             self.saveas_file_action.setEnabled(False)
             temp_icon = helper_forms.set_icon('tango_icons/document-save-as.png')
@@ -684,7 +706,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["close_tab"] = close_tab
             close_tab_action    = PyQt4.QtGui.QAction('Close Tab', self)
-            close_tab_action.setShortcut('Ctrl+W')
+            close_tab_action.setShortcut(data.close_tab_keys)
             close_tab_action.setStatusTip('Close the current tab')
             close_tab_action.triggered.connect(close_tab)
             temp_icon = helper_forms.set_icon('tango_icons/close-tab.png')
@@ -707,7 +729,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             load_settings_action.triggered.connect(self.settings.restore)
             #Add the editing option for the user_functions file
             def open_user_func_file():
-                user_definitions_file = data.application_directory + "/user_functions.cfg"
+                user_definitions_file = os.path.join(data.application_directory, data.config_file)
                 #Test if user_functions file exists
                 if os.path.isfile(user_definitions_file) == False:
                     self.display.repl_display_message(
@@ -718,7 +740,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.open_file(user_definitions_file)
             self.menubar_functions["open_user_func_file"] = open_user_func_file
             edit_functions_action   = PyQt4.QtGui.QAction('Edit User Functions', self)
-            temp_string = 'Open the user_functions.cfg file for '
+            temp_string = 'Open the {} file for '.format(data.config_file)
             temp_string += 'editing in the main window'
             edit_functions_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/file-user-funcs.png')
@@ -727,7 +749,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Add the reload option for the user_functions file
             self.menubar_functions["reload_user_func_file"] = self.import_user_functions
             reload_functions_action = PyQt4.QtGui.QAction('Reload User Functions', self)
-            temp_string = 'Reload the user_functions.cfg file to '
+            temp_string = 'Reload the {} file to '.format(data.config_file)
             temp_string += 'refresh user defined functions'
             reload_functions_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/file-user-funcs-reload.png')
@@ -778,7 +800,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["copy"] = copy
-            action_text = 'Copy\tCtrl+C'
+            action_text = 'Copy\t' + data.copy_keys
             copy_action = PyQt4.QtGui.QAction(action_text , self)
             temp_string = 'Copy any selected text in the currently '
             temp_string += 'selected window to the clipboard'
@@ -792,7 +814,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["cut"] = cut
-            action_text = 'Cut\tCtrl+X'
+            action_text = 'Cut\t' + data.cut_keys
             cut_action  = PyQt4.QtGui.QAction(action_text, self)
             cut_action.setStatusTip('Cut any selected text in the currently selected window to the clipboard')
             temp_icon = helper_forms.set_icon('tango_icons/edit-cut.png')
@@ -804,7 +826,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["paste"] = paste
-            action_text = 'Paste\tCtrl+V'
+            action_text = 'Paste\t' + data.paste_keys
             paste_action    = PyQt4.QtGui.QAction(action_text, self)
             paste_action.setStatusTip('Paste the text in the clipboard to the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-paste.png')
@@ -816,7 +838,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["undo"] = undo
-            action_text = 'Undo\tCtrl+Z'
+            action_text = 'Undo\t' + data.undo_keys
             undo_action    = PyQt4.QtGui.QAction(action_text, self)
             undo_action.setStatusTip('Undo last editor action in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-undo.png')
@@ -828,7 +850,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["redo"] = redo
-            action_text = 'Redo\tCtrl+Y'
+            action_text = 'Redo\t' + data.redo_keys
             redo_action    = PyQt4.QtGui.QAction(action_text, self)
             redo_action.setStatusTip('Redo last undone editor action in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-redo.png')
@@ -840,7 +862,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["select_all"] = select_all
-            action_text = 'Select All\tCtrl+A'
+            action_text = 'Select All\t' + data.select_all_keys
             select_all_action = PyQt4.QtGui.QAction(action_text, self)
             select_all_action.setStatusTip('Select all of the text in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-select-all.png')
@@ -853,7 +875,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["indent"] = indent
-            action_text = 'Indent\tTab'
+            action_text = 'Indent\t' + data.indent_keys
             indent_action = PyQt4.QtGui.QAction(action_text, self)
             indent_action.setStatusTip('Indent the selected lines by the default width (4 spaces) in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/format-indent-more.png')
@@ -866,7 +888,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["unindent"] = unindent
-            action_text = 'Unindent\tShift+Tab'
+            action_text = 'Unindent\t' + data.unindent_keys
             unindent_action    = PyQt4.QtGui.QAction(action_text, self)
             unindent_action.setStatusTip('Unindent the selected lines by the default width (4 spaces) in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/format-indent-less.png')
@@ -879,7 +901,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["delete_start_of_word"] = delete_start_of_word
-            action_text = 'Delete start of word\tCtrl+BackSpace'
+            action_text = 'Delete start of word\t' + data.delete_start_of_word_keys
             del_start_word_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Delete the current word from the cursor to the starting index of the word'
             del_start_word_action.setStatusTip(temp_string)
@@ -893,7 +915,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["delete_end_of_word"] = delete_end_of_word
-            action_text = 'Delete end of word\tCtrl+Delete'
+            action_text = 'Delete end of word\t' + data.delete_end_of_word_keys
             del_end_word_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Delete the current word from the cursor to the ending index of the word'
             del_end_word_action.setStatusTip(temp_string)
@@ -907,7 +929,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["delete_start_of_line"] = delete_start_of_line
-            action_text = 'Delete start of line\tCtrl+Shift+BackSpace'
+            action_text = 'Delete start of line\t' + data.delete_start_of_line_keys
             del_start_line_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Delete the current line from the cursor to the starting index of the line'
             del_start_line_action.setStatusTip(temp_string)
@@ -921,7 +943,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["delete_end_of_line"] = delete_end_of_line
-            action_text = 'Delete end of line\tCtrl+Shift+Delete'
+            action_text = 'Delete end of line\t' + data.delete_end_of_line_keys
             del_end_line_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Delete the current line from the cursor to the ending index of the line'
             del_end_line_action.setStatusTip(temp_string)
@@ -935,7 +957,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["goto_to_start"] = goto_to_start
-            action_text = 'Go to start\tCtrl+Home'
+            action_text = 'Go to start\t' + data.go_to_start_keys
             go_to_start_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Move cursor up to the start of the currently selected document'
             go_to_start_action.setStatusTip(temp_string)
@@ -949,7 +971,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["goto_to_end"] = goto_to_end
-            action_text = 'Go to end\tCtrl+End'
+            action_text = 'Go to end\t' + data.go_to_end_keys
             go_to_end_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Move cursor down to the end of the currently selected document'
             go_to_end_action.setStatusTip(temp_string)
@@ -963,7 +985,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["select_page_up"] = select_page_up
-            action_text = 'Select page up\tCtrl+Shift+PageUp'
+            action_text = 'Select page up\t' + data.select_page_up_keys
             select_page_up_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Select text up one page of the currently selected document'
             select_page_up_action.setStatusTip(temp_string)
@@ -977,7 +999,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["select_page_down"] = select_page_down
-            action_text = 'Select page down\tCtrl+Shift+PageDown'
+            action_text = 'Select page down\t' + data.select_page_down_keys
             select_page_down_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Select text down one page of the currently selected document'
             select_page_down_action.setStatusTip(temp_string)
@@ -991,7 +1013,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["select_to_start"] = select_to_start
-            action_text = 'Select to start\tCtrl+Shift+Home'
+            action_text = 'Select to start\t' + data.select_to_start_keys
             select_to_start_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Select all text up to the start of the currently selected document'
             select_to_start_action.setStatusTip(temp_string)
@@ -1005,7 +1027,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["select_to_end"] = select_to_end
-            action_text = 'Select to end\tCtrl+Shift+End'
+            action_text = 'Select to end\t' + data.select_to_end_keys
             select_to_end_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Select all text down to the start of the currently selected document'
             select_to_end_action.setStatusTip(temp_string)
@@ -1019,7 +1041,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["scroll_up"] = scroll_up
-            action_text = 'Scroll up\tPageUp'
+            action_text = 'Scroll up\t' + data.scroll_up_keys
             scroll_up_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Scroll up one page of the currently selected document'
             scroll_up_action.setStatusTip(temp_string)
@@ -1033,7 +1055,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["scroll_down"] = scroll_down
-            action_text = 'Scroll down\tPageDown'
+            action_text = 'Scroll down\t' + data.scroll_down_keys
             scroll_down_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Scroll down one page of the currently selected document'
             scroll_down_action.setStatusTip(temp_string)
@@ -1047,7 +1069,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["line_cut"] = line_cut
-            action_text = 'Line Cut\tCtrl+L'
+            action_text = 'Line Cut\t' + data.line_cut_keys
             line_cut_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Cut out the current line/lines of the currently selected document'
             line_cut_action.setStatusTip(temp_string)
@@ -1061,7 +1083,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["line_copy"] = line_copy
-            action_text = 'Line Copy\tCtrl+Shift+T'
+            action_text = 'Line Copy\t' + data.line_copy_keys
             line_copy_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Copy the current line/lines of the currently selected document'
             line_copy_action.setStatusTip(temp_string)
@@ -1075,7 +1097,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["line_delete"] = line_delete
-            action_text = 'Line Delete\tCtrl+Shift+L'
+            action_text = 'Line Delete\t' + data.line_delete_keys
             line_delete_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Delete the current line of the currently selected document'
             line_delete_action.setStatusTip(temp_string)
@@ -1089,7 +1111,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["line_transpose"] = line_transpose
-            action_text = 'Line Transpose\tCtrl+T'
+            action_text = 'Line Transpose\t' + data.line_transpose_keys
             line_transpose_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Switch the current line with the line above it of the currently selected document'
             line_transpose_action.setStatusTip(temp_string)
@@ -1103,7 +1125,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["line_duplicate"] = line_duplicate
-            action_text = 'Line/Selection Duplicate\tCtrl+D'
+            action_text = 'Line/Selection Duplicate\t' + data.line_selection_duplicate_keys
             line_duplicate_action    = PyQt4.QtGui.QAction(action_text, self)
             temp_string = 'Duplicate the current line/selection of the currently selected document'
             line_duplicate_action.setStatusTip(temp_string)
@@ -1161,7 +1183,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find"] = special_find
             find_action = PyQt4.QtGui.QAction('Find', self)
-            find_action.setShortcut('Ctrl+F')
+            find_action.setShortcut(data.find_keys)
             find_action.setStatusTip('Find text in the currently selected document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-find.png')
             find_action.setIcon(temp_icon)
@@ -1183,7 +1205,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_find"] = special_regex_find
             regex_find_action = PyQt4.QtGui.QAction('Regex Find', self)
-            regex_find_action.setShortcut('Alt+F')
+            regex_find_action.setShortcut(data.regex_find_keys)
             regex_find_action.setStatusTip(
                 'Find text in currently selected document using Python regular expressions'
             )
@@ -1206,7 +1228,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_and_replace"] = special_find_and_replace
             find_and_replace_action = PyQt4.QtGui.QAction('Find and Replace', self)
-            find_and_replace_action.setShortcut('Ctrl+Shift+F')
+            find_and_replace_action.setShortcut(data.find_and_replace_keys)
             temp_string = 'Find and replace one instance of text '
             temp_string += 'from cursor in currently selected document'
             find_and_replace_action.setStatusTip(temp_string)
@@ -1230,7 +1252,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_find_and_replace"] = special_regex_find_and_replace
             regex_find_and_replace_action = PyQt4.QtGui.QAction('Regex Find and Replace', self)
-            regex_find_and_replace_action.setShortcut('Alt+Shift+F')
+            regex_find_and_replace_action.setShortcut(data.regex_find_and_replace_keys)
             temp_string = 'Find and replace one instance of text '
             temp_string += 'from cursor in currently selected document '
             temp_string += 'using Python regular expressions'
@@ -1252,8 +1274,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_highlight"] = special_highlight
-            highlight_action        = PyQt4.QtGui.QAction('Highlight', self)
-            highlight_action.setShortcut('Ctrl+G')
+            highlight_action = PyQt4.QtGui.QAction('Highlight', self)
+            highlight_action.setShortcut(data.highlight_keys)
             highlight_action.setStatusTip('Highlight all instances of text in currently selected document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-highlight.png')
             highlight_action.setIcon(temp_icon)
@@ -1272,8 +1294,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_highlight"] = special_regex_highlight
-            regex_highlight_action        = PyQt4.QtGui.QAction('Regex Highlight', self)
-            regex_highlight_action.setShortcut('Alt+G')
+            regex_highlight_action = PyQt4.QtGui.QAction('Regex Highlight', self)
+            regex_highlight_action.setShortcut(data.regex_highlight_keys)
             temp_string = "Highlight all instances of text in currently "
             temp_string += "selected document using Python regular expressions"
             regex_highlight_action.setStatusTip(temp_string)
@@ -1290,8 +1312,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(len(self.repl.text()))
             self.menubar_functions["special_clear_highlights"] = special_clear_highlights
-            clear_highlights_action     = PyQt4.QtGui.QAction('Clear Highlights', self)
-            clear_highlights_action.setShortcut('Ctrl+Shift+G')
+            clear_highlights_action = PyQt4.QtGui.QAction('Clear Highlights', self)
+            clear_highlights_action.setShortcut(data.clear_highlights_keys)
             clear_highlights_action.setStatusTip('Clear all in currently selected document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-clear-highlights.png')
             clear_highlights_action.setIcon(temp_icon)
@@ -1308,8 +1330,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('","",case_sensitive'))
             self.menubar_functions["special_replace_in_selection"] = special_replace_in_selection
-            replace_selection_action    = PyQt4.QtGui.QAction('Replace In Selection', self)
-            replace_selection_action.setShortcut('Ctrl+H')
+            replace_selection_action = PyQt4.QtGui.QAction('Replace In Selection', self)
+            replace_selection_action.setShortcut(data.replace_selection_keys)
             temp_string = 'Replace all instances of text in the '
             temp_string += 'selected text of the current selected document'
             replace_selection_action.setStatusTip(temp_string)
@@ -1328,8 +1350,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",r"",case_sensitive'))
             self.menubar_functions["special_regex_replace_in_selection"] = special_regex_replace_in_selection
-            regex_replace_selection_action    = PyQt4.QtGui.QAction('Regex Replace In Selection', self)
-            regex_replace_selection_action.setShortcut('Alt+H')
+            regex_replace_selection_action = PyQt4.QtGui.QAction('Regex Replace In Selection', self)
+            regex_replace_selection_action.setShortcut(data.regex_replace_selection_keys)
             temp_string = 'Replace all instances of text in the '
             temp_string += 'selected text of the current selected document'
             temp_string += 'using Python regular expressions'
@@ -1353,8 +1375,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_replace_all"] = special_replace_all
-            replace_all_action          = PyQt4.QtGui.QAction('Replace All', self)
-            replace_all_action.setShortcut('Ctrl+Shift+H')
+            replace_all_action = PyQt4.QtGui.QAction('Replace All', self)
+            replace_all_action.setShortcut(data.replace_all_keys)
             replace_all_action.setStatusTip('Replace all instances of text in currently selected document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-replace-all.png')
             replace_all_action.setIcon(temp_icon)
@@ -1376,7 +1398,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_replace_all"] = special_regex_replace_all
             regex_replace_all_action    = PyQt4.QtGui.QAction('Regex Replace All', self)
-            regex_replace_all_action.setShortcut('Alt+Shift+H')
+            regex_replace_all_action.setShortcut(data.regex_replace_all_keys)
             regex_replace_all_action.setStatusTip('Replace all instances of text in currently selected document using Python regular expressions')
             temp_icon = helper_forms.set_icon('tango_icons/edit-replace-all-re.png')
             regex_replace_all_action.setIcon(temp_icon)
@@ -1389,7 +1411,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["comment_uncomment"] = comment_uncomment
             toggle_comment_action   = PyQt4.QtGui.QAction('Comment/Uncomment', self)
-            toggle_comment_action.setShortcut('Ctrl+Shift+C')
+            toggle_comment_action.setShortcut(data.toggle_comment_keys)
             temp_string = 'Toggle comments for the selected lines or single line'
             temp_string += " in the currently selected document"
             toggle_comment_action.setStatusTip(temp_string)
@@ -1402,14 +1424,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["toggle_autocompletions"] = toggle_autocompletions
-            toggle_autoc_action = PyQt4.QtGui.QAction('Enable/Disable Autocompletion', self)
-            toggle_autoc_action.setShortcut('Ctrl+K')
+            toggle_autocompletion_action = PyQt4.QtGui.QAction('Enable/Disable Autocompletion', self)
+            toggle_autocompletion_action.setShortcut(data.toggle_autocompletion_keys)
             temp_string = 'Enable/Disable autocompletions '
             temp_string += 'for the currently selected document'
-            toggle_autoc_action.setStatusTip(temp_string)
+            toggle_autocompletion_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/edit-autocompletion.png')
-            toggle_autoc_action.setIcon(temp_icon)
-            toggle_autoc_action.triggered.connect(toggle_autocompletions)
+            toggle_autocompletion_action.setIcon(temp_icon)
+            toggle_autocompletion_action.triggered.connect(toggle_autocompletions)
             def toggle_wordwrap():
                 try:
                     self.get_tab_by_focus().toggle_wordwrap()
@@ -1417,7 +1439,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["toggle_wordwrap"] = toggle_wordwrap
             toggle_wrap_action = PyQt4.QtGui.QAction('Enable/Disable Line Wrapping', self)
-            toggle_wrap_action.setShortcut('Ctrl+P')
+            toggle_wrap_action.setShortcut(data.toggle_wrap_keys)
             temp_string = 'Enable/Disable line wrapping '
             temp_string += 'for the currently selected document'
             toggle_wrap_action.setStatusTip(temp_string)
@@ -1430,8 +1452,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["reload_file"] = reload_file
-            reload_file_action  = PyQt4.QtGui.QAction('Reload file', self)
-            reload_file_action.setShortcut('F9')
+            reload_file_action = PyQt4.QtGui.QAction('Reload file', self)
+            reload_file_action.setShortcut(data.reload_file_keys)
             reload_file_action.setStatusTip('Reload file from disk, will prompt if file contains changes')
             temp_icon = helper_forms.set_icon('tango_icons/view-refresh.png')
             reload_file_action.setIcon(temp_icon)
@@ -1448,8 +1470,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                         message_type=data.MessageType.ERROR
                     )
             self.menubar_functions["create_node_tree"] = create_node_tree
-            node_tree_action    = PyQt4.QtGui.QAction('Create/reload node tree (C / Nim / Python3)', self)
-            node_tree_action.setShortcut('F8')
+            node_tree_action = PyQt4.QtGui.QAction('Create/reload node tree (C / Nim / Python3)', self)
+            node_tree_action.setShortcut(data.node_tree_keys)
             temp_string = 'Create a node tree for the code for the '
             temp_string += 'currently selected document (C / Nim / Python3)'
             node_tree_action.setStatusTip(temp_string)
@@ -1467,8 +1489,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setCursorPosition(len(self.repl.text())-1)
                 self.repl.setFocus()
             self.menubar_functions["special_goto_line"] = special_goto_line
-            goto_line_action        = PyQt4.QtGui.QAction('Goto line', self)
-            goto_line_action.setShortcut('Ctrl+M')
+            goto_line_action = PyQt4.QtGui.QAction('Goto line', self)
+            goto_line_action.setShortcut(data.goto_line_keys)
             goto_line_action.setStatusTip('Go to the specified line in the current main window document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-goto.png')
             goto_line_action.setIcon(temp_icon)
@@ -1480,7 +1502,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["special_indent_to_cursor"] = special_indent_to_cursor
             indent_to_cursor_action = PyQt4.QtGui.QAction('Indent to cursor', self)
-            indent_to_cursor_action.setShortcut('Ctrl+I')
+            indent_to_cursor_action.setShortcut(data.indent_to_cursor_keys)
             temp_string = 'Indent the selected lines to the current cursor position '
             temp_string += '(SPACE ON THE LEFT SIDE OF LINES IS STRIPPED!)'
             indent_to_cursor_action.setStatusTip(temp_string)
@@ -1492,7 +1514,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.editing.convert_to_uppercase(focused_tab.parent.name)
             self.menubar_functions["special_to_uppercase"] = special_to_uppercase
             to_uppercase_action = PyQt4.QtGui.QAction('Selection to UPPERCASE', self)
-            to_uppercase_action.setShortcut('Alt+U')
+            to_uppercase_action.setShortcut(data.to_uppercase_keys)
             to_uppercase_action.setStatusTip('Convert selected text to UPPERCASE')
             temp_icon = helper_forms.set_icon('tango_icons/edit-case-to-upper.png')
             to_uppercase_action.setIcon(temp_icon)
@@ -1502,7 +1524,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.editing.convert_to_lowercase(focused_tab.parent.name)
             self.menubar_functions["special_to_lowercase"] = special_to_lowercase
             to_lowercase_action = PyQt4.QtGui.QAction('Selection to lowercase', self)
-            to_lowercase_action.setShortcut('Alt+L')
+            to_lowercase_action.setShortcut(data.to_lowercase_keys)
             to_lowercase_action.setStatusTip('Convert selected text to lowercase')
             temp_icon = helper_forms.set_icon('tango_icons/edit-case-to-lower.png')
             to_lowercase_action.setIcon(temp_icon)
@@ -1522,8 +1544,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             self.menubar_functions["special_find_in_open_documents"] = special_find_in_open_documents
-            find_in_documents_action    = PyQt4.QtGui.QAction('Find in open documents', self)
-            find_in_documents_action.setShortcut('Ctrl+F4')
+            find_in_documents_action = PyQt4.QtGui.QAction('Find in open documents', self)
+            find_in_documents_action.setShortcut(data.find_in_documents_keys)
             temp_string = 'Find string/regular expression across all open documents'
             temp_string += ' in the currently selected window'
             find_in_documents_action.setStatusTip(temp_string)
@@ -1547,8 +1569,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             self.menubar_functions["special_find_replace_in_open_documents"] = special_find_replace_in_open_documents
-            find_replace_in_documents_action    = PyQt4.QtGui.QAction('Find and replace in open documents', self)
-            find_replace_in_documents_action.setShortcut('Ctrl+F5')
+            find_replace_in_documents_action = PyQt4.QtGui.QAction('Find and replace in open documents', self)
+            find_replace_in_documents_action.setShortcut(data.find_replace_in_documents_keys)
             temp_string = 'Find and replace across all open documents in'
             temp_string += ' the currently selected window'
             find_replace_in_documents_action.setStatusTip(temp_string)
@@ -1573,7 +1595,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
             self.menubar_functions["special_replace_all_in_open_documents"] = special_replace_all_in_open_documents
             replace_all_in_documents_action = PyQt4.QtGui.QAction('Replace all in open documents', self)
-            replace_all_in_documents_action.setShortcut('Ctrl+F6')
+            replace_all_in_documents_action.setShortcut(data.replace_all_in_documents_keys)
             replace_all_in_documents_action.setStatusTip('Replace all instances of search text across all open documents in the currently selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-replace-all-in-open-documents.png')
             replace_all_in_documents_action.setIcon(temp_icon)
@@ -1595,7 +1617,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             edit_menu.addAction(replace_all_action)
             edit_menu.addAction(regex_replace_all_action)
             edit_menu.addAction(toggle_comment_action)
-            edit_menu.addAction(toggle_autoc_action)
+            edit_menu.addAction(toggle_autocompletion_action)
             edit_menu.addAction(toggle_wrap_action)
             edit_menu.addAction(to_uppercase_action)
             edit_menu.addAction(to_lowercase_action)
@@ -1623,7 +1645,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.menubar_functions["special_find_in"]               = special_find_in
             self.menubar_functions["special_find_in_with_dialog"]   = special_find_in_with_dialog
             find_in_files_action    = PyQt4.QtGui.QAction('Find in files', self)
-            find_in_files_action.setShortcut('Ctrl+F2')
+            find_in_files_action.setShortcut(data.find_in_files_keys)
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that contain the search string'
             find_in_files_action.setStatusTip(temp_string)
@@ -1645,7 +1667,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.menubar_functions["special_find_file"]             = special_find_file
             self.menubar_functions["special_find_file_with_dialog"] = special_find_file_with_dialog
             find_files_action   = PyQt4.QtGui.QAction('Find files', self)
-            find_files_action.setShortcut('Ctrl+F1')
+            find_files_action.setShortcut(data.find_files_keys)
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that have the search string in them'
             find_files_action.setStatusTip(temp_string)
@@ -1671,7 +1693,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.menubar_functions["special_replace_in_files"]              = special_replace_in_files
             self.menubar_functions["special_replace_in_files_with_dialog"]  = special_replace_in_files_with_dialog
             replace_in_files_action = PyQt4.QtGui.QAction('Replace in files', self)
-            replace_in_files_action.setShortcut('Ctrl+F3')
+            replace_in_files_action.setShortcut(data.replace_in_files_keys)
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that have the search string in them and replace all '
             temp_string += 'instances in the file with the replace string'
@@ -1694,7 +1716,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.display.show_directory_tree(os.getcwd())
             self.menubar_functions["create_cwd_tree"] = create_cwd_tree
             cwd_tree_action = PyQt4.QtGui.QAction('Show current working directory tree', self)
-            cwd_tree_action.setShortcut('F7')
+            cwd_tree_action.setShortcut(data.cwd_tree_keys)
             temp_string = 'Create a node tree for the current working directory (CWD)'
             cwd_tree_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/system-show-cwd-tree.png')
@@ -1928,71 +1950,71 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             lexers_menu.addAction(YAML_action)
         #View menu
         def construct_view_menu():
-            view_menu   = self.menubar.addMenu("&View")
+            view_menu = self.menubar.addMenu("&View")
             #Show/hide the function wheel
             function_wheel_toggle_action = PyQt4.QtGui.QAction('Show/Hide Function Wheel', self)
-            function_wheel_toggle_action.setShortcut('F1')
+            function_wheel_toggle_action.setShortcut(data.function_wheel_toggle_keys)
             function_wheel_toggle_action.setStatusTip('Show/hide the Ex.Co. function wheel')
             temp_icon = helper_forms.set_icon('Exco_Icon.png')
             function_wheel_toggle_action.setIcon(temp_icon)
             function_wheel_toggle_action.triggered.connect(self.view.toggle_function_wheel)
             #Maximize/minimize entire Ex.Co. window
             maximize_window_action  = PyQt4.QtGui.QAction('Maximize/Normalize', self)
-            maximize_window_action.setShortcut('F12')
+            maximize_window_action.setShortcut(data.maximize_window_keys)
             maximize_window_action.setStatusTip('Maximize/Normalize application window')
             temp_icon = helper_forms.set_icon('tango_icons/view-fullscreen.png')
             maximize_window_action.setIcon(temp_icon)
             maximize_window_action.triggered.connect(self.view.toggle_window_size)
-            main_focus_action   = PyQt4.QtGui.QAction('Focus Main window', self)  
-            main_focus_action.setShortcut('Ctrl+1')
+            main_focus_action = PyQt4.QtGui.QAction('Focus Main window', self)  
+            main_focus_action.setShortcut(data.main_focus_keys)
             main_focus_action.setStatusTip('Set focus to the Main editing window')
             temp_icon = helper_forms.set_icon('tango_icons/view-focus-main.png')
             main_focus_action.setIcon(temp_icon)
             main_focus_action.triggered.connect(
                 functools.partial(self.view.set_window_focus, "main")
             )
-            upper_focus_action  = PyQt4.QtGui.QAction('Focus Upper window', self) 
-            upper_focus_action.setShortcut('Ctrl+2')
+            upper_focus_action = PyQt4.QtGui.QAction('Focus Upper window', self) 
+            upper_focus_action.setShortcut(data.upper_focus_keys)
             upper_focus_action.setStatusTip('Set focus to the Upper editing window')
             temp_icon = helper_forms.set_icon('tango_icons/view-focus-upper.png')
             upper_focus_action.setIcon(temp_icon)
             upper_focus_action.triggered.connect(
                 functools.partial(self.view.set_window_focus, "upper")
             )
-            lower_focus_action  = PyQt4.QtGui.QAction('Focus Lower window', self) 
-            lower_focus_action.setShortcut('Ctrl+3')
+            lower_focus_action = PyQt4.QtGui.QAction('Focus Lower window', self) 
+            lower_focus_action.setShortcut(data.lower_focus_keys)
             lower_focus_action.setStatusTip('Set focus to the Lower editing window')
             temp_icon = helper_forms.set_icon('tango_icons/view-focus-lower.png')
             lower_focus_action.setIcon(temp_icon)
             lower_focus_action.triggered.connect(
                 functools.partial(self.view.set_window_focus, "lower")
             )
-            toggle_log_action   = PyQt4.QtGui.QAction('Show/Hide Log Window', self) 
-            toggle_log_action.setShortcut('F10')
+            toggle_log_action = PyQt4.QtGui.QAction('Show/Hide Log Window', self) 
+            toggle_log_action.setShortcut(data.toggle_log_keys)
             toggle_log_action.setStatusTip('Toggle the display of the log window')
             temp_icon = helper_forms.set_icon('tango_icons/view-log.png')
             toggle_log_action.setIcon(temp_icon)
             toggle_log_action.triggered.connect(self.view.toggle_log_window)
-            spin_clockwise_action   = PyQt4.QtGui.QAction('Spin view clockwise', self)  
-            spin_clockwise_action.setShortcut('Ctrl+*')
+            spin_clockwise_action = PyQt4.QtGui.QAction('Spin view clockwise', self)  
+            spin_clockwise_action.setShortcut(data.spin_clockwise_keys)
             spin_clockwise_action.setStatusTip('Spin the editor windows clockwise')
             temp_icon = helper_forms.set_icon('tango_icons/view-spin-clock.png')
             spin_clockwise_action.setIcon(temp_icon)
             spin_clockwise_action.triggered.connect(self.view.spin_widgets_clockwise)
-            spin_counterclockwise_action    = PyQt4.QtGui.QAction('Spin view counter-clockwise', self)  
-            spin_counterclockwise_action.setShortcut('Ctrl+/')
+            spin_counterclockwise_action = PyQt4.QtGui.QAction('Spin view counter-clockwise', self)  
+            spin_counterclockwise_action.setShortcut(data.spin_counterclockwise_keys)
             spin_counterclockwise_action.setStatusTip('Spin the editor windows counter-clockwise')
             temp_icon = helper_forms.set_icon('tango_icons/view-spin-counter.png')
             spin_counterclockwise_action.setIcon(temp_icon)
             spin_counterclockwise_action.triggered.connect(self.view.spin_widgets_counterclockwise)
-            toggle_mode_action  = PyQt4.QtGui.QAction('Toggle window mode', self)
-            toggle_mode_action.setShortcut('F5')
+            toggle_mode_action = PyQt4.QtGui.QAction('Toggle window mode', self)
+            toggle_mode_action.setShortcut(data.toggle_mode_keys)
             toggle_mode_action.setStatusTip('Toggle between one and three window display')
             temp_icon = helper_forms.set_icon('tango_icons/view-toggle-window-mode.png')
             toggle_mode_action.setIcon(temp_icon)
             toggle_mode_action.triggered.connect(self.view.toggle_window_mode)
-            toggle_main_window_side_action  = PyQt4.QtGui.QAction('Toggle main window side', self)
-            toggle_main_window_side_action.setShortcut('F6')
+            toggle_main_window_side_action = PyQt4.QtGui.QAction('Toggle main window side', self)
+            toggle_main_window_side_action.setShortcut(data.toggle_main_window_side_keys)
             toggle_main_window_side_action.setStatusTip('Toggle which side the main window is on')
             temp_icon = helper_forms.set_icon('tango_icons/view-toggle-window-side.png')
             toggle_main_window_side_action.setIcon(temp_icon)
@@ -2004,16 +2026,16 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["move_tab_right"] = functools.partial(move_tab, direction=data.Direction.RIGHT)
             self.menubar_functions["move_tab_left"] = functools.partial(move_tab, direction=data.Direction.LEFT)
-            move_tab_right_action       = PyQt4.QtGui.QAction('Move tab right', self)
-            move_tab_right_action.setShortcut('Ctrl+.')
+            move_tab_right_action = PyQt4.QtGui.QAction('Move tab right', self)
+            move_tab_right_action.setShortcut(data.move_tab_right_keys)
             move_tab_right_action.setStatusTip('Move the current tab in the currently selected window one position to the right')
             temp_icon = helper_forms.set_icon('tango_icons/view-move-tab-right.png')
             move_tab_right_action.setIcon(temp_icon)
             move_tab_right_action.triggered.connect(
                 functools.partial(move_tab, direction=data.Direction.RIGHT)
             )
-            move_tab_left_action        = PyQt4.QtGui.QAction('Move tab left', self)
-            move_tab_left_action.setShortcut('Ctrl+,')
+            move_tab_left_action = PyQt4.QtGui.QAction('Move tab left', self)
+            move_tab_left_action.setShortcut(data.move_tab_left_keys)
             move_tab_left_action.setStatusTip('Move the current tab in the currently selected window one position to the left')
             temp_icon = helper_forms.set_icon('tango_icons/view-move-tab-left.png')
             move_tab_left_action.setIcon(temp_icon)
@@ -2027,7 +2049,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["show_edge"] = show_edge
             toggle_edge_action = PyQt4.QtGui.QAction('Toggle edge marker', self)
-            toggle_edge_action.setShortcut('Ctrl+E')
+            toggle_edge_action.setShortcut(data.toggle_edge_keys)
             toggle_edge_action.setStatusTip('Toggle the display of the edge marker that shows the prefered maximum chars in a line')
             temp_icon = helper_forms.set_icon('tango_icons/view-edge-marker.png')
             toggle_edge_action.setIcon(temp_icon)
@@ -2039,7 +2061,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["reset_zoom"] = reset_zoom
             reset_zoom_action = PyQt4.QtGui.QAction('Zoom reset', self)
-            reset_zoom_action.setShortcut("Alt+Z")
+            reset_zoom_action.setShortcut(data.reset_zoom_keys)
             reset_zoom_action.setStatusTip('Reset the zoom level on the currently focused document!')
             temp_icon = helper_forms.set_icon('tango_icons/view-zoom-reset.png')
             reset_zoom_action.setIcon(temp_icon)
@@ -2072,7 +2094,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             temp_icon = helper_forms.set_icon('tango_icons/bookmarks.png')
             bookmark_menu.setIcon(temp_icon)
             bookmark_toggle_action = PyQt4.QtGui.QAction('Toggle Bookmark', self)
-            bookmark_toggle_action.setShortcut("CTRL+B")
+            bookmark_toggle_action.setShortcut(data.bookmark_toggle_keys)
             bookmark_toggle_action.setStatusTip("Toggle a bookmark at the current document line")
             temp_icon = helper_forms.set_icon('tango_icons/bookmark.png')
             bookmark_toggle_action.setIcon(temp_icon)
@@ -2094,7 +2116,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             for i in range(10):
                 #Go To
                 bookmark_goto_action = PyQt4.QtGui.QAction('Bookmark {:d}'.format(i), self)
-                bookmark_goto_action.setShortcut("Alt+{:d}".format(i))
+                bookmark_goto_action.setShortcut("{}+{}".format(data.bookmark_goto_keys, i))
                 bookmark_goto_action.setStatusTip("Go to bookmark number:{:d}".format(i))
                 temp_icon = helper_forms.set_icon('tango_icons/bookmarks-goto.png')
                 bookmark_goto_action.setIcon(temp_icon)
@@ -2102,7 +2124,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 bookmark_goto_menu.addAction(bookmark_goto_action)
                 #Store
                 bookmark_store_action = PyQt4.QtGui.QAction('Bookmark {:d}'.format(i), self)
-                bookmark_store_action.setShortcut("Alt+Shift+{:d}".format(i))
+                bookmark_store_action.setShortcut("{}+{}".format(data.bookmark_store_keys, i))
                 bookmark_store_action.setStatusTip("Store bookmark number:{:d}".format(i))
                 temp_icon = helper_forms.set_icon('tango_icons/bookmarks-store.png')
                 bookmark_store_action.setIcon(temp_icon)
@@ -2147,7 +2169,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         def construct_repl_menu():
             repl_menu = self.menubar.addMenu("&REPL")
             repeat_eval_action = PyQt4.QtGui.QAction('REPL Repeat Command', self)
-            repeat_eval_action.setShortcut('F3')
+            repeat_eval_action.setShortcut(data.repeat_eval_keys)
             repeat_eval_action.setStatusTip('Repeat the last REPL command')
             repeat_eval_action.triggered.connect(self.repl.repeat_last_repl_eval)
             temp_icon = helper_forms.set_icon('tango_icons/repl-repeat-command.png')
@@ -2157,7 +2179,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
             self.menubar_functions["repl_single_focus"] = repl_single_focus
             repl_focus_action = PyQt4.QtGui.QAction('Focus REPL(Single)', self)   
-            repl_focus_action.setShortcuts(['Ctrl+R', 'Ctrl+4'])
+            repl_focus_action.setShortcuts(
+                [data.repl_focus_single_1_keys, data.repl_focus_single_2_keys]
+            )
             repl_focus_action.setStatusTip('Set focus to the Python REPL(Single Line)')
             repl_focus_action.triggered.connect(repl_single_focus)
             temp_icon = helper_forms.set_icon('tango_icons/repl-focus-single.png')
@@ -2167,7 +2191,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl_helper.setFocus()
             self.menubar_functions["repl_multi_focus"] = repl_multi_focus
             repl_focus_multi_action = PyQt4.QtGui.QAction('Focus REPL(Multi)', self)
-            repl_focus_multi_action.setShortcut('Ctrl+5')
+            repl_focus_multi_action.setShortcut(data.repl_focus_multi_keys)
             repl_focus_multi_action.setStatusTip('Set focus to the Python REPL(Multi Line)')
             repl_focus_multi_action.triggered.connect(repl_multi_focus)
             temp_icon = helper_forms.set_icon('tango_icons/repl-focus-multi.png')
@@ -2196,7 +2220,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             session_editor_action.triggered.connect(self.display.show_session_editor)
             self.menubar_functions["show_session_editor"] = self.display.show_session_editor
             #Sessions menu
-            self.sessions_menu  = PyQt4.QtGui.QMenu("Sessions")
+            self.sessions_menu = PyQt4.QtGui.QMenu("Sessions")
             self.sessions_menu.setIcon(helper_forms.set_icon('tango_icons/sessions.png'))
             sessions_menu.addAction(add_session_action)
             sessions_menu.addAction(remove_session_action)
@@ -2275,11 +2299,11 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
     def import_user_functions(self):
         """Import the user defined functions form the user_functions.cfg file"""
         self.repl.skip_next_repl_focus()
-        user_file_path = os.path.join(data.application_directory, "user_functions.cfg")
+        user_file_path = os.path.join(data.application_directory, data.config_file)
         #Test if user_functions file exists
         if os.path.isfile(user_file_path) == False:
             message = "User functions file does not exist!\n"
-            message += "Create an empty file named 'user_functions.cfg' "
+            message += "Create an empty file named '{}' ".format(data.config_file)
             message += "in the application directory\n"
             message += "to make this error dissappear."
             self.display.repl_display_message(
@@ -2627,7 +2651,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         #Close the MainWindow
         self.close()
     
-    class Settings():
+    class Settings:
         """
         Functions for manipulating the application settings
         (namespace/nested class to MainWindow)
@@ -2700,7 +2724,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Display message in statusbar
             self.parent.display.write_to_statusbar("Saved settings", 1000)
     
-    class Sessions():
+    class Sessions:
         """
         Functions for manipulating sessions
         (namespace/nested class to MainWindow)
@@ -2981,7 +3005,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             return documents
         
     
-    class View():
+    class View:
         """
         Functions for manipulating the application appearance
         (namespace/nested class to MainWindow)
@@ -3660,7 +3684,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             data.theme = getattr(themes, current_theme_name)
             self.refresh_theme()
     
-    class System():
+    class System:
         """
         Functions that interact with the system
         (namespace/nested class to MainWindow)
@@ -3829,7 +3853,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     message_type=data.MessageType.ERROR
                 )
     
-    class Editing():
+    class Editing:
         """
         Document editing functions
         (namespace/nested class to MainWindow)
@@ -4123,7 +4147,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 argument_list = [line_text, line_number]
                 self.parent._run_focused_widget_method("set_line", argument_list, window_name)
     
-    class Display():
+    class Display:
         """
         Functions for displaying of various functions such as:
         show_nodes, find_in_open_documents, ...
@@ -6386,9 +6410,6 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Initialize superclass, from which the current class is inherited,
         #THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__()
-        #Initialize the namespace references
-        self.hotspots   = self.Hotspots(self)
-        self.bookmarks  = self.Bookmarks(self)
         #Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         #Set font family and size
@@ -6460,6 +6481,10 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.line_list = [""]
         #Bookmark initialization
         self._init_bookmark_marker()
+        #Initialize the namespace references
+        self.hotspots   = self.Hotspots(self)
+        self.bookmarks  = self.Bookmarks(self)
+        self.keyboard   = self.Keyboard(self)
     
     def __setattr__(self, name, value):
         """
@@ -7298,6 +7323,14 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                     message_type=data.MessageType.ERROR
                 )
                 return
+    
+    def remove_empty_lines(self):
+        new_line_list = []
+        for line in self.line_list:
+            if line.strip() != "":
+                new_line_list.append(line)
+        #Assign the new list over the old one
+        self.line_list = new_line_list
 
     """
     Search and replace functions
@@ -8176,7 +8209,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             )
             self.main_form.display.write_to_statusbar("Autocompletions ENABLED")
     
-    class Hotspots():
+    class Hotspots:
         """
         Functions for styling text with hotspots
         (namespace/nested class to CustomEditor)
@@ -8199,7 +8232,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STARTSTYLING, index_from, 2)
             send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETSTYLING, length, 2)
     
-    class Bookmarks():
+    class Bookmarks:
         """
         Bookmark functionality
         """
@@ -8239,8 +8272,256 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             #MarkerAdd function needs the standard line indexing
             scintilla_line = line - 1
             self.parent.markerDelete(scintilla_line, self.parent.bookmark_marker)
-
-
+    
+    class Keyboard:
+        """
+        Keyboard command assignment, ...
+        Relevant Scintilla items:
+            SCI_ASSIGNCMDKEY(int keyDefinition, int sciCommand)
+            SCI_CLEARCMDKEY(int keyDefinition)
+            SCI_CLEARALLCMDKEYS
+            SCI_NULL
+        """
+        parent = None
+        #GNU/Linux and Windows bindings copied from Scintila source 'KeyMap.cxx'
+        bindings = {
+            "Down" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEDOWN,
+            "Down+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEDOWNEXTEND,
+            "Down+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_LINESCROLLDOWN,
+            "Down+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEDOWNRECTEXTEND,
+            "Up" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEUP,
+            "Up+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEUPEXTEND,
+            "Up+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_LINESCROLLUP,
+            "Up+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEUPRECTEXTEND,
+            "[+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_PARAUP,
+            "[+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PARAUPEXTEND,
+            "]+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_PARADOWN,
+            "]+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PARADOWNEXTEND,
+            "Left" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARLEFT,
+            "Left+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARLEFTEXTEND,
+            "Left+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDLEFT,
+            "Left+Shift+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDLEFTEXTEND,
+            "Left+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARLEFTRECTEXTEND,
+            "Right" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARRIGHT,
+            "Right+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARRIGHTEXTEND,
+            "Right+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDRIGHT,
+            "Right+Shift+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDRIGHTEXTEND,
+            "Right+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARRIGHTRECTEXTEND,
+            "/+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDPARTLEFT,
+            "/+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDPARTLEFTEXTEND,
+            "\\+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDPARTRIGHT,
+            "\\+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDPARTRIGHTEXTEND,
+            "Home" : PyQt4.Qsci.QsciScintillaBase.SCI_VCHOME,
+            "Home+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_VCHOMEEXTEND,
+            data.go_to_start_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTSTART,
+            data.select_to_start_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
+            "Home+Alt" : PyQt4.Qsci.QsciScintillaBase.SCI_HOMEDISPLAY,
+            "Home+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_VCHOMERECTEXTEND,
+            "End" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEEND,
+            "End+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEENDEXTEND,
+            data.go_to_end_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTEND,
+            data.select_to_end_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
+            "End+Alt" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEENDDISPLAY,
+            "End+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEENDRECTEXTEND,
+            data.scroll_up_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEUP,
+            data.select_page_up_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEUPEXTEND,
+            "PageUp+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEUPRECTEXTEND,
+            data.scroll_down_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEDOWN,
+            data.select_page_down_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
+            "PageDown+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEDOWNRECTEXTEND,
+            "Delete" : PyQt4.Qsci.QsciScintillaBase.SCI_CLEAR,
+            "Delete+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CUT,
+            data.delete_end_of_word_keys: PyQt4.Qsci.QsciScintillaBase.SCI_DELWORDRIGHT,
+            data.delete_end_of_line_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DELLINERIGHT,
+            "Insert" : PyQt4.Qsci.QsciScintillaBase.SCI_EDITTOGGLEOVERTYPE,
+            "Insert+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PASTE,
+            "Insert+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_COPY,
+            "Escape" : PyQt4.Qsci.QsciScintillaBase.SCI_CANCEL,
+            "Backspace" : PyQt4.Qsci.QsciScintillaBase.SCI_DELETEBACK,
+            "Backspace+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_DELETEBACK,
+            data.delete_start_of_word_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DELWORDLEFT,
+            "Backspace+Alt" : PyQt4.Qsci.QsciScintillaBase.SCI_UNDO,
+            data.delete_start_of_line_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DELLINELEFT,
+            data.undo_keys : PyQt4.Qsci.QsciScintillaBase.SCI_UNDO,
+            data.redo_keys : PyQt4.Qsci.QsciScintillaBase.SCI_REDO,
+            data.cut_keys : PyQt4.Qsci.QsciScintillaBase.SCI_CUT,
+            data.copy_keys : PyQt4.Qsci.QsciScintillaBase.SCI_COPY,
+            data.paste_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PASTE,
+            data.select_all_keys : PyQt4.Qsci.QsciScintillaBase.SCI_SELECTALL,
+            data.indent_keys : PyQt4.Qsci.QsciScintillaBase.SCI_TAB,
+            data.unindent_keys : PyQt4.Qsci.QsciScintillaBase.SCI_BACKTAB,
+            "Return" : PyQt4.Qsci.QsciScintillaBase.SCI_NEWLINE,
+            "Return+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_NEWLINE,
+            "Add+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_ZOOMIN,
+            "Subtract+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_ZOOMOUT,
+            "Divide+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_SETZOOM,
+            data.line_cut_keys : PyQt4.Qsci.QsciScintillaBase.SCI_LINECUT,
+            data.line_delete_keys : PyQt4.Qsci.QsciScintillaBase.SCI_LINEDELETE,
+            data.line_copy_keys : PyQt4.Qsci.QsciScintillaBase.SCI_LINECOPY,
+            data.line_transpose_keys : PyQt4.Qsci.QsciScintillaBase.SCI_LINETRANSPOSE,
+            data.line_selection_duplicate_keys : PyQt4.Qsci.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
+            "U+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_LOWERCASE,
+            "U+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_UPPERCASE,
+        }
+        scintilla_keys = {
+            "down" : PyQt4.Qsci.QsciScintillaBase.SCK_DOWN,
+            "up" : PyQt4.Qsci.QsciScintillaBase.SCK_UP,
+            "left" : PyQt4.Qsci.QsciScintillaBase.SCK_LEFT,
+            "right" : PyQt4.Qsci.QsciScintillaBase.SCK_RIGHT,
+            "home" : PyQt4.Qsci.QsciScintillaBase.SCK_HOME,
+            "end" : PyQt4.Qsci.QsciScintillaBase.SCK_END,
+            "pageup" : PyQt4.Qsci.QsciScintillaBase.SCK_PRIOR,
+            "pagedown" : PyQt4.Qsci.QsciScintillaBase.SCK_NEXT,
+            "delete" : PyQt4.Qsci.QsciScintillaBase.SCK_DELETE,
+            "insert" : PyQt4.Qsci.QsciScintillaBase.SCK_INSERT,
+            "escape" : PyQt4.Qsci.QsciScintillaBase.SCK_ESCAPE,
+            "backspace" : PyQt4.Qsci.QsciScintillaBase.SCK_BACK,
+            "tab" : PyQt4.Qsci.QsciScintillaBase.SCK_TAB,
+            "return" : PyQt4.Qsci.QsciScintillaBase.SCK_RETURN,
+            "add" : PyQt4.Qsci.QsciScintillaBase.SCK_ADD,
+            "subtract" : PyQt4.Qsci.QsciScintillaBase.SCK_SUBTRACT,
+            "divide" : PyQt4.Qsci.QsciScintillaBase.SCK_DIVIDE,
+            "win" : PyQt4.Qsci.QsciScintillaBase.SCK_WIN,
+            "rwin" : PyQt4.Qsci.QsciScintillaBase.SCK_RWIN,
+            "menu" : PyQt4.Qsci.QsciScintillaBase.SCK_MENU,
+        }
+        valid_modifiers = [
+            PyQt4.Qsci.QsciScintillaBase.SCMOD_NORM, 
+            PyQt4.Qsci.QsciScintillaBase.SCMOD_SHIFT, 
+            PyQt4.Qsci.QsciScintillaBase.SCMOD_CTRL, 
+            PyQt4.Qsci.QsciScintillaBase.SCMOD_ALT, 
+            PyQt4.Qsci.QsciScintillaBase.SCMOD_SUPER, 
+            PyQt4.Qsci.QsciScintillaBase.SCMOD_META
+        ]
+        
+        def __init__(self, parent):
+            """Initialization of the Keyboard object instance"""
+            #Get the reference to the MainWindow parent object instance
+            self.parent = parent
+            #Assign keyboard commands
+            self.clear_all_keys()
+            bindings = self.bindings
+            set_key_combination = self.set_key_combination
+            for keys in bindings:
+                set_key_combination(
+                    keys, bindings[keys]
+                )
+        
+        def _parse_key_string(self, key_string):
+            """ Parse a '+' delimited string for a key combination """
+            split_keys = key_string.replace(" ", "").lower().split("+")
+            #Check for to many keys in binding
+            if len(split_keys) > 4:
+                raise ValueError("Too many items in key string!")
+            #Parse the items
+            modifiers = []
+            key_combination = 0
+            if "ctrl" in split_keys:
+                modifiers.append(PyQt4.Qsci.QsciScintillaBase.SCMOD_CTRL)
+                split_keys.remove("ctrl")
+            if "alt" in split_keys:
+                modifiers.append(PyQt4.Qsci.QsciScintillaBase.SCMOD_ALT)
+                split_keys.remove("alt")
+            if "shift" in split_keys:
+                modifiers.append(PyQt4.Qsci.QsciScintillaBase.SCMOD_SHIFT)
+                split_keys.remove("shift")
+            if "meta" in split_keys:
+                modifiers.append(PyQt4.Qsci.QsciScintillaBase.SCMOD_META)
+                split_keys.remove("meta")
+            base_key = split_keys[0]
+            if len(split_keys) == 0:
+                raise ValueError("Key string has to have a base character!")
+            if len(base_key) != 1:
+                if base_key in self.scintilla_keys:
+                    key_combination = self.scintilla_keys[base_key]
+                else:
+                    raise ValueError("Unknown base key!")
+            else:
+                key_combination = ord(base_key.upper())
+            if modifiers != []:
+                for m in modifiers:
+                    key_combination += (m << 16)
+            return key_combination
+        
+        def _check_keys(self, key, modifier=None):
+            """ Check the validity of the key and modifier """
+            if isinstance(key, str) == True:
+                if len(key) != 1:
+                    if modifier != None:
+                        raise ValueError("modifier argument has to be 'None' with a key string!")
+                    #key argument is going to be parsed as a combination
+                    key = self._parse_key_string(key)
+                else:
+                    if key in self.scintilla_keys:
+                        key = self.scintilla_keys[key]
+                    else:
+                        key = ord(key)
+            if modifier == None:
+                key_combination = key
+            else:
+                if not(modifier in self.valid_modifiers):
+                    raise ValueError("The keyboard modifier is not valid: {}".format(modifier))
+                key_combination = key + (modifier << 16)
+            return key_combination
+        
+        def clear_all_keys(self):
+            """
+            Clear all mappings from the internal Scintilla mapping table
+            """
+            self.parent.SendScintilla(
+                PyQt4.Qsci.QsciScintillaBase.SCI_CLEARALLCMDKEYS
+            )
+        
+        def clear_key_combination(self, key, modifier=None):
+            """
+            Clear the key combination from the internal Scintilla Mapping
+            Raw example of clearing the CTRL+X (Cut text function) combination:
+                cmain.SendScintilla(
+                    PyQt4.Qsci.QsciScintillaBase.SCI_CLEARCMDKEY, 
+                    ord('X') + (PyQt4.Qsci.QsciScintillaBase.SCMOD_CTRL << 16)
+                )
+            """
+            try:
+                key_combination = self._check_keys(key, modifier)
+            except Exception as ex:
+                self.parent.main_form.display.repl_display_message(
+                    str(ex), 
+                    message_type=data.MessageType.ERROR
+                )
+                return
+            self.parent.SendScintilla(
+                PyQt4.Qsci.QsciScintillaBase.SCI_CLEARCMDKEY, 
+                key_combination
+            )
+        
+        def set_key_combination(self, key, command, modifier=None):
+            """
+            Assign a key combination to a command.
+            Parameters:
+                key - character or key string combination
+                command - Scintilla command that will execute on the key combination
+                modifier - Ctrl, Alt, ...
+            Raw example of assigning CTRL+D to the Cut function:
+                cmain.SendScintilla(
+                    PyQt4.Qsci.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
+                    ord('D') + (PyQt4.Qsci.QsciScintillaBase.SCMOD_CTRL << 16),
+                    PyQt4.Qsci.QsciScintillaBase.SCI_CUT
+                )
+            """
+            try:
+                key_combination = self._check_keys(key, modifier)
+            except Exception as ex:
+                self.parent.main_form.display.repl_display_message(
+                    str(ex), 
+                    message_type=data.MessageType.ERROR
+                )
+                return
+            self.parent.SendScintilla(
+                PyQt4.Qsci.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
+                key_combination,
+                command
+            )
+        
 
 
 """
@@ -8937,7 +9218,7 @@ Overlay helper widget for visually selecting an Ex.Co. function
 """
 class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
     #Class custom objects/types
-    class ButtonInfo():
+    class ButtonInfo:
         """
         Simple object used as a structure for the custom button information
         """

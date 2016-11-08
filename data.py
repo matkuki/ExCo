@@ -165,7 +165,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "5.3"
+APPLICATION_VERSION     = "5.4"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
@@ -174,6 +174,8 @@ log_window              = None
 application             = None
 #Global string with the application directory
 application_directory   = ""
+#User configuration file
+config_file = "user_functions.cfg"
 #Global string with the resources directory
 resources_directory     = "resources"
 #Application icon image that will be displayed on all Qt widgets
@@ -200,12 +202,108 @@ default_eol = PyQt4.Qsci.QsciScintilla.EolUnix
 theme = themes.Air
 
 
-#Compatibility mode test for PyQt versions lower than 4.11
+"""
+-------------------------------------------
+Keyboard shortcuts 
+-------------------------------------------
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+THESE BINDINGS ARE THE DEFAULT, DON'T CHANGE THEM HERE!
+CUSTOM BINDINGS SHOULD BE OVERIDDEN IN THE USER CONFIGURATION FILE 'user_functions.cfg'!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+"""
+new_file_keys = 'Ctrl+N'
+open_file_keys = 'Ctrl+O'
+save_file_keys = 'Ctrl+S'
+saveas_file_keys = 'Ctrl+Shift+S'
+close_tab_keys = 'Ctrl+W'
+find_keys = 'Ctrl+F'
+regex_find_keys = 'Alt+F'
+find_and_replace_keys = 'Ctrl+Shift+F'
+regex_find_and_replace_keys = 'Alt+Shift+F'
+highlight_keys = 'Ctrl+G'
+regex_highlight_keys = 'Alt+G'
+clear_highlights_keys = 'Ctrl+Shift+G'
+replace_selection_keys = 'Ctrl+H'
+regex_replace_selection_keys = 'Alt+H'
+replace_all_keys = 'Ctrl+Shift+H'
+regex_replace_all_keys = 'Alt+Shift+H'
+toggle_comment_keys = 'Ctrl+Shift+C'
+toggle_autocompletion_keys = 'Ctrl+K'
+toggle_wrap_keys = 'Ctrl+P'
+reload_file_keys = 'F9'
+node_tree_keys = 'F8'
+goto_line_keys = 'Ctrl+M'
+indent_to_cursor_keys = 'Ctrl+I'
+to_uppercase_keys = 'Alt+U'
+to_lowercase_keys = 'Alt+L'
+find_in_documents_keys = 'Ctrl+F4'
+find_replace_in_documents_keys = 'Ctrl+F5'
+replace_all_in_documents_keys = 'Ctrl+F6'
+find_in_files_keys = 'Ctrl+F2'
+find_files_keys = 'Ctrl+F1'
+replace_in_files_keys = 'Ctrl+F3'
+cwd_tree_keys = 'F7'
+function_wheel_toggle_keys = 'F1'
+maximize_window_keys = 'F12'
+main_focus_keys = 'Ctrl+1'
+upper_focus_keys = 'Ctrl+2'
+lower_focus_keys = 'Ctrl+3'
+toggle_log_keys = 'F10'
+spin_clockwise_keys = 'Ctrl+*'
+spin_counterclockwise_keys = 'Ctrl+/'
+toggle_mode_keys = 'F5'
+toggle_main_window_side_keys = 'F6'
+move_tab_right_keys = 'Ctrl+.'
+move_tab_left_keys = 'Ctrl+,'
+toggle_edge_keys = 'Ctrl+E'
+reset_zoom_keys = "Alt+Z"
+bookmark_toggle_keys = "CTRL+B"
+bookmark_goto_keys = "Alt"
+bookmark_store_keys = "Alt+Shift"
+repeat_eval_keys = 'F3'
+repl_focus_single_1_keys = 'Ctrl+R'
+repl_focus_single_2_keys = 'Ctrl+4'
+repl_focus_multi_keys = 'Ctrl+5'
+#Custom editor commands
+copy_keys = 'Ctrl+C'
+cut_keys = 'Ctrl+X'
+paste_keys = 'Ctrl+V'
+undo_keys = 'Ctrl+Z'
+redo_keys = 'Ctrl+Y'
+select_all_keys = 'Ctrl+A'
+indent_keys = 'Tab'
+unindent_keys = 'Shift+Tab'
+delete_start_of_word_keys = 'Ctrl+BackSpace'
+delete_end_of_word_keys = 'Ctrl+Delete'
+delete_start_of_line_keys = 'Ctrl+Shift+BackSpace'
+delete_end_of_line_keys = 'Ctrl+Shift+Delete'
+go_to_start_keys = 'Ctrl+Home'
+go_to_end_keys = 'Ctrl+End'
+select_page_up_keys = 'Shift+PageUp'
+select_page_down_keys = 'Shift+PageDown'
+select_to_start_keys = 'Ctrl+Shift+Home'
+select_to_end_keys = 'Ctrl+Shift+End'
+scroll_up_keys = 'PageUp'
+scroll_down_keys = 'PageDown'
+line_cut_keys = 'Ctrl+L'
+line_copy_keys = 'Ctrl+Shift+T'
+line_delete_keys = 'Ctrl+Shift+L'
+line_transpose_keys = 'Ctrl+T'
+line_selection_duplicate_keys = 'Ctrl+D'
+
+
+"""
+-----------------------------------------------------------
+Compatibility mode test for PyQt versions lower than 4.11
+-----------------------------------------------------------
+"""
 try:
     PyQt4.Qsci.QsciLexerCoffeeScript
     compatibility_mode = False
 except:
     compatibility_mode = True
+
 
 """
 --------------------------------------
