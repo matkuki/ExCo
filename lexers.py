@@ -704,7 +704,6 @@ class RouterOS(PyQt4.Qsci.QsciLexerCustom):
         tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
         #Style the tokens accordingly
         for i, token in enumerate(tokens):
-            print(str(token) + "  " + str(i))
             if commenting == True:
                 #Continuation of comment
                 setStyling(token[1], COMMENT)

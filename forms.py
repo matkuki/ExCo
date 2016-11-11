@@ -1750,222 +1750,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                         message_type=data.MessageType.ERROR
                     )
                     self.display.write_to_statusbar(message)
-            lexers_menu = parent.addMenu("Change lexer")
+            lexers_menu = self.display.create_lexers_menu(
+                "Change lexer", 
+                parent,
+                set_lexer
+            )
             temp_icon = helper_forms.set_icon('tango_icons/lexers.png')
             lexers_menu.setIcon(temp_icon)
-            NONE_action = PyQt4.QtGui.QAction('No lexer', self)
-            NONE_action.setIcon(helper_forms.set_icon('tango_icons/file.png'))
-            NONE_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Text, 'Plain text')
-            )
-            ADA_action = PyQt4.QtGui.QAction('Ada', self)
-            ADA_action.setIcon(helper_forms.set_icon('language_icons/logo_ada.png'))
-            ADA_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Ada, 'Ada')
-            )
-            BASH_action = PyQt4.QtGui.QAction('Bash', self)
-            BASH_action.setIcon(helper_forms.set_icon('language_icons/logo_bash.png'))
-            BASH_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Bash, 'Bash')
-            )
-            BATCH_action = PyQt4.QtGui.QAction('Batch', self)
-            BATCH_action.setIcon(helper_forms.set_icon('language_icons/logo_batch.png'))
-            BATCH_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Batch, 'Batch')
-            )
-            CMAKE_action = PyQt4.QtGui.QAction('CMake', self)
-            CMAKE_action.setIcon(helper_forms.set_icon('language_icons/logo_cmake.png'))
-            CMAKE_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CMake, 'CMake')
-            )
-            C_CPP_action = PyQt4.QtGui.QAction('C / C++', self)
-            C_CPP_action.setIcon(helper_forms.set_icon('language_icons/logo_c_cpp.png'))
-            C_CPP_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CPP, 'C / C++')
-            )
-            CSS_action = PyQt4.QtGui.QAction('CSS', self)
-            CSS_action.setIcon(helper_forms.set_icon('language_icons/logo_css.png'))
-            CSS_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CSS, 'CSS')
-            )
-            D_action = PyQt4.QtGui.QAction('D', self)
-            D_action.setIcon(helper_forms.set_icon('language_icons/logo_d.png'))
-            D_action.triggered.connect(
-                functools.partial(set_lexer, lexers.D, 'D')
-            )
-            FORTRAN_action = PyQt4.QtGui.QAction('Fortran', self)
-            FORTRAN_action.setIcon(helper_forms.set_icon('language_icons/logo_fortran.png'))
-            FORTRAN_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Fortran, 'Fortran')
-            )
-            HTML_action = PyQt4.QtGui.QAction('HTML', self)
-            HTML_action.setIcon(helper_forms.set_icon('language_icons/logo_html.png'))
-            HTML_action.triggered.connect(
-                functools.partial(set_lexer, lexers.HTML, 'HTML')
-            )
-            LUA_action = PyQt4.QtGui.QAction('Lua', self)
-            LUA_action.setIcon(helper_forms.set_icon('language_icons/logo_lua.png'))
-            LUA_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Lua, 'Lua')
-            )
-            MAKEFILE_action = PyQt4.QtGui.QAction('MakeFile', self)
-            MAKEFILE_action.setIcon(helper_forms.set_icon('language_icons/logo_makefile.png'))
-            MAKEFILE_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Makefile, 'MakeFile')
-            )
-            MATLAB_action = PyQt4.QtGui.QAction('Matlab', self)
-            MATLAB_action.setIcon(helper_forms.set_icon('language_icons/logo_matlab.png'))
-            MATLAB_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Matlab, 'Matlab')
-            )
-            NIM_action = PyQt4.QtGui.QAction('Nim', self)
-            NIM_action.setIcon(helper_forms.set_icon('language_icons/logo_nim.png'))
-            NIM_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Nim, 'Nim')
-            )
-            OBERON_action = PyQt4.QtGui.QAction('Oberon / Modula', self)
-            OBERON_action.setIcon(helper_forms.set_icon('language_icons/logo_oberon.png'))
-            OBERON_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Oberon, 'Oberon / Modula')
-            )
-            PASCAL_action = PyQt4.QtGui.QAction('Pascal', self)
-            PASCAL_action.setIcon(helper_forms.set_icon('language_icons/logo_pascal.png'))
-            PASCAL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Pascal, 'Pascal')
-            )
-            PERL_action = PyQt4.QtGui.QAction('Perl', self)
-            PERL_action.setIcon(helper_forms.set_icon('language_icons/logo_perl.png'))
-            PERL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Perl, 'Perl')
-            )
-            PYTHON_action = PyQt4.QtGui.QAction('Python', self)
-            PYTHON_action.setIcon(helper_forms.set_icon('language_icons/logo_python.png'))
-            PYTHON_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Python, 'Python')
-            )
-            RUBY_action = PyQt4.QtGui.QAction('Ruby', self)
-            RUBY_action.setIcon(helper_forms.set_icon('language_icons/logo_ruby.png'))
-            RUBY_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Ruby, 'Ruby')
-            )
-            ROUTEROS_action = PyQt4.QtGui.QAction('RouterOs', self)
-            ROUTEROS_action.setIcon(helper_forms.set_icon('language_icons/logo_routeros.png'))
-            ROUTEROS_action.triggered.connect(
-                functools.partial(set_lexer, lexers.RouterOS, 'RouterOs')
-            )
-            SQL_action = PyQt4.QtGui.QAction('SQL', self)
-            SQL_action.setIcon(helper_forms.set_icon('language_icons/logo_sql.png'))
-            SQL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.SQL, 'SQL')
-            )
-            TCL_action = PyQt4.QtGui.QAction('TCL', self)
-            TCL_action.setIcon(helper_forms.set_icon('language_icons/logo_tcl.png'))
-            TCL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.TCL, 'TCL')
-            )
-            TEX_action = PyQt4.QtGui.QAction('TeX', self)
-            TEX_action.setIcon(helper_forms.set_icon('language_icons/logo_tex.png'))
-            TEX_action.triggered.connect(
-                functools.partial(set_lexer, lexers.TeX, 'TeX')
-            )
-            VERILOG_action = PyQt4.QtGui.QAction('Verilog', self)
-            VERILOG_action.setIcon(helper_forms.set_icon('language_icons/logo_verilog.png'))
-            VERILOG_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Verilog, 'Verilog')
-            )
-            VHDL_action = PyQt4.QtGui.QAction('VHDL', self)
-            VHDL_action.setIcon(helper_forms.set_icon('language_icons/logo_vhdl.png'))
-            VHDL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.VHDL, 'VHDL')
-            )
-            XML_action = PyQt4.QtGui.QAction('XML', self)
-            XML_action.setIcon(helper_forms.set_icon('language_icons/logo_xml.png'))
-            XML_action.triggered.connect(
-                functools.partial(set_lexer, lexers.XML, 'XML')
-            )
-            YAML_action = PyQt4.QtGui.QAction('YAML', self)
-            YAML_action.setIcon(helper_forms.set_icon('language_icons/logo_yaml.png'))
-            YAML_action.triggered.connect(
-                functools.partial(set_lexer, lexers.YAML, 'YAML')
-            )
-            if data.compatibility_mode == False:
-                CoffeeScript_action = PyQt4.QtGui.QAction('CoffeeScript', self)
-                CoffeeScript_action.setIcon(helper_forms.set_icon('language_icons/logo_coffeescript.png'))
-                CoffeeScript_action.triggered.connect(
-                    functools.partial(set_lexer, lexers.CoffeeScript, 'CoffeeScript')
-                )
-            CSharp_action = PyQt4.QtGui.QAction('C#', self)
-            CSharp_action.setIcon(helper_forms.set_icon('language_icons/logo_csharp.png'))
-            CSharp_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CPP, 'C#')
-            )
-            Java_action = PyQt4.QtGui.QAction('Java', self)
-            Java_action.setIcon(helper_forms.set_icon('language_icons/logo_java.png'))
-            Java_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Java, 'Java')
-            )
-            JavaScript_action = PyQt4.QtGui.QAction('JavaScript', self)
-            JavaScript_action.setIcon(helper_forms.set_icon('language_icons/logo_javascript.png'))
-            JavaScript_action.triggered.connect(
-                functools.partial(set_lexer, lexers.JavaScript, 'JavaScript')
-            )
-            Octave_action = PyQt4.QtGui.QAction('Octave', self)
-            Octave_action.setIcon(helper_forms.set_icon('language_icons/logo_octave.png'))
-            Octave_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Octave, 'Octave')
-            )
-            PostScript_action = PyQt4.QtGui.QAction('PostScript', self)
-            PostScript_action.setIcon(helper_forms.set_icon('language_icons/logo_postscript.png'))
-            PostScript_action.triggered.connect(
-                functools.partial(set_lexer, lexers.PostScript, 'PostScript')
-            )
-            Fortran77_action = PyQt4.QtGui.QAction('Fortran77', self)
-            Fortran77_action.setIcon(helper_forms.set_icon('language_icons/logo_fortran77.png'))
-            Fortran77_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Fortran77, 'Fortran77')
-            )
-            IDL_action = PyQt4.QtGui.QAction('IDL', self)
-            IDL_action.setIcon(helper_forms.set_icon('language_icons/logo_idl.png'))
-            IDL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.IDL, 'IDL')
-            )
-            lexers_menu.addAction(NONE_action)
-            lexers_menu.addSeparator()
-            lexers_menu.addAction(ADA_action)
-            lexers_menu.addAction(BASH_action)
-            lexers_menu.addAction(BATCH_action)
-            lexers_menu.addAction(CMAKE_action)
-            lexers_menu.addAction(C_CPP_action)
-            if data.compatibility_mode == False:
-                lexers_menu.addAction(CoffeeScript_action)
-            lexers_menu.addAction(CSharp_action)
-            lexers_menu.addAction(CSS_action)
-            lexers_menu.addAction(D_action)
-            lexers_menu.addAction(Fortran77_action)
-            lexers_menu.addAction(FORTRAN_action)
-            lexers_menu.addAction(HTML_action)
-            lexers_menu.addAction(IDL_action)
-            lexers_menu.addAction(Java_action)
-            lexers_menu.addAction(JavaScript_action)
-            lexers_menu.addAction(LUA_action)
-            lexers_menu.addAction(MAKEFILE_action)
-            lexers_menu.addAction(MATLAB_action)
-            lexers_menu.addAction(NIM_action)
-            lexers_menu.addAction(OBERON_action)
-            lexers_menu.addAction(Octave_action)
-            lexers_menu.addAction(PASCAL_action)
-            lexers_menu.addAction(PERL_action)
-            lexers_menu.addAction(PostScript_action)
-            lexers_menu.addAction(PYTHON_action)
-            lexers_menu.addAction(RUBY_action)
-            lexers_menu.addAction(ROUTEROS_action)
-            lexers_menu.addAction(SQL_action)
-            lexers_menu.addAction(TCL_action)
-            lexers_menu.addAction(TEX_action)
-            lexers_menu.addAction(VERILOG_action)
-            lexers_menu.addAction(VHDL_action)
-            lexers_menu.addAction(XML_action)
-            lexers_menu.addAction(YAML_action)
+            parent.addMenu(lexers_menu)
         #View menu
         def construct_view_menu():
             view_menu = self.menubar.addMenu("&View")
@@ -4184,6 +3976,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         action_earth        = None
         action_water        = None
         action_mc           = None
+        # References to the dynamically created menus
+        stored_menus        = []
         
         def __init__(self, parent):
             """ Initialization of the Display object instance """
@@ -4912,6 +4706,244 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             )
             #Set focus to the text differ tab
             self.parent.upper_window.setCurrentIndex(sm_index)
+        
+        def create_lexers_menu(self, menu_name, menu_owner, set_lexer_func):
+            """
+            Create a lexer menu. Currently used in the View menu and
+            the CustomEditor tab menu.
+            Parameter set_lexer_func has to have:
+                - parameter lexer: a lexers.Lexer object
+                - parameter lexer_name: a string
+            """
+            set_lexer = set_lexer_func
+            lexers_menu = PyQt4.QtGui.QMenu(menu_name, menu_owner)
+            NONE_action = PyQt4.QtGui.QAction('No lexer', lexers_menu)
+            NONE_action.setIcon(helper_forms.set_icon('tango_icons/file.png'))
+            NONE_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Text, 'Plain text')
+            )
+            ADA_action = PyQt4.QtGui.QAction('Ada', lexers_menu)
+            ADA_action.setIcon(helper_forms.set_icon('language_icons/logo_ada.png'))
+            ADA_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Ada, 'Ada')
+            )
+            BASH_action = PyQt4.QtGui.QAction('Bash', lexers_menu)
+            BASH_action.setIcon(helper_forms.set_icon('language_icons/logo_bash.png'))
+            BASH_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Bash, 'Bash')
+            )
+            BATCH_action = PyQt4.QtGui.QAction('Batch', lexers_menu)
+            BATCH_action.setIcon(helper_forms.set_icon('language_icons/logo_batch.png'))
+            BATCH_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Batch, 'Batch')
+            )
+            CMAKE_action = PyQt4.QtGui.QAction('CMake', lexers_menu)
+            CMAKE_action.setIcon(helper_forms.set_icon('language_icons/logo_cmake.png'))
+            CMAKE_action.triggered.connect(
+                functools.partial(set_lexer, lexers.CMake, 'CMake')
+            )
+            C_CPP_action = PyQt4.QtGui.QAction('C / C++', lexers_menu)
+            C_CPP_action.setIcon(helper_forms.set_icon('language_icons/logo_c_cpp.png'))
+            C_CPP_action.triggered.connect(
+                functools.partial(set_lexer, lexers.CPP, 'C / C++')
+            )
+            CSS_action = PyQt4.QtGui.QAction('CSS', lexers_menu)
+            CSS_action.setIcon(helper_forms.set_icon('language_icons/logo_css.png'))
+            CSS_action.triggered.connect(
+                functools.partial(set_lexer, lexers.CSS, 'CSS')
+            )
+            D_action = PyQt4.QtGui.QAction('D', lexers_menu)
+            D_action.setIcon(helper_forms.set_icon('language_icons/logo_d.png'))
+            D_action.triggered.connect(
+                functools.partial(set_lexer, lexers.D, 'D')
+            )
+            FORTRAN_action = PyQt4.QtGui.QAction('Fortran', lexers_menu)
+            FORTRAN_action.setIcon(helper_forms.set_icon('language_icons/logo_fortran.png'))
+            FORTRAN_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Fortran, 'Fortran')
+            )
+            HTML_action = PyQt4.QtGui.QAction('HTML', lexers_menu)
+            HTML_action.setIcon(helper_forms.set_icon('language_icons/logo_html.png'))
+            HTML_action.triggered.connect(
+                functools.partial(set_lexer, lexers.HTML, 'HTML')
+            )
+            LUA_action = PyQt4.QtGui.QAction('Lua', lexers_menu)
+            LUA_action.setIcon(helper_forms.set_icon('language_icons/logo_lua.png'))
+            LUA_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Lua, 'Lua')
+            )
+            MAKEFILE_action = PyQt4.QtGui.QAction('MakeFile', lexers_menu)
+            MAKEFILE_action.setIcon(helper_forms.set_icon('language_icons/logo_makefile.png'))
+            MAKEFILE_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Makefile, 'MakeFile')
+            )
+            MATLAB_action = PyQt4.QtGui.QAction('Matlab', lexers_menu)
+            MATLAB_action.setIcon(helper_forms.set_icon('language_icons/logo_matlab.png'))
+            MATLAB_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Matlab, 'Matlab')
+            )
+            NIM_action = PyQt4.QtGui.QAction('Nim', lexers_menu)
+            NIM_action.setIcon(helper_forms.set_icon('language_icons/logo_nim.png'))
+            NIM_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Nim, 'Nim')
+            )
+            OBERON_action = PyQt4.QtGui.QAction('Oberon / Modula', lexers_menu)
+            OBERON_action.setIcon(helper_forms.set_icon('language_icons/logo_oberon.png'))
+            OBERON_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Oberon, 'Oberon / Modula')
+            )
+            PASCAL_action = PyQt4.QtGui.QAction('Pascal', lexers_menu)
+            PASCAL_action.setIcon(helper_forms.set_icon('language_icons/logo_pascal.png'))
+            PASCAL_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Pascal, 'Pascal')
+            )
+            PERL_action = PyQt4.QtGui.QAction('Perl', lexers_menu)
+            PERL_action.setIcon(helper_forms.set_icon('language_icons/logo_perl.png'))
+            PERL_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Perl, 'Perl')
+            )
+            PYTHON_action = PyQt4.QtGui.QAction('Python', lexers_menu)
+            PYTHON_action.setIcon(helper_forms.set_icon('language_icons/logo_python.png'))
+            PYTHON_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Python, 'Python')
+            )
+            RUBY_action = PyQt4.QtGui.QAction('Ruby', lexers_menu)
+            RUBY_action.setIcon(helper_forms.set_icon('language_icons/logo_ruby.png'))
+            RUBY_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Ruby, 'Ruby')
+            )
+            ROUTEROS_action = PyQt4.QtGui.QAction('RouterOs', lexers_menu)
+            ROUTEROS_action.setIcon(helper_forms.set_icon('language_icons/logo_routeros.png'))
+            ROUTEROS_action.triggered.connect(
+                functools.partial(set_lexer, lexers.RouterOS, 'RouterOs')
+            )
+            SQL_action = PyQt4.QtGui.QAction('SQL', lexers_menu)
+            SQL_action.setIcon(helper_forms.set_icon('language_icons/logo_sql.png'))
+            SQL_action.triggered.connect(
+                functools.partial(set_lexer, lexers.SQL, 'SQL')
+            )
+            TCL_action = PyQt4.QtGui.QAction('TCL', lexers_menu)
+            TCL_action.setIcon(helper_forms.set_icon('language_icons/logo_tcl.png'))
+            TCL_action.triggered.connect(
+                functools.partial(set_lexer, lexers.TCL, 'TCL')
+            )
+            TEX_action = PyQt4.QtGui.QAction('TeX', lexers_menu)
+            TEX_action.setIcon(helper_forms.set_icon('language_icons/logo_tex.png'))
+            TEX_action.triggered.connect(
+                functools.partial(set_lexer, lexers.TeX, 'TeX')
+            )
+            VERILOG_action = PyQt4.QtGui.QAction('Verilog', lexers_menu)
+            VERILOG_action.setIcon(helper_forms.set_icon('language_icons/logo_verilog.png'))
+            VERILOG_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Verilog, 'Verilog')
+            )
+            VHDL_action = PyQt4.QtGui.QAction('VHDL', lexers_menu)
+            VHDL_action.setIcon(helper_forms.set_icon('language_icons/logo_vhdl.png'))
+            VHDL_action.triggered.connect(
+                functools.partial(set_lexer, lexers.VHDL, 'VHDL')
+            )
+            XML_action = PyQt4.QtGui.QAction('XML', lexers_menu)
+            XML_action.setIcon(helper_forms.set_icon('language_icons/logo_xml.png'))
+            XML_action.triggered.connect(
+                functools.partial(set_lexer, lexers.XML, 'XML')
+            )
+            YAML_action = PyQt4.QtGui.QAction('YAML', lexers_menu)
+            YAML_action.setIcon(helper_forms.set_icon('language_icons/logo_yaml.png'))
+            YAML_action.triggered.connect(
+                functools.partial(set_lexer, lexers.YAML, 'YAML')
+            )
+            if data.compatibility_mode == False:
+                CoffeeScript_action = PyQt4.QtGui.QAction('CoffeeScript', lexers_menu)
+                CoffeeScript_action.setIcon(helper_forms.set_icon('language_icons/logo_coffeescript.png'))
+                CoffeeScript_action.triggered.connect(
+                    functools.partial(set_lexer, lexers.CoffeeScript, 'CoffeeScript')
+                )
+            CSharp_action = PyQt4.QtGui.QAction('C#', lexers_menu)
+            CSharp_action.setIcon(helper_forms.set_icon('language_icons/logo_csharp.png'))
+            CSharp_action.triggered.connect(
+                functools.partial(set_lexer, lexers.CPP, 'C#')
+            )
+            Java_action = PyQt4.QtGui.QAction('Java', lexers_menu)
+            Java_action.setIcon(helper_forms.set_icon('language_icons/logo_java.png'))
+            Java_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Java, 'Java')
+            )
+            JavaScript_action = PyQt4.QtGui.QAction('JavaScript', lexers_menu)
+            JavaScript_action.setIcon(helper_forms.set_icon('language_icons/logo_javascript.png'))
+            JavaScript_action.triggered.connect(
+                functools.partial(set_lexer, lexers.JavaScript, 'JavaScript')
+            )
+            Octave_action = PyQt4.QtGui.QAction('Octave', lexers_menu)
+            Octave_action.setIcon(helper_forms.set_icon('language_icons/logo_octave.png'))
+            Octave_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Octave, 'Octave')
+            )
+            PostScript_action = PyQt4.QtGui.QAction('PostScript', lexers_menu)
+            PostScript_action.setIcon(helper_forms.set_icon('language_icons/logo_postscript.png'))
+            PostScript_action.triggered.connect(
+                functools.partial(set_lexer, lexers.PostScript, 'PostScript')
+            )
+            Fortran77_action = PyQt4.QtGui.QAction('Fortran77', lexers_menu)
+            Fortran77_action.setIcon(helper_forms.set_icon('language_icons/logo_fortran77.png'))
+            Fortran77_action.triggered.connect(
+                functools.partial(set_lexer, lexers.Fortran77, 'Fortran77')
+            )
+            IDL_action = PyQt4.QtGui.QAction('IDL', lexers_menu)
+            IDL_action.setIcon(helper_forms.set_icon('language_icons/logo_idl.png'))
+            IDL_action.triggered.connect(
+                functools.partial(set_lexer, lexers.IDL, 'IDL')
+            )
+            lexers_menu.addAction(NONE_action)
+            lexers_menu.addSeparator()
+            lexers_menu.addAction(ADA_action)
+            lexers_menu.addAction(BASH_action)
+            lexers_menu.addAction(BATCH_action)
+            lexers_menu.addAction(CMAKE_action)
+            lexers_menu.addAction(C_CPP_action)
+            if data.compatibility_mode == False:
+                lexers_menu.addAction(CoffeeScript_action)
+            lexers_menu.addAction(CSharp_action)
+            lexers_menu.addAction(CSS_action)
+            lexers_menu.addAction(D_action)
+            lexers_menu.addAction(Fortran77_action)
+            lexers_menu.addAction(FORTRAN_action)
+            lexers_menu.addAction(HTML_action)
+            lexers_menu.addAction(IDL_action)
+            lexers_menu.addAction(Java_action)
+            lexers_menu.addAction(JavaScript_action)
+            lexers_menu.addAction(LUA_action)
+            lexers_menu.addAction(MAKEFILE_action)
+            lexers_menu.addAction(MATLAB_action)
+            lexers_menu.addAction(NIM_action)
+            lexers_menu.addAction(OBERON_action)
+            lexers_menu.addAction(Octave_action)
+            lexers_menu.addAction(PASCAL_action)
+            lexers_menu.addAction(PERL_action)
+            lexers_menu.addAction(PostScript_action)
+            lexers_menu.addAction(PYTHON_action)
+            lexers_menu.addAction(RUBY_action)
+            lexers_menu.addAction(ROUTEROS_action)
+            lexers_menu.addAction(SQL_action)
+            lexers_menu.addAction(TCL_action)
+            lexers_menu.addAction(TEX_action)
+            lexers_menu.addAction(VERILOG_action)
+            lexers_menu.addAction(VHDL_action)
+            lexers_menu.addAction(XML_action)
+            lexers_menu.addAction(YAML_action)
+            # Clean-up the stored menus
+            """
+            This is needed only because the lexer menu is created on the fly!
+            If this clean-up is ommited, then try clicking the CustomEditor lexer
+            menu button 20x times and watch the memory usage ballon up!
+            """
+            for i in range(len(self.stored_menus)):
+                # Delete the QObject by setting it's parent to None
+                self.stored_menus[i].setParent(None)
+            self.stored_menus = []
+            # Add the newly created menu to the internal list for future cleaning
+            self.stored_menus.append(lexers_menu)
+            # Return the created menu
+            return lexers_menu
     
     class Bookmarks:
         """
@@ -5108,7 +5140,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Check for a right click
             if event_button == PyQt4.QtCore.Qt.RightButton:
                 #Create the popup tab context menu
-                menu =  self.parent.TabMenu(
+                menu = self.parent.TabMenu(
                             self, 
                             self.main_form, 
                             self.parent, 
@@ -5569,7 +5601,42 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                     if document.current_icon != None:
                         self.setTabIcon(i, document.current_icon)
         #Display special find buttons if the current tab is text differ
-        if isinstance(current_tab, helper_forms.TextDiffer) == True:
+        if isinstance(current_tab, CustomEditor) == True:
+            def show_lexer_menu():
+                def set_lexer(lexer, lexer_name):
+                    try:
+                        current_tab.current_lexer = None
+                        current_tab.setLexer(None)
+                        # Initialize and set the new lexer
+                        lexer_instance = lexer()
+                        current_tab.set_lexer(lexer_instance, lexer_name)
+                        # Change the corner widget (button) icon
+                        self.cornerWidget().setIcon(current_tab.current_icon)
+                        # Display the lexer change
+                        message = "Lexer changed to: {:s}".format(lexer_name)
+                        self.parent.display.repl_display_message(message)
+                    except Exception as ex:
+                        print(ex)
+                        message = "Error with lexer selection!\n"
+                        message += "Select a window widget with an opened document first."
+                        self.parent.display.repl_display_message(
+                            message, 
+                            message_type=data.MessageType.ERROR
+                        )
+                        self.parent.display.write_to_statusbar(message)
+                lexers_menu = self.parent.display.create_lexers_menu(
+                    "Change lexer", self, set_lexer
+                )
+                cursor = PyQt4.QtGui.QCursor.pos()
+                lexers_menu.popup(cursor)
+            button_show_lexers = PyQt4.QtGui.QToolButton(self)
+            button_show_lexers.setIcon(current_tab.current_icon)
+            button_show_lexers.setPopupMode(PyQt4.QtGui.QToolButton.InstantPopup)
+            button_show_lexers.setToolTip("Change the current lexer")
+            button_show_lexers.clicked.connect(show_lexer_menu)
+            button_show_lexers.show()
+            self.setCornerWidget(button_show_lexers)
+        elif isinstance(current_tab, helper_forms.TextDiffer) == True:
             current_tab.show_find_buttons(self)
         elif isinstance(current_tab, helper_forms.SessionGuiManipulator) == True:
             current_tab.show_session_buttons(self)
@@ -7993,8 +8060,6 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             self.current_file_type = "TEXT"
             lexer = lexers.Text()
             self.comment_string = None
-        #Get the icon according to the file type
-        self.current_icon = helper_forms.get_language_file_icon(file_type)
         #Check if a lexer was chosen
         if lexer != None:
             self.set_lexer(lexer, file_type)
@@ -8029,6 +8094,8 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             isinstance(lexer, lexers.Nim)):
             #Set the margin font for the lexers in the lexers.py module
             self.setMarginsFont(lexer.default_font)
+        #Get the icon according to the file type
+        self.current_icon = helper_forms.get_language_file_icon(file_type)
         #Set the theme
         self.set_theme(data.theme)
 

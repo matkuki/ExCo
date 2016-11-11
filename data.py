@@ -166,7 +166,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "5.4"
+APPLICATION_VERSION     = "5.6"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
