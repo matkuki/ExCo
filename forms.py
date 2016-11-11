@@ -1753,7 +1753,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             lexers_menu = parent.addMenu("Change lexer")
             temp_icon = helper_forms.set_icon('tango_icons/lexers.png')
             lexers_menu.setIcon(temp_icon)
-            NONE_action = PyQt4.QtGui.QAction('DISABLE LEXER', self)
+            NONE_action = PyQt4.QtGui.QAction('No lexer', self)
+            NONE_action.setIcon(helper_forms.set_icon('tango_icons/file.png'))
             NONE_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Text, 'Plain text')
             )
@@ -1763,10 +1764,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 functools.partial(set_lexer, lexers.Ada, 'Ada')
             )
             BASH_action = PyQt4.QtGui.QAction('Bash', self)
+            BASH_action.setIcon(helper_forms.set_icon('language_icons/logo_bash.png'))
             BASH_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Bash, 'Bash')
             )
             BATCH_action = PyQt4.QtGui.QAction('Batch', self)
+            BATCH_action.setIcon(helper_forms.set_icon('language_icons/logo_batch.png'))
             BATCH_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Batch, 'Batch')
             )
@@ -1791,6 +1794,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 functools.partial(set_lexer, lexers.D, 'D')
             )
             FORTRAN_action = PyQt4.QtGui.QAction('Fortran', self)
+            FORTRAN_action.setIcon(helper_forms.set_icon('language_icons/logo_fortran.png'))
             FORTRAN_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Fortran, 'Fortran')
             )
@@ -1805,6 +1809,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 functools.partial(set_lexer, lexers.Lua, 'Lua')
             )
             MAKEFILE_action = PyQt4.QtGui.QAction('MakeFile', self)
+            MAKEFILE_action.setIcon(helper_forms.set_icon('language_icons/logo_makefile.png'))
             MAKEFILE_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Makefile, 'MakeFile')
             )
@@ -1824,6 +1829,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 functools.partial(set_lexer, lexers.Oberon, 'Oberon / Modula')
             )
             PASCAL_action = PyQt4.QtGui.QAction('Pascal', self)
+            PASCAL_action.setIcon(helper_forms.set_icon('language_icons/logo_pascal.png'))
             PASCAL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Pascal, 'Pascal')
             )
@@ -1842,6 +1848,11 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             RUBY_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Ruby, 'Ruby')
             )
+            ROUTEROS_action = PyQt4.QtGui.QAction('RouterOs', self)
+            ROUTEROS_action.setIcon(helper_forms.set_icon('language_icons/logo_routeros.png'))
+            ROUTEROS_action.triggered.connect(
+                functools.partial(set_lexer, lexers.RouterOS, 'RouterOs')
+            )
             SQL_action = PyQt4.QtGui.QAction('SQL', self)
             SQL_action.setIcon(helper_forms.set_icon('language_icons/logo_sql.png'))
             SQL_action.triggered.connect(
@@ -1858,10 +1869,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 functools.partial(set_lexer, lexers.TeX, 'TeX')
             )
             VERILOG_action = PyQt4.QtGui.QAction('Verilog', self)
+            VERILOG_action.setIcon(helper_forms.set_icon('language_icons/logo_verilog.png'))
             VERILOG_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Verilog, 'Verilog')
             )
             VHDL_action = PyQt4.QtGui.QAction('VHDL', self)
+            VHDL_action.setIcon(helper_forms.set_icon('language_icons/logo_vhdl.png'))
             VHDL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.VHDL, 'VHDL')
             )
@@ -1871,6 +1884,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 functools.partial(set_lexer, lexers.XML, 'XML')
             )
             YAML_action = PyQt4.QtGui.QAction('YAML', self)
+            YAML_action.setIcon(helper_forms.set_icon('language_icons/logo_yaml.png'))
             YAML_action.triggered.connect(
                 functools.partial(set_lexer, lexers.YAML, 'YAML')
             )
@@ -1901,14 +1915,17 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 functools.partial(set_lexer, lexers.Octave, 'Octave')
             )
             PostScript_action = PyQt4.QtGui.QAction('PostScript', self)
+            PostScript_action.setIcon(helper_forms.set_icon('language_icons/logo_postscript.png'))
             PostScript_action.triggered.connect(
                 functools.partial(set_lexer, lexers.PostScript, 'PostScript')
             )
             Fortran77_action = PyQt4.QtGui.QAction('Fortran77', self)
+            Fortran77_action.setIcon(helper_forms.set_icon('language_icons/logo_fortran77.png'))
             Fortran77_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Fortran77, 'Fortran77')
             )
             IDL_action = PyQt4.QtGui.QAction('IDL', self)
+            IDL_action.setIcon(helper_forms.set_icon('language_icons/logo_idl.png'))
             IDL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.IDL, 'IDL')
             )
@@ -1941,6 +1958,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             lexers_menu.addAction(PostScript_action)
             lexers_menu.addAction(PYTHON_action)
             lexers_menu.addAction(RUBY_action)
+            lexers_menu.addAction(ROUTEROS_action)
             lexers_menu.addAction(SQL_action)
             lexers_menu.addAction(TCL_action)
             lexers_menu.addAction(TEX_action)
@@ -5061,9 +5079,9 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Initialize superclass
             super().__init__(parent)
             #Store the parent reference
-            self.parent     = parent
+            self.parent = parent
             #Store the main form reference
-            self.main_form  = self.parent.parent
+            self.main_form = self.parent.parent
         
         def mousePressEvent(self, event):
             #Execute the superclass event method
@@ -5086,7 +5104,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         def mouseReleaseEvent(self, event):
             #Execute the superclass event method
             super().mouseReleaseEvent(event)
-            event_button    = event.button()
+            event_button = event.button()
             #Check for a right click
             if event_button == PyQt4.QtCore.Qt.RightButton:
                 #Create the popup tab context menu
@@ -5488,17 +5506,6 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Clear the cursor positions in the statusbar
             self.parent.display.update_cursor_position()
             data.print_log("Mouse click in: \"" + self.name + "\"")
-    
-#    def mouseReleaseEvent(self, event):
-#        super().mouseReleaseEvent(event)
-#        event_button    = event.button()
-#        #Check for a right click
-#        if event_button == PyQt4.QtCore.Qt.RightButton:
-#            #Create the popup tab context menu
-#            menu = self.TabMenu(self)
-#            #Show the tab context menu
-#            cursor = PyQt4.QtGui.QCursor.pos()
-#            menu.popup(cursor)
 
     def wheelEvent(self, wheel_event):
         """QScintilla mouse wheel rotate event"""
@@ -7300,7 +7307,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                 self.line_list = new_line_list
             except Exception as ex:
                 self.main_form.display.repl_display_message(
-                    "'for_each_line' has an error:\n" +str(ex), 
+                    "'for_each_line' has an error:\n" + str(ex), 
                     message_type=data.MessageType.ERROR
                 )
                 return
@@ -7950,6 +7957,9 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         elif file_type  == "octave":
             lexer   = lexers.Octave()
             self.comment_string = "#"
+        elif file_type  == "routeros":
+            lexer   = lexers.RouterOS()
+            self.comment_string = "#"
         elif file_type  == "sql":
             lexer   = lexers.SQL()
             self.comment_string = "#"
@@ -7999,7 +8009,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Store the lexer instance, so that it doesn't get garbage collected
         self.current_lexer = lexer
         #Save the current file type to a string
-        self.current_file_type  = file_type.upper()
+        self.current_file_type = file_type.upper()
         #Set the lexer default font family
         lexer.setDefaultFont(self.default_font)
         #Set the lexer for the current scintilla document

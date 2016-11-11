@@ -1131,6 +1131,8 @@ def get_file_type(file_with_path):
         file_type = "javascript"
     elif file_extension.lower() in data.ext_octave:
         file_type = "octave"
+    elif file_extension.lower() in data.ext_routeros:
+        file_type = "routeros"
     elif file_extension.lower() in data.ext_sql:
         file_type = "sql"
     elif file_extension.lower() in data.ext_postscript:

@@ -136,6 +136,14 @@ class Font:
         MultilineDocumentation = ('Courier', 0xffea8c55, 10, None)
         Pragma = ('Courier', 0xffc07f40, 10, None)
     
+    class RouterOS:
+        Default = ('Courier', 0xffffffff, 10, True)
+        Operator = ('Courier', 0xffB4B80A, 10, True)
+        Comment = ('Courier', 0xff38B86B, 10, True)
+        Keyword1 = ('Courier', 0xff32CD32, 10, True)
+        Keyword2 = ('Courier', 0xffB9005C, 10, True)
+        Keyword3 = ('Courier', 0xff74ccf4, 10, True)
+    
     class Oberon:
         Default = ('Courier', 0xffffffff, 10, None)
         Comment = ('Courier', 0xff6cab9d, 10, None)
@@ -1188,6 +1196,14 @@ class Paper:
         MultilineComment = 0xff112435
         MultilineDocumentation = 0xff112435
         Pragma = 0xff112435
+    
+    class RouterOS:
+        Default = 0xff112435
+        Operator = 0xff112435
+        Comment = 0xff112435
+        Keyword1 = 0xff112435
+        Keyword2 = 0xff112435
+        Keyword3 = 0xff112435
     
     class Oberon:
         Default = 0xff112435

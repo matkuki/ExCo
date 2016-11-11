@@ -144,6 +144,16 @@ def get_language_file_icon(language_name):
         return set_icon('language_icons/logo_tcl.png')
     elif language_name  == "tex":
         return set_icon('language_icons/logo_tex.png')
+    elif language_name  == "idl":
+        return set_icon('language_icons/logo_idl.png')
+    elif language_name  == "bash":
+        return set_icon('language_icons/logo_bash.png')
+    elif language_name  == "batch":
+        return set_icon('language_icons/logo_batch.png')
+    elif language_name  == "fortran":
+        return set_icon('language_icons/logo_fortran.png')
+    elif language_name  == "fortran77":
+        return set_icon('language_icons/logo_fortran77.png')
     elif language_name  == "ini" or language_name  == "makefile":
         return set_icon('tango_icons/document-properties.png')
     elif language_name  == "coffeescript":
@@ -154,12 +164,26 @@ def get_language_file_icon(language_name):
         return set_icon('language_icons/logo_java.png')
     elif language_name  == "javascript":
         return set_icon('language_icons/logo_javascript.png')
+    elif language_name  == "makefile":
+        return set_icon('language_icons/logo_makefile.png')
     elif language_name  == "octave":
         return set_icon('language_icons/logo_octave.png')
+    elif language_name  == "pascal":
+        return set_icon('language_icons/logo_pascal.png')
+    elif language_name  == "postscript":
+        return set_icon('language_icons/logo_postscript.png')
+    elif language_name  == "routeros":
+        return set_icon('language_icons/logo_routeros.png')
     elif language_name  == "sql":
         return set_icon('language_icons/logo_sql.png')
+    elif language_name  == "verilog":
+        return set_icon('language_icons/logo_verilog.png')
+    elif language_name  == "vhdl":
+        return set_icon('language_icons/logo_vhdl.png')
     elif language_name  == "xml":
         return set_icon('language_icons/logo_xml.png')
+    elif language_name  == "yaml":
+        return set_icon('language_icons/logo_yaml.png')
     elif language_name  == "text":
         return set_icon('tango_icons/text-x-generic.png')
     else:
