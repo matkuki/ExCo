@@ -918,9 +918,9 @@ def get_nim_node_tree(nim_code):
     #Return the node list
     return main_node
 
-def get_python_node_tree(python_code):
+def get_python_node_list(python_code):
     """
-    Parse the text and return a node tree as a list.
+    Parse the text and return nodes as a list.
     The text must be valid Python 3 code.
     """
     #Nested function for recursivly traversing all the child nodes
@@ -959,6 +959,26 @@ def get_python_node_tree(python_code):
             children.extend([c[1] for c in cc])
     #Return the parse results
     return import_nodes, class_tree_nodes, function_nodes, global_vars
+
+def get_python_node_tree(python_code):
+    """
+    Parse the text and return nodes as a nested tree.
+    The text must be valid Python 3 code.
+    """
+    parsed_string = ast.parse(python_code)
+
+    def parse_node(node, level):
+        if isinstance(node, ast.ClassDef):
+            print("    "*level + node.name + " (line: {})".format(node.lineno))
+            for child_node in node.body:
+                parse_node(child_node, level+1)
+        elif isinstance(node, ast.FunctionDef):
+            print("    "*level + node.name + " (line: {})".format(node.lineno))
+            for child_node in node.body:
+                parse_node(child_node, level+1)
+
+    for node in ast.iter_child_nodes(parsed_string):
+        parse_node(node, 0)
 
 def get_c_function_list(c_code):
     """

@@ -2132,7 +2132,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             )
             return
         #Update the REPL autocompletions
-        import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_tree(user_code)
+        import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_list(user_code)
         #First get the function names
         user_function_names = [func.name for func in function_nodes]
         #Then get the autocompletions by testing if the function has
@@ -2369,6 +2369,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 else:
                     if window.widget(i).hasFocus() == True:
                         return window.widget(i)
+            if self.repl_helper.hasFocus() == True:
+                return self.repl_helper
         #No tab in the basic widgets has focus
         return None
     
@@ -3477,7 +3479,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                         window.widget(i).set_theme(data.theme)
                     if hasattr(window.widget(i), "refresh_lexer") == True:
                         window.widget(i).refresh_lexer()
-            self.parent.repl_helper.set_theme(data.theme)
+            self.parent.repl_helper.refresh_lexer()
             self.indication_check()
             self.parent.statusbar.setStyleSheet(
                 "color: {0};".format(data.theme.Indication.Font)
@@ -4337,7 +4339,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             if parser == "PYTHON":
                 #Get all the file information
                 try:
-                    import_nodes, class_nodes, function_nodes, global_vars = functions.get_python_node_tree(custom_editor.text())
+                    import_nodes, class_nodes, function_nodes, global_vars = functions.get_python_node_list(custom_editor.text())
                     parser_error = False
                 except Exception as ex:
                     # Exception, probably an error in the file's syntax
@@ -4451,7 +4453,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 parser = custom_editor.current_file_type
             #Get the node tree for the current widget in the custom editor 
             if parser == "PYTHON":
-                import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_tree(custom_editor.text())
+                import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_list(custom_editor.text())
                 init_space  = "    -"
                 extra_space = "     "
                 #Display document name, used for finding the tab when clicking the hotspot
@@ -4812,10 +4814,10 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             RUBY_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Ruby, 'Ruby')
             )
-            ROUTEROS_action = PyQt4.QtGui.QAction('RouterOs', lexers_menu)
+            ROUTEROS_action = PyQt4.QtGui.QAction('RouterOS', lexers_menu)
             ROUTEROS_action.setIcon(helper_forms.set_icon('language_icons/logo_routeros.png'))
             ROUTEROS_action.triggered.connect(
-                functools.partial(set_lexer, lexers.RouterOS, 'RouterOs')
+                functools.partial(set_lexer, lexers.RouterOS, 'RouterOS')
             )
             SQL_action = PyQt4.QtGui.QAction('SQL', lexers_menu)
             SQL_action.setIcon(helper_forms.set_icon('language_icons/logo_sql.png'))
@@ -5512,7 +5514,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Check if the current widget is a custom editor or a QTextEdit widget
             if isinstance(cw, CustomEditor):
                 #Get currently selected tab in the basic widget and display its name and lexer
-                self.parent.display.write_to_statusbar(cw.name + " ({:s})".format(cw.current_file_type))
+                self.parent.display.write_to_statusbar(cw.name)
             else:
                 #Display only the QTextEdit name
                 self.parent.display.write_to_statusbar(cw.name)
@@ -5705,7 +5707,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Check if the current widget is a custom editor or a QTextEdit widget
             if isinstance(cw, CustomEditor):
                 #Get currently selected tab in the basic widget and display its name and lexer
-                self.parent.display.write_to_statusbar(cw.name + " ({:s})".format(cw.current_file_type))
+                self.parent.display.write_to_statusbar(cw.name)
             else:
                 #Display only the QTextEdit name
                 self.parent.display.write_to_statusbar(cw.name)
@@ -9098,6 +9100,7 @@ Scintilla class for inputting more than one line into the REPL
 -----------------------------------------------------
 """
 class ReplHelper(PyQt4.Qsci.QsciScintilla):
+
     """
     REPL scintilla box for inputting multiple lines into the REPL.
     MUST BE PAIRED WITH A ReplLineEdit OBJECT!
@@ -9113,6 +9116,8 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
     indicated       = False
     #Default font
     default_font    = PyQt4.QtGui.QFont('Courier', 10)
+    #LineList object copied from the CustomEditor object
+    line_list       = None
     
     """
     Built-in and private functions
@@ -9150,6 +9155,36 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         self.setEolMode(data.default_eol)
         #Set the initial zoom factor
         self.zoomTo(data.zoom_factor)
+        """
+        Functionality copied from the CustomEditor to copy some of 
+        the neede editing functionality like commenting, ...
+        """
+        # Add the attributes needed to imple
+        self.line_list = CustomEditor.LineList(self, self.text())
+        self.line_list = [""]
+        self.current_file_type = "PYTHON"
+        self.comment_string = "#"
+        self.oberon_comment_style = False
+        # Add the needed functions assigned from the CustomEditor
+        self.set_theme = functools.partial(CustomEditor.set_theme, self)
+        self.toggle_comment_uncomment = functools.partial(CustomEditor.toggle_comment_uncomment, self)
+        self.comment_line = functools.partial(CustomEditor.comment_line, self)
+        self.comment_lines = functools.partial(CustomEditor.comment_lines, self)
+        self.uncomment_line = functools.partial(CustomEditor.uncomment_line, self)
+        self.uncomment_lines = functools.partial(CustomEditor.uncomment_lines, self)
+        self.prepend_to_line = functools.partial(CustomEditor.prepend_to_line, self)
+        self.prepend_to_lines = functools.partial(CustomEditor.prepend_to_lines, self)
+        self.replace_line = functools.partial(CustomEditor.replace_line, self)
+        self.get_line = functools.partial(CustomEditor.get_line, self)
+        self.check_line_numbering = functools.partial(CustomEditor.check_line_numbering, self)
+        self.text_to_list = functools.partial(CustomEditor.text_to_list, self)
+        self.list_to_text = functools.partial(CustomEditor.list_to_text, self)
+        # Add the function and connect the signal to update the line/column positions
+        self._signal_editor_cursor_change = functools.partial(BasicWidget._signal_editor_cursor_change, self)
+        self.cursorPositionChanged.connect(self._signal_editor_cursor_change)
+        """
+        ---------------------------------------------------------------
+        """
         #Set the lexer to python and set the initial autocompletions
         self.update_autocompletions()
 
@@ -9235,40 +9270,22 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
             #Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
     
-    def set_theme(self, theme):
-        if theme == themes.Air:
-            self.resetFoldMarginColors()
-        else:
-            self.setFoldMarginColors(
-                theme.FoldMargin.ForeGround, 
-                theme.FoldMargin.BackGround
-            )
-        self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
-        self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
-        self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            PyQt4.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
-            theme.Paper.Default
-        )
-        self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            PyQt4.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
-            theme.LineMargin.BackGround
-        )
-        self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
-            theme.Cursor
-        )
+    def refresh_lexer(self):
+        self.lexer = lexers.Python(self)
+        #Set the lexers default font
+        self.lexer.setDefaultFont(self.default_font)
+        #Set the lexer with the initial autocompletions
+        self.setLexer(self.lexer)
+        #Set the theme
+        self.set_theme(data.theme)
 
     """
     ReplHelper autocompletion functions
     """
     def update_autocompletions(self, new_autocompletions=[]):
         """Function for updating the ReplHelper autocompletions"""
-        #Set the lexer to python and set the initial autocompletions
-        self.lexer = lexers.Python(self)
-        #Set the lexers default font
-        self.lexer.setDefaultFont(self.default_font)
+        #Set the lexer
+        self.refresh_lexer()
         #Set the scintilla api for the autocompletions (MUST BE AN INSTANCE VARIABLE)
         self.api = PyQt4.Qsci.QsciAPIs(self.lexer)
         #Populate the api with all of the python keywords
@@ -9277,16 +9294,13 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         for word in new_autocompletions:
             self.api.add(word)
         self.api.prepare()
-        #Set the lexer with the initial autocompletions
-        self.setLexer(self.lexer)
-        #Set the theme
-        self.set_theme(data.theme)
         #Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         #Set the source from where the autocompletions will be fetched
         self.setAutoCompletionSource(PyQt4.Qsci.QsciScintilla.AcsAll)
         #Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
+
 
 """
 ----------------------------------------------------------------
