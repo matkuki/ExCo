@@ -27,7 +27,7 @@ All additional licenses are specified at the beginning of every source code file
 - Text diffing (also between editor windows)
 - Execute Terminal/Shell commands directly from the REPL (Windows or GNU/Linux)
 - Ability to add your custom Python functions
-- Language syntax highlighting: Python, Nim, C/C++, JavaScript, C#, Ruby, ...
+- Language syntax highlighting: AVS, Ada, Bash, Batch, CMake, CPP, CSS, CSharp, CoffeeScript, Cython, D, Diff, Fortran, Fortran77, HTML, IDL, Java, JavaScript, Lua, Makefile, Matlab, Nim, Oberon, Octave, PO, POV, Pascal, Perl, PostScript, Properties, PyQt4, Python, RouterOS (MikroTik), Ruby, SQL, Spice, TCL, TeX, Text, VHDL, Verilog, XML and YAML
 - Code tree displaying for: 
     - Python 3
     - Nim
