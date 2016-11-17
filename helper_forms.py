@@ -1023,13 +1023,13 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         for i in range(self.model().rowCount()):
             self.resizeColumnToContents(i)
     
-    def display_python_nodes(self, 
-                             custom_editor,
-                             import_nodes, 
-                             class_nodes,
-                             function_nodes,
-                             global_vars, 
-                             parse_error=False):
+    def display_python_nodes_in_list(self, 
+                                     custom_editor,
+                                     import_nodes, 
+                                     class_nodes,
+                                     function_nodes,
+                                     global_vars, 
+                                     parse_error=False):
         """Display the input python data in the tree display"""
         #Store the custom editor tab that for quicker navigation
         self.bound_tab = custom_editor
@@ -1226,6 +1226,166 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             item_no_functions.setEditable(False)
             item_no_functions.setIcon(self.node_icon_nothing)
             item_functions.appendRow(item_no_functions)
+        #Append the function nodes to the model
+        tree_model.appendRow(item_functions)
+        #Expand the base nodes
+        self.expand(item_classes.index())
+        self.expand(item_functions.index())
+        #Resize the header so the horizontal scrollbar will have the correct width
+        self.resize_horizontal_scrollbar()
+    
+    def display_python_nodes_in_tree(self, 
+                                     custom_editor,
+                                     python_node_tree, 
+                                     parse_error=False):
+        """Display the input python data in the tree display"""
+        #Store the custom editor tab that for quicker navigation
+        self.bound_tab = custom_editor
+        #Set the tree display type to NODE
+        self.set_display_type(data.TreeDisplayType.NODES)
+        #Define the document name, type
+        document_name       = os.path.basename(custom_editor.save_name)
+        document_name_text  = "DOCUMENT: {:s}".format(document_name)
+        document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
+        #Define the display structure texts
+        import_text         = "IMPORTS:"
+        class_text          = "CLASS/METHOD TREE:"
+        function_text       = "FUNCTIONS:"
+        #Initialize the tree display to Python file type
+        self.setSelectionBehavior(PyQt4.QtGui.QAbstractItemView.SelectRows)
+        tree_model = PyQt4.QtGui.QStandardItemModel()
+        tree_model.setHorizontalHeaderLabels([document_name])
+        self.setModel(tree_model)
+        self.setUniformRowHeights(True)
+        self.set_font_size(data.tree_display_font_size)
+        #Add the file attributes to the tree display
+        description_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        )
+        description_font = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
+        item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
+        item_document_name.setEditable(False)
+        item_document_name.setForeground(description_brush)
+        item_document_name.setFont(description_font)
+        item_document_type  = PyQt4.QtGui.QStandardItem(document_type_text)
+        item_document_type.setEditable(False)
+        item_document_type.setForeground(description_brush)
+        item_document_type.setFont(description_font)
+        item_document_type.setIcon(self.python_icon)
+        tree_model.appendRow(item_document_name)
+        tree_model.appendRow(item_document_type)
+        #Set the label properties
+        label_brush = PyQt4.QtGui.QBrush(
+            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        )
+        label_font  = PyQt4.QtGui.QFont(
+            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        )
+        #Check if there was a parsing error
+        if parse_error != False:
+            error_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(180, 0, 0))
+            error_font  = PyQt4.QtGui.QFont(
+                "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+            )
+            item_error = PyQt4.QtGui.QStandardItem("ERROR PARSING FILE!")
+            item_error.setEditable(False)
+            item_error.setForeground(error_brush)
+            item_error.setFont(error_font)
+            item_error.setIcon(self.node_icon_nothing)
+            tree_model.appendRow(item_error)
+            #Show the error message
+            error_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
+            item_error_msg = PyQt4.QtGui.QStandardItem(str(parse_error))
+            item_error_msg.setEditable(False)
+            item_error_msg.setForeground(error_brush)
+            item_error_msg.setFont(error_font)
+            line_number = int(re.search(r"line (\d+)",str(parse_error)).group(1))
+            item_error_msg.line_number = line_number
+            tree_model.appendRow(item_error_msg)
+            return
+        # Create the filtered node lists
+        import_nodes = [x for x in python_node_tree if x.type == "import"]
+        class_nodes = [x for x in python_node_tree if x.type == "class"]
+        function_nodes = [x for x in python_node_tree if x.type == "function"]
+        """Imported module filtering"""
+        item_imports = PyQt4.QtGui.QStandardItem(import_text)
+        item_imports.setEditable(False)
+        item_imports.setForeground(label_brush)
+        item_imports.setFont(label_font)
+        for node in import_nodes:
+            node_text = str(node.name) + " (line:"
+            node_text += str(node.line_number) + ")"
+            item_import_node = PyQt4.QtGui.QStandardItem(node_text)
+            item_import_node.setEditable(False)
+            item_import_node.setIcon(self.node_icon_import)
+            item_imports.appendRow(item_import_node)
+        if import_nodes == []:
+            item_no_imports = PyQt4.QtGui.QStandardItem("No imports found")
+            item_no_imports.setEditable(False)
+            item_no_imports.setIcon(self.node_icon_nothing)
+            item_imports.appendRow(item_no_imports)
+        #Append the import node to the model
+        tree_model.appendRow(item_imports)
+        if import_nodes == []:
+            self.expand(item_imports.index())
+        """Class nodes filtering"""
+        item_classes = PyQt4.QtGui.QStandardItem(class_text)
+        item_classes.setEditable(False)
+        item_classes.setForeground(label_brush)
+        item_classes.setFont(label_font)
+        # Class node construction function
+        def construct_node(node, parent_is_class=False):
+            # Construct the node text
+            node_text = str(node.name) + " (line:"
+            node_text += str(node.line_number) + ")"
+            tree_node = PyQt4.QtGui.QStandardItem(node_text)
+            tree_node.setEditable(False)
+            if node.type == "class":
+                tree_node.setIcon(self.node_icon_class)
+            elif node.type == "function":
+                if parent_is_class == False:
+                    tree_node.setIcon(self.node_icon_procedure)
+                else:
+                    tree_node.setIcon(self.node_icon_method)
+            # Append the children
+            node_is_class = False
+            if node.type == "class":
+                node_is_class = True
+            for child_node in node.children:
+                tree_node.appendRow(construct_node(child_node, node_is_class))
+            # Sort the child node alphabetically
+            tree_node.sortChildren(0)
+            # Return the node
+            return tree_node
+        # Check if there were any nodes found
+        if class_nodes == []:
+            item_no_classes = PyQt4.QtGui.QStandardItem("No classes found")
+            item_no_classes.setEditable(False)
+            item_no_classes.setIcon(self.node_icon_nothing)
+            item_classes.appendRow(item_no_classes)
+        else:
+            # Create the class nodes and add them to the tree
+            for node in class_nodes:
+                item_classes.appendRow(construct_node(node, True))
+        # Append the class nodes to the model
+        tree_model.appendRow(item_classes)
+        """Function nodes filtering"""
+        item_functions = PyQt4.QtGui.QStandardItem(function_text)
+        item_functions.setEditable(False)
+        item_functions.setForeground(label_brush)
+        item_functions.setFont(label_font)
+        #Check if there were any nodes found
+        if function_nodes == []:
+            item_no_functions = PyQt4.QtGui.QStandardItem("No functions found")
+            item_no_functions.setEditable(False)
+            item_no_functions.setIcon(self.node_icon_nothing)
+            item_functions.appendRow(item_no_functions)
+        else:
+            # Create the function nodes and add them to the tree
+            for node in function_nodes:
+                item_functions.appendRow(construct_node(node))
         #Append the function nodes to the model
         tree_model.appendRow(item_functions)
         #Expand the base nodes

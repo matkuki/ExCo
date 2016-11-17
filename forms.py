@@ -4337,24 +4337,39 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             parent.node_tree_tab.parent.setCurrentWidget(parent.node_tree_tab)
             #Display the nodes according to file type
             if parser == "PYTHON":
+#                #Get all the file information
+#                try:
+#                    import_nodes, class_nodes, function_nodes, global_vars = functions.get_python_node_list(custom_editor.text())
+#                    parser_error = False
+#                except Exception as ex:
+#                    # Exception, probably an error in the file's syntax
+#                    import_nodes = []
+#                    class_nodes = []
+#                    function_nodes = []
+#                    global_vars = []
+#                    parser_error = ex
+#                #Display the information in the tree tab
+#                parent.node_tree_tab.display_python_nodes_in_list(
+#                    custom_editor,
+#                    import_nodes,  
+#                    class_nodes, 
+#                    function_nodes, 
+#                    global_vars, 
+#                    parser_error
+#                )
                 #Get all the file information
                 try:
-                    import_nodes, class_nodes, function_nodes, global_vars = functions.get_python_node_list(custom_editor.text())
+                    python_node_tree = functions.get_python_node_tree(custom_editor.text())
                     parser_error = False
                 except Exception as ex:
                     # Exception, probably an error in the file's syntax
-                    import_nodes = []
-                    class_nodes = []
-                    function_nodes = []
-                    global_vars = []
+                    python_node_tree = []
                     parser_error = ex
+                    print(ex)
                 #Display the information in the tree tab
-                parent.node_tree_tab.display_python_nodes(
+                parent.node_tree_tab.display_python_nodes_in_tree(
                     custom_editor,
-                    import_nodes,  
-                    class_nodes, 
-                    function_nodes, 
-                    global_vars, 
+                    python_node_tree, 
                     parser_error
                 )
             elif parser == "C":

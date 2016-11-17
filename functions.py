@@ -965,20 +965,66 @@ def get_python_node_tree(python_code):
     Parse the text and return nodes as a nested tree.
     The text must be valid Python 3 code.
     """
-    parsed_string = ast.parse(python_code)
-
+    # Node object
+    class PythonNode:
+        def __init__(self, name, type, line_number, level):
+            self.name = name
+            self.type = type
+            self.line_number = line_number
+            self.level = level
+            self.children = []
+    
+    # Main parsing function
     def parse_node(node, level):
+        new_node = None
         if isinstance(node, ast.ClassDef):
-            print("    "*level + node.name + " (line: {})".format(node.lineno))
+            new_node = PythonNode(
+                node.name, 
+                "class", 
+                node.lineno, 
+                level
+            )
             for child_node in node.body:
-                parse_node(child_node, level+1)
+                result = parse_node(child_node, level+1)
+                if result != None:
+                    new_node.children.append(result)
+            new_node.children = sorted(new_node.children, key=lambda x: x.name)
         elif isinstance(node, ast.FunctionDef):
-            print("    "*level + node.name + " (line: {})".format(node.lineno))
+            new_node = PythonNode(
+                node.name, 
+                "function", 
+                node.lineno, 
+                level
+            )
             for child_node in node.body:
-                parse_node(child_node, level+1)
-
+                result = parse_node(child_node, level+1)
+                if result != None:
+                    new_node.children.append(result)
+            new_node.children = sorted(new_node.children, key=lambda x: x.name)
+        elif isinstance(node, ast.Import):
+            new_node = PythonNode(
+                node.names[0].name, 
+                "import", 
+                node.lineno, 
+                level
+            )
+#            for child_node in node.body:
+#                result = parse_node(child_node, level+1)
+#                if result != None:
+#                    new_node.children.append(result)
+#            new_node.children = sorted(new_node.children, key=lambda x: x.name)
+        return new_node
+    
+    # Initialization
+    parsed_string = ast.parse(python_code)
+    python_node_tree = []
+    # Parse the nodes recursively
     for node in ast.iter_child_nodes(parsed_string):
-        parse_node(node, 0)
+        result = parse_node(node, 0)
+        if result != None:
+            python_node_tree.append(result)
+    # Return the resulting tree
+    return python_node_tree
 
 def get_c_function_list(c_code):
     """
