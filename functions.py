@@ -975,44 +975,46 @@ def get_python_node_tree(python_code):
             self.children = []
     
     # Main parsing function
-    def parse_node(node, level):
+    def parse_node(ast_node, level, parent_node=None):
         new_node = None
-        if isinstance(node, ast.ClassDef):
+        if isinstance(ast_node, ast.ClassDef):
             new_node = PythonNode(
-                node.name, 
+                ast_node.name, 
                 "class", 
-                node.lineno, 
+                ast_node.lineno, 
                 level
             )
-            for child_node in node.body:
-                result = parse_node(child_node, level+1)
+            for child_node in ast_node.body:
+                result = parse_node(child_node, level+1, new_node)
                 if result != None:
                     new_node.children.append(result)
             new_node.children = sorted(new_node.children, key=lambda x: x.name)
-        elif isinstance(node, ast.FunctionDef):
+        elif isinstance(ast_node, ast.FunctionDef):
             new_node = PythonNode(
-                node.name, 
+                ast_node.name, 
                 "function", 
-                node.lineno, 
+                ast_node.lineno, 
                 level
             )
-            for child_node in node.body:
-                result = parse_node(child_node, level+1)
+            for child_node in ast_node.body:
+                result = parse_node(child_node, level+1, new_node)
                 if result != None:
                     new_node.children.append(result)
             new_node.children = sorted(new_node.children, key=lambda x: x.name)
-        elif isinstance(node, ast.Import):
+        elif isinstance(ast_node, ast.Import):
             new_node = PythonNode(
-                node.names[0].name, 
+                ast_node.names[0].name, 
                 "import", 
-                node.lineno, 
+                ast_node.lineno, 
                 level
             )
-#            for child_node in node.body:
-#                result = parse_node(child_node, level+1)
-#                if result != None:
-#                    new_node.children.append(result)
-#            new_node.children = sorted(new_node.children, key=lambda x: x.name)
+        else:
+            if parent_node != None and hasattr(ast_node, "body"):
+                for child_node in ast_node.body:
+                    result = parse_node(child_node, level+1, parent_node)
+                    if result != None:
+                        parent_node.children.append(result)
+                parent_node.children = sorted(parent_node.children, key=lambda x: x.name)
         return new_node
     
     # Initialization
@@ -1023,6 +1025,8 @@ def get_python_node_tree(python_code):
         result = parse_node(node, 0)
         if result != None:
             python_node_tree.append(result)
+    # Sort the node list
+    python_node_tree = sorted(python_node_tree, key=lambda x: x.name)
     # Return the resulting tree
     return python_node_tree
 

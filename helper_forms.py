@@ -1301,8 +1301,11 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
             item_error_msg.setFont(error_font)
-            line_number = int(re.search(r"line (\d+)",str(parse_error)).group(1))
-            item_error_msg.line_number = line_number
+            try:
+                line_number = int(re.search(r"line (\d+)",str(parse_error)).group(1))
+                item_error_msg.line_number = line_number
+            except:
+                pass
             tree_model.appendRow(item_error_msg)
             return
         # Create the filtered node lists
