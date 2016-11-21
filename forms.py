@@ -1125,6 +1125,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
                     temp_string = 'find("{:s}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
+                    temp_string += 'search_forward=True,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1147,6 +1148,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
                     temp_string = 'regex_find(r"{:s}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
+                    temp_string += 'search_forward=True,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1170,6 +1172,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
                     temp_string = 'find_and_replace("{:s}","",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
+                    temp_string += 'search_forward=True,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1194,6 +1197,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
                     temp_string = 'regex_find_and_replace(r"{:s}",r"",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
+                    temp_string += 'search_forward=True,'
                     temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -3823,27 +3827,27 @@ class MainWindow(data.QMainWindow):
                     message_type=data.MessageType.WARNING
                 )
         
-        def find(self, search_text, case_sensitive=False, window_name=None):
+        def find(self, search_text, case_sensitive=False, search_forward=False, window_name=None):
             """Find text in the currently focused window"""
-            argument_list = [search_text, case_sensitive]
+            argument_list = [search_text, case_sensitive, search_forward]
             self._run_focused_widget_method("find_text", argument_list, window_name)
         
-        def regex_find(self, search_text, case_sensitive=False, window_name=None):
+        def regex_find(self, search_text, case_sensitive=False, search_forward=False, window_name=None):
             """Find text in the currently focused window"""
-            argument_list = [search_text, case_sensitive, True]
+            argument_list = [search_text, case_sensitive, search_forward, True]
             self._run_focused_widget_method("find_text", argument_list, window_name)
         
-        def find_and_replace(self, search_text, replace_text, case_sensitive=False, window_name=None):
+        def find_and_replace(self, search_text, replace_text, case_sensitive=False, search_forward=False, window_name=None):
             """Find and replace text in the currently focused window"""
-            argument_list = [search_text, replace_text, case_sensitive]
+            argument_list = [search_text, replace_text, case_sensitive, search_forward]
             self._run_focused_widget_method("find_and_replace", argument_list, window_name)
         
-        def regex_find_and_replace(self, search_text, replace_text, case_sensitive=False, window_name=None):
+        def regex_find_and_replace(self, search_text, replace_text, case_sensitive=False, search_forward=False, window_name=None):
             """
             Find and replace text in the currently focused window
             using the regular expressions module
             """
-            argument_list = [search_text, replace_text, case_sensitive, True]
+            argument_list = [search_text, replace_text, case_sensitive, search_forward, True]
             self._run_focused_widget_method("find_and_replace", argument_list, window_name)
         
         def replace_all(self, search_text, replace_text, case_sensitive=False, window_name=None):
@@ -6427,6 +6431,15 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             del self[:]
             #Set the new content
             self.extend(re.split("\n", update_text), update_parent=False)
+        
+        def get_absolute_cursor_position(self):
+            """Get the absolute cursor position"""
+            line, index = self.parent.getCursorPosition()
+            absolute_position = 0
+            for i in range(line):
+                absolute_position += len(self[i])
+            absolute_position += index + 1
+            return absolute_position
     
 #    """
 #    LineList property functions (decorators)
@@ -6843,6 +6856,15 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         else:
             #Slice up the line_list list according to the boundaries
             return self.line_list[line_from:line_to]
+    
+    def get_absolute_cursor_position(self):
+        """
+        Get the absolute cursor position using the line list
+        NOTE:
+            This function returns the actual length of characters,
+            NOT the length of bytes!
+        """
+        return self.line_list.get_absolute_cursor_position()
     
     def append_to_line(self, append_text,  line_number):
         """Add text to the back of the line"""
@@ -7351,7 +7373,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 )
                 return
         else:
-            #Selected text, apply function to the selected lines
+            #Selected text, apply function to the selected lines only
             try:
                 #Get the starting and end line
                 start_line_number   = self.getSelection()[0] + 1
@@ -7381,7 +7403,11 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     """
     Search and replace functions
     """
-    def find_text(self, search_text, case_sensitive=False, regular_expression=False):
+    def find_text(self, 
+                  search_text, 
+                  case_sensitive=False, 
+                  search_forward=False, 
+                  regular_expression=False):
         """
         (SAME AS THE QSciScintilla.find, BUT THIS RETURNS A RESULT)
         Function to find an occurance of text in the current tab of a basic widget:
@@ -7390,75 +7416,130 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             ! THERE IS A BUG WHEN SEARCHING FOR UNICODE STRINGS, THESE ARE ALWAYS CASE SENSITIVE
         """
         def focus_entire_found_text():
-            """Nested function for selection the entire found text"""
-            #Save the currently found text selection attributes
+            """
+            Nested function for selection the entire found text
+            """
+            # Save the currently found text selection attributes
             position = self.getSelection()
-            #Set the cursor to the beginning of the line, so that in case the
-            #found string index is behind the previous cursor index, the whole
-            #found text is shown!
+            # Set the cursor to the beginning of the line, so that in case the
+            # found string index is behind the previous cursor index, the whole
+            # found text is shown!
             self.setCursorPosition(position[0], 0)
             self.setSelection(position[0], position[1], position[2], position[3])
-        #Set focus to the tab that will be searched
+        # Set focus to the tab that will be searched
         self.parent.setCurrentWidget(self)
         if regular_expression == True:
-            #Get the absolute cursor index from line/index position
+            # Get the absolute cursor index from line/index position
             line, index = self.getCursorPosition()
             absolute_position = self.positionFromLineIndex(line, index)
-            #Compile the search expression according to the case sensitivity
+            # Compile the search expression according to the case sensitivity
             if case_sensitive == True:
                 compiled_search_re = re.compile(search_text)
             else:
                 compiled_search_re = re.compile(search_text, re.IGNORECASE)
-            #Regex search from the absolute position to the end for the search expression
-            search_result = re.search(compiled_search_re, self.text()[absolute_position:])
-            if search_result != None:
-                #Select the found expression
-                result_start    = absolute_position + search_result.start()
-                result_end      = result_start + len(search_result.group(0))
-                self.setCursorPosition(0, result_start)
-                self.setSelection(0, result_start, 0, result_end)
-#                #Disable REPL focus after the REPL evaluation
-#                self._skip_next_repl_focus()
-                #Return successful find
-                return data.SearchResult.FOUND
-            else:
-                #Begin a new search from the top of the document
-                search_result = re.search(compiled_search_re, self.text())
+            # Search based on the search direction
+            if search_forward == True:
+                # Regex search from the absolute position to the end for the search expression
+                search_result = re.search(compiled_search_re, self.text()[absolute_position:])
                 if search_result != None:
                     #Select the found expression
-                    result_start    = search_result.start()
+                    result_start    = absolute_position + search_result.start()
                     result_end      = result_start + len(search_result.group(0))
                     self.setCursorPosition(0, result_start)
                     self.setSelection(0, result_start, 0, result_end)
-                    self.main_form.display.write_to_statusbar("Reached end of document, started from the top again!")
-#                    #Disable REPL focus after the REPL evaluation
-#                    self._skip_next_repl_focus()
-                    #Return cycled find
-                    return data.SearchResult.CYCLED
+                    # Return successful find
+                    return data.SearchResult.FOUND
                 else:
-                    self.main_form.display.write_to_statusbar("Text was not found!")
-                    return data.SearchResult.NOT_FOUND
+                    # Begin a new search from the top of the document
+                    search_result = re.search(compiled_search_re, self.text())
+                    if search_result != None:
+                        # Select the found expression
+                        result_start    = search_result.start()
+                        result_end      = result_start + len(search_result.group(0))
+                        self.setCursorPosition(0, result_start)
+                        self.setSelection(0, result_start, 0, result_end)
+                        self.main_form.display.write_to_statusbar("Reached end of document, started from the top again!")
+                        # Return cycled find
+                        return data.SearchResult.CYCLED
+                    else:
+                        self.main_form.display.write_to_statusbar("Text was not found!")
+                        return data.SearchResult.NOT_FOUND
+            else:
+                # Move the cursor one character back when searching backard
+                # to not catch the same search result again
+                cursor_position = self.get_absolute_cursor_position()
+                search_text = self.text()[:cursor_position]
+                # Regex search from the absolute position to the end for the search expression
+                search_result = [m for m in re.finditer(compiled_search_re, search_text)]
+                if search_result != []:
+                    #Select the found expression
+                    result_start    = search_result[-1].start()
+                    result_end      = search_result[-1].end()
+                    self.setCursorPosition(0, result_start)
+                    self.setSelection(0, result_start, 0, result_end)
+                    # Return successful find
+                    return data.SearchResult.FOUND
+                else:
+                    # Begin a new search from the top of the document
+                    search_result = [m for m in re.finditer(compiled_search_re, self.text())]
+                    if search_result != []:
+                        # Select the found expression
+                        result_start    = search_result[-1].start()
+                        result_end      = search_result[-1].end()
+                        self.setCursorPosition(0, result_start)
+                        self.setSelection(0, result_start, 0, result_end)
+                        self.main_form.display.write_to_statusbar("Reached end of document, started from the top again!")
+                        # Return cycled find
+                        return data.SearchResult.CYCLED
+                    else:
+                        self.main_form.display.write_to_statusbar("Text was not found!")
+                        return data.SearchResult.NOT_FOUND
         else:
-            #"findFirst" is the QScintilla function for finding text in a document
-            if self.findFirst(search_text, False, case_sensitive, False, False) == False:
-                #Try to find text again from the top of the scintilla document
-                if self.findFirst(search_text, False, case_sensitive, False, False, line=0, index=0) == False:
+            # Move the cursor one character back when searching backard
+            # to not catch the same search result again
+            if search_forward == False:
+                line, index = self.getCursorPosition()
+                self.setCursorPosition(line, index-1)
+            # "findFirst" is the QScintilla function for finding text in a document
+            search_result = self.findFirst(search_text, 
+                False, 
+                case_sensitive, 
+                False, 
+                False, 
+                forward=search_forward
+            )
+            if search_result == False:
+                # Try to find text again from the top or at the bottom of 
+                # the scintilla document, depending on the search direction
+                if search_forward == True:
+                    s_line = 0
+                    s_index = 0
+                else:
+                    s_line = len(self.line_list)-1
+                    s_index = len(self.text())
+                inner_result = self.findFirst(
+                    search_text, 
+                    False, 
+                    case_sensitive, 
+                    False, 
+                    False, 
+                    forward=search_forward, 
+                    line=s_line, 
+                    index=s_index
+                )
+                if inner_result == False:
                     self.main_form.display.write_to_statusbar("Text was not found!")
                     return data.SearchResult.NOT_FOUND
                 else:
-                    self.main_form.display.write_to_statusbar("Reached end of document, started from the top again!")
+                    self.main_form.display.write_to_statusbar("Reached end of document, started from the other end again!")
                     focus_entire_found_text()
-#                    #Disable REPL focus after the REPL evaluation
-#                    self._skip_next_repl_focus()
-                    #Return cycled find
+                    # Return cycled find
                     return data.SearchResult.CYCLED
             else:
-                #Found text
+                # Found text
                 self.main_form.display.write_to_statusbar("Found text: \"" + search_text + "\"")
                 focus_entire_found_text()
-#                #Disable REPL focus after the REPL evaluation
-#                self._skip_next_repl_focus()
-                #Return successful find
+                # Return successful find
                 return data.SearchResult.FOUND
     
     def find_all(self,
@@ -7481,11 +7562,14 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                          search_text, 
                          replace_text, 
                          case_sensitive=False, 
+                         search_forward=False, 
                          regular_expression=False):
         """Find next instance of the search string and replace it with the replace string"""
         if regular_expression == True:
             #Check if expression exists in the document
-            search_result = self.find_text(search_text, case_sensitive, regular_expression)
+            search_result = self.find_text(
+                search_text, case_sensitive, search_forward,regular_expression
+            )
             if search_result != data.SearchResult.NOT_FOUND:
                 if case_sensitive == True:
                     compiled_search_re = re.compile(search_text)
