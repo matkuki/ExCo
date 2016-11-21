@@ -2,67 +2,69 @@
 # -*- coding: utf-8 -*-
 
 """
-    Ex.Co. LICENSE :
-        This file is part of Ex.Co..
+Copyright (c) 2013-2016 Matic Kukovec. 
+Release under the GNU GPL3 license.
 
-        Ex.Co. is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        Ex.Co. is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with Ex.Co..  If not, see <http://www.gnu.org/licenses/>.
-
-
-    PYTHON LICENSE :
-        "Python" and the Python logos are trademarks or registered trademarks of the Python Software Foundation,
-        used by Ex.Co. with permission from the Foundation
-
-
-    Cython LICENSE:
-        Cython is freely available under the open source Apache License
-
-
-    PyQt4 LICENSE :
-        PyQt4 is licensed under the GNU General Public License version 3
-    PyQt Alternative Logo LICENSE:
-        The PyQt Alternative Logo is licensed under Creative Commons CC0 1.0 Universal Public Domain Dedication
-
-
-    Qt Logo LICENSE:
-        The Qt logo is copyright of Digia Plc and/or its subsidiaries.
-        Digia, Qt and their respective logos are trademarks of Digia Corporation in Finland and/or other countries worldwide.
-
-
-    Tango Icons LICENSE:
-        The Tango base icon theme is released to the Public Domain.
-        The Tango base icon theme is made possible by the Tango Desktop Project.
-
-    My Tango Style Icons LICENSE:
-        The Tango Icons I created are released under the GNU General Public License version 3.
-
-
-    Eric6 LICENSE:
-        Eric6 IDE is licensed under the GNU General Public License version 3
-
-
-    Nuitka LICENSE:
-        Nuitka is a Python compiler compatible with Ex.Co..
-        Nuitka is licensed under the Apache license.
+For more information check the 'LICENSE.txt' file.
+For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
-
 
 ##  FILE DESCRIPTION:
 ##      Module that holds objects that will be used across modules.
 
-import PyQt4.Qsci
-import themes
+import sys
 
+"""
+PyQt4 / PyQt5 selection
+"""
+# Widgets that were moved from the QtGui module to the QtWidgets module in PyQt5
+moved_widgets = [
+    "QApplication", "QMainWindow", "QTreeView", "QLineEdit", "QDialog",
+    "QGroupBox", "QTabWidget", "QTextEdit", "QTabBar", "QMenu", "QMenuBar",
+    "QLabel", "QAction", "QGridLayout", "QStatusBar", "QVBoxLayout",
+    "QSplitter", "QToolButton", "QToolBar", "QAbstractItemView", "QMessageBox",
+    "QFileDialog", "QTextEdit", "QWidget"
+]
+
+try:
+    import PyQt5.Qsci
+    import PyQt5.QtCore
+    import PyQt5.QtGui
+    import PyQt5.QtWidgets
+    PyQt = PyQt5
+    """
+    Move the moved widgets into this module so the reference in other modules
+    will always be the same regardless of which PyQt version you are using.
+    """
+    # Get a reference to this (data) module
+    thismodule = sys.modules[__name__]
+    # Add the references to this module dynamically
+    for widget in moved_widgets:
+        setattr(thismodule, widget, getattr(PyQt5.QtWidgets, widget))
+    # Set the constant for the PyQt version
+    PYQT_MODE = 5
+except:
+    import PyQt4.Qsci
+    import PyQt4.QtCore
+    import PyQt4.QtGui
+    PyQt = PyQt4
+    """
+    Move the moved widgets into this module so the reference in other modules
+    will always be the same regardless of which PyQt version you are using.
+    """
+    # Get a reference to this (data) module
+    thismodule = sys.modules[__name__]
+    # Add the references to this module dynamically
+    for widget in moved_widgets:
+        setattr(thismodule, widget, getattr(PyQt4.QtGui, widget))
+    # Set the constant for the PyQt version
+    PYQT_MODE = 4
+# Safety check for PyQt mode selection
+if PYQT_MODE != 4 and PYQT_MODE != 5:
+    raise Exception("PyQt mode has to be either 4 or 5!")
+
+# Themes need PyQt version defined beforehand, as they also import the data module
+import themes
 
 """
 File extension lists
@@ -166,7 +168,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "5.6"
+APPLICATION_VERSION     = "5.7"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
@@ -198,7 +200,7 @@ zoom_factor = 0
 #Default tree display(file-tree, node-tree, ...)
 tree_display_font_size = 10
 #Default EOL style (EolWindows-CRLF, EolUnix-LF, EolMac-CR)
-default_eol = PyQt4.Qsci.QsciScintilla.EolUnix
+default_eol = PyQt.Qsci.QsciScintilla.EolUnix
 #Current theme
 theme = themes.Air
 
@@ -210,7 +212,7 @@ Keyboard shortcuts
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 THESE BINDINGS ARE THE DEFAULT, DON'T CHANGE THEM HERE!
-CUSTOM BINDINGS SHOULD BE OVERIDDEN IN THE USER CONFIGURATION FILE 'user_functions.cfg'!
+CUSTOM BINDINGS SHOULD BE OVERRIDDEN IN THE USER CONFIGURATION FILE 'user_functions.cfg'!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 """
 new_file_keys = 'Ctrl+N'
@@ -300,7 +302,7 @@ Compatibility mode test for PyQt versions lower than 4.11
 -----------------------------------------------------------
 """
 try:
-    PyQt4.Qsci.QsciLexerCoffeeScript
+    PyQt.Qsci.QsciLexerCoffeeScript
     compatibility_mode = False
 except:
     compatibility_mode = True

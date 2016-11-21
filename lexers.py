@@ -2,58 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-    Ex.Co. LICENSE :
-        This file is part of Ex.Co..
+Copyright (c) 2013-2016 Matic Kukovec. 
+Release under the GNU GPL3 license.
 
-        Ex.Co. is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        Ex.Co. is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with Ex.Co..  If not, see <http://www.gnu.org/licenses/>.
-
-
-    PYTHON LICENSE :
-        "Python" and the Python logos are trademarks or registered trademarks of the Python Software Foundation,
-        used by Ex.Co. with permission from the Foundation
-
-
-    Cython LICENSE:
-        Cython is freely available under the open source Apache License
-
-
-    PyQt4 LICENSE :
-        PyQt4 is licensed under the GNU General Public License version 3
-    PyQt Alternative Logo LICENSE:
-        The PyQt Alternative Logo is licensed under Creative Commons CC0 1.0 Universal Public Domain Dedication
-
-
-    Qt Logo LICENSE:
-        The Qt logo is copyright of Digia Plc and/or its subsidiaries.
-        Digia, Qt and their respective logos are trademarks of Digia Corporation in Finland and/or other countries worldwide.
-
-
-    Tango Icons LICENSE:
-        The Tango base icon theme is released to the Public Domain.
-        The Tango base icon theme is made possible by the Tango Desktop Project.
-
-    My Tango Style Icons LICENSE:
-        The Tango Icons I created are released under the GNU General Public License version 3.
-
-
-    Eric6 LICENSE:
-        Eric6 IDE is licensed under the GNU General Public License version 3
-
-
-    Nuitka LICENSE:
-        Nuitka is a Python compiler compatible with Ex.Co..
-        Nuitka is licensed under the Apache license.
+For more information check the 'LICENSE.txt' file.
+For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
 
@@ -63,9 +16,6 @@
 import keyword
 import builtins
 import re
-import PyQt4.QtCore
-import PyQt4.QtGui
-import PyQt4.Qsci
 import functions
 import data
 #Try importing the Cython module
@@ -85,16 +35,16 @@ Module helper functions
 def set_font(lexer, style_name, style_options):
     font, color, size, bold = style_options
     lexer.setColor(
-        PyQt4.QtGui.QColor(color), 
+        data.PyQt.QtGui.QColor(color), 
         lexer.styles[style_name]
     )
-    weight = PyQt4.QtGui.QFont.Normal
+    weight = data.PyQt.QtGui.QFont.Normal
     if bold == 1 or bold == True:
-        weight = PyQt4.QtGui.QFont.Bold
+        weight = data.PyQt.QtGui.QFont.Bold
     elif bold == 2:
-        weight = PyQt4.QtGui.QFont.Black
+        weight = data.PyQt.QtGui.QFont.Black
     lexer.setFont(
-        PyQt4.QtGui.QFont(font, size, weight=weight), 
+        data.PyQt.QtGui.QFont(font, size, weight=weight), 
         lexer.styles[style_name]
     )
 
@@ -104,10 +54,10 @@ def set_font(lexer, style_name, style_options):
 Module objects
 -------------------------------------------------
 """
-class Text(PyQt4.Qsci.QsciLexerCustom):
+class Text(data.PyQt.Qsci.QsciLexerCustom):
     """Lexer for styling normal text documents"""
     #Class variables
-    default_font = PyQt4.QtGui.QFont('Courier', 10)
+    default_font = data.PyQt.QtGui.QFont('Courier', 10)
     styles = {
         "Default" : 0
     }
@@ -126,7 +76,7 @@ class Text(PyQt4.Qsci.QsciLexerCustom):
     def set_theme(self, theme):
         # Papers
         self.setPaper(
-            PyQt4.QtGui.QColor(theme.Paper.Python.Default), 
+            data.PyQt.QtGui.QColor(theme.Paper.Python.Default), 
             self.styles["Default"]
         )
         # Fonts
@@ -147,7 +97,7 @@ class Text(PyQt4.Qsci.QsciLexerCustom):
         self.setStyling(end - start, 0)
 
 
-class Python(PyQt4.Qsci.QsciLexerPython):
+class Python(data.PyQt.Qsci.QsciLexerPython):
     """Standard Python lexer with added keywords from built-in functions"""
     #Class variables
     _kwrds = None
@@ -186,7 +136,7 @@ class Python(PyQt4.Qsci.QsciLexerPython):
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
-            paper = PyQt4.QtGui.QColor(getattr(theme.Paper.Python, style))
+            paper = data.PyQt.QtGui.QColor(getattr(theme.Paper.Python, style))
             self.setPaper(paper, self.styles[style])
             # Fonts
             set_font(self, style, getattr(theme.Font.Python, style))
@@ -203,7 +153,7 @@ class Python(PyQt4.Qsci.QsciLexerPython):
         return keywords
 
 
-class Cython(PyQt4.Qsci.QsciLexerPython):
+class Cython(data.PyQt.Qsci.QsciLexerPython):
     """Cython - basically Python with added keywords"""
     #Class variables
     _kwrds = None
@@ -259,7 +209,7 @@ class Cython(PyQt4.Qsci.QsciLexerPython):
         for style in self.styles:
             # Papers
             self.setPaper(
-                PyQt4.QtGui.QColor(theme.Paper.Python.Default), 
+                data.PyQt.QtGui.QColor(theme.Paper.Python.Default), 
                 self.styles[style]
             )
             # Fonts
@@ -277,7 +227,7 @@ class Cython(PyQt4.Qsci.QsciLexerPython):
         return keywrds
 
 
-class Oberon(PyQt4.Qsci.QsciLexerCustom):
+class Oberon(data.PyQt.Qsci.QsciLexerCustom):
     """
     Custom lexer for the Oberon/Oberon-2/Modula/Modula-2 programming languages
     """
@@ -293,9 +243,9 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
     }
     
     #Class variables
-    default_color       = PyQt4.QtGui.QColor(data.theme.Font.Oberon.Default[1])
-    default_paper       = PyQt4.QtGui.QColor(data.theme.Paper.Oberon.Default)
-    default_font        = PyQt4.QtGui.QFont('Courier', 10)
+    default_color       = data.PyQt.QtGui.QColor(data.theme.Font.Oberon.Default[1])
+    default_paper       = data.PyQt.QtGui.QColor(data.theme.Paper.Oberon.Default)
+    default_font        = data.PyQt.QtGui.QFont('Courier', 10)
     keyword_list        = [
         'ARRAY', 'IMPORT', 'RETURN', 'BEGIN', 'IN',
         'THEN', 'BY', 'IS', 'TO', 'CASE', 'LOOP', 'Type', 
@@ -337,7 +287,7 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
         for style in self.styles:
             # Papers
             self.setPaper(
-                PyQt4.QtGui.QColor(theme.Paper.Oberon.Default), 
+                data.PyQt.QtGui.QColor(theme.Paper.Oberon.Default), 
                 self.styles[style]
             )
             # Fonts
@@ -437,7 +387,7 @@ class Oberon(PyQt4.Qsci.QsciLexerCustom):
                 else:
                     setStyling(token[1], DEF)
 
-class Ada(PyQt4.Qsci.QsciLexerCustom):
+class Ada(data.PyQt.Qsci.QsciLexerCustom):
     """Custom lexer for the Ada programming languages"""
     styles = {
         "Default" : 0,
@@ -451,9 +401,9 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
     }
     
     #Class variables
-    default_color       = PyQt4.QtGui.QColor(data.theme.Font.Ada.Default[1])
-    default_paper       = PyQt4.QtGui.QColor(data.theme.Paper.Ada.Default)
-    default_font        = PyQt4.QtGui.QFont('Courier', 10)
+    default_color       = data.PyQt.QtGui.QColor(data.theme.Font.Ada.Default[1])
+    default_paper       = data.PyQt.QtGui.QColor(data.theme.Paper.Ada.Default)
+    default_font        = data.PyQt.QtGui.QFont('Courier', 10)
     keyword_list        =   [ 
         "abort", "else", "new", "return",
         "abs", "elsif", "not", "reverse",
@@ -503,7 +453,7 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
         for style in self.styles:
             # Papers
             self.setPaper(
-                PyQt4.QtGui.QColor(theme.Paper.Ada.Default), 
+                data.PyQt.QtGui.QColor(theme.Paper.Ada.Default), 
                 self.styles[style]
             )
             # Fonts
@@ -537,13 +487,14 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
             #Loop optimizations
             setStyling  = self.setStyling
             kw_list     = self.keyword_list
-            DEF = self.styles.Default
-            KWD = self.styles.KEYWORD
-            COM = self.styles.Comment
-            STR = self.styles.String
-            PRO = self.styles.PROCEDURE
-            NUM = self.styles.Number
-            PAC = self.styles.PACKAGE
+            DEF = self.styles["Default"]
+            KWD = self.styles["Keyword"]
+            COM = self.styles["Comment"]
+            STR = self.styles["String"]
+            PRO = self.styles["Procedure"]
+            NUM = self.styles["Number"]
+            PAC = self.styles["Package"]
+#            TYP = self.styles["Type"]
             #Initialize comment state and split the text into tokens
             commenting  = False
             stringing   = False
@@ -599,7 +550,7 @@ class Ada(PyQt4.Qsci.QsciLexerCustom):
                 else:
                     setStyling(token[1], DEF)
 
-class RouterOS(PyQt4.Qsci.QsciLexerCustom):
+class RouterOS(data.PyQt.Qsci.QsciLexerCustom):
     """
     Custom lexer for the RouterOS syntax for MikroTik routers (WinBox)
     """
@@ -612,9 +563,9 @@ class RouterOS(PyQt4.Qsci.QsciLexerCustom):
         "Keyword3" : 5,
     }
     #Class variables
-    default_color       = PyQt4.QtGui.QColor(data.theme.Font.RouterOS.Default[1])
-    default_paper       = PyQt4.QtGui.QColor(data.theme.Paper.RouterOS.Default)
-    default_font        = PyQt4.QtGui.QFont('Courier', 10)
+    default_color       = data.PyQt.QtGui.QColor(data.theme.Font.RouterOS.Default[1])
+    default_paper       = data.PyQt.QtGui.QColor(data.theme.Paper.RouterOS.Default)
+    default_font        = data.PyQt.QtGui.QFont('Courier', 10)
     #All keywords, operators, ...
     operator_list = [
         '!', '$', '(', ')', ',', ':', '[', ']', '{', '|', '}', "="
@@ -663,7 +614,7 @@ class RouterOS(PyQt4.Qsci.QsciLexerCustom):
         for style in self.styles:
             # Papers
             self.setPaper(
-                PyQt4.QtGui.QColor(theme.Paper.RouterOS.Default), 
+                data.PyQt.QtGui.QColor(theme.Paper.RouterOS.Default), 
                 self.styles[style]
             )
             # Fonts
@@ -725,7 +676,7 @@ class RouterOS(PyQt4.Qsci.QsciLexerCustom):
                 setStyling(token[1], DEFAULT)
 
 
-class Nim(PyQt4.Qsci.QsciLexerCustom):
+class Nim(data.PyQt.Qsci.QsciLexerCustom):
     """
     Custom lexer for the Nim programming languages
     """
@@ -753,9 +704,9 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
     }
     
     #Class variables
-    default_color       = PyQt4.QtGui.QColor(data.theme.Font.Nim.Default[1])
-    default_paper       = PyQt4.QtGui.QColor(data.theme.Paper.Nim.Default)
-    default_font        = PyQt4.QtGui.QFont('Courier', 10)
+    default_color       = data.PyQt.QtGui.QColor(data.theme.Font.Nim.Default[1])
+    default_paper       = data.PyQt.QtGui.QColor(data.theme.Paper.Nim.Default)
+    default_font        = data.PyQt.QtGui.QFont('Courier', 10)
     #Basic keywords and built-in procedures and templates
     basic_keyword_list  = [
         "as", "atomic", "bind", "sizeof", 
@@ -859,7 +810,7 @@ class Nim(PyQt4.Qsci.QsciLexerCustom):
         for style in self.styles:
             # Papers
             self.setPaper(
-                PyQt4.QtGui.QColor(theme.Paper.Nim.Default), 
+                data.PyQt.QtGui.QColor(theme.Paper.Nim.Default), 
                 self.styles[style]
             )
             # Fonts
@@ -1103,17 +1054,17 @@ derived classes and adding styles to them.
 predefined_lexers = [
     "QsciLexerPython",
 ]
-for i in PyQt4.Qsci.__dict__:
+for i in data.PyQt.Qsci.__dict__:
     if i.startswith("QsciLexer") and len(i) > len("QsciLexer"):
         if not(i in predefined_lexers):
             lexer_name = i.replace("QsciLexer", "")
             styles = {}
-            cls = getattr(PyQt4.Qsci, i)
+            cls = getattr(data.PyQt.Qsci, i)
             for j in dir(cls):
                 att_value = getattr(cls, j)
                 if j[0].isupper() == True and isinstance(att_value, int):
                     styles[j] = att_value
-            cls_text = "class {0}(PyQt4.Qsci.{1}):\n".format(lexer_name, i)
+            cls_text = "class {0}(data.PyQt.Qsci.{1}):\n".format(lexer_name, i)
             cls_text += "    styles = {\n"
             for style in styles:
                 cls_text += "        \"{0}\" : {1},\n".format(style, styles[style])
@@ -1129,7 +1080,7 @@ for i in PyQt4.Qsci.__dict__:
             for style in styles:
                 cls_text += "        for style in self.styles:\n"
                 cls_text += "            self.setPaper(\n"
-                cls_text += "                PyQt4.QtGui.QColor(theme.Paper.{0}.Default), \n".format(lexer_name)
+                cls_text += "                data.PyQt.QtGui.QColor(theme.Paper.{0}.Default), \n".format(lexer_name)
                 cls_text += "                self.styles[style]\n"
                 cls_text += "            )\n"
                 cls_text += "            set_font(self, style, getattr(theme.Font.{0}, style))\n".format(lexer_name)

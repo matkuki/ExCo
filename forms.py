@@ -2,58 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-    Ex.Co. LICENSE :
-        This file is part of Ex.Co..
+Copyright (c) 2013-2016 Matic Kukovec. 
+Release under the GNU GPL3 license.
 
-        Ex.Co. is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        Ex.Co. is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with Ex.Co..  If not, see <http://www.gnu.org/licenses/>.
-
-
-    PYTHON LICENSE :
-        "Python" and the Python logos are trademarks or registered trademarks of the Python Software Foundation,
-        used by Ex.Co. with permission from the Foundation
-
-
-    Cython LICENSE:
-        Cython is freely available under the open source Apache License
-
-
-    PyQt4 LICENSE :
-        PyQt4 is licensed under the GNU General Public License version 3
-    PyQt Alternative Logo LICENSE:
-        The PyQt Alternative Logo is licensed under Creative Commons CC0 1.0 Universal Public Domain Dedication
-
-
-    Qt Logo LICENSE:
-        The Qt logo is copyright of Digia Plc and/or its subsidiaries.
-        Digia, Qt and their respective logos are trademarks of Digia Corporation in Finland and/or other countries worldwide.
-
-
-    Tango Icons LICENSE:
-        The Tango base icon theme is released to the Public Domain.
-        The Tango base icon theme is made possible by the Tango Desktop Project.
-    
-    My Tango Style Icons LICENSE:
-        The Tango icons I created are released under the GNU General Public License version 3.
-    
-    
-    Eric6 LICENSE:
-        Eric6 IDE is licensed under the GNU General Public License version 3
-
-
-    Nuitka LICENSE:
-        Nuitka is a Python compiler compatible with Ex.Co..
-        Nuitka is freely available under the open source Apache License.
+For more information check the 'LICENSE.txt' file.
+For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
 ##  FILE DESCRIPTION:
@@ -87,9 +40,6 @@ import re
 import collections
 import textwrap
 import importlib
-import PyQt4.QtCore
-import PyQt4.QtGui
-import PyQt4.Qsci
 import data
 import themes
 import helper_forms
@@ -97,6 +47,7 @@ import functions
 import interpreter
 import settings
 import lexers
+import traceback
 
 
 
@@ -105,7 +56,7 @@ import lexers
 Main window and its supporting objects
 -------------------------------------------------
 """
-class MainWindow(PyQt4.QtGui.QMainWindow):
+class MainWindow(data.QMainWindow):
     """Main form that holds all Qt objects"""
     #Define main form control references
     main_window             = None  #Main window
@@ -224,7 +175,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         self._init_interpreter()
         #Set the main window icon if it exists
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(PyQt4.QtGui.QIcon(data.application_icon))
+            self.setWindowIcon(data.PyQt.QtGui.QIcon(data.application_icon))
         #Set the repl type to a single line
         self.view.set_repl_type(data.ReplType.SINGLE_LINE)
         self.view.indication_check()
@@ -239,10 +190,10 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.create_new()
     
     def _init_statusbar(self):
-        self.statusbar  = PyQt4.QtGui.QStatusBar(self)
+        self.statusbar  = data.QStatusBar(self)
         self.display.write_to_statusbar("Status Bar")
         #Add label for showing the cursor position in a basic widget
-        self.statusbar_label_left = PyQt4.QtGui.QLabel()
+        self.statusbar_label_left = data.QLabel()
         self.statusbar_label_left.setText("")
         self.statusbar.addPermanentWidget(self.statusbar_label_left)
         #Add the statusbar to the MainWindow
@@ -407,14 +358,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         #Check if there are any modified documents
         if self.check_document_states() == True:
             quit_message = "You have modified documents!\nQuit anyway?"
-            reply = PyQt4.QtGui.QMessageBox.question(
-                        self, 
-                        'Quit', 
-                        quit_message,
-                        PyQt4.QtGui.QMessageBox.Yes,
-                        PyQt4.QtGui.QMessageBox.No
-                    )
-            if reply != PyQt4.QtGui.QMessageBox.Yes:
+            reply = data.QMessageBox.question(
+                self, 
+                'Quit', 
+                quit_message,
+                data.QMessageBox.Yes,
+                data.QMessageBox.No
+            )
+            if reply != data.QMessageBox.Yes:
                 event.ignore()
 
     def resizeEvent(self, event):
@@ -459,7 +410,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         pressed_key = key_event.key()
         accept_keypress = False
         #Check for escape keypress
-        if pressed_key == PyQt4.QtCore.Qt.Key_Escape:
+        if pressed_key == data.PyQt.QtCore.Qt.Key_Escape:
             #Check if the function wheel overlay is shown
             if self.view.function_wheel_overlay.isVisible() == True:
                 self.view.toggle_function_wheel()
@@ -494,7 +445,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         Function for using a QFileDialog window for retreiving
         a directory name as a string
         """
-        dir_dialog = PyQt4.QtGui.QFileDialog
+        dir_dialog = data.QFileDialog
         directory = dir_dialog.getExistingDirectory()
         return directory
     
@@ -604,7 +555,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         first parameter is always "checked: bool").
         This is a very long function that should be trimmed sometime!
         """
-        self.menubar = PyQt4.QtGui.QMenuBar(self)
+        self.menubar = data.QMenuBar(self)
         #Nested function for writing text to the REPL
         def repl_text_input(text,  cursor_position):
             self.repl.setText(text)
@@ -615,7 +566,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             file_menu           = self.menubar.addMenu("&File")
             def special_create_new_file():
                 self.file_create_new()
-            new_file_action     = PyQt4.QtGui.QAction('New', self)
+            new_file_action     = data.QAction('New', self)
             new_file_action.setShortcut(data.new_file_keys)
             new_file_action.setStatusTip('Create new empty file')
             temp_icon = helper_forms.set_icon('tango_icons/document-new.png')
@@ -624,7 +575,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Open file
             def special_open_file():
                 self.file_open()
-            open_file_action = PyQt4.QtGui.QAction('Open', self)
+            open_file_action = data.QAction('Open', self)
             open_file_action.setShortcut(data.open_file_keys)  
             open_file_action.setStatusTip('Open File')
             temp_icon = helper_forms.set_icon('tango_icons/document-open.png')
@@ -634,7 +585,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Save
             def special_save_file():
                 self.file_save()
-            self.save_file_action = PyQt4.QtGui.QAction('Save', self)
+            self.save_file_action = data.QAction('Save', self)
             self.save_file_action.setShortcut(data.save_file_keys)
             self.save_file_action.setStatusTip('Save current file in the UTF-8 encoding')
             self.save_file_action.setEnabled(False)
@@ -644,7 +595,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Save as
             def special_saveas_file():
                 self.file_saveas()
-            self.saveas_file_action = PyQt4.QtGui.QAction('Save As', self)
+            self.saveas_file_action = data.QAction('Save As', self)
             self.saveas_file_action.setShortcut(data.saveas_file_keys)
             self.saveas_file_action.setStatusTip('Save current file as a new file in the UTF-8 encoding')
             self.saveas_file_action.setEnabled(False)
@@ -654,7 +605,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Save all
             def special_save_all():
                 self.file_save_all()
-            self.save_all_action = PyQt4.QtGui.QAction('Save All', self)
+            self.save_all_action = data.QAction('Save All', self)
             self.save_all_action.setStatusTip('Save all modified documents in all windows in the UTF-8 encoding')
             self.save_all_action.setEnabled(False)
             temp_icon = helper_forms.set_icon('tango_icons/file-save-all.png')
@@ -662,16 +613,16 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.save_all_action.triggered.connect(special_save_all)
             #Exit
             action_text = 'Exit\tAlt+F4'
-            exit_action = PyQt4.QtGui.QAction(action_text, self)     
+            exit_action = data.QAction(action_text, self)     
             exit_action.setStatusTip('Exit application')
             temp_icon = helper_forms.set_icon('tango_icons/system-log-out.png')
             exit_action.setIcon(temp_icon)
             exit_action.triggered.connect(self.exit)
             #Additional menu for saving in different encodings
             def add_save_in_different_encoding_submenu():
-                self.save_in_encoding = PyQt4.QtGui.QMenu("Save in encoding...")
+                self.save_in_encoding = data.QMenu("Save in encoding...")
                 #Save as ASCII encoding
-                self.save_ascii_file_action = PyQt4.QtGui.QAction('ASCII', self)
+                self.save_ascii_file_action = data.QAction('ASCII', self)
                 temp_string = 'Save current file with the ASCII encoding, '
                 temp_string += 'unknown characters will be replaced with "?"'
                 self.save_ascii_file_action.setStatusTip(temp_string)
@@ -680,7 +631,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     functools.partial(self.file_save, encoding="ascii")
                 )
                 #Save in ANSI Windows encoding
-                self.save_ansiwin_file_action = PyQt4.QtGui.QAction('ANSI (Windows)', self)
+                self.save_ansiwin_file_action = data.QAction('ANSI (Windows)', self)
                 temp_string = 'Save current file with the ANSI Windows (CP-1250) encoding with CR+LF line ending, '
                 temp_string += 'unknown characters will be replaced with "?"'
                 self.save_ansiwin_file_action.setStatusTip(temp_string)
@@ -705,24 +656,24 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["close_tab"] = close_tab
-            close_tab_action    = PyQt4.QtGui.QAction('Close Tab', self)
+            close_tab_action    = data.QAction('Close Tab', self)
             close_tab_action.setShortcut(data.close_tab_keys)
             close_tab_action.setStatusTip('Close the current tab')
             close_tab_action.triggered.connect(close_tab)
             temp_icon = helper_forms.set_icon('tango_icons/close-tab.png')
             close_tab_action.setIcon(temp_icon)
-            close_all_action    = PyQt4.QtGui.QAction('Close All Tabs', self)
+            close_all_action    = data.QAction('Close All Tabs', self)
             close_all_action.setStatusTip('Close all tabs in the main and upper window')
             close_all_action.triggered.connect(self.close_all_tabs)
             temp_icon = helper_forms.set_icon('tango_icons/close-all-tabs.png')
             close_all_action.setIcon(temp_icon)
             #Add load/save settings options
-            save_settings_action    = PyQt4.QtGui.QAction('Save Settings', self)
+            save_settings_action    = data.QAction('Save Settings', self)
             save_settings_action.setStatusTip('Save current settings: main window side')
             temp_icon = helper_forms.set_icon('tango_icons/file-settings-save.png')
             save_settings_action.setIcon(temp_icon)
             save_settings_action.triggered.connect(self.settings.save)
-            load_settings_action    = PyQt4.QtGui.QAction('Load Settings', self)
+            load_settings_action    = data.QAction('Load Settings', self)
             load_settings_action.setStatusTip('Load saved settings: main window side')
             temp_icon = helper_forms.set_icon('tango_icons/file-settings-load.png')
             load_settings_action.setIcon(temp_icon)
@@ -739,7 +690,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     return
                 self.open_file(user_definitions_file)
             self.menubar_functions["open_user_func_file"] = open_user_func_file
-            edit_functions_action   = PyQt4.QtGui.QAction('Edit User Functions', self)
+            edit_functions_action   = data.QAction('Edit User Functions', self)
             temp_string = 'Open the {} file for '.format(data.config_file)
             temp_string += 'editing in the main window'
             edit_functions_action.setStatusTip(temp_string)
@@ -748,7 +699,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             edit_functions_action.triggered.connect(open_user_func_file)
             #Add the reload option for the user_functions file
             self.menubar_functions["reload_user_func_file"] = self.import_user_functions
-            reload_functions_action = PyQt4.QtGui.QAction('Reload User Functions', self)
+            reload_functions_action = data.QAction('Reload User Functions', self)
             temp_string = 'Reload the {} file to '.format(data.config_file)
             temp_string += 'refresh user defined functions'
             reload_functions_action.setStatusTip(temp_string)
@@ -757,7 +708,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             reload_functions_action.triggered.connect(self.import_user_functions)
             #Add reload themes function
             self.menubar_functions["themes_reload"] = self.view.reload_themes
-            themes_reload_action = PyQt4.QtGui.QAction('Reload Themes', self)
+            themes_reload_action = data.QAction('Reload Themes', self)
             temp_string = 'Reload themes from modules to update '
             temp_string += 'any changes made in the theme files'
             themes_reload_action.setStatusTip(temp_string)
@@ -765,7 +716,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             themes_reload_action.setIcon(temp_icon)
             themes_reload_action.triggered.connect(self.view.reload_themes)
             #Add recent file list in the file menu
-            self.recent_files_menu = PyQt4.QtGui.QMenu("Recent Files")
+            self.recent_files_menu = data.QMenu("Recent Files")
             temp_icon = helper_forms.set_icon('tango_icons/file-recent-files.png')
             self.recent_files_menu.setIcon(temp_icon)
             #Add the actions to the File menu
@@ -801,7 +752,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["copy"] = copy
             action_text = 'Copy\t' + data.copy_keys
-            copy_action = PyQt4.QtGui.QAction(action_text , self)
+            copy_action = data.QAction(action_text , self)
             temp_string = 'Copy any selected text in the currently '
             temp_string += 'selected window to the clipboard'
             copy_action.setStatusTip(temp_string)
@@ -815,7 +766,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["cut"] = cut
             action_text = 'Cut\t' + data.cut_keys
-            cut_action  = PyQt4.QtGui.QAction(action_text, self)
+            cut_action  = data.QAction(action_text, self)
             cut_action.setStatusTip('Cut any selected text in the currently selected window to the clipboard')
             temp_icon = helper_forms.set_icon('tango_icons/edit-cut.png')
             cut_action.setIcon(temp_icon)
@@ -827,7 +778,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["paste"] = paste
             action_text = 'Paste\t' + data.paste_keys
-            paste_action    = PyQt4.QtGui.QAction(action_text, self)
+            paste_action    = data.QAction(action_text, self)
             paste_action.setStatusTip('Paste the text in the clipboard to the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-paste.png')
             paste_action.setIcon(temp_icon)
@@ -839,7 +790,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["undo"] = undo
             action_text = 'Undo\t' + data.undo_keys
-            undo_action    = PyQt4.QtGui.QAction(action_text, self)
+            undo_action    = data.QAction(action_text, self)
             undo_action.setStatusTip('Undo last editor action in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-undo.png')
             undo_action.setIcon(temp_icon)
@@ -851,7 +802,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["redo"] = redo
             action_text = 'Redo\t' + data.redo_keys
-            redo_action    = PyQt4.QtGui.QAction(action_text, self)
+            redo_action    = data.QAction(action_text, self)
             redo_action.setStatusTip('Redo last undone editor action in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-redo.png')
             redo_action.setIcon(temp_icon)
@@ -863,7 +814,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["select_all"] = select_all
             action_text = 'Select All\t' + data.select_all_keys
-            select_all_action = PyQt4.QtGui.QAction(action_text, self)
+            select_all_action = data.QAction(action_text, self)
             select_all_action.setStatusTip('Select all of the text in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-select-all.png')
             select_all_action.setIcon(temp_icon)
@@ -876,7 +827,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["indent"] = indent
             action_text = 'Indent\t' + data.indent_keys
-            indent_action = PyQt4.QtGui.QAction(action_text, self)
+            indent_action = data.QAction(action_text, self)
             indent_action.setStatusTip('Indent the selected lines by the default width (4 spaces) in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/format-indent-more.png')
             indent_action.setIcon(temp_icon)
@@ -889,7 +840,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["unindent"] = unindent
             action_text = 'Unindent\t' + data.unindent_keys
-            unindent_action    = PyQt4.QtGui.QAction(action_text, self)
+            unindent_action    = data.QAction(action_text, self)
             unindent_action.setStatusTip('Unindent the selected lines by the default width (4 spaces) in the currenty selected window')
             temp_icon = helper_forms.set_icon('tango_icons/format-indent-less.png')
             unindent_action.setIcon(temp_icon)
@@ -897,12 +848,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def delete_start_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_DELWORDLEFT)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDLEFT)
                 except:
                     pass
             self.menubar_functions["delete_start_of_word"] = delete_start_of_word
             action_text = 'Delete start of word\t' + data.delete_start_of_word_keys
-            del_start_word_action    = PyQt4.QtGui.QAction(action_text, self)
+            del_start_word_action    = data.QAction(action_text, self)
             temp_string = 'Delete the current word from the cursor to the starting index of the word'
             del_start_word_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/delete-end-word.png')
@@ -911,12 +862,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def delete_end_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_DELWORDRIGHT)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDRIGHT)
                 except:
                     pass
             self.menubar_functions["delete_end_of_word"] = delete_end_of_word
             action_text = 'Delete end of word\t' + data.delete_end_of_word_keys
-            del_end_word_action    = PyQt4.QtGui.QAction(action_text, self)
+            del_end_word_action    = data.QAction(action_text, self)
             temp_string = 'Delete the current word from the cursor to the ending index of the word'
             del_end_word_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/delete-start-word.png')
@@ -925,12 +876,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def delete_start_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_DELLINELEFT)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINELEFT)
                 except:
                     pass
             self.menubar_functions["delete_start_of_line"] = delete_start_of_line
             action_text = 'Delete start of line\t' + data.delete_start_of_line_keys
-            del_start_line_action    = PyQt4.QtGui.QAction(action_text, self)
+            del_start_line_action    = data.QAction(action_text, self)
             temp_string = 'Delete the current line from the cursor to the starting index of the line'
             del_start_line_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/delete-start-line.png')
@@ -939,12 +890,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def delete_end_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_DELLINERIGHT)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINERIGHT)
                 except:
                     pass
             self.menubar_functions["delete_end_of_line"] = delete_end_of_line
             action_text = 'Delete end of line\t' + data.delete_end_of_line_keys
-            del_end_line_action    = PyQt4.QtGui.QAction(action_text, self)
+            del_end_line_action    = data.QAction(action_text, self)
             temp_string = 'Delete the current line from the cursor to the ending index of the line'
             del_end_line_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/delete-end-line.png')
@@ -953,12 +904,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def goto_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTSTART)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTART)
                 except:
                     pass
             self.menubar_functions["goto_to_start"] = goto_to_start
             action_text = 'Go to start\t' + data.go_to_start_keys
-            go_to_start_action    = PyQt4.QtGui.QAction(action_text, self)
+            go_to_start_action    = data.QAction(action_text, self)
             temp_string = 'Move cursor up to the start of the currently selected document'
             go_to_start_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/goto-start.png')
@@ -967,12 +918,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def goto_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTEND)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTEND)
                 except:
                     pass
             self.menubar_functions["goto_to_end"] = goto_to_end
             action_text = 'Go to end\t' + data.go_to_end_keys
-            go_to_end_action    = PyQt4.QtGui.QAction(action_text, self)
+            go_to_end_action    = data.QAction(action_text, self)
             temp_string = 'Move cursor down to the end of the currently selected document'
             go_to_end_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/goto-end.png')
@@ -981,12 +932,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def select_page_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_PAGEUPEXTEND)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUPEXTEND)
                 except:
                     pass
             self.menubar_functions["select_page_up"] = select_page_up
             action_text = 'Select page up\t' + data.select_page_up_keys
-            select_page_up_action    = PyQt4.QtGui.QAction(action_text, self)
+            select_page_up_action    = data.QAction(action_text, self)
             temp_string = 'Select text up one page of the currently selected document'
             select_page_up_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon("")
@@ -995,12 +946,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def select_page_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_PAGEDOWN)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     pass
             self.menubar_functions["select_page_down"] = select_page_down
             action_text = 'Select page down\t' + data.select_page_down_keys
-            select_page_down_action    = PyQt4.QtGui.QAction(action_text, self)
+            select_page_down_action    = data.QAction(action_text, self)
             temp_string = 'Select text down one page of the currently selected document'
             select_page_down_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon("")
@@ -1009,12 +960,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def select_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND)
                 except:
                     pass
             self.menubar_functions["select_to_start"] = select_to_start
             action_text = 'Select to start\t' + data.select_to_start_keys
-            select_to_start_action    = PyQt4.QtGui.QAction(action_text, self)
+            select_to_start_action    = data.QAction(action_text, self)
             temp_string = 'Select all text up to the start of the currently selected document'
             select_to_start_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon("")
@@ -1023,12 +974,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def select_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTENDEXTEND)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTENDEXTEND)
                 except:
                     pass
             self.menubar_functions["select_to_end"] = select_to_end
             action_text = 'Select to end\t' + data.select_to_end_keys
-            select_to_end_action    = PyQt4.QtGui.QAction(action_text, self)
+            select_to_end_action    = data.QAction(action_text, self)
             temp_string = 'Select all text down to the start of the currently selected document'
             select_to_end_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon("")
@@ -1037,12 +988,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def scroll_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_PAGEUP)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUP)
                 except:
                     pass
             self.menubar_functions["scroll_up"] = scroll_up
             action_text = 'Scroll up\t' + data.scroll_up_keys
-            scroll_up_action    = PyQt4.QtGui.QAction(action_text, self)
+            scroll_up_action    = data.QAction(action_text, self)
             temp_string = 'Scroll up one page of the currently selected document'
             scroll_up_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/scroll-up.png')
@@ -1051,12 +1002,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def scroll_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_PAGEDOWN)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     pass
             self.menubar_functions["scroll_down"] = scroll_down
             action_text = 'Scroll down\t' + data.scroll_down_keys
-            scroll_down_action    = PyQt4.QtGui.QAction(action_text, self)
+            scroll_down_action    = data.QAction(action_text, self)
             temp_string = 'Scroll down one page of the currently selected document'
             scroll_down_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/scroll-down.png')
@@ -1065,12 +1016,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def line_cut():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_LINECUT)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINECUT)
                 except:
                     pass
             self.menubar_functions["line_cut"] = line_cut
             action_text = 'Line Cut\t' + data.line_cut_keys
-            line_cut_action    = PyQt4.QtGui.QAction(action_text, self)
+            line_cut_action    = data.QAction(action_text, self)
             temp_string = 'Cut out the current line/lines of the currently selected document'
             line_cut_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/edit-line-cut.png')
@@ -1079,12 +1030,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def line_copy():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_LINECOPY)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINECOPY)
                 except:
                     pass
             self.menubar_functions["line_copy"] = line_copy
             action_text = 'Line Copy\t' + data.line_copy_keys
-            line_copy_action    = PyQt4.QtGui.QAction(action_text, self)
+            line_copy_action    = data.QAction(action_text, self)
             temp_string = 'Copy the current line/lines of the currently selected document'
             line_copy_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/edit-line-copy.png')
@@ -1093,12 +1044,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def line_delete():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_LINEDELETE)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDELETE)
                 except:
                     pass
             self.menubar_functions["line_delete"] = line_delete
             action_text = 'Line Delete\t' + data.line_delete_keys
-            line_delete_action    = PyQt4.QtGui.QAction(action_text, self)
+            line_delete_action    = data.QAction(action_text, self)
             temp_string = 'Delete the current line of the currently selected document'
             line_delete_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/edit-line-delete.png')
@@ -1107,12 +1058,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def line_transpose():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_LINETRANSPOSE)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINETRANSPOSE)
                 except:
                     pass
             self.menubar_functions["line_transpose"] = line_transpose
             action_text = 'Line Transpose\t' + data.line_transpose_keys
-            line_transpose_action    = PyQt4.QtGui.QAction(action_text, self)
+            line_transpose_action    = data.QAction(action_text, self)
             temp_string = 'Switch the current line with the line above it of the currently selected document'
             line_transpose_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/edit-line-transpose.png')
@@ -1121,12 +1072,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def line_duplicate():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(PyQt4.Qsci.QsciScintillaBase.SCI_LINEDUPLICATE)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDUPLICATE)
                 except:
                     pass
             self.menubar_functions["line_duplicate"] = line_duplicate
             action_text = 'Line/Selection Duplicate\t' + data.line_selection_duplicate_keys
-            line_duplicate_action    = PyQt4.QtGui.QAction(action_text, self)
+            line_duplicate_action    = data.QAction(action_text, self)
             temp_string = 'Duplicate the current line/selection of the currently selected document'
             line_duplicate_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon('tango_icons/edit-line-duplicate.png')
@@ -1134,7 +1085,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             line_duplicate_action.triggered.connect(line_duplicate)
             #Rectangular block selection
             action_text = 'Rectangular block selection\tAlt+Mouse'
-            rect_block_action    = PyQt4.QtGui.QAction(action_text, self)
+            rect_block_action    = data.QAction(action_text, self)
             temp_string = 'Select rectangle using the mouse in the currently selected document'
             rect_block_action.setStatusTip(temp_string)
             temp_icon = helper_forms.set_icon("")
@@ -1182,7 +1133,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find"] = special_find
-            find_action = PyQt4.QtGui.QAction('Find', self)
+            find_action = data.QAction('Find', self)
             find_action.setShortcut(data.find_keys)
             find_action.setStatusTip('Find text in the currently selected document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-find.png')
@@ -1204,7 +1155,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_find"] = special_regex_find
-            regex_find_action = PyQt4.QtGui.QAction('Regex Find', self)
+            regex_find_action = data.QAction('Regex Find', self)
             regex_find_action.setShortcut(data.regex_find_keys)
             regex_find_action.setStatusTip(
                 'Find text in currently selected document using Python regular expressions'
@@ -1227,7 +1178,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_and_replace"] = special_find_and_replace
-            find_and_replace_action = PyQt4.QtGui.QAction('Find and Replace', self)
+            find_and_replace_action = data.QAction('Find and Replace', self)
             find_and_replace_action.setShortcut(data.find_and_replace_keys)
             temp_string = 'Find and replace one instance of text '
             temp_string += 'from cursor in currently selected document'
@@ -1251,7 +1202,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_find_and_replace"] = special_regex_find_and_replace
-            regex_find_and_replace_action = PyQt4.QtGui.QAction('Regex Find and Replace', self)
+            regex_find_and_replace_action = data.QAction('Regex Find and Replace', self)
             regex_find_and_replace_action.setShortcut(data.regex_find_and_replace_keys)
             temp_string = 'Find and replace one instance of text '
             temp_string += 'from cursor in currently selected document '
@@ -1274,7 +1225,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_highlight"] = special_highlight
-            highlight_action = PyQt4.QtGui.QAction('Highlight', self)
+            highlight_action = data.QAction('Highlight', self)
             highlight_action.setShortcut(data.highlight_keys)
             highlight_action.setStatusTip('Highlight all instances of text in currently selected document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-highlight.png')
@@ -1294,7 +1245,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_highlight"] = special_regex_highlight
-            regex_highlight_action = PyQt4.QtGui.QAction('Regex Highlight', self)
+            regex_highlight_action = data.QAction('Regex Highlight', self)
             regex_highlight_action.setShortcut(data.regex_highlight_keys)
             temp_string = "Highlight all instances of text in currently "
             temp_string += "selected document using Python regular expressions"
@@ -1312,7 +1263,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(len(self.repl.text()))
             self.menubar_functions["special_clear_highlights"] = special_clear_highlights
-            clear_highlights_action = PyQt4.QtGui.QAction('Clear Highlights', self)
+            clear_highlights_action = data.QAction('Clear Highlights', self)
             clear_highlights_action.setShortcut(data.clear_highlights_keys)
             clear_highlights_action.setStatusTip('Clear all in currently selected document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-clear-highlights.png')
@@ -1330,7 +1281,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('","",case_sensitive'))
             self.menubar_functions["special_replace_in_selection"] = special_replace_in_selection
-            replace_selection_action = PyQt4.QtGui.QAction('Replace In Selection', self)
+            replace_selection_action = data.QAction('Replace In Selection', self)
             replace_selection_action.setShortcut(data.replace_selection_keys)
             temp_string = 'Replace all instances of text in the '
             temp_string += 'selected text of the current selected document'
@@ -1350,7 +1301,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",r"",case_sensitive'))
             self.menubar_functions["special_regex_replace_in_selection"] = special_regex_replace_in_selection
-            regex_replace_selection_action = PyQt4.QtGui.QAction('Regex Replace In Selection', self)
+            regex_replace_selection_action = data.QAction('Regex Replace In Selection', self)
             regex_replace_selection_action.setShortcut(data.regex_replace_selection_keys)
             temp_string = 'Replace all instances of text in the '
             temp_string += 'selected text of the current selected document'
@@ -1375,7 +1326,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_replace_all"] = special_replace_all
-            replace_all_action = PyQt4.QtGui.QAction('Replace All', self)
+            replace_all_action = data.QAction('Replace All', self)
             replace_all_action.setShortcut(data.replace_all_keys)
             replace_all_action.setStatusTip('Replace all instances of text in currently selected document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-replace-all.png')
@@ -1397,7 +1348,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_regex_replace_all"] = special_regex_replace_all
-            regex_replace_all_action    = PyQt4.QtGui.QAction('Regex Replace All', self)
+            regex_replace_all_action    = data.QAction('Regex Replace All', self)
             regex_replace_all_action.setShortcut(data.regex_replace_all_keys)
             regex_replace_all_action.setStatusTip('Replace all instances of text in currently selected document using Python regular expressions')
             temp_icon = helper_forms.set_icon('tango_icons/edit-replace-all-re.png')
@@ -1410,7 +1361,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["comment_uncomment"] = comment_uncomment
-            toggle_comment_action   = PyQt4.QtGui.QAction('Comment/Uncomment', self)
+            toggle_comment_action   = data.QAction('Comment/Uncomment', self)
             toggle_comment_action.setShortcut(data.toggle_comment_keys)
             temp_string = 'Toggle comments for the selected lines or single line'
             temp_string += " in the currently selected document"
@@ -1424,7 +1375,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["toggle_autocompletions"] = toggle_autocompletions
-            toggle_autocompletion_action = PyQt4.QtGui.QAction('Enable/Disable Autocompletion', self)
+            toggle_autocompletion_action = data.QAction('Enable/Disable Autocompletion', self)
             toggle_autocompletion_action.setShortcut(data.toggle_autocompletion_keys)
             temp_string = 'Enable/Disable autocompletions '
             temp_string += 'for the currently selected document'
@@ -1438,7 +1389,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["toggle_wordwrap"] = toggle_wordwrap
-            toggle_wrap_action = PyQt4.QtGui.QAction('Enable/Disable Line Wrapping', self)
+            toggle_wrap_action = data.QAction('Enable/Disable Line Wrapping', self)
             toggle_wrap_action.setShortcut(data.toggle_wrap_keys)
             temp_string = 'Enable/Disable line wrapping '
             temp_string += 'for the currently selected document'
@@ -1452,7 +1403,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["reload_file"] = reload_file
-            reload_file_action = PyQt4.QtGui.QAction('Reload file', self)
+            reload_file_action = data.QAction('Reload file', self)
             reload_file_action.setShortcut(data.reload_file_keys)
             reload_file_action.setStatusTip('Reload file from disk, will prompt if file contains changes')
             temp_icon = helper_forms.set_icon('tango_icons/view-refresh.png')
@@ -1470,7 +1421,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                         message_type=data.MessageType.ERROR
                     )
             self.menubar_functions["create_node_tree"] = create_node_tree
-            node_tree_action = PyQt4.QtGui.QAction('Create/reload node tree (C / Nim / Python3)', self)
+            node_tree_action = data.QAction('Create/reload node tree (C / Nim / Python3)', self)
             node_tree_action.setShortcut(data.node_tree_keys)
             temp_string = 'Create a node tree for the code for the '
             temp_string += 'currently selected document (C / Nim / Python3)'
@@ -1489,7 +1440,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     self.repl.setCursorPosition(len(self.repl.text())-1)
                 self.repl.setFocus()
             self.menubar_functions["special_goto_line"] = special_goto_line
-            goto_line_action = PyQt4.QtGui.QAction('Goto line', self)
+            goto_line_action = data.QAction('Goto line', self)
             goto_line_action.setShortcut(data.goto_line_keys)
             goto_line_action.setStatusTip('Go to the specified line in the current main window document')
             temp_icon = helper_forms.set_icon('tango_icons/edit-goto.png')
@@ -1501,7 +1452,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["special_indent_to_cursor"] = special_indent_to_cursor
-            indent_to_cursor_action = PyQt4.QtGui.QAction('Indent to cursor', self)
+            indent_to_cursor_action = data.QAction('Indent to cursor', self)
             indent_to_cursor_action.setShortcut(data.indent_to_cursor_keys)
             temp_string = 'Indent the selected lines to the current cursor position '
             temp_string += '(SPACE ON THE LEFT SIDE OF LINES IS STRIPPED!)'
@@ -1513,7 +1464,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 focused_tab = self.get_used_tab()
                 self.editing.convert_to_uppercase(focused_tab.parent.name)
             self.menubar_functions["special_to_uppercase"] = special_to_uppercase
-            to_uppercase_action = PyQt4.QtGui.QAction('Selection to UPPERCASE', self)
+            to_uppercase_action = data.QAction('Selection to UPPERCASE', self)
             to_uppercase_action.setShortcut(data.to_uppercase_keys)
             to_uppercase_action.setStatusTip('Convert selected text to UPPERCASE')
             temp_icon = helper_forms.set_icon('tango_icons/edit-case-to-upper.png')
@@ -1523,7 +1474,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 focused_tab = self.get_used_tab()
                 self.editing.convert_to_lowercase(focused_tab.parent.name)
             self.menubar_functions["special_to_lowercase"] = special_to_lowercase
-            to_lowercase_action = PyQt4.QtGui.QAction('Selection to lowercase', self)
+            to_lowercase_action = data.QAction('Selection to lowercase', self)
             to_lowercase_action.setShortcut(data.to_lowercase_keys)
             to_lowercase_action.setStatusTip('Convert selected text to lowercase')
             temp_icon = helper_forms.set_icon('tango_icons/edit-case-to-lower.png')
@@ -1544,7 +1495,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             self.menubar_functions["special_find_in_open_documents"] = special_find_in_open_documents
-            find_in_documents_action = PyQt4.QtGui.QAction('Find in open documents', self)
+            find_in_documents_action = data.QAction('Find in open documents', self)
             find_in_documents_action.setShortcut(data.find_in_documents_keys)
             temp_string = 'Find string/regular expression across all open documents'
             temp_string += ' in the currently selected window'
@@ -1569,7 +1520,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             self.menubar_functions["special_find_replace_in_open_documents"] = special_find_replace_in_open_documents
-            find_replace_in_documents_action = PyQt4.QtGui.QAction('Find and replace in open documents', self)
+            find_replace_in_documents_action = data.QAction('Find and replace in open documents', self)
             find_replace_in_documents_action.setShortcut(data.find_replace_in_documents_keys)
             temp_string = 'Find and replace across all open documents in'
             temp_string += ' the currently selected window'
@@ -1594,7 +1545,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             self.menubar_functions["special_replace_all_in_open_documents"] = special_replace_all_in_open_documents
-            replace_all_in_documents_action = PyQt4.QtGui.QAction('Replace all in open documents', self)
+            replace_all_in_documents_action = data.QAction('Replace all in open documents', self)
             replace_all_in_documents_action.setShortcut(data.replace_all_in_documents_keys)
             replace_all_in_documents_action.setStatusTip('Replace all instances of search text across all open documents in the currently selected window')
             temp_icon = helper_forms.set_icon('tango_icons/edit-replace-all-in-open-documents.png')
@@ -1644,7 +1595,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_in"]               = special_find_in
             self.menubar_functions["special_find_in_with_dialog"]   = special_find_in_with_dialog
-            find_in_files_action    = PyQt4.QtGui.QAction('Find in files', self)
+            find_in_files_action    = data.QAction('Find in files', self)
             find_in_files_action.setShortcut(data.find_in_files_keys)
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that contain the search string'
@@ -1666,7 +1617,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_file"]             = special_find_file
             self.menubar_functions["special_find_file_with_dialog"] = special_find_file_with_dialog
-            find_files_action   = PyQt4.QtGui.QAction('Find files', self)
+            find_files_action   = data.QAction('Find files', self)
             find_files_action.setShortcut(data.find_files_keys)
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that have the search string in them'
@@ -1692,7 +1643,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_replace_in_files"]              = special_replace_in_files
             self.menubar_functions["special_replace_in_files_with_dialog"]  = special_replace_in_files_with_dialog
-            replace_in_files_action = PyQt4.QtGui.QAction('Replace in files', self)
+            replace_in_files_action = data.QAction('Replace in files', self)
             replace_in_files_action.setShortcut(data.replace_in_files_keys)
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that have the search string in them and replace all '
@@ -1707,7 +1658,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",show_'))
             self.menubar_functions["special_run_command"] = special_run_command
-            run_command_action  = PyQt4.QtGui.QAction('Run command', self)
+            run_command_action  = data.QAction('Run command', self)
             run_command_action.setStatusTip('Run command as a new process (FULLY TESTED ONLY ON WINDOWS!)')
             temp_icon = helper_forms.set_icon('tango_icons/utilities-terminal.png')
             run_command_action.setIcon(temp_icon)
@@ -1715,7 +1666,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             def create_cwd_tree():
                 self.display.show_directory_tree(os.getcwd())
             self.menubar_functions["create_cwd_tree"] = create_cwd_tree
-            cwd_tree_action = PyQt4.QtGui.QAction('Show current working directory tree', self)
+            cwd_tree_action = data.QAction('Show current working directory tree', self)
             cwd_tree_action.setShortcut(data.cwd_tree_keys)
             temp_string = 'Create a node tree for the current working directory (CWD)'
             cwd_tree_action.setStatusTip(temp_string)
@@ -1762,20 +1713,20 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         def construct_view_menu():
             view_menu = self.menubar.addMenu("&View")
             #Show/hide the function wheel
-            function_wheel_toggle_action = PyQt4.QtGui.QAction('Show/Hide Function Wheel', self)
+            function_wheel_toggle_action = data.QAction('Show/Hide Function Wheel', self)
             function_wheel_toggle_action.setShortcut(data.function_wheel_toggle_keys)
             function_wheel_toggle_action.setStatusTip('Show/hide the Ex.Co. function wheel')
             temp_icon = helper_forms.set_icon('Exco_Icon.png')
             function_wheel_toggle_action.setIcon(temp_icon)
             function_wheel_toggle_action.triggered.connect(self.view.toggle_function_wheel)
             #Maximize/minimize entire Ex.Co. window
-            maximize_window_action  = PyQt4.QtGui.QAction('Maximize/Normalize', self)
+            maximize_window_action  = data.QAction('Maximize/Normalize', self)
             maximize_window_action.setShortcut(data.maximize_window_keys)
             maximize_window_action.setStatusTip('Maximize/Normalize application window')
             temp_icon = helper_forms.set_icon('tango_icons/view-fullscreen.png')
             maximize_window_action.setIcon(temp_icon)
             maximize_window_action.triggered.connect(self.view.toggle_window_size)
-            main_focus_action = PyQt4.QtGui.QAction('Focus Main window', self)  
+            main_focus_action = data.QAction('Focus Main window', self)  
             main_focus_action.setShortcut(data.main_focus_keys)
             main_focus_action.setStatusTip('Set focus to the Main editing window')
             temp_icon = helper_forms.set_icon('tango_icons/view-focus-main.png')
@@ -1783,7 +1734,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             main_focus_action.triggered.connect(
                 functools.partial(self.view.set_window_focus, "main")
             )
-            upper_focus_action = PyQt4.QtGui.QAction('Focus Upper window', self) 
+            upper_focus_action = data.QAction('Focus Upper window', self) 
             upper_focus_action.setShortcut(data.upper_focus_keys)
             upper_focus_action.setStatusTip('Set focus to the Upper editing window')
             temp_icon = helper_forms.set_icon('tango_icons/view-focus-upper.png')
@@ -1791,7 +1742,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             upper_focus_action.triggered.connect(
                 functools.partial(self.view.set_window_focus, "upper")
             )
-            lower_focus_action = PyQt4.QtGui.QAction('Focus Lower window', self) 
+            lower_focus_action = data.QAction('Focus Lower window', self) 
             lower_focus_action.setShortcut(data.lower_focus_keys)
             lower_focus_action.setStatusTip('Set focus to the Lower editing window')
             temp_icon = helper_forms.set_icon('tango_icons/view-focus-lower.png')
@@ -1799,31 +1750,31 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             lower_focus_action.triggered.connect(
                 functools.partial(self.view.set_window_focus, "lower")
             )
-            toggle_log_action = PyQt4.QtGui.QAction('Show/Hide Log Window', self) 
+            toggle_log_action = data.QAction('Show/Hide Log Window', self) 
             toggle_log_action.setShortcut(data.toggle_log_keys)
             toggle_log_action.setStatusTip('Toggle the display of the log window')
             temp_icon = helper_forms.set_icon('tango_icons/view-log.png')
             toggle_log_action.setIcon(temp_icon)
             toggle_log_action.triggered.connect(self.view.toggle_log_window)
-            spin_clockwise_action = PyQt4.QtGui.QAction('Spin view clockwise', self)  
+            spin_clockwise_action = data.QAction('Spin view clockwise', self)  
             spin_clockwise_action.setShortcut(data.spin_clockwise_keys)
             spin_clockwise_action.setStatusTip('Spin the editor windows clockwise')
             temp_icon = helper_forms.set_icon('tango_icons/view-spin-clock.png')
             spin_clockwise_action.setIcon(temp_icon)
             spin_clockwise_action.triggered.connect(self.view.spin_widgets_clockwise)
-            spin_counterclockwise_action = PyQt4.QtGui.QAction('Spin view counter-clockwise', self)  
+            spin_counterclockwise_action = data.QAction('Spin view counter-clockwise', self)  
             spin_counterclockwise_action.setShortcut(data.spin_counterclockwise_keys)
             spin_counterclockwise_action.setStatusTip('Spin the editor windows counter-clockwise')
             temp_icon = helper_forms.set_icon('tango_icons/view-spin-counter.png')
             spin_counterclockwise_action.setIcon(temp_icon)
             spin_counterclockwise_action.triggered.connect(self.view.spin_widgets_counterclockwise)
-            toggle_mode_action = PyQt4.QtGui.QAction('Toggle window mode', self)
+            toggle_mode_action = data.QAction('Toggle window mode', self)
             toggle_mode_action.setShortcut(data.toggle_mode_keys)
             toggle_mode_action.setStatusTip('Toggle between one and three window display')
             temp_icon = helper_forms.set_icon('tango_icons/view-toggle-window-mode.png')
             toggle_mode_action.setIcon(temp_icon)
             toggle_mode_action.triggered.connect(self.view.toggle_window_mode)
-            toggle_main_window_side_action = PyQt4.QtGui.QAction('Toggle main window side', self)
+            toggle_main_window_side_action = data.QAction('Toggle main window side', self)
             toggle_main_window_side_action.setShortcut(data.toggle_main_window_side_keys)
             toggle_main_window_side_action.setStatusTip('Toggle which side the main window is on')
             temp_icon = helper_forms.set_icon('tango_icons/view-toggle-window-side.png')
@@ -1836,7 +1787,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     pass
             self.menubar_functions["move_tab_right"] = functools.partial(move_tab, direction=data.Direction.RIGHT)
             self.menubar_functions["move_tab_left"] = functools.partial(move_tab, direction=data.Direction.LEFT)
-            move_tab_right_action = PyQt4.QtGui.QAction('Move tab right', self)
+            move_tab_right_action = data.QAction('Move tab right', self)
             move_tab_right_action.setShortcut(data.move_tab_right_keys)
             move_tab_right_action.setStatusTip('Move the current tab in the currently selected window one position to the right')
             temp_icon = helper_forms.set_icon('tango_icons/view-move-tab-right.png')
@@ -1844,7 +1795,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             move_tab_right_action.triggered.connect(
                 functools.partial(move_tab, direction=data.Direction.RIGHT)
             )
-            move_tab_left_action = PyQt4.QtGui.QAction('Move tab left', self)
+            move_tab_left_action = data.QAction('Move tab left', self)
             move_tab_left_action.setShortcut(data.move_tab_left_keys)
             move_tab_left_action.setStatusTip('Move the current tab in the currently selected window one position to the left')
             temp_icon = helper_forms.set_icon('tango_icons/view-move-tab-left.png')
@@ -1858,7 +1809,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["show_edge"] = show_edge
-            toggle_edge_action = PyQt4.QtGui.QAction('Toggle edge marker', self)
+            toggle_edge_action = data.QAction('Toggle edge marker', self)
             toggle_edge_action.setShortcut(data.toggle_edge_keys)
             toggle_edge_action.setStatusTip('Toggle the display of the edge marker that shows the prefered maximum chars in a line')
             temp_icon = helper_forms.set_icon('tango_icons/view-edge-marker.png')
@@ -1870,7 +1821,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["reset_zoom"] = reset_zoom
-            reset_zoom_action = PyQt4.QtGui.QAction('Zoom reset', self)
+            reset_zoom_action = data.QAction('Zoom reset', self)
             reset_zoom_action.setShortcut(data.reset_zoom_keys)
             reset_zoom_action.setStatusTip('Reset the zoom level on the currently focused document!')
             temp_icon = helper_forms.set_icon('tango_icons/view-zoom-reset.png')
@@ -1903,14 +1854,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             bookmark_menu = view_menu.addMenu("&Bookmarks")
             temp_icon = helper_forms.set_icon('tango_icons/bookmarks.png')
             bookmark_menu.setIcon(temp_icon)
-            bookmark_toggle_action = PyQt4.QtGui.QAction('Toggle Bookmark', self)
+            bookmark_toggle_action = data.QAction('Toggle Bookmark', self)
             bookmark_toggle_action.setShortcut(data.bookmark_toggle_keys)
             bookmark_toggle_action.setStatusTip("Toggle a bookmark at the current document line")
             temp_icon = helper_forms.set_icon('tango_icons/bookmark.png')
             bookmark_toggle_action.setIcon(temp_icon)
             bookmark_toggle_action.triggered.connect(bookmark_toggle)
             bookmark_menu.addAction(bookmark_toggle_action)
-            bookmark_clear_action = PyQt4.QtGui.QAction('Clear Bookmarks', self)
+            bookmark_clear_action = data.QAction('Clear Bookmarks', self)
             bookmark_clear_action.setStatusTip("Clear all bookmarks")
             temp_icon = helper_forms.set_icon('tango_icons/bookmarks-clear.png')
             bookmark_clear_action.setIcon(temp_icon)
@@ -1925,7 +1876,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             bookmark_store_menu.setIcon(temp_icon)
             for i in range(10):
                 #Go To
-                bookmark_goto_action = PyQt4.QtGui.QAction('Bookmark {:d}'.format(i), self)
+                bookmark_goto_action = data.QAction('Bookmark {:d}'.format(i), self)
                 bookmark_goto_action.setShortcut("{}+{}".format(data.bookmark_goto_keys, i))
                 bookmark_goto_action.setStatusTip("Go to bookmark number:{:d}".format(i))
                 temp_icon = helper_forms.set_icon('tango_icons/bookmarks-goto.png')
@@ -1933,7 +1884,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 bookmark_goto_action.triggered.connect(functools.partial(bookmark_goto, i))
                 bookmark_goto_menu.addAction(bookmark_goto_action)
                 #Store
-                bookmark_store_action = PyQt4.QtGui.QAction('Bookmark {:d}'.format(i), self)
+                bookmark_store_action = data.QAction('Bookmark {:d}'.format(i), self)
                 bookmark_store_action.setShortcut("{}+{}".format(data.bookmark_store_keys, i))
                 bookmark_store_action.setStatusTip("Store bookmark number:{:d}".format(i))
                 temp_icon = helper_forms.set_icon('tango_icons/bookmarks-store.png')
@@ -1946,7 +1897,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 except:
                     pass
             self.menubar_functions["toggle_line_endings"] = toggle_line_endings
-            toggle_lineend_action = PyQt4.QtGui.QAction('Toggle EOL visibility', self)
+            toggle_lineend_action = data.QAction('Toggle EOL visibility', self)
 #            toggle_lineend_action.setShortcut('Ctrl+')
             temp_string = 'Toggle the visibility of the End-Of-Line characters '
             temp_string += 'for the currently selected document'
@@ -1978,7 +1929,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         #REPL menu
         def construct_repl_menu():
             repl_menu = self.menubar.addMenu("&REPL")
-            repeat_eval_action = PyQt4.QtGui.QAction('REPL Repeat Command', self)
+            repeat_eval_action = data.QAction('REPL Repeat Command', self)
             repeat_eval_action.setShortcut(data.repeat_eval_keys)
             repeat_eval_action.setStatusTip('Repeat the last REPL command')
             repeat_eval_action.triggered.connect(self.repl.repeat_last_repl_eval)
@@ -1988,7 +1939,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
             self.menubar_functions["repl_single_focus"] = repl_single_focus
-            repl_focus_action = PyQt4.QtGui.QAction('Focus REPL(Single)', self)   
+            repl_focus_action = data.QAction('Focus REPL(Single)', self)   
             repl_focus_action.setShortcuts(
                 [data.repl_focus_single_1_keys, data.repl_focus_single_2_keys]
             )
@@ -2000,7 +1951,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.view.set_repl_type(data.ReplType.MULTI_LINE)
                 self.repl_helper.setFocus()
             self.menubar_functions["repl_multi_focus"] = repl_multi_focus
-            repl_focus_multi_action = PyQt4.QtGui.QAction('Focus REPL(Multi)', self)
+            repl_focus_multi_action = data.QAction('Focus REPL(Multi)', self)
             repl_focus_multi_action.setShortcut(data.repl_focus_multi_keys)
             repl_focus_multi_action.setStatusTip('Set focus to the Python REPL(Multi Line)')
             repl_focus_multi_action.triggered.connect(repl_multi_focus)
@@ -2012,25 +1963,25 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         #Sessions menu
         def construct_sessions_menu():
             sessions_menu       = self.menubar.addMenu("&Sessions")
-            add_session_action  = PyQt4.QtGui.QAction('Add Session', self)
+            add_session_action  = data.QAction('Add Session', self)
             add_session_action.setStatusTip('Save the currently opened documents to a session')
             add_session_action.setIcon(helper_forms.set_icon('tango_icons/session-add.png'))
             add_session_action.triggered.connect(
                 functools.partial(repl_text_input, text='session_add("", session_group=None)', cursor_position=13)
             )
-            remove_session_action = PyQt4.QtGui.QAction('Remove Session', self)
+            remove_session_action = data.QAction('Remove Session', self)
             remove_session_action.setStatusTip('Remove the session with matching name and group')
             remove_session_action.setIcon(helper_forms.set_icon('tango_icons/session-remove.png'))
             remove_session_action.triggered.connect(
                 functools.partial(repl_text_input, text='session_remove("", session_group=None)', cursor_position=16)
             )
-            session_editor_action = PyQt4.QtGui.QAction('Graphical Session Editor', self)
+            session_editor_action = data.QAction('Graphical Session Editor', self)
             session_editor_action.setStatusTip('Graphical user friendly session editor')
             session_editor_action.setIcon(helper_forms.set_icon('tango_icons/sessions-gui.png'))
             session_editor_action.triggered.connect(self.display.show_session_editor)
             self.menubar_functions["show_session_editor"] = self.display.show_session_editor
             #Sessions menu
-            self.sessions_menu = PyQt4.QtGui.QMenu("Sessions")
+            self.sessions_menu = data.QMenu("Sessions")
             self.sessions_menu.setIcon(helper_forms.set_icon('tango_icons/sessions.png'))
             sessions_menu.addAction(add_session_action)
             sessions_menu.addAction(remove_session_action)
@@ -2041,7 +1992,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         def construct_help_menu():
             help_menu = self.menubar.addMenu("&Help")
             self.fm = help_menu
-            about_action = PyQt4.QtGui.QAction('About Ex.Co.', self)
+            about_action = data.QAction('About Ex.Co.', self)
             about_action.setStatusTip('Ex.Co. Information')
             temp_icon = helper_forms.set_icon('tango_icons/help-browser.png')
             about_action.setIcon(temp_icon)
@@ -2071,7 +2022,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         """Initialize the three widgets that are used for displaying data"""
         #Initialize and add child controls to main_window(QTabControl)
         self.main_window    = BasicWidget(self)
-        self.main_window.setTabShape(PyQt4.QtGui.QTabWidget.Rounded)
+        self.main_window.setTabShape(data.QTabWidget.Rounded)
         #Initialize and add child controls to lower_window(QTabControl)
         self.upper_window   = BasicWidget(self)
         #Initialise and add child controls to lower_window(QTabControl)
@@ -2085,8 +2036,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         self.repl_helper    = ReplHelper(self, self.repl)
         self.repl_helper.setObjectName("REPL_multiline")
         #Initialize the groupbox that the REPL will be in, and place the REPL widget into it
-        self.repl_box       = PyQt4.QtGui.QGroupBox("Python Interactive Interpreter (REPL)")
-        repl_layout         = PyQt4.QtGui.QVBoxLayout()
+        self.repl_box       = data.QGroupBox("Python Interactive Interpreter (REPL)")
+        repl_layout         = data.QVBoxLayout()
         repl_layout.addWidget(self.repl)
         repl_layout.addWidget(self.repl_helper)
         self.repl_box.setLayout(repl_layout)
@@ -2179,15 +2130,20 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
     def open_file_with_dialog(self, basic_widget=None):
         """Open a file for editing using a file dialog"""
         #Create and show a file dialog window, restore last browsed directory and set the file filter
-        file_dialog = PyQt4.QtGui.QFileDialog
+        file_dialog = data.QFileDialog
         files = file_dialog.getOpenFileNames(
-                    self, 
-                    "Open File",  
-                    self.last_browsed_dir, 
-                    "All Files (*);;Ex.Co. Files({:s})".format(' '.join(self.exco_file_exts))
-                )
-        #Check and then add the selected file to the main BasicWidget if the window parameter is unspecified
-        self.open_files(files, basic_widget)
+            self, 
+            "Open File",  
+            self.last_browsed_dir, 
+            "All Files (*);;Ex.Co. Files({:s})".format(' '.join(self.exco_file_exts))
+        )
+        if data.PYQT_MODE == 4:
+            # Check and then add the selected file to the main BasicWidget if the window parameter is unspecified
+            self.open_files(files, basic_widget)
+        elif data.PYQT_MODE == 5:
+            # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
+            # so pass only the files to the function
+            self.open_files(files[0], basic_widget)
     
     def open_files(self, files=None, basic_widget=None):
         """Cheach and read valid files to the selected BasicWidget"""
@@ -2203,14 +2159,19 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.open_file(file, basic_widget)
 
     def open_file(self, file=None, basic_widget=None):
-        """Read file contents into a BasicWidget"""
-        if file != None and file != "":
+        """
+        Read file contents into a BasicWidget
+        """
+        def open_file_function(in_file, basic_widget):
             #Check if file exists
-            if os.path.isfile(file) == False:
-                self.display.repl_display_message("File: {:s}\ndoesn't exist!".format(file), message_type=data.MessageType.ERROR)
+            if os.path.isfile(in_file) == False:
+                self.display.repl_display_message(
+                    "File: {:s}\ndoesn't exist!".format(in_file), 
+                    message_type=data.MessageType.ERROR
+                )
                 return
             #Check the file size
-            file_size = functions.get_file_size_Mb(file)
+            file_size = functions.get_file_size_Mb(in_file)
             if file_size  > 50:
                 #Close the log window if it is displayed
                 self.view.set_log_window(False)
@@ -2219,32 +2180,32 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 warning +=  "A lot of RAM will be needed!\n"
                 warning +=  "Files larger than 300 MB can cause the system to hang!\n"
                 warning +=  "Are you sure you want to open it?"
-                reply = PyQt4.QtGui.QMessageBox.question(
-                            self, 
-                            'OPENING HUGE FILE', 
-                            warning,
-                            PyQt4.QtGui.QMessageBox.Yes,
-                            PyQt4.QtGui.QMessageBox.No
-                        )
-                if reply == PyQt4.QtGui.QMessageBox.No:
+                reply = data.QMessageBox.question(
+                    self, 
+                    'OPENING HUGE FILE', 
+                    warning,
+                    data.QMessageBox.Yes,
+                    data.QMessageBox.No
+                )
+                if reply == data.QMessageBox.No:
                     return
             #Check selected window
             if basic_widget == None:
                 basic_widget = self.main_window
             #Check if file is already open
-            index   = self.check_open_file(file, basic_widget)
+            index = self.check_open_file(in_file, basic_widget)
             if index != None:
                 basic_widget.setCurrentIndex(index)
                 return
             #Add new scintilla document tab to the basic widget
-            new_tab = basic_widget.editor_add_document(file, "file", bypass_check=False)
+            new_tab = basic_widget.editor_add_document(in_file, "file", bypass_check=False)
             #Set the icon if it was set by the lexer
             if new_tab.current_icon != None:
                 basic_widget.setTabIcon(basic_widget.indexOf(new_tab), new_tab.current_icon)
             if new_tab != None:
                 try:
                     #Read the whole file and display the text
-                    file_text = functions.read_file_to_string(file)
+                    file_text = functions.read_file_to_string(in_file)
                     new_tab.setText(file_text)
                 except MemoryError:
                     message = "Insufficient memory to open the file!"
@@ -2262,11 +2223,11 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 #because adding the file content line by line was registered as a text change
                 basic_widget.reset_text_changed()
                 #Update the settings manipulator with the new file
-                self.settings.update_recent_list(file)
+                self.settings.update_recent_list(in_file)
                 #Update the current working directory
-                path = os.path.dirname(file)
+                path = os.path.dirname(in_file)
                 self.set_cwd(path)
-                data.print_log("Opened file: " + str(file))
+                data.print_log("Opened file: " + str(in_file))
                 #Set focus to the newly opened document
                 basic_widget.currentWidget().setFocus()
                 #Update the Save/SaveAs buttons in the menubar
@@ -2274,8 +2235,22 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             else:
                 message = "File cannot be read!\n"
                 message += "It's probably not a text file!"
-                self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
+                self.display.repl_display_message(
+                    message, message_type=data.MessageType.ERROR
+                )
                 self.display.write_to_statusbar("File cannot be read!", 3000)
+        if isinstance(file, str) == True:
+            if file != None and file != "":
+                open_file_function(file, basic_widget)
+        elif isinstance(file, list) == True:
+            for f in file:
+                open_file_function(f, basic_widget)
+        else:
+            self.display.repl_display_message(
+                "Unknown parameter type to 'open file' function!", 
+                message_type=data.MessageType.ERROR
+            )
+            
     
     def check_open_file(self, file_with_path, basic_widget):
         """Check if a file is already open in one of the windows"""
@@ -2299,14 +2274,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Close the log window if it is displayed
             self.view.set_log_window(False)
             message = "You have modified documents!\nClose all tabs?"
-            reply = PyQt4.QtGui.QMessageBox.question(
-                        self, 
-                        'Close all tabs', 
-                        message,
-                        PyQt4.QtGui.QMessageBox.Yes,
-                        PyQt4.QtGui.QMessageBox.No
-                    )
-            if reply == PyQt4.QtGui.QMessageBox.No:
+            reply = data.QMessageBox.question(
+                self, 
+                'Close all tabs', 
+                message,
+                data.QMessageBox.Yes,
+                data.QMessageBox.No
+            )
+            if reply == data.QMessageBox.No:
                 return
         #Close all tabs and remove all bookmarks from them
         for i in range(self.main_window.count()):
@@ -2502,7 +2477,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 if len(recent_file_name) > 30:
                     #Shorten the name that will appear in the menubar
                     recent_file_name = "...{:s}".format(os.path.splitdrive(recent_file)[1][-30:])
-                new_file_action = PyQt4.QtGui.QAction(recent_file_name, self.parent)
+                new_file_action = data.QAction(recent_file_name, self.parent)
                 new_file_action.setStatusTip("Open: {:s}".format(recent_file))
                 #Create a function reference for opening the recent file
                 temp_function = functools.partial(new_file_function, recent_file)
@@ -2623,14 +2598,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
                 message += "Restore session '{:s}' anyway?".format(session_name)
-                reply = PyQt4.QtGui.QMessageBox.question(
-                            self.parent, 
-                            'Restore Session', 
-                            message,
-                            PyQt4.QtGui.QMessageBox.Yes,
-                            PyQt4.QtGui.QMessageBox.No
-                        )
-                if reply == PyQt4.QtGui.QMessageBox.No:
+                reply = data.QMessageBox.question(
+                    self.parent, 
+                    'Restore Session', 
+                    message,
+                    data.QMessageBox.Yes,
+                    data.QMessageBox.No
+                )
+                if reply == data.QMessageBox.No:
                     return
             #Find the session
             session = self.parent.settings.manipulator.get_session(
@@ -2680,13 +2655,13 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
                 message += "Restore Ex.Co development session anyway?"
-                reply = PyQt4.QtGui.QMessageBox.question(
-                            self.parent, 'Restore Session', 
-                            message,
-                            PyQt4.QtGui.QMessageBox.Yes,
-                            PyQt4.QtGui.QMessageBox.No
-                        )
-                if reply == PyQt4.QtGui.QMessageBox.No:
+                reply = data.QMessageBox.question(
+                    self.parent, 'Restore Session', 
+                    message,
+                    data.QMessageBox.Yes,
+                    data.QMessageBox.No
+                )
+                if reply == data.QMessageBox.No:
                     return
             #Clear all documents from the main and upper window
             self.parent.main_window.clear()
@@ -2755,7 +2730,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.parent.sessions_menu.clear()
             #First add the Ex.Co. session (all Ex.Co. source files)
             session_name = "Ex.Co. source files"
-            exco_session_action = PyQt4.QtGui.QAction(session_name, self.parent)
+            exco_session_action = data.QAction(session_name, self.parent)
             exco_session_action.setStatusTip("Open all Ex.Co. source files")
             exco_session_method = self.exco_restore
             exco_session_action.setIcon(helper_forms.set_icon('Exco_Icon.png'))
@@ -2788,7 +2763,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Loop through all of the stored sessions and add them
             for session in self.parent.settings.manipulator.stored_sessions:
                 #Add the session
-                new_session_action = PyQt4.QtGui.QAction(session.name, self.parent)
+                new_session_action = data.QAction(session.name, self.parent)
                 new_session_action.setStatusTip("Restore Session: {:s}".format(session.name))
                 new_session_method = functools.partial(
                                          self.restore,
@@ -2850,16 +2825,16 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Get the reference to the MainWindow parent object instance
             self.parent = parent
             #Get the function wheel overlay image size
-            function_wheel_size =   PyQt4.QtGui.QPixmap(
-                                        os.path.join(
-                                            data.resources_directory, 
-                                            data.function_wheel_image
-                                        )
-                                    ).size()
-            self.FUNCTION_WHEEL_BOUNDS =    (
-                                                function_wheel_size.width(), 
-                                                function_wheel_size.height()
-                                            )
+            function_wheel_size = data.PyQt.QtGui.QPixmap(
+                os.path.join(
+                    data.resources_directory, 
+                    data.function_wheel_image
+                )
+            ).size()
+            self.FUNCTION_WHEEL_BOUNDS = (
+                function_wheel_size.width(), 
+                function_wheel_size.height()
+            )
             #Initialize the REPL state to unknown, so it will force
             #the form layout to refresh it
             self.repl_state = None
@@ -2888,7 +2863,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                          self.parent.horizontal_splitter.width()*self.horizontal_width_1]
                     )
             #Set the REPL font
-            self.parent.repl.setFont(PyQt4.QtGui.QFont("Arial", 12, PyQt4.QtGui.QFont.Bold))
+            self.parent.repl.setFont(data.PyQt.QtGui.QFont("Arial", 12, data.PyQt.QtGui.QFont.Bold))
             #Refresh the size relation between the basic widgets and the REPL,
             #so that the REPL height is always the same
             self.refresh_main_splitter()
@@ -2938,11 +2913,11 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             self.parent.last_focused_tab = focused_tab
             #Create QSplitters to split main window into three parts: 
             #editing(QScintilla), upper_window(QTabControl), lower_window(QTabControl)
-            vertical_splitter      = PyQt4.QtGui.QSplitter(PyQt4.QtCore.Qt.Vertical)
+            vertical_splitter      = data.QSplitter(data.PyQt.QtCore.Qt.Vertical)
             vertical_splitter.setObjectName("Vertical_Splitter")
-            horizontal_splitter    = PyQt4.QtGui.QSplitter(PyQt4.QtCore.Qt.Horizontal)
+            horizontal_splitter    = data.QSplitter(data.PyQt.QtCore.Qt.Horizontal)
             horizontal_splitter.setObjectName("Horizontal_Splitter")
-            main_splitter          = PyQt4.QtGui.QSplitter(PyQt4.QtCore.Qt.Vertical)
+            main_splitter          = data.QSplitter(data.PyQt.QtCore.Qt.Vertical)
             main_splitter.setObjectName("Main_Splitter")
             #Set new widget order to class attributes
             main_widget.name    = "Main"
@@ -2970,8 +2945,8 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Set the window mode attribute to one
             self.parent.window_mode = data.WindowMode.THREE
             #Initialize the main groupbox
-            main_groupbox = PyQt4.QtGui.QGroupBox(self.parent)
-            main_groupbox_layout = PyQt4.QtGui.QVBoxLayout(main_groupbox)
+            main_groupbox = data.QGroupBox(self.parent)
+            main_groupbox_layout = data.QVBoxLayout(main_groupbox)
             main_groupbox_layout.addWidget(main_splitter)
             main_groupbox.setLayout(main_groupbox_layout)
             main_groupbox.setObjectName("Main_Groupbox")
@@ -3170,9 +3145,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 self.repl_state == data.ReplType.MULTI_LINE):
                 return
             #Initialize the groupbox that the REPL will be in, and place the REPL widget into it
-            self.parent.repl_box = PyQt4.QtGui.QGroupBox("Python Interactive Interpreter (REPL)")
+            self.parent.repl_box = data.QGroupBox("Python Interactive Interpreter (REPL)")
             self.parent.repl_box.setObjectName("REPL_Box")
-            repl_layout = PyQt4.QtGui.QVBoxLayout()
+            repl_layout = data.QVBoxLayout()
             repl_layout.addWidget(self.parent.repl)
             repl_layout.addWidget(self.parent.repl_helper)
             #Set which REPL widget will be displayed
@@ -3214,7 +3189,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Check the windows size before displaying the overlay
             if (self.parent.width() < self.FUNCTION_WHEEL_BOUNDS[0] or 
                 self.parent.height() < self.FUNCTION_WHEEL_BOUNDS[1]):
-                new_size =  PyQt4.QtCore.QSize(
+                new_size =  data.PyQt.QtCore.QSize(
                                 self.FUNCTION_WHEEL_BOUNDS[0] + self.FUNCTION_WHEEL_BOUNDS[0]/5,
                                 self.FUNCTION_WHEEL_BOUNDS[1] + self.FUNCTION_WHEEL_BOUNDS[1]/5
                             )
@@ -3622,14 +3597,14 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             warning += "You better have a backup of the files if you are unsure,\n"
             warning += "because this action CANNOT be undone!\n"
             warning += "Do you want to continue?"
-            reply = PyQt4.QtGui.QMessageBox.warning(
+            reply = data.QMessageBoxwarning(
                         self.parent,
                         'REPLACING IN FILES', 
                         warning,
-                        PyQt4.QtGui.QMessageBox.Yes,
-                        PyQt4.QtGui.QMessageBox.No
+                        data.QMessageBox.Yes,
+                        data.QMessageBox.No
                     )
-            if reply == PyQt4.QtGui.QMessageBox.No:
+            if reply == data.QMessageBox.No:
                 return
             #Check if the search directory is none, then use a dialog window
             #to select the real search directory
@@ -3990,7 +3965,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
         
         def init_theme_indicator(self):
             """ Initialization of the theme indicator in the statusbar """
-            class ThemeIndicator(PyQt4.QtGui.QLabel):
+            class ThemeIndicator(data.QLabel):
                 def __init__(self, parent):
                     # Initialize superclass
                     super().__init__()
@@ -4000,7 +3975,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 def mouseReleaseEvent(self, event):
                     # Execute the superclass event method
                     super().mouseReleaseEvent(event)
-                    cursor = PyQt4.QtGui.QCursor.pos()
+                    cursor = data.PyQt.QtGui.QCursor.pos()
                     self.parent.theme_menu.popup(cursor)
             
             if data.theme == themes.Air:
@@ -4015,12 +3990,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             elif data.theme == themes.MC:
                 tooltip = "MC"
                 image = "tango_icons/theme-mc.png"
-            raw_picture = PyQt4.QtGui.QPixmap(
+            raw_picture = data.PyQt.QtGui.QPixmap(
                 os.path.join(
                     data.resources_directory, image
                 )
             )
-            picture = raw_picture.scaled(16, 16, PyQt4.QtCore.Qt.KeepAspectRatio)
+            picture = raw_picture.scaled(16, 16, data.PyQt.QtCore.Qt.KeepAspectRatio)
             self.theme_indicatore = ThemeIndicator(self)
             self.theme_indicatore.setPixmap(picture)
             self.theme_indicatore.setToolTip(tooltip)
@@ -4059,12 +4034,12 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 elif data.theme == themes.MC:
                     tooltip = "Midnight Commander"
                     image = "tango_icons/theme-mc.png"
-                raw_picture = PyQt4.QtGui.QPixmap(
+                raw_picture = data.PyQt.QtGui.QPixmap(
                     os.path.join(
                         data.resources_directory, image
                     )
                 )
-                picture = raw_picture.scaled(16, 16, PyQt4.QtCore.Qt.KeepAspectRatio)
+                picture = raw_picture.scaled(16, 16, data.PyQt.QtCore.Qt.KeepAspectRatio)
                 self.theme_indicatore.setPixmap(picture)
                 self.theme_indicatore.setToolTip(tooltip)
                 self.theme_indicatore.setStyleSheet(
@@ -4088,9 +4063,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                     message_type=data.MessageType.SUCCESS
                 )
                 
-            self.theme_menu = PyQt4.QtGui.QMenu()
+            self.theme_menu = data.QMenu()
             # Air
-            action_air = PyQt4.QtGui.QAction("Air", self.theme_menu)
+            action_air = data.QAction("Air", self.theme_menu)
             action_air.triggered.connect(
                 functools.partial(choose_theme, themes.Air)
             )
@@ -4098,7 +4073,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             action_air.setIcon(icon)
             self.theme_menu.addAction(action_air)
             # Earth
-            action_earth = PyQt4.QtGui.QAction("Earth", self.theme_menu)
+            action_earth = data.QAction("Earth", self.theme_menu)
             action_earth.triggered.connect(
                 functools.partial(choose_theme, themes.Earth)
             )
@@ -4106,7 +4081,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             action_earth.setIcon(icon)
             self.theme_menu.addAction(action_earth)
             # Water
-            action_water = PyQt4.QtGui.QAction("Water", self.theme_menu)
+            action_water = data.QAction("Water", self.theme_menu)
             action_water.triggered.connect(
                 functools.partial(choose_theme, themes.Water)
             )
@@ -4114,7 +4089,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             action_water.setIcon(icon)
             self.theme_menu.addAction(action_water)
             # Midnight Commander
-            action_mc = PyQt4.QtGui.QAction("MC", self.theme_menu)
+            action_mc = data.QAction("MC", self.theme_menu)
             action_mc.triggered.connect(
                 functools.partial(choose_theme, themes.MC)
             )
@@ -4159,42 +4134,42 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                       number for custom styling
                 """
                 parent.repl_messages_tab.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETFONT,
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETFONT,
                     lexer_number,
                     b'Ariel'
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETSIZE,
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETSIZE,
                     lexer_number,
                     10
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBOLD,
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBOLD,
                     lexer_number,
                     True
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETUNDERLINE,
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETUNDERLINE,
                     lexer_number,
                     False
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETFORE,
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETFORE,
                     lexer_number,
                     color
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK,
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK,
                     lexer_number,
                     data.theme.Paper.Default
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_STARTSTYLING,
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_STARTSTYLING,
                     start,
                     lexer_number
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_SETSTYLING,
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_SETSTYLING,
                     end - start,
                     lexer_number
                 )
@@ -4273,7 +4248,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Check if REPL messages tab exists
             if self.parent.repl_messages_tab != None:
                 self.parent.repl_messages_tab.setText("")
-                self.parent.repl_messages_tab.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STYLECLEARALL)
+                self.parent.repl_messages_tab.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STYLECLEARALL)
                 self.parent.repl_messages_tab.set_theme(data.theme)
                 #Bring the REPL tab to the front
                 self.parent.repl_messages_tab.parent.setCurrentWidget(self.parent.repl_messages_tab)
@@ -4431,7 +4406,7 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
             #Set the NODE document to be ReadOnly
             parent.node_tree_tab.setReadOnly(True)
             parent.node_tree_tab.setText("")
-            parent.node_tree_tab.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STYLECLEARALL)
+            parent.node_tree_tab.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STYLECLEARALL)
             parent.node_tree_tab.parentWidget().setCurrentWidget(parent.node_tree_tab)
             #Check if the custom editor is valid
             if isinstance(custom_editor, CustomEditor) == False:
@@ -4712,179 +4687,179 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
                 - parameter lexer_name: a string
             """
             set_lexer = set_lexer_func
-            lexers_menu = PyQt4.QtGui.QMenu(menu_name, menu_owner)
-            NONE_action = PyQt4.QtGui.QAction('No lexer', lexers_menu)
+            lexers_menu = data.QMenu(menu_name, menu_owner)
+            NONE_action = data.QAction('No lexer', lexers_menu)
             NONE_action.setIcon(helper_forms.set_icon('tango_icons/file.png'))
             NONE_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Text, 'Plain text')
             )
-            ADA_action = PyQt4.QtGui.QAction('Ada', lexers_menu)
+            ADA_action = data.QAction('Ada', lexers_menu)
             ADA_action.setIcon(helper_forms.set_icon('language_icons/logo_ada.png'))
             ADA_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Ada, 'Ada')
             )
-            BASH_action = PyQt4.QtGui.QAction('Bash', lexers_menu)
+            BASH_action = data.QAction('Bash', lexers_menu)
             BASH_action.setIcon(helper_forms.set_icon('language_icons/logo_bash.png'))
             BASH_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Bash, 'Bash')
             )
-            BATCH_action = PyQt4.QtGui.QAction('Batch', lexers_menu)
+            BATCH_action = data.QAction('Batch', lexers_menu)
             BATCH_action.setIcon(helper_forms.set_icon('language_icons/logo_batch.png'))
             BATCH_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Batch, 'Batch')
             )
-            CMAKE_action = PyQt4.QtGui.QAction('CMake', lexers_menu)
+            CMAKE_action = data.QAction('CMake', lexers_menu)
             CMAKE_action.setIcon(helper_forms.set_icon('language_icons/logo_cmake.png'))
             CMAKE_action.triggered.connect(
                 functools.partial(set_lexer, lexers.CMake, 'CMake')
             )
-            C_CPP_action = PyQt4.QtGui.QAction('C / C++', lexers_menu)
+            C_CPP_action = data.QAction('C / C++', lexers_menu)
             C_CPP_action.setIcon(helper_forms.set_icon('language_icons/logo_c_cpp.png'))
             C_CPP_action.triggered.connect(
                 functools.partial(set_lexer, lexers.CPP, 'C / C++')
             )
-            CSS_action = PyQt4.QtGui.QAction('CSS', lexers_menu)
+            CSS_action = data.QAction('CSS', lexers_menu)
             CSS_action.setIcon(helper_forms.set_icon('language_icons/logo_css.png'))
             CSS_action.triggered.connect(
                 functools.partial(set_lexer, lexers.CSS, 'CSS')
             )
-            D_action = PyQt4.QtGui.QAction('D', lexers_menu)
+            D_action = data.QAction('D', lexers_menu)
             D_action.setIcon(helper_forms.set_icon('language_icons/logo_d.png'))
             D_action.triggered.connect(
                 functools.partial(set_lexer, lexers.D, 'D')
             )
-            FORTRAN_action = PyQt4.QtGui.QAction('Fortran', lexers_menu)
+            FORTRAN_action = data.QAction('Fortran', lexers_menu)
             FORTRAN_action.setIcon(helper_forms.set_icon('language_icons/logo_fortran.png'))
             FORTRAN_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Fortran, 'Fortran')
             )
-            HTML_action = PyQt4.QtGui.QAction('HTML', lexers_menu)
+            HTML_action = data.QAction('HTML', lexers_menu)
             HTML_action.setIcon(helper_forms.set_icon('language_icons/logo_html.png'))
             HTML_action.triggered.connect(
                 functools.partial(set_lexer, lexers.HTML, 'HTML')
             )
-            LUA_action = PyQt4.QtGui.QAction('Lua', lexers_menu)
+            LUA_action = data.QAction('Lua', lexers_menu)
             LUA_action.setIcon(helper_forms.set_icon('language_icons/logo_lua.png'))
             LUA_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Lua, 'Lua')
             )
-            MAKEFILE_action = PyQt4.QtGui.QAction('MakeFile', lexers_menu)
+            MAKEFILE_action = data.QAction('MakeFile', lexers_menu)
             MAKEFILE_action.setIcon(helper_forms.set_icon('language_icons/logo_makefile.png'))
             MAKEFILE_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Makefile, 'MakeFile')
             )
-            MATLAB_action = PyQt4.QtGui.QAction('Matlab', lexers_menu)
+            MATLAB_action = data.QAction('Matlab', lexers_menu)
             MATLAB_action.setIcon(helper_forms.set_icon('language_icons/logo_matlab.png'))
             MATLAB_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Matlab, 'Matlab')
             )
-            NIM_action = PyQt4.QtGui.QAction('Nim', lexers_menu)
+            NIM_action = data.QAction('Nim', lexers_menu)
             NIM_action.setIcon(helper_forms.set_icon('language_icons/logo_nim.png'))
             NIM_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Nim, 'Nim')
             )
-            OBERON_action = PyQt4.QtGui.QAction('Oberon / Modula', lexers_menu)
+            OBERON_action = data.QAction('Oberon / Modula', lexers_menu)
             OBERON_action.setIcon(helper_forms.set_icon('language_icons/logo_oberon.png'))
             OBERON_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Oberon, 'Oberon / Modula')
             )
-            PASCAL_action = PyQt4.QtGui.QAction('Pascal', lexers_menu)
+            PASCAL_action = data.QAction('Pascal', lexers_menu)
             PASCAL_action.setIcon(helper_forms.set_icon('language_icons/logo_pascal.png'))
             PASCAL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Pascal, 'Pascal')
             )
-            PERL_action = PyQt4.QtGui.QAction('Perl', lexers_menu)
+            PERL_action = data.QAction('Perl', lexers_menu)
             PERL_action.setIcon(helper_forms.set_icon('language_icons/logo_perl.png'))
             PERL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Perl, 'Perl')
             )
-            PYTHON_action = PyQt4.QtGui.QAction('Python', lexers_menu)
+            PYTHON_action = data.QAction('Python', lexers_menu)
             PYTHON_action.setIcon(helper_forms.set_icon('language_icons/logo_python.png'))
             PYTHON_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Python, 'Python')
             )
-            RUBY_action = PyQt4.QtGui.QAction('Ruby', lexers_menu)
+            RUBY_action = data.QAction('Ruby', lexers_menu)
             RUBY_action.setIcon(helper_forms.set_icon('language_icons/logo_ruby.png'))
             RUBY_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Ruby, 'Ruby')
             )
-            ROUTEROS_action = PyQt4.QtGui.QAction('RouterOS', lexers_menu)
+            ROUTEROS_action = data.QAction('RouterOS', lexers_menu)
             ROUTEROS_action.setIcon(helper_forms.set_icon('language_icons/logo_routeros.png'))
             ROUTEROS_action.triggered.connect(
                 functools.partial(set_lexer, lexers.RouterOS, 'RouterOS')
             )
-            SQL_action = PyQt4.QtGui.QAction('SQL', lexers_menu)
+            SQL_action = data.QAction('SQL', lexers_menu)
             SQL_action.setIcon(helper_forms.set_icon('language_icons/logo_sql.png'))
             SQL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.SQL, 'SQL')
             )
-            TCL_action = PyQt4.QtGui.QAction('TCL', lexers_menu)
+            TCL_action = data.QAction('TCL', lexers_menu)
             TCL_action.setIcon(helper_forms.set_icon('language_icons/logo_tcl.png'))
             TCL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.TCL, 'TCL')
             )
-            TEX_action = PyQt4.QtGui.QAction('TeX', lexers_menu)
+            TEX_action = data.QAction('TeX', lexers_menu)
             TEX_action.setIcon(helper_forms.set_icon('language_icons/logo_tex.png'))
             TEX_action.triggered.connect(
                 functools.partial(set_lexer, lexers.TeX, 'TeX')
             )
-            VERILOG_action = PyQt4.QtGui.QAction('Verilog', lexers_menu)
+            VERILOG_action = data.QAction('Verilog', lexers_menu)
             VERILOG_action.setIcon(helper_forms.set_icon('language_icons/logo_verilog.png'))
             VERILOG_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Verilog, 'Verilog')
             )
-            VHDL_action = PyQt4.QtGui.QAction('VHDL', lexers_menu)
+            VHDL_action = data.QAction('VHDL', lexers_menu)
             VHDL_action.setIcon(helper_forms.set_icon('language_icons/logo_vhdl.png'))
             VHDL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.VHDL, 'VHDL')
             )
-            XML_action = PyQt4.QtGui.QAction('XML', lexers_menu)
+            XML_action = data.QAction('XML', lexers_menu)
             XML_action.setIcon(helper_forms.set_icon('language_icons/logo_xml.png'))
             XML_action.triggered.connect(
                 functools.partial(set_lexer, lexers.XML, 'XML')
             )
-            YAML_action = PyQt4.QtGui.QAction('YAML', lexers_menu)
+            YAML_action = data.QAction('YAML', lexers_menu)
             YAML_action.setIcon(helper_forms.set_icon('language_icons/logo_yaml.png'))
             YAML_action.triggered.connect(
                 functools.partial(set_lexer, lexers.YAML, 'YAML')
             )
             if data.compatibility_mode == False:
-                CoffeeScript_action = PyQt4.QtGui.QAction('CoffeeScript', lexers_menu)
+                CoffeeScript_action = data.QAction('CoffeeScript', lexers_menu)
                 CoffeeScript_action.setIcon(helper_forms.set_icon('language_icons/logo_coffeescript.png'))
                 CoffeeScript_action.triggered.connect(
                     functools.partial(set_lexer, lexers.CoffeeScript, 'CoffeeScript')
                 )
-            CSharp_action = PyQt4.QtGui.QAction('C#', lexers_menu)
+            CSharp_action = data.QAction('C#', lexers_menu)
             CSharp_action.setIcon(helper_forms.set_icon('language_icons/logo_csharp.png'))
             CSharp_action.triggered.connect(
                 functools.partial(set_lexer, lexers.CPP, 'C#')
             )
-            Java_action = PyQt4.QtGui.QAction('Java', lexers_menu)
+            Java_action = data.QAction('Java', lexers_menu)
             Java_action.setIcon(helper_forms.set_icon('language_icons/logo_java.png'))
             Java_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Java, 'Java')
             )
-            JavaScript_action = PyQt4.QtGui.QAction('JavaScript', lexers_menu)
+            JavaScript_action = data.QAction('JavaScript', lexers_menu)
             JavaScript_action.setIcon(helper_forms.set_icon('language_icons/logo_javascript.png'))
             JavaScript_action.triggered.connect(
                 functools.partial(set_lexer, lexers.JavaScript, 'JavaScript')
             )
-            Octave_action = PyQt4.QtGui.QAction('Octave', lexers_menu)
+            Octave_action = data.QAction('Octave', lexers_menu)
             Octave_action.setIcon(helper_forms.set_icon('language_icons/logo_octave.png'))
             Octave_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Octave, 'Octave')
             )
-            PostScript_action = PyQt4.QtGui.QAction('PostScript', lexers_menu)
+            PostScript_action = data.QAction('PostScript', lexers_menu)
             PostScript_action.setIcon(helper_forms.set_icon('language_icons/logo_postscript.png'))
             PostScript_action.triggered.connect(
                 functools.partial(set_lexer, lexers.PostScript, 'PostScript')
             )
-            Fortran77_action = PyQt4.QtGui.QAction('Fortran77', lexers_menu)
+            Fortran77_action = data.QAction('Fortran77', lexers_menu)
             Fortran77_action.setIcon(helper_forms.set_icon('language_icons/logo_fortran77.png'))
             Fortran77_action.triggered.connect(
                 functools.partial(set_lexer, lexers.Fortran77, 'Fortran77')
             )
-            IDL_action = PyQt4.QtGui.QAction('IDL', lexers_menu)
+            IDL_action = data.QAction('IDL', lexers_menu)
             IDL_action.setIcon(helper_forms.set_icon('language_icons/logo_idl.png'))
             IDL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.IDL, 'IDL')
@@ -5093,9 +5068,9 @@ class MainWindow(PyQt4.QtGui.QMainWindow):
 Subclassed QTabWidget that can hold all custom editor and other widgets
 -----------------------------
 """
-class BasicWidget(PyQt4.QtGui.QTabWidget):          
+class BasicWidget(data.QTabWidget):          
     """Basic widget used for holding QScintilla/QTextEdit objects"""
-    class CustomTabBar(PyQt4.QtGui.QTabBar):
+    class CustomTabBar(data.QTabBar):
         """Custom tab bar used to capture tab clicks, ..."""
         #Reference to the parent widget
         parent      = None
@@ -5115,26 +5090,26 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Execute the superclass event method
             super().mousePressEvent(event)
             event_button    = event.button()
-            key_modifiers   = PyQt4.QtGui.QApplication.keyboardModifiers()
+            key_modifiers   = data.QApplication.keyboardModifiers()
             #Tab Drag&Drop functionality
-            if event_button == PyQt4.QtCore.Qt.LeftButton:
-                if (key_modifiers == PyQt4.QtCore.Qt.ControlModifier or
-                    key_modifiers == PyQt4.QtCore.Qt.ShiftModifier):
+            if event_button == data.PyQt.QtCore.Qt.LeftButton:
+                if (key_modifiers == data.PyQt.QtCore.Qt.ControlModifier or
+                    key_modifiers == data.PyQt.QtCore.Qt.ShiftModifier):
                     tab_number = self.parent.tabBar().tabAt(event.pos())
                     if tab_number != -1:
-                        mime_data = PyQt4.QtCore.QMimeData()
+                        mime_data = data.PyQt.QtCore.QMimeData()
                         mime_data.setText("{:s} {:d}".format(self.parent.name, tab_number))
-                        drag = PyQt4.QtGui.QDrag(self.parent)
+                        drag = data.PyQt.QtGui.QDrag(self.parent)
                         drag.setMimeData(mime_data)
                         drag.setHotSpot(event.pos())
-                        drag.exec_(PyQt4.QtCore.Qt.CopyAction | PyQt4.QtCore.Qt.MoveAction)
+                        drag.exec_(data.PyQt.QtCore.Qt.CopyAction | data.PyQt.QtCore.Qt.MoveAction)
         
         def mouseReleaseEvent(self, event):
             #Execute the superclass event method
             super().mouseReleaseEvent(event)
             event_button = event.button()
             #Check for a right click
-            if event_button == PyQt4.QtCore.Qt.RightButton:
+            if event_button == data.PyQt.QtCore.Qt.RightButton:
                 #Create the popup tab context menu
                 menu = self.parent.TabMenu(
                             self, 
@@ -5144,12 +5119,12 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                             event.pos()
                         )
                 #Show the tab context menu
-                cursor = PyQt4.QtGui.QCursor.pos()
+                cursor = data.PyQt.QtGui.QCursor.pos()
                 menu.popup(cursor)
                 #Accept the event
                 event.accept()
     
-    class TabMenu(PyQt4.QtGui.QMenu):
+    class TabMenu(data.QMenu):
         """Custom menu that appears when right clicking a tab"""
         def __init__(self, parent, main_form, basic_widget, editor_widget, cursor_position):
             #Nested function for creating a move or copy action
@@ -5158,7 +5133,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                                         move=True, 
                                         focus_name=None):
                 window = main_form.get_window_by_name(window_name)
-                action = PyQt4.QtGui.QAction(action_name, self)
+                action = data.QAction(action_name, self)
                 if move == True:
                     func = window.move_editor_in
                     action_func =   functools.partial(
@@ -5214,7 +5189,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                         text_1_name, 
                         text_2_name
                     )
-                diff_action = PyQt4.QtGui.QAction(action_name, self)
+                diff_action = data.QAction(action_name, self)
                 if "main" in action_name.lower():
                     diff_action.setIcon(helper_forms.set_icon('tango_icons/compare-text-main.png'))
                 elif "upper" in action_name.lower():
@@ -5279,7 +5254,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                                 focus_name="lower"
                             )
             #Clear REPL MESSAGES tab action
-            clear_repl_action = PyQt4.QtGui.QAction("Clear messages", self)
+            clear_repl_action = data.QAction("Clear messages", self)
             clear_repl_action.setIcon(helper_forms.set_icon('tango_icons/edit-clear.png'))
             clear_repl_action.triggered.connect(main_form.display.repl_clear_tab)
             #Text difference actions
@@ -5302,9 +5277,12 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                                     editor_widget
                                 )
             #Update current working directory action
-            update_cwd_action = PyQt4.QtGui.QAction("Update CWD", self)
-            update_cwd_action.setIcon(helper_forms.set_icon('tango_icons/update-cwd.png'))
-            update_cwd_action.triggered.connect(update_cwd)
+            if hasattr(editor_widget, "save_name") == True:
+                update_cwd_action = data.QAction("Update CWD", self)
+                update_cwd_action.setIcon(helper_forms.set_icon('tango_icons/update-cwd.png'))
+                update_cwd_action.triggered.connect(update_cwd)
+                self.addAction(update_cwd_action)
+                self.addSeparator()
             #Nested function for adding diff actions
             def add_diff_actions():
                 #Diff to main window
@@ -5322,8 +5300,6 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Check which basic widget is the parent to the clicked tab
             if "main" in basic_widget_name:
                 #Add the actions to the menu
-                self.addAction(update_cwd_action)
-                self.addSeparator()
                 self.addAction(move_to_upper)
                 self.addAction(move_to_lower)
                 self.addSeparator()
@@ -5343,8 +5319,6 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                     add_diff_actions()
             elif "upper" in basic_widget_name:
                 #Add the actions to the menu
-                self.addAction(update_cwd_action)
-                self.addSeparator()
                 self.addAction(move_to_main)
                 self.addAction(move_to_lower)
                 self.addSeparator()
@@ -5364,8 +5338,6 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                     add_diff_actions()
             elif "lower" in basic_widget_name:
                 #Add the actions to the menu
-                self.addAction(update_cwd_action)
-                self.addSeparator()
                 self.addAction(move_to_main)
                 self.addAction(move_to_upper)
                 self.addSeparator()
@@ -5398,7 +5370,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
     #Custom tab bar
     custom_tab_bar          = None
     #Default font for textboxes
-    default_editor_font     = PyQt4.QtGui.QFont('Courier', 10)
+    default_editor_font     = data.PyQt.QtGui.QFont('Courier', 10)
     #Stored icon for the node tree tab
     node_tree_icon          = None
     #Stored icon for the repl messages tab
@@ -5465,8 +5437,8 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         super().event(event)
         #Only check indication if the current widget is not indicated
         if self.indicated == False:
-            if (event.type() == PyQt4.QtCore.QEvent.KeyPress or
-                event.type() == PyQt4.QtCore.QEvent.KeyRelease):
+            if (event.type() == data.PyQt.QtCore.QEvent.KeyPress or
+                event.type() == data.PyQt.QtCore.QEvent.KeyRelease):
                 #Check indication
                 self.parent.view.indication_check()
         #Indicate that the event was processed by returning True
@@ -5488,9 +5460,9 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             #Drag&drop widget event occured
             name, str_index = self.drag_text.split()
             index = int(str_index)
-            key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers() 
-            if (key_modifiers == PyQt4.QtCore.Qt.ControlModifier or
-                key_modifiers == PyQt4.QtCore.Qt.AltModifier):
+            key_modifiers = data.QApplication.keyboardModifiers() 
+            if (key_modifiers == data.PyQt.QtCore.Qt.ControlModifier or
+                key_modifiers == data.PyQt.QtCore.Qt.AltModifier):
                 self.copy_editor_in(self.drag_source, index)
                 data.print_log("Drag&Drop copied tab {:d} from the {:s} widget".format(index, name))
             else:
@@ -5537,19 +5509,23 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
 
     def wheelEvent(self, wheel_event):
         """QScintilla mouse wheel rotate event"""
-        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers() 
-        if wheel_event.delta() < 0:
+        key_modifiers = data.QApplication.keyboardModifiers()
+        if data.PYQT_MODE == 4:
+            delta = wheel_event.delta()
+        else:
+            delta = wheel_event.angleDelta().y()
+        if delta < 0:
             data.print_log("Mouse rotate down event")
-            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.zoom_out()
         else:
             data.print_log("Mouse rotate up event")
-            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.zoom_in()
         #Handle the event
-        if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+        if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
             #Accept the event, the event will not be propageted(sent forward) to the parent
             wheel_event.accept()
         else:
@@ -5623,11 +5599,11 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                 lexers_menu = self.parent.display.create_lexers_menu(
                     "Change lexer", self, set_lexer
                 )
-                cursor = PyQt4.QtGui.QCursor.pos()
+                cursor = data.PyQt.QtGui.QCursor.pos()
                 lexers_menu.popup(cursor)
-            button_show_lexers = PyQt4.QtGui.QToolButton(self)
+            button_show_lexers = data.QToolButton(self)
             button_show_lexers.setIcon(current_tab.current_icon)
-            button_show_lexers.setPopupMode(PyQt4.QtGui.QToolButton.InstantPopup)
+            button_show_lexers.setPopupMode(data.QToolButton.InstantPopup)
             button_show_lexers.setToolTip("Change the current lexer")
             button_show_lexers.clicked.connect(show_lexer_menu)
             button_show_lexers.show()
@@ -5640,9 +5616,9 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             if current_tab.name == "REPL MESSAGES":
                 def clear():
                     self.parent.display.repl_clear_tab()
-                button_clear_repl_messages = PyQt4.QtGui.QToolButton(self)
+                button_clear_repl_messages = data.QToolButton(self)
                 button_clear_repl_messages.setIcon(helper_forms.set_icon('tango_icons/edit-clear.png'))
-                button_clear_repl_messages.setPopupMode(PyQt4.QtGui.QToolButton.InstantPopup)
+                button_clear_repl_messages.setPopupMode(data.QToolButton.InstantPopup)
                 button_clear_repl_messages.setToolTip("Clear messages")
                 button_clear_repl_messages.clicked.connect(clear)
                 button_clear_repl_messages.show()
@@ -5667,14 +5643,14 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
                 #Display the close notification
                 close_message = "Document '" + self.tabText(emmited_tab_number)
                 close_message += "' has been modified!\nClose it anyway?"
-                reply = PyQt4.QtGui.QMessageBox.question(
-                            self, 
-                            'Closing Tab', 
-                            close_message,
-                            PyQt4.QtGui.QMessageBox.Yes,
-                            PyQt4.QtGui.QMessageBox.No
-                        )
-                if reply == PyQt4.QtGui.QMessageBox.Yes:
+                reply = data.QMessageBox.question(
+                    self, 
+                    'Closing Tab', 
+                    close_message,
+                    data.QMessageBox.Yes,
+                    data.QMessageBox.No
+                )
+                if reply == data.QMessageBox.Yes:
                     clear_document_bookmarks()
                     #Close tab anyway
                     self.removeTab(emmited_tab_number)
@@ -5787,7 +5763,7 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
             self.currentWidget().zoomTo(0)
             #Update the margin width
             self.editor_update_margin()
-        elif isinstance(self.currentWidget(), PyQt4.QtGui.QTextEdit):
+        elif isinstance(self.currentWidget(), data.QTextEdit):
             #Reset zoom
             self.currentWidget().setFont(self.default_editor_font)
     
@@ -5800,8 +5776,8 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
         new_scintilla_tab.parent    = self
         new_scintilla_tab.name      = name
         #Initialize the scrollbars
-        new_scintilla_tab.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
-        new_scintilla_tab.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETHSCROLLBAR, True)
+        new_scintilla_tab.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
+        new_scintilla_tab.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETHSCROLLBAR, True)
         #Hide the margin
         new_scintilla_tab.setMarginWidth(1, 0)
         #Disable drops
@@ -6014,13 +5990,13 @@ class BasicWidget(PyQt4.QtGui.QTabWidget):
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
 -----------------------------
 """ 
-class PlainEditor(PyQt4.Qsci.QsciScintilla):
+class PlainEditor(data.PyQt.Qsci.QsciScintilla):
     #Class variables
     name            = None
     parent          = None
     main_form       = None
     savable         = data.CanSave.NO
-    default_font    = PyQt4.QtGui.QFont('Courier', 10)
+    default_font    = data.PyQt.QtGui.QFont('Courier', 10)
     """Namespace references for grouping functionality"""
     hotspots    = None
     
@@ -6070,7 +6046,7 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
         self.setCursorPosition(line_number, 0)
         #Move the first displayed line to the top of the viewving area
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_GOTOLINE, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_GOTOLINE, 
             line_number
         )
     
@@ -6088,17 +6064,17 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
         self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
         self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            PyQt4.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            data.PyQt.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
             theme.Paper.Default
         )
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            PyQt4.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            data.PyQt.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
             theme.LineMargin.BackGround
         )
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
             theme.Cursor
         )
     
@@ -6119,11 +6095,11 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
             """Style the text from/to with a hotspot"""
             send_scintilla = self.parent.SendScintilla
             #Use the scintilla low level messaging system to set the hotspot
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETHOTSPOT, 2, True)
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETHOTSPOTACTIVEFORE, True, color)
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETHOTSPOTACTIVEUNDERLINE, True)
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STARTSTYLING, index_from, 2)
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETSTYLING, length, 2)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETHOTSPOT, 2, True)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETHOTSPOTACTIVEFORE, True, color)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETHOTSPOTACTIVEUNDERLINE, True)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STARTSTYLING, index_from, 2)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETSTYLING, length, 2)
 
 
 """
@@ -6131,7 +6107,7 @@ class PlainEditor(PyQt4.Qsci.QsciScintilla):
 Subclassed QScintilla widget used for editing
 -----------------------------
 """ 
-class CustomEditor(PyQt4.Qsci.QsciScintilla):
+class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     """
     QScintilla widget with added custom functions
     COMMENT:    Functions treat items as if the starting with index is 1 instead of 0!
@@ -6148,10 +6124,10 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     embedded                = False
     last_browsed_dir        = ""
     #Default fonts
-    default_font            = PyQt4.QtGui.QFont('Courier', 10)
+    default_font            = data.PyQt.QtGui.QFont('Courier', 10)
     default_comment_font    = b'Courier'
     #Brace matching color
-    brace_color             = PyQt4.QtGui.QColor(255, 153, 0)
+    brace_color             = data.PyQt.QtGui.QColor(255, 153, 0)
     #Current document lexer
     current_lexer           = None
     #Current document type, initialized to text
@@ -6485,14 +6461,14 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Set font family and size
         self.setFont(self.default_font)
         #Set the margin type (0 is by default line numbers, 1 is for non code folding symbols and 2 is for code folding)
-        self.setMarginType(0, PyQt4.Qsci.QsciScintilla.NumberMargin)
+        self.setMarginType(0, data.PyQt.Qsci.QsciScintilla.NumberMargin)
         #Set margin width and font
         self.setMarginWidth(0, "00")
         self.setMarginsFont(self.default_font)
         #Reset the modified status of the document
         self.setModified(False)
         #Set brace matching
-        self.setBraceMatching(PyQt4.Qsci.QsciScintilla.SloppyBraceMatch)
+        self.setBraceMatching(data.PyQt.Qsci.QsciScintilla.SloppyBraceMatch)
         self.setMatchedBraceBackgroundColor(self.brace_color)
         #Autoindentation enabled when using "Enter" to indent to the same level as the previous line
         self.setAutoIndent(True)
@@ -6600,7 +6576,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     
     def _init_bookmark_marker(self):
         """Initialize the marker for the bookmarks"""
-        image_scale_size = PyQt4.QtCore.QSize(16, 16)
+        image_scale_size = data.PyQt.QtCore.QSize(16, 16)
         bookmark_image  = helper_forms.set_pixmap('tango_icons/bookmark.png')
         bookmark_image  = bookmark_image.scaled(image_scale_size)
         self.bookmark_marker = self.markerDefine(bookmark_image, 1)
@@ -6636,14 +6612,14 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #the default indent/unindent functionality
         key = event.key()
 #        char = event.text()
-#        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers()
-        if key == PyQt4.QtCore.Qt.Key_Tab:
+#        key_modifiers = data.QApplication.keyboardModifiers()
+        if key == data.PyQt.QtCore.Qt.Key_Tab:
             self.custom_indent()
-        elif key == PyQt4.QtCore.Qt.Key_Backtab:
+        elif key == data.PyQt.QtCore.Qt.Key_Backtab:
             self.custom_unindent()
-        elif (key == PyQt4.QtCore.Qt.Key_Enter or
-              key == PyQt4.QtCore.Qt.Key_Return):
-            super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
+        elif (key == data.PyQt.QtCore.Qt.Key_Enter or
+              key == data.PyQt.QtCore.Qt.Key_Return):
+            super(data.PyQt.Qsci.QsciScintilla, self).keyPressEvent(event)
             #Check for autoindent character list
             if hasattr(self.current_lexer, "autoindent_characters"):
                 line_number = self.get_line_number()
@@ -6676,21 +6652,21 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                         )
         else:
             #Execute the superclass method first, the same trick as in __init__ !
-            super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
+            super(data.PyQt.Qsci.QsciScintilla, self).keyPressEvent(event)
             #Filter the event
             self._filter_keypress(event)
 
     def keyReleaseEvent(self, event):
         """QScintila KeyReleaseEvent, to catch which key was released"""
         #Execute the superclass method first, the same trick as in __init__ !
-        super(PyQt4.Qsci.QsciScintilla, self).keyReleaseEvent(event)
+        super(data.PyQt.Qsci.QsciScintilla, self).keyReleaseEvent(event)
         #Filter the event
         self._filter_keyrelease(event)
 
     def mousePressEvent(self, event):
         """Overloaded mouse click event"""
         #Execute the superclass method first, the same trick as in __init__ !
-        super(PyQt4.Qsci.QsciScintilla, self).mousePressEvent(event)
+        super(data.PyQt.Qsci.QsciScintilla, self).mousePressEvent(event)
         #Set focus to the clicked editor
         self.setFocus()
         #Set Save/SaveAs buttons in the menubar
@@ -6706,10 +6682,10 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
 
     def wheelEvent(self, event):
         """Mouse scroll event of the custom editor"""
-        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers()
-        if key_modifiers != PyQt4.QtCore.Qt.ControlModifier:
+        key_modifiers = data.QApplication.keyboardModifiers()
+        if key_modifiers != data.PyQt.QtCore.Qt.ControlModifier:
             #Execute the superclass method
-            super(PyQt4.Qsci.QsciScintilla, self).wheelEvent(event)
+            super(data.PyQt.Qsci.QsciScintilla, self).wheelEvent(event)
         else:
             #Ignore the event, it will be propageted up to the parent objects
             event.ignore()
@@ -6749,7 +6725,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     def set_first_visible_line(self, line_number):
         """Move the top of the viewing area to the selected line"""
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_SETFIRSTVISIBLELINE, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_SETFIRSTVISIBLELINE, 
             line_number
         )
 
@@ -6836,17 +6812,17 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
         self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            PyQt4.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            data.PyQt.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
             theme.Paper.Default
         )
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            PyQt4.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+            data.PyQt.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
             theme.LineMargin.BackGround
         )
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
             theme.Cursor
         )
     
@@ -7294,22 +7270,22 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     def text_to_list(self, input_text):
         """Split the input text into a list of lines according to the document EOL delimiter"""
         out_list = []
-        if self.eolMode() == PyQt4.Qsci.QsciScintilla.EolUnix:
+        if self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolUnix:
             out_list = input_text.split("\n")
-        elif self.eolMode() == PyQt4.Qsci.QsciScintilla.EolWindows:
+        elif self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolWindows:
             out_list = input_text.split("\r\n")
-        elif self.eolMode() == PyQt4.Qsci.QsciScintilla.EolMac:
+        elif self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolMac:
             out_list = input_text.split("\r")
         return out_list
     
     def list_to_text(self, line_list):
         """Convert a list of lines to one string according to the document EOL delimiter"""
         out_text = ""
-        if self.eolMode() == PyQt4.Qsci.QsciScintilla.EolUnix:
+        if self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolUnix:
             out_text = "\n".join(line_list)
-        elif self.eolMode() == PyQt4.Qsci.QsciScintilla.EolWindows:
+        elif self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolWindows:
             out_text = "\r\n".join(line_list)
-        elif self.eolMode() == PyQt4.Qsci.QsciScintilla.EolMac:
+        elif self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolMac:
             out_text = "\r".join(line_list)
         return out_text
 
@@ -7789,7 +7765,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         INFO:   This is done using the scintilla "INDICATORS" described in the official
                 scintilla API (http://www.scintilla.org/ScintillaDoc.html#Indicators)
         """
-        scintilla_command = PyQt4.Qsci.QsciScintillaBase.SCI_INDICATORFILLRANGE
+        scintilla_command = data.PyQt.Qsci.QsciScintillaBase.SCI_INDICATORFILLRANGE
         for highlight in highlight_list:
             start   = highlight[1]
             length  = highlight[3] - highlight[1]
@@ -7831,7 +7807,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                        fore_color):
         """Set the indicator settings"""
         self.indicatorDefine(
-            PyQt4.Qsci.QsciScintillaBase.INDIC_ROUNDBOX,
+            data.PyQt.Qsci.QsciScintillaBase.INDIC_ROUNDBOX,
             indicator
         )
         self.setIndicatorForegroundColor(
@@ -7839,7 +7815,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             indicator
         )
         self.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_SETINDICATORCURRENT, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_SETINDICATORCURRENT, 
             indicator
         )
 
@@ -7847,21 +7823,21 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         """Set the appearance of the highlight indicator (the default indicator is 0)"""
         self._set_indicator(
             self.HIGHLIGHT_INDICATOR, 
-            PyQt4.QtGui.QColor(0, 255, 0, 80)
+            data.PyQt.QtGui.QColor(0, 255, 0, 80)
         )
 
     def set_indicator_replace(self):
         """Set the appearance of the highlight indicator"""
         self._set_indicator(
             self.REPLACE_INDICATOR, 
-            PyQt4.QtGui.QColor(50, 180, 255, 80)
+            data.PyQt.QtGui.QColor(50, 180, 255, 80)
         )
 
     def set_indicator_find(self):
         """Set the appearance of the highlight indicator"""
         self._set_indicator(
             self.FIND_INDICATOR, 
-            PyQt4.QtGui.QColor(255, 180, 50, 100)
+            data.PyQt.QtGui.QColor(255, 180, 50, 100)
         )
 
 
@@ -7886,7 +7862,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         """Save a document to a file"""
         if self.save_name == "" or saveas != False:
             #Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QfileDialog
-            file_dialog         = PyQt4.QtGui.QFileDialog
+            file_dialog         = data.QFileDialog
             #Check if the custom editors last browsed dir was previously set
             if self.last_browsed_dir == "" and last_dir != None:
                 self.last_browsed_dir = last_dir
@@ -8080,9 +8056,9 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Change the font style of comments so that they are the same as the default scintilla text
         #This is done using the low-level API function "SendScintilla" that is documented here: http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciScintillaBase.html
         #With it you can invoke C functions documented here: http://www.scintilla.org/ScintillaDoc.html
-        self.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETFONT, 1, self.default_comment_font)
+        self.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETFONT, 1, self.default_comment_font)
         #Enable code folding for the file type
-        self.setFolding(PyQt4.Qsci.QsciScintilla.PlainFoldStyle)
+        self.setFolding(data.PyQt.Qsci.QsciScintilla.PlainFoldStyle)
         #Set all fonts in the current lexer to the default style
         #and set the keyword styles to bold
         if (isinstance(lexer, lexers.Ada) or
@@ -8097,7 +8073,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
 
     def clear_editor(self):
         """Clear the text from the scintilla document"""
-        self.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_CLEARALL)
+        self.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_CLEARALL)
     
     def tabs_to_spaces(self):
         """Convert all tab(\t) characters to spaces"""
@@ -8123,17 +8099,17 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
     def edge_marker_show(self):
         """Show the marker at the specified column number"""
         #Set the marker color to blue
-        marker_color        = PyQt4.QtGui.QColor(180, 180, 180, alpha=255)
+        marker_color = data.PyQt.QtGui.QColor(180, 180, 180, alpha=255)
         #Set the column number where the marker will be shown
-        marker_column   = data.EDGE_MARKER_COLUMN 
+        marker_column = data.EDGE_MARKER_COLUMN 
         #Set the marker options
         self.setEdgeColor(marker_color)
         self.setEdgeColumn(marker_column)
-        self.setEdgeMode(PyQt4.Qsci.QsciScintilla.EdgeLine)
+        self.setEdgeMode(data.PyQt.Qsci.QsciScintilla.EdgeLine)
 
     def edge_marker_hide(self):
         """Hide the column marker"""
-        self.setEdgeMode(PyQt4.Qsci.QsciScintilla.EdgeNone)
+        self.setEdgeMode(data.PyQt.Qsci.QsciScintilla.EdgeNone)
     
     def edge_marker_toggle(self):
         """Toggle edge marker display"""
@@ -8156,12 +8132,14 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             self.main_form.view.set_log_window(False)
             #Display the close notification
             reload_message = "Document '" + self.name+ "' has been modified!\nReload it from disk anyway?"
-            reply = PyQt4.QtGui.QMessageBox.question(   self, 
-                                                                        'Reloding Tab', 
-                                                                        reload_message,
-                                                                        PyQt4.QtGui.QMessageBox.Yes,
-                                                                        PyQt4.QtGui.QMessageBox.No)
-            if reply == PyQt4.QtGui.QMessageBox.No:
+            reply = data.QMessageBox.question(
+                self, 
+                'Reloding Tab', 
+                reload_message,
+                data.QMessageBox.Yes,
+                data.QMessageBox.No
+            )
+            if reply == data.QMessageBox.No:
                 #Cancel tab file reloading
                 return
         #Check if the name of the document is valid
@@ -8191,31 +8169,31 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         """ 
         Toggle word wrap on/off.
         Wrap modes:
-            PyQt4.Qsci.QsciScintilla.WrapNone - Lines are not wrapped.
-            PyQt4.Qsci.QsciScintilla.WrapWord - Lines are wrapped at word boundaries.
-            PyQt4.Qsci.QsciScintilla.WrapCharacter - Lines are wrapped at character boundaries.
-            PyQt4.Qsci.QsciScintilla.WrapWhitespace - Lines are wrapped at whitespace boundaries. 
+            data.PyQt.Qsci.QsciScintilla.WrapNone - Lines are not wrapped.
+            data.PyQt.Qsci.QsciScintilla.WrapWord - Lines are wrapped at word boundaries.
+            data.PyQt.Qsci.QsciScintilla.WrapCharacter - Lines are wrapped at character boundaries.
+            data.PyQt.Qsci.QsciScintilla.WrapWhitespace - Lines are wrapped at whitespace boundaries. 
         Wrap visual flags:
-            PyQt4.Qsci.QsciScintilla.WrapFlagNone - No wrap flag is displayed.
-            PyQt4.Qsci.QsciScintilla.WrapFlagByText - A wrap flag is displayed by the text.
-            PyQt4.Qsci.QsciScintilla.WrapFlagByBorder - A wrap flag is displayed by the border.
-            PyQt4.Qsci.QsciScintilla.WrapFlagInMargin - A wrap flag is displayed in the line number margin. 
+            data.PyQt.Qsci.QsciScintilla.WrapFlagNone - No wrap flag is displayed.
+            data.PyQt.Qsci.QsciScintilla.WrapFlagByText - A wrap flag is displayed by the text.
+            data.PyQt.Qsci.QsciScintilla.WrapFlagByBorder - A wrap flag is displayed by the border.
+            data.PyQt.Qsci.QsciScintilla.WrapFlagInMargin - A wrap flag is displayed in the line number margin. 
         Wrap indentation:
-            PyQt4.Qsci.QsciScintilla.WrapIndentFixed - Wrapped sub-lines are indented by the amount set by setWrapVisualFlags().
-            PyQt4.Qsci.QsciScintilla.WrapIndentSame - Wrapped sub-lines are indented by the same amount as the first sub-line.
-            PyQt4.Qsci.QsciScintilla.WrapIndentIndented - Wrapped sub-lines are indented by the same amount as the first sub-line plus one more level of indentation. 
+            data.PyQt.Qsci.QsciScintilla.WrapIndentFixed - Wrapped sub-lines are indented by the amount set by setWrapVisualFlags().
+            data.PyQt.Qsci.QsciScintilla.WrapIndentSame - Wrapped sub-lines are indented by the same amount as the first sub-line.
+            data.PyQt.Qsci.QsciScintilla.WrapIndentIndented - Wrapped sub-lines are indented by the same amount as the first sub-line plus one more level of indentation. 
         """
-        if self.wrapMode() == PyQt4.Qsci.QsciScintilla.WrapNone:
-            self.setWrapMode(PyQt4.Qsci.QsciScintilla.WrapWord)
-            self.setWrapVisualFlags(PyQt4.Qsci.QsciScintilla.WrapFlagByText)
-            self.setWrapIndentMode(PyQt4.Qsci.QsciScintilla.WrapIndentSame)
+        if self.wrapMode() == data.PyQt.Qsci.QsciScintilla.WrapNone:
+            self.setWrapMode(data.PyQt.Qsci.QsciScintilla.WrapWord)
+            self.setWrapVisualFlags(data.PyQt.Qsci.QsciScintilla.WrapFlagByText)
+            self.setWrapIndentMode(data.PyQt.Qsci.QsciScintilla.WrapIndentSame)
             self.main_form.display.repl_display_message(
                 "Line wrapping ON", 
                 message_type=data.MessageType.WARNING
             )
         else:
-            self.setWrapMode(PyQt4.Qsci.QsciScintilla.WrapNone)
-            self.setWrapVisualFlags(PyQt4.Qsci.QsciScintilla.WrapFlagNone)
+            self.setWrapMode(data.PyQt.Qsci.QsciScintilla.WrapNone)
+            self.setWrapVisualFlags(data.PyQt.Qsci.QsciScintilla.WrapFlagNone)
             self.main_form.display.repl_display_message(
                 "Line wrapping OFF", 
                 message_type=data.MessageType.WARNING
@@ -8249,13 +8227,13 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         #Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         #Set the source from where the autocompletions will be fetched
-        self.setAutoCompletionSource(PyQt4.Qsci.QsciScintilla.AcsDocument)
+        self.setAutoCompletionSource(data.PyQt.Qsci.QsciScintilla.AcsDocument)
         #Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
     
     def disable_autocompletions(self):
         """Disable the CustomEditor autocompletions"""
-        self.setAutoCompletionSource(PyQt4.Qsci.QsciScintilla.AcsNone)
+        self.setAutoCompletionSource(data.PyQt.Qsci.QsciScintilla.AcsNone)
     
     def toggle_autocompletions(self):
         """Enable/disable autocompletions for the CustomEditor"""
@@ -8265,7 +8243,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         else:
             document_name = os.path.basename(self.save_name)
         #Check the autocompletion source
-        if self.autoCompletionSource() == PyQt4.Qsci.QsciScintilla.AcsDocument:
+        if self.autoCompletionSource() == data.PyQt.Qsci.QsciScintilla.AcsDocument:
             self.disable_autocompletions()
             message = "Autocompletions DISABLED in {:s}".format(document_name)
             self.main_form.display.repl_display_message(
@@ -8299,11 +8277,11 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             """Style the text from/to with a hotspot"""
             send_scintilla = self.parent.SendScintilla
             #Use the scintilla low level messaging system to set the hotspot
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETHOTSPOT, 2, True)
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETHOTSPOTACTIVEFORE, True, color)
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETHOTSPOTACTIVEUNDERLINE, True)
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_STARTSTYLING, index_from, 2)
-            send_scintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETSTYLING, length, 2)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETHOTSPOT, 2, True)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETHOTSPOTACTIVEFORE, True, color)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETHOTSPOTACTIVEUNDERLINE, True)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STARTSTYLING, index_from, 2)
+            send_scintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETSTYLING, length, 2)
     
     class Bookmarks:
         """
@@ -8358,113 +8336,113 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
         parent = None
         #GNU/Linux and Windows bindings copied from Scintila source 'KeyMap.cxx'
         bindings = {
-            "Down" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEDOWN,
-            "Down+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEDOWNEXTEND,
-            "Down+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_LINESCROLLDOWN,
-            "Down+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEDOWNRECTEXTEND,
-            "Up" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEUP,
-            "Up+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEUPEXTEND,
-            "Up+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_LINESCROLLUP,
-            "Up+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEUPRECTEXTEND,
-            "[+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_PARAUP,
-            "[+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PARAUPEXTEND,
-            "]+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_PARADOWN,
-            "]+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PARADOWNEXTEND,
-            "Left" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARLEFT,
-            "Left+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARLEFTEXTEND,
-            "Left+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDLEFT,
-            "Left+Shift+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDLEFTEXTEND,
-            "Left+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARLEFTRECTEXTEND,
-            "Right" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARRIGHT,
-            "Right+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARRIGHTEXTEND,
-            "Right+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDRIGHT,
-            "Right+Shift+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDRIGHTEXTEND,
-            "Right+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CHARRIGHTRECTEXTEND,
-            "/+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDPARTLEFT,
-            "/+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDPARTLEFTEXTEND,
-            "\\+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDPARTRIGHT,
-            "\\+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_WORDPARTRIGHTEXTEND,
-            "Home" : PyQt4.Qsci.QsciScintillaBase.SCI_VCHOME,
-            "Home+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_VCHOMEEXTEND,
-            data.go_to_start_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTSTART,
-            data.select_to_start_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
-            "Home+Alt" : PyQt4.Qsci.QsciScintillaBase.SCI_HOMEDISPLAY,
-            "Home+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_VCHOMERECTEXTEND,
-            "End" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEEND,
-            "End+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEENDEXTEND,
-            data.go_to_end_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTEND,
-            data.select_to_end_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
-            "End+Alt" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEENDDISPLAY,
-            "End+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_LINEENDRECTEXTEND,
-            data.scroll_up_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEUP,
-            data.select_page_up_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEUPEXTEND,
-            "PageUp+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEUPRECTEXTEND,
-            data.scroll_down_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEDOWN,
-            data.select_page_down_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
-            "PageDown+Alt+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PAGEDOWNRECTEXTEND,
-            "Delete" : PyQt4.Qsci.QsciScintillaBase.SCI_CLEAR,
-            "Delete+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_CUT,
-            data.delete_end_of_word_keys: PyQt4.Qsci.QsciScintillaBase.SCI_DELWORDRIGHT,
-            data.delete_end_of_line_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DELLINERIGHT,
-            "Insert" : PyQt4.Qsci.QsciScintillaBase.SCI_EDITTOGGLEOVERTYPE,
-            "Insert+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_PASTE,
-            "Insert+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_COPY,
-            "Escape" : PyQt4.Qsci.QsciScintillaBase.SCI_CANCEL,
-            "Backspace" : PyQt4.Qsci.QsciScintillaBase.SCI_DELETEBACK,
-            "Backspace+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_DELETEBACK,
-            data.delete_start_of_word_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DELWORDLEFT,
-            "Backspace+Alt" : PyQt4.Qsci.QsciScintillaBase.SCI_UNDO,
-            data.delete_start_of_line_keys : PyQt4.Qsci.QsciScintillaBase.SCI_DELLINELEFT,
-            data.undo_keys : PyQt4.Qsci.QsciScintillaBase.SCI_UNDO,
-            data.redo_keys : PyQt4.Qsci.QsciScintillaBase.SCI_REDO,
-            data.cut_keys : PyQt4.Qsci.QsciScintillaBase.SCI_CUT,
-            data.copy_keys : PyQt4.Qsci.QsciScintillaBase.SCI_COPY,
-            data.paste_keys : PyQt4.Qsci.QsciScintillaBase.SCI_PASTE,
-            data.select_all_keys : PyQt4.Qsci.QsciScintillaBase.SCI_SELECTALL,
-            data.indent_keys : PyQt4.Qsci.QsciScintillaBase.SCI_TAB,
-            data.unindent_keys : PyQt4.Qsci.QsciScintillaBase.SCI_BACKTAB,
-            "Return" : PyQt4.Qsci.QsciScintillaBase.SCI_NEWLINE,
-            "Return+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_NEWLINE,
-            "Add+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_ZOOMIN,
-            "Subtract+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_ZOOMOUT,
-            "Divide+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_SETZOOM,
-            data.line_cut_keys : PyQt4.Qsci.QsciScintillaBase.SCI_LINECUT,
-            data.line_delete_keys : PyQt4.Qsci.QsciScintillaBase.SCI_LINEDELETE,
-            data.line_copy_keys : PyQt4.Qsci.QsciScintillaBase.SCI_LINECOPY,
-            data.line_transpose_keys : PyQt4.Qsci.QsciScintillaBase.SCI_LINETRANSPOSE,
-            data.line_selection_duplicate_keys : PyQt4.Qsci.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
-            "U+Ctrl" : PyQt4.Qsci.QsciScintillaBase.SCI_LOWERCASE,
-            "U+Ctrl+Shift" : PyQt4.Qsci.QsciScintillaBase.SCI_UPPERCASE,
+            "Down" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDOWN,
+            "Down+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDOWNEXTEND,
+            "Down+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINESCROLLDOWN,
+            "Down+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDOWNRECTEXTEND,
+            "Up" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEUP,
+            "Up+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEUPEXTEND,
+            "Up+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINESCROLLUP,
+            "Up+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEUPRECTEXTEND,
+            "[+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_PARAUP,
+            "[+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PARAUPEXTEND,
+            "]+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_PARADOWN,
+            "]+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PARADOWNEXTEND,
+            "Left" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARLEFT,
+            "Left+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARLEFTEXTEND,
+            "Left+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDLEFT,
+            "Left+Shift+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDLEFTEXTEND,
+            "Left+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARLEFTRECTEXTEND,
+            "Right" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARRIGHT,
+            "Right+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARRIGHTEXTEND,
+            "Right+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDRIGHT,
+            "Right+Shift+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDRIGHTEXTEND,
+            "Right+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARRIGHTRECTEXTEND,
+            "/+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDPARTLEFT,
+            "/+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDPARTLEFTEXTEND,
+            "\\+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDPARTRIGHT,
+            "\\+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDPARTRIGHTEXTEND,
+            "Home" : data.PyQt.Qsci.QsciScintillaBase.SCI_VCHOME,
+            "Home+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_VCHOMEEXTEND,
+            data.go_to_start_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTART,
+            data.select_to_start_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
+            "Home+Alt" : data.PyQt.Qsci.QsciScintillaBase.SCI_HOMEDISPLAY,
+            "Home+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_VCHOMERECTEXTEND,
+            "End" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEEND,
+            "End+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEENDEXTEND,
+            data.go_to_end_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTEND,
+            data.select_to_end_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
+            "End+Alt" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEENDDISPLAY,
+            "End+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEENDRECTEXTEND,
+            data.scroll_up_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUP,
+            data.select_page_up_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUPEXTEND,
+            "PageUp+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUPRECTEXTEND,
+            data.scroll_down_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWN,
+            data.select_page_down_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
+            "PageDown+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWNRECTEXTEND,
+            "Delete" : data.PyQt.Qsci.QsciScintillaBase.SCI_CLEAR,
+            "Delete+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CUT,
+            data.delete_end_of_word_keys: data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDRIGHT,
+            data.delete_end_of_line_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINERIGHT,
+            "Insert" : data.PyQt.Qsci.QsciScintillaBase.SCI_EDITTOGGLEOVERTYPE,
+            "Insert+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PASTE,
+            "Insert+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_COPY,
+            "Escape" : data.PyQt.Qsci.QsciScintillaBase.SCI_CANCEL,
+            "Backspace" : data.PyQt.Qsci.QsciScintillaBase.SCI_DELETEBACK,
+            "Backspace+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_DELETEBACK,
+            data.delete_start_of_word_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDLEFT,
+            "Backspace+Alt" : data.PyQt.Qsci.QsciScintillaBase.SCI_UNDO,
+            data.delete_start_of_line_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINELEFT,
+            data.undo_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_UNDO,
+            data.redo_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_REDO,
+            data.cut_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_CUT,
+            data.copy_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_COPY,
+            data.paste_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PASTE,
+            data.select_all_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_SELECTALL,
+            data.indent_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_TAB,
+            data.unindent_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_BACKTAB,
+            "Return" : data.PyQt.Qsci.QsciScintillaBase.SCI_NEWLINE,
+            "Return+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_NEWLINE,
+            "Add+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_ZOOMIN,
+            "Subtract+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_ZOOMOUT,
+            "Divide+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_SETZOOM,
+            data.line_cut_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_LINECUT,
+            data.line_delete_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDELETE,
+            data.line_copy_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_LINECOPY,
+            data.line_transpose_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_LINETRANSPOSE,
+            data.line_selection_duplicate_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
+            "U+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_LOWERCASE,
+            "U+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_UPPERCASE,
         }
         scintilla_keys = {
-            "down" : PyQt4.Qsci.QsciScintillaBase.SCK_DOWN,
-            "up" : PyQt4.Qsci.QsciScintillaBase.SCK_UP,
-            "left" : PyQt4.Qsci.QsciScintillaBase.SCK_LEFT,
-            "right" : PyQt4.Qsci.QsciScintillaBase.SCK_RIGHT,
-            "home" : PyQt4.Qsci.QsciScintillaBase.SCK_HOME,
-            "end" : PyQt4.Qsci.QsciScintillaBase.SCK_END,
-            "pageup" : PyQt4.Qsci.QsciScintillaBase.SCK_PRIOR,
-            "pagedown" : PyQt4.Qsci.QsciScintillaBase.SCK_NEXT,
-            "delete" : PyQt4.Qsci.QsciScintillaBase.SCK_DELETE,
-            "insert" : PyQt4.Qsci.QsciScintillaBase.SCK_INSERT,
-            "escape" : PyQt4.Qsci.QsciScintillaBase.SCK_ESCAPE,
-            "backspace" : PyQt4.Qsci.QsciScintillaBase.SCK_BACK,
-            "tab" : PyQt4.Qsci.QsciScintillaBase.SCK_TAB,
-            "return" : PyQt4.Qsci.QsciScintillaBase.SCK_RETURN,
-            "add" : PyQt4.Qsci.QsciScintillaBase.SCK_ADD,
-            "subtract" : PyQt4.Qsci.QsciScintillaBase.SCK_SUBTRACT,
-            "divide" : PyQt4.Qsci.QsciScintillaBase.SCK_DIVIDE,
-            "win" : PyQt4.Qsci.QsciScintillaBase.SCK_WIN,
-            "rwin" : PyQt4.Qsci.QsciScintillaBase.SCK_RWIN,
-            "menu" : PyQt4.Qsci.QsciScintillaBase.SCK_MENU,
+            "down" : data.PyQt.Qsci.QsciScintillaBase.SCK_DOWN,
+            "up" : data.PyQt.Qsci.QsciScintillaBase.SCK_UP,
+            "left" : data.PyQt.Qsci.QsciScintillaBase.SCK_LEFT,
+            "right" : data.PyQt.Qsci.QsciScintillaBase.SCK_RIGHT,
+            "home" : data.PyQt.Qsci.QsciScintillaBase.SCK_HOME,
+            "end" : data.PyQt.Qsci.QsciScintillaBase.SCK_END,
+            "pageup" : data.PyQt.Qsci.QsciScintillaBase.SCK_PRIOR,
+            "pagedown" : data.PyQt.Qsci.QsciScintillaBase.SCK_NEXT,
+            "delete" : data.PyQt.Qsci.QsciScintillaBase.SCK_DELETE,
+            "insert" : data.PyQt.Qsci.QsciScintillaBase.SCK_INSERT,
+            "escape" : data.PyQt.Qsci.QsciScintillaBase.SCK_ESCAPE,
+            "backspace" : data.PyQt.Qsci.QsciScintillaBase.SCK_BACK,
+            "tab" : data.PyQt.Qsci.QsciScintillaBase.SCK_TAB,
+            "return" : data.PyQt.Qsci.QsciScintillaBase.SCK_RETURN,
+            "add" : data.PyQt.Qsci.QsciScintillaBase.SCK_ADD,
+            "subtract" : data.PyQt.Qsci.QsciScintillaBase.SCK_SUBTRACT,
+            "divide" : data.PyQt.Qsci.QsciScintillaBase.SCK_DIVIDE,
+            "win" : data.PyQt.Qsci.QsciScintillaBase.SCK_WIN,
+            "rwin" : data.PyQt.Qsci.QsciScintillaBase.SCK_RWIN,
+            "menu" : data.PyQt.Qsci.QsciScintillaBase.SCK_MENU,
         }
         valid_modifiers = [
-            PyQt4.Qsci.QsciScintillaBase.SCMOD_NORM, 
-            PyQt4.Qsci.QsciScintillaBase.SCMOD_SHIFT, 
-            PyQt4.Qsci.QsciScintillaBase.SCMOD_CTRL, 
-            PyQt4.Qsci.QsciScintillaBase.SCMOD_ALT, 
-            PyQt4.Qsci.QsciScintillaBase.SCMOD_SUPER, 
-            PyQt4.Qsci.QsciScintillaBase.SCMOD_META
+            data.PyQt.Qsci.QsciScintillaBase.SCMOD_NORM, 
+            data.PyQt.Qsci.QsciScintillaBase.SCMOD_SHIFT, 
+            data.PyQt.Qsci.QsciScintillaBase.SCMOD_CTRL, 
+            data.PyQt.Qsci.QsciScintillaBase.SCMOD_ALT, 
+            data.PyQt.Qsci.QsciScintillaBase.SCMOD_SUPER, 
+            data.PyQt.Qsci.QsciScintillaBase.SCMOD_META
         ]
         
         def __init__(self, parent):
@@ -8490,16 +8468,16 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             modifiers = []
             key_combination = 0
             if "ctrl" in split_keys:
-                modifiers.append(PyQt4.Qsci.QsciScintillaBase.SCMOD_CTRL)
+                modifiers.append(data.PyQt.Qsci.QsciScintillaBase.SCMOD_CTRL)
                 split_keys.remove("ctrl")
             if "alt" in split_keys:
-                modifiers.append(PyQt4.Qsci.QsciScintillaBase.SCMOD_ALT)
+                modifiers.append(data.PyQt.Qsci.QsciScintillaBase.SCMOD_ALT)
                 split_keys.remove("alt")
             if "shift" in split_keys:
-                modifiers.append(PyQt4.Qsci.QsciScintillaBase.SCMOD_SHIFT)
+                modifiers.append(data.PyQt.Qsci.QsciScintillaBase.SCMOD_SHIFT)
                 split_keys.remove("shift")
             if "meta" in split_keys:
-                modifiers.append(PyQt4.Qsci.QsciScintillaBase.SCMOD_META)
+                modifiers.append(data.PyQt.Qsci.QsciScintillaBase.SCMOD_META)
                 split_keys.remove("meta")
             base_key = split_keys[0]
             if len(split_keys) == 0:
@@ -8542,7 +8520,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             Clear all mappings from the internal Scintilla mapping table
             """
             self.parent.SendScintilla(
-                PyQt4.Qsci.QsciScintillaBase.SCI_CLEARALLCMDKEYS
+                data.PyQt.Qsci.QsciScintillaBase.SCI_CLEARALLCMDKEYS
             )
         
         def clear_key_combination(self, key, modifier=None):
@@ -8550,8 +8528,8 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
             Clear the key combination from the internal Scintilla Mapping
             Raw example of clearing the CTRL+X (Cut text function) combination:
                 cmain.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_CLEARCMDKEY, 
-                    ord('X') + (PyQt4.Qsci.QsciScintillaBase.SCMOD_CTRL << 16)
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_CLEARCMDKEY, 
+                    ord('X') + (data.PyQt.Qsci.QsciScintillaBase.SCMOD_CTRL << 16)
                 )
             """
             try:
@@ -8563,7 +8541,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                 )
                 return
             self.parent.SendScintilla(
-                PyQt4.Qsci.QsciScintillaBase.SCI_CLEARCMDKEY, 
+                data.PyQt.Qsci.QsciScintillaBase.SCI_CLEARCMDKEY, 
                 key_combination
             )
         
@@ -8576,9 +8554,9 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                 modifier - Ctrl, Alt, ...
             Raw example of assigning CTRL+D to the Cut function:
                 cmain.SendScintilla(
-                    PyQt4.Qsci.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
-                    ord('D') + (PyQt4.Qsci.QsciScintillaBase.SCMOD_CTRL << 16),
-                    PyQt4.Qsci.QsciScintillaBase.SCI_CUT
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
+                    ord('D') + (data.PyQt.Qsci.QsciScintillaBase.SCMOD_CTRL << 16),
+                    data.PyQt.Qsci.QsciScintillaBase.SCI_CUT
                 )
             """
             try:
@@ -8590,7 +8568,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
                 )
                 return
             self.parent.SendScintilla(
-                PyQt4.Qsci.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
+                data.PyQt.Qsci.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
                 key_combination,
                 command
             )
@@ -8602,7 +8580,7 @@ class CustomEditor(PyQt4.Qsci.QsciScintilla):
 Python REPL widget
 -----------------------------
 """
-class ReplLineEdit(PyQt4.QtGui.QLineEdit):
+class ReplLineEdit(data.QLineEdit):
     """Custom QLineEdit used for the REPL functionality"""
     #Class variables  (class variables >> this means that these variables are shared accross instances of this class, until you assign a new value to them, then they become instance variables)
     parent                          = None          #Main window reference
@@ -8683,8 +8661,8 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
         elif pressed_key == 16777219:
             #A new character has been typed, reset the input buffer counter
             self._input_buffer["count"] = 0
-        elif (pressed_key == PyQt4.QtCore.Qt.Key_Enter or
-                pressed_key == PyQt4.QtCore.Qt.Key_Return):
+        elif (pressed_key == data.PyQt.QtCore.Qt.Key_Enter or
+                pressed_key == data.PyQt.QtCore.Qt.Key_Return):
             if self.selectedText() != "":
                 self.setCursorPosition(len(self.text()))
             else:
@@ -8908,10 +8886,10 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
     """
     def event(self, event):
         """Rereferenced/overloaded main QWidget event, that is executed before all other events of the widget"""
-        if (event.type() == PyQt4.QtCore.QEvent.KeyPress) and (event.key() == PyQt4.QtCore.Qt.Key_Tab):
+        if (event.type() == data.PyQt.QtCore.QEvent.KeyPress) and (event.key() == data.PyQt.QtCore.Qt.Key_Tab):
             self._cycle_autocompletion()
             return True
-        return PyQt4.QtGui.QLineEdit.event(self, event)
+        return data.QLineEdit.event(self, event)
 
     def _keypress_decorator(func):
         """A decorator for the QScintila KeypressEvent, to catch which key was pressed"""
@@ -8924,7 +8902,7 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
     def keyPressEvent(self,  event):
         """QScintila keyPressEvent, to catch which key was pressed"""
         #Return the key event
-        return PyQt4.QtGui.QLineEdit.keyPressEvent(self, event)
+        return data.QLineEdit.keyPressEvent(self, event)
 
     def focusInEvent(self, event):
         """Event that fires when the REPL gets focus"""
@@ -8943,7 +8921,7 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
         #Ignore the event
         event.ignore()
         #Return the focus event
-        return PyQt4.QtGui.QLineEdit.focusInEvent(self, event)
+        return data.QLineEdit.focusInEvent(self, event)
     
     def setFocus(self):
         """Overridden focus event"""
@@ -8959,23 +8937,27 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
         #Ignore the event
         event.ignore()
         #Return the focus event
-        return PyQt4.QtGui.QLineEdit.focusOutEvent(self, event)
+        return data.QLineEdit.focusOutEvent(self, event)
     
     def wheelEvent(self, wheel_event):
         """Overridden mouse wheel rotate event"""
-        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers() 
-        if wheel_event.delta() < 0:
+        key_modifiers = data.QApplication.keyboardModifiers()
+        if data.PYQT_MODE == 4:
+            delta = wheel_event.delta()
+        else:
+            delta = wheel_event.angleDelta().y()
+        if delta < 0:
             data.print_log("REPL helper mouse rotate down event")
-            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.decrease_text_size()
         else:
             data.print_log("REPL helper mouse rotate up event")
-            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.increase_text_size()
         #Handle the event
-        if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+        if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
             #Accept the event, the event will not be propageted(sent forward) to the parent
             wheel_event.accept()
         else:
@@ -8989,7 +8971,7 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
             return
         new_font.setPointSize(new_font.pointSize() + 1)
         self.setFont(new_font)
-        new_font_metric = PyQt4.QtGui.QFontMetrics(new_font)
+        new_font_metric = data.PyQt.QtGui.QFontMetrics(new_font)
         self.parent.view.main_relation = new_font_metric.height() + 48
         self.parent.view.refresh_main_splitter()
     
@@ -9000,7 +8982,7 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
             return
         new_font.setPointSize(new_font.pointSize() - 1)
         self.setFont(new_font)
-        new_font_metric = PyQt4.QtGui.QFontMetrics(new_font)
+        new_font_metric = data.PyQt.QtGui.QFontMetrics(new_font)
         self.parent.view.main_relation = new_font_metric.height() + 48
         self.parent.view.refresh_main_splitter()
     
@@ -9093,7 +9075,7 @@ class ReplLineEdit(PyQt4.QtGui.QLineEdit):
 Scintilla class for inputting more than one line into the REPL
 -----------------------------------------------------
 """
-class ReplHelper(PyQt4.Qsci.QsciScintilla):
+class ReplHelper(data.PyQt.Qsci.QsciScintilla):
 
     """
     REPL scintilla box for inputting multiple lines into the REPL.
@@ -9103,13 +9085,13 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
     parent          = None
     repl_master     = None
     lexer           = None
-    #The scintilla api object(PyQt4.Qsci.QsciAPIs) must be an instace variable, or the underlying c++
+    #The scintilla api object(data.PyQt.Qsci.QsciAPIs) must be an instace variable, or the underlying c++
     #mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
     api             = None
     #Attribute for indicating if the REPL helper is indicated
     indicated       = False
     #Default font
-    default_font    = PyQt4.QtGui.QFont('Courier', 10)
+    default_font    = data.PyQt.QtGui.QFont('Courier', 10)
     #LineList object copied from the CustomEditor object
     line_list       = None
     
@@ -9124,8 +9106,8 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         #Save the reference to the REPL object
         self.repl_master = repl_master
         #Hide the horizontal and show the vertical scrollbar
-        self.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
-        self.SendScintilla(PyQt4.Qsci.QsciScintillaBase.SCI_SETHSCROLLBAR, False)
+        self.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
+        self.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETHSCROLLBAR, False)
         #Hide the margin
         self.setMarginWidth(1, 0)
         #Autoindentation enabled when using "Enter" to indent to the same level as the previous line
@@ -9137,8 +9119,8 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         #Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         #Set brace matching
-        self.setBraceMatching(PyQt4.Qsci.QsciScintilla.SloppyBraceMatch)
-        self.setMatchedBraceBackgroundColor(PyQt4.QtGui.QColor(255, 153, 0))
+        self.setBraceMatching(data.PyQt.Qsci.QsciScintilla.SloppyBraceMatch)
+        self.setMatchedBraceBackgroundColor(data.PyQt.QtGui.QColor(255, 153, 0))
         #Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         #Set backspace to delete by tab widths
@@ -9187,11 +9169,11 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         pressed_key = key_event.key()
         accept_keypress = False
         #Get key modifiers and check if the Ctrl+Enter was pressed
-        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers()
-        if ((key_modifiers == PyQt4.QtCore.Qt.ControlModifier and pressed_key == PyQt4.QtCore.Qt.Key_Return) or
-            pressed_key == PyQt4.QtCore.Qt.Key_Enter):
+        key_modifiers = data.QApplication.keyboardModifiers()
+        if ((key_modifiers == data.PyQt.QtCore.Qt.ControlModifier and pressed_key == data.PyQt.QtCore.Qt.Key_Return) or
+            pressed_key == data.PyQt.QtCore.Qt.Key_Enter):
                 #ON MY KEYBOARD Ctrl+Enter CANNOT BE DETECTED!
-                #Qt.ControlModifier  MODIFIER SHOWS FALSE WHEN USING PyQt4.QtGui.QApplication.keyboardModifiers() + Enter
+                #Qt.ControlModifier  MODIFIER SHOWS FALSE WHEN USING data.QApplication.keyboardModifiers() + Enter
                 self.repl_master.external_eval_request(self.text(), self)
                 accept_keypress = True
         return accept_keypress
@@ -9212,12 +9194,12 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         #Filter the event
         if self._filter_keypress(event) == False:
             #Execute the superclass method, if the filter ignored the event
-            super(PyQt4.Qsci.QsciScintilla, self).keyPressEvent(event)
+            super(data.PyQt.Qsci.QsciScintilla, self).keyPressEvent(event)
     
     def keyReleaseEvent(self, event):
         """QScintila KeyReleaseEvent, to catch which key was released"""
         #Execute the superclass method first, the same trick as in __init__ !
-        super(PyQt4.Qsci.QsciScintilla, self).keyReleaseEvent(event)
+        super(data.PyQt.Qsci.QsciScintilla, self).keyReleaseEvent(event)
         #Filter the event
         self._filter_keyrelease(event)
     
@@ -9245,21 +9227,25 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
     
     def wheelEvent(self, wheel_event):
         """Overridden mouse wheel rotate event"""
-        key_modifiers = PyQt4.QtGui.QApplication.keyboardModifiers() 
-        if wheel_event.delta() < 0:
+        key_modifiers = data.QApplication.keyboardModifiers()
+        if data.PYQT_MODE == 4:
+            delta = wheel_event.delta()
+        else:
+            delta = wheel_event.angleDelta().y()
+        if delta < 0:
             data.print_log("REPL helper mouse rotate down event")
-            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.zoomOut()
         else:
             data.print_log("REPL helper mouse rotate up event")
-            if key_modifiers == PyQt4.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.zoomIn()
         #Handle the event
-        if key_modifiers != PyQt4.QtCore.Qt.ControlModifier:
+        if key_modifiers != data.PyQt.QtCore.Qt.ControlModifier:
             #Execute the superclass method
-            super(PyQt4.Qsci.QsciScintilla, self).wheelEvent(wheel_event)
+            super(data.PyQt.Qsci.QsciScintilla, self).wheelEvent(wheel_event)
         else:
             #Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
@@ -9281,7 +9267,7 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         #Set the lexer
         self.refresh_lexer()
         #Set the scintilla api for the autocompletions (MUST BE AN INSTANCE VARIABLE)
-        self.api = PyQt4.Qsci.QsciAPIs(self.lexer)
+        self.api = data.PyQt.Qsci.QsciAPIs(self.lexer)
         #Populate the api with all of the python keywords
         for kw in keyword.kwlist:
             self.api.add(kw)
@@ -9291,7 +9277,7 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
         #Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         #Set the source from where the autocompletions will be fetched
-        self.setAutoCompletionSource(PyQt4.Qsci.QsciScintilla.AcsAll)
+        self.setAutoCompletionSource(data.PyQt.Qsci.QsciScintilla.AcsAll)
         #Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
 
@@ -9301,7 +9287,7 @@ class ReplHelper(PyQt4.Qsci.QsciScintilla):
 Overlay helper widget for visually selecting an Ex.Co. function
 ----------------------------------------------------------------
 """
-class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
+class FunctionWheelOverlay(data.QGroupBox):
     #Class custom objects/types
     class ButtonInfo:
         """
@@ -9328,8 +9314,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                      input_pixmap, 
                      input_function, 
                      input_function_text, 
-                     input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
+                     input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                      input_focus_last_widget=data.HexButtonFocus.NONE, 
                      input_no_tab_focus_disable=False, 
@@ -9353,7 +9339,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             self.check_text_differ  = input_check_text_differ
             self.tool_tip           = input_tool_tip
     
-    class CustomButton(PyQt4.QtGui.QLabel):
+    class CustomButton(data.QLabel):
         """
         Custom button used for displaying and executing Ex.Co. functions
         """
@@ -9384,8 +9370,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                      input_pixmap, 
                      input_function=None, 
                      input_function_text="", 
-                     input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
+                     input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                      input_focus_last_widget=data.HexButtonFocus.NONE, 
                      input_no_tab_focus_disable=False, 
@@ -9405,7 +9391,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             #Store the main function image
             self.stored_pixmap = input_pixmap
             #Store the hex edge image
-            self.stored_hex = PyQt4.QtGui.QPixmap(
+            self.stored_hex = data.PyQt.QtGui.QPixmap(
                 os.path.join(
                     data.resources_directory, 
                     "various/hex-button-edge.png"
@@ -9446,42 +9432,42 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             #Store the opacity
             self.stored_opacity = input_opacity
             #Create and initialize the QImage from the stored QPixmap
-            button_image    = self.stored_pixmap
-            hex_image       = self.stored_hex
-            image = PyQt4.QtGui.QImage(
-                        hex_image.size(), 
-                        PyQt4.QtGui.QImage.Format_ARGB32_Premultiplied
-                    )
-            image.fill(PyQt4.QtCore.Qt.transparent)
+            button_image = self.stored_pixmap
+            hex_image = self.stored_hex
+            image = data.PyQt.QtGui.QImage(
+                hex_image.size(), 
+                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+            )
+            image.fill(data.PyQt.QtCore.Qt.transparent)
             #Create and initialize the QPainter that will manipulate the QImage
-            button_painter = PyQt4.QtGui.QPainter(image)
+            button_painter = data.PyQt.QtGui.QPainter(image)
             button_painter.setOpacity(input_opacity)
             button_painter.drawPixmap(18, 13, button_image)
             button_painter.end()
             #Display the manipulated image
-            self.setPixmap(PyQt4.QtGui.QPixmap.fromImage(image))
+            self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
         
         def _set_opacity_with_hex_edge(self, input_opacity):
             """Set the opacity of the stored QPixmap image and display it"""
             #Store the opacity
             self.stored_opacity = input_opacity
             #Create and initialize the QImage from the stored QPixmap
-            button_image    = self.stored_pixmap
-            hex_image       = self.stored_hex
-            image           = PyQt4.QtGui.QImage(
-                                hex_image.size(), 
-                                PyQt4.QtGui.QImage.Format_ARGB32_Premultiplied
-                              )
-            image.fill(PyQt4.QtCore.Qt.transparent)
+            button_image = self.stored_pixmap
+            hex_image = self.stored_hex
+            image = data.PyQt.QtGui.QImage(
+                hex_image.size(), 
+                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+            )
+            image.fill(data.PyQt.QtCore.Qt.transparent)
             #Create and initialize the QPainter that will manipulate the QImage
-            button_painter = PyQt4.QtGui.QPainter(image)
-            button_painter.setCompositionMode(PyQt4.QtGui.QPainter.CompositionMode_Source)
+            button_painter = data.PyQt.QtGui.QPainter(image)
+            button_painter.setCompositionMode(data.PyQt.QtGui.QPainter.CompositionMode_Source)
             button_painter.setOpacity(input_opacity)
             button_painter.drawPixmap(0, 0, hex_image)
             button_painter.drawPixmap(18, 13, button_image)
             button_painter.end()
             #Display the manipulated image
-            self.setPixmap(PyQt4.QtGui.QPixmap.fromImage(image))
+            self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
         
         def mousePressEvent(self, event):
             """Overloaded widget click event"""
@@ -9499,8 +9485,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                     self.main_form.view.last_executed_function_text = self.function_text
                     #Execute the buttons stored function
                     self.function()
-                except Exception as ex:
-                    print(ex)
+                except:
+                    traceback.print_exc()
                     message = "You need to focus one of the editor windows first!"
                     self.main_form.display.repl_display_message(
                         message, 
@@ -9559,7 +9545,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         main_form                   = None
         extra_button                = None
         extra_button_size_factor    = 1/3
-        extra_button_position       = PyQt4.QtCore.QPoint(0, 0)
+        extra_button_position       = data.PyQt.QtCore.QPoint(0, 0)
         extra_button_stored_opacity = None
         extra_button_stored_pixmap  = None
         extra_button_function       = None
@@ -9578,14 +9564,14 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             self.parent     = parent
             self.main_form  = main_form
             #Initialize the extra button
-            self.extra_button = PyQt4.QtGui.QLabel(self)
+            self.extra_button = data.QLabel(self)
             width   = int(self.geometry().width() * self.extra_button_size_factor)
             height  = int(self.geometry().height() * self.extra_button_size_factor)
-            self.extra_button_position = PyQt4.QtCore.QPoint(
+            self.extra_button_position = data.PyQt.QtCore.QPoint(
                                             self.geometry().width()*2/3-width, 
                                             self.geometry().height()*1/4
                                          )
-            rectangle   = PyQt4.QtCore.QRect(self.extra_button_position, PyQt4.QtCore.QSize(width, height))
+            rectangle   = data.PyQt.QtCore.QRect(self.extra_button_position, data.PyQt.QtCore.QSize(width, height))
             self.extra_button.setGeometry(rectangle)
             self.extra_button_stored_pixmap = input_extra_pixmap
             self.extra_button.setPixmap(input_extra_pixmap)
@@ -9630,11 +9616,11 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             if self.isEnabled() == True:
                 self._set_extra_button_opacity(self.OPACITY_HIGH)
                 #Display the stored extra buttons function text
-                extra_button_font = PyQt4.QtGui.QFont(
-                                        'Courier', 
-                                        self.stored_font.pointSize()-2, 
-                                        weight=PyQt4.QtGui.QFont.Bold
-                                    )
+                extra_button_font = data.PyQt.QtGui.QFont(
+                    'Courier', 
+                    self.stored_font.pointSize()-2, 
+                    weight=data.PyQt.QtGui.QFont.Bold
+                )
                 self.parent.display(
                     self.extra_button_function_text, 
                     extra_button_font
@@ -9646,11 +9632,11 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             if self.isEnabled() == True:
                 self._set_extra_button_opacity(self.OPACITY_LOW)
                 #Clear the function text
-                extra_button_font = PyQt4.QtGui.QFont(
-                                        'Courier', 
-                                        self.stored_font.pointSize()-2, 
-                                        weight=PyQt4.QtGui.QFont.Bold
-                                    )
+                extra_button_font = data.PyQt.QtGui.QFont(
+                    'Courier', 
+                    self.stored_font.pointSize()-2, 
+                    weight=data.PyQt.QtGui.QFont.Bold
+                )
                 self.parent.display(
                     "", 
                     extra_button_font
@@ -9674,9 +9660,9 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             #Update the extra button geometry
             width = int(self.geometry().width() * self.extra_button_size_factor)
             height = int(self.geometry().height() * self.extra_button_size_factor)
-            rectangle   = PyQt4.QtCore.QRect(
+            rectangle   = data.PyQt.QtCore.QRect(
                             self.extra_button_position, 
-                            PyQt4.QtCore.QSize(width, height)
+                            data.PyQt.QtCore.QSize(width, height)
                           )
             self.extra_button.setGeometry(rectangle)
         
@@ -9685,16 +9671,19 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
             #Store the opacity
             self.extra_button_stored_opacity = input_opacity
             #Create and initialize the QImage from the stored QPixmap
-            button_image    = self.extra_button_stored_pixmap
-            image = PyQt4.QtGui.QImage(button_image.size(), PyQt4.QtGui.QImage.Format_ARGB32_Premultiplied)
-            image.fill(PyQt4.QtCore.Qt.transparent)
+            button_image = self.extra_button_stored_pixmap
+            image = data.PyQt.QtGui.QImage(
+                button_image.size(), 
+                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+            )
+            image.fill(data.PyQt.QtCore.Qt.transparent)
             #Create and initialize the QPainter that will manipulate the QImage
-            button_painter = PyQt4.QtGui.QPainter(image)
+            button_painter = data.PyQt.QtGui.QPainter(image)
             button_painter.setOpacity(input_opacity)
             button_painter.drawPixmap(0, 0, button_image)
             button_painter.end()
             #Display the manipulated image
-            self.extra_button.setPixmap(PyQt4.QtGui.QPixmap.fromImage(image))
+            self.extra_button.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
 
     #Class variables
     parent                  = None
@@ -9711,7 +9700,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         #Store the reference to the main form
         self.main_form = main_form
         #Store the background image for sizing details
-        self.background_image = PyQt4.QtGui.QPixmap(
+        self.background_image = data.PyQt.QtGui.QPixmap(
             os.path.join(
                 data.resources_directory, 
                 data.function_wheel_image
@@ -9728,31 +9717,33 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         self.setStyleSheet("background-color:transparent;")
         self.setStyleSheet("border:0;")
         #Setup the picture
-        exco_picture    = PyQt4.QtGui.QPixmap(
+        exco_picture    = data.PyQt.QtGui.QPixmap(
             os.path.join(
                 data.resources_directory, 
                 data.function_wheel_image
             )
         )
-        self.picture    = PyQt4.QtGui.QLabel(self)
+        self.picture    = data.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())
         self.picture.setScaledContents(True)
-        self.layout = PyQt4.QtGui.QGridLayout()
+        self.layout = data.QGridLayout()
         self.layout.setSpacing(0)
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins(
+            data.PyQt.QtCore.QMargins(0,0,0,0)
+        )
         self.layout.addWidget(self.picture)
         self.setLayout(self.layout)
         
         #Initialize the display label that will display the function names
         #when the mouse cursor is over a function button
-        self.display_label = PyQt4.QtGui.QLabel(self)
+        self.display_label = data.QLabel(self)
         self.display_label.setGeometry(36, 448, 120, 50)
-        font = PyQt4.QtGui.QFont('Courier', 14)
+        font = data.PyQt.QtGui.QFont('Courier', 14)
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            PyQt4.QtCore.Qt.AlignHCenter | PyQt4.QtCore.Qt.AlignVCenter
+            data.PyQt.QtCore.Qt.AlignHCenter | data.PyQt.QtCore.Qt.AlignVCenter
         )
         #Initialize all of the hex function buttons
         self._init_all_buttons()
@@ -9969,8 +9960,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-replace-in-selection-re.png", 
                 form.menubar_functions["special_regex_replace_in_selection"], 
                 "Regex Replace\nin selection", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 11, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 11, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10004,8 +9995,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-autocompletion.png", 
                 form.menubar_functions["toggle_autocompletions"], 
                 "Toggle\nAutocompletions", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 10, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 10, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10015,8 +10006,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-case-to-upper.png", 
                 form.menubar_functions["special_to_uppercase"], 
                 "Selection to\nUPPERCASE", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10026,8 +10017,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-case-to-lower.png", 
                 form.menubar_functions["special_to_lowercase"], 
                 "Selection to\nlowercase", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10037,8 +10028,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-node-tree.png", 
                 form.menubar_functions["create_node_tree"], 
                 "Create/Reload\n Node Tree", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 11, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 11, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB,  
                 input_tool_tip=("Create a node tree from the currently\n" +
@@ -10060,8 +10051,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-find-in-open-documents.png", 
                 form.menubar_functions["special_find_in_open_documents"], 
                 "Find in open\ndocuments", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10071,8 +10062,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-replace-in-open-documents.png", 
                 form.menubar_functions["special_find_replace_in_open_documents"], 
                 "Find and Replace\nin open documents", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 9, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 9, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10082,8 +10073,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/edit-replace-all-in-open-documents.png", 
                 form.menubar_functions["special_replace_all_in_open_documents"], 
                 "Replace all in\nopen documents", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 10, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 10, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10093,8 +10084,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/bookmark.png", 
                 form.menubar_functions["bookmark_toggle"], 
                 "Toggle\nBookmark", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10104,8 +10095,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/wordwrap.png", 
                 form.menubar_functions["toggle_wordwrap"], 
                 "Toggle\nWord Wrap", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10115,8 +10106,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/view-line-end.png", 
                 form.menubar_functions["toggle_line_endings"], 
                 "Toggle\nLine Ending\nVisibility", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10305,8 +10296,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 form.view.spin_widgets_clockwise, 
                 "Spin Windows\nClockwise", 
                 input_focus_last_widget=False, 
-                input_font=PyQt4.QtGui.QFont(
-                                'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10317,8 +10308,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 form.view.spin_widgets_counterclockwise, 
                 "Spin Windows\nCounter\nClockwise",  
                 input_focus_last_widget=False, 
-                input_font=PyQt4.QtGui.QFont(
-                                'Courier', 10, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                'Courier', 10, weight=data.PyQt.QtGui.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10329,8 +10320,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 form.view.toggle_window_mode, 
                 "Toggle\nWindow Mode",  
                 input_focus_last_widget=False, 
-                input_font=PyQt4.QtGui.QFont(
-                                'Courier', 13, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10341,8 +10332,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 form.view.toggle_main_window_side, 
                 "Toggle\nWindow Side",  
                 input_focus_last_widget=False, 
-                input_font=PyQt4.QtGui.QFont(
-                                'Courier', 13, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10372,8 +10363,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/close-tab.png", 
                 form.menubar_functions["close_tab"], 
                 "Close Current\nTab", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 11, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 11, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_no_tab_focus_disable=True,
@@ -10438,8 +10429,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 form.menubar_functions["show_session_editor"], 
                 "Show Session\nEditor", 
                 input_no_document_focus_disable=False,
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 12, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
             ),
             self.ButtonInfo(
@@ -10448,8 +10439,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/system-show-cwd-tree.png", 
                 form.menubar_functions["create_cwd_tree"], 
                 "Show CWD\nFile/Directory\nTree", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 10, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 10, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.NONE, 
                 input_tool_tip=("Create a file/directory tree for the " + 
@@ -10462,8 +10453,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 "tango_icons/bookmarks-clear.png", 
                 form.menubar_functions["bookmarks_clear"], 
                 "Clear All\nBookmarks", 
-                input_font=PyQt4.QtGui.QFont(
-                                    'Courier', 14, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.NONE, 
                 input_no_document_focus_disable=False,
@@ -10483,8 +10474,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 form.menubar_functions["repl_single_focus"], 
                 "REPL Focus\n(Single Line)",  
                 input_focus_last_widget=False, 
-                input_font=PyQt4.QtGui.QFont(
-                                'Courier', 13, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10495,8 +10486,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 form.menubar_functions["repl_multi_focus"], 
                 "REPL Focus\n(Multi Line)",  
                 input_focus_last_widget=False, 
-                input_font=PyQt4.QtGui.QFont(
-                                'Courier', 13, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10507,8 +10498,8 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                 form.repl.repeat_last_repl_eval, 
                 "Repeat Last\nREPL Command",  
                 input_focus_last_widget=False, 
-                input_font=PyQt4.QtGui.QFont(
-                                'Courier', 13, weight=PyQt4.QtGui.QFont.Bold
+                input_font=data.PyQt.QtGui.QFont(
+                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10630,7 +10621,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            PyQt4.QtCore.Qt.AlignHCenter | PyQt4.QtCore.Qt.AlignVCenter
+            data.PyQt.QtCore.Qt.AlignHCenter | data.PyQt.QtCore.Qt.AlignVCenter
         )
         #Display the string
         self.display_label.setText(string)
@@ -10671,19 +10662,19 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         geo = self.geometry()
         new_width = int(geo.width() * width_scale_factor)
         new_height = int(geo.height() * height_scale_factor)
-        rectangle   = PyQt4.QtCore.QRect(geo.topLeft(), PyQt4.QtCore.QSize(new_width, new_height))
+        rectangle   = data.PyQt.QtCore.QRect(geo.topLeft(), data.PyQt.QtCore.QSize(new_width, new_height))
         self.setGeometry(rectangle)
         #Scale all of the function wheel child widgets
         for button in self.children():
             geo = button.geometry()
-            new_topLeft = PyQt4.QtCore.QPoint(
+            new_topLeft = data.PyQt.QtCore.QPoint(
                             int(geo.topLeft().x() * width_scale_factor),
                             int(geo.topLeft().y() * height_scale_factor)
                           )
             new_width = int(geo.width() * width_scale_factor)
             new_height = int(geo.height() * height_scale_factor)
-            new_size = PyQt4.QtCore.QSize(new_width, new_height)
-            rectangle   = PyQt4.QtCore.QRect(new_topLeft, new_size)
+            new_size = data.PyQt.QtCore.QSize(new_width, new_height)
+            rectangle   = data.PyQt.QtCore.QRect(new_topLeft, new_size)
             button.setGeometry(rectangle)
         #Center to main form
         self.center(self.size())
@@ -10695,9 +10686,9 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
         """
         x_offset = int((self.main_form.size().width() - size.width()) / 2)
         y_offset = int((self.main_form.size().height()*93/100 - size.height()) / 2)
-        rectangle_top_left  = PyQt4.QtCore.QPoint(x_offset, y_offset)
+        rectangle_top_left  = data.PyQt.QtCore.QPoint(x_offset, y_offset)
         rectangle_size      = size
-        rectangle   = PyQt4.QtCore.QRect(rectangle_top_left, rectangle_size)
+        rectangle   = data.PyQt.QtCore.QRect(rectangle_top_left, rectangle_size)
         self.setGeometry(rectangle)
     
     def highlight_last_clicked_button(self):
@@ -10715,7 +10706,7 @@ class FunctionWheelOverlay(PyQt4.QtGui.QGroupBox):
                     if button.isEnabled() == True:
                         button.highlight()
                     button_position = self.mapToGlobal(button.geometry().topLeft())
-                    cursor = PyQt4.QtGui.QCursor()
+                    cursor = data.PyQt.QtGui.QCursor()
                     cursor.setPos(
                         button_position.x() + int(button.geometry().width()/2), 
                         button_position.y() + int(button.geometry().height()/2)

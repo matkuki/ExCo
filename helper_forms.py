@@ -2,58 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-    Ex.Co. LICENSE :
-        This file is part of Ex.Co..
+Copyright (c) 2013-2016 Matic Kukovec. 
+Release under the GNU GPL3 license.
 
-        Ex.Co. is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        Ex.Co. is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with Ex.Co..  If not, see <http://www.gnu.org/licenses/>.
-
-
-    PYTHON LICENSE :
-        "Python" and the Python logos are trademarks or registered trademarks of the Python Software Foundation,
-        used by Ex.Co. with permission from the Foundation
-
-
-    Cython LICENSE:
-        Cython is freely available under the open source Apache License
-
-
-    PyQt4 LICENSE :
-        PyQt4 is licensed under the GNU General Public License version 3
-    PyQt Alternative Logo LICENSE:
-        The PyQt Alternative Logo is licensed under Creative Commons CC0 1.0 Universal Public Domain Dedication
-
-
-    Qt Logo LICENSE:
-        The Qt logo is copyright of Digia Plc and/or its subsidiaries.
-        Digia, Qt and their respective logos are trademarks of Digia Corporation in Finland and/or other countries worldwide.
-
-
-    Tango Icons LICENSE:
-        The Tango base icon theme is released to the Public Domain.
-        The Tango base icon theme is made possible by the Tango Desktop Project.
-
-    My Tango Style Icons LICENSE:
-        The Tango Icons I created are released under the GNU General Public License version 3.
-    
-    
-    Eric6 LICENSE:
-        Eric6 IDE is licensed under the GNU General Public License version 3
-
-
-    Nuitka LICENSE:
-        Nuitka is a Python compiler compatible with Ex.Co..
-        Nuitka is freely available under the open source Apache License.
+For more information check the 'LICENSE.txt' file.
+For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
 ##  FILE DESCRIPTION:
@@ -67,8 +20,6 @@ import inspect
 import functools
 import difflib
 import re
-import PyQt4.QtCore
-import PyQt4.QtGui
 import settings
 import functions
 import forms
@@ -85,7 +36,7 @@ def set_icon(icon_name):
     """
     Module function for initializing and returning an QIcon object
     """
-    return   PyQt4.QtGui.QIcon(
+    return   data.PyQt.QtGui.QIcon(
                 os.path.join(
                     data.resources_directory, 
                     icon_name
@@ -96,7 +47,7 @@ def set_pixmap(pixmap_name):
     """
     Module function for initializing and returning an QPixmap object
     """
-    return   PyQt4.QtGui.QPixmap(
+    return   data.PyQt.QtGui.QPixmap(
                 os.path.join(
                     data.resources_directory, 
                     pixmap_name
@@ -195,11 +146,11 @@ def get_language_file_icon(language_name):
 Module objects
 -------------------------------------------------
 """
-class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
+class SessionGuiManipulator(data.QTreeView):
     """
     GUI object for easier user editing of sessions
     """
-    class SessionItem(PyQt4.QtGui.QStandardItem):
+    class SessionItem(data.PyQt.QtGui.QStandardItem):
         """QStandarItem with overridden methods"""
         #The session that the standard item will store
         my_parent   = None
@@ -505,14 +456,14 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             remove_group_name = selected_item.name
             message =  "Are you sure you want to delete group:\n"
             message += "'{:s}' ?".format(remove_group_name)
-            reply = PyQt4.QtGui.QMessageBox.question(
+            reply = data.QMessageBox.question(
                         self.parent, 
                         'Delete Session Group', 
                         message,
-                        PyQt4.QtGui.QMessageBox.Yes,
-                        PyQt4.QtGui.QMessageBox.No
+                        data.QMessageBox.Yes,
+                        data.QMessageBox.No
                     )
-            if reply == PyQt4.QtGui.QMessageBox.No:
+            if reply == data.QMessageBox.No:
                 return
             #Delete all of the session with the group name
             for session in self.settings_manipulator.stored_sessions:
@@ -534,14 +485,14 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
                 group_name += " / "
             message =  "Are you sure you want to delete session:\n"
             message += "'{:s}{:s}' ?".format(group_name, remove_session.name)
-            reply = PyQt4.QtGui.QMessageBox.question(
+            reply = data.QMessageBox.question(
                         self.parent, 
                         'Delete Session Group', 
                         message,
-                        PyQt4.QtGui.QMessageBox.Yes,
-                        PyQt4.QtGui.QMessageBox.No
+                        data.QMessageBox.Yes,
+                        data.QMessageBox.No
                     )
-            if reply == PyQt4.QtGui.QMessageBox.No:
+            if reply == data.QMessageBox.No:
                 return
             #Delete the session
             #Delete all of the session with the group name
@@ -614,14 +565,14 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
     def show_sessions(self):
         """Show the current session in a tree structure"""
         #Initialize the display
-        self.tree_model = PyQt4.QtGui.QStandardItemModel()
+        self.tree_model = data.PyQt.QtGui.QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["SESSIONS"])
         self.header().hide()
         self.setModel(self.tree_model)
         self.setUniformRowHeights(True)
         #Connect the tree model signals
         self.tree_model.itemChanged.connect(self._item_changed)
-        font    = PyQt4.QtGui.QFont("Courier", 10, PyQt4.QtGui.QFont.Bold)
+        font    = data.PyQt.QtGui.QFont("Courier", 10, data.PyQt.QtGui.QFont.Bold)
         #First add all of the groups, if any
         self.groups = {}
         for session in self.settings_manipulator.stored_sessions:
@@ -664,9 +615,9 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
         on the parent basic widget
         """
         #Create the find toolbar and buttons
-        session_toolbar = PyQt4.QtGui.QToolBar(parent)
-        session_toolbar.setIconSize(PyQt4.QtCore.QSize(16,16))
-        session_add_action = PyQt4.QtGui.QAction(
+        session_toolbar = data.QToolBar(parent)
+        session_toolbar.setIconSize(data.PyQt.QtCore.QSize(16,16))
+        session_add_action = data.QAction(
                                     self.icon_session_add, 
                                     "session_add",
                                     parent
@@ -675,7 +626,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             "Add a new session"
         )
         session_add_action.triggered.connect(self.add_empty_session)
-        session_remove_action = PyQt4.QtGui.QAction(
+        session_remove_action = data.QAction(
                                     self.icon_session_remove, 
                                     "session_remove",
                                     parent
@@ -684,7 +635,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             "Remove the selected session"
         )
         session_remove_action.triggered.connect(self.remove_session)
-        session_overwrite_action = PyQt4.QtGui.QAction(
+        session_overwrite_action = data.QAction(
                                         self.icon_session_overwrite, 
                                         "session_overwrite",
                                         parent
@@ -693,7 +644,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             "Overwrite the selected session"
         )
         session_overwrite_action.triggered.connect(self.overwrite_session)
-        session_add_group_action = PyQt4.QtGui.QAction(
+        session_add_group_action = data.QAction(
                                         self.icon_group_add, 
                                         "session_add_group",
                                         parent
@@ -702,7 +653,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
             "Add a new group"
         )
         session_add_group_action.triggered.connect(self.add_empty_group)
-        session_edit_action = PyQt4.QtGui.QAction(
+        session_edit_action = data.QAction(
                                         self.icon_session_edit, 
                                         "session_edit",
                                         parent
@@ -727,7 +678,7 @@ class SessionGuiManipulator(PyQt4.QtGui.QTreeView):
 Object for displaying various results in a tree structure
 ----------------------------------------------------------------------------
 """
-class TreeDisplay(PyQt4.QtGui.QTreeView):
+class TreeDisplay(data.QTreeView):
     #Class custom objects/types
     class Directory():
         """
@@ -844,7 +795,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         #Set Save/SaveAs buttons in the menubar
         self.parent._set_save_status()
         
-        if event.button() == PyQt4.QtCore.Qt.RightButton:
+        if event.button() == data.PyQt.QtCore.Qt.RightButton:
             index = self.indexAt(event.pos())
             self._item_click(index)
     
@@ -855,9 +806,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                 hasattr(item, "is_base") == True):
                 def update_cwd():
                     self.main_form.set_cwd(item.full_name)
-                cursor = PyQt4.QtGui.QCursor.pos()
-                self.tree_menu = PyQt4.QtGui.QMenu()
-                action_update_cwd = PyQt4.QtGui.QAction("Update CWD", self.tree_menu)
+                cursor = data.PyQt.QtGui.QCursor.pos()
+                self.tree_menu = data.QMenu()
+                action_update_cwd = data.QAction("Update CWD", self.tree_menu)
                 action_update_cwd.triggered.connect(update_cwd)
                 icon = set_icon('tango_icons/update-cwd.png')
                 action_update_cwd.setIcon(icon)
@@ -868,7 +819,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                             os.path.join(item.full_name, os.pardir)
                         )
                         self.main_form.set_cwd(parent_directory)
-                    action_update_to_parent = PyQt4.QtGui.QAction(
+                    action_update_to_parent = data.QAction(
                         "Update CWD to parent", self.tree_menu
                     )
                     action_update_to_parent.triggered.connect(update_to_parent)
@@ -883,7 +834,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                         self.main_form.display.show_directory_tree(
                             parent_directory
                         )
-                    action_one_dir_up = PyQt4.QtGui.QAction(
+                    action_one_dir_up = data.QAction(
                         "One directory up ..", self.tree_menu
                     )
                     action_one_dir_up.triggered.connect(one_dir_up)
@@ -894,9 +845,9 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             elif hasattr(item, "full_name") == True:
                 def open_file():
                     self.main_form.open_file(item.full_name)
-                cursor = PyQt4.QtGui.QCursor.pos()
-                self.tree_menu = PyQt4.QtGui.QMenu()
-                action_open_file = PyQt4.QtGui.QAction("Open", self.tree_menu)
+                cursor = data.PyQt.QtGui.QCursor.pos()
+                self.tree_menu = data.QMenu()
+                action_open_file = data.QAction("Open", self.tree_menu)
                 action_open_file.triggered.connect(open_file)
                 icon = set_icon('tango_icons/document-open.png')
                 action_open_file.setIcon(icon)
@@ -905,7 +856,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                 def update_to_parent():
                     directory = os.path.dirname(item.full_name)
                     self.main_form.set_cwd(directory)
-                action_update_to_parent = PyQt4.QtGui.QAction(
+                action_update_to_parent = data.QAction(
                     "Update CWD", self.tree_menu
                 )
                 action_update_to_parent.triggered.connect(update_to_parent)
@@ -925,17 +876,17 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             
             item = self.model().itemFromIndex(model_index)
             item_text = item.text()
-            cursor = PyQt4.QtGui.QCursor.pos()
-            self.tree_menu = PyQt4.QtGui.QMenu()
+            cursor = data.PyQt.QtGui.QCursor.pos()
+            self.tree_menu = data.QMenu()
             
             if (hasattr(item, "line_number") == True or "line:" in item_text):
-                action_goto_line = PyQt4.QtGui.QAction("Goto node item", self.tree_menu)
+                action_goto_line = data.QAction("Goto node item", self.tree_menu)
                 action_goto_line.triggered.connect(goto_item)
                 icon = set_icon('tango_icons/edit-goto.png')
                 action_goto_line.setIcon(icon)
                 self.tree_menu.addAction(action_goto_line)
             elif "DOCUMENT" in item_text:
-                action_open = PyQt4.QtGui.QAction("Focus document", self.tree_menu)
+                action_open = data.QAction("Focus document", self.tree_menu)
                 action_open.triggered.connect(open_document)
                 icon = set_icon('tango_icons/document-open.png')
                 action_open.setIcon(icon)
@@ -1008,7 +959,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
     def set_font_size(self, size_in_points):
         """Set the font size for the tree display items"""
         #Initialize the font with the new size
-        new_font = PyQt4.QtGui.QFont('Courier', size_in_points)
+        new_font = data.PyQt.QtGui.QFont('Courier', size_in_points)
         #Set the new font
         self.setFont(new_font)
     
@@ -1044,24 +995,24 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         class_text          = "CLASS/METHOD TREE:"
         function_text       = "FUNCTIONS:"
         #Initialize the tree display to Python file type
-        self.setSelectionBehavior(PyQt4.QtGui.QAbstractItemView.SelectRows)
-        tree_model = PyQt4.QtGui.QStandardItemModel()
+        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        description_font = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
-        item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
+        item_document_name  = data.PyQt.QtGui.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type  = PyQt4.QtGui.QStandardItem(document_type_text)
+        item_document_type  = data.PyQt.QtGui.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1069,27 +1020,27 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         #Set the label properties
-        label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        label_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        label_font  = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
         #Check if there was a parsing error
         if parse_error != False:
-            error_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(180, 0, 0))
-            error_font  = PyQt4.QtGui.QFont(
-                "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+            error_brush = data.PyQt.QtGui.QBrush(data.PyQt.QtGui.QColor(180, 0, 0))
+            error_font  = data.PyQt.QtGui.QFont(
+                "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
             )
-            item_error = PyQt4.QtGui.QStandardItem("ERROR PARSING FILE!")
+            item_error = data.PyQt.QtGui.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
             item_error.setForeground(error_brush)
             item_error.setFont(error_font)
             item_error.setIcon(self.node_icon_nothing)
             tree_model.appendRow(item_error)
             #Show the error message
-            error_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
-            item_error_msg = PyQt4.QtGui.QStandardItem(str(parse_error))
+            error_font = data.PyQt.QtGui.QFont("Courier", data.tree_display_font_size)
+            item_error_msg = data.PyQt.QtGui.QStandardItem(str(parse_error))
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
             item_error_msg.setFont(error_font)
@@ -1098,19 +1049,19 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             tree_model.appendRow(item_error_msg)
             return
         """Imported module filtering"""
-        item_imports = PyQt4.QtGui.QStandardItem(import_text)
+        item_imports = data.PyQt.QtGui.QStandardItem(import_text)
         item_imports.setEditable(False)
         item_imports.setForeground(label_brush)
         item_imports.setFont(label_font)
         for node in import_nodes:
             node_text = str(node[0]) + " (line:"
             node_text += str(node[1]) + ")"
-            item_import_node = PyQt4.QtGui.QStandardItem(node_text)
+            item_import_node = data.PyQt.QtGui.QStandardItem(node_text)
             item_import_node.setEditable(False)
             item_import_node.setIcon(self.node_icon_import)
             item_imports.appendRow(item_import_node)
         if import_nodes == []:
-            item_no_imports = PyQt4.QtGui.QStandardItem("No imports found")
+            item_no_imports = data.PyQt.QtGui.QStandardItem("No imports found")
             item_no_imports.setEditable(False)
             item_no_imports.setIcon(self.node_icon_nothing)
             item_imports.appendRow(item_no_imports)
@@ -1119,7 +1070,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         if import_nodes == []:
             self.expand(item_imports.index())
         """Class nodes filtering"""
-        item_classes = PyQt4.QtGui.QStandardItem(class_text)
+        item_classes = data.PyQt.QtGui.QStandardItem(class_text)
         item_classes.setEditable(False)
         item_classes.setForeground(label_brush)
         item_classes.setFont(label_font)
@@ -1138,7 +1089,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             #Construct the parent node
             node_text = str(node[0].name) + " (line:"
             node_text += str(node[0].lineno) + ")"
-            parent_tree_node = PyQt4.QtGui.QStandardItem(node_text)
+            parent_tree_node = data.PyQt.QtGui.QStandardItem(node_text)
             parent_tree_node.setEditable(False)
             parent_tree_node.setIcon(self.node_icon_class)
             #Create a list that will hold the child nodes
@@ -1151,7 +1102,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                 child_object    = child[1]
                 child_text  = str(child_object.name) + " (line:"
                 child_text  += str(child_object.lineno) + ")"
-                child_tree_node = PyQt4.QtGui.QStandardItem(child_text)
+                child_tree_node = data.PyQt.QtGui.QStandardItem(child_text)
                 child_tree_node.setEditable(False)
                 #Save the base node, its type for adding children to it
                 base_node_items[child_level]    = child_tree_node
@@ -1200,12 +1151,12 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_classes)
         #Check if there were any nodes found
         if class_nodes == []:
-            item_no_classes = PyQt4.QtGui.QStandardItem("No classes found")
+            item_no_classes = data.PyQt.QtGui.QStandardItem("No classes found")
             item_no_classes.setEditable(False)
             item_no_classes.setIcon(self.node_icon_nothing)
             item_classes.appendRow(item_no_classes)
         """Function nodes filtering"""
-        item_functions = PyQt4.QtGui.QStandardItem(function_text)
+        item_functions = data.PyQt.QtGui.QStandardItem(function_text)
         item_functions.setEditable(False)
         item_functions.setForeground(label_brush)
         item_functions.setFont(label_font)
@@ -1215,14 +1166,14 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             func_text = func.name + " (line:"
             func_text += str(func.lineno) + ")"
             #Construct the node and add it to the tree
-            function_node = PyQt4.QtGui.QStandardItem(func_text)
+            function_node = data.PyQt.QtGui.QStandardItem(func_text)
             function_node.setEditable(False)
             function_node.setIcon(self.node_icon_procedure)
             item_functions.appendRow(function_node)
         item_functions.sortChildren(0)
         #Check if there were any nodes found
         if function_nodes == []:
-            item_no_functions = PyQt4.QtGui.QStandardItem("No functions found")
+            item_no_functions = data.PyQt.QtGui.QStandardItem("No functions found")
             item_no_functions.setEditable(False)
             item_no_functions.setIcon(self.node_icon_nothing)
             item_functions.appendRow(item_no_functions)
@@ -1252,24 +1203,24 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         class_text          = "CLASS/METHOD TREE:"
         function_text       = "FUNCTIONS:"
         #Initialize the tree display to Python file type
-        self.setSelectionBehavior(PyQt4.QtGui.QAbstractItemView.SelectRows)
-        tree_model = PyQt4.QtGui.QStandardItemModel()
+        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        description_font = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
-        item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
+        item_document_name  = data.PyQt.QtGui.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type  = PyQt4.QtGui.QStandardItem(document_type_text)
+        item_document_type  = data.PyQt.QtGui.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1277,27 +1228,27 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         #Set the label properties
-        label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        label_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        label_font  = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
         #Check if there was a parsing error
         if parse_error != False:
-            error_brush = PyQt4.QtGui.QBrush(PyQt4.QtGui.QColor(180, 0, 0))
-            error_font  = PyQt4.QtGui.QFont(
-                "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+            error_brush = data.PyQt.QtGui.QBrush(data.PyQt.QtGui.QColor(180, 0, 0))
+            error_font  = data.PyQt.QtGui.QFont(
+                "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
             )
-            item_error = PyQt4.QtGui.QStandardItem("ERROR PARSING FILE!")
+            item_error = data.PyQt.QtGui.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
             item_error.setForeground(error_brush)
             item_error.setFont(error_font)
             item_error.setIcon(self.node_icon_nothing)
             tree_model.appendRow(item_error)
             #Show the error message
-            error_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
-            item_error_msg = PyQt4.QtGui.QStandardItem(str(parse_error))
+            error_font = data.PyQt.QtGui.QFont("Courier", data.tree_display_font_size)
+            item_error_msg = data.PyQt.QtGui.QStandardItem(str(parse_error))
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
             item_error_msg.setFont(error_font)
@@ -1313,19 +1264,19 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         class_nodes = [x for x in python_node_tree if x.type == "class"]
         function_nodes = [x for x in python_node_tree if x.type == "function"]
         """Imported module filtering"""
-        item_imports = PyQt4.QtGui.QStandardItem(import_text)
+        item_imports = data.PyQt.QtGui.QStandardItem(import_text)
         item_imports.setEditable(False)
         item_imports.setForeground(label_brush)
         item_imports.setFont(label_font)
         for node in import_nodes:
             node_text = str(node.name) + " (line:"
             node_text += str(node.line_number) + ")"
-            item_import_node = PyQt4.QtGui.QStandardItem(node_text)
+            item_import_node = data.PyQt.QtGui.QStandardItem(node_text)
             item_import_node.setEditable(False)
             item_import_node.setIcon(self.node_icon_import)
             item_imports.appendRow(item_import_node)
         if import_nodes == []:
-            item_no_imports = PyQt4.QtGui.QStandardItem("No imports found")
+            item_no_imports = data.PyQt.QtGui.QStandardItem("No imports found")
             item_no_imports.setEditable(False)
             item_no_imports.setIcon(self.node_icon_nothing)
             item_imports.appendRow(item_no_imports)
@@ -1334,7 +1285,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         if import_nodes == []:
             self.expand(item_imports.index())
         """Class nodes filtering"""
-        item_classes = PyQt4.QtGui.QStandardItem(class_text)
+        item_classes = data.PyQt.QtGui.QStandardItem(class_text)
         item_classes.setEditable(False)
         item_classes.setForeground(label_brush)
         item_classes.setFont(label_font)
@@ -1343,7 +1294,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             # Construct the node text
             node_text = str(node.name) + " (line:"
             node_text += str(node.line_number) + ")"
-            tree_node = PyQt4.QtGui.QStandardItem(node_text)
+            tree_node = data.PyQt.QtGui.QStandardItem(node_text)
             tree_node.setEditable(False)
             if node.type == "class":
                 tree_node.setIcon(self.node_icon_class)
@@ -1364,7 +1315,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             return tree_node
         # Check if there were any nodes found
         if class_nodes == []:
-            item_no_classes = PyQt4.QtGui.QStandardItem("No classes found")
+            item_no_classes = data.PyQt.QtGui.QStandardItem("No classes found")
             item_no_classes.setEditable(False)
             item_no_classes.setIcon(self.node_icon_nothing)
             item_classes.appendRow(item_no_classes)
@@ -1375,13 +1326,13 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         # Append the class nodes to the model
         tree_model.appendRow(item_classes)
         """Function nodes filtering"""
-        item_functions = PyQt4.QtGui.QStandardItem(function_text)
+        item_functions = data.PyQt.QtGui.QStandardItem(function_text)
         item_functions.setEditable(False)
         item_functions.setForeground(label_brush)
         item_functions.setFont(label_font)
         #Check if there were any nodes found
         if function_nodes == []:
-            item_no_functions = PyQt4.QtGui.QStandardItem("No functions found")
+            item_no_functions = data.PyQt.QtGui.QStandardItem("No functions found")
             item_no_functions.setEditable(False)
             item_no_functions.setIcon(self.node_icon_nothing)
             item_functions.appendRow(item_no_functions)
@@ -1410,24 +1361,24 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         #Define the display structure texts
         function_text       = "FUNCTIONS:"
         #Initialize the tree display
-        self.setSelectionBehavior(PyQt4.QtGui.QAbstractItemView.SelectRows)
-        tree_model = PyQt4.QtGui.QStandardItemModel()
+        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush   = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush   = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font    = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        description_font    = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
-        item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
+        item_document_name  = data.PyQt.QtGui.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type  = PyQt4.QtGui.QStandardItem(document_type_text)
+        item_document_type  = data.PyQt.QtGui.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1435,14 +1386,14 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         #Set the label properties
-        label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        label_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        label_font  = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
         """Function nodes filtering"""
-        item_functions = PyQt4.QtGui.QStandardItem(function_text)
+        item_functions = data.PyQt.QtGui.QStandardItem(function_text)
         item_functions.setEditable(False)
         item_functions.setForeground(label_brush)
         item_functions.setFont(label_font)
@@ -1452,13 +1403,13 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             func_text = func[0] + " (line:"
             func_text += str(func[1]) + ")"
             #Construct the node and add it to the tree
-            function_node = PyQt4.QtGui.QStandardItem(func_text)
+            function_node = data.PyQt.QtGui.QStandardItem(func_text)
             function_node.setEditable(False)
             function_node.setIcon(self.node_icon_procedure)
             item_functions.appendRow(function_node)
         #Check if there were any nodes found
         if function_nodes == []:
-            item_no_functions = PyQt4.QtGui.QStandardItem("No functions found")
+            item_no_functions = data.PyQt.QtGui.QStandardItem("No functions found")
             item_no_functions.setEditable(False)
             item_functions.appendRow(item_no_functions)
         #Append the function nodes to the model
@@ -1479,24 +1430,24 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         document_name_text  = "DOCUMENT: {:s}".format(document_name)
         document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
         #Initialize the tree display
-        self.setSelectionBehavior(PyQt4.QtGui.QAbstractItemView.SelectRows)
-        tree_model = PyQt4.QtGui.QStandardItemModel()
+        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        description_font = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
-        item_document_name  = PyQt4.QtGui.QStandardItem(document_name_text)
+        item_document_name  = data.PyQt.QtGui.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type  = PyQt4.QtGui.QStandardItem(document_type_text)
+        item_document_type  = data.PyQt.QtGui.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1504,11 +1455,11 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         """Add the nodes"""
-        label_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        label_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        label_font  = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
         #Nested function for creating a tree node
         def create_tree_node(node_text, 
@@ -1516,7 +1467,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                              node_text_font, 
                              node_icon, 
                              node_line_number):
-            tree_node = PyQt4.QtGui.QStandardItem(node_text)
+            tree_node = data.PyQt.QtGui.QStandardItem(node_text)
             tree_node.setEditable(False)
             if node_text_brush != None:
                 tree_node.setForeground(node_text_brush)
@@ -1763,8 +1714,8 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
     def _init_found_files_options(self, search_text, directory, custom_text=None):
         #Initialize the tree display to the found files type
         self.horizontalScrollbarAction(1)
-        self.setSelectionBehavior(PyQt4.QtGui.QAbstractItemView.SelectRows)
-        tree_model = PyQt4.QtGui.QStandardItemModel()
+        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["FOUND FILES TREE"])
         self.header().hide()
         self.setModel(tree_model)
@@ -1772,14 +1723,14 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(10)
         """Define the description details"""
         #Font
-        description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font    = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        description_font    = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
         #Directory item
-        item_directory  = PyQt4.QtGui.QStandardItem(
+        item_directory  = data.PyQt.QtGui.QStandardItem(
             "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
         )
         item_directory.setEditable(False)
@@ -1787,11 +1738,11 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         item_directory.setFont(description_font)
         #Search item, display according to the custom text parameter
         if custom_text == None:
-            item_search_text = PyQt4.QtGui.QStandardItem(
+            item_search_text = data.PyQt.QtGui.QStandardItem(
                 "FILE HAS: {:s}".format(search_text)
             )
         else:
-            item_search_text = PyQt4.QtGui.QStandardItem(custom_text)
+            item_search_text = data.PyQt.QtGui.QStandardItem(custom_text)
         item_search_text.setEditable(False)
         item_search_text.setForeground(description_brush)
         item_search_text.setFont(description_font)
@@ -1802,8 +1753,8 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
     def _init_replace_in_files_options(self, search_text, replace_text, directory):
         #Initialize the tree display to the found files type
         self.horizontalScrollbarAction(1)
-        self.setSelectionBehavior(PyQt4.QtGui.QAbstractItemView.SelectRows)
-        tree_model = PyQt4.QtGui.QStandardItemModel()
+        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["REPLACED IN FILES TREE"])
         self.header().hide()
         self.setModel(tree_model)
@@ -1811,28 +1762,28 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         """Define the description details"""
         #Font
-        description_brush = PyQt4.QtGui.QBrush(
-            PyQt4.QtGui.QColor(data.theme.Font.Python.Default[1])
+        description_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.Default[1])
         )
-        description_font = PyQt4.QtGui.QFont(
-            "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+        description_font = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
         )
         #Directory item
-        item_directory  = PyQt4.QtGui.QStandardItem(
+        item_directory  = data.PyQt.QtGui.QStandardItem(
             "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
         )
         item_directory.setEditable(False)
         item_directory.setForeground(description_brush)
         item_directory.setFont(description_font)
         #Search item
-        item_search_text = PyQt4.QtGui.QStandardItem(
+        item_search_text = data.PyQt.QtGui.QStandardItem(
                             "SEARCH TEXT: {:s}".format(search_text)
                            )
         item_search_text.setEditable(False)
         item_search_text.setForeground(description_brush)
         item_search_text.setFont(description_font)
         #Replace item
-        item_replace_text = PyQt4.QtGui.QStandardItem(
+        item_replace_text = data.PyQt.QtGui.QStandardItem(
                             "REPLACE TEXT: {:s}".format(replace_text)
                            )
         item_replace_text.setEditable(False)
@@ -1873,18 +1824,18 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             #Set the UNIX file format to the directory
             directory = directory.replace("\\", "/")
             """Adding the files"""
-            label_brush = PyQt4.QtGui.QBrush(
-                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+            label_brush = data.PyQt.QtGui.QBrush(
+                data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
             )
-            label_font = PyQt4.QtGui.QFont(
-                "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+            label_font = data.PyQt.QtGui.QFont(
+                "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
             )
-            item_brush = PyQt4.QtGui.QBrush(
-                PyQt4.QtGui.QColor(data.theme.Font.Python.Default[1])
+            item_brush = data.PyQt.QtGui.QBrush(
+                data.PyQt.QtGui.QColor(data.theme.Font.Python.Default[1])
             )
-            item_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
+            item_font = data.PyQt.QtGui.QFont("Courier", data.tree_display_font_size)
             #Create the base directory item that will hold all of the found files
-            item_base_directory = PyQt4.QtGui.QStandardItem(directory)
+            item_base_directory = data.PyQt.QtGui.QStandardItem(directory)
             item_base_directory.setEditable(False)
             item_base_directory.setForeground(label_brush)
             item_base_directory.setFont(label_font)
@@ -1909,7 +1860,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                     if directory_name.startswith("/"):
                         directory_name = directory_name[1:]
                     #Initialize the file item
-                    item_file = PyQt4.QtGui.QStandardItem(file_name)
+                    item_file = data.PyQt.QtGui.QStandardItem(file_name)
                     item_file.setEditable(False)
                     item_file.setForeground(item_brush)
                     item_file.setFont(item_font)
@@ -1948,7 +1899,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                             current_directory = current_directory.directories[dir]
                         else:
                             #Create the new directory item
-                            item_new_directory = PyQt4.QtGui.QStandardItem(dir)
+                            item_new_directory = data.PyQt.QtGui.QStandardItem(dir)
                             item_new_directory.setEditable(False)
                             item_new_directory.setIcon(self.folder_icon)
                             item_new_directory.setForeground(item_brush)
@@ -1970,7 +1921,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             #Resize the header so the horizontal scrollbar will have the correct width
             self.resize_horizontal_scrollbar()
         else:
-            item_no_files_found = PyQt4.QtGui.QStandardItem("No items found")
+            item_no_files_found = data.PyQt.QtGui.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
             item_no_files_found.setIcon(self.node_icon_nothing)
             item_no_files_found.setForeground(label_brush)
@@ -1984,18 +1935,18 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             #Set the UNIX file format to the directory
             directory = directory.replace("\\", "/")
             """Adding the files"""
-            label_brush = PyQt4.QtGui.QBrush(
-                PyQt4.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+            label_brush = data.PyQt.QtGui.QBrush(
+                data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
             )
-            label_font  = PyQt4.QtGui.QFont(
-                "Courier", data.tree_display_font_size, PyQt4.QtGui.QFont.Bold
+            label_font  = data.PyQt.QtGui.QFont(
+                "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
             )
-            item_brush = PyQt4.QtGui.QBrush(
-                PyQt4.QtGui.QColor(data.theme.Font.Python.Default[1])
+            item_brush = data.PyQt.QtGui.QBrush(
+                data.PyQt.QtGui.QColor(data.theme.Font.Python.Default[1])
             )
-            item_font = PyQt4.QtGui.QFont("Courier", data.tree_display_font_size)
+            item_font = data.PyQt.QtGui.QFont("Courier", data.tree_display_font_size)
             #Create the base directory item that will hold all of the found files
-            item_base_directory = PyQt4.QtGui.QStandardItem(directory)
+            item_base_directory = data.PyQt.QtGui.QStandardItem(directory)
             item_base_directory.setEditable(False)
             item_base_directory.setForeground(label_brush)
             item_base_directory.setFont(label_font)
@@ -2017,7 +1968,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                     if directory_name.startswith("/"):
                         directory_name = directory_name[1:]
                     #Initialize the file item
-                    item_file = PyQt4.QtGui.QStandardItem(file_name)
+                    item_file = data.PyQt.QtGui.QStandardItem(file_name)
                     item_file.setEditable(False)
                     file_type = functions.get_file_type(file_name)
                     item_file.setIcon(get_language_file_icon(file_type))
@@ -2030,7 +1981,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                         #Adjust the line numbering to Ex.Co. (1 to end)
                         line += 1
                         #Create the goto line item
-                        item_line = PyQt4.QtGui.QStandardItem("line {:d}".format(line))
+                        item_line = data.PyQt.QtGui.QStandardItem("line {:d}".format(line))
                         item_line.setEditable(False)
                         item_line.setIcon(self.goto_icon)
                         item_line.setForeground(item_brush)
@@ -2069,7 +2020,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
                             current_directory = current_directory.directories[dir]
                         else:
                             #Create the new directory item
-                            item_new_directory = PyQt4.QtGui.QStandardItem(dir)
+                            item_new_directory = data.PyQt.QtGui.QStandardItem(dir)
                             item_new_directory.setEditable(False)
                             item_new_directory.setIcon(self.folder_icon)
                             item_new_directory.setForeground(item_brush)
@@ -2090,7 +2041,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
             #Resize the header so the horizontal scrollbar will have the correct width
             self.resize_horizontal_scrollbar()
         else:
-            item_no_files_found = PyQt4.QtGui.QStandardItem("No items found")
+            item_no_files_found = data.PyQt.QtGui.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
             item_no_files_found.setIcon(self.node_icon_nothing)
             item_no_files_found.setForeground(item_brush)
@@ -2200,7 +2151,7 @@ class TreeDisplay(PyQt4.QtGui.QTreeView):
 Object for displaying text difference between two files
 ----------------------------------------------------------------------------
 """
-class TextDiffer(PyQt4.QtGui.QWidget):
+class TextDiffer(data.QWidget):
     """A widget that holds two PlainEditors for displaying text difference"""
     #Class variables
     parent                  = None
@@ -2214,18 +2165,18 @@ class TextDiffer(PyQt4.QtGui.QWidget):
     text_2_name             = None
     diff_text               = None
     #Class constants
-    DEFAULT_FONT            = PyQt4.QtGui.QFont('Courier', 10)
-    MARGIN_STYLE            = PyQt4.Qsci.QsciScintilla.STYLE_LINENUMBER
+    DEFAULT_FONT            = data.PyQt.QtGui.QFont('Courier', 10)
+    MARGIN_STYLE            = data.PyQt.Qsci.QsciScintilla.STYLE_LINENUMBER
     INDICATOR_UNIQUE_1          = 1
-    Indicator_Unique_1_Color    = PyQt4.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
+    Indicator_Unique_1_Color    = data.PyQt.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
     INDICATOR_UNIQUE_2          = 2
-    Indicator_Unique_2_Color    = PyQt4.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
+    Indicator_Unique_2_Color    = data.PyQt.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
     INDICATOR_SIMILAR           = 3
-    Indicator_Similar_Color     = PyQt4.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
-    GET_X_OFFSET    = PyQt4.Qsci.QsciScintillaBase.SCI_GETXOFFSET
-    SET_X_OFFSET    = PyQt4.Qsci.QsciScintillaBase.SCI_SETXOFFSET
-    UPDATE_H_SCROLL = PyQt4.Qsci.QsciScintillaBase.SC_UPDATE_H_SCROLL
-    UPDATE_V_SCROLL = PyQt4.Qsci.QsciScintillaBase.SC_UPDATE_V_SCROLL
+    Indicator_Similar_Color     = data.PyQt.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
+    GET_X_OFFSET    = data.PyQt.Qsci.QsciScintillaBase.SCI_GETXOFFSET
+    SET_X_OFFSET    = data.PyQt.Qsci.QsciScintillaBase.SCI_SETXOFFSET
+    UPDATE_H_SCROLL = data.PyQt.Qsci.QsciScintillaBase.SC_UPDATE_H_SCROLL
+    UPDATE_V_SCROLL = data.PyQt.Qsci.QsciScintillaBase.SC_UPDATE_V_SCROLL
     #Diff icons
     icon_unique_1   = None
     icon_unique_2   = None
@@ -2277,7 +2228,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         self.icon_unique_2  = set_icon("tango_icons/diff-unique-2.png")
         self.icon_similar   = set_icon("tango_icons/diff-similar.png")
         #Create the horizontal splitter and two editor widgets
-        self.splitter = PyQt4.QtGui.QSplitter(PyQt4.QtCore.Qt.Horizontal, self)
+        self.splitter = data.QSplitter(data.PyQt.QtCore.Qt.Horizontal, self)
         self.editor_1 = forms.CustomEditor(self, main_form)
         self.init_editor(self.editor_1)
         self.editor_2 = forms.CustomEditor(self, main_form)
@@ -2286,7 +2237,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         self.editor_2.choose_lexer("text")
         self.splitter.addWidget(self.editor_1)
         self.splitter.addWidget(self.editor_2)
-        self.layout = PyQt4.QtGui.QVBoxLayout()
+        self.layout = data.QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addWidget(self.splitter)
         #Set the layout
@@ -2508,15 +2459,15 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         #to the marker background color
         editor.setMarginWidth(1, "00")
         editor.setMarginWidth(2, 0)        
-        editor.setMarginType(0, PyQt4.Qsci.QsciScintilla.TextMargin)
-        editor.setMarginType(1, PyQt4.Qsci.QsciScintilla.SymbolMargin)
-        editor.setMarginType(2, PyQt4.Qsci.QsciScintilla.SymbolMargin)
+        editor.setMarginType(0, data.PyQt.Qsci.QsciScintilla.TextMargin)
+        editor.setMarginType(1, data.PyQt.Qsci.QsciScintilla.SymbolMargin)
+        editor.setMarginType(2, data.PyQt.Qsci.QsciScintilla.SymbolMargin)
         #I DON'T KNOW THE ENTIRE LOGIC BEHIND MARKERS AND MARGINS! If you set 
         #something wrong in the margin mask, the markers on a different margin don't appear!
         #http://www.scintilla.org/ScintillaDoc.html#SCI_SETMARGINMASKN
         editor.setMarginMarkerMask(
             1,
-            ~PyQt4.Qsci.QsciScintillaBase.SC_MASK_FOLDERS 
+            ~data.PyQt.Qsci.QsciScintillaBase.SC_MASK_FOLDERS 
         )
         editor.setMarginMarkerMask(
             2, 
@@ -2526,7 +2477,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
     def init_markers(self):
         """Initialize all markers for showing diff symbols"""
         #Set the images
-        image_scale_size = PyQt4.QtCore.QSize(16, 16)
+        image_scale_size = data.PyQt.QtCore.QSize(16, 16)
         image_unique_1  = set_pixmap('tango_icons/diff-unique-1.png')
         image_unique_2  = set_pixmap('tango_icons/diff-unique-2.png')
         image_similar   = set_pixmap('tango_icons/diff-similar.png')
@@ -2535,9 +2486,9 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         image_unique_2  = image_unique_2.scaled(image_scale_size)
         image_similar   = image_similar.scaled(image_scale_size)
         #Markers for editor 1
-        self.marker_unique_1            = self.editor_1.markerDefine(PyQt4.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
+        self.marker_unique_1            = self.editor_1.markerDefine(data.PyQt.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
         self.marker_unique_symbol_1     = self.editor_1.markerDefine(image_unique_1, 1)
-        self.marker_similar_1           = self.editor_1.markerDefine(PyQt4.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
+        self.marker_similar_1           = self.editor_1.markerDefine(data.PyQt.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
         self.marker_similar_symbol_1    = self.editor_1.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
         self.editor_1.setMarkerBackgroundColor(self.Indicator_Unique_1_Color, self.marker_unique_1)
@@ -2551,9 +2502,9 @@ class TextDiffer(PyQt4.QtGui.QWidget):
             self.marker_similar_symbol_1
         )
         #Markers for editor 2
-        self.marker_unique_2            = self.editor_2.markerDefine(PyQt4.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
+        self.marker_unique_2            = self.editor_2.markerDefine(data.PyQt.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
         self.marker_unique_symbol_2     = self.editor_2.markerDefine(image_unique_2, 1)
-        self.marker_similar_2           = self.editor_2.markerDefine(PyQt4.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
+        self.marker_similar_2           = self.editor_2.markerDefine(data.PyQt.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
         self.marker_similar_symbol_2    = self.editor_2.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
         self.editor_2.setMarkerBackgroundColor(self.Indicator_Unique_2_Color, self.marker_unique_2)
@@ -2573,7 +2524,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
                        color):
         """Set the indicator settings"""
         editor.indicatorDefine(
-            PyQt4.Qsci.QsciScintillaBase.INDIC_ROUNDBOX,
+            data.PyQt.Qsci.QsciScintillaBase.INDIC_ROUNDBOX,
             indicator
         )
         editor.setIndicatorForegroundColor(
@@ -2581,7 +2532,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
             indicator
         )
         editor.SendScintilla(
-            PyQt4.Qsci.QsciScintillaBase.SCI_SETINDICATORCURRENT, 
+            data.PyQt.Qsci.QsciScintillaBase.SCI_SETINDICATORCURRENT, 
             indicator
         )
     
@@ -2591,8 +2542,8 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         editor.setUtf8(True)
         editor.setIndentationsUseTabs(False)
         editor.setFont(self.DEFAULT_FONT)
-        editor.setBraceMatching(PyQt4.Qsci.QsciScintilla.SloppyBraceMatch)
-        editor.setMatchedBraceBackgroundColor(PyQt4.QtGui.QColor(255, 153, 0))
+        editor.setBraceMatching(data.PyQt.Qsci.QsciScintilla.SloppyBraceMatch)
+        editor.setMatchedBraceBackgroundColor(data.PyQt.QtGui.QColor(255, 153, 0))
         editor.setAcceptDrops(False)
         editor.setEolMode(data.default_eol)
         editor.setReadOnly(True)
@@ -2624,7 +2575,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
                 self.Indicator_Similar_Color
             )
         #Color the line background
-        scintilla_command = PyQt4.Qsci.QsciScintillaBase.SCI_INDICATORFILLRANGE
+        scintilla_command = data.PyQt.Qsci.QsciScintillaBase.SCI_INDICATORFILLRANGE
         start   = editor.positionFromLineIndex(line, 0)
         length  = editor.lineLength(line)
         editor.SendScintilla(
@@ -2874,9 +2825,9 @@ class TextDiffer(PyQt4.QtGui.QWidget):
         if isinstance(parent, forms.BasicWidget) == False:
             return
         #Create the find toolbar and buttons
-        find_toolbar = PyQt4.QtGui.QToolBar(parent)
-        find_toolbar.setIconSize(PyQt4.QtCore.QSize(16,16))
-        unique_1_action =   PyQt4.QtGui.QAction(
+        find_toolbar = data.QToolBar(parent)
+        find_toolbar.setIconSize(data.PyQt.QtCore.QSize(16,16))
+        unique_1_action =   data.QAction(
                                 set_icon("tango_icons/diff-unique-1.png"), 
                                 "unique_1_button",
                                 parent
@@ -2885,7 +2836,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
             "Scroll to next unique line\nin document: '{:s}'".format(self.text_1_name)
         )
         unique_1_action.triggered.connect(self.find_next_unique_1)
-        unique_2_action =   PyQt4.QtGui.QAction(
+        unique_2_action =   data.QAction(
                                 set_icon("tango_icons/diff-unique-2.png"), 
                                 "unique_2_button",
                                 parent
@@ -2894,7 +2845,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
             "Scroll to next unique line\nin document: '{:s}'".format(self.text_2_name)
         )
         unique_2_action.triggered.connect(self.find_next_unique_2)
-        similar_action =   PyQt4.QtGui.QAction(
+        similar_action =   data.QAction(
                                 set_icon("tango_icons/diff-similar.png"), 
                                 "unique_2_button",
                                 parent
@@ -2922,17 +2873,17 @@ class TextDiffer(PyQt4.QtGui.QWidget):
             editor.setMarginsForegroundColor(theme.LineMargin.ForeGround)
             editor.setMarginsBackgroundColor(theme.LineMargin.BackGround)
             editor.SendScintilla(
-                PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-                PyQt4.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+                data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+                data.PyQt.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
                 theme.Paper.Default
             )
             editor.SendScintilla(
-                PyQt4.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-                PyQt4.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+                data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
+                data.PyQt.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
                 theme.LineMargin.BackGround
             )
             editor.SendScintilla(
-                PyQt4.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+                data.PyQt.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
                 theme.Cursor
             )
             editor.choose_lexer("text")
@@ -2946,7 +2897,7 @@ class TextDiffer(PyQt4.QtGui.QWidget):
 Object for showing log messages across all widgets, mostly for debug purposes
 ----------------------------------------------------------------------------
 """
-class MessageLogger(PyQt4.QtGui.QWidget):
+class MessageLogger(data.QWidget):
     """Simple subclass for displaying log messages"""
     #Controls and variables of the log window  (class variables >> this means that these variables are shared accross instances of this class)
     displaybox  = None      #QTextEdit that will display log messages
@@ -2961,10 +2912,10 @@ class MessageLogger(PyQt4.QtGui.QWidget):
         #Initialize the log window
         self.setWindowTitle("LOGGING WINDOW")
         self.resize(500, 300)
-        self.setWindowFlags(PyQt4.QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint)
         
         #Initialize the display box
-        self.displaybox = PyQt4.QtGui.QTextEdit(self)
+        self.displaybox = data.QTextEdit(self)
         self.displaybox.setReadOnly(True)
         #Make displaybox click/doubleclick event also fire the log window click/doubleclick method
         self.displaybox.mousePressEvent         = self._event_mousepress
@@ -2972,7 +2923,7 @@ class MessageLogger(PyQt4.QtGui.QWidget):
         self.keyPressEvent                      = self._keypress
         
         #Initialize layout
-        self.layout = PyQt4.QtGui.QGridLayout()
+        self.layout = data.QGridLayout()
         self.layout.addWidget(self.displaybox)
         self.setLayout(self.layout)
         
@@ -2982,7 +2933,7 @@ class MessageLogger(PyQt4.QtGui.QWidget):
         
         #Set the log window icon
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(PyQt4.QtGui.QIcon(data.application_icon))
+            self.setWindowIcon(data.PyQt.QtGui.QIcon(data.application_icon))
     
     def _event_mouse_doubleclick(self, mouse_event):
         """Rereferenced/overloaded displaybox doubleclick event"""
@@ -2995,7 +2946,7 @@ class MessageLogger(PyQt4.QtGui.QWidget):
     def _keypress(self, key_event):
         """Rereferenced/overloaded MessageLogger keypress event"""
         pressed_key = key_event.key()
-        if pressed_key == PyQt4.QtCore.Qt.Key_Escape:
+        if pressed_key == data.PyQt.QtCore.Qt.Key_Escape:
             self.close()
     
     def clear_log(self):
@@ -3012,8 +2963,8 @@ class MessageLogger(PyQt4.QtGui.QWidget):
             self.displaybox.append(message)
         #Bring cursor to the current message (this is in a QTextEdit not QScintilla)
         cursor = self.displaybox.textCursor()
-        cursor.movePosition(PyQt4.QtGui.QTextCursor.End)
-        cursor.movePosition(PyQt4.QtGui.QTextCursor.StartOfLine)
+        cursor.movePosition(data.PyQt.QtGui.QTextCursor.End)
+        cursor.movePosition(data.PyQt.QtGui.QTextCursor.StartOfLine)
         self.displaybox.setTextCursor(cursor)
 
 
@@ -3023,7 +2974,7 @@ class MessageLogger(PyQt4.QtGui.QWidget):
 ExCo Information Widget for displaying the license, used languages and libraries, ...
 -----------------------------------------------------------------------------------
 """
-class ExCoInfo(PyQt4.QtGui.QDialog):
+class ExCoInfo(data.QDialog):
     #Class variables
     name    = "Ex.Co. Info"
     savable = data.CanSave.NO
@@ -3036,10 +2987,10 @@ class ExCoInfo(PyQt4.QtGui.QDialog):
         super().__init__()
         #Setup the window
         self.setWindowTitle("About Ex.Co.")
-        self.setWindowFlags(PyQt4.QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint)
         #Setup the picture
-        exco_picture    = PyQt4.QtGui.QPixmap(data.about_image)
-        self.picture    = PyQt4.QtGui.QLabel(self)
+        exco_picture    = data.PyQt.QtGui.QPixmap(data.about_image)
+        self.picture    = data.PyQt.QtGui.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())
         self.picture.setScaledContents(True)
@@ -3047,14 +2998,14 @@ class ExCoInfo(PyQt4.QtGui.QDialog):
         self.picture.mousePressEvent        = self._close
         self.picture.mouseDoubleClickEvent  = self._close
         #Initialize layout
-        self.layout = PyQt4.QtGui.QGridLayout()
+        self.layout = data.QGridLayout()
         self.layout.addWidget(self.picture)
         self.layout.setSpacing(0)
         self.layout.setMargin(0)
         self.setLayout(self.layout)
         #Set the log window icon
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(PyQt4.QtGui.QIcon(data.application_icon))
+            self.setWindowIcon(data.PyQt.QtGui.QIcon(data.application_icon))
         #Save the info window geometry, the values were gotten by showing a dialog with the label containing
         #the Exco_Info.png image with the size set to (50, 50), so it would automatically resize to the label image size
         my_width    = 610
@@ -3066,11 +3017,11 @@ class ExCoInfo(PyQt4.QtGui.QDialog):
         parent_height   = parent.geometry().height()
         my_left = parent_left + (parent_width/2) - (my_width/2)
         my_top = parent_top + (parent_height/2) - (my_height/2)
-        self.setGeometry(PyQt4.QtCore.QRect(my_left, my_top, my_width, my_height))
+        self.setGeometry(data.PyQt.QtCore.QRect(my_left, my_top, my_width, my_height))
         self.setFixedSize(my_width, my_height)
 #        self.setStyleSheet("background-color:transparent;")
-#        self.setWindowFlags(PyQt4.QtCore.Qt.WindowStaysOnTopHint | PyQt4.QtCore.Qt.Dialog | PyQt4.QtCore.Qt.FramelessWindowHint)
-#        self.setAttribute(PyQt4.QtCore.Qt.WA_TranslucentBackground)
+#        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint | data.PyQt.QtCore.Qt.Dialog | data.PyQt.QtCore.Qt.FramelessWindowHint)
+#        self.setAttribute(data.PyQt.QtCore.Qt.WA_TranslucentBackground)
 
     def _close(self, event):
         """Close the widget"""
