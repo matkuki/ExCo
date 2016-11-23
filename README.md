@@ -27,7 +27,7 @@ All additional licenses are specified at the beginning of every source code file
 - Text diffing (also between editor windows)
 - Execute Terminal/Shell commands directly from the REPL (Windows or GNU/Linux)
 - Ability to add your custom Python functions
-- Language syntax highlighting: AVS, Ada, Bash, Batch, CMake, CPP, CSS, CSharp, CoffeeScript, Cython, D, Diff, Fortran, Fortran77, HTML, IDL, Java, JavaScript, Lua, Makefile, Matlab, Nim, Oberon, Octave, PO, POV, Pascal, Perl, PostScript, Properties, PyQt4, Python, RouterOS (MikroTik), Ruby, SQL, Spice, TCL, TeX, Text, VHDL, Verilog, XML and YAML
+- Language syntax highlighting: AVS, Ada, Bash, Batch, CMake, CPP, CSS, CSharp, CoffeeScript, Cython, D, Diff, Fortran, Fortran77, HTML, IDL, Java, JavaScript, Lua, Makefile, Matlab, Nim, Oberon, Octave, PO, POV, Pascal, Perl, PostScript, Properties, Python, RouterOS (MikroTik), Ruby, SQL, Spice, TCL, TeX, Text, VHDL, Verilog, XML and YAML
 - Code tree displaying for: 
     - Python 3
     - Nim
@@ -56,7 +56,7 @@ __Optional dependencies:__
     your version of Python3 (QScintilla2 is bundled with the installer). Run Ex.Co. using the command described below in the 'Starting Ex&#46;Co&#46;' section.
 
   Method 2 - using __pip__:<br>
-  If you have pip installed with your Python 3 installation, you can install PyQt5 and QScintilla2 with the following commands (You will need to run the commands as administrator!):<br>
+  If you have pip installed with your Python 3 installation (needs to be Python 3.5 or higher), you can install PyQt5 and QScintilla2 with the following commands (You will need to run the commands as administrator!):<br>
 ```sh 
 $ pip install PyQt5
 ```
@@ -67,13 +67,13 @@ $ pip install qscintilla2
   Method 1 - using __apt-get__:<br>
   If you are on Lubuntu, Raspbian or probably most Debian derivatives, install the following libraries using __apt-get__:
   - python3.x (Probably already installed on the system)
-  - python3-pyqt4
-  - python3-pyqt4.qsci
+  - python3-pyqt4 __or__ python3-pyqt5
+  - python3-pyqt4.qsci __or__ python3-pyqt5.qsci
     (If this library is outdated, you will get a 'missing QsciLexerCoffeeScript' or similar exception.
      Update the repositories and try again. If that still doesn't help, try using Ubuntu's 'Universe' repositories.)
 
   Method 2 - using __pip__:<br>
-  If you have pip installed with your Python 3 installation, you can install PyQt5 and QScintilla2 with the following commands (You will need to run the commands as administrator!):<br>
+  If you have pip installed with your Python 3 installation (needs to be Python 3.5 or higher) , you can install PyQt5 and QScintilla2 with the following commands (You will need to run the commands as sudo!):<br>
 ```sh 
 $ pip install PyQt5
 ```
@@ -81,7 +81,7 @@ $ pip install PyQt5
 $ pip install qscintilla2
 ```
 
-  Otherwise you can install PyQt4 and QScintilla2 (you'll also need the SIP library) from source from their official [website](https://www.riverbankcomputing.com/software/pyqt/download). Download the source code and follow the instructions in the readme/install files. You'll also need the [Qt4 C++ source code](https://wiki.qt.io/Get_the_Source#Qt_4.x).
+  Otherwise you can install PyQt4/PyQt5 and QScintilla2 (you'll also need the SIP library) from source from their official [website](https://www.riverbankcomputing.com/software/pyqt/download). Download the source code and follow the instructions in the readme/install files. You'll also need the [Qt C++ source code](https://wiki.qt.io/Get_the_Source#Qt_4.x).
 - __Mac OS__:<br>
   Try using Anaconda Python 3 and it's package manager to install all dependencies. Here is the more [information](https://github.com/matkuki/ExCo/issues/1).<br>
   I don't know much about Mac's, but you can try using the default Mac package manager to find the PyQt4 and QScintilla2
