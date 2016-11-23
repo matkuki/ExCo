@@ -968,6 +968,25 @@ def get_python_node_tree(python_code):
                     if result != None:
                         parent_node.children.append(result)
                 parent_node.children = sorted(parent_node.children, key=lambda x: x.name)
+            else:
+                new_nodes = []
+                if hasattr(ast_node, "body"):
+                    for child_node in ast_node.body:
+                        result = parse_node(child_node, level+1, None)
+                        if result != None:
+                            new_nodes.append(result)
+                if hasattr(ast_node, "orelse"):
+                    for child_node in ast_node.orelse:
+                        result = parse_node(child_node, level+1, None)
+                        if result != None:
+                            new_nodes.append(result)
+                if hasattr(ast_node, "finalbody"):
+                    for child_node in ast_node.finalbody:
+                        result = parse_node(child_node, level+1, None)
+                        if result != None:
+                            new_nodes.append(result)
+                if new_nodes != []:
+                    return new_nodes
         return new_node
     
     # Initialization
@@ -977,7 +996,11 @@ def get_python_node_tree(python_code):
     for node in ast.iter_child_nodes(parsed_string):
         result = parse_node(node, 0)
         if result != None:
-            python_node_tree.append(result)
+            if isinstance(result, list):
+                for n in result:
+                    python_node_tree.append(n)
+            else:
+                python_node_tree.append(result)
     # Sort the node list
     python_node_tree = sorted(python_node_tree, key=lambda x: x.name)
     # Return the resulting tree

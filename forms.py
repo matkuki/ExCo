@@ -3703,6 +3703,7 @@ class MainWindow(data.QMainWindow):
                 result = basic_widget.widget(i).find_text(
                              search_text,
                              case_sensitive, 
+                             True, # search_forward
                              regular_expression  
                          )
                 #If a replace was done, return success
@@ -7568,7 +7569,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         if regular_expression == True:
             #Check if expression exists in the document
             search_result = self.find_text(
-                search_text, case_sensitive, search_forward,regular_expression
+                search_text, case_sensitive, search_forward, regular_expression
             )
             if search_result != data.SearchResult.NOT_FOUND:
                 if case_sensitive == True:
