@@ -169,10 +169,8 @@ class MainWindow(data.QMainWindow):
             self.view.set_log_window(True)
         data.print_log("Main window displayed successfully")
         self.settings.restore()
-        
         #Initialize the theme indicator
         self.display.init_theme_indicator()
-        
         #Initialize repl interpreter
         self._init_interpreter()
         #Set the main window icon if it exists
@@ -2090,7 +2088,10 @@ class MainWindow(data.QMainWindow):
             return
         if self._first_scan == False:
             self._first_scan = True
-            self.repl._repl_eval("first_scan()", display_action=False)
+            self.repl._repl_eval(
+                "if callable(first_scan):\n    first_scan()", 
+                display_action=False
+            )
         #Update the REPL autocompletions
         import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_list(user_code)
         #First get the function names
