@@ -58,41 +58,43 @@ Main window and its supporting objects
 """
 class MainWindow(data.QMainWindow):
     """Main form that holds all Qt objects"""
-    #Define main form control references
-    main_window             = None  #Main window
-    upper_window            = None  #Upper sidebar
-    lower_window            = None  #Lower sidebar
-    vertical_splitter       = None  #QSplitter that will split the main form vertically
-    horizontal_splitter     = None  #QSplitter that will split the main form horizontally
-    main_splitter           = None  #QSplitter that will split the main form and REPL vertically
-    main_groupbox           = None  #QGroupBox that will hold the main splitter, needed for overlaying
-    main_groupbox_layout    = None  #QVBoxLayout used by the main groupbox
-    repl                    = None  #QLineEdit that will be used for the Python REPL
-    repl_helper             = None  #QTextEdit helper for inputting more than one line into the REPL
-    repl_box                = None  #QGroupBox that the REPL will be in
-    repl_messages_tab       = None  #Reference to a tab that displays REPL messages
-    node_tree_tab           = None  #Reference to a tab that displays NODE TREE information
-    menubar                 = None  #Menubar
-    recent_files_menu       = None  #Recent files submenu in the Menubar
-    sessions_menu           = None  #Sessions option on the menubar
-    toolbar                 = None  #Toolbar
-    statusbar               = None  #Statusbar
-    statusbar_label_left    = None  #Left side of the statusbar for showing line and column numbers
-    #Flag for locking the main window keypress and release
+    # Define main form control references
+    main_window             = None  # Main window
+    upper_window            = None  # Upper sidebar
+    lower_window            = None  # Lower sidebar
+    vertical_splitter       = None  # QSplitter that will split the main form vertically
+    horizontal_splitter     = None  # QSplitter that will split the main form horizontally
+    main_splitter           = None  # QSplitter that will split the main form and REPL vertically
+    main_groupbox           = None  # QGroupBox that will hold the main splitter, needed for overlaying
+    main_groupbox_layout    = None  # QVBoxLayout used by the main groupbox
+    repl                    = None  # QLineEdit that will be used for the Python REPL
+    repl_helper             = None  # QTextEdit helper for inputting more than one line into the REPL
+    repl_box                = None  # QGroupBox that the REPL will be in
+    repl_messages_tab       = None  # Reference to a tab that displays REPL messages
+    node_tree_tab           = None  # Reference to a tab that displays NODE TREE information
+    menubar                 = None  # Menubar
+    recent_files_menu       = None  # Recent files submenu in the Menubar
+    sessions_menu           = None  # Sessions option on the menubar
+    toolbar                 = None  # Toolbar
+    statusbar               = None  # Statusbar
+    statusbar_label_left    = None  # Left side of the statusbar for showing line and column numbers
+    # Flag for locking the main window keypress and release
     key_lock                = False
-    #Last directory browsed by the "Open File" and other dialogs
+    # Flag indicating the first time the user config file was imported
+    _first_scan             = False
+    # Last directory browsed by the "Open File" and other dialogs
     last_browsed_dir        = ""
-    #Generator for supplying the number when a new document is created
+    # Generator for supplying the number when a new document is created
     new_file_count          = itertools.count(0, 1)
-    #References for enabling/disabling saving of the current document in the menubar
+    # References for enabling/disabling saving of the current document in the menubar
     save_file_action            = None
     saveas_file_action          = None
     save_ascii_file_action      = None
     save_ansiwin_file_action    = None
     save_in_encoding            = None
-    #Attribute for signaling the state of the save buttons in the "File" menubar
+    # Attribute for signaling the state of the save buttons in the "File" menubar
     save_state              = False
-    #Supported Ex.Co. file extension types
+    # Supported Ex.Co. file extension types
     exco_file_exts =  (
         ['*' + x for x in data.ext_python] +
         ['*' + x for x in data.ext_cpython] +
@@ -109,9 +111,9 @@ class MainWindow(data.QMainWindow):
         ['*' + x for x in data.ext_text] +
         ['*' + x for x in data.ext_ini]
     )
-    #Dictionary for storing the menubar special functions
+    # Dictionary for storing the menubar special functions
     menubar_functions       = {}
-    #Last focused widget and tab needed by the function wheel overlay
+    # Last focused widget and tab needed by the function wheel overlay
     last_focused_widget     = None
     last_focused_tab        = None
     """Namespace references for grouping functionality"""
@@ -2086,6 +2088,9 @@ class MainWindow(data.QMainWindow):
                 message_type=data.MessageType.ERROR
             )
             return
+        if self._first_scan == False:
+            self._first_scan = True
+            self.repl._repl_eval("first_scan()", display_action=False)
         #Update the REPL autocompletions
         import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_list(user_code)
         #First get the function names
@@ -7381,14 +7386,14 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 end_line_number     = self.getSelection()[2] + 1
                 #Apply the function to the lines
                 new_line_list = []
-                for i in self.line_list[start_line_number:end_line_number]:
-                    new_line = in_func(self.line_list[i])
+                for line in self.line_list[start_line_number:end_line_number]:
+                    new_line = in_func(line)
                     new_line_list.append(new_line)
                 #Assign the new list over the old one
                 self.line_list[start_line_number:end_line_number] = new_line_list
             except Exception as ex:
                 self.main_form.display.repl_display_message(
-                    "'for_each_line' has an error:\n" +str(ex), 
+                    "'for_each_line' has an error:\n" + str(ex), 
                     message_type=data.MessageType.ERROR
                 )
                 return
