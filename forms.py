@@ -81,7 +81,7 @@ class MainWindow(data.QMainWindow):
     # Flag for locking the main window keypress and release
     key_lock                = False
     # Flag indicating the first time the user config file was imported
-    _first_scan             = False
+    _first_scan             = True
     # Last directory browsed by the "Open File" and other dialogs
     last_browsed_dir        = ""
     # Generator for supplying the number when a new document is created
@@ -2086,8 +2086,8 @@ class MainWindow(data.QMainWindow):
                 message_type=data.MessageType.ERROR
             )
             return
-        if self._first_scan == False:
-            self._first_scan = True
+        if self._first_scan == True:
+            self._first_scan = False
             self.repl._repl_eval(
                 "if callable(first_scan):\n    first_scan()", 
                 display_action=False
@@ -8788,7 +8788,7 @@ class ReplLineEdit(data.QLineEdit):
                 #whichever widget was focused before
                 repl_messages.parent.setCurrentIndex(current_rm_index)
         #Evaluate the REPL text and store the result
-        eval_return = self.interpreter.eval_command(current_command)
+        eval_return = self.interpreter.eval_command(current_command, display_action)
         #Save text into the input buffer
         self._input_buffer_add(self.text())
         #Clear the REPL text

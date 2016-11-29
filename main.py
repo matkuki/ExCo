@@ -108,6 +108,8 @@ def main():
             file_arguments = ";".join(file_list)
         else:
             file_arguments = [options.single_file]
+    if file_arguments == ['']:
+        file_arguments = None
     #Get the application directory
     data.application_directory = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
     #Check if Ex.Co. is run as a cxfreeze executable (the path will contain library.zip)

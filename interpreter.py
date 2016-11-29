@@ -180,7 +180,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
         #Save the REPL print function as a reference
         self.repl_print = repl_print
     
-    def eval_command(self, command):
+    def eval_command(self, command, display_action=True):
         """
         This EVAL function executes the command by the interactive interpreter.
         (inputted by the REPL ReplLineEdit and pressing enter)
@@ -202,7 +202,8 @@ class CustomInterpreter(code.InteractiveInterpreter):
                 #Try to EVALUATE the command
                 data.print_log("Trying to EVALUATE the command.")
                 eval_return = eval(filtered_command, self.locals)
-                self.repl_print(eval_return)
+                if display_action == True:
+                    self.repl_print(eval_return)
                 data.print_log(eval_return)
                 data.print_log("Evaluation succeeded!")
                 return None
