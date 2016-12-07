@@ -2147,13 +2147,12 @@ class MainWindow(data.QMainWindow):
             self.last_browsed_dir, 
             "All Files (*);;Ex.Co. Files({:s})".format(' '.join(self.exco_file_exts))
         )
-        if data.PYQT_MODE == 4:
-            # Check and then add the selected file to the main BasicWidget if the window parameter is unspecified
-            self.open_files(files, basic_widget)
-        elif data.PYQT_MODE == 5:
+        if data.PYQT_MODE == 5:
             # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
             # so pass only the files to the function
-            self.open_files(files[0], basic_widget)
+            files = files[0]
+        # Check and then add the selected file to the main BasicWidget if the window parameter is unspecified
+        self.open_files(files, basic_widget)
     
     def open_files(self, files=None, basic_widget=None):
         """Cheach and read valid files to the selected BasicWidget"""
@@ -7953,17 +7952,21 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         """Save a document to a file"""
         if self.save_name == "" or saveas != False:
             #Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QfileDialog
-            file_dialog         = data.QFileDialog
+            file_dialog = data.QFileDialog
             #Check if the custom editors last browsed dir was previously set
             if self.last_browsed_dir == "" and last_dir != None:
                 self.last_browsed_dir = last_dir
             #Get the filename from the QfileDialog window
-            temp_save_name  = file_dialog.getSaveFileName(
-                                  self, 
-                                  "Save File", 
-                                  self.last_browsed_dir + self.save_name, 
-                                  "All Files(*)"
-                              )
+            temp_save_name = file_dialog.getSaveFileName(
+                self, 
+                "Save File", 
+                self.last_browsed_dir + self.save_name, 
+                "All Files(*)"
+            )
+            if data.PYQT_MODE == 5:
+                # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
+                # so pass only the files to the function
+                temp_save_name = temp_save_name[0]
             #Check if the user has selected a file
             if temp_save_name == "":
                 return

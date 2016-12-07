@@ -1051,9 +1051,13 @@ class Nim(data.PyQt.Qsci.QsciLexerCustom):
 Set colors for all other lexers by dynamically creating
 derived classes and adding styles to them.
 """
+# Lexers that were manually defined above
 predefined_lexers = [
     "QsciLexerPython",
 ]
+# Themes that are missing when upgrading QScintilla
+missing_themes = {}
+# Loop through the Qsci module lexers and adjust them
 for i in data.PyQt.Qsci.__dict__:
     if i.startswith("QsciLexer") and len(i) > len("QsciLexer"):
         if not(i in predefined_lexers):
@@ -1077,11 +1081,21 @@ for i in data.PyQt.Qsci.__dict__:
             cls_text += "    def set_theme(self, theme):\n"
             cls_text += "        self.setDefaultColor(theme.Font.Default)\n".format(lexer_name)
             cls_text += "        self.setDefaultPaper(theme.Paper.Default)\n".format(lexer_name)
+            cls_text += "        missing_themes['{}'] = []\n".format(lexer_name)
             for style in styles:
                 cls_text += "        for style in self.styles:\n"
-                cls_text += "            self.setPaper(\n"
-                cls_text += "                data.PyQt.QtGui.QColor(theme.Paper.{0}.Default), \n".format(lexer_name)
-                cls_text += "                self.styles[style]\n"
-                cls_text += "            )\n"
-                cls_text += "            set_font(self, style, getattr(theme.Font.{0}, style))\n".format(lexer_name)
+                cls_text += "            try:\n"
+                cls_text += "                self.setPaper(\n"
+                cls_text += "                    data.PyQt.QtGui.QColor(theme.Paper.{0}.Default), \n".format(lexer_name)
+                cls_text += "                    self.styles[style]\n"
+                cls_text += "                )\n"
+                cls_text += "                set_font(self, style, getattr(theme.Font.{0}, style))\n".format(lexer_name)
+                cls_text += "            except:\n"
+                cls_text += "               if not(style in missing_themes['{}']):\n".format(lexer_name)
+                cls_text += "                   missing_themes['{}'].append(style)\n".format(lexer_name)
+                cls_text += "        if len(missing_themes['{}']) != 0:\n".format(lexer_name)
+                cls_text += "            print(\"Lexer '{}' missing themes:\")\n".format(lexer_name)
+                cls_text += "            for mt in missing_themes['{}']:\n".format(lexer_name)
+                cls_text += "                print('    - ' + mt)\n"
+                cls_text += "            raise Exception(\"Lexer '{}' has missing themes!\")\n".format(lexer_name)
             exec(cls_text)

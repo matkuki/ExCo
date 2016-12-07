@@ -220,6 +220,12 @@ class Font:
         UUID = ('Courier', 0xfff7f1c1, 10, None)
         UnclosedString = ('Courier', 0xfff7f1c1, 10, None)
         VerbatimString = ('Courier', 0xff679d47, 10, None)
+        UserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveEscapeSequence = ('Courier', 0xff808080, 10, None)
+        EscapeSequence = ('Courier', 0xff808080, 10, None)
+        InactiveUserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveTaskMarker = ('Courier', 0xff808080, 10, None)
+        TaskMarker = ('Courier', 0xff808080, 10, None)
     
     class CSS:
         AtRule = ('Courier', 0xff7f7f00, 10, None)
@@ -298,6 +304,12 @@ class Font:
         UUID = ('Courier', 0xfff7f1c1, 10, None)
         UnclosedString = ('Courier', 0xfff7f1c1, 10, None)
         VerbatimString = ('Courier', 0xff679d47, 10, None)
+        UserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveEscapeSequence = ('Courier', 0xff808080, 10, None)
+        EscapeSequence = ('Courier', 0xff808080, 10, None)
+        InactiveUserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveTaskMarker = ('Courier', 0xff808080, 10, None)
+        TaskMarker = ('Courier', 0xff808080, 10, None)
     
     class CoffeeScript:
         BlockRegex = ('Courier', 0xff3f7f3f, 10, None)
@@ -556,6 +568,12 @@ class Font:
         UUID = ('Courier', 0xff804080, 10, None)
         UnclosedString = ('Courier', 0xfff7f1c1, 10, None)
         VerbatimString = ('Courier', 0xff679d47, 10, None)
+        UserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveEscapeSequence = ('Courier', 0xff808080, 10, None)
+        EscapeSequence = ('Courier', 0xff808080, 10, None)
+        InactiveUserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveTaskMarker = ('Courier', 0xff808080, 10, None)
+        TaskMarker = ('Courier', 0xff808080, 10, None)
     
     class Java:
         Comment = ('Courier', 0xff679d47, 10, None)
@@ -608,6 +626,12 @@ class Font:
         UUID = ('Courier', 0xfff7f1c1, 10, None)
         UnclosedString = ('Courier', 0xfff7f1c1, 10, None)
         VerbatimString = ('Courier', 0xff679d47, 10, None)
+        UserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveEscapeSequence = ('Courier', 0xff808080, 10, None)
+        EscapeSequence = ('Courier', 0xff808080, 10, None)
+        InactiveUserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveTaskMarker = ('Courier', 0xff808080, 10, None)
+        TaskMarker = ('Courier', 0xff808080, 10, None)
     
     class JavaScript:
         Comment = ('Courier', 0xff679d47, 10, None)
@@ -660,6 +684,12 @@ class Font:
         UUID = ('Courier', 0xfff7f1c1, 10, None)
         UnclosedString = ('Courier', 0xfff7f1c1, 10, None)
         VerbatimString = ('Courier', 0xff679d47, 10, None)
+        UserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveEscapeSequence = ('Courier', 0xff808080, 10, None)
+        EscapeSequence = ('Courier', 0xff808080, 10, None)
+        InactiveUserLiteral = ('Courier', 0xff808080, 10, None)
+        InactiveTaskMarker = ('Courier', 0xff808080, 10, None)
+        TaskMarker = ('Courier', 0xff808080, 10, None)
     
     class Lua:
         BasicFunctions = ('Courier', 0xff519872, 10, None)
@@ -914,6 +944,7 @@ class Font:
         PlusPrompt = ('Courier', 0xff679d47, 10, None)
         QuotedIdentifier = ('Courier', 0xfff7f1c1, 10, None)
         SingleQuotedString = ('Courier', 0xff7ca563, 10, None)
+        QuotedOperator = ('Courier', 0xff808080, 10, None)
     
     class Spice:
         Command = ('Courier', 0xff519872, 10, None)
@@ -974,6 +1005,7 @@ class Font:
         StandardType = ('Courier', 0xff208080, 10, None)
         String = ('Courier', 0xff7ca563, 10, None)
         UnclosedString = ('Courier', 0xfff7f1c1, 10, None)
+        CommentBlock = ('Courier', 0xff800080, 10, None)
     
     class Verilog:
         Comment = ('Courier', 0xff679d47, 10, None)
@@ -990,6 +1022,30 @@ class Font:
         SystemTask = ('Courier', 0xff804020, 10, None)
         UnclosedString = ('Courier', 0xfff7f1c1, 10, None)
         UserKeywordSet = ('Courier', 0xff2a00ff, 10, None)
+        InactiveDefault = ('Courier', 0xff808080, 10, None)
+        InactiveUnclosedString = ('Courier', 0xff808080, 10, None)
+        InactiveCommentKeyword = ('Courier', 0xff808080, 10, None)
+        InactiveKeywordSet2 = ('Courier', 0xff808080, 10, None)
+        InactiveComment = ('Courier', 0xff808080, 10, None)
+        DeclareInputOutputPort = ('Courier', 0xff808080, 10, None)
+        InactiveString = ('Courier', 0xff808080, 10, None)
+        CommentKeyword = ('Courier', 0xff808080, 10, None)
+        DeclareOutputPort = ('Courier', 0xff808080, 10, None)
+        PortConnection = ('Courier', 0xff808080, 10, None)
+        InactiveKeyword = ('Courier', 0xff808080, 10, None)
+        DeclareInputPort = ('Courier', 0xff808080, 10, None)
+        InactiveDeclareInputPort = ('Courier', 0xff808080, 10, None)
+        InactiveDeclareOutputPort = ('Courier', 0xff808080, 10, None)
+        InactiveUserKeywordSet = ('Courier', 0xff808080, 10, None)
+        InactiveCommentBang = ('Courier', 0xff808080, 10, None)
+        InactiveIdentifier = ('Courier', 0xff808080, 10, None)
+        InactivePortConnection = ('Courier', 0xff808080, 10, None)
+        InactiveNumber = ('Courier', 0xff808080, 10, None)
+        InactiveSystemTask = ('Courier', 0xff808080, 10, None)
+        InactivePreprocessor = ('Courier', 0xff808080, 10, None)
+        InactiveOperator = ('Courier', 0xff808080, 10, None)
+        InactiveDeclareInputOutputPort = ('Courier', 0xff808080, 10, None)
+        InactiveCommentLine = ('Courier', 0xff808080, 10, None)
     
     class XML:
         ASPAtStart = ('Courier', 0xfff7f1c1, 10, None)
@@ -1282,6 +1338,13 @@ class Paper:
         PreProcessorCommentLineDoc = 0xff1a0f0b
         DoubleQuotedString = 0xff1a0f0b
         InactiveKeyword = 0xff1a0f0b
+        InactiveKeyword = 0xff1a0f0b
+        UserLiteral = 0xff1a0f0b
+        InactiveEscapeSequence = 0xff1a0f0b
+        EscapeSequence = 0xff1a0f0b
+        InactiveUserLiteral = 0xff1a0f0b
+        InactiveTaskMarker = 0xff1a0f0b
+        TaskMarker = 0xff1a0f0b
     
     class CSS:
         Important = 0xff1a0f0b
@@ -1360,6 +1423,12 @@ class Paper:
         PreProcessorCommentLineDoc = 0xff1a0f0b
         DoubleQuotedString = 0xff1a0f0b
         InactiveKeyword = 0xff1a0f0b
+        UserLiteral = 0xff1a0f0b
+        InactiveEscapeSequence = 0xff1a0f0b
+        EscapeSequence = 0xff1a0f0b
+        InactiveUserLiteral = 0xff1a0f0b
+        InactiveTaskMarker = 0xff1a0f0b
+        TaskMarker = 0xff1a0f0b
     
     class CoffeeScript:
         UUID = 0xff1a0f0b
@@ -1618,6 +1687,12 @@ class Paper:
         PreProcessorCommentLineDoc = 0xff1a0f0b
         DoubleQuotedString = 0xff1a0f0b
         InactiveKeyword = 0xff1a0f0b
+        UserLiteral = 0xff1a0f0b
+        InactiveEscapeSequence = 0xff1a0f0b
+        EscapeSequence = 0xff1a0f0b
+        InactiveUserLiteral = 0xff1a0f0b
+        InactiveTaskMarker = 0xff1a0f0b
+        TaskMarker = 0xff1a0f0b
     
     class Java:
         CommentDocKeywordError = 0xff1a0f0b
@@ -1670,6 +1745,12 @@ class Paper:
         PreProcessorCommentLineDoc = 0xff1a0f0b
         DoubleQuotedString = 0xff1a0f0b
         InactiveKeyword = 0xff1a0f0b
+        UserLiteral = 0xff1a0f0b
+        InactiveEscapeSequence = 0xff1a0f0b
+        EscapeSequence = 0xff1a0f0b
+        InactiveUserLiteral = 0xff1a0f0b
+        InactiveTaskMarker = 0xff1a0f0b
+        TaskMarker = 0xff1a0f0b
     
     class JavaScript:
         CommentDocKeywordError = 0xff1a0f0b
@@ -1722,6 +1803,12 @@ class Paper:
         PreProcessorCommentLineDoc = 0xff1a0f0b
         DoubleQuotedString = 0xff1a0f0b
         InactiveKeyword = 0xff1a0f0b
+        UserLiteral = 0xff1a0f0b
+        InactiveEscapeSequence = 0xff1a0f0b
+        EscapeSequence = 0xff1a0f0b
+        InactiveUserLiteral = 0xff1a0f0b
+        InactiveTaskMarker = 0xff1a0f0b
+        TaskMarker = 0xff1a0f0b
     
     class Lua:
         Label = 0xff1a0f0b
@@ -1976,6 +2063,7 @@ class Paper:
         Identifier = 0xff1a0f0b
         Keyword = 0xff1a0f0b
         CommentDoc = 0xff1a0f0b
+        QuotedOperator = 0xff1a0f0b
     
     class Spice:
         Function = 0xff1a0f0b
@@ -2036,6 +2124,7 @@ class Paper:
         StandardType = 0xff1a0f0b
         Keyword = 0xff1a0f0b
         UnclosedString = 0xffe0c0e0
+        CommentBlock = 0xff1a0f0b
     
     class Verilog:
         CommentBang = 0xffe0f0ff
@@ -2052,6 +2141,30 @@ class Paper:
         String = 0xff1a0f0b
         Keyword = 0xff1a0f0b
         UnclosedString = 0xffe0c0e0
+        InactiveDefault = 0xff1a0f0b
+        InactiveUnclosedString = 0xff1a0f0b
+        InactiveCommentKeyword = 0xff1a0f0b
+        InactiveKeywordSet2 = 0xff1a0f0b
+        InactiveComment = 0xff1a0f0b
+        DeclareInputOutputPort = 0xff1a0f0b
+        InactiveString = 0xff1a0f0b
+        CommentKeyword = 0xff1a0f0b
+        DeclareOutputPort = 0xff1a0f0b
+        PortConnection = 0xff1a0f0b
+        InactiveKeyword = 0xff1a0f0b
+        DeclareInputPort = 0xff1a0f0b
+        InactiveDeclareInputPort = 0xff1a0f0b
+        InactiveDeclareOutputPort = 0xff1a0f0b
+        InactiveUserKeywordSet = 0xff1a0f0b
+        InactiveCommentBang = 0xff1a0f0b
+        InactiveIdentifier = 0xff1a0f0b
+        InactivePortConnection = 0xff1a0f0b
+        InactiveNumber = 0xff1a0f0b
+        InactiveSystemTask = 0xff1a0f0b
+        InactivePreprocessor = 0xff1a0f0b
+        InactiveOperator = 0xff1a0f0b
+        InactiveDeclareInputOutputPort = 0xff1a0f0b
+        InactiveCommentLine = 0xff1a0f0b
     
     class XML:
         HTMLValue = 0xffffefff
