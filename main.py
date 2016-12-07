@@ -112,9 +112,9 @@ def main():
         file_arguments = None
     #Get the application directory
     data.application_directory = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
-    #Check if Ex.Co. is run as a cxfreeze executable (the path will contain library.zip)
-    if "library.zip" in data.application_directory:
-        data.application_directory = data.application_directory.replace("library.zip", "")
+    #Check if Ex.Co. is run as a cx_freeze executable (the path will contain library.zip)
+    if data.application_directory.endswith(".zip"):
+        data.application_directory = os.path.dirname(data.application_directory)
     #Set the resources directory
     data.resources_directory = os.path.join(data.application_directory,  "resources")
     #Combine the application path with the Ex.Co. icon file name (the icon file name is set in the global module)
@@ -142,4 +142,8 @@ def main():
     
 #Check if this is the main executing script
 if __name__ == '__main__':
+    main()
+elif '__main__' in __name__:
+    # cx_freeze mangles the __name__ variable,
+    # but it still contains '__main__'
     main()
