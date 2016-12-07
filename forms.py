@@ -563,7 +563,7 @@ class MainWindow(data.QMainWindow):
             self.repl.setCursorPosition(cursor_position)
         #File menu
         def construct_file_menu():
-            file_menu           = self.menubar.addMenu("&File")
+            file_menu = self.menubar.addMenu("&File")
             def special_create_new_file():
                 self.file_create_new()
             new_file_action     = data.QAction('New', self)

@@ -216,6 +216,9 @@ class SessionGuiManipulator(data.QTreeView):
         super().mousePressEvent(event)
         #Set the focus
         self.setFocus()
+        #Set the last focused widget to the parent basic widget
+        self.main_form.last_focused_widget = self.parent
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
         #Set Save/SaveAs buttons in the menubar
         self.parent._set_save_status()
     
@@ -792,6 +795,9 @@ class TreeDisplay(data.QTreeView):
         super().mousePressEvent(event)
         #Set the focus
         self.setFocus()
+        #Set the last focused widget to the parent basic widget
+        self.main_form.last_focused_widget = self.parent
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
         #Set Save/SaveAs buttons in the menubar
         self.parent._set_save_status()
         
