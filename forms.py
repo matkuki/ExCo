@@ -128,9 +128,9 @@ class MainWindow(data.QMainWindow):
 
     def __init__(self, new_document=False, logging=False, file_arguments=None):
         """Initialization routine for the main form"""
-        #Initialize superclass, from which the main form is inherited
+        # Initialize superclass, from which the main form is inherited
         super().__init__()
-        #Initialize the namespace references
+        # Initialize the namespace references
         self.settings   = self.Settings(self)
         self.sessions   = self.Sessions(self)
         self.view       = self.View(self)
@@ -138,56 +138,58 @@ class MainWindow(data.QMainWindow):
         self.editing    = self.Editing(self)
         self.display    = self.Display(self)
         self.bookmarks  = self.Bookmarks(self)
-        #Set the name of the main window
+        # Set the name of the main window
         self.setObjectName("Form")
-        #Initialize the main window 
+        # Initialize the main window 
         self.setWindowTitle("Ex.Co. " + data.APPLICATION_VERSION)
-        #Initialize the log dialog window
+        # Initialize the log dialog window
         data.log_window = helper_forms.MessageLogger(self)
-        #Initialize basic window widgets(main, side_up, side_down)
+        # Initialize basic window widgets(main, side_up, side_down)
         self._init_basic_widgets()
-        #Initialize statusbar
+        # Initialize statusbar
         self._init_statusbar()
-        #Initialize the REPL
+        # Initialize the REPL
         self._init_repl()
-        #Initialize the menubar
+        # Initialize the menubar
         self._init_menubar()
-        #Set the three basic widgets inside the splitters
+        # Set the three basic widgets inside the splitters
         self.view.set_basic_widgets(
             main_widget     = self.main_window,
             upper_widget    = self.upper_window,
             lower_widget    = self.lower_window
         )
-        #Set the initial window size according to the system resolution
+        # Set the initial window size according to the system resolution
         initial_size    = self.view.function_wheel_overlay.background_image.size()
         initial_width   = initial_size.width() * 14/10
         initial_height  = initial_size.height() * 11/10
         self.resize(initial_width, initial_height)
-        #Show log window if logging mode is enabled
+        # Show log window if logging mode is enabled
         if logging == True:
-            #Show log dialog window
+            # Show log dialog window
             self.view.set_log_window(True)
         data.print_log("Main window displayed successfully")
         self.settings.restore()
-        #Initialize the theme indicator
+        # Initialize the theme indicator
         self.display.init_theme_indicator()
-        #Initialize repl interpreter
+        # Initialize repl interpreter
         self._init_interpreter()
-        #Set the main window icon if it exists
+        # Set the main window icon if it exists
         if os.path.isfile(data.application_icon) == True:
             self.setWindowIcon(data.PyQt.QtGui.QIcon(data.application_icon))
-        #Set the repl type to a single line
+        # Set the repl type to a single line
         self.view.set_repl_type(data.ReplType.SINGLE_LINE)
         self.view.indication_check()
-        #Open the file passed as an argument to the QMainWindow initialization
+        # Open the file passed as an argument to the QMainWindow initialization
         if file_arguments != None:
             for file in file_arguments:
                 self.open_file(file=file, basic_widget=self.main_window)
         else:
-            #Create a new document in the main window if the flag was set and
-            #the file_arguments is None
+            # Create a new document in the main window if the flag was set and
+            # the file_arguments is None
             if new_document == True:
                 self.create_new()
+        # Show the PyQt / QScintilla version in statusbar
+        self.statusbar_label_left.setText(data.LIBRARY_VERSIONS)
     
     def _init_statusbar(self):
         self.statusbar  = data.QStatusBar(self)
@@ -3833,22 +3835,22 @@ class MainWindow(data.QMainWindow):
                     message_type=data.MessageType.WARNING
                 )
         
-        def find(self, search_text, case_sensitive=False, search_forward=False, window_name=None):
+        def find(self, search_text, case_sensitive=False, search_forward=True, window_name=None):
             """Find text in the currently focused window"""
             argument_list = [search_text, case_sensitive, search_forward]
             self._run_focused_widget_method("find_text", argument_list, window_name)
         
-        def regex_find(self, search_text, case_sensitive=False, search_forward=False, window_name=None):
+        def regex_find(self, search_text, case_sensitive=False, search_forward=True, window_name=None):
             """Find text in the currently focused window"""
             argument_list = [search_text, case_sensitive, search_forward, True]
             self._run_focused_widget_method("find_text", argument_list, window_name)
         
-        def find_and_replace(self, search_text, replace_text, case_sensitive=False, search_forward=False, window_name=None):
+        def find_and_replace(self, search_text, replace_text, case_sensitive=False, search_forward=True, window_name=None):
             """Find and replace text in the currently focused window"""
             argument_list = [search_text, replace_text, case_sensitive, search_forward]
             self._run_focused_widget_method("find_and_replace", argument_list, window_name)
         
-        def regex_find_and_replace(self, search_text, replace_text, case_sensitive=False, search_forward=False, window_name=None):
+        def regex_find_and_replace(self, search_text, replace_text, case_sensitive=False, search_forward=True, window_name=None):
             """
             Find and replace text in the currently focused window
             using the regular expressions module
@@ -7412,7 +7414,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     def find_text(self, 
                   search_text, 
                   case_sensitive=False, 
-                  search_forward=False, 
+                  search_forward=True, 
                   regular_expression=False):
         """
         (SAME AS THE QSciScintilla.find, BUT THIS RETURNS A RESULT)
@@ -7568,7 +7570,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                          search_text, 
                          replace_text, 
                          case_sensitive=False, 
-                         search_forward=False, 
+                         search_forward=True, 
                          regular_expression=False):
         """Find next instance of the search string and replace it with the replace string"""
         if regular_expression == True:
@@ -7840,7 +7842,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 "{:d} matches highlighted".format(len(matches)) 
             )
             #Set the cursor to the first highlight
-            self.find_text(highlight_text, case_sensitive, regular_expression)
+            self.find_text(highlight_text, case_sensitive, True, regular_expression)
         else:
             self.main_form.display.repl_display_message(
                 "No matches found!",

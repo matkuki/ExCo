@@ -1206,6 +1206,7 @@ class TreeDisplay(data.QTreeView):
         document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
         #Define the display structure texts
         import_text         = "IMPORTS:"
+        global_vars_text    = "GLOBALS:"
         class_text          = "CLASS/METHOD TREE:"
         function_text       = "FUNCTIONS:"
         #Initialize the tree display to Python file type
@@ -1269,6 +1270,7 @@ class TreeDisplay(data.QTreeView):
         import_nodes = [x for x in python_node_tree if x.type == "import"]
         class_nodes = [x for x in python_node_tree if x.type == "class"]
         function_nodes = [x for x in python_node_tree if x.type == "function"]
+        globals_nodes = [x for x in python_node_tree if x.type == "global_variable"]
         """Imported module filtering"""
         item_imports = data.PyQt.QtGui.QStandardItem(import_text)
         item_imports.setEditable(False)
@@ -1290,12 +1292,7 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_imports)
         if import_nodes == []:
             self.expand(item_imports.index())
-        """Class nodes filtering"""
-        item_classes = data.PyQt.QtGui.QStandardItem(class_text)
-        item_classes.setEditable(False)
-        item_classes.setForeground(label_brush)
-        item_classes.setFont(label_font)
-        # Class node construction function
+        # Node construction function
         def construct_node(node, parent_is_class=False):
             # Construct the node text
             node_text = str(node.name) + " (line:"
@@ -1309,6 +1306,8 @@ class TreeDisplay(data.QTreeView):
                     tree_node.setIcon(self.node_icon_procedure)
                 else:
                     tree_node.setIcon(self.node_icon_method)
+            elif node.type == "global_variable":
+                tree_node.setIcon(self.node_icon_variable)
             # Append the children
             node_is_class = False
             if node.type == "class":
@@ -1319,6 +1318,30 @@ class TreeDisplay(data.QTreeView):
             tree_node.sortChildren(0)
             # Return the node
             return tree_node
+        """Global variable nodes filtering"""
+        item_globals = data.PyQt.QtGui.QStandardItem(global_vars_text)
+        item_globals.setEditable(False)
+        item_globals.setForeground(label_brush)
+        item_globals.setFont(label_font)
+        #Check if there were any nodes found
+        if globals_nodes == []:
+            item_no_globals = data.PyQt.QtGui.QStandardItem("No global variables found")
+            item_no_globals.setEditable(False)
+            item_no_globals.setIcon(self.node_icon_nothing)
+            item_globals.appendRow(item_no_globals)
+        else:
+            # Create the function nodes and add them to the tree
+            for node in globals_nodes:
+                item_globals.appendRow(construct_node(node))
+        #Append the function nodes to the model
+        tree_model.appendRow(item_globals)
+        if globals_nodes == []:
+            self.expand(item_globals.index())
+        """Class nodes filtering"""
+        item_classes = data.PyQt.QtGui.QStandardItem(class_text)
+        item_classes.setEditable(False)
+        item_classes.setForeground(label_brush)
+        item_classes.setFont(label_font)
         # Check if there were any nodes found
         if class_nodes == []:
             item_no_classes = data.PyQt.QtGui.QStandardItem("No classes found")
@@ -1348,6 +1371,7 @@ class TreeDisplay(data.QTreeView):
                 item_functions.appendRow(construct_node(node))
         #Append the function nodes to the model
         tree_model.appendRow(item_functions)
+        """Finalization"""
         #Expand the base nodes
         self.expand(item_classes.index())
         self.expand(item_functions.index())
@@ -2995,8 +3019,8 @@ class ExCoInfo(data.QDialog):
         self.setWindowTitle("About Ex.Co.")
         self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint)
         #Setup the picture
-        exco_picture    = data.PyQt.QtGui.QPixmap(data.about_image)
-        self.picture    = data.PyQt.QtGui.QLabel(self)
+        exco_picture = data.PyQt.QtGui.QPixmap(data.about_image)
+        self.picture = data.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())
         self.picture.setScaledContents(True)
@@ -3007,7 +3031,9 @@ class ExCoInfo(data.QDialog):
         self.layout = data.QGridLayout()
         self.layout.addWidget(self.picture)
         self.layout.setSpacing(0)
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins(
+            data.PyQt.QtCore.QMargins(0,0,0,0)
+        )
         self.setLayout(self.layout)
         #Set the log window icon
         if os.path.isfile(data.application_icon) == True:

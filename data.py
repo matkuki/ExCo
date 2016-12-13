@@ -63,6 +63,19 @@ except:
 if PYQT_MODE != 4 and PYQT_MODE != 5:
     raise Exception("PyQt mode has to be either 4 or 5!")
 
+
+"""
+-----------------------------------------------------------
+Compatibility mode test for PyQt versions lower than 4.11
+-----------------------------------------------------------
+"""
+try:
+    PyQt.Qsci.QsciLexerCoffeeScript
+    compatibility_mode = False
+except:
+    compatibility_mode = True
+
+
 # Themes need PyQt version defined beforehand, as they also import the data module
 import themes
 
@@ -168,7 +181,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "5.9"
+APPLICATION_VERSION     = "5.10"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
@@ -203,6 +216,13 @@ tree_display_font_size = 10
 default_eol = PyQt.Qsci.QsciScintilla.EolUnix
 #Current theme
 theme = themes.Air
+
+# Show PyQt/QScintilla version that is being used and if running in 
+# QScintilla compatibility mode
+LIBRARY_VERSIONS = "PyQt" + PyQt.QtCore.PYQT_VERSION_STR
+LIBRARY_VERSIONS += " / QScintilla" + PyQt.Qsci.QSCINTILLA_VERSION_STR
+if compatibility_mode == True:
+    LIBRARY_VERSIONS += "(Compatibility mode)"
 
 
 """
@@ -295,17 +315,6 @@ line_delete_keys = 'Ctrl+Shift+L'
 line_transpose_keys = 'Ctrl+T'
 line_selection_duplicate_keys = 'Ctrl+D'
 
-
-"""
------------------------------------------------------------
-Compatibility mode test for PyQt versions lower than 4.11
------------------------------------------------------------
-"""
-try:
-    PyQt.Qsci.QsciLexerCoffeeScript
-    compatibility_mode = False
-except:
-    compatibility_mode = True
 
 
 """

@@ -929,6 +929,8 @@ def get_python_node_tree(python_code):
     
     # Main parsing function
     def parse_node(ast_node, level, parent_node=None):
+        nonlocal globals_list
+        nonlocal python_node_tree
         new_node = None
         if isinstance(ast_node, ast.ClassDef):
             new_node = PythonNode(
@@ -940,7 +942,11 @@ def get_python_node_tree(python_code):
             for child_node in ast_node.body:
                 result = parse_node(child_node, level+1, new_node)
                 if result != None:
-                    new_node.children.append(result)
+                    if isinstance(result, list):
+                        for n in result:
+                            new_node.children.append(n)
+                    else:
+                        new_node.children.append(result)
             new_node.children = sorted(new_node.children, key=lambda x: x.name)
         elif isinstance(ast_node, ast.FunctionDef):
             new_node = PythonNode(
@@ -952,7 +958,11 @@ def get_python_node_tree(python_code):
             for child_node in ast_node.body:
                 result = parse_node(child_node, level+1, new_node)
                 if result != None:
-                    new_node.children.append(result)
+                    if isinstance(result, list):
+                        for n in result:
+                            new_node.children.append(n)
+                    else:
+                        new_node.children.append(result)
             new_node.children = sorted(new_node.children, key=lambda x: x.name)
         elif isinstance(ast_node, ast.Import):
             new_node = PythonNode(
@@ -961,12 +971,47 @@ def get_python_node_tree(python_code):
                 ast_node.lineno, 
                 level
             )
+        elif isinstance(ast_node, ast.Assign) and (level == 0 or parent_node == None):
+            # Globals that do are not defined with the 'global' keyword,
+            # but are defined on the top level
+            new_nodes = []
+            for target in ast_node.targets:
+                name = target.id
+                if not(name in globals_list):
+                    new_nodes.append(
+                        PythonNode(
+                            name, 
+                            "global_variable", 
+                            ast_node.lineno, 
+                            level
+                        )
+                    )
+                    globals_list.append(name)
+            return new_nodes
+        elif isinstance(ast_node, ast.Global):
+            # Globals can be nested somewhere deep in the AST, so they
+            # are appended directly into the non-local python_node_tree list
+            for name in ast_node.names:
+                if not(name in globals_list):
+                    python_node_tree.append(
+                        PythonNode(
+                            name, 
+                            "global_variable", 
+                            ast_node.lineno, 
+                            level
+                        )
+                    )
+                    globals_list.append(name)
         else:
             if parent_node != None and hasattr(ast_node, "body"):
                 for child_node in ast_node.body:
                     result = parse_node(child_node, level+1, parent_node)
                     if result != None:
-                        parent_node.children.append(result)
+                        if isinstance(result, list):
+                            for n in result:
+                                parent_node.children.append(n)
+                        else:
+                            parent_node.children.append(result)
                 parent_node.children = sorted(parent_node.children, key=lambda x: x.name)
             else:
                 new_nodes = []
@@ -974,17 +1019,38 @@ def get_python_node_tree(python_code):
                     for child_node in ast_node.body:
                         result = parse_node(child_node, level+1, None)
                         if result != None:
-                            new_nodes.append(result)
+                            if isinstance(result, list):
+                                for n in result:
+                                    new_nodes.append(n)
+                            else:
+                                new_nodes.append(result)
                 if hasattr(ast_node, "orelse"):
                     for child_node in ast_node.orelse:
                         result = parse_node(child_node, level+1, None)
                         if result != None:
-                            new_nodes.append(result)
+                            if isinstance(result, list):
+                                for n in result:
+                                    new_nodes.append(n)
+                            else:
+                                new_nodes.append(result)
                 if hasattr(ast_node, "finalbody"):
                     for child_node in ast_node.finalbody:
                         result = parse_node(child_node, level+1, None)
                         if result != None:
-                            new_nodes.append(result)
+                            if isinstance(result, list):
+                                for n in result:
+                                    new_nodes.append(n)
+                            else:
+                                new_nodes.append(result)
+                if hasattr(ast_node, "handlers"):
+                    for child_node in ast_node.handlers:
+                        result = parse_node(child_node, level+1, None)
+                        if result != None:
+                            if isinstance(result, list):
+                                for n in result:
+                                    new_nodes.append(n)
+                            else:
+                                new_nodes.append(result)
                 if new_nodes != []:
                     return new_nodes
         return new_node
@@ -992,6 +1058,8 @@ def get_python_node_tree(python_code):
     # Initialization
     parsed_string = ast.parse(python_code)
     python_node_tree = []
+    # List of globals for testing for duplicates
+    globals_list = []
     # Parse the nodes recursively
     for node in ast.iter_child_nodes(parsed_string):
         result = parse_node(node, 0)
