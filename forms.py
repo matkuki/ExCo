@@ -1768,7 +1768,7 @@ class MainWindow(data.QMainWindow):
             temp_icon = helper_forms.set_icon('tango_icons/view-spin-clock.png')
             spin_clockwise_action.setIcon(temp_icon)
             spin_clockwise_action.triggered.connect(self.view.spin_widgets_clockwise)
-            spin_counterclockwise_action = data.QAction('Spin view counter-clockwise', self)  
+            spin_counterclockwise_action = data.QAction('Spin view counter-clockwise', self)
             spin_counterclockwise_action.setShortcut(data.spin_counterclockwise_keys)
             spin_counterclockwise_action.setStatusTip('Spin the editor windows counter-clockwise')
             temp_icon = helper_forms.set_icon('tango_icons/view-spin-counter.png')
