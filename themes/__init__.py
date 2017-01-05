@@ -10,22 +10,27 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 
-"""
-This way does not work with the new way themes are reloaded in:
-'forms.MainWindow.View.reload_themes'
----------------------------------------------------------------
-"""
-#import themes.air as Air
-#import themes.earth as Earth
-#import themes.water as Water
-#import themes.mc as MC
-"""
----------------------------------------------------------------
-"""
-
+import os
+import data
 import importlib.machinery
-Air = importlib.machinery.SourceFileLoader('Air','themes/air.py').load_module()
-Earth = importlib.machinery.SourceFileLoader('Earth','themes/earth.py').load_module()
-Water = importlib.machinery.SourceFileLoader('Water','themes/water.py').load_module()
-MC = importlib.machinery.SourceFileLoader('MC','themes/mc.py').load_module()
+
+base_directory = os.path.dirname(os.path.realpath(__file__))
+air_directory = os.path.join(base_directory, 'air.py')
+earth_directory = os.path.join(base_directory, 'earth.py')
+water_directory = os.path.join(base_directory, 'water.py')
+mc_directory = os.path.join(base_directory, 'mc.py')
+
+Air = importlib.machinery.SourceFileLoader('Air', air_directory).load_module()
+Earth = importlib.machinery.SourceFileLoader('Earth', earth_directory).load_module()
+Water = importlib.machinery.SourceFileLoader('Water', water_directory).load_module()
+MC = importlib.machinery.SourceFileLoader('MC', mc_directory).load_module()
+
+"""
+For backwards compatibility
+"""
+air = Air
+earth = Earth
+water = Water
+mc = MC
+
 
