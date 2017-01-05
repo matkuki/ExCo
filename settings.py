@@ -68,7 +68,7 @@ class SettingsFileManipulator():
         "",
         "# General Settings",  
         "main_window_side = 0", 
-        "theme = themes.air", 
+        "theme = themes.Air", 
         "", 
         "# Recent files", 
         "recent_files = []", 
