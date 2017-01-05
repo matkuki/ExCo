@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2016 Matic Kukovec. 
+Copyright (c) 2013-2017 Matic Kukovec. 
 Release under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -181,7 +181,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "5.10"
+APPLICATION_VERSION     = "6.0"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere

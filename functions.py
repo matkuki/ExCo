@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2016 Matic Kukovec. 
+Copyright (c) 2013-2017 Matic Kukovec. 
 Release under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -976,17 +976,18 @@ def get_python_node_tree(python_code):
             # but are defined on the top level
             new_nodes = []
             for target in ast_node.targets:
-                name = target.id
-                if not(name in globals_list):
-                    new_nodes.append(
-                        PythonNode(
-                            name, 
-                            "global_variable", 
-                            ast_node.lineno, 
-                            level
+                if hasattr(target, "id") == True:
+                    name = target.id
+                    if not(name in globals_list):
+                        new_nodes.append(
+                            PythonNode(
+                                name, 
+                                "global_variable", 
+                                ast_node.lineno, 
+                                level
+                            )
                         )
-                    )
-                    globals_list.append(name)
+                        globals_list.append(name)
             return new_nodes
         elif isinstance(ast_node, ast.Global):
             # Globals can be nested somewhere deep in the AST, so they

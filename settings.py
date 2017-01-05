@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2016 Matic Kukovec. 
+Copyright (c) 2013-2017 Matic Kukovec. 
 Release under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -115,7 +115,7 @@ class SettingsFileManipulator():
         settings_lines.append("")
         settings_lines.append("# General Settings")
         settings_lines.append("main_window_side = {}".format(main_window_side))
-        settings_lines.append("theme = {}".format(data.theme.__name__))
+        settings_lines.append("theme = themes.{}".format(data.theme.__name__))
         settings_lines.append("")
         settings_lines.append("# Recent files")
         settings_lines.append("recent_files = [")

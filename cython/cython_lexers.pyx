@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2016 Matic Kukovec. 
+Copyright (c) 2013-2017 Matic Kukovec. 
 Release under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.

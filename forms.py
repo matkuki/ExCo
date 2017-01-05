@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2016 Matic Kukovec. 
+Copyright (c) 2013-2017 Matic Kukovec. 
 Release under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -1690,8 +1690,7 @@ class MainWindow(data.QMainWindow):
                 try:
                     #Get the focused tab and reset the lexer
                     focused_tab = self.get_tab_by_focus()
-                    focused_tab.current_lexer = None
-                    focused_tab.setLexer(None)
+                    focused_tab.clear_lexer()
                     #Initialize and set the new lexer
                     lexer_instance = lexer()
                     focused_tab.set_lexer(lexer_instance, lexer_name)
@@ -2016,10 +2015,11 @@ class MainWindow(data.QMainWindow):
         #Connect the triggered signal for hiding the function wheel on menubar clicks
         def hide_fw(action):
             #Hide the function wheel only when the clicked action is not "Show/Hide Function Wheel"
-            if action.text() != "Show/Hide Function Wheel":
-                #Hide the function wheel if it is shown
-                if self.view.function_wheel_overlay != None:
-                    self.view.hide_function_wheel()
+            if isinstance(action, data.QAction):
+                if action.text() != "Show/Hide Function Wheel":
+                    #Hide the function wheel if it is shown
+                    if self.view.function_wheel_overlay != None:
+                        self.view.hide_function_wheel()
         self.menubar.triggered.connect(hide_fw)
         #Add the menubar to the MainWindow
         self.setMenuBar(self.menubar)
@@ -2479,7 +2479,15 @@ class MainWindow(data.QMainWindow):
             if new_file != None:
                 self.manipulator.add_recent_file(new_file)
             #Refresh the menubar recent list
-            self.parent.recent_files_menu.clear()
+            recent_files_menu = self.parent.recent_files_menu
+            # !!Clear all of the actions from the menu OR YOU'LL HAVE MEMORY LEAKS!!
+            for action in recent_files_menu.actions():
+                recent_files_menu.removeAction(action)
+                action.setParent(None)
+                action.deleteLater()
+                action = None
+            recent_files_menu.clear()
+            # Add the new recent files list to the menu
             for recent_file in reversed(self.manipulator.recent_files):
                 #Iterate in the reverse order, so that the last file will be displayed
                 #on the top of the menubar "Recent Files" menu
@@ -2488,12 +2496,12 @@ class MainWindow(data.QMainWindow):
                 if len(recent_file_name) > 30:
                     #Shorten the name that will appear in the menubar
                     recent_file_name = "...{:s}".format(os.path.splitdrive(recent_file)[1][-30:])
-                new_file_action = data.QAction(recent_file_name, self.parent)
+                new_file_action = data.QAction(recent_file_name, recent_files_menu) #self.parent)
                 new_file_action.setStatusTip("Open: {:s}".format(recent_file))
                 #Create a function reference for opening the recent file
                 temp_function = functools.partial(new_file_function, recent_file)
                 new_file_action.triggered.connect(temp_function)
-                self.parent.recent_files_menu.addAction(new_file_action)
+                recent_files_menu.addAction(new_file_action)
     
         def restore(self):
             """Restore the previously stored settings"""
@@ -3461,10 +3469,10 @@ class MainWindow(data.QMainWindow):
             ]
             for window in windows:
                 for i in range(window.count()):
-                    if hasattr(window.widget(i), "set_theme") == True:
-                        window.widget(i).set_theme(data.theme)
                     if hasattr(window.widget(i), "refresh_lexer") == True:
                         window.widget(i).refresh_lexer()
+                    elif hasattr(window.widget(i), "set_theme") == True:
+                        window.widget(i).set_theme(data.theme)
             self.parent.repl_helper.refresh_lexer()
             self.indication_check()
             self.parent.statusbar.setStyleSheet(
@@ -3473,12 +3481,35 @@ class MainWindow(data.QMainWindow):
         
         def reload_themes(self):
             global lexers, themes
-            current_theme_name = data.theme.__name__.split(".")[1]
-            importlib.reload(themes.air)
-            importlib.reload(themes.earth)
-            importlib.reload(themes.water)
-            importlib.reload(themes.mc)
-            importlib.reload(lexers)
+            
+            """
+            !!!! THE OLD ROUTINE EATS MEMORY LIKE CRAZY !!!!
+            (If you don't want to consume memory reload the themes by restarting Ex.Co.!)
+            -----------------------------------------------------------------------------
+            """
+#            current_theme_name = data.theme.__name__.split(".")[1]
+#            import themes
+#            import lexers
+#            importlib.reload(themes.air)
+#            importlib.reload(themes.earth)
+#            importlib.reload(themes.water)
+#            importlib.reload(themes.mc)
+#            importlib.reload(lexers)
+            """
+            -----------------------------------------------------------------------------
+            """
+            
+            # Store the name of the current theme
+            current_theme_name = data.theme.__name__
+            # Remove the themes and lexers modules
+            del themes
+            del lexers
+            del sys.modules["themes"]
+            del sys.modules["lexers"]
+            # Reimport the modules
+            import themes
+            import lexers
+            # Set the theme again
             data.theme = getattr(themes, current_theme_name)
             self.refresh_theme()
     
@@ -4074,7 +4105,15 @@ class MainWindow(data.QMainWindow):
                     "Changed theme to: {}".format(tooltip), 
                     message_type=data.MessageType.SUCCESS
                 )
-                
+            
+            if self.theme_menu != None:
+                # Clear the menu actions from memory
+                self.theme_menu.clear()
+                for action in self.theme_menu.actions():
+                    self.theme_menu.removeAction(action)
+                    action.setParent(None)
+                    action.deleteLater()
+                    action = None
             self.theme_menu = data.QMenu()
             # Air
             action_air = data.QAction("Air", self.theme_menu)
@@ -5589,8 +5628,7 @@ class BasicWidget(data.QTabWidget):
             def show_lexer_menu():
                 def set_lexer(lexer, lexer_name):
                     try:
-                        current_tab.current_lexer = None
-                        current_tab.setLexer(None)
+                        current_tab.clear_lexer()
                         # Initialize and set the new lexer
                         lexer_instance = lexer()
                         current_tab.set_lexer(lexer_instance, lexer_name)
@@ -5647,6 +5685,8 @@ class BasicWidget(data.QTabWidget):
             if isinstance(self.widget(emmited_tab_number), CustomEditor):
                 self.parent.bookmarks.remove_editor_all(self.widget(emmited_tab_number))
         data.print_log("Closing tab: " + str(self.tabText(emmited_tab_number)))
+        # Store the tab reference
+        tab = self.widget(emmited_tab_number)
         #Check if the document is modified
         if self.widget(emmited_tab_number).savable == data.CanSave.YES:
             if self.widget(emmited_tab_number).save_status == data.FileStatus.MODIFIED:
@@ -5677,6 +5717,9 @@ class BasicWidget(data.QTabWidget):
             clear_document_bookmarks()
             #The document cannot be saved, close it
             self.removeTab(emmited_tab_number)
+        # Delete the tab from memory
+        tab.setParent(None)
+        del tab
 
     def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
         """Signal that fires when cursor position changes"""
@@ -6642,7 +6685,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
               key == data.PyQt.QtCore.Qt.Key_Return):
             super(data.PyQt.Qsci.QsciScintilla, self).keyPressEvent(event)
             #Check for autoindent character list
-            if hasattr(self.current_lexer, "autoindent_characters"):
+            if hasattr(self.lexer(), "autoindent_characters"):
                 line_number = self.get_line_number()
                 #Check that the last line is valid
                 if len(self.line_list[line_number-1]) == 0:
@@ -6650,7 +6693,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 elif len(self.line_list[line_number-1].rstrip()) == 0:
                     return
                 last_character = self.line_list[line_number-1].rstrip()[-1]
-                if last_character in self.current_lexer.autoindent_characters:
+                if last_character in self.lexer().autoindent_characters:
                     line = self.line_list[line_number]
                     stripped_line = self.line_list[line_number].strip()
                     if stripped_line == "":
@@ -8002,7 +8045,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 save_result = functions.write_to_file(converted_text, self.save_name, encoding)
         #Check result of the functions.write_to_file function
         if save_result == True:
-            #Saving has succedded
+            #Saving has succeded
             self.parent.reset_text_changed(self.parent.indexOf(self))
             #Update the lexer for the document
             file_type = functions.get_file_type(self.save_name)
@@ -8023,7 +8066,8 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     
     def refresh_lexer(self):
         """ Refresh the current lexer (used by themes) """
-        self.choose_lexer(self.current_file_type.lower())
+        self.set_theme(data.theme)
+        self.lexer().set_theme(data.theme)
     
     def choose_lexer(self, file_type):
         """Choose the lexer from the file type parameter for the scintilla document"""
@@ -8137,16 +8181,23 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 message_type=data.MessageType.ERROR
             )
     
+    def clear_lexer(self):
+        """Remove the lexer from the editor"""
+        if self.lexer() != None:
+            self.lexer().setParent(None)
+            self.setLexer(None)
+    
     def set_lexer(self, lexer, file_type):
         """Function that actually sets the lexer"""
-        #Store the lexer instance, so that it doesn't get garbage collected
-        self.current_lexer = lexer
+        # First clear the lexer
+        self.clear_lexer()
         #Save the current file type to a string
         self.current_file_type = file_type.upper()
         #Set the lexer default font family
         lexer.setDefaultFont(self.default_font)
         #Set the lexer for the current scintilla document
-        self.setLexer(self.current_lexer)
+        lexer.setParent(self)
+        self.setLexer(lexer)
         #Reset the brace matching color
         self.setMatchedBraceBackgroundColor(self.brace_color)
         #Change the font style of comments so that they are the same as the default scintilla text
@@ -9180,7 +9231,6 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
     #Class variables
     parent          = None
     repl_master     = None
-    lexer           = None
     #The scintilla api object(data.PyQt.Qsci.QsciAPIs) must be an instace variable, or the underlying c++
     #mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
     api             = None
@@ -9254,10 +9304,9 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         # Add the function and connect the signal to update the line/column positions
         self._signal_editor_cursor_change = functools.partial(BasicWidget._signal_editor_cursor_change, self)
         self.cursorPositionChanged.connect(self._signal_editor_cursor_change)
-        """
-        ---------------------------------------------------------------
-        """
-        #Set the lexer to python and set the initial autocompletions
+        #Set the lexer to python
+        self.set_lexer()
+        #Set the initial autocompletions
         self.update_autocompletions()
 
     def _filter_keypress(self, key_event):
@@ -9346,14 +9395,26 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
             #Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
     
-    def refresh_lexer(self):
-        self.lexer = lexers.Python(self)
+    def set_lexer(self):
+        if self.lexer() != None:
+            self.lexer().setParent(None)
+            self.setLexer(None)
+        # Create the new lexer
+        lexer = lexers.Python()
+        lexer.setParent(self)
         #Set the lexers default font
-        self.lexer.setDefaultFont(self.default_font)
+        lexer.setDefaultFont(self.default_font)
         #Set the lexer with the initial autocompletions
-        self.setLexer(self.lexer)
+        self.setLexer(lexer)
         #Set the theme
         self.set_theme(data.theme)
+        self.lexer().set_theme(data.theme)
+    
+    def refresh_lexer(self):
+        #Set the theme
+        self.set_theme(data.theme)
+        self.lexer().set_theme(data.theme)
+        
 
     """
     ReplHelper autocompletion functions
@@ -9363,7 +9424,7 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         #Set the lexer
         self.refresh_lexer()
         #Set the scintilla api for the autocompletions (MUST BE AN INSTANCE VARIABLE)
-        self.api = data.PyQt.Qsci.QsciAPIs(self.lexer)
+        self.api = data.PyQt.Qsci.QsciAPIs(self.lexer())
         #Populate the api with all of the python keywords
         for kw in keyword.kwlist:
             self.api.add(kw)
