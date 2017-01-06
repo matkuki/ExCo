@@ -9586,6 +9586,9 @@ class FunctionWheelOverlay(data.QGroupBox):
             self.setPixmap(input_pixmap)
             #Image should scale to the button size
             self.setScaledContents(True)
+            # Set the button mask, which sets the button area to the shape of
+            # the button image instead of a rectangle
+            self.setMask(self.stored_hex.mask())
             #Set the initial opacity to low
             self._set_opacity(self.OPACITY_LOW)
             #Set the tooltip if it was set
@@ -9611,12 +9614,17 @@ class FunctionWheelOverlay(data.QGroupBox):
             button_painter.end()
             #Display the manipulated image
             self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+            # Set the button mask, which sets the button area to the shape of
+            # the button image instead of a rectangle
+            self.setMask(self.stored_hex.mask())
         
         def _set_opacity_with_hex_edge(self, input_opacity):
-            """Set the opacity of the stored QPixmap image and display it"""
-            #Store the opacity
+            """
+            Set the opacity of the stored QPixmap image and display it
+            """
+            # Store the opacity
             self.stored_opacity = input_opacity
-            #Create and initialize the QImage from the stored QPixmap
+            # Create and initialize the QImage from the stored QPixmap
             button_image = self.stored_pixmap
             hex_image = self.stored_hex
             image = data.PyQt.QtGui.QImage(
@@ -9624,15 +9632,19 @@ class FunctionWheelOverlay(data.QGroupBox):
                 data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
             )
             image.fill(data.PyQt.QtCore.Qt.transparent)
-            #Create and initialize the QPainter that will manipulate the QImage
+            # Create and initialize the QPainter that will manipulate the QImage
             button_painter = data.PyQt.QtGui.QPainter(image)
             button_painter.setCompositionMode(data.PyQt.QtGui.QPainter.CompositionMode_Source)
             button_painter.setOpacity(input_opacity)
             button_painter.drawPixmap(0, 0, hex_image)
             button_painter.drawPixmap(18, 13, button_image)
             button_painter.end()
-            #Display the manipulated image
+            # Display the manipulated image
             self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+            # Set the button mask, which sets the button area to the shape of
+            # the button image instead of a rectangle
+            self.setMask(self.stored_hex.mask())
+            
         
         def mousePressEvent(self, event):
             """Overloaded widget click event"""

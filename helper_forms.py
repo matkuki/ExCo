@@ -36,23 +36,23 @@ def set_icon(icon_name):
     """
     Module function for initializing and returning an QIcon object
     """
-    return   data.PyQt.QtGui.QIcon(
-                os.path.join(
-                    data.resources_directory, 
-                    icon_name
-                )
-            )
+    return data.PyQt.QtGui.QIcon(
+        os.path.join(
+            data.resources_directory, 
+            icon_name
+        )
+    )
 
 def set_pixmap(pixmap_name):
     """
     Module function for initializing and returning an QPixmap object
     """
-    return   data.PyQt.QtGui.QPixmap(
-                os.path.join(
-                    data.resources_directory, 
-                    pixmap_name
-                )
-            )
+    return data.PyQt.QtGui.QPixmap(
+        os.path.join(
+            data.resources_directory, 
+            pixmap_name
+        )
+    )
 
 def get_language_file_icon(language_name):
     """
