@@ -1372,11 +1372,11 @@ def write_to_file(text, file_with_path, encoding="utf-8"):
             #unknown characters will be displayed as question marks or something similar
             text = codecs.decode(byte_string, encoding, "replace")
         #Open the file for writing, create it if it doesn't exists
-        file = open(file_with_path, "w", newline="", encoding=encoding)
-        #Write text to the file
-        file.write(text)
-        #Close the file handle
-        file.close()
+        with open(file_with_path, "w", newline="", encoding=encoding) as file:
+            #Write text to the file
+            file.write(text)
+            #Close the file handle
+            file.close()
         #Writing to file succeded
         return True
     except Exception as ex:

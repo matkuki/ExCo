@@ -120,14 +120,21 @@ class Python(data.PyQt.Qsci.QsciLexerPython):
         "Decorator" : 15
     }
     
+    
+    def __del__(self):
+        self._kwrds = None
+    
     def __init__(self, parent=None):
         """Overridden initialization"""
         #Initialize superclass
         super().__init__()
         #Initialize list with keywords
-        self._kwrds = keyword.kwlist
-        #Extend the list with built-in functions
-        self._kwrds.extend([bi for bi in builtins.__dict__.keys()])
+        built_ins = keyword.kwlist
+        for i in builtins.__dict__.keys():
+            if not(i in built_ins):
+                built_ins.append(i)
+        self._kwrds = list(set(built_ins))
+        self._kwrds.sort()
         #Transform list into a single string with spaces between list items
         self._kwrds = " ".join(self._kwrds)
         #Set the theme
@@ -146,11 +153,11 @@ class Python(data.PyQt.Qsci.QsciLexerPython):
         Overridden method for determining keywords,
         read the QScintilla QsciLexer class documentation on the Riverbank website.
         """
-        keywords = None
         #Only state 1 returns keywords, don't know why? Check the C++ Scintilla lexer source files.
         if state == 1:
-            keywords = self._kwrds
-        return keywords
+            return self._kwrds
+        else:
+            return None
 
 
 class Cython(data.PyQt.Qsci.QsciLexerPython):
@@ -191,14 +198,19 @@ class Cython(data.PyQt.Qsci.QsciLexerPython):
         #Initialize superclass
         super().__init__()
         #Initialize list with keywords
-        self._kwrds = keyword.kwlist
-        #Extend the list with built-in functions
-        self._kwrds.extend([bi for bi in builtins.__dict__.keys()])
+        #Initialize list with keywords
+        built_ins = keyword.kwlist
+        for i in builtins.__dict__.keys():
+            if not(i in built_ins):
+                built_ins.append(i)
+        self._kwrds = list(set(built_ins))
+        #Transform list into a single string with spaces between list items
         #Add the C keywords supported by Cython
         self._kwrds.extend(self._c_kwrds)
         #Add the Cython keywords
         self._kwrds.extend(self._cython_kwrds)
         #Transform list into a single string with spaces between list items
+        self._kwrds.sort()
         self._kwrds = " ".join(self._kwrds)
         #Reset autoindentation style
         self.setAutoIndentStyle(0)

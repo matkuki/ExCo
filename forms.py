@@ -718,9 +718,7 @@ class MainWindow(data.QMainWindow):
             themes_reload_action.setIcon(temp_icon)
             themes_reload_action.triggered.connect(self.view.reload_themes)
             #Add recent file list in the file menu
-            self.recent_files_menu = data.QMenu("Recent Files")
-            temp_icon = helper_forms.set_icon('tango_icons/file-recent-files.png')
-            self.recent_files_menu.setIcon(temp_icon)
+            recent_file_list_menu = self.view.create_recent_file_list_menu()
             #Add the actions to the File menu
             file_menu.addAction(new_file_action)
             file_menu.addAction(open_file_action)   
@@ -740,7 +738,7 @@ class MainWindow(data.QMainWindow):
             file_menu.addSeparator()
             file_menu.addAction(themes_reload_action)
             file_menu.addSeparator()
-            file_menu.addMenu(self.recent_files_menu)
+            file_menu.addMenu(recent_file_list_menu)
             file_menu.addSeparator()
             file_menu.addAction(exit_action)
         #Edit Menus
@@ -3513,6 +3511,17 @@ class MainWindow(data.QMainWindow):
             data.theme = getattr(themes, current_theme_name)
             self.refresh_theme()
     
+        def create_recent_file_list_menu(self):
+            self.parent.recent_files_menu = data.QMenu("Recent Files")
+            temp_icon = helper_forms.set_icon('tango_icons/file-recent-files.png')
+            self.parent.recent_files_menu.setIcon(temp_icon)
+            return self.parent.recent_files_menu
+        
+        def delete_recent_file_list_menu(self):
+            self.parent.recent_files_menu.setParent(None)
+            self.parent.recent_files_menu = None
+
+    
     class System:
         """
         Functions that interact with the system
@@ -6183,8 +6192,6 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     default_comment_font    = b'Courier'
     #Brace matching color
     brace_color             = data.PyQt.QtGui.QColor(255, 153, 0)
-    #Current document lexer
-    current_lexer           = None
     #Current document type, initialized to text
     current_file_type       = "TEXT"
     #Current tab icon
@@ -8184,6 +8191,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     def clear_lexer(self):
         """Remove the lexer from the editor"""
         if self.lexer() != None:
+            self.lexer().deleteLater()
             self.lexer().setParent(None)
             self.setLexer(None)
     
