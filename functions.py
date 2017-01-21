@@ -24,6 +24,116 @@ import itertools
 import operator
 import data
 
+def create_icon(icon_name):
+    """
+    Function for initializing and returning an QIcon object
+    """
+    return data.PyQt.QtGui.QIcon(
+        os.path.join(
+            data.resources_directory, 
+            icon_name
+        )
+    )
+
+def create_pixmap(pixmap_name):
+    """
+    Function for initializing and returning an QPixmap object
+    """
+    return data.PyQt.QtGui.QPixmap(
+        os.path.join(
+            data.resources_directory, 
+            pixmap_name
+        )
+    )
+
+def get_language_file_icon(language_name):
+    """
+    Function for getting the programming language icon from the language name
+    """
+    language_name = language_name.lower()
+    if language_name    == "python":
+        return create_icon('language_icons/logo_python.png')
+    elif language_name  == "cython":
+        return create_icon('language_icons/logo_cython.png')
+    elif language_name  == "c":
+        return create_icon('language_icons/logo_c.png')
+    elif language_name  == "c++":
+        return create_icon('language_icons/logo_cpp.png')
+    elif language_name  == "c / c++":
+        return create_icon('language_icons/logo_c_cpp.png')
+    elif language_name  == "oberon/modula":
+        return create_icon('language_icons/logo_oberon.png')
+    elif language_name  == "d":
+        return create_icon('language_icons/logo_d.png')
+    elif language_name  == "nim":
+        return create_icon('language_icons/logo_nim.png')
+    elif language_name  == "ada":
+        return create_icon('language_icons/logo_ada.png')
+    elif language_name  == "cmake":
+        return create_icon('language_icons/logo_cmake.png')
+    elif language_name  == "css":
+        return create_icon('language_icons/logo_css.png')
+    elif language_name  == "html":
+        return create_icon('language_icons/logo_html.png')
+    elif language_name  == "json":
+        return create_icon('language_icons/logo_json.png')
+    elif language_name  == "lua":
+        return create_icon('language_icons/logo_lua.png')
+    elif language_name  == "matlab":
+        return create_icon('language_icons/logo_matlab.png')
+    elif language_name  == "perl":
+        return create_icon('language_icons/logo_perl.png')
+    elif language_name  == "ruby":
+        return create_icon('language_icons/logo_ruby.png')
+    elif language_name  == "tcl":
+        return create_icon('language_icons/logo_tcl.png')
+    elif language_name  == "tex":
+        return create_icon('language_icons/logo_tex.png')
+    elif language_name  == "idl":
+        return create_icon('language_icons/logo_idl.png')
+    elif language_name  == "bash":
+        return create_icon('language_icons/logo_bash.png')
+    elif language_name  == "batch":
+        return create_icon('language_icons/logo_batch.png')
+    elif language_name  == "fortran":
+        return create_icon('language_icons/logo_fortran.png')
+    elif language_name  == "fortran77":
+        return create_icon('language_icons/logo_fortran77.png')
+    elif language_name  == "ini" or language_name  == "makefile":
+        return create_icon('tango_icons/document-properties.png')
+    elif language_name  == "coffeescript":
+        return create_icon('language_icons/logo_coffeescript.png')
+    elif language_name  == "c#":
+        return create_icon('language_icons/logo_csharp.png')
+    elif language_name  == "java":
+        return create_icon('language_icons/logo_java.png')
+    elif language_name  == "javascript":
+        return create_icon('language_icons/logo_javascript.png')
+    elif language_name  == "makefile":
+        return create_icon('language_icons/logo_makefile.png')
+    elif language_name  == "octave":
+        return create_icon('language_icons/logo_octave.png')
+    elif language_name  == "pascal":
+        return create_icon('language_icons/logo_pascal.png')
+    elif language_name  == "postscript":
+        return create_icon('language_icons/logo_postscript.png')
+    elif language_name  == "routeros":
+        return create_icon('language_icons/logo_routeros.png')
+    elif language_name  == "sql":
+        return create_icon('language_icons/logo_sql.png')
+    elif language_name  == "verilog":
+        return create_icon('language_icons/logo_verilog.png')
+    elif language_name  == "vhdl":
+        return create_icon('language_icons/logo_vhdl.png')
+    elif language_name  == "xml":
+        return create_icon('language_icons/logo_xml.png')
+    elif language_name  == "yaml":
+        return create_icon('language_icons/logo_yaml.png')
+    elif language_name  == "text":
+        return create_icon('tango_icons/text-x-generic.png')
+    else:
+        return create_icon("tango_icons/file.png")
+
 def get_file_size_Mb(file_with_path):
     """Get the file size in Mb"""
     size_bytes = os.path.getsize(file_with_path)
@@ -1328,11 +1438,11 @@ def read_file_to_string(file_with_path):
             try:
                 #If opening the file in the default Ex.Co. encoding fails,
                 #open it using the prefered system encoding!
-                file = open(file_with_path, "r", encoding=current_encoding, errors="strict")
-                #Read the whole file with "read()"
-                text = file.read()
-                #Close the file handle
-                file.close()
+                with open(file_with_path, "r", encoding=current_encoding, errors="strict") as file:
+                    #Read the whole file with "read()"
+                    text = file.read()
+                    #Close the file handle
+                    file.close()
                 #Return the text string
                 return text
             except:

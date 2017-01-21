@@ -14,6 +14,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import sys
 
+
 """
 PyQt4 / PyQt5 selection
 """
@@ -181,7 +182,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "6.0"
+APPLICATION_VERSION     = "6.1"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
@@ -273,8 +274,8 @@ main_focus_keys = 'Ctrl+1'
 upper_focus_keys = 'Ctrl+2'
 lower_focus_keys = 'Ctrl+3'
 toggle_log_keys = 'F10'
-spin_clockwise_keys = 'Ctrl+PgUp'
-spin_counterclockwise_keys = 'Ctrl+PgDown'
+spin_clockwise_keys = 'Ctrl+PgDown'
+spin_counterclockwise_keys = 'Ctrl+PgUp'
 toggle_mode_keys = 'F5'
 toggle_main_window_side_keys = 'F6'
 move_tab_right_keys = 'Ctrl+.'
@@ -324,7 +325,5 @@ Various global functions and routines
 """
 def print_log(message):
     """Internal module function that runs the append_message method of the log window"""
-    try:
+    if log_window != None:
         log_window.append_message(message)
-    except:
-        return

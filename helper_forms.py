@@ -15,6 +15,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import os
 import os.path
 import collections
+import traceback
 import ast
 import inspect
 import functools
@@ -24,121 +25,9 @@ import settings
 import functions
 import forms
 import data
+import components
 import themes
 
-
-"""
--------------------------------------------------
-Module helper functions
--------------------------------------------------
-"""
-def set_icon(icon_name):
-    """
-    Module function for initializing and returning an QIcon object
-    """
-    return data.PyQt.QtGui.QIcon(
-        os.path.join(
-            data.resources_directory, 
-            icon_name
-        )
-    )
-
-def set_pixmap(pixmap_name):
-    """
-    Module function for initializing and returning an QPixmap object
-    """
-    return data.PyQt.QtGui.QPixmap(
-        os.path.join(
-            data.resources_directory, 
-            pixmap_name
-        )
-    )
-
-def get_language_file_icon(language_name):
-    """
-    Module function for getting the programming language icon from the language name
-    """
-    language_name = language_name.lower()
-    if language_name    == "python":
-        return set_icon('language_icons/logo_python.png')
-    elif language_name  == "cython":
-        return set_icon('language_icons/logo_cython.png')
-    elif language_name  == "c":
-        return set_icon('language_icons/logo_c.png')
-    elif language_name  == "c++":
-        return set_icon('language_icons/logo_cpp.png')
-    elif language_name  == "oberon/modula":
-        return set_icon('language_icons/logo_oberon.png')
-    elif language_name  == "d":
-        return set_icon('language_icons/logo_d.png')
-    elif language_name  == "nim":
-        return set_icon('language_icons/logo_nim.png')
-    elif language_name  == "ada":
-        return set_icon('language_icons/logo_ada.png')
-    elif language_name  == "cmake":
-        return set_icon('language_icons/logo_cmake.png')
-    elif language_name  == "css":
-        return set_icon('language_icons/logo_css.png')
-    elif language_name  == "html":
-        return set_icon('language_icons/logo_html.png')
-    elif language_name  == "json":
-        return set_icon('language_icons/logo_json.png')
-    elif language_name  == "lua":
-        return set_icon('language_icons/logo_lua.png')
-    elif language_name  == "matlab":
-        return set_icon('language_icons/logo_matlab.png')
-    elif language_name  == "perl":
-        return set_icon('language_icons/logo_perl.png')
-    elif language_name  == "ruby":
-        return set_icon('language_icons/logo_ruby.png')
-    elif language_name  == "tcl":
-        return set_icon('language_icons/logo_tcl.png')
-    elif language_name  == "tex":
-        return set_icon('language_icons/logo_tex.png')
-    elif language_name  == "idl":
-        return set_icon('language_icons/logo_idl.png')
-    elif language_name  == "bash":
-        return set_icon('language_icons/logo_bash.png')
-    elif language_name  == "batch":
-        return set_icon('language_icons/logo_batch.png')
-    elif language_name  == "fortran":
-        return set_icon('language_icons/logo_fortran.png')
-    elif language_name  == "fortran77":
-        return set_icon('language_icons/logo_fortran77.png')
-    elif language_name  == "ini" or language_name  == "makefile":
-        return set_icon('tango_icons/document-properties.png')
-    elif language_name  == "coffeescript":
-        return set_icon('language_icons/logo_coffeescript.png')
-    elif language_name  == "c#":
-        return set_icon('language_icons/logo_csharp.png')
-    elif language_name  == "java":
-        return set_icon('language_icons/logo_java.png')
-    elif language_name  == "javascript":
-        return set_icon('language_icons/logo_javascript.png')
-    elif language_name  == "makefile":
-        return set_icon('language_icons/logo_makefile.png')
-    elif language_name  == "octave":
-        return set_icon('language_icons/logo_octave.png')
-    elif language_name  == "pascal":
-        return set_icon('language_icons/logo_pascal.png')
-    elif language_name  == "postscript":
-        return set_icon('language_icons/logo_postscript.png')
-    elif language_name  == "routeros":
-        return set_icon('language_icons/logo_routeros.png')
-    elif language_name  == "sql":
-        return set_icon('language_icons/logo_sql.png')
-    elif language_name  == "verilog":
-        return set_icon('language_icons/logo_verilog.png')
-    elif language_name  == "vhdl":
-        return set_icon('language_icons/logo_vhdl.png')
-    elif language_name  == "xml":
-        return set_icon('language_icons/logo_xml.png')
-    elif language_name  == "yaml":
-        return set_icon('language_icons/logo_yaml.png')
-    elif language_name  == "text":
-        return set_icon('tango_icons/text-x-generic.png')
-    else:
-        return set_icon("tango_icons/file.png")
 
 
 """
@@ -169,6 +58,8 @@ class SessionGuiManipulator(data.QTreeView):
     parent                  = None
     main_form               = None
     settings_manipulator    = None
+    current_icon            = None
+    icon_manipulator        = None
     name                    = ""
     savable                 = data.CanSave.NO
     last_clicked_session    = None
@@ -177,6 +68,7 @@ class SessionGuiManipulator(data.QTreeView):
     refresh_lock            = False
     edit_flag               = False
     last_created_item       = None
+    session_toolbar         = None
     #Icons
     node_icon_group         = None
     node_icon_session       = None
@@ -186,30 +78,56 @@ class SessionGuiManipulator(data.QTreeView):
     icon_group_add          = None
     icon_session_edit       = None
     
+    
+    def clean_up(self):
+        # Disconnect signals
+        self.doubleClicked.disconnect()
+        # Clean up main references
+        self.parent = None
+        self.main_form = None
+        self.settings_manipulator = None
+        self.icon_manipulator = None
+        self.session_toolbar.setParent(None)
+        self.session_toolbar.deleteLater()
+        self.session_toolbar = None
+        # Clean up self
+        self.setParent(None)
+        self.deleteLater()
+    
     def __init__(self, settings_manipulator, parent, main_form):
         """Initialization"""
         #Initialize the superclass
         super().__init__(parent)
+        # Initialize components
+        self.icon_manipulator = components.IconManipulator()
         #Store the reference to the parent BasicWidget from the "forms" module
         self.parent = parent
         #Store the reference to the MainWindow form from the "forms" module
         self.main_form = main_form
         #Store the reference to the active SettingsManipulator
         self.settings_manipulator = settings_manipulator
+        #Set the icon
+        self.current_icon = functions.create_icon("tango_icons/sessions.png")
         #Store name of self
         self.name = "Session editing tree display"
         #Enable node expansion on double click
         self.setExpandsOnDoubleClick(True)
         #Set the node icons
-        self.node_icon_group    = set_icon("tango_icons/folder.png")
-        self.node_icon_session  = set_icon("tango_icons/sessions.png")
-        self.icon_session_add       = set_icon("tango_icons/session-add.png")
-        self.icon_session_remove    = set_icon("tango_icons/session-remove.png")
-        self.icon_session_overwrite = set_icon("tango_icons/session-overwrite.png")
-        self.icon_group_add         = set_icon("tango_icons/folder-add.png")
-        self.icon_session_edit      = set_icon("tango_icons/session-edit.png")
+        self.node_icon_group        = functions.create_icon("tango_icons/folder.png")
+        self.node_icon_session      = functions.create_icon("tango_icons/sessions.png")
+        self.icon_session_add       = functions.create_icon("tango_icons/session-add.png")
+        self.icon_session_remove    = functions.create_icon("tango_icons/session-remove.png")
+        self.icon_session_overwrite = functions.create_icon("tango_icons/session-overwrite.png")
+        self.icon_group_add         = functions.create_icon("tango_icons/folder-add.png")
+        self.icon_session_edit      = functions.create_icon("tango_icons/session-edit.png")
         #Connect the signals
         self.doubleClicked.connect(self._item_double_clicked)
+    
+    def clean_model(self):
+        return
+        if self.model() != None:
+            self.model().setParent(None)
+            self.setModel(None)
     
     def mousePressEvent(self, event):
         """Function connected to the clicked signal of the tree display"""
@@ -571,6 +489,7 @@ class SessionGuiManipulator(data.QTreeView):
         self.tree_model = data.PyQt.QtGui.QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["SESSIONS"])
         self.header().hide()
+        self.clean_model()
         self.setModel(self.tree_model)
         self.setUniformRowHeights(True)
         #Connect the tree model signals
@@ -617,62 +536,67 @@ class SessionGuiManipulator(data.QTreeView):
         Create and display buttons for manipulating sessions
         on the parent basic widget
         """
+        # Clean up the toolbar if it exists
+        if self.session_toolbar != None:
+            self.session_toolbar.setParent(None)
+            self.session_toolbar.deleteLater()
+            self.session_toolbar = None
         #Create the find toolbar and buttons
-        session_toolbar = data.QToolBar(parent)
-        session_toolbar.setIconSize(data.PyQt.QtCore.QSize(16,16))
+        self.session_toolbar = data.QToolBar(parent)
+        self.session_toolbar.setIconSize(data.PyQt.QtCore.QSize(16,16))
         session_add_action = data.QAction(
-                                    self.icon_session_add, 
-                                    "session_add",
-                                    parent
-                                )
+            self.icon_session_add, 
+            "session_add",
+            parent
+        )
         session_add_action.setToolTip(
             "Add a new session"
         )
         session_add_action.triggered.connect(self.add_empty_session)
         session_remove_action = data.QAction(
-                                    self.icon_session_remove, 
-                                    "session_remove",
-                                    parent
-                                )
+            self.icon_session_remove, 
+            "session_remove",
+            parent
+        )
         session_remove_action.setToolTip(
             "Remove the selected session"
         )
         session_remove_action.triggered.connect(self.remove_session)
         session_overwrite_action = data.QAction(
-                                        self.icon_session_overwrite, 
-                                        "session_overwrite",
-                                        parent
-                                    )
+            self.icon_session_overwrite, 
+            "session_overwrite",
+            parent
+        )
         session_overwrite_action.setToolTip(
             "Overwrite the selected session"
         )
         session_overwrite_action.triggered.connect(self.overwrite_session)
         session_add_group_action = data.QAction(
-                                        self.icon_group_add, 
-                                        "session_add_group",
-                                        parent
-                                    )
+            self.icon_group_add, 
+            "session_add_group",
+            parent
+        )
         session_add_group_action.setToolTip(
             "Add a new group"
         )
         session_add_group_action.triggered.connect(self.add_empty_group)
         session_edit_action = data.QAction(
-                                        self.icon_session_edit, 
-                                        "session_edit",
-                                        parent
-                                    )
+            self.icon_session_edit, 
+            "session_edit",
+            parent
+        )
         session_edit_action.setToolTip(
             "Edit the selected item"
         )
         session_edit_action.triggered.connect(self.edit_item)
-        session_toolbar.addAction(session_edit_action)
-        session_toolbar.addAction(session_overwrite_action)
-        session_toolbar.addAction(session_add_group_action)
-        session_toolbar.addAction(session_add_action)
-        session_toolbar.addAction(session_remove_action)
-        session_toolbar.show()
+        self.session_toolbar.addAction(session_edit_action)
+        self.session_toolbar.addAction(session_overwrite_action)
+        self.session_toolbar.addAction(session_add_group_action)
+        self.session_toolbar.addAction(session_add_action)
+        self.session_toolbar.addAction(session_remove_action)
+        self.session_toolbar.show()
         #Set the corner widget of the parent
-        parent.setCornerWidget(session_toolbar)
+        parent.setCornerWidget(self.session_toolbar)
 
 
 
@@ -717,7 +641,11 @@ class TreeDisplay(data.QTreeView):
     main_form               = None
     name                    = ""
     savable                 = data.CanSave.NO
+    current_icon            = None
+    icon_manipulator        = None
     tree_display_type       = None
+    tree_menu               = None
+    bound_tab               = None
     #Attributes specific to the display data
     bound_node_tab          = None
     #Node icons
@@ -742,65 +670,92 @@ class TreeDisplay(data.QTreeView):
     nim_icon                = None
     c_icon                  = None
     
+    
+    def clean_up(self):
+        # Clean up the tree model
+        self.clean_model()
+        # Disconnect signals
+        self.doubleClicked.disconnect()
+        self.expanded.disconnect()
+        # Clean up main references
+        self.main_form.node_tree_tab = None
+        self.parent = None
+        self.main_form = None
+        self.icon_manipulator = None
+        self.bound_tab = None
+        if self.tree_menu != None:
+            self.tree_menu.setParent(None)
+            self.tree_menu = None
+        # Clean up self
+        self.setParent(None)
+        self.deleteLater()
+    
+    def parent_destroyed(self, event):
+        # Connect the bound tab 'destroy' signal to this function
+        # for automatic closing of this tree widget
+        self.parent.close_tab(self)
+    
     def __init__(self, parent=None, main_form=None):
         """Initialization"""
-        #Initialize the superclass
+        # Initialize the superclass
         super().__init__(parent)
-        #Store the reference to the parent
+        # Initialize components
+        self.icon_manipulator = components.IconManipulator()
+        # Store the reference to the parent
         self.parent = parent
-        #Store the reference to the main form
+        # Store the reference to the main form
         self.main_form = main_form
-        #Store name of self
+        # Store name of self
         self.name = "Tree display"
-        #Disable node expansion on double click
+        # Disable node expansion on double click
         self.setExpandsOnDoubleClick(False)
-        #Connect the click and doubleclick signal
+        # Connect the click and doubleclick signal
         self.doubleClicked.connect(self._item_double_click)
 #        self.clicked.connect(self._item_click)
-        #Connect the doubleclick signal
+        # Connect the doubleclick signal
         self.expanded.connect(self._check_contents)
-        #Initialize the icons
-        #Node icons
-        self.node_icon_import   = set_icon("various/node_module.png")
-        self.node_icon_type     = set_icon("various/node_type.png")
-        self.node_icon_variable = set_icon("various/node_variable.png")
-        self.node_icon_const    = set_icon("various/node_const.png")
-        self.node_icon_function = set_icon("various/node_function.png")
-        self.node_icon_procedure= set_icon("various/node_procedure.png")
-        self.node_icon_converter= set_icon("various/node_converter.png")
-        self.node_icon_iterator = set_icon("various/node_iterator.png")
-        self.node_icon_class    = set_icon("various/node_class.png")
-        self.node_icon_method   = set_icon("various/node_method.png")
-        self.node_icon_macro    = set_icon("various/node_macro.png")
-        self.node_icon_template = set_icon("various/node_template.png")
-        self.node_icon_namespace= set_icon("various/node_namespace.png")
-        self.node_icon_nothing  = set_icon("tango_icons/dialog-warning.png")
-        self.python_icon        = set_icon("language_icons/logo_python.png")
-        self.nim_icon           = set_icon("language_icons/logo_nim.png")
-        self.c_icon             = set_icon("language_icons/logo_c.png")
-        #File searching icons
-        self.file_icon      = set_icon("tango_icons/file.png")
-        self.folder_icon    = set_icon("tango_icons/folder.png")
-        self.goto_icon      = set_icon('tango_icons/edit-goto.png')
+        # Initialize the icons
+        # Node icons
+        self.node_icon_import   = functions.create_icon("various/node_module.png")
+        self.node_icon_type     = functions.create_icon("various/node_type.png")
+        self.node_icon_variable = functions.create_icon("various/node_variable.png")
+        self.node_icon_const    = functions.create_icon("various/node_const.png")
+        self.node_icon_function = functions.create_icon("various/node_function.png")
+        self.node_icon_procedure= functions.create_icon("various/node_procedure.png")
+        self.node_icon_converter= functions.create_icon("various/node_converter.png")
+        self.node_icon_iterator = functions.create_icon("various/node_iterator.png")
+        self.node_icon_class    = functions.create_icon("various/node_class.png")
+        self.node_icon_method   = functions.create_icon("various/node_method.png")
+        self.node_icon_macro    = functions.create_icon("various/node_macro.png")
+        self.node_icon_template = functions.create_icon("various/node_template.png")
+        self.node_icon_namespace= functions.create_icon("various/node_namespace.png")
+        self.node_icon_nothing  = functions.create_icon("tango_icons/dialog-warning.png")
+        self.python_icon        = functions.create_icon("language_icons/logo_python.png")
+        self.nim_icon           = functions.create_icon("language_icons/logo_nim.png")
+        self.c_icon             = functions.create_icon("language_icons/logo_c.png")
+        # File searching icons
+        self.file_icon      = functions.create_icon("tango_icons/file.png")
+        self.folder_icon    = functions.create_icon("tango_icons/folder.png")
+        self.goto_icon      = functions.create_icon('tango_icons/edit-goto.png')
     
     def setFocus(self):
         """Overridden focus event"""
-        #Execute the supeclass focus function
+        # Execute the supeclass focus function
         super().setFocus()
-        #Check indication
+        # Check indication
         self.main_form.view.indication_check()
     
     def mousePressEvent(self, event):
         """Function connected to the clicked signal of the tree display"""
         super().mousePressEvent(event)
-        #Set the focus
+        # Set the focus
         self.setFocus()
-        #Set the last focused widget to the parent basic widget
+        # Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self.parent
         data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
-        #Set Save/SaveAs buttons in the menubar
+        # Set Save/SaveAs buttons in the menubar
         self.parent._set_save_status()
-        
+        # Get the index of the clicked item and execute the item's procedure
         if event.button() == data.PyQt.QtCore.Qt.RightButton:
             index = self.indexAt(event.pos())
             self._item_click(index)
@@ -813,10 +768,15 @@ class TreeDisplay(data.QTreeView):
                 def update_cwd():
                     self.main_form.set_cwd(item.full_name)
                 cursor = data.PyQt.QtGui.QCursor.pos()
+                
+                if self.tree_menu != None:
+                    self.tree_menu.setParent(None)
+                    self.tree_menu = None
+
                 self.tree_menu = data.QMenu()
                 action_update_cwd = data.QAction("Update CWD", self.tree_menu)
                 action_update_cwd.triggered.connect(update_cwd)
-                icon = set_icon('tango_icons/update-cwd.png')
+                icon = functions.create_icon('tango_icons/update-cwd.png')
                 action_update_cwd.setIcon(icon)
                 self.tree_menu.addAction(action_update_cwd)
                 if hasattr(item, "is_base") == True:
@@ -829,7 +789,7 @@ class TreeDisplay(data.QTreeView):
                         "Update CWD to parent", self.tree_menu
                     )
                     action_update_to_parent.triggered.connect(update_to_parent)
-                    icon = set_icon('tango_icons/update-cwd.png')
+                    icon = functions.create_icon('tango_icons/update-cwd.png')
                     action_update_to_parent.setIcon(icon)
                     self.tree_menu.addAction(action_update_to_parent)
                     self.tree_menu.addSeparator()
@@ -844,7 +804,7 @@ class TreeDisplay(data.QTreeView):
                         "One directory up ..", self.tree_menu
                     )
                     action_one_dir_up.triggered.connect(one_dir_up)
-                    icon = set_icon('tango_icons/one-dir-up.png')
+                    icon = functions.create_icon('tango_icons/one-dir-up.png')
                     action_one_dir_up.setIcon(icon)
                     self.tree_menu.addAction(action_one_dir_up)
                 self.tree_menu.popup(cursor)
@@ -852,10 +812,15 @@ class TreeDisplay(data.QTreeView):
                 def open_file():
                     self.main_form.open_file(item.full_name)
                 cursor = data.PyQt.QtGui.QCursor.pos()
+                
+                if self.tree_menu != None:
+                    self.tree_menu.setParent(None)
+                    self.tree_menu = None
+                
                 self.tree_menu = data.QMenu()
                 action_open_file = data.QAction("Open", self.tree_menu)
                 action_open_file.triggered.connect(open_file)
-                icon = set_icon('tango_icons/document-open.png')
+                icon = functions.create_icon('tango_icons/document-open.png')
                 action_open_file.setIcon(icon)
                 self.tree_menu.addAction(action_open_file)
                 self.tree_menu.addSeparator()
@@ -866,7 +831,7 @@ class TreeDisplay(data.QTreeView):
                     "Update CWD", self.tree_menu
                 )
                 action_update_to_parent.triggered.connect(update_to_parent)
-                icon = set_icon('tango_icons/update-cwd.png')
+                icon = functions.create_icon('tango_icons/update-cwd.png')
                 action_update_to_parent.setIcon(icon)
                 self.tree_menu.addAction(action_update_to_parent)
                 self.tree_menu.popup(cursor)
@@ -883,23 +848,26 @@ class TreeDisplay(data.QTreeView):
             item = self.model().itemFromIndex(model_index)
             item_text = item.text()
             cursor = data.PyQt.QtGui.QCursor.pos()
+            
+            if self.tree_menu != None:
+                self.tree_menu.setParent(None)
+                self.tree_menu = None
+            
             self.tree_menu = data.QMenu()
             
             if (hasattr(item, "line_number") == True or "line:" in item_text):
                 action_goto_line = data.QAction("Goto node item", self.tree_menu)
                 action_goto_line.triggered.connect(goto_item)
-                icon = set_icon('tango_icons/edit-goto.png')
+                icon = functions.create_icon('tango_icons/edit-goto.png')
                 action_goto_line.setIcon(icon)
                 self.tree_menu.addAction(action_goto_line)
             elif "DOCUMENT" in item_text:
                 action_open = data.QAction("Focus document", self.tree_menu)
                 action_open.triggered.connect(open_document)
-                icon = set_icon('tango_icons/document-open.png')
+                icon = functions.create_icon('tango_icons/document-open.png')
                 action_open.setIcon(icon)
                 self.tree_menu.addAction(action_open)
-            
-            
-            
+
             self.tree_menu.popup(cursor)
     
     def _item_double_click(self, model_index):
@@ -938,24 +906,31 @@ class TreeDisplay(data.QTreeView):
                 document.goto_line(item.line_number)
     
     def _node_item_parse(self, item):
-        #Check the item text
+        # Check if the bound tab has been cleaned up and has no parent
+        if self.bound_tab == None or self.bound_tab.parent == None:
+            self.main_form.display.repl_display_message(
+                "The bound tab has been closed! Reload the tree display.", 
+                message_type=data.MessageType.ERROR
+            )
+            return
+        # Check the item text
         item_text = item.text()
         if hasattr(item, "line_number") == True:
-            #Goto the stored line number
+            # Goto the stored line number
             self.bound_tab.parent.setCurrentWidget(self.bound_tab)
             self.bound_tab.goto_line(item.line_number)
         elif "line:" in item_text:
-            #Parse the line number out of the item text
+            # Parse the line number out of the item text
             line = item_text.split()[-1]
             start_index = line.index(":") + 1
             end_index   = -1
             line_number = int(line[start_index:end_index])
-            #Focus the bound tab in its parent window
+            # Focus the bound tab in its parent window
             self.bound_tab.parent.setCurrentWidget(self.bound_tab)
-            #Go to the item line number
+            # Go to the item line number
             self.bound_tab.goto_line(line_number)
         elif "DOCUMENT" in item_text:
-            #Focus the bound tab in its parent window
+            # Focus the bound tab in its parent window
             self.bound_tab.parent.setCurrentWidget(self.bound_tab)
     
     def _check_contents(self):
@@ -1004,6 +979,7 @@ class TreeDisplay(data.QTreeView):
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
         tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
+        self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
@@ -1018,7 +994,7 @@ class TreeDisplay(data.QTreeView):
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type  = data.PyQt.QtGui.QStandardItem(document_type_text)
+        item_document_type = data.PyQt.QtGui.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1191,6 +1167,32 @@ class TreeDisplay(data.QTreeView):
         #Resize the header so the horizontal scrollbar will have the correct width
         self.resize_horizontal_scrollbar()
     
+    def construct_node(self, node, parent_is_class=False):
+        # Construct the node text
+        node_text = str(node.name) + " (line:"
+        node_text += str(node.line_number) + ")"
+        tree_node = data.PyQt.QtGui.QStandardItem(node_text)
+        tree_node.setEditable(False)
+        if node.type == "class":
+            tree_node.setIcon(self.node_icon_class)
+        elif node.type == "function":
+            if parent_is_class == False:
+                tree_node.setIcon(self.node_icon_procedure)
+            else:
+                tree_node.setIcon(self.node_icon_method)
+        elif node.type == "global_variable":
+            tree_node.setIcon(self.node_icon_variable)
+        # Append the children
+        node_is_class = False
+        if node.type == "class":
+            node_is_class = True
+        for child_node in node.children:
+            tree_node.appendRow(self.construct_node(child_node, node_is_class))
+        # Sort the child node alphabetically
+        tree_node.sortChildren(0)
+        # Return the node
+        return tree_node
+    
     def display_python_nodes_in_tree(self, 
                                      custom_editor,
                                      python_node_tree, 
@@ -1213,6 +1215,7 @@ class TreeDisplay(data.QTreeView):
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
         tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
+        self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
@@ -1292,32 +1295,6 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_imports)
         if import_nodes == []:
             self.expand(item_imports.index())
-        # Node construction function
-        def construct_node(node, parent_is_class=False):
-            # Construct the node text
-            node_text = str(node.name) + " (line:"
-            node_text += str(node.line_number) + ")"
-            tree_node = data.PyQt.QtGui.QStandardItem(node_text)
-            tree_node.setEditable(False)
-            if node.type == "class":
-                tree_node.setIcon(self.node_icon_class)
-            elif node.type == "function":
-                if parent_is_class == False:
-                    tree_node.setIcon(self.node_icon_procedure)
-                else:
-                    tree_node.setIcon(self.node_icon_method)
-            elif node.type == "global_variable":
-                tree_node.setIcon(self.node_icon_variable)
-            # Append the children
-            node_is_class = False
-            if node.type == "class":
-                node_is_class = True
-            for child_node in node.children:
-                tree_node.appendRow(construct_node(child_node, node_is_class))
-            # Sort the child node alphabetically
-            tree_node.sortChildren(0)
-            # Return the node
-            return tree_node
         """Global variable nodes filtering"""
         item_globals = data.PyQt.QtGui.QStandardItem(global_vars_text)
         item_globals.setEditable(False)
@@ -1332,7 +1309,7 @@ class TreeDisplay(data.QTreeView):
         else:
             # Create the function nodes and add them to the tree
             for node in globals_nodes:
-                item_globals.appendRow(construct_node(node))
+                item_globals.appendRow(self.construct_node(node))
         #Append the function nodes to the model
         tree_model.appendRow(item_globals)
         if globals_nodes == []:
@@ -1351,7 +1328,7 @@ class TreeDisplay(data.QTreeView):
         else:
             # Create the class nodes and add them to the tree
             for node in class_nodes:
-                item_classes.appendRow(construct_node(node, True))
+                item_classes.appendRow(self.construct_node(node, True))
         # Append the class nodes to the model
         tree_model.appendRow(item_classes)
         """Function nodes filtering"""
@@ -1368,7 +1345,7 @@ class TreeDisplay(data.QTreeView):
         else:
             # Create the function nodes and add them to the tree
             for node in function_nodes:
-                item_functions.appendRow(construct_node(node))
+                item_functions.appendRow(self.construct_node(node))
         #Append the function nodes to the model
         tree_model.appendRow(item_functions)
         """Finalization"""
@@ -1394,6 +1371,7 @@ class TreeDisplay(data.QTreeView):
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
         tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
+        self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
@@ -1463,6 +1441,7 @@ class TreeDisplay(data.QTreeView):
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
         tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
+        self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
@@ -1741,6 +1720,12 @@ class TreeDisplay(data.QTreeView):
                     show_nim_node(None, item_namespace_node, namespace)
         show_nim_node(tree_model, None, nim_nodes)
     
+    def clean_model(self):
+        return
+        if self.model() != None:
+            self.model().setParent(None)
+            self.setModel(None)
+    
     def _init_found_files_options(self, search_text, directory, custom_text=None):
         #Initialize the tree display to the found files type
         self.horizontalScrollbarAction(1)
@@ -1748,6 +1733,7 @@ class TreeDisplay(data.QTreeView):
         tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["FOUND FILES TREE"])
         self.header().hide()
+        self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(10)
@@ -1787,6 +1773,7 @@ class TreeDisplay(data.QTreeView):
         tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["REPLACED IN FILES TREE"])
         self.header().hide()
+        self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
@@ -1895,7 +1882,7 @@ class TreeDisplay(data.QTreeView):
                     item_file.setForeground(item_brush)
                     item_file.setFont(item_font)
                     file_type = functions.get_file_type(file_name)
-                    item_file.setIcon(get_language_file_icon(file_type))
+                    item_file.setIcon(functions.get_language_file_icon(file_type))
                     #Add an atribute that will hold the full file name to the QStandartItem.
                     #It's a python object, attributes can be added dynamically!
                     item_file.full_name = item_with_path
@@ -2001,7 +1988,7 @@ class TreeDisplay(data.QTreeView):
                     item_file = data.PyQt.QtGui.QStandardItem(file_name)
                     item_file.setEditable(False)
                     file_type = functions.get_file_type(file_name)
-                    item_file.setIcon(get_language_file_icon(file_type))
+                    item_file.setIcon(functions.get_language_file_icon(file_type))
                     item_file.setForeground(item_brush)
                     item_file.setFont(item_font)
                     #Add an atribute that will hold the full file name to the QStandartItem.
@@ -2188,12 +2175,13 @@ class TextDiffer(data.QWidget):
     main_form               = None
     name                    = ""
     savable                 = data.CanSave.NO
+    current_icon            = None
+    icon_manipulator        = None
     focused_editor          = None
     text_1                  = None
     text_2                  = None
     text_1_name             = None
     text_2_name             = None
-    diff_text               = None
     #Class constants
     DEFAULT_FONT            = data.PyQt.QtGui.QFont('Courier', 10)
     MARGIN_STYLE            = data.PyQt.Qsci.QsciScintilla.STYLE_LINENUMBER
@@ -2225,6 +2213,38 @@ class TextDiffer(data.QWidget):
     editor_1    = None
     editor_2    = None
     layout      = None
+    find_toolbar= None
+    
+        
+    def clean_up(self):
+        self.editor_1.mousePressEvent = None
+        self.editor_1.wheelEvent = None
+        self.editor_2.mousePressEvent = None
+        self.editor_2.wheelEvent = None
+        self.editor_1.actual_parent = None
+        self.editor_2.actual_parent = None
+        self.editor_1.clean_up()
+        self.editor_2.clean_up()
+        self.editor_1 = None
+        self.editor_2 = None
+        if self.find_toolbar != None:
+            self.find_toolbar.setParent(None)
+            self.find_toolbar = None
+        self.focused_editor = None
+        self.splitter.setParent(None)
+        self.splitter = None
+        self.layout = None
+        self.parent = None
+        self.main_form = None
+        self.icon_manipulator = None
+        # Clean up self
+        self.setParent(None)
+        self.deleteLater()
+        """
+        The actual clean up will occur when the next garbage collection
+        cycle is executed, probably because of the nested functions and 
+        the focus decorator.
+        """
     
     def __init__(self, 
                  parent, 
@@ -2234,16 +2254,20 @@ class TextDiffer(data.QWidget):
                  text_1_name="", 
                  text_2_name=""):
         """Initialization"""
-        #Initialize the superclass
+        # Initialize the superclass
         super().__init__(parent)
-        #Initialize colors according to theme
+        # Initialize components
+        self.icon_manipulator = components.IconManipulator()
+        # Initialize colors according to theme
         self.Indicator_Unique_1_Color = data.theme.TextDifferColors.Indicator_Unique_1_Color
         self.Indicator_Unique_2_Color = data.theme.TextDifferColors.Indicator_Unique_2_Color
         self.Indicator_Similar_Color = data.theme.TextDifferColors.Indicator_Similar_Color
-        #Store the reference to the parent
+        # Store the reference to the parent
         self.parent = parent
-        #Store the reference to the main form
+        # Store the reference to the main form
         self.main_form = main_form
+        # Set the differ icon
+        self.current_icon = functions.create_icon('tango_icons/compare-text.png')
         #Set the name of the differ widget
         if text_1_name != None and text_2_name != None:
             self.name = "Text difference: {:s} / {:s}".format(text_1_name, text_2_name)
@@ -2253,11 +2277,11 @@ class TextDiffer(data.QWidget):
             self.name = "Text difference"
             self.text_1_name = "TEXT 1"
             self.text_2_name = "TEXT 2"
-        #Initialize diff icons
-        self.icon_unique_1  = set_icon("tango_icons/diff-unique-1.png")
-        self.icon_unique_2  = set_icon("tango_icons/diff-unique-2.png")
-        self.icon_similar   = set_icon("tango_icons/diff-similar.png")
-        #Create the horizontal splitter and two editor widgets
+        # Initialize diff icons
+        self.icon_unique_1  = functions.create_icon("tango_icons/diff-unique-1.png")
+        self.icon_unique_2  = functions.create_icon("tango_icons/diff-unique-2.png")
+        self.icon_similar   = functions.create_icon("tango_icons/diff-similar.png")
+        # Create the horizontal splitter and two editor widgets
         self.splitter = data.QSplitter(data.PyQt.QtCore.Qt.Horizontal, self)
         self.editor_1 = forms.CustomEditor(self, main_form)
         self.init_editor(self.editor_1)
@@ -2270,23 +2294,23 @@ class TextDiffer(data.QWidget):
         self.layout = data.QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addWidget(self.splitter)
-        #Set the layout
+        # Set the layout
         self.setLayout(self.layout)
-        #Connect the necessary signals
+        # Connect the necessary signals
         self.editor_1.SCN_UPDATEUI.connect(self._scn_updateui_1)
         self.editor_2.SCN_UPDATEUI.connect(self._scn_updateui_2)
         self.editor_1.cursorPositionChanged.connect(self._cursor_change_1)
         self.editor_2.cursorPositionChanged.connect(self._cursor_change_2)
-        #Overwrite the CustomEditor parent widgets to point to the TextDiffers' PARENT
+        # Overwrite the CustomEditor parent widgets to point to the TextDiffers' PARENT
         self.editor_1.parent = self.parent
         self.editor_2.parent = self.parent
-        #Add a new attribute to the CustomEditor that will hold the TextDiffer reference
+        # Add a new attribute to the CustomEditor that will hold the TextDiffer reference
         self.editor_1.actual_parent = self
         self.editor_2.actual_parent = self
-        #Set the embedded flag
+        # Set the embedded flag
         self.editor_1.embedded = True
         self.editor_2.embedded = True
-        #Add decorators to each editors mouse clicks and mouse wheel scrolls
+        # Add decorators to each editors mouse clicks and mouse wheel scrolls
         def focus_decorator(function_to_decorate, focused_editor):
             def decorated_function(*args, **kwargs):
                 self.focused_editor = focused_editor
@@ -2308,21 +2332,21 @@ class TextDiffer(data.QWidget):
             self.editor_2.wheelEvent,
             self.editor_2
         )
-        #Focus the first editor on initialization
+        # Focus the first editor on initialization
         self.focused_editor = self.editor_1
         self.focused_editor.setFocus()
-        #Initialize markers
+        # Initialize markers
         self.init_markers()
-        #Set the theme
+        # Set the theme
         self.set_theme(data.theme)
-        #Set editor functions that have to be propagated from the TextDiffer
-        #to the child editor
+        # Set editor functions that have to be propagated from the TextDiffer
+        # to the child editor
         self._init_editor_functions()
-        #Check the text validity
+        # Check the text validity
         if text_1 == None or text_2 == None:
             #One of the texts is unspecified
             return
-        #Create the diff
+        # Create the diff
         self.compare(text_1, text_2)
     
     def _scn_updateui_1(self, sc_update):
@@ -2413,6 +2437,7 @@ class TextDiffer(data.QWidget):
         )
         skip_functions = [
             "set_theme",
+            "clean_up",
         ]
         enabled_functions = [
             "find_text",
@@ -2508,9 +2533,9 @@ class TextDiffer(data.QWidget):
         """Initialize all markers for showing diff symbols"""
         #Set the images
         image_scale_size = data.PyQt.QtCore.QSize(16, 16)
-        image_unique_1  = set_pixmap('tango_icons/diff-unique-1.png')
-        image_unique_2  = set_pixmap('tango_icons/diff-unique-2.png')
-        image_similar   = set_pixmap('tango_icons/diff-similar.png')
+        image_unique_1  = functions.create_pixmap('tango_icons/diff-unique-1.png')
+        image_unique_2  = functions.create_pixmap('tango_icons/diff-unique-2.png')
+        image_similar   = functions.create_pixmap('tango_icons/diff-similar.png')
         #Scale the images to a smaller size
         image_unique_1  = image_unique_1.scaled(image_scale_size)
         image_unique_2  = image_unique_2.scaled(image_scale_size)
@@ -2796,8 +2821,8 @@ class TextDiffer(data.QWidget):
         next_unique_diff_line = self.editor_1.markerFindNext(cursor_line+1, 0b0011)
         #Correct the line numbering to the 1..line_count display
         next_unique_diff_line += 1
-        self.editor_1.goto_line(next_unique_diff_line)
-        self.editor_2.goto_line(next_unique_diff_line)
+        self.editor_1.goto_line(next_unique_diff_line, skip_repl_focus=False)
+        self.editor_2.goto_line(next_unique_diff_line, skip_repl_focus=False)
         #Check if we are back at the start of the document
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
@@ -2815,8 +2840,8 @@ class TextDiffer(data.QWidget):
         next_unique_diff_line = self.editor_2.markerFindNext(cursor_line+1, 0b0011)
         #Correct the line numbering to the 1..line_count display
         next_unique_diff_line += 1
-        self.editor_1.goto_line(next_unique_diff_line)
-        self.editor_2.goto_line(next_unique_diff_line)
+        self.editor_1.goto_line(next_unique_diff_line, skip_repl_focus=False)
+        self.editor_2.goto_line(next_unique_diff_line, skip_repl_focus=False)
         #Check if we are back at the start of the document
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
@@ -2834,8 +2859,8 @@ class TextDiffer(data.QWidget):
         next_unique_diff_line = self.editor_1.markerFindNext(cursor_line+1, 0b1100)
         #Correct the line numbering to the 1..line_count display
         next_unique_diff_line += 1
-        self.editor_1.goto_line(next_unique_diff_line)
-        self.editor_2.goto_line(next_unique_diff_line)
+        self.editor_1.goto_line(next_unique_diff_line, skip_repl_focus=False)
+        self.editor_2.goto_line(next_unique_diff_line, skip_repl_focus=False)
         #Check if we are back at the start of the document
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
@@ -2851,45 +2876,49 @@ class TextDiffer(data.QWidget):
         Create and display buttons for finding unique/similar differences
         on the parent basic widget
         """
-        #Check if the parent is a basic widget
+        # Check if the parent is a basic widget
         if isinstance(parent, forms.BasicWidget) == False:
             return
-        #Create the find toolbar and buttons
-        find_toolbar = data.QToolBar(parent)
-        find_toolbar.setIconSize(data.PyQt.QtCore.QSize(16,16))
-        unique_1_action =   data.QAction(
-                                set_icon("tango_icons/diff-unique-1.png"), 
-                                "unique_1_button",
-                                parent
-                            )
+        # Clean up the toolbar if needed
+        if self.find_toolbar != None:
+            self.find_toolbar.setParent(None)
+            self.find_toolbar = None
+        # Create the find toolbar and buttons
+        self.find_toolbar = data.QToolBar(parent)
+        self.find_toolbar.setIconSize(data.PyQt.QtCore.QSize(16,16))
+        unique_1_action = data.QAction(
+            functions.create_icon("tango_icons/diff-unique-1.png"), 
+            "unique_1_button",
+            parent
+        )
         unique_1_action.setToolTip(
             "Scroll to next unique line\nin document: '{:s}'".format(self.text_1_name)
         )
         unique_1_action.triggered.connect(self.find_next_unique_1)
         unique_2_action =   data.QAction(
-                                set_icon("tango_icons/diff-unique-2.png"), 
-                                "unique_2_button",
-                                parent
-                            )
+            functions.create_icon("tango_icons/diff-unique-2.png"), 
+            "unique_2_button",
+            parent
+        )
         unique_2_action.setToolTip(
             "Scroll to next unique line\nin document: '{:s}'".format(self.text_2_name)
         )
         unique_2_action.triggered.connect(self.find_next_unique_2)
-        similar_action =   data.QAction(
-                                set_icon("tango_icons/diff-similar.png"), 
-                                "unique_2_button",
-                                parent
-                            )
+        similar_action = data.QAction(
+            functions.create_icon("tango_icons/diff-similar.png"), 
+            "unique_2_button",
+            parent
+        )
         similar_action.setToolTip(
             "Scroll to next similar line\nin both documents"
         )
         similar_action.triggered.connect(self.find_next_similar)
-        find_toolbar.addAction(unique_1_action)
-        find_toolbar.addAction(unique_2_action)
-        find_toolbar.addAction(similar_action)
-        find_toolbar.show()
-        #Set the corner widget of the parent
-        parent.setCornerWidget(find_toolbar)
+        self.find_toolbar.addAction(unique_1_action)
+        self.find_toolbar.addAction(unique_2_action)
+        self.find_toolbar.addAction(similar_action)
+        self.find_toolbar.show()
+        # Set the corner widget of the parent
+        parent.setCornerWidget(self.find_toolbar)
     
     def set_theme(self, theme):
         def set_editor_theme(editor):
@@ -3057,4 +3086,7 @@ class ExCoInfo(data.QDialog):
 
     def _close(self, event):
         """Close the widget"""
+        self.picture.setParent(None)
+        self.picture = None
+        self.layout = None
         self.close()

@@ -48,6 +48,119 @@ def set_font(lexer, style_name, style_options):
         lexer.styles[style_name]
     )
 
+def get_lexer_from_file_type(file_type):
+    current_file_type = file_type
+    lexer = None
+    open_close_comment_style = False
+    comment_string     = None
+    end_comment_string = None
+    if file_type    == "python":
+        lexer   = Python()
+        comment_string = "#"
+    elif file_type  == "cython":
+        lexer   = Cython()
+        comment_string = "#"
+    elif file_type  == "c":
+        lexer   = CPP()
+        comment_string = "//"
+    elif file_type  == "c++":
+        lexer   = CPP()
+        comment_string = "//"
+    elif file_type  == "pascal":
+        lexer   = Pascal()
+        comment_string = "//"
+    elif file_type  == "oberon/modula":
+        lexer   = Oberon()
+        open_close_comment_style = True
+        comment_string     = "(*"
+        end_comment_string = "*)"
+    elif file_type  == "ada":
+        lexer   = Ada()
+        comment_string = "--"
+    elif file_type  == "d":
+        lexer   = D()
+        comment_string = "//"
+    elif file_type  == "nim":
+        lexer   = Nim()
+        comment_string = "#"
+    elif file_type  == "makefile":
+        lexer   = Makefile()
+        comment_string = "#"
+    elif file_type  == "xml":
+        lexer   = XML()
+        comment_string = None
+    elif file_type  == "batch":
+        lexer   = Batch()
+        comment_string = "::"
+    elif file_type  == "bash":
+        lexer   = Bash()
+        comment_string = "#"
+    elif file_type  == "lua":
+        lexer   = Lua()
+        comment_string = "--"
+    elif file_type  == "coffeescript":
+        if data.compatibility_mode == False:
+            lexer = CoffeeScript()
+            comment_string = "#"
+        else:
+            lexer = Text()
+            comment_string = None
+    elif file_type  == "c#":
+        lexer   = CPP()
+        comment_string = "//"
+    elif file_type  == "java":
+        lexer   = Java()
+        comment_string = "//"
+    elif file_type  == "javascript":
+        lexer   = JavaScript()
+        comment_string = "//"
+    elif file_type  == "octave":
+        lexer   = Octave()
+        comment_string = "#"
+    elif file_type  == "routeros":
+        lexer   = RouterOS()
+        comment_string = "#"
+    elif file_type  == "sql":
+        lexer   = SQL()
+        comment_string = "#"
+    elif file_type  == "postscript":
+        lexer   = PostScript()
+        comment_string = "%"
+    elif file_type  == "fortran":
+        lexer   = Fortran()
+        comment_string = "c "
+    elif file_type  == "fortran77":
+        lexer   = Fortran77()
+        comment_string = "c "
+    elif file_type  == "idl":
+        lexer   = IDL()
+        comment_string = "//"
+    elif file_type  == "ruby":
+        lexer   = Ruby()
+        comment_string = "#"
+    elif file_type  == "html":
+        lexer   = HTML()
+        open_close_comment_style = True
+        comment_string     = "<!--"
+        end_comment_string = "-->"
+    elif file_type  == "css":
+        lexer   = CSS()
+        open_close_comment_style = True
+        comment_string     = "/*"
+        end_comment_string = "*/"
+    else:
+        #No lexer was chosen, set file type to text and lexer to plain text
+        current_file_type = "TEXT"
+        lexer = Text()
+        comment_string = None
+    return (
+        current_file_type, 
+        lexer, 
+        open_close_comment_style, 
+        comment_string, 
+        end_comment_string
+    )
+
 
 """
 -------------------------------------------------
