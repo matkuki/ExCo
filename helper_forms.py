@@ -191,11 +191,11 @@ class SessionGuiManipulator(data.QTreeView):
                     group_name += " / "
                 self.main_form.display.repl_display_message(
                     "Session '{:s}{:s}' was renamed to '{:s}{:s}'!".format(
-                                                                group_name, 
-                                                                old_item_name, 
-                                                                group_name, 
-                                                                new_item_name
-                                                            ), 
+                       group_name, 
+                       old_item_name,  
+                       group_name, 
+                       new_item_name 
+                    ), 
                     message_type=data.MessageType.SUCCESS
                 )
                 #Refresh the session tree

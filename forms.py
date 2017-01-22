@@ -7087,7 +7087,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             def indent_func(line):
                 if line.strip() != " ":
                     if line.startswith(" "):
-                        leading_spaces = len(line) - len(line.strip())
+                        leading_spaces = len(line) - len(line.lstrip())
                         diff = (data.tab_width - (leading_spaces % data.tab_width))
                         adding_text = diff * " "
                         line = adding_text + line
@@ -7195,7 +7195,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             # Smart unindentation that unindents each line to the nearest tab column
             def unindent_func(line):
                 if line.startswith(" "):
-                    leading_spaces = len(line) - len(line.strip())
+                    leading_spaces = len(line) - len(line.lstrip())
                     diff = leading_spaces % data.tab_width
                     if diff == 0:
                         diff = data.tab_width
