@@ -888,6 +888,7 @@ class Font:
         TripleDoubleQuotedString = ('Courier', 0xffe1aa7d, 10, None)
         TripleSingleQuotedString = ('Courier', 0xffe1aa7d, 10, None)
         UnclosedString = ('Courier', 0xfff7f1c1, 10, None)
+        CustomKeyword = ('Courier', 0xff6e6e00, 10, True)
     
     class Ruby:
         Backticks = ('Courier', 0xffffff00, 10, None)
@@ -2007,6 +2008,7 @@ class Paper:
         ClassName = 0xff1a0f0b
         Keyword = 0xff1a0f0b
         HighlightedIdentifier = 0xff1a0f0b
+        CustomKeyword = 0xff1a0f0b
     
     class Ruby:
         Symbol = 0xff1a0f0b

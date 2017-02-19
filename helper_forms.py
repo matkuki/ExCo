@@ -32,7 +32,7 @@ import themes
 
 """
 -------------------------------------------------
-Module objects
+Session manipulation object
 -------------------------------------------------
 """
 class SessionGuiManipulator(data.QTreeView):
@@ -3068,7 +3068,7 @@ class ExCoInfo(data.QDialog):
         if os.path.isfile(data.application_icon) == True:
             self.setWindowIcon(data.PyQt.QtGui.QIcon(data.application_icon))
         #Save the info window geometry, the values were gotten by showing a dialog with the label containing
-        #the Exco_Info.png image with the size set to (50, 50), so it would automatically resize to the label image size
+        #the ExCo info image with the size set to (50, 50), so it would automatically resize to the label image size
         my_width    = 610
         my_height   = 620
         #Set the info window position

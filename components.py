@@ -14,6 +14,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import data
 import forms
+import helper_forms
 import re
 
 
@@ -48,6 +49,24 @@ class IconManipulator:
                 obj_parent.update_tab_icon(obj)
         elif hasattr(obj, "parent") and obj.current_icon != None:
             obj.parent.update_tab_icon(obj)
+    
+    def update_corner_widget(self, obj, basic_widget):
+        result = True
+        if isinstance(obj, forms.CustomEditor) == True:
+            # Display the 'change lexer' button in the upper right corner of the tab
+            obj.show_corner_widget()
+        elif isinstance(obj, helper_forms.TextDiffer) == True:
+            # Display special find buttons if the current tab is text differ
+            obj.show_find_buttons(basic_widget)
+        elif isinstance(obj, helper_forms.SessionGuiManipulator) == True:
+            # Display the special session buttons
+            obj.show_session_buttons(basic_widget)
+        elif isinstance(obj, forms.PlainEditor) == True:
+            # Display the repl clear button if it's applicable
+            obj.show_repl_corner_widget()
+        else:
+            result = False
+        return result
 
 
 class LineList(list):

@@ -55,17 +55,17 @@ setup(
 )
 
 # Clean-up
-print("Post-build clean-up started ...")
-if os.path.exists('build'):
-    shutil.rmtree('build')
-filelist = [f for f in os.listdir(".") if f.endswith(".c")]
-for f in filelist:
-    os.remove(f)
-print("Post-build clean-up completed.")
-
-print("Kopiranje cython_lexers.pyd datoteke ...")
-shutil.copyfile(
-    'D:/Domaci_Projekti/ExCoEdit/cython_build/cython_lexers.pyd', 
-    "D:/Domaci_Projekti/razno_za_exco/Testiranje/cython_lexers.pyd"
-)
+#print("Post-build clean-up started ...")
+#if os.path.exists('build'):
+#    shutil.rmtree('build')
+#filelist = [f for f in os.listdir(".") if f.endswith(".c")]
+#for f in filelist:
+#    os.remove(f)
+#print("Post-build clean-up completed.")
+#
+#print("Kopiranje cython_lexers.pyd datoteke ...")
+#shutil.copyfile(
+#    'D:/Domaci_Projekti/ExCoEdit/cython_build/cython_lexers.pyd', 
+#    "D:/Domaci_Projekti/razno_za_exco/Testiranje/cython_lexers.pyd"
+#)
 

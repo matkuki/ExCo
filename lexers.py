@@ -18,13 +18,21 @@ import builtins
 import re
 import functions
 import data
-#Try importing the Cython module
+import time
+# Try importing the Cython module
 try:
     import cython_lexers
     cython_found = True
 except Exception as ex:
     print(ex)
     cython_found = False
+# Try importing the Nim module
+try:
+    import nim_lexers
+    nim_found = True
+except Exception as ex:
+    print(ex)
+    nim_found = False
 
 
 """
@@ -51,115 +59,137 @@ def set_font(lexer, style_name, style_options):
 def get_lexer_from_file_type(file_type):
     current_file_type = file_type
     lexer = None
-    open_close_comment_style = False
-    comment_string     = None
-    end_comment_string = None
-    if file_type    == "python":
-        lexer   = Python()
-        comment_string = "#"
-    elif file_type  == "cython":
-        lexer   = Cython()
-        comment_string = "#"
-    elif file_type  == "c":
-        lexer   = CPP()
-        comment_string = "//"
-    elif file_type  == "c++":
-        lexer   = CPP()
-        comment_string = "//"
-    elif file_type  == "pascal":
-        lexer   = Pascal()
-        comment_string = "//"
-    elif file_type  == "oberon/modula":
-        lexer   = Oberon()
-        open_close_comment_style = True
-        comment_string     = "(*"
-        end_comment_string = "*)"
-    elif file_type  == "ada":
-        lexer   = Ada()
-        comment_string = "--"
-    elif file_type  == "d":
-        lexer   = D()
-        comment_string = "//"
-    elif file_type  == "nim":
-        lexer   = Nim()
-        comment_string = "#"
-    elif file_type  == "makefile":
-        lexer   = Makefile()
-        comment_string = "#"
-    elif file_type  == "xml":
-        lexer   = XML()
-        comment_string = None
-    elif file_type  == "batch":
-        lexer   = Batch()
-        comment_string = "::"
-    elif file_type  == "bash":
-        lexer   = Bash()
-        comment_string = "#"
-    elif file_type  == "lua":
-        lexer   = Lua()
-        comment_string = "--"
-    elif file_type  == "coffeescript":
+    if file_type == "python":
+        lexer = CustomPython()
+    elif file_type == "cython":
+        lexer = Cython()
+    elif file_type == "c":
+        lexer = CPP()
+    elif file_type == "c++":
+        lexer = CPP()
+    elif file_type == "pascal":
+        lexer = Pascal()
+    elif file_type == "oberon/modula":
+        lexer = Oberon()
+    elif file_type == "ada":
+        lexer = Ada()
+    elif file_type == "d":
+        lexer = D()
+    elif file_type == "nim":
+        lexer = Nim()
+    elif file_type == "makefile":
+        lexer = Makefile()
+    elif file_type == "xml":
+        lexer = XML()
+    elif file_type == "batch":
+        lexer = Batch()
+    elif file_type == "bash":
+        lexer = Bash()
+    elif file_type == "lua":
+        lexer = Lua()
+    elif file_type == "coffeescript":
         if data.compatibility_mode == False:
             lexer = CoffeeScript()
-            comment_string = "#"
         else:
             lexer = Text()
-            comment_string = None
-    elif file_type  == "c#":
-        lexer   = CPP()
-        comment_string = "//"
-    elif file_type  == "java":
-        lexer   = Java()
-        comment_string = "//"
-    elif file_type  == "javascript":
-        lexer   = JavaScript()
-        comment_string = "//"
-    elif file_type  == "octave":
-        lexer   = Octave()
-        comment_string = "#"
-    elif file_type  == "routeros":
-        lexer   = RouterOS()
-        comment_string = "#"
-    elif file_type  == "sql":
-        lexer   = SQL()
-        comment_string = "#"
-    elif file_type  == "postscript":
-        lexer   = PostScript()
-        comment_string = "%"
-    elif file_type  == "fortran":
-        lexer   = Fortran()
-        comment_string = "c "
-    elif file_type  == "fortran77":
-        lexer   = Fortran77()
-        comment_string = "c "
-    elif file_type  == "idl":
-        lexer   = IDL()
-        comment_string = "//"
-    elif file_type  == "ruby":
-        lexer   = Ruby()
-        comment_string = "#"
-    elif file_type  == "html":
-        lexer   = HTML()
-        open_close_comment_style = True
-        comment_string     = "<!--"
-        end_comment_string = "-->"
-    elif file_type  == "css":
-        lexer   = CSS()
-        open_close_comment_style = True
-        comment_string     = "/*"
-        end_comment_string = "*/"
+    elif file_type == "c#":
+        lexer = CPP()
+    elif file_type == "java":
+        lexer = Java()
+    elif file_type == "javascript":
+        lexer = JavaScript()
+    elif file_type == "octave":
+        lexer = Octave()
+    elif file_type == "routeros":
+        lexer = RouterOS()
+    elif file_type == "sql":
+        lexer = SQL()
+    elif file_type == "postscript":
+        lexer = PostScript()
+    elif file_type == "fortran":
+        lexer = Fortran()
+    elif file_type == "fortran77":
+        lexer = Fortran77()
+    elif file_type == "idl":
+        lexer = IDL()
+    elif file_type == "ruby":
+        lexer = Ruby()
+    elif file_type == "html":
+        lexer = HTML()
+    elif file_type == "css":
+        lexer = CSS()
     else:
         #No lexer was chosen, set file type to text and lexer to plain text
         current_file_type = "TEXT"
         lexer = Text()
+    return (current_file_type, lexer)
+
+def get_comment_style_for_lexer(lexer):
+    open_close_comment_style = False
+    comment_string = None
+    end_comment_string = None
+    if isinstance(lexer, CustomPython):
+        comment_string = "#"
+    elif isinstance(lexer, Python):
+        comment_string = "#"
+    elif isinstance(lexer, Cython):
+        comment_string = "#"
+    elif isinstance(lexer, CPP):
+        comment_string = "//"
+    elif isinstance(lexer, Pascal):
+        comment_string = "//"
+    elif isinstance(lexer, Oberon):
+        open_close_comment_style = True
+        comment_string = "(*"
+        end_comment_string = "*)"
+    elif isinstance(lexer, Ada):
+        comment_string = "--"
+    elif isinstance(lexer, D):
+        comment_string = "//"
+    elif isinstance(lexer, Nim):
+        comment_string = "#"
+    elif isinstance(lexer, Makefile):
+        comment_string = "#"
+    elif isinstance(lexer, XML):
         comment_string = None
-    return (
-        current_file_type, 
-        lexer, 
-        open_close_comment_style, 
-        comment_string, 
-        end_comment_string
-    )
+    elif isinstance(lexer, Batch):
+        comment_string = "::"
+    elif isinstance(lexer, Bash):
+        comment_string = "#"
+    elif isinstance(lexer, Lua):
+        comment_string = "--"
+    elif data.compatibility_mode == False and isinstance(lexer, CoffeeScript):
+        comment_string = "#"
+    elif isinstance(lexer, Java):
+        comment_string = "//"
+    elif isinstance(lexer, JavaScript):
+        comment_string = "//"
+    elif isinstance(lexer, Octave):
+        comment_string = "#"
+    elif isinstance(lexer, RouterOS):
+        comment_string = "#"
+    elif isinstance(lexer, SQL):
+        comment_string = "#"
+    elif isinstance(lexer, PostScript):
+        comment_string = "%"
+    elif isinstance(lexer, Fortran):
+        comment_string = "c "
+    elif isinstance(lexer, Fortran77):
+        comment_string = "c "
+    elif isinstance(lexer, IDL):
+        comment_string = "//"
+    elif isinstance(lexer, Ruby):
+        comment_string = "#"
+    elif isinstance(lexer, HTML):
+        open_close_comment_style = True
+        comment_string = "<!--"
+        end_comment_string = "-->"
+    elif isinstance(lexer, CSS):
+        open_close_comment_style = True
+        comment_string = "/*"
+        end_comment_string = "*/"
+    # Save the comment options to the lexer
+    return (open_close_comment_style, comment_string, end_comment_string)
 
 
 """
@@ -233,25 +263,25 @@ class Python(data.PyQt.Qsci.QsciLexerPython):
         "Decorator" : 15
     }
     
-    
-    def __del__(self):
-        self._kwrds = None
-    
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, additional_keywords=[]):
         """Overridden initialization"""
-        #Initialize superclass
+        # Initialize superclass
         super().__init__()
+        # Initialize the keyword list
+        self.init_kwrds(additional_keywords)
+        # Set the theme
+        self.set_theme(data.theme)
+    
+    def init_kwrds(self, additional_keywords=[]):
         #Initialize list with keywords
         built_ins = keyword.kwlist
         for i in builtins.__dict__.keys():
             if not(i in built_ins):
                 built_ins.append(i)
-        self._kwrds = list(set(built_ins))
+        self._kwrds = list(set(built_ins + additional_keywords))
         self._kwrds.sort()
         #Transform list into a single string with spaces between list items
         self._kwrds = " ".join(self._kwrds)
-        #Set the theme
-        self.set_theme(data.theme)
     
     def set_theme(self, theme):
         for style in self.styles:
@@ -271,6 +301,174 @@ class Python(data.PyQt.Qsci.QsciLexerPython):
             return self._kwrds
         else:
             return None
+
+class CustomPython(data.PyQt.Qsci.QsciLexerCustom):
+    class Sequence:
+        def __init__(self, 
+                     start, 
+                     stop_sequences, 
+                     stop_characters, 
+                     style, 
+                     add_to_style):
+            self.start = start
+            self.stop_sequences = stop_sequences
+            self.stop_characters = stop_characters
+            self.style = style
+            self.add_to_style = add_to_style
+
+    # Class variables
+    styles = {
+        "Default" : 0,
+        "Comment" : 1,
+        "Number" : 2,
+        "DoubleQuotedString" : 3,
+        "SingleQuotedString" : 4,
+        "Keyword" : 5,
+        "TripleSingleQuotedString" : 6,
+        "TripleDoubleQuotedString" : 7,
+        "ClassName" : 8,
+        "FunctionMethodName" : 9,
+        "Operator" : 10,
+        "Identifier" : 11,
+        "CommentBlock" : 12,
+        "UnclosedString" : 13,
+        "HighlightedIdentifier" : 14,
+        "Decorator" : 15,
+        "CustomKeyword" : 16,
+    }
+    default_color       = data.PyQt.QtGui.QColor(data.theme.Font.Python.Default[1])
+    default_paper       = data.PyQt.QtGui.QColor(data.theme.Paper.Python.Default)
+    default_font        = data.PyQt.QtGui.QFont('Courier', 10)
+    # Styling lists and characters
+    keyword_list        = list(set(keyword.kwlist + dir(builtins)))
+    additional_list     = []
+    sq                  = Sequence('\'', ['\'', '\n'], [], styles["SingleQuotedString"], True)
+    dq                  = Sequence('"', ['"', '\n'], [], styles["DoubleQuotedString"], True)
+    edq                 = Sequence('""', [], [], styles["DoubleQuotedString"], True)
+    esq                 = Sequence('\'\'', [], [], styles["DoubleQuotedString"], True)
+    tqd                 = Sequence('\'\'\'', ['\'\'\''], [], styles["TripleSingleQuotedString"], True)
+    tqs                 = Sequence('"""', ['"""'], [], styles["TripleDoubleQuotedString"], True)
+    cls                 = Sequence('class', [':'], ['(', '\n'], styles["ClassName"], False)
+    defi                = Sequence('def', [], ['('], styles["FunctionMethodName"], False)
+    comment             = Sequence('#', [], ['\n'], styles["Comment"], True)
+    dcomment            = Sequence('##', [], ['\n'], styles["CommentBlock"], True)
+    decorator           = Sequence('@', ['\n'], [' '], styles["Decorator"], True)
+    sequence_lists      = [
+        sq, dq, edq, esq, tqd, tqs, cls, defi, comment, dcomment, decorator
+    ]                           
+    multiline_sequence_list = [tqd, tqs]
+    sequence_start_chrs = [x.start for x in sequence_lists]
+    # Regular expression split sequence to tokenize text
+    splitter            = re.compile(r"(\\'|\\\"|\(\*|\*\)|\n|\"+|\'+|\#+|\s+|\w+|\W)")
+    #Characters that autoindent one level on pressing Return/Enter
+    autoindent_characters = [":"]
+
+    def __init__(self, parent=None, additional_keywords=[]):
+        """Overridden initialization"""
+        # Initialize superclass
+        super().__init__()
+        # Set the additional keywords
+        self.additional_list = ["self"]
+        self.additional_list.extend(additional_keywords)
+        # Set the default style values
+        self.setDefaultColor(self.default_color)
+        self.setDefaultPaper(self.default_paper)
+        self.setDefaultFont(self.default_font)
+        # Reset autoindentation style
+        self.setAutoIndentStyle(0)
+        # Set the theme
+        self.set_theme(data.theme)
+    
+    def language(self):
+        return "Python"
+    
+    def description(self, style):
+        if style <= 16:
+            description = "Custom lexer for the Python programming languages"
+        else:
+            description = ""
+        return description
+    
+    def set_theme(self, theme):
+        for style in self.styles:
+            # Papers
+            paper = data.PyQt.QtGui.QColor(getattr(theme.Paper.Python, style))
+            self.setPaper(paper, self.styles[style])
+            # Fonts
+            set_font(self, style, getattr(theme.Font.Python, style))
+    
+    if nim_found == True:
+        def styleText(self, start, end):
+            nim_lexers.python_style_text(start, end, self, self.editor())    
+    else:
+        def styleText(self, start, end):
+            editor = self.editor()
+            if editor is None:
+                return
+            # Initialize the styling
+            self.startStyling(start)
+            # Scintilla works with bytes, so we have to adjust the start and end boundaries
+            text = bytearray(editor.text(), "utf-8")[start:end].decode("utf-8")
+            # Loop optimizations
+            setStyling  = self.setStyling
+            # Initialize comment state and split the text into tokens
+            sequence = None
+            tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
+            # Check if there is a style(comment, string, ...) stretching on from the previous line
+            if start != 0:
+                previous_style = editor.SendScintilla(editor.SCI_GETSTYLEAT, start - 1)
+                for i in self.multiline_sequence_list:
+                    if previous_style == i.style:
+                        sequence = i
+                        break
+            
+            # Style the tokens accordingly
+            for i, token in enumerate(tokens):
+#                print(token[0].encode("utf-8"))
+                token_name = token[0]
+                token_length = token[1]
+                if sequence != None:
+                    if token_name in sequence.stop_sequences:
+                        if sequence.add_to_style == True:
+                            setStyling(token_length, sequence.style)
+                        else:
+                            setStyling(token_length, self.styles["Default"])
+                        sequence = None
+                    elif any(ch in token_name for ch in sequence.stop_characters):
+                        if sequence.add_to_style == True:
+                            setStyling(token_length, sequence.style)
+                        else:
+                            setStyling(token_length, self.styles["Default"])
+                        sequence = None
+                    else:
+                        setStyling(token_length, sequence.style)
+                elif token_name in self.sequence_start_chrs:
+                    for i in self.sequence_lists:
+                        if token_name == i.start:
+                            if i.stop_sequences == [] and i.stop_characters == []:
+                                # Skip styling if both stop sequences and stop characters are empty
+                                setStyling(token_length, i.style)
+                            else:
+                                # Style the sequence and store the reference to it
+                                sequence = i
+                                if i.add_to_style == True:
+                                    setStyling(token_length, sequence.style)
+                                else:
+                                    if token_name in self.keyword_list:
+                                        setStyling(token_length, self.styles["Keyword"])
+                                    elif token_name in self.additional_list:
+                                        setStyling(token_length, self.styles["CustomKeyword"])
+                                    else:
+                                        setStyling(token_length, self.styles["Default"])
+                            break
+                elif token_name in self.keyword_list:
+                    setStyling(token_length, self.styles["Keyword"])
+                elif token_name in self.additional_list:
+                    setStyling(token_length, self.styles["CustomKeyword"])
+                elif token_name[0].isdigit():
+                    setStyling(token_length, self.styles["Number"])
+                else:
+                    setStyling(token_length, self.styles["Default"])
 
 
 class Cython(data.PyQt.Qsci.QsciLexerPython):
@@ -393,6 +591,12 @@ class Oberon(data.PyQt.Qsci.QsciLexerCustom):
         self.setDefaultColor(self.default_color)
         self.setDefaultPaper(self.default_paper)
         self.setDefaultFont(self.default_font)
+        try:
+            import nim_lexers
+            nim_lexers.python_style_text(0)
+        except Exception as ex:
+            print(ex)
+        
         #Reset autoindentation style
         self.setAutoIndentStyle(0)
         #Set the theme

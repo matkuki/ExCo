@@ -347,19 +347,35 @@ class CustomInterpreter(code.InteractiveInterpreter):
         else:
             #GNU/Linux (Lubuntu tested)
             if show_console == True:
-                #Uses XTerm terminal emulator by default
-                end_delimiter_string = "-------------------------"
-                end_message_string = "\'Press any key to continue\'"
-                process_commands = [
-                    """subprocess.Popen(
-                            ["{:s}","-e","{:s};echo {:s};read -p {:s}"]
-                       )""".format(
-                                data.terminal, 
-                                command, 
-                                end_delimiter_string, 
-                                end_message_string
-                            )
-                ]
+                if data.terminal == "lxterminal":
+                    # LXTerminal
+                    end_delimiter_string = "-------------------------"
+                    end_message_string = "Press any key to continue"
+                    process_commands = [
+                        """subprocess.Popen(
+                                ["{:s}","-l","-e","{:s};echo {:s};read -p '{:s}'"]
+                        )""".format(
+                                    data.terminal, 
+                                    command, 
+                                    end_delimiter_string, 
+                                    end_message_string
+                                )
+    
+                    ]
+                else:
+                    # Others terminals like XTerm
+                    end_delimiter_string = "-------------------------"
+                    end_message_string = "\'Press any key to continue\'"
+                    process_commands = [
+                        """subprocess.Popen(
+                                ["{:s}","-e","{:s};echo {:s};read -p {:s}"]
+                        )""".format(
+                                    data.terminal, 
+                                    command, 
+                                    end_delimiter_string, 
+                                    end_message_string
+                                )
+                    ]
             else:
                 if output_to_repl == True:
                     options     = 'stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True'

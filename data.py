@@ -182,7 +182,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "6.1"
+APPLICATION_VERSION     = "6.2"
 #Global variable that holds state of logging mode
 logging_mode            = False
 #Global referenc to the log display window, so it can be used anywhere
@@ -196,9 +196,9 @@ config_file = "user_functions.cfg"
 #Global string with the resources directory
 resources_directory     = "resources"
 #Application icon image that will be displayed on all Qt widgets
-application_icon        = "Exco_Icon.png"
+application_icon        = "exco-icon.png"
 #Ex.Co. information image displayed when "About Ex.Co" action is clicked in the menubar "Help" menu
-about_image             = "ExCo_Info.png"
+about_image             = "exco-info.png"
 #Funcion wheel background image
 function_wheel_image    = "various/function-wheel.png"
 #Maximum limit of highlighting instances

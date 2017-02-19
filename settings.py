@@ -115,7 +115,7 @@ class SettingsFileManipulator():
         settings_lines.append("")
         settings_lines.append("# General Settings")
         settings_lines.append("main_window_side = {}".format(main_window_side))
-        settings_lines.append("theme = themes.{}".format(data.theme.__name__))
+        settings_lines.append("theme = {}".format(data.theme.__name__))
         settings_lines.append("")
         settings_lines.append("# Recent files")
         settings_lines.append("recent_files = [")

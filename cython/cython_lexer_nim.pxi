@@ -168,7 +168,6 @@ def style_nim(int start,
     """
     cdef char[255]  current_token
     cdef char[255]  previous_token
-    cdef int        previous_token_type = 0
     cdef int        token_length = 0
     cdef int        temp_state = 0
     # Scintilla works with bytes, so we have to adjust the start and end boundaries

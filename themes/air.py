@@ -876,7 +876,7 @@ class Font:
         HighlightedIdentifier = ('Courier', 0xff407090, 10, None)
         Identifier = ('Courier', 0xff000000, 10, None)
         Inconsistent = ('Courier', 0xff007f00, 10, None)
-        Keyword = ('Courier', 0xff00007f, 10, None)
+        Keyword = ('Courier', 0xff00007f, 10, True)
         NoWarning = ('Courier', 0xff808080, 10, None)
         Number = ('Courier', 0xff007f7f, 10, None)
         Operator = ('Courier', 0xff000000, 10, None)
@@ -887,6 +887,7 @@ class Font:
         TripleDoubleQuotedString = ('Courier', 0xff7f0000, 10, None)
         TripleSingleQuotedString = ('Courier', 0xff7f0000, 10, None)
         UnclosedString = ('Courier', 0xff000000, 10, None)
+        CustomKeyword = ('Courier', 0xff6e6e00, 10, True)
     
     class Ruby:
         Backticks = ('Courier', 0xffffff00, 10, None)
@@ -2005,6 +2006,7 @@ class Paper:
         ClassName = 0xffffffff
         Keyword = 0xffffffff
         HighlightedIdentifier = 0xffffffff
+        CustomKeyword = 0xffffffff
     
     class Ruby:
         Symbol = 0xffffffff

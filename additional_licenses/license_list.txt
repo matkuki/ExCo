@@ -27,6 +27,10 @@ Cython LICENSE:
     Cython is freely available under the open source Apache License
 
 
+Nim LICENSE:
+    The Nim compiler and the library are MIT licensed.
+
+
 PyQt4 LICENSE :
     PyQt4 is licensed under the GNU General Public License version 3
 PyQt Alternative Logo LICENSE:
@@ -53,3 +57,4 @@ Eric6 LICENSE:
 Nuitka LICENSE:
     Nuitka is a Python compiler compatible with Ex.Co..
     Nuitka is licensed under the Apache license.
+

@@ -1358,8 +1358,8 @@ class MainWindow(data.QMainWindow):
             def comment_uncomment():
                 try:
                     self.get_tab_by_focus().toggle_comment_uncomment()
-                except:
-                    pass
+                except Exception as ex:
+                    print(ex)
             self.menubar_functions["comment_uncomment"] = comment_uncomment
             toggle_comment_action   = data.QAction('Comment/Uncomment', self)
             toggle_comment_action.setShortcut(data.toggle_comment_keys)
@@ -1692,7 +1692,6 @@ class MainWindow(data.QMainWindow):
                     message = "Lexer changed to: {:s}".format(lexer_name)
                     self.display.repl_display_message(message)
                 except Exception as ex:
-                    print(ex)
                     message = "Error with lexer selection!\n"
                     message += "Select a window widget with an opened document first."
                     self.display.repl_display_message(
@@ -1713,7 +1712,7 @@ class MainWindow(data.QMainWindow):
             function_wheel_toggle_action = data.QAction('Show/Hide Function Wheel', self)
             function_wheel_toggle_action.setShortcut(data.function_wheel_toggle_keys)
             function_wheel_toggle_action.setStatusTip('Show/hide the Ex.Co. function wheel')
-            temp_icon = functions.create_icon('Exco_Icon.png')
+            temp_icon = functions.create_icon(data.application_icon)
             function_wheel_toggle_action.setIcon(temp_icon)
             function_wheel_toggle_action.triggered.connect(self.view.toggle_function_wheel)
             #Maximize/minimize entire Ex.Co. window
@@ -2096,7 +2095,7 @@ class MainWindow(data.QMainWindow):
         # functions can also have attributes! Very nice!
         user_function_autocompletions = []
         for func_name in user_function_names:
-            """User functions are stored in the REPL's intepreter 'locals' dictionary"""""
+            """User functions are stored in the REPL's intepreter 'locals' dictionary"""
             function = self.repl.interpreter.__dict__['locals'][func_name]
             # Check for the "autocompletions" attribute
             if hasattr(function, "autocompletion"):
@@ -2691,6 +2690,8 @@ class MainWindow(data.QMainWindow):
                 os.path.join(exco_dir, "cython"),
             ]
             for directory in exco_dirs:
+                if os.path.isdir(directory) == False:
+                    continue
                 for item in os.listdir(directory):
                     file_extension = os.path.splitext(item)[1].lower()
                     if (file_extension == ".py" or
@@ -3480,35 +3481,27 @@ class MainWindow(data.QMainWindow):
             global lexers, themes
             
             """
-            !!!! THE OLD ROUTINE EATS MEMORY LIKE CRAZY !!!!
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            THIS ROUTINE EATS MEMORY LIKE CRAZY BUT IS NEEDED
+            FOR NUITKA AND CX_FREEZE TO WORK CORRECTLY
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             (If you don't want to consume memory reload the themes by restarting Ex.Co.!)
             -----------------------------------------------------------------------------
             """
-#            current_theme_name = data.theme.__name__.split(".")[1]
-#            import themes
-#            import lexers
-#            importlib.reload(themes.air)
-#            importlib.reload(themes.earth)
-#            importlib.reload(themes.water)
-#            importlib.reload(themes.mc)
-#            importlib.reload(lexers)
-            """
-            -----------------------------------------------------------------------------
-            """
-            
-            # Store the name of the current theme
-            current_theme_name = data.theme.__name__
-            # Remove the themes and lexers modules
-            del themes
-            del lexers
-            del sys.modules["themes"]
-            del sys.modules["lexers"]
-            # Reimport the modules
+            current_theme_name = data.theme.__name__.split(".")[1]
             import themes
             import lexers
+            importlib.reload(themes.Air)
+            importlib.reload(themes.Earth)
+            importlib.reload(themes.Water)
+            importlib.reload(themes.MC)
+            importlib.reload(lexers)
             # Set the theme again
             data.theme = getattr(themes, current_theme_name)
             self.refresh_theme()
+            """
+            -----------------------------------------------------------------------------
+            """
     
         def create_recent_file_list_menu(self):
             self.parent.recent_files_menu = data.QMenu("Recent Files")
@@ -4409,6 +4402,16 @@ class MainWindow(data.QMainWindow):
                     python_node_tree, 
                     parser_error
                 )
+                new_keywords = [x.name for x in python_node_tree if x.type == "import"]
+                new_keywords.extend([x.name for x in python_node_tree if x.type == "class"])
+                new_keywords.extend([x.name for x in python_node_tree if x.type == "function"])
+                new_keywords.extend([x.name for x in python_node_tree if x.type == "global_variable"])
+                custom_editor.set_lexer(
+                    lexers.CustomPython(
+                        custom_editor, additional_keywords=new_keywords
+                    ),
+                    "PYTHON"
+                )
             elif parser == "C":
                 # Get all the file information
                 function_nodes = functions.get_c_function_list(custom_editor.text())
@@ -5253,20 +5256,20 @@ class BasicWidget(data.QTabWidget):
                 action = data.QAction(action_name, self)
                 if move == True:
                     func = window.move_editor_in
-                    action_func =   functools.partial(
-                                        func, 
-                                        basic_widget, 
-                                        parent.tabAt(cursor_position), 
-                                    )
+                    action_func = functools.partial(
+                        func, 
+                        basic_widget, 
+                        parent.tabAt(cursor_position), 
+                    )
                     icon = functions.create_icon('tango_icons/window-tab-move.png')
                 else:
                     func = window.copy_editor_in
-                    action_func =   functools.partial(
-                                        func, 
-                                        basic_widget, 
-                                        parent.tabAt(cursor_position), 
-                                        focus_name
-                                    )
+                    action_func = functools.partial(
+                        func, 
+                        basic_widget, 
+                        parent.tabAt(cursor_position), 
+                        focus_name
+                    )
                     icon = functions.create_icon('tango_icons/window-tab-copy.png')
                 action.setIcon(icon)
                 action.triggered.connect(action_func)
@@ -5352,24 +5355,24 @@ class BasicWidget(data.QTabWidget):
             move_to_upper = create_move_copy_action("Move to upper window", "upper")
             move_to_lower = create_move_copy_action("Move to lower window", "lower")
             #Copy action
-            copy_to_main =  create_move_copy_action(
-                                "Copy to main window", 
-                                "main", 
-                                move=False, 
-                                focus_name="main"
-                            )
+            copy_to_main = create_move_copy_action(
+                "Copy to main window", 
+                "main", 
+                move=False, 
+                focus_name="main"
+            )
             copy_to_upper = create_move_copy_action(
-                                "Copy to upper window", 
-                                "upper", 
-                                move=False, 
-                                focus_name="upper"
-                            )
+                "Copy to upper window", 
+                "upper", 
+                move=False, 
+                focus_name="upper"
+            )
             copy_to_lower = create_move_copy_action(
-                                "Copy to lower window", 
-                                "lower", 
-                                move=False, 
-                                focus_name="lower"
-                            )
+                "Copy to lower window", 
+                "lower", 
+                move=False, 
+                focus_name="lower"
+            )
             #Clear REPL MESSAGES tab action
             clear_repl_action = data.QAction("Clear messages", self)
             clear_repl_action.setIcon(functions.create_icon('tango_icons/edit-clear.png'))
@@ -5664,22 +5667,14 @@ class BasicWidget(data.QTabWidget):
         for i in range(self.count()):
             self.update_tab_icon(self.widget(i))
         # Update the corner widgets
-        if isinstance(current_tab, CustomEditor) == True:
-            # Display the 'change lexer' button in the upper right corner of the tab
-            current_tab.show_corner_widget()
-        elif isinstance(current_tab, helper_forms.TextDiffer) == True:
-            # Display special find buttons if the current tab is text differ
-            current_tab.show_find_buttons(self)
-        elif isinstance(current_tab, helper_forms.SessionGuiManipulator) == True:
-            # Display the special session buttons
-            current_tab.show_session_buttons(self)
-        elif isinstance(current_tab, PlainEditor) == True:
-            # Display the repl clear button if it's applicable
-            current_tab.show_repl_corner_widget()
+        if current_tab != None and hasattr(current_tab, "icon_manipulator"):
+            if current_tab.icon_manipulator.update_corner_widget(current_tab, self) == False:
+                # Remove the corner widget if the current widget is of an unknown type
+                self.setCornerWidget(None)
         else:
-            # Remove the corner widget
+            # Remove the corner widget if there is no current tab active
             self.setCornerWidget(None)
-        
+
     def _signal_editor_tabclose(self, emmited_tab_number):
         """Event that fires when a tab close"""
         #Nested function for clearing all bookmarks in the document
@@ -5723,6 +5718,8 @@ class BasicWidget(data.QTabWidget):
         # Delete the tab from memory
         if hasattr(tab, "clean_up"):
             tab.clean_up()
+        # Just in case, decrement the refcount of the tab (that's what del does)
+        del tab
 #        import ctypes
 #        _decref = ctypes.pythonapi.Py_DecRef
 #        _decref.argtypes = [ctypes.py_object]
@@ -5737,9 +5734,7 @@ class BasicWidget(data.QTabWidget):
 #                for i in dir(r):
 #                    if isinstance(getattr(r, i), helper_forms.TreeDisplay):
 #                        print("    " + i)
-#        print(sys.getrefcount(tab))        
-        del tab
-        tab = None
+#        print(sys.getrefcount(tab))
 
     def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
         """Signal that fires when cursor position changes"""
@@ -6028,10 +6023,10 @@ class BasicWidget(data.QTabWidget):
         new_widget = self.editor_create_document(source_widget.save_name)
         #Add the copied custom editor to the target basic widget
         new_index = self.addTab(
-                        new_widget, 
-                        source_basic_widget.tabIcon(source_index), 
-                        source_basic_widget.tabText(source_index)
-                    )
+            new_widget, 
+            source_basic_widget.tabIcon(source_index), 
+            source_basic_widget.tabText(source_index)
+        )
         #Set focus to the copied widget
         self.setCurrentIndex(new_index)
         #Copy the source editor text and set the lexer accordigly
@@ -6042,7 +6037,7 @@ class BasicWidget(data.QTabWidget):
         if focus_name == None:
             self.parent.view.set_window_focus(self.drag_source.name)
         else:
-           self.parent.view.set_window_focus(focus_name) 
+            self.parent.view.set_window_focus(focus_name) 
         #Update the margin in the copied widget
         self.editor_update_margin()
 
@@ -6051,25 +6046,42 @@ class BasicWidget(data.QTabWidget):
         moved_widget        = source_basic_widget.widget(source_index)
         moved_widget_icon   = source_basic_widget.tabIcon(source_index)
         moved_widget_text   = source_basic_widget.tabText(source_index)
-        #Check if the source tab is valid
+        # Check if the source tab is valid
         if moved_widget == None:
             return
-        #PlainEditor tabs should not evaluate its name
+        # PlainEditor tabs should not evaluate its name
         if isinstance(moved_widget, CustomEditor) == True:
-            #Check if the source file already exists in the target basic widget
+            # Check if the source file already exists in the target basic widget
             check_index = self.parent.check_open_file(moved_widget.save_name, self)
             if check_index != None:
-                #File is already open, focus it
+                # File is already open, focus it
                 self.setCurrentIndex(check_index)
                 return
-        #Move the custom editor widget from source to target
+        # Move the custom editor widget from source to target
         new_index = self.addTab(moved_widget, moved_widget_icon, moved_widget_text)
-        #Set focus to the copied widget
+        # Set focus to the copied widget
         self.setCurrentIndex(new_index)
-        #Change the custom editor parent
+        # Change the custom editor parent
         self.widget(new_index).parent = self
-        #Set Focus to the copied widget parent
+        # Set Focus to the copied widget parent
         self.parent.view.set_window_focus(source_basic_widget.name)
+        # Update corner widget
+        """
+        This has to be done multiple times! 
+        Don't know why yet, maybe the PyQt parent transfer happens in the background???
+        """
+        for i in range(2):
+            self._signal_editor_tabindex_change(None)
+            source_basic_widget._signal_editor_tabindex_change(None)
+#        """Move another CustomEditor widget into self with a copy"""
+#        moved_widget        = source_basic_widget.widget(source_index)
+#        # Check if the source tab is valid
+#        if moved_widget == None:
+#            return
+#        # Copy the tab into the new basic widget 
+#        self.copy_editor_in(source_basic_widget, source_index)
+#        # Close the tab in the current basic widget
+#        source_basic_widget._signal_editor_tabclose(source_index)
 
 
 """
@@ -6141,6 +6153,12 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
     def _init_clear_repl_corner_widget(self):
         def clear():
             self.main_form.display.repl_clear_tab()
+        # Clean the corner widget if it already exists
+        if self.corner_widget != None:
+            self.corner_widget.setParent(None)
+            self.corner_widget.deleteLater()
+            self.corner_widget = None
+        # Create the new corner button
         button_clear_repl_messages = data.QToolButton(self)
         button_clear_repl_messages.setIcon(functions.create_icon('tango_icons/edit-clear.png'))
         button_clear_repl_messages.setPopupMode(data.QToolButton.InstantPopup)
@@ -6220,9 +6238,6 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
 Subclassed QScintilla widget used for editing
 ---------------------------------------------
 """ 
-def tmp(event):
-    print("TU")
-
 class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     """
     QScintilla widget with added custom functions
@@ -6490,7 +6505,6 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                     message = "Lexer changed to: {:s}".format(lexer_name)
                     self.main_form.display.repl_display_message(message)
                 except Exception as ex:
-                    print(ex)
                     message = "Error with lexer selection!\n"
                     message += "Select a window widget with an opened document first."
                     self.main_form.display.repl_display_message(
@@ -6503,6 +6517,12 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             )
             cursor = data.PyQt.QtGui.QCursor.pos()
             lexers_menu.popup(cursor)
+        # Clean the corner widget if it already exists
+        if self.corner_widget != None:
+            self.corner_widget.setParent(None)
+            self.corner_widget.deleteLater()
+            self.corner_widget = None
+        # Create the new corner button
         button_show_lexers = data.QToolButton(self)
         button_show_lexers.setIcon(self.current_icon)
         button_show_lexers.setPopupMode(data.QToolButton.InstantPopup)
@@ -6900,11 +6920,11 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         if line_number == None:
             line_number = self.getCursorPosition()[0] + 1
         #Check commenting style
-        if self.open_close_comment_style == True:
-            self.prepend_to_line(self.comment_string, line_number)
-            self.append_to_line(self.end_comment_string, line_number)
+        if self.lexer().open_close_comment_style == True:
+            self.prepend_to_line(self.lexer().comment_string, line_number)
+            self.append_to_line(self.lexer().end_comment_string, line_number)
         else:
-            self.prepend_to_line(self.comment_string, line_number)
+            self.prepend_to_line(self.lexer().comment_string, line_number)
         #Return the cursor to the commented line
         self.setCursorPosition(line_number-1, 0)
 
@@ -6914,14 +6934,15 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             return
         else:
             #Check commenting style
-            if self.open_close_comment_style == True:
-                self.prepend_to_lines(self.comment_string, line_from, line_to)
-                self.append_to_lines(self.end_comment_string, line_from, line_to)
+            if self.lexer().open_close_comment_style == True:
+                self.prepend_to_lines(self.lexer().comment_string, line_from, line_to)
+                self.append_to_lines(self.lexer().end_comment_string, line_from, line_to)
             else:
-                self.prepend_to_lines(self.comment_string, line_from, line_to)
+                self.prepend_to_lines(self.lexer().comment_string, line_from, line_to)
             #Select the commented lines again, reverse the boundaries,
             #so that the cursor will be at the beggining of the selection
-            self.setSelection(line_to-1, self.lineLength(line_to-1)-1, line_from-1, 0)
+            line_to_length = len(self.line_list[line_to])
+            self.setSelection(line_to-1, line_to_length, line_from-1, 0)
 
     def uncomment_line(self, line_number=None):
         """Uncomment a single line according to the currently set lexer"""
@@ -6929,16 +6950,16 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             line_number = self.getCursorPosition()[0] + 1
         line_text       = self.get_line(line_number)
         #Check the commenting style
-        if self.open_close_comment_style == True:
-            if line_text.lstrip().startswith(self.comment_string):
-                new_line = line_text.replace(self.comment_string, "", 1)
-                new_line = functions.right_replace(new_line, self.end_comment_string, "", 1)
+        if self.lexer().open_close_comment_style == True:
+            if line_text.lstrip().startswith(self.lexer().comment_string):
+                new_line = line_text.replace(self.lexer().comment_string, "", 1)
+                new_line = functions.right_replace(new_line, self.lexer().end_comment_string, "", 1)
                 self.replace_line(new_line, line_number)
                 #Return the cursor to the uncommented line
                 self.setCursorPosition(line_number-1, 0)
         else:
-            if line_text.lstrip().startswith(self.comment_string):
-                self.replace_line(line_text.replace(self.comment_string, "", 1), line_number)
+            if line_text.lstrip().startswith(self.lexer().comment_string):
+                self.replace_line(line_text.replace(self.lexer().comment_string, "", 1), line_number)
                 #Return the cursor to the uncommented line
                 self.setCursorPosition(line_number-1, 0)
 
@@ -6947,37 +6968,33 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         if line_from == line_to:
             return
         else:
-            #Adjust the line numbers to standard(0..lines()-1) numbering
-            line_from   -= 1
-            line_to     -= 1
-            #Select the text from the lines
-            self.setSelection(line_from, 0, line_to, self.lineLength(line_to)-1)
-            #Split the line text into a list
-            selected_lines = self.text_to_list(self.selectedText())
-            #Loop through the list and remove the comment string if it's in front of the line
+            # Select the lines
+            selected_lines = self.line_list[line_from:line_to]
+            # Loop through the list and remove the comment string if it's in front of the line
             for i in range(len(selected_lines)):
-                #Check the commenting style
-                if self.open_close_comment_style == True:
-                    if selected_lines[i].lstrip().startswith(self.comment_string):
+                # Check the commenting style
+                if self.lexer().open_close_comment_style == True:
+                    if selected_lines[i].lstrip().startswith(self.lexer().comment_string):
                         selected_lines[i] = selected_lines[i].replace(
-                                                self.comment_string, 
-                                                "", 
-                                                1
-                                            )
+                            self.lexer().comment_string, 
+                            "", 
+                            1
+                        )
                         selected_lines[i] = functions.right_replace(
-                                                selected_lines[i], 
-                                                self.end_comment_string, 
-                                                "", 
-                                                1
-                                            )
+                            selected_lines[i], 
+                            self.lexer().end_comment_string, 
+                            "", 
+                            1
+                        )
                 else:
-                    if selected_lines[i].lstrip().startswith(self.comment_string):
-                        selected_lines[i] = selected_lines[i].replace(self.comment_string, "", 1)
-            #Replace the selected text with the prepended list merged into one string
-            self.replaceSelectedText(self.list_to_text(selected_lines))
-            #Select the uncommented lines again, reverse the boundaries,
-            #so that the cursor will be at the beggining of the selection
-            self.setSelection(line_to, self.lineLength(line_to)-1, line_from, 0)
+                    if selected_lines[i].lstrip().startswith(self.lexer().comment_string):
+                        selected_lines[i] = selected_lines[i].replace(self.lexer().comment_string, "", 1)
+            # Replace the selected text with the prepended list merged into one string
+            self.line_list[line_from:line_to] = selected_lines
+            # Select the uncommented lines again, reverse the boundaries,
+            # so that the cursor will be at the beggining of the selection
+            line_to_length = len(self.line_list[line_to])
+            self.setSelection(line_to-1, line_to_length, line_from-1, 0)
     
     def indent_lines_to_cursor(self):
         """
@@ -7258,7 +7275,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     def toggle_comment_uncomment(self):
         """Toggle commenting for the selected lines"""
         #Check if the document is a valid programming language
-        if self.current_file_type == "TEXT" or self.current_file_type == None:
+        if self.lexer().comment_string == None:
             return
         #Test if there is no selected text
         if (self.getSelection() == (-1, -1, -1, -1) or
@@ -7267,17 +7284,17 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             line_number = self.getCursorPosition()[0] + 1
             line_text   = self.get_line(line_number)
             #Un/comment only the current line (no arguments un/comments current line)
-            if line_text.lstrip().startswith(self.comment_string):
+            if line_text.lstrip().startswith(self.lexer().comment_string):
                 self.uncomment_line()
             else:
                 self.comment_line()
         else:
             #Text is selected 
             start_line_number   = self.getSelection()[0] + 1
-            first_selected_chars = self.selectedText()[0:len(self.comment_string)]
+            first_selected_chars = self.selectedText()[0:len(self.lexer().comment_string)]
             end_line_number     = self.getSelection()[2] + 1
             #Choose un/commenting according to the first line in selection
-            if first_selected_chars == self.comment_string:
+            if first_selected_chars == self.lexer().comment_string:
                 self.uncomment_lines(start_line_number, end_line_number)
             else:
                 self.comment_lines(start_line_number, end_line_number)
@@ -7965,12 +7982,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     def choose_lexer(self, file_type):
         """Choose the lexer from the file type parameter for the scintilla document"""
         #Set the lexer for syntax highlighting according to file type
-        result = lexers.get_lexer_from_file_type(file_type)
-        self.current_file_type = result[0]
-        lexer = result[1]
-        self.open_close_comment_style = result[2]
-        self.comment_string = result[3]
-        self.end_comment_string = result[4]
+        self.current_file_type, lexer = lexers.get_lexer_from_file_type(file_type)
         #Check if a lexer was chosen
         if lexer != None:
             self.set_lexer(lexer, file_type)
@@ -7995,6 +8007,11 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         self.current_file_type = file_type.upper()
         # Set the lexer default font family
         lexer.setDefaultFont(self.default_font)
+        # Set the comment options
+        result = lexers.get_comment_style_for_lexer(lexer)
+        lexer.open_close_comment_style = result[0]
+        lexer.comment_string = result[1]
+        lexer.end_comment_string = result[2]
         # Set the lexer for the current scintilla document
         lexer.setParent(self)
         self.setLexer(lexer)
@@ -8111,7 +8128,9 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         """Copy everything needed from self to the destination editor"""
         if new_editor == None:
             return
-        new_editor.setLexer(self.lexer())
+        # Copy all of the settings
+        lexer_copy = self.lexer().__class__(new_editor)
+        new_editor.set_lexer(lexer_copy, self.current_file_type)
         new_editor.setText(self.text())
     
     def toggle_wordwrap(self):
@@ -8825,7 +8844,7 @@ class ReplLineEdit(data.QLineEdit):
         return key_press
 
     @_keypress_decorator    #Add decorator to the keypress event
-    def keyPressEvent(self,  event):
+    def keyPressEvent(self, event):
         """QScintila keyPressEvent, to catch which key was pressed"""
         #Return the key event
         return data.QLineEdit.keyPressEvent(self, event)
@@ -9063,9 +9082,6 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         # Add the attributes needed to imple
         self.line_list = components.LineList(self, self.text())
         self.line_list = [""]
-        self.current_file_type = "PYTHON"
-        self.comment_string = "#"
-        self.open_close_comment_style = False
         # Add the needed functions assigned from the CustomEditor
         self.set_theme = functools.partial(CustomEditor.set_theme, self)
         self.toggle_comment_uncomment = functools.partial(CustomEditor.toggle_comment_uncomment, self)
@@ -10660,6 +10676,5 @@ class FunctionWheelOverlay(data.QGroupBox):
                         button_position.y() + int(button.geometry().height()/2)
                     )
                     break
-
 
 
