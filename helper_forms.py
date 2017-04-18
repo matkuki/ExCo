@@ -3,7 +3,7 @@
 
 """
 Copyright (c) 2013-2017 Matic Kukovec. 
-Release under the GNU GPL3 license.
+Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
@@ -18,6 +18,7 @@ import collections
 import traceback
 import ast
 import inspect
+import math
 import functools
 import difflib
 import re
@@ -664,6 +665,7 @@ class TreeDisplay(data.QTreeView):
     node_icon_variable      = None
     node_icon_namespace     = None
     node_icon_nothing       = None
+    node_pragma             = None
     folder_icon             = None
     goto_icon               = None
     python_icon             = None
@@ -729,6 +731,7 @@ class TreeDisplay(data.QTreeView):
         self.node_icon_macro    = functions.create_icon("various/node_macro.png")
         self.node_icon_template = functions.create_icon("various/node_template.png")
         self.node_icon_namespace= functions.create_icon("various/node_namespace.png")
+        self.node_icon_pragma   = functions.create_icon("various/node_pragma.png")
         self.node_icon_nothing  = functions.create_icon("tango_icons/dialog-warning.png")
         self.python_icon        = functions.create_icon("language_icons/logo_python.png")
         self.nim_icon           = functions.create_icon("language_icons/logo_nim.png")
@@ -1355,19 +1358,131 @@ class TreeDisplay(data.QTreeView):
         #Resize the header so the horizontal scrollbar will have the correct width
         self.resize_horizontal_scrollbar()
     
-    def display_c_nodes(self, custom_editor, function_nodes):
+    def display_c_nodes(self, custom_editor, module):
         """Display the input C data in a tree structure"""
-        #Store the custom editor tab that for quicker navigation
+        # Store the custom editor tab that for quicker navigation
         self.bound_tab = custom_editor
-        #Set the tree display type to NODE
+        # Set the tree display type to NODE
         self.set_display_type(data.TreeDisplayType.NODES)
-        #Define the document name, type
+        # Define the display structure texts
+        function_text       = "FUNCTIONS:"
+        prototype_text      = "PROTOTYPES:"
+        types_text          = "TYPES:"
+        variable_text       = "VARIABLES:"
+        include_text        = "INCLUDES:"
+        pragma_text         = "PRAGMAS:"
+        define_text         = "DEFINES:"
+        # Set the label properties
+        label_brush = data.PyQt.QtGui.QBrush(
+            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        )
+        label_font  = data.PyQt.QtGui.QFont(
+            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        )
+        # Filter the nodes
+        def display_node(tree_node, c_node):
+            function_list = []
+            var_list = []
+            prototype_list = []
+            type_list = []
+            include_list = []
+            define_list = []
+            pragma_list = []
+            for v in c_node.children:
+                if v.type == "function":
+                    function_list.append(v)
+                elif v.type == "var":
+                    var_list.append(v)
+                elif v.type == "prototype":
+                    prototype_list.append(v)
+                elif (v.type == "typedef" or 
+                      v.type == "struct" or 
+                      v.type == "enum" or 
+                      v.type == "union"):
+                    type_list.append(v)
+                elif v.type == "include":
+                    include_list.append(v)
+                elif v.type == "define":
+                    define_list.append(v)
+                elif v.type == "pragma":
+                    pragma_list.append(v)
+                else:
+                    raise Exception("Unknown C node: {}".format(v.type))
+            # Add The nodes to the tree using the parent tree node
+            for i in range(7):
+                if i == 0:
+                    if include_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(include_text)
+                    icon = self.node_icon_import
+                    current_list = include_list
+                elif i == 1:
+                    if pragma_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(pragma_text)
+                    icon = self.node_icon_pragma
+                    current_list = pragma_list
+                elif i == 2:
+                    if define_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(define_text)
+                    icon = self.node_icon_macro
+                    current_list = define_list
+                elif i == 3:
+                    if type_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(types_text)
+                    icon = self.node_icon_type
+                    current_list = type_list
+                elif i == 4:
+                    if var_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(variable_text)
+                    icon = self.node_icon_variable
+                    current_list = var_list
+                elif i == 5:
+                    if prototype_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(prototype_text)
+                    icon = self.node_icon_function
+                    current_list = prototype_list
+                elif i == 6:
+                    if function_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(function_text)
+                    icon = self.node_icon_procedure
+                    current_list = function_list
+                item.setEditable(False)
+                item.setForeground(label_brush)
+                item.setFont(label_font)
+                # Create nodes as tree items
+                current_list = sorted(current_list, key=lambda x: x.name)
+                for n in current_list:
+                    # Set the function node text
+                    node_text = n.name + " (line:"
+                    node_text += str(n.line_number) + ")"
+                    # Construct the node and add it to the tree
+                    node = data.PyQt.QtGui.QStandardItem(node_text)
+                    node.setEditable(False)
+                    node.setIcon(icon)
+                    
+                    if n.children != []:
+                        display_node(node, n)
+                    
+                    item.appendRow(node)
+                # Check if there were any nodes found
+                if current_list == []:
+                    item_no_nodes = data.PyQt.QtGui.QStandardItem("No items found")
+                    item_no_nodes.setEditable(False)
+                    item.appendRow(item_no_nodes)
+                # Append the nodes to the parent node
+                tree_node.appendRow(item)
+        
+        # Define the document name, type
         document_name       = os.path.basename(custom_editor.save_name)
         document_name_text  = "DOCUMENT: {:s}".format(document_name)
         document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
-        #Define the display structure texts
-        function_text       = "FUNCTIONS:"
-        #Initialize the tree display
+        # Initialize the tree display
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
         tree_model = data.PyQt.QtGui.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
@@ -1375,7 +1490,7 @@ class TreeDisplay(data.QTreeView):
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
-        #Add the file attributes to the tree display
+        # Add the file attributes to the tree display
         description_brush   = data.PyQt.QtGui.QBrush(
             data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
         )
@@ -1393,38 +1508,9 @@ class TreeDisplay(data.QTreeView):
         item_document_type.setIcon(self.c_icon)
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
-        #Set the label properties
-        label_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
-        )
-        label_font  = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
-        )
-        """Function nodes filtering"""
-        item_functions = data.PyQt.QtGui.QStandardItem(function_text)
-        item_functions.setEditable(False)
-        item_functions.setForeground(label_brush)
-        item_functions.setFont(label_font)
-        #Create function nodes as tree items
-        for func in function_nodes:
-            #Set the function node text
-            func_text = func[0] + " (line:"
-            func_text += str(func[1]) + ")"
-            #Construct the node and add it to the tree
-            function_node = data.PyQt.QtGui.QStandardItem(func_text)
-            function_node.setEditable(False)
-            function_node.setIcon(self.node_icon_procedure)
-            item_functions.appendRow(function_node)
-        #Check if there were any nodes found
-        if function_nodes == []:
-            item_no_functions = data.PyQt.QtGui.QStandardItem("No functions found")
-            item_no_functions.setEditable(False)
-            item_functions.appendRow(item_no_functions)
-        #Append the function nodes to the model
-        tree_model.appendRow(item_functions)
-        #Expand the base node
-        self.expand(item_functions.index())
-        #Resize the header so the horizontal scrollbar will have the correct width
+        # Add the items recursively
+        display_node(tree_model, module[0])
+        # Resize the header so the horizontal scrollbar will have the correct width
         self.resize_horizontal_scrollbar()
     
     def display_nim_nodes(self, custom_editor, nim_nodes):
@@ -3083,10 +3169,834 @@ class ExCoInfo(data.QDialog):
 #        self.setStyleSheet("background-color:transparent;")
 #        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint | data.PyQt.QtCore.Qt.Dialog | data.PyQt.QtCore.Qt.FramelessWindowHint)
 #        self.setAttribute(data.PyQt.QtCore.Qt.WA_TranslucentBackground)
-
+    
     def _close(self, event):
         """Close the widget"""
         self.picture.setParent(None)
         self.picture = None
         self.layout = None
         self.close()
+
+"""
+-----------------------------------------------------------------------------------
+Custom buttons used by the FunctionWheelOverlay and ContextMenu in the forms module
+-----------------------------------------------------------------------------------
+"""
+class CustomButton(data.QLabel):
+    """
+    Custom button used for displaying and executing Ex.Co. functions
+    """
+    #Class variables
+    parent              = None
+    group_box_parent    = None
+    main_form           = None
+    stored_pixmap       = None
+    stored_font         = None
+    stored_hex          = None
+    function            = None
+    function_text       = None
+    stored_opacity      = 0.0
+    focus_last_widget   = True
+    no_tab_focus_disable       = False
+    no_document_focus_disable  = True
+    check_last_tab_type = False
+    check_text_differ   = None
+    tool_tip            = None
+    scale               = (1, 1)
+    # Class constants
+    OPACITY_LOW         = 0.5
+    OPACITY_HIGH        = 1.0
+    """
+    This was measured by hand
+    """
+    INNER_IMAGE_OFFSET  = (18, 13)
+    """
+    This should be the actual pixel dimensions of the hex image file
+    """
+    HEX_IMAGE_SIZE      = (68, 60)
+    
+    
+    def __init__(self, 
+                 parent, 
+                 main_form,
+                 input_pixmap, 
+                 input_function=None, 
+                 input_function_text="", 
+                 input_font=data.PyQt.QtGui.QFont(
+                 'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
+                 ), 
+                 input_focus_last_widget=data.HexButtonFocus.NONE, 
+                 input_no_tab_focus_disable=False, 
+                 input_no_document_focus_disable=True, 
+                 input_check_last_tab_type=False, 
+                 input_check_text_differ=False, 
+                 input_tool_tip=None,
+                 input_scale=(1, 1)):
+        #Initialize superclass
+        super().__init__(parent)
+        #Store the reference to the parent
+        self.parent = parent
+        #Store the reference to the main form
+        self.main_form = main_form
+        #Store the reference to the group box that holds the parent
+        #(the parent of the parent)
+        self.group_box_parent = parent.parent
+        #Store the main function image
+        self.stored_pixmap = input_pixmap
+        #Store the hex edge image
+        self.stored_hex = data.PyQt.QtGui.QPixmap(
+            os.path.join(
+                data.resources_directory, 
+                "various/hex-button-edge.png"
+            )
+        )
+        #Store the function that will be executed on the click event
+        self.function = input_function
+        #Store the function text
+        self.function_text = input_function_text
+        #Set the attribute that will be check if focus update is needed
+        #when the custom button executes its function
+        self.focus_last_widget = input_focus_last_widget
+        #Set the attribute that checks if any tab is focused
+        self.no_tab_focus_disable = input_no_tab_focus_disable
+        #Set the attribute that will be check if button will be disabled
+        #if there is no focused document tab
+        self.no_document_focus_disable = input_no_document_focus_disable
+        #Set checking the save state stored in the main form
+        self.check_last_tab_type = input_check_last_tab_type
+        #Set checking for if the focused tab is a text differer
+        self.check_text_differ = input_check_text_differ
+        #Set the font that will be used with the button
+        self.stored_font = input_font
+        #Enable mouse move events
+        self.setMouseTracking(True)
+        #Set the image for displaying
+        self.setPixmap(input_pixmap)
+        #Image should scale to the button size
+        self.setScaledContents(True)
+        # Set the button mask, which sets the button area to the shape of
+        # the button image instead of a rectangle
+        self.setMask(self.stored_hex.mask())
+        #Set the initial opacity to low
+        self._set_opacity(self.OPACITY_LOW)
+        #Set the tooltip if it was set
+        if input_tool_tip != None:
+            self.setToolTip(input_tool_tip)
+        # Set the scaling
+        self.scale = input_scale
+
+    def _set_opacity(self, input_opacity):
+        """Set the opacity of the stored QPixmap image and display it"""
+        # Store the opacity
+        self.stored_opacity = input_opacity
+        # Create and initialize the QImage from the stored QPixmap
+        button_image = self.stored_pixmap
+        # Resize the button image to scale
+        button_image = button_image.scaled(
+            data.PyQt.QtCore.QSize(
+                math.ceil(button_image.size().width() * self.scale[0]),
+                math.ceil(button_image.size().height() * self.scale[1]),
+            ),
+            transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+        )
+        # Scale the hex image
+        hex_image = self.stored_hex
+        scaled_size = data.PyQt.QtCore.QSize(
+            math.ceil(hex_image.size().width() * self.scale[0]),
+            math.ceil(hex_image.size().height() * self.scale[1]),
+        )
+        image = data.PyQt.QtGui.QImage(
+            scaled_size, #hex_image.size(), 
+            data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+        )
+        image.fill(data.PyQt.QtCore.Qt.transparent)
+        # Create and initialize the QPainter that will manipulate the QImage
+        button_painter = data.PyQt.QtGui.QPainter(image)
+        button_painter.setOpacity(input_opacity)
+        # Adjust inner button positioning according to the scale
+        x_scaled = math.ceil(self.scale[0] * self.INNER_IMAGE_OFFSET[0])
+        y_scaled = math.ceil(self.scale[1] * self.INNER_IMAGE_OFFSET[1])
+        button_painter.drawPixmap(x_scaled, y_scaled, button_image)
+        button_painter.end()
+        # Display the manipulated image
+        self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+        # Set the button mask, which sets the button area to the shape of
+        # the button image instead of a rectangle
+        self.setMask(hex_image.mask())
+    
+    def _set_opacity_with_hex_edge(self, input_opacity):
+        """
+        Set the opacity of the stored QPixmap image and display it
+        """
+        # Store the opacity
+        self.stored_opacity = input_opacity
+        # Create and initialize the QImage from the stored QPixmap
+        button_image = self.stored_pixmap
+        # Resize the button image to scale
+        button_image = button_image.scaled(
+            data.PyQt.QtCore.QSize(
+                math.ceil(button_image.size().width() * self.scale[0]),
+                math.ceil(button_image.size().height() * self.scale[1]),
+            ),
+            transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+        )
+        # Scale the hex image
+        hex_image = self.stored_hex
+        scaled_size = data.PyQt.QtCore.QSize(
+            math.ceil(hex_image.size().width() * self.scale[0]),
+            math.ceil(hex_image.size().height() * self.scale[1]),
+        )
+        image = data.PyQt.QtGui.QImage(
+            scaled_size, #hex_image.size(), 
+            data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+        )
+        image.fill(data.PyQt.QtCore.Qt.transparent)
+        # Create and initialize the QPainter that will manipulate the QImage
+        button_painter = data.PyQt.QtGui.QPainter(image)
+        button_painter.setCompositionMode(data.PyQt.QtGui.QPainter.CompositionMode_Source)
+        button_painter.setOpacity(input_opacity)
+        # Resize the hex image to scale
+        hex_image = hex_image.scaled(
+            data.PyQt.QtCore.QSize(
+                math.ceil(hex_image.size().width() * self.scale[0]),
+                math.ceil(hex_image.size().height() * self.scale[1]),
+            ),
+            transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+        )
+        # Adjust inner button positioning according to the scale
+        button_painter.drawPixmap(0, 0, hex_image)
+        x_scaled = math.ceil(self.scale[0] * self.INNER_IMAGE_OFFSET[0])
+        y_scaled = math.ceil(self.scale[1] * self.INNER_IMAGE_OFFSET[1])
+        button_painter.drawPixmap(x_scaled, y_scaled, button_image)
+        button_painter.end()
+        # Display the manipulated image
+        self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+        # Set the button mask, which sets the button area to the shape of
+        # the button image instead of a rectangle
+        self.setMask(hex_image.mask())
+    
+    def set_offset(self, offset):
+        self.setGeometry(
+            offset[0], 
+            offset[1], 
+            math.ceil(self.scale[0] * self.HEX_IMAGE_SIZE[0]), 
+            math.ceil(self.scale[0] * self.HEX_IMAGE_SIZE[1])
+        )
+    
+    def mousePressEvent(self, event):
+        """Overloaded widget click event"""
+        #Execute the superclass mouse click event first
+        super().mousePressEvent(event)
+        #Execute the function if it was initialized
+        if self.function != None:
+            try:
+                #Set focus to the last focused widget stored on the main form
+                if self.focus_last_widget == data.HexButtonFocus.TAB:
+                    self.main_form.last_focused_widget.currentWidget().setFocus()
+                elif self.focus_last_widget == data.HexButtonFocus.WINDOW:
+                    self.main_form.last_focused_widget.setFocus()
+                #Store the executed function for next cursor placement
+                self.main_form.view.last_executed_function_text = self.function_text
+                #Execute the buttons stored function
+                self.function()
+            except:
+                traceback.print_exc()
+                message = "You need to focus one of the editor windows first!"
+                self.main_form.display.repl_display_message(
+                    message, 
+                    message_type=data.MessageType.ERROR
+                )
+            #Close the function wheel
+            self.parent.hide()
+    
+    def mouseMoveEvent(self, event):
+        """Overloaded mouse move event"""
+        super().mouseMoveEvent(event)
+        if self.isEnabled() == True:
+            self.highlight()
+    
+    def enterEvent(self, event):
+        """Overloaded widget enter event"""
+        super().enterEvent(event)
+        #Bring the widget to the front of the Z-axis stack
+        self.raise_()
+        #Highlight the widget only if it's enabled
+        if self.isEnabled() == True:
+            self.highlight()
+    
+    def leaveEvent(self, event):
+        """Overloaded widget leave event"""
+        super().leaveEvent(event)
+        #Dim the widget only if it's enabled
+        if self.isEnabled() == True:
+            self.dim()
+    
+    def dim(self, clear_hex_edge=False):
+        """Set the buttons opacity to low and clear the function text"""
+        #Set the opacity to low
+        if clear_hex_edge == True:
+            self._set_opacity(self.OPACITY_LOW)
+        else:
+            self._set_opacity_with_hex_edge(self.OPACITY_LOW)
+        #Clear the text in the parent display label
+        self.parent.display("", self.stored_font)
+    
+    def highlight(self):
+        """Set the buttons opacity to high and display the buttons function text"""
+        #Set the opacity to full
+        self._set_opacity_with_hex_edge(self.OPACITY_HIGH)
+        #Display the stored function text
+        self.parent.display(self.function_text, self.stored_font)
+
+class DoubleButton(CustomButton):
+    """
+    A CustomButton with an extra button added to itself,
+    used for when double functionality is needed, for example when
+    a function has a version with or without a dialog window.
+    """
+    #The extra button reference
+    parent                      = None
+    main_form                   = None
+    extra_button                = None
+    extra_button_size_factor    = 1/3
+    extra_button_position       = data.PyQt.QtCore.QPoint(0, 0)
+    extra_button_stored_opacity = None
+    extra_button_stored_pixmap  = None
+    extra_button_function       = None
+    extra_button_function_text  = None
+    #Class constants
+    OPACITY_LOW                 = 0.5
+    OPACITY_HIGH                = 1.0
+    
+    def init_extra_button(self, 
+                          parent, 
+                          main_form, 
+                          input_extra_pixmap, 
+                          input_extra_function=None, 
+                          input_extra_function_text=""):   
+        #Store the parent and main form references
+        self.parent     = parent
+        self.main_form  = main_form
+        #Initialize the extra button
+        self.extra_button = data.QLabel(self)
+        width   = int(self.geometry().width() * self.extra_button_size_factor)
+        height  = int(self.geometry().height() * self.extra_button_size_factor)
+        self.extra_button_position = data.PyQt.QtCore.QPoint(
+                                        self.geometry().width()*2/3-width, 
+                                        self.geometry().height()*1/4
+                                        )
+        rectangle   = data.PyQt.QtCore.QRect(self.extra_button_position, data.PyQt.QtCore.QSize(width, height))
+        self.extra_button.setGeometry(rectangle)
+        self.extra_button_stored_pixmap = input_extra_pixmap
+        self.extra_button.setPixmap(input_extra_pixmap)
+        self.extra_button.setScaledContents(True)
+        #Store the function options
+        self.extra_button_function      = input_extra_function
+        self.extra_button_function_text = input_extra_function_text
+        #Set the extra button opacity to low
+        self._set_extra_button_opacity(self.OPACITY_LOW)
+        #Overridden the extra buttons events
+        self.extra_button.mousePressEvent   = self.extra_button_click
+        self.extra_button.enterEvent        = self.extra_button_enter_event
+        self.extra_button.leaveEvent        = self.extra_button_leave_event
+    
+    def extra_button_click(self, event):
+        """mousePressEvent for the extra button"""
+        #Execute the function if it was initialized
+        if self.extra_button_function != None:
+            try:
+                #Set focus to the last focused widget stored on the main form
+                if self.focus_last_widget == data.HexButtonFocus.TAB:
+                    self.main_form.last_focused_widget.currentWidget().setFocus()
+                elif self.focus_last_widget == data.HexButtonFocus.WINDOW:
+                    self.main_form.last_focused_widget.setFocus()
+                #Store the executed function for next cursor placement
+                self.main_form.view.last_executed_function_text = self.function_text
+                #Execute the buttons stored function
+                self.extra_button_function()
+            except Exception as ex:
+                print(ex)
+                message = "You need to focus one of the editor windows first!"
+                self.main_form.display.repl_display_message(
+                    message, 
+                    message_type=data.MessageType.ERROR
+                )
+            #Close the function wheel
+            self.parent.hide()
+    
+    def extra_button_enter_event(self, event):
+        """Overloaded widget enter event"""
+        #Check if the button is enabled
+        if self.isEnabled() == True:
+            self._set_extra_button_opacity(self.OPACITY_HIGH)
+            #Display the stored extra buttons function text
+            extra_button_font = data.PyQt.QtGui.QFont(
+                'Courier', 
+                self.stored_font.pointSize()-2, 
+                weight=data.PyQt.QtGui.QFont.Bold
+            )
+            self.parent.display(
+                self.extra_button_function_text, 
+                extra_button_font
+            )
+    
+    def extra_button_leave_event(self, event):
+        """Overloaded widget enter event"""
+        #Check if the button is enabled
+        if self.isEnabled() == True:
+            self._set_extra_button_opacity(self.OPACITY_LOW)
+            #Clear the function text
+            extra_button_font = data.PyQt.QtGui.QFont(
+                'Courier', 
+                self.stored_font.pointSize()-2, 
+                weight=data.PyQt.QtGui.QFont.Bold
+            )
+            self.parent.display(
+                "", 
+                extra_button_font
+            )
+    
+    def extra_button_enable(self):
+        """Hide and disable the extra button"""
+        self.extra_button.setVisible(True)
+        self.extra_button.setEnabled(True)
+    
+    def extra_button_disable(self):
+        """Hide and disable the extra button"""
+        self.extra_button.setVisible(False)
+        self.extra_button.setEnabled(False)
+        self._set_extra_button_opacity(self.OPACITY_LOW)
+    
+    def resizeEvent(self, event):
+        """Overridden resize event"""
+        #Execute the superclass resize function
+        super().resizeEvent(event)
+        #Update the extra button geometry
+        width = int(self.geometry().width() * self.extra_button_size_factor)
+        height = int(self.geometry().height() * self.extra_button_size_factor)
+        rectangle   = data.PyQt.QtCore.QRect(
+                        self.extra_button_position, 
+                        data.PyQt.QtCore.QSize(width, height)
+                        )
+        self.extra_button.setGeometry(rectangle)
+    
+    def _set_extra_button_opacity(self, input_opacity):
+        """Set the opacity of the extra button"""
+        #Store the opacity
+        self.extra_button_stored_opacity = input_opacity
+        #Create and initialize the QImage from the stored QPixmap
+        button_image = self.extra_button_stored_pixmap
+        image = data.PyQt.QtGui.QImage(
+            button_image.size(), 
+            data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+        )
+        image.fill(data.PyQt.QtCore.Qt.transparent)
+        #Create and initialize the QPainter that will manipulate the QImage
+        button_painter = data.PyQt.QtGui.QPainter(image)
+        button_painter.setOpacity(input_opacity)
+        button_painter.drawPixmap(0, 0, button_image)
+        button_painter.end()
+        #Display the manipulated image
+        self.extra_button.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+
+
+"""
+---------------------------------------------------------
+Custom context menu for the editors and REPL
+---------------------------------------------------------
+""" 
+class ContextMenu(data.QGroupBox):
+    class ContextButton(CustomButton):
+        """
+        Subclassed custom button
+        """
+        # The button's number in the context menu
+        number = None
+        
+        def _fill_background_color(self):
+            self.setAutoFillBackground(True)
+            p = self.palette()
+            p.setColor(self.backgroundRole(), data.PyQt.QtCore.Qt.white)
+            self.setPalette(p)
+        
+        def _set_opacity(self, input_opacity):
+            super()._set_opacity(input_opacity)
+            self._fill_background_color()
+        
+        def _set_opacity_with_hex_edge(self, input_opacity):
+            super()._set_opacity_with_hex_edge(input_opacity)
+            self._fill_background_color()
+        
+        def mousePressEvent(self, event):
+            """Overloaded widget click event"""
+            button = event.button()
+            if button == data.PyQt.QtCore.Qt.LeftButton:
+                # Execute the function if it was initialized
+                if self.function != None:
+                    try:
+                        # Execute the buttons stored function
+                        self.function()
+                    except:
+                        traceback.print_exc()
+                        message = "You need to focus one of the editor windows first!"
+                        self.main_form.display.repl_display_message(
+                            message, 
+                            message_type=data.MessageType.ERROR
+                        )
+                    if self.main_form.click_drag_action != None:
+                        function_name = self.main_form.click_drag_action.function.__name__
+#                        print(self.number, function_name)
+                        if self.parent.functions_type == "standard":
+                            ContextMenu.standard_buttons[self.number] = function_name
+                        elif self.parent.functions_type == "plain":
+                            ContextMenu.standard_buttons[self.number] = function_name
+                        elif self.parent.functions_type == "horizontal":
+                            ContextMenu.horizontal_buttons[self.number] = function_name
+                        elif self.parent.functions_type == "special":
+                            ContextMenu.special_buttons[self.number] = function_name
+                        # Reset cursor and stored action
+                        data.application.restoreOverrideCursor()
+                        self.main_form.click_drag_action = None
+                    # Close the function wheel
+                    self.parent.hide()
+                    event.accept()
+                else:
+                    event.ignore()
+            elif button == data.PyQt.QtCore.Qt.RightButton:
+                # Close the function wheel
+                self.parent.hide()
+                event.accept()
+            else:
+                event.ignore()
+        
+        def dim(self, clear_hex_edge=False):
+            """Set the buttons opacity to low and clear the function text"""
+            # Set the opacity to low
+            if clear_hex_edge == True:
+                self._set_opacity(self.OPACITY_LOW)
+            else:
+                self._set_opacity_with_hex_edge(self.OPACITY_LOW)
+        
+        def highlight(self):
+            """Set the buttons opacity to high and display the buttons function text"""
+            # Set the opacity to full
+            self._set_opacity_with_hex_edge(self.OPACITY_HIGH)
+            # Display the stored function text
+            self.main_form.display.write_to_statusbar(self.function_text)
+    
+    # Various references
+    main_form = None
+    # Painting offset
+    offset = (0, 0)
+    # Stored menu button
+    button_list = None
+    # Functions dictionary
+    function_list = {}
+    # Inner button positions, clockwise from the top, 
+    # last position is in the middle
+    inner_button_positions = [
+        (-27, -24, 0),
+        (14, 0, 1),
+        (14, 48, 2),
+        (-27, 72, 3),
+        (-68, 48, 4),
+        (-68, 0, 5),
+        (-27, 24, 6)
+    ]
+    outer_button_positions = [
+        (-27, -72, 7),
+        (14, -48, 8),
+        (54, -24, 9),
+        (54, 24, 10),
+        (54, 72, 11),
+        (14, 96, 12),
+        (-27, 120, 13),
+        (-68, 96, 14),
+        (-108, 72, 15),
+        (-108, 24, 16),
+        (-108, -24, 17),
+        (-68, -48, 18),
+    ]
+    horizontal_button_positions = [
+        (-148, 0, 19),
+        (-108, 24, 20),
+        (-68, 0, 21),
+        (-27, 24, 22),
+        (14, 0, 23),
+        (54, 24, 24),
+        (94, 0, 25),
+    ]
+    standard_buttons = {
+        0: "copy",
+        1: "cut",
+        2: "paste",
+        3: "line_copy",
+        4: "undo",
+        5: "redo",
+        6: "line_duplicate",
+        7: "line_transpose",
+        8: "line_cut",
+        9: "line_delete",
+        10: "select_all",
+        11: "special_to_uppercase",
+        12: "special_to_lowercase",
+        13: "show_edge",
+        14: "toggle_line_endings",
+        15: "goto_to_end",
+        16: "goto_to_start",
+        17: "special_indent_to_cursor",
+        18: "reset_zoom",
+    }
+    # A Copy for when the functions need to be reset
+    stored_standard_buttons = dict(standard_buttons) # or standard_buttons[:]
+    special_buttons = {
+        0: "copy",
+        1: "cut",
+        2: "paste",
+        3: "line_copy",
+        4: "undo",
+        5: "redo",
+        6: "line_duplicate",
+        7: "line_transpose",
+        8: "line_cut",
+        9: "line_delete",
+        10: "select_all",
+        11: "special_to_uppercase",
+        12: "special_to_lowercase",
+        13: "comment_uncomment",
+        14: "toggle_line_endings",
+        15: "goto_to_end",
+        16: "goto_to_start",
+        17: "special_indent_to_cursor",
+        18: "create_node_tree",
+    }
+    # A Copy for when the functions need to be reset
+    stored_special_buttons = dict(special_buttons) # or special_buttons[:]
+    horizontal_buttons = {
+        19: "copy",
+        20: "cut",
+        21: "paste",
+        22: "comment_uncomment",
+        23: "undo",
+        24: "redo",
+        25: "line_duplicate",
+    }
+    # A Copy for when the functions need to be reset
+    stored_horizontal_buttons = dict(horizontal_buttons) # or horizontal_buttons[:]
+    # Button scaling factor
+    x_scale = 0.7
+    y_scale = 0.7
+    # Total button position offset
+    total_offset = (0, -48)
+    # Current context menu functions type
+    functions_type = None
+    
+    def __init__(self, parent=None, main_form=None, offset=(0, 0)):
+        # Initialize the superclass
+        super().__init__(parent)
+        # Store the reference to the parent
+        self.setParent(parent)
+        # Store the reference to the main form
+        self.main_form = main_form
+        # Store the painting offset
+        self.offset = offset
+        # Set the background color
+        style_sheet = "background-color: transparent;"
+        style_sheet += "border: 0 px;"
+        self.setStyleSheet(style_sheet)
+        # Set the groupbox size
+        screen_resolution = data.application.desktop().screenGeometry()
+        width, height = screen_resolution.width(), screen_resolution.height()
+        self.setGeometry(
+            data.PyQt.QtCore.QRect(0, 0, width, height)
+        )
+    
+    @staticmethod
+    def reset_functions():
+        """
+        Copy stored functions back into the active menu functions
+        """
+        ContextMenu.standard_buttons = dict(ContextMenu.stored_standard_buttons)
+        ContextMenu.special_buttons = dict(ContextMenu.stored_special_buttons)
+        ContextMenu.horizontal_buttons = dict(ContextMenu.stored_horizontal_buttons)
+    
+    @staticmethod
+    def get_settings():
+        """
+        Return the custom function settings for the settings manipulator
+        """
+        return {
+            "standard_buttons": ContextMenu.standard_buttons,
+            "special_buttons": ContextMenu.special_buttons,
+            "horizontal_buttons": ContextMenu.horizontal_buttons,
+        }
+    
+    def check_position_offset(self, 
+                              inner_buttons=True, 
+                              outer_buttons=True,
+                              horizontal_buttons=False):
+        button_positions = []
+        if inner_buttons == True:
+            button_positions.extend(ContextMenu.inner_button_positions)
+        if outer_buttons == True:
+            button_positions.extend(ContextMenu.outer_button_positions)
+        if horizontal_buttons == True:
+            button_positions.extend(self.horizontal_button_positions)
+        hex_x_size = self.ContextButton.HEX_IMAGE_SIZE[0] * self.x_scale
+        hex_y_size = self.ContextButton.HEX_IMAGE_SIZE[1] * self.y_scale
+        window_size = self.parent().size() - data.PyQt.QtCore.QSize(hex_x_size, hex_y_size)
+        min_x = 0
+        min_y = 0
+        max_x = 0
+        max_y = 0
+        for b in button_positions:
+            x = self.offset[0]+ b[0]*self.x_scale/0.8 + self.total_offset[0]
+            y = self.offset[1]+ b[1]*self.y_scale/0.8 + self.total_offset[1]
+            if x < min_x:
+                min_x = x
+            if x > window_size.width():
+                new_max = x - window_size.width()
+                if new_max > max_x:
+                    max_x = new_max
+            if y < min_y:
+                min_y = y
+            if y > window_size.height():
+                new_max = y - window_size.height()
+                if new_max > max_y:
+                    max_y = new_max
+        if min_x != 0:
+            self.offset = (self.offset[0]-min_x, self.offset[1])
+        if max_x != 0:
+            self.offset = (self.offset[0]-max_x, self.offset[1])
+        if min_y != 0:
+            self.offset = (self.offset[0], self.offset[1]-min_y)
+        if max_y != 0:
+            self.offset = (self.offset[0], self.offset[1]-max_y)
+    
+    @staticmethod
+    def add_function(name, pixmap, function, function_name):
+        ContextMenu.function_list[name] = (pixmap, function, function_name)
+    
+    def mousePressEvent(self, event):
+        button = event.button()
+        super().mousePressEvent(event)
+        self.hide()
+    
+    def add_buttons(self, buttons):
+        """
+        Add buttons to the context menu
+        """
+        total_offset = self.total_offset
+        for b in buttons:
+            function_info = b[0]
+            button_position = b[1]
+            button_number = button_position[2]
+            button = self.ContextButton(
+                self, 
+                self.main_form, 
+                input_pixmap=function_info[0], 
+                input_function=function_info[1], 
+                input_function_text=function_info[2],
+                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_scale=(self.x_scale, self.y_scale),
+            )
+            button.number = button_number
+            #Set the button size and location
+            button.set_offset(
+                (self.offset[0]+ button_position[0]*self.x_scale/0.8 + total_offset[0], 
+                    self.offset[1]+ button_position[1]*self.y_scale/0.8 + total_offset[1])
+            )
+            button.dim()
+            self.button_list.append(button)
+    
+    def create_horizontal_multiline_repl_buttons(self):
+        # Check if any of the buttons are out of the window and adjust the offset
+        self.check_position_offset(
+            inner_buttons=False, 
+            outer_buttons=False,
+            horizontal_buttons=True
+        )
+        buttons = [ContextMenu.horizontal_buttons[x] for x in range(19, 26)]
+        # Add the buttons
+        self.button_list = []
+        self.add_horizontal_buttons(buttons)
+        self.functions_type = "horizontal"
+    
+    def create_multiline_repl_buttons(self):
+        inner_buttons = [ContextMenu.horizontal_buttons[x] for x in range(19, 26)]
+        self.create_buttons(inner_buttons)
+        self.functions_type = "horizontal"
+    
+    def create_plain_buttons(self):
+        inner_buttons = [ContextMenu.standard_buttons[x] for x in range(7)]
+        self.create_buttons(inner_buttons)
+        self.functions_type = "plain"
+    
+    def create_standard_buttons(self):
+        inner_buttons = [ContextMenu.standard_buttons[x] for x in range(7)]
+        outer_buttons = [ContextMenu.standard_buttons[x] for x in range(7, len(ContextMenu.standard_buttons))]
+        self.create_buttons(inner_buttons, outer_buttons)
+        self.functions_type = "standard"
+    
+    def create_special_buttons(self):
+        inner_buttons = [ContextMenu.special_buttons[x] for x in range(7)]
+        outer_buttons = [ContextMenu.special_buttons[x] for x in range(7, len(ContextMenu.standard_buttons))]
+        self.create_buttons(inner_buttons, outer_buttons)
+        self.functions_type = "special"
+    
+    def create_buttons(self, 
+                       inner_buttons=[], 
+                       outer_buttons=[]):
+        # Check if any of the buttons are out of the window and adjust the offset
+        if outer_buttons == []:
+            self.check_position_offset(
+                inner_buttons=True, 
+                outer_buttons=False,
+                horizontal_buttons=False
+            )
+        else:
+            self.check_position_offset()
+        # Add the buttons
+        self.button_list = []
+        if inner_buttons != []:
+            buttons = inner_buttons
+            self.add_inner_buttons(buttons)
+        if outer_buttons != []:
+            buttons = outer_buttons
+            self.add_outer_buttons(outer_buttons)
+    
+    def add_inner_buttons(self, in_buttons):
+        self._add_buttons(in_buttons, 7, ContextMenu.inner_button_positions)
+    
+    def add_outer_buttons(self, in_buttons):
+        self._add_buttons(in_buttons, 12, ContextMenu.outer_button_positions)
+    
+    def add_horizontal_buttons(self, in_buttons):
+        self._add_buttons(in_buttons, 7, ContextMenu.horizontal_button_positions)
+    
+    def _add_buttons(self, in_buttons, max_count, positions):
+        if len(in_buttons) > max_count:
+            raise Exception("Too many inner buttons in context menu!")
+        buttons = []
+        for i,button in enumerate(in_buttons):
+            if (button in self.function_list) == False:
+                self.main_form.display.repl_display_message(
+                    "'{}' context menu function does not exist!".format(button), 
+                    message_type=data.MessageType.ERROR
+                )
+            else:
+                buttons.append(
+                    (ContextMenu.function_list[button], positions[i])
+                )
+        self.add_buttons(buttons)
+    
+    def show(self):
+        super().show()
+        # When the context menu is shown it is needed to paint
+        # the background or the backgrounds will be transparent
+        for button in self.button_list:
+            button.setVisible(True)
+            button._fill_background_color()
+
+
+

@@ -8,7 +8,6 @@ import future
 import sequtils
 import parseutils
 
-
 type
     Sequence = object
         start*: seq[char]
@@ -73,7 +72,7 @@ var
     ]
     operator_list = [
         '=', '+', '-', '*', '/', '<', '>', '$', '.',
-        '~', '&', '%', '|', '!', '?', '^', '.', ':'
+        '~', '&', '%', '|', '!', '?', '^', '.', ':', ','
     ]
     extended_separators: array[len(separator_list) + len(operator_list), char]
     
@@ -248,7 +247,8 @@ proc python_style_text*(self, args: PyObjectPtr): PyObjectPtr {.exportc, cdecl.}
     proc check_stop_sequence(pos: int, actseq: SeqActive): bool =
         if text[pos] in actseq.sequence.stop_extra:
             return true
-        if pos > 0 and (text[pos-1] in actseq.sequence.negative_lookbehind):
+        if (pos > 0 and (text[pos-1] in actseq.sequence.negative_lookbehind)) and
+           (pos > 1 and not (text[pos-2] in actseq.sequence.negative_lookbehind)):
             return false
         for i, s in actseq.sequence.stop.pairs:
             if text[pos+i] != s:
@@ -346,11 +346,15 @@ proc python_style_text*(self, args: PyObjectPtr): PyObjectPtr {.exportc, cdecl.}
         inc(i)
         # Check for end of text
         if i >= text_length:
-            raise newException(IndexError, "Styling went over the text length limit!")
+            # Style text
+            token_name = text[token_start..i]
+            token_length = i - token_start
+            style_token(token_name, token_length)
     #------------------------------------------------------------------------------
     clean_up()
     returnNone()
 
 
+echo "Nim lexers imported!"
 
 

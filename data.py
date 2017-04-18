@@ -3,7 +3,7 @@
 
 """
 Copyright (c) 2013-2017 Matic Kukovec. 
-Release under the GNU GPL3 license.
+Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
@@ -83,8 +83,8 @@ import themes
 """
 File extension lists
 """
-ext_python              = [".py", ".pyw"]
-ext_cpython             = [".pyx", ".pxd", ".pxi"]
+ext_python              = [".py", ".pyw", ".scons"]
+ext_cython             = [".pyx", ".pxd", ".pxi"]
 ext_c                   = [".c", ".h"]
 ext_cpp                 = [".c++", ".h++", ".cc", ".hh", ".cpp", ".hpp", ".cxx", ".hxx"]
 ext_pascal              = [".pas", ".pp", ".lpr", ".cyp"]
@@ -182,41 +182,43 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-APPLICATION_VERSION     = "6.2"
-#Global variable that holds state of logging mode
-logging_mode            = False
-#Global referenc to the log display window, so it can be used anywhere
-log_window              = None
-#Global reference to the Qt application
-application             = None
-#Global string with the application directory
-application_directory   = ""
-#User configuration file
+application_version = "6.3"
+# Global variable that holds state of logging mode
+logging_mode = False
+# Global referenc to the log display window, so it can be used anywhere
+log_window = None
+# Global reference to the Qt application
+application = None
+# Global string with the application directory
+application_directory = ""
+# User configuration file
 config_file = "user_functions.cfg"
-#Global string with the resources directory
-resources_directory     = "resources"
-#Application icon image that will be displayed on all Qt widgets
-application_icon        = "exco-icon.png"
-#Ex.Co. information image displayed when "About Ex.Co" action is clicked in the menubar "Help" menu
-about_image             = "exco-info.png"
-#Funcion wheel background image
-function_wheel_image    = "various/function-wheel.png"
-#Maximum limit of highlighting instances
-MAXIMUM_HIGHLIGHTS      = 300
-#Column at which the edge marker is shown in documents
-EDGE_MARKER_COLUMN      = 90
-#Global width of tabs
+# Global string with the resources directory
+resources_directory = "resources"
+# Application icon image that will be displayed on all Qt widgets
+application_icon = "exco-icon.png"
+# Ex.Co. information image displayed when "About Ex.Co" 
+# action is clicked in the menubar "Help" menu
+about_image = "exco-info.png"
+# Funcion wheel background image
+function_wheel_image = "various/function-wheel.png"
+# Maximum limit of highlighting instances
+maximum_highlights = 300
+# Column at which the edge marker is shown in documents
+edge_marker_column = 90
+# Global width of tabs
 tab_width = 4
-#Terminal console program used on GNU/Linux
+# Terminal console program used on GNU/Linux
 terminal = "lxterminal"
-#Zoom factor when a new editor is created (default is 0)
+# Zoom factor when a new editor is created (default is 0)
 zoom_factor = 0
-#Default tree display(file-tree, node-tree, ...)
+# Default tree display font size (file-tree, node-tree, ...)
 tree_display_font_size = 10
-#Default EOL style (EolWindows-CRLF, EolUnix-LF, EolMac-CR)
+# Default EOL style in editors (EolWindows-CRLF, EolUnix-LF, EolMac-CR)
 default_eol = PyQt.Qsci.QsciScintilla.EolUnix
-#Current theme
+# Current theme
 theme = themes.Air
+
 
 # Show PyQt/QScintilla version that is being used and if running in 
 # QScintilla compatibility mode
@@ -289,7 +291,7 @@ repeat_eval_keys = 'F3'
 repl_focus_single_1_keys = 'Ctrl+R'
 repl_focus_single_2_keys = 'Ctrl+4'
 repl_focus_multi_keys = 'Ctrl+5'
-#Custom editor commands
+# Custom editor commands
 copy_keys = 'Ctrl+C'
 cut_keys = 'Ctrl+X'
 paste_keys = 'Ctrl+V'

@@ -3,7 +3,7 @@
 
 """
 Copyright (c) 2013-2017 Matic Kukovec. 
-Release under the GNU GPL3 license.
+Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
@@ -14,7 +14,7 @@ For complete license information of the dependencies, check the 'additional_lice
 ##        involving PyQt4
 ##
 ##      - The file is very big because I wanted all of the widget definition in a single file.
-##        To navigate the file use either Ex.Co.(Show Node Tree function - F5) itself or 
+##        To navigate the file use either Ex.Co.(Show Node Tree function - F8) itself or 
 ##        in the Eric6 IDE
 ##
 ##      - Every import is explicitly defined e.g.: PyQt4.Qt...  
@@ -98,7 +98,7 @@ class MainWindow(data.QMainWindow):
     # Supported Ex.Co. file extension types
     exco_file_exts =  (
         ['*' + x for x in data.ext_python] +
-        ['*' + x for x in data.ext_cpython] +
+        ['*' + x for x in data.ext_cython] +
         ['*' + x for x in data.ext_c] +
         ['*' + x for x in data.ext_cpp] +
         ['*' + x for x in data.ext_pascal] +
@@ -117,6 +117,8 @@ class MainWindow(data.QMainWindow):
     # Last focused widget and tab needed by the function wheel overlay
     last_focused_widget     = None
     last_focused_tab        = None
+    # Click&Drag action storage reference for the menubar
+    click_drag_action       = None
     """Namespace references for grouping functionality"""
     settings                = None
     sessions                = None
@@ -142,7 +144,7 @@ class MainWindow(data.QMainWindow):
         # Set the name of the main window
         self.setObjectName("Form")
         # Initialize the main window 
-        self.setWindowTitle("Ex.Co. " + data.APPLICATION_VERSION)
+        self.setWindowTitle("Ex.Co. " + data.application_version)
         # Initialize the log dialog window
         data.log_window = helper_forms.MessageLogger(self)
         # Initialize basic window widgets(main, side_up, side_down)
@@ -169,6 +171,7 @@ class MainWindow(data.QMainWindow):
             # Show log dialog window
             self.view.set_log_window(True)
         data.print_log("Main window displayed successfully")
+        # Load the settings
         self.settings.restore()
         # Initialize the theme indicator
         self.display.init_theme_indicator()
@@ -196,7 +199,7 @@ class MainWindow(data.QMainWindow):
         self.statusbar  = data.QStatusBar(self)
         self.display.write_to_statusbar("Status Bar")
         #Add label for showing the cursor position in a basic widget
-        self.statusbar_label_left = data.QLabel()
+        self.statusbar_label_left = data.QLabel(self)
         self.statusbar_label_left.setText("")
         self.statusbar.addPermanentWidget(self.statusbar_label_left)
         #Add the statusbar to the MainWindow
@@ -220,7 +223,7 @@ class MainWindow(data.QMainWindow):
             open_d      = self.open_file_with_dialog, 
             save        = functions.write_to_file, 
             log         = data.log_window, 
-            version     = data.APPLICATION_VERSION,
+            version     = data.application_version,
             run         = self.run_process, 
             set_cwd         = self.set_cwd, 
             get_cwd         = self.get_cwd, 
@@ -307,15 +310,15 @@ class MainWindow(data.QMainWindow):
         """Display the current working directory"""
         self.display.repl_display_message(os.getcwd())
 
-    def set_cwd(self, dir):
+    def set_cwd(self, directory):
         """Set the current working directory and display it"""
-        os.chdir(dir)
+        os.chdir(directory)
         #Store the current REPL text
         repl_text = self.repl.text()
         #Reset the interpreter and update its references
         self._reset_interpreter()
         #Update the last browsed directory to the class/instance variable
-        self.last_browsed_dir = dir
+        self.last_browsed_dir = directory
         #Display the selected directory
         self.display.repl_display_message("CWD changed to:")
         self.get_cwd()
@@ -349,7 +352,7 @@ class MainWindow(data.QMainWindow):
             return
         #Set the new current working directory
         self.set_cwd(path)
-
+    
     def leaveEvent(self,  event):
         """Event that fires when you leave the main form"""
         data.print_log("Left Main form")
@@ -402,11 +405,12 @@ class MainWindow(data.QMainWindow):
     
     def mousePressEvent(self, event):
         """Overridden main window mouse click event"""
-        #Execute the superclass mouse press event
+        # Execute the superclass mouse press event
         super().mousePressEvent(event)
-        #Hide the function wheel if it is shown
-        if self.view.function_wheel_overlay != None:
-            self.view.hide_function_wheel()
+        # Hide the function wheel if it is shown
+        if event.button() != data.PyQt.QtCore.Qt.RightButton:
+            if self.view.function_wheel_overlay != None:
+                self.view.hide_function_wheel()
     
     def _window_filter_keypress(self, key_event):
         """Filter keypress for appropriate action"""
@@ -474,7 +478,7 @@ class MainWindow(data.QMainWindow):
             if focused_tab != None and focused_tab.savable == data.CanSave.YES:
                 focused_tab.save_document(
                     saveas=False, 
-                    last_dir=self.last_browsed_dir, 
+                    last_dir=self.last_browsed_dir,  
                     encoding=encoding, 
                     line_ending=line_ending
                 )
@@ -554,96 +558,159 @@ class MainWindow(data.QMainWindow):
         This is a very long function that should be trimmed sometime!
         """
         self.menubar = data.QMenuBar(self)
-        #Nested function for writing text to the REPL
-        def repl_text_input(text,  cursor_position):
+        # Object for connecting to the menubar events
+        class ClickEventFilter(data.PyQt.QtCore.QObject):
+            # Timers
+            click_timer = None
+            reset_timer = None
+            # Overridden filter method
+            def eventFilter(self, receiver, event):
+                if(event.type() == data.PyQt.QtCore.QEvent.MouseButtonPress):
+                    cursor = data.PyQt.QtGui.QCursor.pos()
+                    cursor = cursor - receiver.pos()
+                    if receiver.actionAt(cursor) != None:
+                        action = receiver.actionAt(cursor)
+#                        print(action.text())
+                        # Create the click&drag detect timer
+                        def click_and_drag():
+                            def hide_parents(obj):
+                                obj.hide()
+                                if obj.parent() != None and (isinstance(obj.parent(), data.QMenu)):
+                                    hide_parents(obj.parent())
+                            hide_parents(receiver)
+                            self.click_timer = None
+                            if hasattr(action, "pixmap"):
+                                cursor = data.PyQt.QtGui.QCursor(
+                                    action.pixmap
+                                )
+                                data.application.setOverrideCursor(cursor)
+                                self.parent().click_drag_action = action
+                                # Create the reset timer
+                                def reset():
+                                    data.application.restoreOverrideCursor()
+                                    self.reset_timer = None
+                                    self.parent().click_drag_action = None
+                                if self.reset_timer != None:
+                                    self.reset_timer.stop()
+                                self.reset_timer = data.PyQt.QtCore.QTimer(self)
+                                self.reset_timer.setInterval(10000)
+                                self.reset_timer.setSingleShot(True)
+                                self.reset_timer.timeout.connect(reset)
+                                self.reset_timer.start()
+                                self.parent().display.repl_display_message(
+                                    "The cursor icon will be reset in 10 seconds.", 
+                                    message_type=data.MessageType.WARNING
+                                )
+                        self.click_timer = data.PyQt.QtCore.QTimer(self)
+                        self.click_timer.setInterval(400)
+                        self.click_timer.setSingleShot(True)
+                        self.click_timer.timeout.connect(click_and_drag)
+                        self.click_timer.start()
+                elif(event.type() == data.PyQt.QtCore.QEvent.MouseButtonRelease):
+                    data.application.restoreOverrideCursor()
+                    if self.click_timer != None:
+                        self.click_timer.stop()
+                        self.click_timer = None
+                    if self.reset_timer != None:
+                        self.reset_timer.stop()
+                        self.parent().click_drag_action = None
+                return super().eventFilter(receiver, event)
+        # Click filter for the menubar menus
+        click_filter = ClickEventFilter(self)
+        # Nested function for creating an action
+        def create_action(name, key_combo, status_tip, icon, function, enabled=True):
+            action = data.QAction(name, self)
+            # Key combination
+            if key_combo != None and key_combo != "" and key_combo != []:
+                if isinstance(key_combo, list):
+                    action.setShortcuts(key_combo)
+                else:
+                    action.setShortcut(key_combo)
+            action.setStatusTip(status_tip)
+            # Icon and pixmap
+            action.pixmap = None
+            if icon != None:
+                action.setIcon(functions.create_icon(icon))
+#                action.pixmap = functions.create_pixmap(icon)
+                action.pixmap = functions.create_pixmap_with_size(icon, 32, 32)
+            # Function
+            if function != None:
+                action.triggered.connect(function)
+            action.function = function
+            self.menubar_functions[function.__name__] = function
+#            print(function.__name__)
+            # Check if there is a tab character in the function
+            # name and remove the part of the string after it
+            if '\t' in name:
+                name = name[:name.find('\t')]
+            # Add the action to the context menu 
+            # function list in the helper forms module
+            helper_forms.ContextMenu.add_function(
+                function.__name__, action.pixmap, function, name
+            )
+            # Enable/disable action according to passed 
+            # parameter and return the action
+            action.setEnabled(enabled)
+            return action
+        # Nested function for writing text to the REPL
+        def repl_text_input(text, cursor_position):
             self.repl.setText(text)
             self.repl.setFocus()
             self.repl.setCursorPosition(cursor_position)
-        #File menu
+        # File menu
         def construct_file_menu():
             file_menu = self.menubar.addMenu("&File")
+            file_menu.installEventFilter(click_filter)
+            # New file
             def special_create_new_file():
                 self.file_create_new()
-            new_file_action     = data.QAction('New', self)
-            new_file_action.setShortcut(data.new_file_keys)
-            new_file_action.setStatusTip('Create new empty file')
-            temp_icon = functions.create_icon('tango_icons/document-new.png')
-            new_file_action.setIcon(temp_icon)
-            new_file_action.triggered.connect(special_create_new_file)
-            #Open file
+            new_file_action = create_action('New', data.new_file_keys, 'Create new empty file', 'tango_icons/document-new.png', special_create_new_file)
+            # Open file
             def special_open_file():
                 self.file_open()
-            open_file_action = data.QAction('Open', self)
-            open_file_action.setShortcut(data.open_file_keys)  
-            open_file_action.setStatusTip('Open File')
-            temp_icon = functions.create_icon('tango_icons/document-open.png')
-            open_file_action.setIcon(temp_icon)
-            open_file_action.triggered.connect(special_open_file)
-            #Save options need to be saved to a reference for disabling/enabling
-            #Save
+            open_file_action = create_action('Open', data.open_file_keys, 'Open file', 'tango_icons/document-open.png', special_open_file)
+            # Save options need to be saved to a reference for disabling/enabling
+            # Save file
             def special_save_file():
                 self.file_save()
-            self.save_file_action = data.QAction('Save', self)
-            self.save_file_action.setShortcut(data.save_file_keys)
-            self.save_file_action.setStatusTip('Save current file in the UTF-8 encoding')
-            self.save_file_action.setEnabled(False)
-            temp_icon = functions.create_icon('tango_icons/document-save.png')
-            self.save_file_action.setIcon(temp_icon)
-            self.save_file_action.triggered.connect(special_save_file)
-            #Save as
+            self.save_file_action = create_action('Save', data.save_file_keys, 'Save current file in the UTF-8 encoding', 'tango_icons/document-save.png', special_save_file, enabled=False)
+            # Save file as
             def special_saveas_file():
                 self.file_saveas()
-            self.saveas_file_action = data.QAction('Save As', self)
-            self.saveas_file_action.setShortcut(data.saveas_file_keys)
-            self.saveas_file_action.setStatusTip('Save current file as a new file in the UTF-8 encoding')
-            self.saveas_file_action.setEnabled(False)
-            temp_icon = functions.create_icon('tango_icons/document-save-as.png')
-            self.saveas_file_action.setIcon(temp_icon)
-            self.saveas_file_action.triggered.connect(special_saveas_file)
-            #Save all
+            self.saveas_file_action = create_action('Save As', data.saveas_file_keys, 'Save current file as a new file in the UTF-8 encoding', 'tango_icons/document-save-as.png', special_saveas_file, enabled=False)
+            # Save all
             def special_save_all():
                 self.file_save_all()
-            self.save_all_action = data.QAction('Save All', self)
-            self.save_all_action.setStatusTip('Save all modified documents in all windows in the UTF-8 encoding')
-            self.save_all_action.setEnabled(False)
-            temp_icon = functions.create_icon('tango_icons/file-save-all.png')
-            self.save_all_action.setIcon(temp_icon)
-            self.save_all_action.triggered.connect(special_save_all)
-            #Exit
-            action_text = 'Exit\tAlt+F4'
-            exit_action = data.QAction(action_text, self)     
-            exit_action.setStatusTip('Exit application')
-            temp_icon = functions.create_icon('tango_icons/system-log-out.png')
-            exit_action.setIcon(temp_icon)
-            exit_action.triggered.connect(self.exit)
-            #Additional menu for saving in different encodings
+            self.save_all_action = create_action('Save All', None, 'Save all modified documents in all windows in the UTF-8 encoding', 'tango_icons/file-save-all.png', special_save_all, enabled=False)
+            # Exit
+            exit_action = create_action('Exit\tAlt+F4', None, 'Exit application', 'tango_icons/system-log-out.png', self.exit)
+            # Additional menu for saving in different encodings
             def add_save_in_different_encoding_submenu():
+                # Add the save in encoding menu
                 self.save_in_encoding = data.QMenu("Save in encoding...")
-                #Save as ASCII encoding
-                self.save_ascii_file_action = data.QAction('ASCII', self)
-                temp_string = 'Save current file with the ASCII encoding, '
-                temp_string += 'unknown characters will be replaced with "?"'
-                self.save_ascii_file_action.setStatusTip(temp_string)
-                self.save_ascii_file_action.setEnabled(False)
-                self.save_ascii_file_action.triggered.connect(
-                    functools.partial(self.file_save, encoding="ascii")
-                )
-                #Save in ANSI Windows encoding
-                self.save_ansiwin_file_action = data.QAction('ANSI (Windows)', self)
-                temp_string = 'Save current file with the ANSI Windows (CP-1250) encoding with CR+LF line ending, '
-                temp_string += 'unknown characters will be replaced with "?"'
-                self.save_ansiwin_file_action.setStatusTip(temp_string)
-                self.save_ansiwin_file_action.setEnabled(False)
-                self.save_ansiwin_file_action.triggered.connect(
-                    functools.partial(self.file_save, encoding="cp1250", line_ending="\r\n")
-                )
-                self.save_in_encoding.addAction(self.save_ascii_file_action)
-                self.save_in_encoding.addAction(self.save_ansiwin_file_action)
                 self.save_in_encoding.setEnabled(False)
                 temp_icon = functions.create_icon('tango_icons/document-save-as.png')
                 self.save_in_encoding.setIcon(temp_icon)
+                self.save_in_encoding.installEventFilter(click_filter)
+                # Save as ASCII encoding
+                temp_string = 'Save current file with the ASCII encoding, '
+                temp_string += 'unknown characters will be replaced with "?"'
+                def save_ascii_file():
+                    self.file_save(encoding="ascii")
+                self.save_ascii_file_action = create_action('ASCII', None, temp_string, None, save_ascii_file, enabled=False)
+                # Save in ANSI Windows encoding
+                temp_string = 'Save current file with the ANSI Windows (CP-1250) encoding with CR+LF line ending, '
+                temp_string += 'unknown characters will be replaced with "?"'
+                def save_ansi_file():
+                    self.file_save(encoding="cp1250", line_ending="\r\n")
+                self.save_ansiwin_file_action = create_action('ANSI (Windows)', None, temp_string, None, save_ansi_file, enabled=False)
+                # Add the save options to to parent action
+                self.save_in_encoding.addAction(self.save_ascii_file_action)
+                self.save_in_encoding.addAction(self.save_ansiwin_file_action)
+                # Add the parent action to the menu
                 file_menu.addMenu(self.save_in_encoding)
-            #Add the closing functions
+            # Add the closing functions
+            # Close tab
             def close_tab():
                 try:
                     current_window  = self.get_window_by_child_tab()
@@ -653,29 +720,12 @@ class MainWindow(data.QMainWindow):
                     current_window.currentWidget().setFocus()
                 except:
                     pass
-            self.menubar_functions["close_tab"] = close_tab
-            close_tab_action    = data.QAction('Close Tab', self)
-            close_tab_action.setShortcut(data.close_tab_keys)
-            close_tab_action.setStatusTip('Close the current tab')
-            close_tab_action.triggered.connect(close_tab)
-            temp_icon = functions.create_icon('tango_icons/close-tab.png')
-            close_tab_action.setIcon(temp_icon)
-            close_all_action    = data.QAction('Close All Tabs', self)
-            close_all_action.setStatusTip('Close all tabs in the main and upper window')
-            close_all_action.triggered.connect(self.close_all_tabs)
-            temp_icon = functions.create_icon('tango_icons/close-all-tabs.png')
-            close_all_action.setIcon(temp_icon)
+            close_tab_action = create_action('Close Tab', data.close_tab_keys, 'Close the current tab', 'tango_icons/close-tab.png', close_tab)
+            # Close all
+            close_all_action = create_action('Close All Tabs', None, 'Close all tabs in all windows', 'tango_icons/close-all-tabs.png', self.close_all_tabs)
             #Add load/save settings options
-            save_settings_action    = data.QAction('Save Settings', self)
-            save_settings_action.setStatusTip('Save current settings: main window side')
-            temp_icon = functions.create_icon('tango_icons/file-settings-save.png')
-            save_settings_action.setIcon(temp_icon)
-            save_settings_action.triggered.connect(self.settings.save)
-            load_settings_action    = data.QAction('Load Settings', self)
-            load_settings_action.setStatusTip('Load saved settings: main window side')
-            temp_icon = functions.create_icon('tango_icons/file-settings-load.png')
-            load_settings_action.setIcon(temp_icon)
-            load_settings_action.triggered.connect(self.settings.restore)
+            save_settings_action = create_action('Save Settings', None, 'Save current settings', 'tango_icons/file-settings-save.png', self.settings.save)
+            load_settings_action = create_action('Load Settings', None, 'Load saved settings', 'tango_icons/file-settings-load.png', self.settings.restore)
             #Add the editing option for the user_functions file
             def open_user_func_file():
                 user_definitions_file = os.path.join(data.application_directory, data.config_file)
@@ -687,32 +737,11 @@ class MainWindow(data.QMainWindow):
                     )
                     return
                 self.open_file(user_definitions_file)
-            self.menubar_functions["open_user_func_file"] = open_user_func_file
-            edit_functions_action   = data.QAction('Edit User Functions', self)
-            temp_string = 'Open the {} file for '.format(data.config_file)
-            temp_string += 'editing in the main window'
-            edit_functions_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/file-user-funcs.png')
-            edit_functions_action.setIcon(temp_icon)
-            edit_functions_action.triggered.connect(open_user_func_file)
+            edit_functions_action = create_action('Edit User Functions', None, 'Open the {} file for editing in the main window'.format(data.config_file), 'tango_icons/file-user-funcs.png', open_user_func_file)
             #Add the reload option for the user_functions file
-            self.menubar_functions["reload_user_func_file"] = self.import_user_functions
-            reload_functions_action = data.QAction('Reload User Functions', self)
-            temp_string = 'Reload the {} file to '.format(data.config_file)
-            temp_string += 'refresh user defined functions'
-            reload_functions_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/file-user-funcs-reload.png')
-            reload_functions_action.setIcon(temp_icon)
-            reload_functions_action.triggered.connect(self.import_user_functions)
+            reload_functions_action = create_action('Reload User Functions', None, 'Reload the {} file to refresh user defined functions'.format(data.config_file), 'tango_icons/file-user-funcs-reload.png', self.import_user_functions)
             #Add reload themes function
-            self.menubar_functions["themes_reload"] = self.view.reload_themes
-            themes_reload_action = data.QAction('Reload Themes', self)
-            temp_string = 'Reload themes from modules to update '
-            temp_string += 'any changes made in the theme files'
-            themes_reload_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/themes-reload.png')
-            themes_reload_action.setIcon(temp_icon)
-            themes_reload_action.triggered.connect(self.view.reload_themes)
+            themes_reload_action = create_action('Reload Themes', None, 'Reload themes from modules to update any changes made in the theme files', 'tango_icons/themes-reload.png', self.view.reload_themes)
             #Add recent file list in the file menu
             recent_file_list_menu = self.view.create_recent_file_list_menu()
             #Add the actions to the File menu
@@ -741,344 +770,297 @@ class MainWindow(data.QMainWindow):
         #Adding the basic options to the menu
         def construct_edit_basic_menu():
             edit_menu   = self.menubar.addMenu("&Editing")
+            edit_menu.installEventFilter(click_filter)
             def copy():
                 try:
                     self.get_tab_by_focus().copy()
                 except:
                     pass
-            self.menubar_functions["copy"] = copy
-            action_text = 'Copy\t' + data.copy_keys
-            copy_action = data.QAction(action_text , self)
             temp_string = 'Copy any selected text in the currently '
             temp_string += 'selected window to the clipboard'
-            copy_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-copy.png')
-            copy_action.setIcon(temp_icon)
-            copy_action.triggered.connect(copy)
+            copy_action = create_action('Copy\t' + data.copy_keys, None, temp_string, 'tango_icons/edit-copy.png', copy)
             def cut():
                 try:
                     self.get_tab_by_focus().cut()
                 except:
                     pass
-            self.menubar_functions["cut"] = cut
-            action_text = 'Cut\t' + data.cut_keys
-            cut_action  = data.QAction(action_text, self)
-            cut_action.setStatusTip('Cut any selected text in the currently selected window to the clipboard')
-            temp_icon = functions.create_icon('tango_icons/edit-cut.png')
-            cut_action.setIcon(temp_icon)
-            cut_action.triggered.connect(cut)
+            cut_action = create_action('Cut\t' + data.cut_keys, None, 'Cut any selected text in the currently selected window to the clipboard', 'tango_icons/edit-cut.png', cut)
             def paste():
                 try:
                     self.get_tab_by_focus().paste()
                 except:
                     pass
-            self.menubar_functions["paste"] = paste
-            action_text = 'Paste\t' + data.paste_keys
-            paste_action    = data.QAction(action_text, self)
-            paste_action.setStatusTip('Paste the text in the clipboard to the currenty selected window')
-            temp_icon = functions.create_icon('tango_icons/edit-paste.png')
-            paste_action.setIcon(temp_icon)
-            paste_action.triggered.connect(paste)
+            paste_action = create_action('Paste\t' + data.paste_keys, None, 'Paste the text in the clipboard to the currenty selected window', 'tango_icons/edit-paste.png', paste)
             def undo():
                 try:
                     self.get_tab_by_focus().undo()
                 except:
                     pass
-            self.menubar_functions["undo"] = undo
-            action_text = 'Undo\t' + data.undo_keys
-            undo_action    = data.QAction(action_text, self)
-            undo_action.setStatusTip('Undo last editor action in the currenty selected window')
-            temp_icon = functions.create_icon('tango_icons/edit-undo.png')
-            undo_action.setIcon(temp_icon)
-            undo_action.triggered.connect(undo)
+            undo_action = create_action(
+                'Undo\t' + data.undo_keys, None, 'Undo last editor action in the currenty selected window', 'tango_icons/edit-undo.png', undo
+            )
             def redo():
                 try:
                     self.get_tab_by_focus().redo()
                 except:
                     pass
-            self.menubar_functions["redo"] = redo
-            action_text = 'Redo\t' + data.redo_keys
-            redo_action    = data.QAction(action_text, self)
-            redo_action.setStatusTip('Redo last undone editor action in the currenty selected window')
-            temp_icon = functions.create_icon('tango_icons/edit-redo.png')
-            redo_action.setIcon(temp_icon)
-            redo_action.triggered.connect(redo)
+            redo_action = create_action(
+                'Redo\t' + data.redo_keys, None, 'Redo last undone editor action in the currenty selected window', 'tango_icons/edit-redo.png', redo
+            )
             def select_all():
                 try:
                     self.get_tab_by_focus().selectAll(True)
                 except:
                     pass
-            self.menubar_functions["select_all"] = select_all
-            action_text = 'Select All\t' + data.select_all_keys
-            select_all_action = data.QAction(action_text, self)
-            select_all_action.setStatusTip('Select all of the text in the currenty selected window')
-            temp_icon = functions.create_icon('tango_icons/edit-select-all.png')
-            select_all_action.setIcon(temp_icon)
-            select_all_action.triggered.connect(select_all)
+            select_all_action = create_action(
+                'Select All\t' + data.select_all_keys, None, 'Select all of the text in the currenty selected window', 'tango_icons/edit-select-all.png', select_all
+            )
             def indent():
                 try:
-                    tab = self.get_tab_by_focus()
-                    tab.custom_indent()
+                    self.get_tab_by_focus().custom_indent()
                 except:
                     pass
-            self.menubar_functions["indent"] = indent
-            action_text = 'Indent\t' + data.indent_keys
-            indent_action = data.QAction(action_text, self)
-            indent_action.setStatusTip('Indent the selected lines by the default width (4 spaces) in the currenty selected window')
-            temp_icon = functions.create_icon('tango_icons/format-indent-more.png')
-            indent_action.setIcon(temp_icon)
-            indent_action.triggered.connect(indent)
+            indent_action = create_action(
+                'Indent\t' + data.indent_keys, 
+                None, 
+                'Indent the selected lines by the default width (4 spaces) in the currenty selected window', 
+                'tango_icons/format-indent-more.png', 
+                indent
+            )
             def unindent():
                 try:
-                    tab = self.get_tab_by_focus()
-                    tab.custom_unindent()
+                    self.get_tab_by_focus().custom_unindent()
                 except:
                     pass
-            self.menubar_functions["unindent"] = unindent
-            action_text = 'Unindent\t' + data.unindent_keys
-            unindent_action    = data.QAction(action_text, self)
-            unindent_action.setStatusTip('Unindent the selected lines by the default width (4 spaces) in the currenty selected window')
-            temp_icon = functions.create_icon('tango_icons/format-indent-less.png')
-            unindent_action.setIcon(temp_icon)
-            unindent_action.triggered.connect(unindent)
+            unindent_action = create_action(
+                'Unindent\t' + data.unindent_keys, 
+                None, 
+                'Unindent the selected lines by the default width (4 spaces) in the currenty selected window', 
+                'tango_icons/format-indent-less.png', 
+                unindent
+            )
             def delete_start_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDLEFT)
                 except:
                     pass
-            self.menubar_functions["delete_start_of_word"] = delete_start_of_word
-            action_text = 'Delete start of word\t' + data.delete_start_of_word_keys
-            del_start_word_action    = data.QAction(action_text, self)
-            temp_string = 'Delete the current word from the cursor to the starting index of the word'
-            del_start_word_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/delete-end-word.png')
-            del_start_word_action.setIcon(temp_icon)
-            del_start_word_action.triggered.connect(delete_start_of_word)
+            del_start_word_action = create_action(
+                'Delete start of word\t' + data.delete_start_of_word_keys, 
+                None, 
+                'Delete the current word from the cursor to the starting index of the word', 
+                'tango_icons/delete-start-word.png', 
+                delete_start_of_word
+            )
             def delete_end_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDRIGHT)
                 except:
                     pass
-            self.menubar_functions["delete_end_of_word"] = delete_end_of_word
-            action_text = 'Delete end of word\t' + data.delete_end_of_word_keys
-            del_end_word_action    = data.QAction(action_text, self)
-            temp_string = 'Delete the current word from the cursor to the ending index of the word'
-            del_end_word_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/delete-start-word.png')
-            del_end_word_action.setIcon(temp_icon)
-            del_end_word_action.triggered.connect(delete_end_of_word)
+            del_end_word_action = create_action(
+                'Delete end of word\t' + data.delete_end_of_word_keys,
+                None, 
+                'Delete the current word from the cursor to the ending index of the word', 
+                'tango_icons/delete-end-word.png', 
+                delete_end_of_word
+            )
             def delete_start_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINELEFT)
                 except:
                     pass
-            self.menubar_functions["delete_start_of_line"] = delete_start_of_line
-            action_text = 'Delete start of line\t' + data.delete_start_of_line_keys
-            del_start_line_action    = data.QAction(action_text, self)
-            temp_string = 'Delete the current line from the cursor to the starting index of the line'
-            del_start_line_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/delete-start-line.png')
-            del_start_line_action.setIcon(temp_icon)
-            del_start_line_action.triggered.connect(delete_start_of_line)
+            del_start_line_action = create_action(
+                'Delete start of line\t' + data.delete_start_of_line_keys,
+                None, 
+                'Delete the current line from the cursor to the starting index of the line', 
+                'tango_icons/delete-start-line.png', 
+                delete_start_of_line
+            )
             def delete_end_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINERIGHT)
                 except:
                     pass
-            self.menubar_functions["delete_end_of_line"] = delete_end_of_line
-            action_text = 'Delete end of line\t' + data.delete_end_of_line_keys
-            del_end_line_action    = data.QAction(action_text, self)
-            temp_string = 'Delete the current line from the cursor to the ending index of the line'
-            del_end_line_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/delete-end-line.png')
-            del_end_line_action.setIcon(temp_icon)
-            del_end_line_action.triggered.connect(delete_end_of_line)
+            del_end_line_action = create_action(
+                'Delete end of line\t' + data.delete_end_of_line_keys,
+                None, 
+                'Delete the current line from the cursor to the ending index of the line', 
+                'tango_icons/delete-end-line.png', 
+                delete_end_of_line
+            )
             def goto_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTART)
                 except:
                     pass
-            self.menubar_functions["goto_to_start"] = goto_to_start
-            action_text = 'Go to start\t' + data.go_to_start_keys
-            go_to_start_action    = data.QAction(action_text, self)
-            temp_string = 'Move cursor up to the start of the currently selected document'
-            go_to_start_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/goto-start.png')
-            go_to_start_action.setIcon(temp_icon)
-            go_to_start_action.triggered.connect(goto_to_start)
+            go_to_start_action = create_action(
+                'Go to start\t' + data.go_to_start_keys,
+                None, 
+                'Move cursor up to the start of the currently selected document', 
+                'tango_icons/goto-start.png', 
+                goto_to_start
+            )
             def goto_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTEND)
                 except:
                     pass
-            self.menubar_functions["goto_to_end"] = goto_to_end
-            action_text = 'Go to end\t' + data.go_to_end_keys
-            go_to_end_action    = data.QAction(action_text, self)
-            temp_string = 'Move cursor down to the end of the currently selected document'
-            go_to_end_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/goto-end.png')
-            go_to_end_action.setIcon(temp_icon)
-            go_to_end_action.triggered.connect(goto_to_end)
+            go_to_end_action = create_action(
+                'Go to end\t' + data.go_to_end_keys,
+                None, 
+                'Move cursor down to the end of the currently selected document', 
+                'tango_icons/goto-end.png', 
+                goto_to_end
+            )
             def select_page_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUPEXTEND)
                 except:
                     pass
-            self.menubar_functions["select_page_up"] = select_page_up
-            action_text = 'Select page up\t' + data.select_page_up_keys
-            select_page_up_action    = data.QAction(action_text, self)
-            temp_string = 'Select text up one page of the currently selected document'
-            select_page_up_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon("")
-            select_page_up_action.setIcon(temp_icon)
-            select_page_up_action.triggered.connect(select_page_up)
+            select_page_up_action = create_action(
+                'Select page up\t' + data.select_page_up_keys,
+                None, 
+                'Select text up one page of the currently selected document', 
+                None, 
+                select_page_up
+            )
             def select_page_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     pass
-            self.menubar_functions["select_page_down"] = select_page_down
-            action_text = 'Select page down\t' + data.select_page_down_keys
-            select_page_down_action    = data.QAction(action_text, self)
-            temp_string = 'Select text down one page of the currently selected document'
-            select_page_down_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon("")
-            select_page_down_action.setIcon(temp_icon)
-            select_page_down_action.triggered.connect(select_page_down)
+            select_page_down_action = create_action(
+                'Select page down\t' + data.select_page_down_keys,
+                None, 
+                'Select text down one page of the currently selected document', 
+                None, 
+                select_page_down
+            )
             def select_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND)
                 except:
                     pass
-            self.menubar_functions["select_to_start"] = select_to_start
-            action_text = 'Select to start\t' + data.select_to_start_keys
-            select_to_start_action    = data.QAction(action_text, self)
-            temp_string = 'Select all text up to the start of the currently selected document'
-            select_to_start_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon("")
-            select_to_start_action.setIcon(temp_icon)
-            select_to_start_action.triggered.connect(select_to_start)
+            select_to_start_action = create_action(
+                'Select to start\t' + data.select_to_start_keys,
+                None, 
+                'Select all text up to the start of the currently selected document', 
+                None, 
+                select_to_start
+            )
             def select_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTENDEXTEND)
                 except:
                     pass
-            self.menubar_functions["select_to_end"] = select_to_end
-            action_text = 'Select to end\t' + data.select_to_end_keys
-            select_to_end_action    = data.QAction(action_text, self)
-            temp_string = 'Select all text down to the start of the currently selected document'
-            select_to_end_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon("")
-            select_to_end_action.setIcon(temp_icon)
-            select_to_end_action.triggered.connect(select_to_end)
+            select_to_end_action = create_action(
+                'Select to end\t' + data.select_to_end_keys,
+                None, 
+                'Select all text down to the start of the currently selected document', 
+                None, 
+                select_to_end
+            )
             def scroll_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUP)
                 except:
                     pass
-            self.menubar_functions["scroll_up"] = scroll_up
-            action_text = 'Scroll up\t' + data.scroll_up_keys
-            scroll_up_action    = data.QAction(action_text, self)
-            temp_string = 'Scroll up one page of the currently selected document'
-            scroll_up_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/scroll-up.png')
-            scroll_up_action.setIcon(temp_icon)
-            scroll_up_action.triggered.connect(scroll_up)
+            scroll_up_action = create_action(
+                'Scroll up\t' + data.scroll_up_keys,
+                None, 
+                'Scroll up one page of the currently selected document', 
+                'tango_icons/scroll-up.png', 
+                scroll_up
+            )
             def scroll_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     pass
-            self.menubar_functions["scroll_down"] = scroll_down
-            action_text = 'Scroll down\t' + data.scroll_down_keys
-            scroll_down_action    = data.QAction(action_text, self)
-            temp_string = 'Scroll down one page of the currently selected document'
-            scroll_down_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/scroll-down.png')
-            scroll_down_action.setIcon(temp_icon)
-            scroll_down_action.triggered.connect(scroll_down)
+            scroll_down_action = create_action(
+                'Scroll down\t' + data.scroll_down_keys,
+                None, 
+                'Scroll down one page of the currently selected document', 
+                'tango_icons/scroll-down.png', 
+                scroll_down
+            )
             def line_cut():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINECUT)
                 except:
                     pass
-            self.menubar_functions["line_cut"] = line_cut
-            action_text = 'Line Cut\t' + data.line_cut_keys
-            line_cut_action    = data.QAction(action_text, self)
-            temp_string = 'Cut out the current line/lines of the currently selected document'
-            line_cut_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-line-cut.png')
-            line_cut_action.setIcon(temp_icon)
-            line_cut_action.triggered.connect(line_cut)
+            line_cut_action = create_action(
+                'Line Cut\t' + data.line_cut_keys,
+                None, 
+                'Cut out the current line/lines of the currently selected document', 
+                'tango_icons/edit-line-cut.png', 
+                line_cut
+            )
             def line_copy():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINECOPY)
                 except:
                     pass
-            self.menubar_functions["line_copy"] = line_copy
-            action_text = 'Line Copy\t' + data.line_copy_keys
-            line_copy_action    = data.QAction(action_text, self)
-            temp_string = 'Copy the current line/lines of the currently selected document'
-            line_copy_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-line-copy.png')
-            line_copy_action.setIcon(temp_icon)
-            line_copy_action.triggered.connect(line_copy)
+            line_copy_action = create_action(
+                'Line Copy\t' + data.line_copy_keys,
+                None, 
+                'Copy the current line/lines of the currently selected document', 
+                'tango_icons/edit-line-copy.png', 
+                line_copy
+            )
             def line_delete():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDELETE)
                 except:
                     pass
-            self.menubar_functions["line_delete"] = line_delete
-            action_text = 'Line Delete\t' + data.line_delete_keys
-            line_delete_action    = data.QAction(action_text, self)
-            temp_string = 'Delete the current line of the currently selected document'
-            line_delete_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-line-delete.png')
-            line_delete_action.setIcon(temp_icon)
-            line_delete_action.triggered.connect(line_delete)
+            line_delete_action = create_action(
+                'Line Delete\t' + data.line_delete_keys,
+                None, 
+                'Delete the current line of the currently selected document', 
+                'tango_icons/edit-line-delete.png', 
+                line_delete
+            )
             def line_transpose():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINETRANSPOSE)
                 except:
                     pass
-            self.menubar_functions["line_transpose"] = line_transpose
-            action_text = 'Line Transpose\t' + data.line_transpose_keys
-            line_transpose_action    = data.QAction(action_text, self)
-            temp_string = 'Switch the current line with the line above it of the currently selected document'
-            line_transpose_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-line-transpose.png')
-            line_transpose_action.setIcon(temp_icon)
-            line_transpose_action.triggered.connect(line_transpose)
+            line_transpose_action = create_action(
+                'Line Transpose\t' + data.line_transpose_keys,
+                None, 
+                'Switch the current line with the line above it of the currently selected document', 
+                'tango_icons/edit-line-transpose.png', 
+                line_transpose
+            )
             def line_duplicate():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDUPLICATE)
+                    #send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDUPLICATE)
+                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_SELECTIONDUPLICATE)
                 except:
                     pass
-            self.menubar_functions["line_duplicate"] = line_duplicate
-            action_text = 'Line/Selection Duplicate\t' + data.line_selection_duplicate_keys
-            line_duplicate_action    = data.QAction(action_text, self)
-            temp_string = 'Duplicate the current line/selection of the currently selected document'
-            line_duplicate_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-line-duplicate.png')
-            line_duplicate_action.setIcon(temp_icon)
-            line_duplicate_action.triggered.connect(line_duplicate)
+            line_duplicate_action = create_action(
+                'Line/Selection Duplicate\t' + data.line_selection_duplicate_keys,
+                None, 
+                'Duplicate the current line/selection of the currently selected document', 
+                'tango_icons/edit-line-duplicate.png', 
+                line_duplicate
+            )
             #Rectangular block selection
             action_text = 'Rectangular block selection\tAlt+Mouse'
             rect_block_action    = data.QAction(action_text, self)
@@ -1113,7 +1095,8 @@ class MainWindow(data.QMainWindow):
             edit_menu.addAction(select_to_end_action)
             edit_menu.addAction(rect_block_action)
         def construct_edit_advanced_menu():
-            edit_menu   = self.menubar.addMenu("&Advanced")
+            edit_menu = self.menubar.addMenu("&Advanced")
+            edit_menu.installEventFilter(click_filter)
             #Nested special function for finding text in the currentlly focused custom editor
             def special_find():
                 try:
@@ -1129,13 +1112,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_find"] = special_find
-            find_action = data.QAction('Find', self)
-            find_action.setShortcut(data.find_keys)
-            find_action.setStatusTip('Find text in the currently selected document')
-            temp_icon = functions.create_icon('tango_icons/edit-find.png')
-            find_action.setIcon(temp_icon)
-            find_action.triggered.connect(special_find)
+            find_action = create_action(
+                'Find',
+                data.find_keys, 
+                'Find text in the currently selected document', 
+                'tango_icons/edit-find.png', 
+                special_find
+            )
             #Nested special function for finding text in the currentlly focused 
             #custom editor using regular expressions
             def special_regex_find():
@@ -1152,15 +1135,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_regex_find"] = special_regex_find
-            regex_find_action = data.QAction('Regex Find', self)
-            regex_find_action.setShortcut(data.regex_find_keys)
-            regex_find_action.setStatusTip(
-                'Find text in currently selected document using Python regular expressions'
+            regex_find_action = create_action(
+                'Regex Find',
+                data.regex_find_keys, 
+                'Find text in currently selected document using Python regular expressions', 
+                'tango_icons/edit-find-re.png', 
+                special_regex_find
             )
-            temp_icon = functions.create_icon('tango_icons/edit-find-re.png')
-            regex_find_action.setIcon(temp_icon)
-            regex_find_action.triggered.connect(special_regex_find)
             #Nested special function for finding and replacing one instance of text in the current main window custom editor
             def special_find_and_replace():
                 try:
@@ -1176,15 +1157,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_find_and_replace"] = special_find_and_replace
-            find_and_replace_action = data.QAction('Find and Replace', self)
-            find_and_replace_action.setShortcut(data.find_and_replace_keys)
-            temp_string = 'Find and replace one instance of text '
-            temp_string += 'from cursor in currently selected document'
-            find_and_replace_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-find-replace.png')
-            find_and_replace_action.setIcon(temp_icon)
-            find_and_replace_action.triggered.connect(special_find_and_replace)
+            find_and_replace_action = create_action(
+                'Find and Replace',
+                data.find_and_replace_keys, 
+                'Find and replace one instance of text from cursor in currently selected document', 
+                'tango_icons/edit-find-replace.png', 
+                special_find_and_replace
+            )
             #Nested special function for finding and replacing one instance of text
             #in the current main window custom editor using regular expressions
             def special_regex_find_and_replace():
@@ -1201,16 +1180,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_regex_find_and_replace"] = special_regex_find_and_replace
-            regex_find_and_replace_action = data.QAction('Regex Find and Replace', self)
-            regex_find_and_replace_action.setShortcut(data.regex_find_and_replace_keys)
-            temp_string = 'Find and replace one instance of text '
-            temp_string += 'from cursor in currently selected document '
-            temp_string += 'using Python regular expressions'
-            regex_find_and_replace_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-find-replace-re.png')
-            regex_find_and_replace_action.setIcon(temp_icon)
-            regex_find_and_replace_action.triggered.connect(special_regex_find_and_replace)
+            regex_find_and_replace_action = create_action(
+                'Regex Find and Replace',
+                data.regex_find_and_replace_keys, 
+                'Find and replace one instance of text from cursor in currently selected document using Python regular expressions', 
+                'tango_icons/edit-find-replace-re.png', 
+                special_regex_find_and_replace
+            )
             def special_highlight():
                 try:
                     focused_tab = self.get_used_tab()
@@ -1224,13 +1200,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_highlight"] = special_highlight
-            highlight_action = data.QAction('Highlight', self)
-            highlight_action.setShortcut(data.highlight_keys)
-            highlight_action.setStatusTip('Highlight all instances of text in currently selected document')
-            temp_icon = functions.create_icon('tango_icons/edit-highlight.png')
-            highlight_action.setIcon(temp_icon)
-            highlight_action.triggered.connect(special_highlight)
+            highlight_action = create_action(
+                'Highlight',
+                data.highlight_keys, 
+                'Highlight all instances of text in currently selected document', 
+                'tango_icons/edit-highlight.png', 
+                special_highlight
+            )
             def special_regex_highlight():
                 try:
                     focused_tab = self.get_used_tab()
@@ -1244,15 +1220,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_regex_highlight"] = special_regex_highlight
-            regex_highlight_action = data.QAction('Regex Highlight', self)
-            regex_highlight_action.setShortcut(data.regex_highlight_keys)
-            temp_string = "Highlight all instances of text in currently "
-            temp_string += "selected document using Python regular expressions"
-            regex_highlight_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-highlight-re.png')
-            regex_highlight_action.setIcon(temp_icon)
-            regex_highlight_action.triggered.connect(special_regex_highlight)
+            regex_highlight_action = create_action(
+                'Regex Highlight',
+                data.regex_highlight_keys, 
+                'Highlight all instances of text in currently selected document using Python regular expressions', 
+                'tango_icons/edit-highlight-re.png', 
+                special_regex_highlight
+            )
             def special_clear_highlights():
                 try:
                     focused_tab = self.get_used_tab()
@@ -1262,13 +1236,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(len(self.repl.text()))
-            self.menubar_functions["special_clear_highlights"] = special_clear_highlights
-            clear_highlights_action = data.QAction('Clear Highlights', self)
-            clear_highlights_action.setShortcut(data.clear_highlights_keys)
-            clear_highlights_action.setStatusTip('Clear all in currently selected document')
-            temp_icon = functions.create_icon('tango_icons/edit-clear-highlights.png')
-            clear_highlights_action.setIcon(temp_icon)
-            clear_highlights_action.triggered.connect(special_clear_highlights)
+            clear_highlights_action = create_action(
+                'Clear Highlights',
+                data.clear_highlights_keys, 
+                'Clear all higlights in currently selected document', 
+                'tango_icons/edit-clear-highlights.png', 
+                special_clear_highlights
+            )
             def special_replace_in_selection():
                 try:
                     focused_tab = self.get_used_tab()
@@ -1280,15 +1254,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('","",case_sensitive'))
-            self.menubar_functions["special_replace_in_selection"] = special_replace_in_selection
-            replace_selection_action = data.QAction('Replace In Selection', self)
-            replace_selection_action.setShortcut(data.replace_selection_keys)
-            temp_string = 'Replace all instances of text in the '
-            temp_string += 'selected text of the current selected document'
-            replace_selection_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-replace-in-selection.png')
-            replace_selection_action.setIcon(temp_icon)
-            replace_selection_action.triggered.connect(special_replace_in_selection)
+            replace_selection_action = create_action(
+                'Replace In Selection',
+                data.replace_selection_keys, 
+                'Replace all instances of text in the selected text of the current selected document', 
+                'tango_icons/edit-replace-in-selection.png', 
+                special_replace_in_selection
+            )
             def special_regex_replace_in_selection():
                 try:
                     focused_tab = self.get_used_tab()
@@ -1300,16 +1272,16 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",r"",case_sensitive'))
-            self.menubar_functions["special_regex_replace_in_selection"] = special_regex_replace_in_selection
-            regex_replace_selection_action = data.QAction('Regex Replace In Selection', self)
-            regex_replace_selection_action.setShortcut(data.regex_replace_selection_keys)
             temp_string = 'Replace all instances of text in the '
             temp_string += 'selected text of the current selected document'
             temp_string += 'using Python regular expressions'
-            regex_replace_selection_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-replace-in-selection-re.png')
-            regex_replace_selection_action.setIcon(temp_icon)
-            regex_replace_selection_action.triggered.connect(special_regex_replace_in_selection)
+            regex_replace_selection_action = create_action(
+                'Regex Replace In Selection',
+                data.regex_replace_selection_keys, 
+                temp_string, 
+                'tango_icons/edit-replace-in-selection-re.png', 
+                special_regex_replace_in_selection
+            )
             #Nested special function for replacing all instances of text in
             #the selected custom editor
             def special_replace_all():
@@ -1325,13 +1297,13 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_replace_all"] = special_replace_all
-            replace_all_action = data.QAction('Replace All', self)
-            replace_all_action.setShortcut(data.replace_all_keys)
-            replace_all_action.setStatusTip('Replace all instances of text in currently selected document')
-            temp_icon = functions.create_icon('tango_icons/edit-replace-all.png')
-            replace_all_action.setIcon(temp_icon)
-            replace_all_action.triggered.connect(special_replace_all)
+            replace_all_action = create_action(
+                'Replace All',
+                data.replace_all_keys, 
+                'Replace all instances of text in currently selected document', 
+                'tango_icons/edit-replace-all.png', 
+                special_replace_all
+            )
             #Nested special function for replacing all instances of text in
             #the selected custom editor using regular expressions
             def special_regex_replace_all():
@@ -1347,68 +1319,62 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_regex_replace_all"] = special_regex_replace_all
-            regex_replace_all_action    = data.QAction('Regex Replace All', self)
-            regex_replace_all_action.setShortcut(data.regex_replace_all_keys)
-            regex_replace_all_action.setStatusTip('Replace all instances of text in currently selected document using Python regular expressions')
-            temp_icon = functions.create_icon('tango_icons/edit-replace-all-re.png')
-            regex_replace_all_action.setIcon(temp_icon)
-            regex_replace_all_action.triggered.connect(special_regex_replace_all)
+            regex_replace_all_action = create_action(
+                'Regex Replace All',
+                data.regex_replace_all_keys, 
+                'Replace all instances of text in currently selected document using Python regular expressions', 
+                'tango_icons/edit-replace-all-re.png', 
+                special_regex_replace_all
+            )
             #Nested special function for un/commenting selected lines in the main widget
             def comment_uncomment():
                 try:
                     self.get_tab_by_focus().toggle_comment_uncomment()
                 except Exception as ex:
                     print(ex)
-            self.menubar_functions["comment_uncomment"] = comment_uncomment
-            toggle_comment_action   = data.QAction('Comment/Uncomment', self)
-            toggle_comment_action.setShortcut(data.toggle_comment_keys)
-            temp_string = 'Toggle comments for the selected lines or single line'
-            temp_string += " in the currently selected document"
-            toggle_comment_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-comment-uncomment.png')
-            toggle_comment_action.setIcon(temp_icon)
-            toggle_comment_action.triggered.connect(comment_uncomment)
+            toggle_comment_action = create_action(
+                'Comment/Uncomment',
+                data.toggle_comment_keys, 
+                'Toggle comments for the selected lines or single line in the currently selected document', 
+                'tango_icons/edit-comment-uncomment.png', 
+                comment_uncomment
+            )
             def toggle_autocompletions():
                 try:
                     self.get_tab_by_focus().toggle_autocompletions()
                 except:
                     pass
-            self.menubar_functions["toggle_autocompletions"] = toggle_autocompletions
-            toggle_autocompletion_action = data.QAction('Enable/Disable Autocompletion', self)
-            toggle_autocompletion_action.setShortcut(data.toggle_autocompletion_keys)
-            temp_string = 'Enable/Disable autocompletions '
-            temp_string += 'for the currently selected document'
-            toggle_autocompletion_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-autocompletion.png')
-            toggle_autocompletion_action.setIcon(temp_icon)
-            toggle_autocompletion_action.triggered.connect(toggle_autocompletions)
+            toggle_autocompletion_action = create_action(
+                'Enable/Disable Autocompletion',
+                data.toggle_autocompletion_keys, 
+                'Enable/Disable autocompletions for the currently selected document', 
+                'tango_icons/edit-autocompletion.png', 
+                toggle_autocompletions
+            )
             def toggle_wordwrap():
                 try:
                     self.get_tab_by_focus().toggle_wordwrap()
                 except:
                     pass
-            self.menubar_functions["toggle_wordwrap"] = toggle_wordwrap
-            toggle_wrap_action = data.QAction('Enable/Disable Line Wrapping', self)
-            toggle_wrap_action.setShortcut(data.toggle_wrap_keys)
-            temp_string = 'Enable/Disable line wrapping '
-            temp_string += 'for the currently selected document'
-            toggle_wrap_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/wordwrap.png')
-            toggle_wrap_action.setIcon(temp_icon)
-            toggle_wrap_action.triggered.connect(toggle_wordwrap)
+            toggle_wrap_action = create_action(
+                'Enable/Disable Line Wrapping',
+                data.toggle_wrap_keys, 
+                'Enable/Disable line wrapping for the currently selected document', 
+                'tango_icons/wordwrap.png', 
+                toggle_wordwrap
+            )
             def reload_file():
                 try:
                     self.get_tab_by_focus().reload_file()
                 except:
                     pass
-            self.menubar_functions["reload_file"] = reload_file
-            reload_file_action = data.QAction('Reload file', self)
-            reload_file_action.setShortcut(data.reload_file_keys)
-            reload_file_action.setStatusTip('Reload file from disk, will prompt if file contains changes')
-            temp_icon = functions.create_icon('tango_icons/view-refresh.png')
-            reload_file_action.setIcon(temp_icon)
-            reload_file_action.triggered.connect(reload_file)
+            reload_file_action = create_action(
+                'Reload file',
+                data.reload_file_keys, 
+                'Reload file from disk, will prompt if file contains changes', 
+                'tango_icons/view-refresh.png', 
+                reload_file
+            )
             def create_node_tree():
                 mw = self.get_tab_by_focus()
                 if isinstance(mw, CustomEditor):
@@ -1420,15 +1386,13 @@ class MainWindow(data.QMainWindow):
                         message, 
                         message_type=data.MessageType.ERROR
                     )
-            self.menubar_functions["create_node_tree"] = create_node_tree
-            node_tree_action = data.QAction('Create/reload node tree (C / Nim / Python3)', self)
-            node_tree_action.setShortcut(data.node_tree_keys)
-            temp_string = 'Create a node tree for the code for the '
-            temp_string += 'currently selected document (C / Nim / Python3)'
-            node_tree_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-node-tree.png')
-            node_tree_action.setIcon(temp_icon)
-            node_tree_action.triggered.connect(create_node_tree)
+            node_tree_action = create_action(
+                'Create/reload node tree (C / Nim / Python3)',
+                data.node_tree_keys, 
+                'Create a node tree for the code for the currently selected document (C / Nim / Python3)', 
+                'tango_icons/edit-node-tree.png', 
+                create_node_tree
+            )
             def special_goto_line():
                 try:
                     focused_tab = self.get_used_tab()
@@ -1439,47 +1403,47 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText('goto_line()')
                     self.repl.setCursorPosition(len(self.repl.text())-1)
                 self.repl.setFocus()
-            self.menubar_functions["special_goto_line"] = special_goto_line
-            goto_line_action = data.QAction('Goto line', self)
-            goto_line_action.setShortcut(data.goto_line_keys)
-            goto_line_action.setStatusTip('Go to the specified line in the current main window document')
-            temp_icon = functions.create_icon('tango_icons/edit-goto.png')
-            goto_line_action.setIcon(temp_icon)
-            goto_line_action.triggered.connect(special_goto_line)
+            goto_line_action = create_action(
+                'Goto line',
+                data.goto_line_keys, 
+                'Go to the specified line in the current main window document', 
+                'tango_icons/edit-goto.png', 
+                special_goto_line
+            )
             def special_indent_to_cursor():
                 try:
                     self.get_tab_by_focus().indent_lines_to_cursor()
                 except:
                     pass
-            self.menubar_functions["special_indent_to_cursor"] = special_indent_to_cursor
-            indent_to_cursor_action = data.QAction('Indent to cursor', self)
-            indent_to_cursor_action.setShortcut(data.indent_to_cursor_keys)
             temp_string = 'Indent the selected lines to the current cursor position '
             temp_string += '(SPACE ON THE LEFT SIDE OF LINES IS STRIPPED!)'
-            indent_to_cursor_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-indent-to-cursor.png')
-            indent_to_cursor_action.setIcon(temp_icon)
-            indent_to_cursor_action.triggered.connect(special_indent_to_cursor)
+            indent_to_cursor_action = create_action(
+                'Indent to cursor',
+                data.indent_to_cursor_keys, 
+                temp_string, 
+                'tango_icons/edit-indent-to-cursor.png', 
+                special_indent_to_cursor
+            )
             def special_to_uppercase():
                 focused_tab = self.get_used_tab()
                 self.editing.convert_to_uppercase(focused_tab.parent.name)
-            self.menubar_functions["special_to_uppercase"] = special_to_uppercase
-            to_uppercase_action = data.QAction('Selection to UPPERCASE', self)
-            to_uppercase_action.setShortcut(data.to_uppercase_keys)
-            to_uppercase_action.setStatusTip('Convert selected text to UPPERCASE')
-            temp_icon = functions.create_icon('tango_icons/edit-case-to-upper.png')
-            to_uppercase_action.setIcon(temp_icon)
-            to_uppercase_action.triggered.connect(special_to_uppercase)
+            to_uppercase_action = create_action(
+                'Selection to UPPERCASE',
+                data.to_uppercase_keys, 
+                'Convert selected text to UPPERCASE', 
+                'tango_icons/edit-case-to-upper.png', 
+                special_to_uppercase
+            )
             def special_to_lowercase():
                 focused_tab = self.get_used_tab()
                 self.editing.convert_to_lowercase(focused_tab.parent.name)
-            self.menubar_functions["special_to_lowercase"] = special_to_lowercase
-            to_lowercase_action = data.QAction('Selection to lowercase', self)
-            to_lowercase_action.setShortcut(data.to_lowercase_keys)
-            to_lowercase_action.setStatusTip('Convert selected text to lowercase')
-            temp_icon = functions.create_icon('tango_icons/edit-case-to-lower.png')
-            to_lowercase_action.setIcon(temp_icon)
-            to_lowercase_action.triggered.connect(special_to_lowercase)
+            to_lowercase_action = create_action(
+                'Selection to lowercase',
+                data.to_lowercase_keys, 
+                'Convert selected text to lowercase', 
+                'tango_icons/edit-case-to-lower.png', 
+                special_to_lowercase
+            )
             #Nested function for finding files in open documents
             def special_find_in_open_documents():
                 try:
@@ -1494,15 +1458,11 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
-            self.menubar_functions["special_find_in_open_documents"] = special_find_in_open_documents
-            find_in_documents_action = data.QAction('Find in open documents', self)
-            find_in_documents_action.setShortcut(data.find_in_documents_keys)
-            temp_string = 'Find string/regular expression across all open documents'
-            temp_string += ' in the currently selected window'
-            find_in_documents_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-find-in-open-documents.png')
-            find_in_documents_action.setIcon(temp_icon)
-            find_in_documents_action.triggered.connect(
+            find_in_documents_action = create_action(
+                'Find in open documents',
+                data.find_in_documents_keys, 
+                temp_string, 
+                'tango_icons/edit-find-in-open-documents.png', 
                 special_find_in_open_documents
             )
             #Nested function for finding and replacing text in open documents
@@ -1519,15 +1479,11 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
-            self.menubar_functions["special_find_replace_in_open_documents"] = special_find_replace_in_open_documents
-            find_replace_in_documents_action = data.QAction('Find and replace in open documents', self)
-            find_replace_in_documents_action.setShortcut(data.find_replace_in_documents_keys)
-            temp_string = 'Find and replace across all open documents in'
-            temp_string += ' the currently selected window'
-            find_replace_in_documents_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/edit-replace-in-open-documents.png')
-            find_replace_in_documents_action.setIcon(temp_icon)
-            find_replace_in_documents_action.triggered.connect(
+            find_replace_in_documents_action = create_action(
+                'Find and replace in open documents',
+                data.find_replace_in_documents_keys, 
+                temp_string, 
+                'tango_icons/edit-replace-in-open-documents.png', 
                 special_find_replace_in_open_documents
             )
             #Nested function for replacing all string instances in open documents
@@ -1544,14 +1500,19 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
-            self.menubar_functions["special_replace_all_in_open_documents"] = special_replace_all_in_open_documents
-            replace_all_in_documents_action = data.QAction('Replace all in open documents', self)
-            replace_all_in_documents_action.setShortcut(data.replace_all_in_documents_keys)
-            replace_all_in_documents_action.setStatusTip('Replace all instances of search text across all open documents in the currently selected window')
-            temp_icon = functions.create_icon('tango_icons/edit-replace-all-in-open-documents.png')
-            replace_all_in_documents_action.setIcon(temp_icon)
-            replace_all_in_documents_action.triggered.connect(
+            replace_all_in_documents_action = create_action(
+                'Replace all in open documents',
+                data.replace_all_in_documents_keys, 
+                'Replace all instances of search text across all open documents in the currently selected window', 
+                'tango_icons/edit-replace-all-in-open-documents.png', 
                 special_replace_all_in_open_documents
+            )
+            reset_context_menu_action = create_action(
+                'Reset context menus',
+                None, 
+                'Reset functions of ALL context menus (right-click menus)', 
+                'tango_icons/reset-context-menu.png', 
+                helper_forms.ContextMenu.reset_functions
             )
             #Adding the edit menu and constructing all of the options
             edit_menu.addAction(find_action)
@@ -1574,13 +1535,15 @@ class MainWindow(data.QMainWindow):
             edit_menu.addAction(to_lowercase_action)
             edit_menu.addAction(node_tree_action)
             edit_menu.addAction(reload_file_action)
+            edit_menu.addAction(reset_context_menu_action)
             edit_menu.addSeparator()
             edit_menu.addAction(find_in_documents_action)
             edit_menu.addAction(find_replace_in_documents_action)
             edit_menu.addAction(replace_all_in_documents_action)
         #System menu
         def construct_system_menu():
-            system_menu    = self.menubar.addMenu("S&ystem")
+            system_menu = self.menubar.addMenu("S&ystem")
+            system_menu.installEventFilter(click_filter)
             def special_find_in():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_in_files("",r"directory",case_sensitive=False,search_subdirs=True,break_on_find=False)')
@@ -1593,16 +1556,16 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_find_in"]               = special_find_in
-            self.menubar_functions["special_find_in_with_dialog"]   = special_find_in_with_dialog
-            find_in_files_action    = data.QAction('Find in files', self)
-            find_in_files_action.setShortcut(data.find_in_files_keys)
+            self.menubar_functions["special_find_in_with_dialog"] = special_find_in_with_dialog
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that contain the search string'
-            find_in_files_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/system-find-in-files.png')
-            find_in_files_action.setIcon(temp_icon)
-            find_in_files_action.triggered.connect(special_find_in)
+            find_in_files_action = create_action(
+                'Find in files',
+                data.find_in_files_keys, 
+                temp_string, 
+                'tango_icons/system-find-in-files.png', 
+                special_find_in
+            )
             def special_find_file():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_files("",r"directory",case_sensitive=False,search_subdirs=True)')
@@ -1615,16 +1578,16 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_find_file"]             = special_find_file
             self.menubar_functions["special_find_file_with_dialog"] = special_find_file_with_dialog
-            find_files_action   = data.QAction('Find files', self)
-            find_files_action.setShortcut(data.find_files_keys)
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that have the search string in them'
-            find_files_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/system-find-files.png')
-            find_files_action.setIcon(temp_icon)
-            find_files_action.triggered.connect(special_find_file)
+            find_files_action = create_action(
+                'Find files',
+                data.find_files_keys, 
+                temp_string, 
+                'tango_icons/system-find-files.png', 
+                special_find_file
+            )
             def special_replace_in_files():
                 #The second argument is raw, so that single backslashes work for windows paths
                 temp_string = 'replace_in_files("search_text","replace_text",'
@@ -1641,38 +1604,39 @@ class MainWindow(data.QMainWindow):
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_replace_in_files"]              = special_replace_in_files
-            self.menubar_functions["special_replace_in_files_with_dialog"]  = special_replace_in_files_with_dialog
-            replace_in_files_action = data.QAction('Replace in files', self)
-            replace_in_files_action.setShortcut(data.replace_in_files_keys)
+            self.menubar_functions["special_replace_in_files_with_dialog"] = special_replace_in_files_with_dialog
             temp_string = 'Find all the files in a directory/subdirectories '
             temp_string += 'that have the search string in them and replace all '
             temp_string += 'instances in the file with the replace string'
-            replace_in_files_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/system-replace-in-files.png')
-            replace_in_files_action.setIcon(temp_icon)
-            replace_in_files_action.triggered.connect(special_replace_in_files)
+            replace_in_files_action = create_action(
+                'Replace in files',
+                data.replace_in_files_keys, 
+                temp_string, 
+                'tango_icons/system-replace-in-files.png', 
+                special_replace_in_files
+            )
             def special_run_command():
                 self.repl.setText('run("",show_console=True)')
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",show_'))
-            self.menubar_functions["special_run_command"] = special_run_command
-            run_command_action  = data.QAction('Run command', self)
-            run_command_action.setStatusTip('Run command as a new process (FULLY TESTED ONLY ON WINDOWS!)')
-            temp_icon = functions.create_icon('tango_icons/utilities-terminal.png')
-            run_command_action.setIcon(temp_icon)
-            run_command_action.triggered.connect(special_run_command)
+            run_command_action = create_action(
+                'Run command',
+                None, 
+                'Run command as a new process (FULLY TESTED ONLY ON WINDOWS!)', 
+                'tango_icons/utilities-terminal.png', 
+                special_run_command
+            )
             def create_cwd_tree():
                 self.display.show_directory_tree(os.getcwd())
-            self.menubar_functions["create_cwd_tree"] = create_cwd_tree
-            cwd_tree_action = data.QAction('Show current working directory tree', self)
-            cwd_tree_action.setShortcut(data.cwd_tree_keys)
-            temp_string = 'Create a node tree for the current working directory (CWD)'
-            cwd_tree_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/system-show-cwd-tree.png')
-            cwd_tree_action.setIcon(temp_icon)
-            cwd_tree_action.triggered.connect(create_cwd_tree)
+            cwd_tree_action = create_action(
+                'Show current working directory tree',
+                data.cwd_tree_keys, 
+                'Create a node tree for the current working directory (CWD)', 
+                'tango_icons/system-show-cwd-tree.png', 
+                create_cwd_tree
+            )
+            # Add the menu items
             system_menu.addAction(find_files_action)
             system_menu.addAction(find_in_files_action)
             system_menu.addAction(replace_in_files_action)
@@ -1700,129 +1664,142 @@ class MainWindow(data.QMainWindow):
                     )
                     self.display.write_to_statusbar(message)
             lexers_menu = self.display.create_lexers_menu(
-                "Change lexer", set_lexer
+                "Change lexer", set_lexer, store_menu_to_mainform=False, custom_parent=parent
             )
+            lexers_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/lexers.png')
             lexers_menu.setIcon(temp_icon)
             parent.addMenu(lexers_menu)
         #View menu
         def construct_view_menu():
             view_menu = self.menubar.addMenu("&View")
+            view_menu.installEventFilter(click_filter)
             #Show/hide the function wheel
-            function_wheel_toggle_action = data.QAction('Show/Hide Function Wheel', self)
-            function_wheel_toggle_action.setShortcut(data.function_wheel_toggle_keys)
-            function_wheel_toggle_action.setStatusTip('Show/hide the Ex.Co. function wheel')
-            temp_icon = functions.create_icon(data.application_icon)
-            function_wheel_toggle_action.setIcon(temp_icon)
-            function_wheel_toggle_action.triggered.connect(self.view.toggle_function_wheel)
+            function_wheel_toggle_action = create_action(
+                'Show/Hide Function Wheel',
+                data.function_wheel_toggle_keys, 
+                'Show/hide the Ex.Co. function wheel', 
+                data.application_icon, 
+                self.view.toggle_function_wheel
+            )
             #Maximize/minimize entire Ex.Co. window
-            maximize_window_action  = data.QAction('Maximize/Normalize', self)
-            maximize_window_action.setShortcut(data.maximize_window_keys)
-            maximize_window_action.setStatusTip('Maximize/Normalize application window')
-            temp_icon = functions.create_icon('tango_icons/view-fullscreen.png')
-            maximize_window_action.setIcon(temp_icon)
-            maximize_window_action.triggered.connect(self.view.toggle_window_size)
-            main_focus_action = data.QAction('Focus Main window', self)  
-            main_focus_action.setShortcut(data.main_focus_keys)
-            main_focus_action.setStatusTip('Set focus to the Main editing window')
-            temp_icon = functions.create_icon('tango_icons/view-focus-main.png')
-            main_focus_action.setIcon(temp_icon)
-            main_focus_action.triggered.connect(
-                functools.partial(self.view.set_window_focus, "main")
+            maximize_window_action = create_action(
+                'Maximize/Normalize',
+                data.maximize_window_keys, 
+                'Maximize/Normalize application window', 
+                'tango_icons/view-fullscreen.png', 
+                self.view.toggle_window_size
             )
-            upper_focus_action = data.QAction('Focus Upper window', self) 
-            upper_focus_action.setShortcut(data.upper_focus_keys)
-            upper_focus_action.setStatusTip('Set focus to the Upper editing window')
-            temp_icon = functions.create_icon('tango_icons/view-focus-upper.png')
-            upper_focus_action.setIcon(temp_icon)
-            upper_focus_action.triggered.connect(
-                functools.partial(self.view.set_window_focus, "upper")
+            def focus_main_window():
+                self.view.set_window_focus("main")
+            main_focus_action = create_action(
+                'Focus Main window',
+                data.main_focus_keys, 
+                'Set focus to the Main editing window', 
+                'tango_icons/view-focus-main.png', 
+                focus_main_window
             )
-            lower_focus_action = data.QAction('Focus Lower window', self) 
-            lower_focus_action.setShortcut(data.lower_focus_keys)
-            lower_focus_action.setStatusTip('Set focus to the Lower editing window')
-            temp_icon = functions.create_icon('tango_icons/view-focus-lower.png')
-            lower_focus_action.setIcon(temp_icon)
-            lower_focus_action.triggered.connect(
-                functools.partial(self.view.set_window_focus, "lower")
+            def focus_upper_window():
+                self.view.set_window_focus("upper")
+            upper_focus_action = create_action(
+                'Focus Upper window',
+                data.upper_focus_keys, 
+                'Set focus to the Upper editing window', 
+                'tango_icons/view-focus-upper.png', 
+                focus_upper_window
             )
-            toggle_log_action = data.QAction('Show/Hide Log Window', self) 
-            toggle_log_action.setShortcut(data.toggle_log_keys)
-            toggle_log_action.setStatusTip('Toggle the display of the log window')
-            temp_icon = functions.create_icon('tango_icons/view-log.png')
-            toggle_log_action.setIcon(temp_icon)
-            toggle_log_action.triggered.connect(self.view.toggle_log_window)
-            spin_clockwise_action = data.QAction('Spin view clockwise', self)  
-            spin_clockwise_action.setShortcut(data.spin_clockwise_keys)
-            spin_clockwise_action.setStatusTip('Spin the editor windows clockwise')
-            temp_icon = functions.create_icon('tango_icons/view-spin-clock.png')
-            spin_clockwise_action.setIcon(temp_icon)
-            spin_clockwise_action.triggered.connect(self.view.spin_widgets_clockwise)
-            spin_counterclockwise_action = data.QAction('Spin view counter-clockwise', self)
-            spin_counterclockwise_action.setShortcut(data.spin_counterclockwise_keys)
-            spin_counterclockwise_action.setStatusTip('Spin the editor windows counter-clockwise')
-            temp_icon = functions.create_icon('tango_icons/view-spin-counter.png')
-            spin_counterclockwise_action.setIcon(temp_icon)
-            spin_counterclockwise_action.triggered.connect(self.view.spin_widgets_counterclockwise)
-            toggle_mode_action = data.QAction('Toggle window mode', self)
-            toggle_mode_action.setShortcut(data.toggle_mode_keys)
-            toggle_mode_action.setStatusTip('Toggle between one and three window display')
-            temp_icon = functions.create_icon('tango_icons/view-toggle-window-mode.png')
-            toggle_mode_action.setIcon(temp_icon)
-            toggle_mode_action.triggered.connect(self.view.toggle_window_mode)
-            toggle_main_window_side_action = data.QAction('Toggle main window side', self)
-            toggle_main_window_side_action.setShortcut(data.toggle_main_window_side_keys)
-            toggle_main_window_side_action.setStatusTip('Toggle which side the main window is on')
-            temp_icon = functions.create_icon('tango_icons/view-toggle-window-side.png')
-            toggle_main_window_side_action.setIcon(temp_icon)
-            toggle_main_window_side_action.triggered.connect(self.view.toggle_main_window_side)
-            def move_tab(direction):
+            def focus_lower_window():
+                self.view.set_window_focus("lower")
+            lower_focus_action = create_action(
+                'Focus Lower window',
+                data.lower_focus_keys, 
+                'Set focus to the Lower editing window', 
+                'tango_icons/view-focus-lower.png', 
+                focus_lower_window
+            )
+            toggle_log_action = create_action(
+                'Show/Hide Log Window',
+                data.toggle_log_keys, 
+                'Toggle the display of the log window', 
+                'tango_icons/view-log.png', 
+                self.view.toggle_log_window
+            )
+            spin_clockwise_action = create_action(
+                'Spin view clockwise',
+                data.spin_clockwise_keys, 
+                'Spin the editor windows clockwise', 
+                'tango_icons/view-spin-clock.png', 
+                self.view.spin_widgets_clockwise
+            )
+            spin_counterclockwise_action = create_action(
+                'Spin view counter-clockwise',
+                data.spin_counterclockwise_keys, 
+                'Spin the editor windows counter-clockwise', 
+                'tango_icons/view-spin-counter.png', 
+                self.view.spin_widgets_counterclockwise
+            )
+            toggle_mode_action = create_action(
+                'Toggle window mode',
+                data.toggle_mode_keys, 
+                'Toggle between one and three window display', 
+                'tango_icons/view-toggle-window-mode.png', 
+                self.view.toggle_window_mode
+            )
+            toggle_main_window_side_action = create_action(
+                'Toggle main window side',
+                data.toggle_main_window_side_keys, 
+                'Toggle which side the main window is on', 
+                'tango_icons/view-toggle-window-side.png', 
+                self.view.toggle_main_window_side
+            )
+            def move_tab_right():
                 try:
-                    self.get_window_by_child_tab().move_tab(direction)
+                    self.get_window_by_child_tab().move_tab(data.Direction.RIGHT)
                 except:
                     pass
-            self.menubar_functions["move_tab_right"] = functools.partial(move_tab, direction=data.Direction.RIGHT)
-            self.menubar_functions["move_tab_left"] = functools.partial(move_tab, direction=data.Direction.LEFT)
-            move_tab_right_action = data.QAction('Move tab right', self)
-            move_tab_right_action.setShortcut(data.move_tab_right_keys)
-            move_tab_right_action.setStatusTip('Move the current tab in the currently selected window one position to the right')
-            temp_icon = functions.create_icon('tango_icons/view-move-tab-right.png')
-            move_tab_right_action.setIcon(temp_icon)
-            move_tab_right_action.triggered.connect(
-                functools.partial(move_tab, direction=data.Direction.RIGHT)
+            move_tab_right_action = create_action(
+                'Move tab right',
+                data.move_tab_right_keys, 
+                'Move the current tab in the currently selected window one position to the right', 
+                'tango_icons/view-move-tab-right.png', 
+                move_tab_right
             )
-            move_tab_left_action = data.QAction('Move tab left', self)
-            move_tab_left_action.setShortcut(data.move_tab_left_keys)
-            move_tab_left_action.setStatusTip('Move the current tab in the currently selected window one position to the left')
-            temp_icon = functions.create_icon('tango_icons/view-move-tab-left.png')
-            move_tab_left_action.setIcon(temp_icon)
-            move_tab_left_action.triggered.connect(
-                functools.partial(move_tab, direction=data.Direction.LEFT)
+            def move_tab_left():
+                try:
+                    self.get_window_by_child_tab().move_tab(data.Direction.LEFT)
+                except:
+                    pass
+            move_tab_left_action = create_action(
+                'Move tab left',
+                data.move_tab_left_keys, 
+                'Move the current tab in the currently selected window one position to the left', 
+                'tango_icons/view-move-tab-left.png', 
+                move_tab_left
             )
             def show_edge():
                 try:
                     self.get_tab_by_focus().edge_marker_toggle()
                 except:
                     pass
-            self.menubar_functions["show_edge"] = show_edge
-            toggle_edge_action = data.QAction('Toggle edge marker', self)
-            toggle_edge_action.setShortcut(data.toggle_edge_keys)
-            toggle_edge_action.setStatusTip('Toggle the display of the edge marker that shows the prefered maximum chars in a line')
-            temp_icon = functions.create_icon('tango_icons/view-edge-marker.png')
-            toggle_edge_action.setIcon(temp_icon)
-            toggle_edge_action.triggered.connect(show_edge)
+            toggle_edge_action = create_action(
+                'Toggle edge marker',
+                data.toggle_edge_keys, 
+                'Toggle the display of the edge marker that shows the prefered maximum chars in a line', 
+                'tango_icons/view-edge-marker.png', 
+                show_edge
+            )
             def reset_zoom():
                 try:
                     self.get_tab_by_focus().parent.zoom_reset()
                 except:
                     pass
-            self.menubar_functions["reset_zoom"] = reset_zoom
-            reset_zoom_action = data.QAction('Zoom reset', self)
-            reset_zoom_action.setShortcut(data.reset_zoom_keys)
-            reset_zoom_action.setStatusTip('Reset the zoom level on the currently focused document!')
-            temp_icon = functions.create_icon('tango_icons/view-zoom-reset.png')
-            reset_zoom_action.setIcon(temp_icon)
-            reset_zoom_action.triggered.connect(reset_zoom)
+            reset_zoom_action = create_action(
+                'Zoom reset',
+                data.reset_zoom_keys, 
+                'Reset the zoom level on the currently focused document', 
+                'tango_icons/view-zoom-reset.png', 
+                reset_zoom
+            )
             #Bookmarks
             def bookmark_goto(number):
                 self.bookmarks.goto(number)
@@ -1838,46 +1815,55 @@ class MainWindow(data.QMainWindow):
                     )
                 except:
                     pass
-            def bookmarks_clear():
-                self.bookmarks.clear()
-            self.menubar_functions["bookmarks_clear"] = bookmarks_clear
             def bookmark_toggle():
                 try:
                     self.get_tab_by_focus().bookmarks.toggle()
                 except:
                     pass
-            self.menubar_functions["bookmark_toggle"] = bookmark_toggle
             bookmark_menu = view_menu.addMenu("&Bookmarks")
+            bookmark_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/bookmarks.png')
             bookmark_menu.setIcon(temp_icon)
-            bookmark_toggle_action = data.QAction('Toggle Bookmark', self)
-            bookmark_toggle_action.setShortcut(data.bookmark_toggle_keys)
-            bookmark_toggle_action.setStatusTip("Toggle a bookmark at the current document line")
-            temp_icon = functions.create_icon('tango_icons/bookmark.png')
-            bookmark_toggle_action.setIcon(temp_icon)
-            bookmark_toggle_action.triggered.connect(bookmark_toggle)
+            bookmark_toggle_action = create_action(
+                'Toggle Bookmark',
+                data.bookmark_toggle_keys, 
+                'Toggle a bookmark at the current document line', 
+                'tango_icons/bookmark.png', 
+                bookmark_toggle
+            )
             bookmark_menu.addAction(bookmark_toggle_action)
-            bookmark_clear_action = data.QAction('Clear Bookmarks', self)
-            bookmark_clear_action.setStatusTip("Clear all bookmarks")
-            temp_icon = functions.create_icon('tango_icons/bookmarks-clear.png')
-            bookmark_clear_action.setIcon(temp_icon)
-            bookmark_clear_action.triggered.connect(bookmarks_clear)
+            def bookmarks_clear():
+                self.bookmarks.clear()
+            bookmark_clear_action = create_action(
+                'Clear Bookmarks',
+                None, 
+                'Clear Bookmarks', 
+                'tango_icons/bookmarks-clear.png', 
+                bookmarks_clear
+            )
             bookmark_menu.addAction(bookmark_clear_action)
             bookmark_menu.addSeparator()
             bookmark_goto_menu = bookmark_menu.addMenu("Go To")
+            bookmark_goto_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/bookmarks-goto.png')
             bookmark_goto_menu.setIcon(temp_icon)
             bookmark_store_menu = bookmark_menu.addMenu("Store")
+            bookmark_store_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/bookmarks-store.png')
             bookmark_store_menu.setIcon(temp_icon)
             for i in range(10):
                 #Go To
-                bookmark_goto_action = data.QAction('Bookmark {:d}'.format(i), self)
-                bookmark_goto_action.setShortcut("{}+{}".format(data.bookmark_goto_keys, i))
-                bookmark_goto_action.setStatusTip("Go to bookmark number:{:d}".format(i))
-                temp_icon = functions.create_icon('tango_icons/bookmarks-goto.png')
-                bookmark_goto_action.setIcon(temp_icon)
-                bookmark_goto_action.triggered.connect(functools.partial(bookmark_goto, i))
+                def create_goto_bookmark():
+                    func = functools.partial(bookmark_goto, i)
+                    func.__name__ = "goto_bookmark_{}".format(i)
+                    return func
+                bookmark_goto_action = create_action(
+                    'Bookmark {:d}'.format(i),
+                    "{}+{}".format(data.bookmark_goto_keys, i), 
+                    "Go to bookmark number:{:d}".format(i), 
+                    'tango_icons/bookmarks-goto.png', 
+                    create_goto_bookmark()
+                )
                 bookmark_goto_menu.addAction(bookmark_goto_action)
                 #Store
                 bookmark_store_action = data.QAction('Bookmark {:d}'.format(i), self)
@@ -1886,21 +1872,32 @@ class MainWindow(data.QMainWindow):
                 temp_icon = functions.create_icon('tango_icons/bookmarks-store.png')
                 bookmark_store_action.setIcon(temp_icon)
                 bookmark_store_action.triggered.connect(functools.partial(bookmark_store, i))
+                def create_store_bookmark():
+                    func = functools.partial(bookmark_store, i)
+                    func.__name__ = "store_bookmark_{}".format(i)
+                    return func
+                bookmark_store_action = create_action(
+                    'Bookmark {:d}'.format(i),
+                    "{}+{}".format(data.bookmark_store_keys, i), 
+                    "Store bookmark number:{:d}".format(i), 
+                    'tango_icons/bookmarks-store.png', 
+                    create_store_bookmark()
+                )
                 bookmark_store_menu.addAction(bookmark_store_action)
             def toggle_line_endings():
                 try:
                     self.get_tab_by_focus().toggle_line_endings()
                 except:
                     pass
-            self.menubar_functions["toggle_line_endings"] = toggle_line_endings
-            toggle_lineend_action = data.QAction('Toggle EOL visibility', self)
-#            toggle_lineend_action.setShortcut('Ctrl+')
             temp_string = 'Toggle the visibility of the End-Of-Line characters '
             temp_string += 'for the currently selected document'
-            toggle_lineend_action.setStatusTip(temp_string)
-            temp_icon = functions.create_icon('tango_icons/view-line-end.png')
-            toggle_lineend_action.setIcon(temp_icon)
-            toggle_lineend_action.triggered.connect(toggle_line_endings)
+            toggle_lineend_action = create_action(
+                'Toggle EOL visibility',
+                None, 
+                temp_string, 
+                'tango_icons/view-line-end.png', 
+                toggle_line_endings
+            )
             #Add all actions and menus
             view_menu.addAction(function_wheel_toggle_action)
             view_menu.addSeparator()
@@ -1925,57 +1922,66 @@ class MainWindow(data.QMainWindow):
         #REPL menu
         def construct_repl_menu():
             repl_menu = self.menubar.addMenu("&REPL")
-            repeat_eval_action = data.QAction('REPL Repeat Command', self)
-            repeat_eval_action.setShortcut(data.repeat_eval_keys)
-            repeat_eval_action.setStatusTip('Repeat the last REPL command')
-            repeat_eval_action.triggered.connect(self.repl.repeat_last_repl_eval)
-            temp_icon = functions.create_icon('tango_icons/repl-repeat-command.png')
-            repeat_eval_action.setIcon(temp_icon)
+            repl_menu.installEventFilter(click_filter)
+            repeat_eval_action = create_action(
+                'REPL Repeat Command',
+                data.repeat_eval_keys, 
+                'Repeat the last REPL command', 
+                'tango_icons/repl-repeat-command.png', 
+                self.repl.repeat_last_repl_eval
+            )
             def repl_single_focus():
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
-            self.menubar_functions["repl_single_focus"] = repl_single_focus
-            repl_focus_action = data.QAction('Focus REPL(Single)', self)   
-            repl_focus_action.setShortcuts(
-                [data.repl_focus_single_1_keys, data.repl_focus_single_2_keys]
+            repl_focus_action = create_action(
+                'Focus REPL(Single)',
+                [data.repl_focus_single_1_keys, data.repl_focus_single_2_keys], 
+                'Set focus to the Python REPL(Single Line)', 
+                'tango_icons/repl-focus-single.png', 
+                repl_single_focus
             )
-            repl_focus_action.setStatusTip('Set focus to the Python REPL(Single Line)')
-            repl_focus_action.triggered.connect(repl_single_focus)
-            temp_icon = functions.create_icon('tango_icons/repl-focus-single.png')
-            repl_focus_action.setIcon(temp_icon)
             def repl_multi_focus():
                 self.view.set_repl_type(data.ReplType.MULTI_LINE)
                 self.repl_helper.setFocus()
-            self.menubar_functions["repl_multi_focus"] = repl_multi_focus
-            repl_focus_multi_action = data.QAction('Focus REPL(Multi)', self)
-            repl_focus_multi_action.setShortcut(data.repl_focus_multi_keys)
-            repl_focus_multi_action.setStatusTip('Set focus to the Python REPL(Multi Line)')
-            repl_focus_multi_action.triggered.connect(repl_multi_focus)
-            temp_icon = functions.create_icon('tango_icons/repl-focus-multi.png')
-            repl_focus_multi_action.setIcon(temp_icon)
+            repl_focus_multi_action = create_action(
+                'Focus REPL(Multi)',
+                data.repl_focus_multi_keys, 
+                'Set focus to the Python REPL(Multi Line)', 
+                'tango_icons/repl-focus-multi.png', 
+                repl_multi_focus
+            )
             repl_menu.addAction(repeat_eval_action)
             repl_menu.addAction(repl_focus_action)  
             repl_menu.addAction(repl_focus_multi_action)
         #Sessions menu
         def construct_sessions_menu():
-            sessions_menu       = self.menubar.addMenu("&Sessions")
-            add_session_action  = data.QAction('Add Session', self)
-            add_session_action.setStatusTip('Save the currently opened documents to a session')
-            add_session_action.setIcon(functions.create_icon('tango_icons/session-add.png'))
-            add_session_action.triggered.connect(
-                functools.partial(repl_text_input, text='session_add("", session_group=None)', cursor_position=13)
+            sessions_menu = self.menubar.addMenu("&Sessions")
+            sessions_menu.installEventFilter(click_filter)
+            def add_session():
+                repl_text_input(text='session_add("", session_group=None)', cursor_position=13)
+            add_session_action = create_action(
+                'Add Session',
+                None, 
+                'Save the currently opened documents to a session', 
+                'tango_icons/session-add.png', 
+                add_session
             )
-            remove_session_action = data.QAction('Remove Session', self)
-            remove_session_action.setStatusTip('Remove the session with matching name and group')
-            remove_session_action.setIcon(functions.create_icon('tango_icons/session-remove.png'))
-            remove_session_action.triggered.connect(
-                functools.partial(repl_text_input, text='session_remove("", session_group=None)', cursor_position=16)
+            def remove_session():
+                repl_text_input(text='session_remove("", session_group=None)', cursor_position=13)
+            remove_session_action = create_action(
+                'Remove Session',
+                None, 
+                'Remove the session with matching name and group', 
+                'tango_icons/session-remove.png', 
+                remove_session
             )
-            session_editor_action = data.QAction('Graphical Session Editor', self)
-            session_editor_action.setStatusTip('Graphical user friendly session editor')
-            session_editor_action.setIcon(functions.create_icon('tango_icons/sessions-gui.png'))
-            session_editor_action.triggered.connect(self.display.show_session_editor)
-            self.menubar_functions["show_session_editor"] = self.display.show_session_editor
+            session_editor_action = create_action(
+                'Graphical Session Editor',
+                None, 
+                'Graphical user friendly session editor', 
+                'tango_icons/sessions-gui.png', 
+                self.display.show_session_editor
+            )
             #Sessions menu
             self.sessions_menu = data.QMenu("Sessions")
             self.sessions_menu.setIcon(functions.create_icon('tango_icons/sessions.png'))
@@ -1987,12 +1993,15 @@ class MainWindow(data.QMainWindow):
         #Help menu
         def construct_help_menu():
             help_menu = self.menubar.addMenu("&Help")
+            help_menu.installEventFilter(click_filter)
             self.fm = help_menu
-            about_action = data.QAction('About Ex.Co.', self)
-            about_action.setStatusTip('Ex.Co. Information')
-            temp_icon = functions.create_icon('tango_icons/help-browser.png')
-            about_action.setIcon(temp_icon)
-            about_action.triggered.connect(self.view.show_about)
+            about_action = create_action(
+                'About Ex.Co.',
+                None, 
+                'Ex.Co. Information', 
+                'tango_icons/help-browser.png', 
+                self.view.show_about
+            )
             help_menu.addAction(about_action)
         #Execute the nested construction functions
         construct_file_menu()
@@ -2231,6 +2240,8 @@ class MainWindow(data.QMainWindow):
                 self.settings.update_recent_list(in_file)
                 #Update the current working directory
                 path = os.path.dirname(in_file)
+                if path == "":
+                    path = data.application_directory
                 self.set_cwd(path)
                 data.print_log("Opened file: " + str(in_file))
                 #Set focus to the newly opened document
@@ -2467,14 +2478,17 @@ class MainWindow(data.QMainWindow):
         
         def update_recent_list(self, new_file=None):
             """Update the settings manipulator with the new file"""
-            #Nested function for opening the recent file
+            # Nested function for opening the recent file
             def new_file_function(file):
-                self.parent.open_file(file=file, basic_widget=None)
-                self.parent.main_window.currentWidget().setFocus()
-            #Update the file manipulator
+                try:
+                    self.parent.open_file(file=file, basic_widget=None)
+                    self.parent.main_window.currentWidget().setFocus()
+                except:
+                    pass
+            # Update the file manipulator
             if new_file != None:
                 self.manipulator.add_recent_file(new_file)
-            #Refresh the menubar recent list
+            # Refresh the menubar recent list
             recent_files_menu = self.parent.recent_files_menu
             # !!Clear all of the actions from the menu OR YOU'LL HAVE MEMORY LEAKS!!
             for action in recent_files_menu.actions():
@@ -2485,43 +2499,56 @@ class MainWindow(data.QMainWindow):
             recent_files_menu.clear()
             # Add the new recent files list to the menu
             for recent_file in reversed(self.manipulator.recent_files):
-                #Iterate in the reverse order, so that the last file will be displayed
-                #on the top of the menubar "Recent Files" menu
+                # Iterate in the reverse order, so that the last file will be displayed
+                # on the top of the menubar "Recent Files" menu
                 recent_file_name = recent_file
-                #Check if the filename has too many characters
+                # Check if the filename has too many characters
                 if len(recent_file_name) > 30:
-                    #Shorten the name that will appear in the menubar
+                    # Shorten the name that will appear in the menubar
                     recent_file_name = "...{:s}".format(os.path.splitdrive(recent_file)[1][-30:])
                 new_file_action = data.QAction(recent_file_name, recent_files_menu) #self.parent)
                 new_file_action.setStatusTip("Open: {:s}".format(recent_file))
-                #Create a function reference for opening the recent file
+                # Create a function reference for opening the recent file
                 temp_function = functools.partial(new_file_function, recent_file)
                 new_file_action.triggered.connect(temp_function)
                 recent_files_menu.addAction(new_file_action)
     
         def restore(self):
             """Restore the previously stored settings"""
-            #Load the settings from the initialization file
-            self.manipulator.load_settings()
-            #Set main window side
+            # Load the settings from the initialization file
+            result = self.manipulator.load_settings()
+            # Set main window side
             self.parent.view.set_main_window_side(
                 self.manipulator.main_window_side
             )
-            #Update the theme
+            # Update the theme
             data.theme = self.manipulator.theme
             self.parent.view.refresh_theme()
-            #Update recent files list in the menubar
+            # Update recent files list in the menubar
             self.update_recent_list()
-            #Update sessions list in the menubar
+            # Update sessions list in the menubar
             self.parent.sessions.update_menu()
-            #Display message in statusbar
+            # Display message in statusbar
             self.parent.display.write_to_statusbar("Restored settings", 1000)
+            # Update custon context menu functions
+            for func_type in self.manipulator.context_menu_functions.keys():
+                funcs = self.manipulator.context_menu_functions[func_type]
+                for func_key in funcs.keys():
+                    getattr(helper_forms.ContextMenu, func_type)[func_key] = funcs[func_key]
+            # Display the settings load error AFTER the theme has been set
+            # Otherwise the error text color will not be styled correctly
+            if result == False:
+                self.parent.display.repl_display_message(
+                    "Error loading the settings file, using the default settings values!\nTHE SETTINGS FILE WILL NOT BE UPDATED!", 
+                    message_type=data.MessageType.ERROR
+                )
         
         def save(self):
             """Save the current settings"""
             self.manipulator.save_settings(
                 self.parent.view.main_window_side, 
-                data.theme
+                data.theme,
+                helper_forms.ContextMenu.get_settings()
             )
             #Display message in statusbar
             self.parent.display.write_to_statusbar("Saved settings", 1000)
@@ -2624,9 +2651,9 @@ class MainWindow(data.QMainWindow):
                     return
             #Find the session
             session = self.parent.settings.manipulator.get_session(
-                          session_name,
-                          session_group
-                      )
+                session_name,
+                session_group
+            )
             #Check if session was found
             if session != None:
                 #Clear all documents from the main and upper window
@@ -3203,25 +3230,25 @@ class MainWindow(data.QMainWindow):
         
         def show_function_wheel(self):
             """Show the function wheel overlay"""
-            #Check the windows size before displaying the overlay
+            # Check the windows size before displaying the overlay
             if (self.parent.width() < self.FUNCTION_WHEEL_BOUNDS[0] or 
                 self.parent.height() < self.FUNCTION_WHEEL_BOUNDS[1]):
                 new_size =  data.PyQt.QtCore.QSize(
-                                self.FUNCTION_WHEEL_BOUNDS[0] + self.FUNCTION_WHEEL_BOUNDS[0]/5,
-                                self.FUNCTION_WHEEL_BOUNDS[1] + self.FUNCTION_WHEEL_BOUNDS[1]/5
-                            )
+                    self.FUNCTION_WHEEL_BOUNDS[0] + self.FUNCTION_WHEEL_BOUNDS[0]/5,
+                    self.FUNCTION_WHEEL_BOUNDS[1] + self.FUNCTION_WHEEL_BOUNDS[1]/5
+                )
                 self.parent.resize(new_size)
-            #Check if the function wheel overlay is initialized
+            # Check if the function wheel overlay is initialized
             if self.function_wheel_overlay != None:
-                #Save the currently focused widget
+                # Save the currently focused widget
                 focused_widget  = self.parent.get_window_by_child_tab()
                 focused_tab     = self.parent.get_tab_by_focus()
                 if focused_widget == None:
                     focused_widget = self.parent.get_window_by_focus()
-                #Store the last focused widget and tab
+                # Store the last focused widget and tab
                 self.parent.last_focused_widget = focused_widget
                 self.parent.last_focused_tab    = focused_tab
-                #Show the function wheel overlay
+                # Show the function wheel overlay
                 self.function_wheel_overlay.show()
         
         def hide_function_wheel(self):
@@ -3476,6 +3503,8 @@ class MainWindow(data.QMainWindow):
             self.parent.statusbar.setStyleSheet(
                 "color: {0};".format(data.theme.Indication.Font)
             )
+            # Update the taskbar menu
+            self.parent.display.update_theme_taskbar_icon()
         
         def reload_themes(self):
             global lexers, themes
@@ -4075,49 +4104,64 @@ class MainWindow(data.QMainWindow):
             )
             self.parent.statusbar.addPermanentWidget(self.theme_indicatore)
         
+        def update_theme_taskbar_icon(self):
+            # Check if the indicator is initialized
+            if self.theme_indicatore == None:
+                return
+            # Set the theme icon and tooltip
+            if data.theme == themes.Air:
+                tooltip = "Air"
+                image = "tango_icons/theme-air.png"
+            elif data.theme == themes.Earth:
+                tooltip = "Earth"
+                image = "tango_icons/theme-earth.png"
+            elif data.theme == themes.Water:
+                tooltip = "Water"
+                image = "tango_icons/theme-water.png"
+            elif data.theme == themes.MC:
+                tooltip = "Midnight Commander"
+                image = "tango_icons/theme-mc.png"
+            raw_picture = data.PyQt.QtGui.QPixmap(
+                os.path.join(
+                    data.resources_directory, image
+                )
+            )
+            picture = raw_picture.scaled(16, 16, data.PyQt.QtCore.Qt.KeepAspectRatio)
+            self.theme_indicatore.setPixmap(picture)
+            self.theme_indicatore.setToolTip(tooltip)
+            self.theme_indicatore.setStyleSheet(
+                "ThemeIndicator {" + 
+                "    color: black;" + 
+                "    padding-top: 0px;" +
+                "    padding-bottom: 0px;" +
+                "    padding-left: 0px;" +
+                "    padding-right: 4px;" +
+                "}" +
+                "QToolTip {" + 
+                "    color: black;" + 
+                "    padding-top: 0px;" +
+                "    padding-bottom: 0px;" +
+                "    padding-left: 0px;" +
+                "    padding-right: 0px;" + 
+                "}"
+            )
+        
         def init_theme_menu(self):
             """ Initialization of the theme menu used by the theme indicator """
             def choose_theme(theme):
                 data.theme = theme
                 self.parent.view.refresh_theme()
+                self.update_theme_taskbar_icon()
                 if data.theme == themes.Air:
-                    tooltip = "Air"
-                    image = "tango_icons/theme-air.png"
+                    current_theme = "Air"
                 elif data.theme == themes.Earth:
-                    tooltip = "Earth"
-                    image = "tango_icons/theme-earth.png"
+                    current_theme = "Earth"
                 elif data.theme == themes.Water:
-                    tooltip = "Water"
-                    image = "tango_icons/theme-water.png"
+                    current_theme = "Water"
                 elif data.theme == themes.MC:
-                    tooltip = "Midnight Commander"
-                    image = "tango_icons/theme-mc.png"
-                raw_picture = data.PyQt.QtGui.QPixmap(
-                    os.path.join(
-                        data.resources_directory, image
-                    )
-                )
-                picture = raw_picture.scaled(16, 16, data.PyQt.QtCore.Qt.KeepAspectRatio)
-                self.theme_indicatore.setPixmap(picture)
-                self.theme_indicatore.setToolTip(tooltip)
-                self.theme_indicatore.setStyleSheet(
-                    "ThemeIndicator {" + 
-                    "    color: black;" + 
-                    "    padding-top: 0px;" +
-                    "    padding-bottom: 0px;" +
-                    "    padding-left: 0px;" +
-                    "    padding-right: 4px;" +
-                    "}" +
-                    "QToolTip {" + 
-                    "    color: black;" + 
-                    "    padding-top: 0px;" +
-                    "    padding-bottom: 0px;" +
-                    "    padding-left: 0px;" +
-                    "    padding-right: 0px;" + 
-                    "}"
-                )
+                    current_theme = "Midnight Commander"
                 self.repl_display_message(
-                    "Changed theme to: {}".format(tooltip), 
+                    "Changed theme to: {}".format(current_theme), 
                     message_type=data.MessageType.SUCCESS
                 )
             
@@ -4414,11 +4458,12 @@ class MainWindow(data.QMainWindow):
                 )
             elif parser == "C":
                 # Get all the file information
-                function_nodes = functions.get_c_function_list(custom_editor.text())
+#                function_nodes = functions.get_c_function_list(custom_editor.text())
+                c_nodes = functions.get_c_node_tree(custom_editor.text())
                 # Display the information in the tree tab
                 parent.node_tree_tab.display_c_nodes(
                     custom_editor, 
-                    function_nodes 
+                    c_nodes 
                 )
             elif parser == "NIM":
                 # Get all the file information
@@ -4788,7 +4833,11 @@ class MainWindow(data.QMainWindow):
             #Set focus to the text differ tab
             self.parent.upper_window.setCurrentIndex(sm_index)
         
-        def create_lexers_menu(self, menu_name, set_lexer_func):
+        def create_lexers_menu(self, 
+                               menu_name, 
+                               set_lexer_func, 
+                               store_menu_to_mainform=True,
+                               custom_parent=None):
             """
             Create a lexer menu. Currently used in the View menu and
             the CustomEditor tab menu.
@@ -4797,183 +4846,339 @@ class MainWindow(data.QMainWindow):
                 - parameter lexer_name: a string
             """
             set_lexer = set_lexer_func
+            # Nested function for creating an action
+            def create_action(name, 
+                              key_combo, 
+                              status_tip, 
+                              icon, 
+                              function, 
+                              menu_parent):
+                action = data.QAction(name, menu_parent)
+                # Key combination
+                if key_combo != None and key_combo != "" and key_combo != []:
+                    if isinstance(key_combo, list):
+                        action.setShortcuts(key_combo)
+                    else:
+                        action.setShortcut(key_combo)
+                action.setStatusTip(status_tip)
+                # Icon and pixmap
+                action.pixmap = None
+                if icon != None:
+                    action.setIcon(functions.create_icon(icon))
+                    action.pixmap = functions.create_pixmap_with_size(icon, 32, 32)
+                # Function
+                if function != None:
+                    action.triggered.connect(function)
+                action.function = function
+                self.parent.menubar_functions[function.__name__] = function
+                # Check if there is a tab character in the function
+                # name and remove the part of the string after it
+                if '\t' in name:
+                    name = name[:name.find('\t')]
+                # Add the action to the context menu 
+                # function list in the helper forms module
+                helper_forms.ContextMenu.add_function(
+                    function.__name__, action.pixmap, function, name
+                )
+                # Enable/disable action according to passed 
+                # parameter and return the action
+                action.setEnabled(True)
+                return action
             # The owner of the lexers menu is always the MainWindow
-            lexers_menu = data.QMenu(menu_name, self.parent)
-            NONE_action = data.QAction('No lexer', lexers_menu)
-            NONE_action.setIcon(functions.create_icon('tango_icons/file.png'))
-            NONE_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Text, 'Plain text')
+            if custom_parent != None:
+                parent = custom_parent
+            else:
+                parent = self.parent
+            lexers_menu = data.QMenu(menu_name, parent)
+            def create_lexer(lexer, description):
+                func = functools.partial(set_lexer, lexer, description)
+                func.__name__ = "set_lexer_{}".format(lexer.__name__)
+                return func
+            NONE_action = create_action(
+                'No lexer',
+                None, 
+                'Disable document lexer', 
+                'tango_icons/file.png', 
+                create_lexer(lexers.Text, 'Plain text'),
+                lexers_menu
             )
-            ADA_action = data.QAction('Ada', lexers_menu)
-            ADA_action.setIcon(functions.create_icon('language_icons/logo_ada.png'))
-            ADA_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Ada, 'Ada')
+            ADA_action = create_action(
+                'Ada',
+                None, 
+                'Change document lexer to: Ada', 
+                'language_icons/logo_ada.png', 
+                create_lexer(lexers.Ada, 'Ada'),
+                lexers_menu
             )
-            BASH_action = data.QAction('Bash', lexers_menu)
-            BASH_action.setIcon(functions.create_icon('language_icons/logo_bash.png'))
-            BASH_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Bash, 'Bash')
+            BASH_action = create_action(
+                'Bash',
+                None, 
+                'Change document lexer to: Bash', 
+                'language_icons/logo_bash.png', 
+                create_lexer(lexers.Bash, 'Bash'),
+                lexers_menu
             )
-            BATCH_action = data.QAction('Batch', lexers_menu)
-            BATCH_action.setIcon(functions.create_icon('language_icons/logo_batch.png'))
-            BATCH_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Batch, 'Batch')
+            BATCH_action = create_action(
+                'Batch',
+                None, 
+                'Change document lexer to: Batch', 
+                'language_icons/logo_batch.png', 
+                create_lexer(lexers.Batch, 'Batch'),
+                lexers_menu
             )
-            CMAKE_action = data.QAction('CMake', lexers_menu)
-            CMAKE_action.setIcon(functions.create_icon('language_icons/logo_cmake.png'))
-            CMAKE_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CMake, 'CMake')
+            CMAKE_action = create_action(
+                'CMake',
+                None, 
+                'Change document lexer to: CMake', 
+                'language_icons/logo_cmake.png', 
+                create_lexer(lexers.CMake, 'CMake'),
+                lexers_menu
             )
-            C_CPP_action = data.QAction('C / C++', lexers_menu)
-            C_CPP_action.setIcon(functions.create_icon('language_icons/logo_c_cpp.png'))
-            C_CPP_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CPP, 'C / C++')
+            C_CPP_action = create_action(
+                'C / C++',
+                None, 
+                'Change document lexer to: C / C++', 
+                'language_icons/logo_c_cpp.png', 
+                create_lexer(lexers.CPP, 'C / C++'),
+                lexers_menu
             )
-            CSS_action = data.QAction('CSS', lexers_menu)
-            CSS_action.setIcon(functions.create_icon('language_icons/logo_css.png'))
-            CSS_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CSS, 'CSS')
+            CSS_action = create_action(
+                'CSS',
+                None, 
+                'Change document lexer to: CSS', 
+                'language_icons/logo_css.png', 
+                create_lexer(lexers.CSS, 'CSS'),
+                lexers_menu
             )
-            D_action = data.QAction('D', lexers_menu)
-            D_action.setIcon(functions.create_icon('language_icons/logo_d.png'))
-            D_action.triggered.connect(
-                functools.partial(set_lexer, lexers.D, 'D')
+            D_action = create_action(
+                'D',
+                None, 
+                'Change document lexer to: D', 
+                'language_icons/logo_d.png', 
+                create_lexer(lexers.D, 'D'),
+                lexers_menu
             )
-            FORTRAN_action = data.QAction('Fortran', lexers_menu)
-            FORTRAN_action.setIcon(functions.create_icon('language_icons/logo_fortran.png'))
-            FORTRAN_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Fortran, 'Fortran')
+            FORTRAN_action = create_action(
+                'Fortran',
+                None, 
+                'Change document lexer to: Fortran', 
+                'language_icons/logo_fortran.png', 
+                create_lexer(lexers.Fortran, 'Fortran'),
+                lexers_menu
             )
-            HTML_action = data.QAction('HTML', lexers_menu)
-            HTML_action.setIcon(functions.create_icon('language_icons/logo_html.png'))
-            HTML_action.triggered.connect(
-                functools.partial(set_lexer, lexers.HTML, 'HTML')
+            HTML_action = create_action(
+                'HTML',
+                None, 
+                'Change document lexer to: HTML', 
+                'language_icons/logo_html.png', 
+                create_lexer(lexers.HTML, 'HTML'),
+                lexers_menu
             )
-            LUA_action = data.QAction('Lua', lexers_menu)
-            LUA_action.setIcon(functions.create_icon('language_icons/logo_lua.png'))
-            LUA_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Lua, 'Lua')
+            LUA_action = create_action(
+                'Lua',
+                None, 
+                'Change document lexer to: Lua', 
+                'language_icons/logo_lua.png', 
+                create_lexer(lexers.Lua, 'Lua'),
+                lexers_menu
             )
-            MAKEFILE_action = data.QAction('MakeFile', lexers_menu)
-            MAKEFILE_action.setIcon(functions.create_icon('language_icons/logo_makefile.png'))
-            MAKEFILE_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Makefile, 'MakeFile')
+            MAKEFILE_action = create_action(
+                'MakeFile',
+                None, 
+                'Change document lexer to: MakeFile', 
+                'language_icons/logo_makefile.png', 
+                create_lexer(lexers.Makefile, 'MakeFile'),
+                lexers_menu
             )
-            MATLAB_action = data.QAction('Matlab', lexers_menu)
-            MATLAB_action.setIcon(functions.create_icon('language_icons/logo_matlab.png'))
-            MATLAB_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Matlab, 'Matlab')
+            MATLAB_action = create_action(
+                'Matlab',
+                None, 
+                'Change document lexer to: Matlab', 
+                'language_icons/logo_matlab.png', 
+                create_lexer(lexers.Matlab, 'Matlab'),
+                lexers_menu
             )
-            NIM_action = data.QAction('Nim', lexers_menu)
-            NIM_action.setIcon(functions.create_icon('language_icons/logo_nim.png'))
-            NIM_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Nim, 'Nim')
+            NIM_action = create_action(
+                'Nim',
+                None, 
+                'Change document lexer to: Nim', 
+                'language_icons/logo_nim.png', 
+                create_lexer(lexers.Nim, 'Nim'),
+                lexers_menu
             )
-            OBERON_action = data.QAction('Oberon / Modula', lexers_menu)
-            OBERON_action.setIcon(functions.create_icon('language_icons/logo_oberon.png'))
-            OBERON_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Oberon, 'Oberon / Modula')
+            OBERON_action = create_action(
+                'Oberon / Modula',
+                None, 
+                'Change document lexer to: Oberon / Modula', 
+                'language_icons/logo_oberon.png', 
+                create_lexer(lexers.Oberon, 'Oberon / Modula'),
+                lexers_menu
             )
-            PASCAL_action = data.QAction('Pascal', lexers_menu)
-            PASCAL_action.setIcon(functions.create_icon('language_icons/logo_pascal.png'))
-            PASCAL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Pascal, 'Pascal')
+            PASCAL_action = create_action(
+                'Pascal',
+                None, 
+                'Change document lexer to: Pascal', 
+                'language_icons/logo_pascal.png', 
+                create_lexer(lexers.Pascal, 'Pascal'),
+                lexers_menu
             )
-            PERL_action = data.QAction('Perl', lexers_menu)
-            PERL_action.setIcon(functions.create_icon('language_icons/logo_perl.png'))
-            PERL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Perl, 'Perl')
+            PERL_action = create_action(
+                'Perl',
+                None, 
+                'Change document lexer to: Perl', 
+                'language_icons/logo_perl.png', 
+                create_lexer(lexers.Perl, 'Perl'),
+                lexers_menu
             )
-            PYTHON_action = data.QAction('Python', lexers_menu)
-            PYTHON_action.setIcon(functions.create_icon('language_icons/logo_python.png'))
-            PYTHON_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Python, 'Python')
+            PYTHON_action = create_action(
+                'Python',
+                None, 
+                'Change document lexer to: Python', 
+                'language_icons/logo_python.png', 
+                create_lexer(lexers.Python, 'Python'),
+                lexers_menu
             )
-            RUBY_action = data.QAction('Ruby', lexers_menu)
-            RUBY_action.setIcon(functions.create_icon('language_icons/logo_ruby.png'))
-            RUBY_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Ruby, 'Ruby')
+            RUBY_action = create_action(
+                'Ruby',
+                None, 
+                'Change document lexer to: Ruby', 
+                'language_icons/logo_ruby.png', 
+                create_lexer(lexers.Ruby, 'Ruby'),
+                lexers_menu
             )
-            ROUTEROS_action = data.QAction('RouterOS', lexers_menu)
-            ROUTEROS_action.setIcon(functions.create_icon('language_icons/logo_routeros.png'))
-            ROUTEROS_action.triggered.connect(
-                functools.partial(set_lexer, lexers.RouterOS, 'RouterOS')
+            ROUTEROS_action = create_action(
+                'RouterOS',
+                None, 
+                'Change document lexer to: RouterOS', 
+                'language_icons/logo_routeros.png', 
+                create_lexer(lexers.RouterOS, 'RouterOS'),
+                lexers_menu
             )
-            SQL_action = data.QAction('SQL', lexers_menu)
-            SQL_action.setIcon(functions.create_icon('language_icons/logo_sql.png'))
-            SQL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.SQL, 'SQL')
+            SQL_action = create_action(
+                'RouterOS',
+                None, 
+                'Change document lexer to: SQL', 
+                'language_icons/logo_sql.png', 
+                create_lexer(lexers.SQL, 'SQL'),
+                lexers_menu
             )
             TCL_action = data.QAction('TCL', lexers_menu)
             TCL_action.setIcon(functions.create_icon('language_icons/logo_tcl.png'))
             TCL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.TCL, 'TCL')
             )
-            TEX_action = data.QAction('TeX', lexers_menu)
-            TEX_action.setIcon(functions.create_icon('language_icons/logo_tex.png'))
-            TEX_action.triggered.connect(
-                functools.partial(set_lexer, lexers.TeX, 'TeX')
+            TCL_action = create_action(
+                'TCL',
+                None, 
+                'Change document lexer to: TCL', 
+                'language_icons/logo_tcl.png', 
+                create_lexer(lexers.TCL, 'TCL'),
+                lexers_menu
             )
-            VERILOG_action = data.QAction('Verilog', lexers_menu)
-            VERILOG_action.setIcon(functions.create_icon('language_icons/logo_verilog.png'))
-            VERILOG_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Verilog, 'Verilog')
+            TEX_action = create_action(
+                'TeX',
+                None, 
+                'Change document lexer to: TeX', 
+                'language_icons/logo_tex.png', 
+                create_lexer(lexers.TeX, 'TeX'),
+                lexers_menu
             )
-            VHDL_action = data.QAction('VHDL', lexers_menu)
-            VHDL_action.setIcon(functions.create_icon('language_icons/logo_vhdl.png'))
-            VHDL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.VHDL, 'VHDL')
+            VERILOG_action = create_action(
+                'Verilog',
+                None, 
+                'Change document lexer to: Verilog', 
+                'language_icons/logo_verilog.png', 
+                create_lexer(lexers.Verilog, 'Verilog'),
+                lexers_menu
             )
-            XML_action = data.QAction('XML', lexers_menu)
-            XML_action.setIcon(functions.create_icon('language_icons/logo_xml.png'))
-            XML_action.triggered.connect(
-                functools.partial(set_lexer, lexers.XML, 'XML')
+            VHDL_action = create_action(
+                'VHDL',
+                None, 
+                'Change document lexer to: VHDL', 
+                'language_icons/logo_vhdl.png', 
+                create_lexer(lexers.VHDL, 'VHDL'),
+                lexers_menu
             )
-            YAML_action = data.QAction('YAML', lexers_menu)
-            YAML_action.setIcon(functions.create_icon('language_icons/logo_yaml.png'))
-            YAML_action.triggered.connect(
-                functools.partial(set_lexer, lexers.YAML, 'YAML')
+            XML_action = create_action(
+                'VHDL',
+                None, 
+                'Change document lexer to: XML', 
+                'language_icons/logo_xml.png', 
+                create_lexer(lexers.XML, 'XML'),
+                lexers_menu
+            )
+            YAML_action = create_action(
+                'YAML',
+                None, 
+                'Change document lexer to: YAML', 
+                'language_icons/logo_yaml.png', 
+                create_lexer(lexers.YAML, 'YAML'),
+                lexers_menu
             )
             if data.compatibility_mode == False:
-                CoffeeScript_action = data.QAction('CoffeeScript', lexers_menu)
-                CoffeeScript_action.setIcon(functions.create_icon('language_icons/logo_coffeescript.png'))
-                CoffeeScript_action.triggered.connect(
-                    functools.partial(set_lexer, lexers.CoffeeScript, 'CoffeeScript')
+                CoffeeScript_action = create_action(
+                    'CoffeeScript',
+                    None, 
+                    'Change document lexer to: CoffeeScript', 
+                    'language_icons/logo_coffeescript.png', 
+                    create_lexer(lexers.CoffeeScript, 'CoffeeScript'),
+                    lexers_menu
                 )
-            CSharp_action = data.QAction('C#', lexers_menu)
-            CSharp_action.setIcon(functions.create_icon('language_icons/logo_csharp.png'))
-            CSharp_action.triggered.connect(
-                functools.partial(set_lexer, lexers.CPP, 'C#')
+            CSharp_action = create_action(
+                'C#',
+                None, 
+                'Change document lexer to: C#', 
+                'language_icons/logo_csharp.png', 
+                create_lexer(lexers.CPP, 'C#'),
+                lexers_menu
             )
-            Java_action = data.QAction('Java', lexers_menu)
-            Java_action.setIcon(functions.create_icon('language_icons/logo_java.png'))
-            Java_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Java, 'Java')
+            Java_action = create_action(
+                'Java',
+                None, 
+                'Change document lexer to: Java', 
+                'language_icons/logo_java.png', 
+                create_lexer(lexers.Java, 'Java'),
+                lexers_menu
             )
-            JavaScript_action = data.QAction('JavaScript', lexers_menu)
-            JavaScript_action.setIcon(functions.create_icon('language_icons/logo_javascript.png'))
-            JavaScript_action.triggered.connect(
-                functools.partial(set_lexer, lexers.JavaScript, 'JavaScript')
+            JavaScript_action = create_action(
+                'JavaScript',
+                None, 
+                'Change document lexer to: JavaScript', 
+                'language_icons/logo_javascript.png', 
+                create_lexer(lexers.JavaScript, 'JavaScript'),
+                lexers_menu
             )
-            Octave_action = data.QAction('Octave', lexers_menu)
-            Octave_action.setIcon(functions.create_icon('language_icons/logo_octave.png'))
-            Octave_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Octave, 'Octave')
+            Octave_action = create_action(
+                'Octave',
+                None, 
+                'Change document lexer to: Octave', 
+                'language_icons/logo_octave.png', 
+                create_lexer(lexers.Octave, 'Octave'),
+                lexers_menu
             )
-            PostScript_action = data.QAction('PostScript', lexers_menu)
-            PostScript_action.setIcon(functions.create_icon('language_icons/logo_postscript.png'))
-            PostScript_action.triggered.connect(
-                functools.partial(set_lexer, lexers.PostScript, 'PostScript')
+            PostScript_action = create_action(
+                'PostScript',
+                None, 
+                'Change document lexer to: PostScript', 
+                'language_icons/logo_postscript.png', 
+                create_lexer(lexers.PostScript, 'PostScript'),
+                lexers_menu
             )
-            Fortran77_action = data.QAction('Fortran77', lexers_menu)
-            Fortran77_action.setIcon(functions.create_icon('language_icons/logo_fortran77.png'))
-            Fortran77_action.triggered.connect(
-                functools.partial(set_lexer, lexers.Fortran77, 'Fortran77')
+            Fortran77_action = create_action(
+                'Fortran77',
+                None, 
+                'Change document lexer to: Fortran77', 
+                'language_icons/logo_fortran77.png', 
+                create_lexer(lexers.Fortran77, 'Fortran77'),
+                lexers_menu
             )
-            IDL_action = data.QAction('IDL', lexers_menu)
-            IDL_action.setIcon(functions.create_icon('language_icons/logo_idl.png'))
-            IDL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.IDL, 'IDL')
+            IDL_action = create_action(
+                'IDL',
+                None, 
+                'Change document lexer to: IDL', 
+                'language_icons/logo_idl.png', 
+                create_lexer(lexers.IDL, 'IDL'),
+                lexers_menu
             )
             lexers_menu.addAction(NONE_action)
             lexers_menu.addSeparator()
@@ -5025,7 +5230,8 @@ class MainWindow(data.QMainWindow):
                 self.stored_menus[i].setParent(None)
             self.stored_menus = []
             # Add the newly created menu to the internal list for future cleaning
-            self.stored_menus.append(lexers_menu)
+            if store_menu_to_mainform == True:
+                self.stored_menus.append(lexers_menu)
             # Return the created menu
             return lexers_menu
     
@@ -5541,15 +5747,15 @@ class BasicWidget(data.QTabWidget):
                 return
     
     def event(self, event):
-        #Execute the superclass event method
+        # Execute the superclass event method
         super().event(event)
-        #Only check indication if the current widget is not indicated
+        # Only check indication if the current widget is not indicated
         if self.indicated == False:
             if (event.type() == data.PyQt.QtCore.QEvent.KeyPress or
                 event.type() == data.PyQt.QtCore.QEvent.KeyRelease):
-                #Check indication
+                # Check indication
                 self.parent.view.indication_check()
-        #Indicate that the event was processed by returning True
+        # Indicate that the event was processed by returning True
         return True
 
     def dragEnterEvent(self, event):
@@ -5596,22 +5802,26 @@ class BasicWidget(data.QTabWidget):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        #Set focus to the clicked basic widget
+        # Set focus to the clicked basic widget
         self.setFocus()
-        #Set Save/SaveAs buttons in the menubar
+        # Set Save/SaveAs buttons in the menubar
         self._set_save_status()
-        #Store the last focused widget to the parent
+        # Store the last focused widget to the parent
         self.parent.last_focused_widget = self
         data.print_log("Stored \"{:s}\" as last focused widget".format(self.name))
-        #Hide the function wheel if it is shown
+        # Hide the function wheel if it is shown
         if self.parent.view.function_wheel_overlay != None:
             self.parent.view.hide_function_wheel()
-        #Display the tab name in the log window
+        if (event.button() == data.PyQt.QtCore.Qt.RightButton and
+            self.count() == 0):
+            # Show the function wheel if right clicked
+            self.parent.view.show_function_wheel()
+        # Display the tab name in the log window
         if self.currentWidget() != None:
             tab_name = self.currentWidget().name
             data.print_log("Mouse click in: \"" + str(tab_name) + "\"")
         else:
-            #Clear the cursor positions in the statusbar
+            # Clear the cursor positions in the statusbar
             self.parent.display.update_cursor_position()
             data.print_log("Mouse click in: \"" + self.name + "\"")
 
@@ -6100,6 +6310,8 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
     default_font    = data.PyQt.QtGui.QFont('Courier', 10)
     # Corner widget reference
     corner_widget   = None
+    # Reference to the custom context menu
+    context_menu    = None
     """Namespace references for grouping functionality"""
     hotspots        = None
 
@@ -6172,6 +6384,28 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
             self.parent.setCornerWidget(self.corner_widget)
             self.corner_widget.show()
     
+    def delete_context_menu(self):
+        # Clean up the context menu
+        if self.context_menu != None:
+            self.context_menu.hide()
+            for b in self.context_menu.button_list:
+                b.setParent(None)
+            self.context_menu.setParent(None)
+            self.context_menu = None
+    
+    def contextMenuEvent(self, event):
+        # Built-in context menu
+#        super().contextMenuEvent(event)
+        self.delete_context_menu()
+        # Show a context menu according to the current lexer
+        offset = (event.x(), event.y())
+        self.context_menu = helper_forms.ContextMenu(
+            self, self.main_form, offset
+        )
+        self.context_menu.create_plain_buttons()
+        self.context_menu.show()
+        event.accept()
+    
     def mousePressEvent(self, event):
         """Overloaded mouse click event"""
         #Execute the superclass mouse click event
@@ -6233,6 +6467,7 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
         )
 
 
+
 """
 ---------------------------------------------
 Subclassed QScintilla widget used for editing
@@ -6286,6 +6521,8 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     line_count              = None
     # Reference to the editor's corner widget
     corner_widget           = None
+    # Reference to the custom context menu
+    context_menu            = None
     """Namespace references for grouping functionality"""
     hotspots                = None
     bookmarks               = None
@@ -6323,6 +6560,8 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         self.icon_manipulator = None
         # Clear the lexer
         self.clear_lexer()
+        # Clean up the context menu if necessary
+        self.delete_context_menu()
         # Disengage self from the parent and clean up self
         self.setParent(None)
         self.deleteLater()
@@ -6331,7 +6570,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         """Initialize the scintilla widget"""
         #Initialize superclass, from which the current class is inherited,
         #THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
-        super().__init__()
+        super().__init__(parent)
         # Initialize components
         self.icon_manipulator = components.IconManipulator()
         #Set encoding format to UTF-8 (Unicode)
@@ -6404,7 +6643,6 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         self._init_corner_widget()
         #Setup the LineList object that will hold the custom editor text as a list of lines
         self.line_list = components.LineList(self, self.text())
-        self.line_list = [""]
         #Bookmark initialization
         self._init_bookmark_marker()
         #Initialize the namespace references
@@ -6546,6 +6784,9 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     """
     def keyPressEvent(self, event):
         """QScintila keyPressEvent, to catch which key was pressed"""
+        # Hide the context menu if it is shown
+        if self.context_menu != None:
+            self.delete_context_menu()
         #Filter out TAB and SHIFT+TAB key combinations to override
         #the default indent/unindent functionality
         key = event.key()
@@ -6603,20 +6844,59 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
 
     def mousePressEvent(self, event):
         """Overloaded mouse click event"""
-        #Execute the superclass method first, the same trick as in __init__ !
+        # Execute the superclass method first, the same trick as in __init__ !
         super().mousePressEvent(event)
-        #Set focus to the clicked editor
+        # Set focus to the clicked editor
         self.setFocus()
-        #Set Save/SaveAs buttons in the menubar
+        # Set Save/SaveAs buttons in the menubar
         self.parent._set_save_status()
-        #Update the cursor positions in the statusbar
+        # Update the cursor positions in the statusbar
         self.main_form.display.update_cursor_position(self.getCursorPosition()[0], self.getCursorPosition()[1])
-        #Set the last focused widget to the parent basic widget
+        # Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self.parent
         data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
-        #Hide the function wheel if it is shown
+        # Hide the function wheel if it is shown
         if self.main_form.view.function_wheel_overlay != None:
             self.main_form.view.hide_function_wheel()
+        # Hide the context menu if it is shown
+        if self.context_menu != None:
+            self.delete_context_menu()
+    
+    def delete_context_menu(self):
+        # Clean up the context menu
+        if self.context_menu != None:
+            self.context_menu.hide()
+            for b in self.context_menu.button_list:
+                b.setParent(None)
+            self.context_menu.setParent(None)
+            self.context_menu = None
+    
+    def contextMenuEvent(self, event):
+        # Built-in context menu
+#        super().contextMenuEvent(event)
+        # If the parent is a text differ return from this function
+        if hasattr(self, "actual_parent"):
+            return
+        self.delete_context_menu()
+        # Show a context menu according to the current lexer
+        offset = (event.x(), event.y())
+        self.context_menu = helper_forms.ContextMenu(
+            self, self.main_form, offset
+        )
+        if (self.current_file_type == "C" or
+            isinstance(self.lexer(), lexers.Python) or
+            isinstance(self.lexer(), lexers.CustomPython) or
+            isinstance(self.lexer(), lexers.Nim)):
+                self.context_menu.create_special_buttons()
+                self.context_menu.show()
+        else:
+            if self.getSelection() != (-1,-1,-1,-1):
+                self.context_menu.create_standard_buttons()
+                self.context_menu.show()
+            else:
+                self.context_menu.create_standard_buttons()
+                self.context_menu.show()
+        event.accept()
 
     def wheelEvent(self, event):
         """Mouse scroll event of the custom editor"""
@@ -7003,37 +7283,41 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 contains tabs, the indent will not be correct unless you run the
                 tabs_to_spaces function first!
         """
-        #Test if there is no selected text
-        if self.getSelection() == (-1, -1, -1, -1):
-            return
         #Get the cursor index in the current line and selected lines
         cursor_position     = self.getCursorPosition()
         indent_space        = cursor_position[1] * " "
-        start_line_number   = self.getSelection()[0] + 1
-        end_line_number     = self.getSelection()[2] + 1
-        #Get the lines text as a list
-        indented_lines = []
-        line_list = self.get_lines(start_line_number, end_line_number)
-        for i in range(len(line_list)):
-            line = line_list[i].lstrip()
-            indented_lines.append(indent_space + line)
-        #Adjust the line numbers to standard(0..lines()) numbering
-        start_line_number   -= 1
-        end_line_number     -= 1
-        #Select the text from the lines
-        if end_line_number == (self.lines()-1):
-            #The last selected line is at the end of the document,
-            #select every character to the end.
-            self.setSelection(start_line_number, 0, end_line_number, self.lineLength(end_line_number))
+        #Test if indenting one or many lines
+        if self.getSelection() == (-1, -1, -1, -1):
+            line_number = cursor_position[0] + 1
+            line = self.line_list[line_number].lstrip()
+            self.line_list[line_number] = indent_space + line
         else:
-            self.setSelection(start_line_number, 0, end_line_number, self.lineLength(end_line_number)-1)
-        #Replace the selected text with the prepended list merged into one string
-        self.replaceSelectedText(self.list_to_text(indented_lines))
-        #Move the cursor to the beggining of the restore line
-        #to reset the document view to the beginning of the line
-        self.setCursorPosition(cursor_position[0], 0)
-        #Restore cursor back to the original position
-        self.setCursorPosition(cursor_position[0], cursor_position[1])
+            #Get the cursor index in the current line and selected lines
+            start_line_number   = self.getSelection()[0] + 1
+            end_line_number     = self.getSelection()[2] + 1
+            #Get the lines text as a list
+            indented_lines = []
+            line_list = self.get_lines(start_line_number, end_line_number)
+            for i in range(len(line_list)):
+                line = line_list[i].lstrip()
+                indented_lines.append(indent_space + line)
+            #Adjust the line numbers to standard(0..lines()) numbering
+            start_line_number   -= 1
+            end_line_number     -= 1
+            #Select the text from the lines
+            if end_line_number == (self.lines()-1):
+                #The last selected line is at the end of the document,
+                #select every character to the end.
+                self.setSelection(start_line_number, 0, end_line_number, self.lineLength(end_line_number))
+            else:
+                self.setSelection(start_line_number, 0, end_line_number, self.lineLength(end_line_number)-1)
+            #Replace the selected text with the prepended list merged into one string
+            self.replaceSelectedText(self.list_to_text(indented_lines))
+            #Move the cursor to the beggining of the restore line
+            #to reset the document view to the beginning of the line
+            self.setCursorPosition(cursor_position[0], 0)
+            #Restore cursor back to the original position
+            self.setCursorPosition(cursor_position[0], cursor_position[1])
     
     def custom_indent(self):
         """
@@ -7276,6 +7560,10 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         """Toggle commenting for the selected lines"""
         #Check if the document is a valid programming language
         if self.lexer().comment_string == None:
+            self.main_form.display.repl_display_message(
+                "Lexer '{}' has no comment abillity!".format(self.lexer().language()), 
+                message_type=data.MessageType.WARNING
+            )
             return
         #Test if there is no selected text
         if (self.getSelection() == (-1, -1, -1, -1) or
@@ -7308,25 +7596,22 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 message_type=data.MessageType.ERROR
             )
             return
-        #Check there is only one argument
-        arguments = inspect.getargspec(in_func).args
-        if len(arguments) != 1:
-            self.main_form.display.repl_display_message(
-                "'for_each_line' function has to have only one argument!", 
-                message_type=data.MessageType.ERROR
-            )
-            return
-        #
+        # Loop through the lines and apply the function to each line
         if (self.getSelection() == (-1, -1, -1, -1) or
             self.getSelection()[0] == self.getSelection()[2]):
             #No selected text, apply function to the every line
             try:
                 new_line_list = []
+                function_returns_none = False
                 for line in self.line_list:
                     new_line = in_func(line)
+                    if new_line == None:
+                        function_returns_none = True
+                        continue
                     new_line_list.append(new_line)
-                #Assign the new list over the old one
-                self.line_list = new_line_list
+                if function_returns_none == False:
+                    #Assign the new list over the old one
+                    self.line_list = new_line_list
             except Exception as ex:
                 self.main_form.display.repl_display_message(
                     "'for_each_line' has an error:\n" + str(ex), 
@@ -7341,11 +7626,16 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 end_line_number     = self.getSelection()[2] + 1
                 #Apply the function to the lines
                 new_line_list = []
+                function_returns_none = False
                 for line in self.line_list[start_line_number:end_line_number]:
                     new_line = in_func(line)
+                    if new_line == None:
+                        function_returns_none = True
+                        continue
                     new_line_list.append(new_line)
-                #Assign the new list over the old one
-                self.line_list[start_line_number:end_line_number] = new_line_list
+                if function_returns_none == False:
+                    #Assign the new list over the old one
+                    self.line_list[start_line_number:end_line_number] = new_line_list
             except Exception as ex:
                 self.main_form.display.repl_display_message(
                     "'for_each_line' has an error:\n" + str(ex), 
@@ -7645,7 +7935,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                         )
                     )
                 #Display the replacements in the REPL tab
-                if len(corrected_matches) < data.MAXIMUM_HIGHLIGHTS:
+                if len(corrected_matches) < data.maximum_highlights:
                     message = "{:s} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
@@ -7673,7 +7963,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 self.highlight_raw(corrected_matches)
             else:
                 #Display the replacements in the REPL tab
-                if len(matches) < data.MAXIMUM_HIGHLIGHTS:
+                if len(matches) < data.maximum_highlights:
                     message = "{:s} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
@@ -7957,9 +8247,10 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         if save_result == True:
             #Saving has succeded
             self.parent.reset_text_changed(self.parent.indexOf(self))
-            #Update the lexer for the document
-            file_type = functions.get_file_type(self.save_name)
-            self.choose_lexer(file_type)
+            #Update the lexer for the document only if the lexer is not set
+            if isinstance(self.lexer(), lexers.Text):
+                file_type = functions.get_file_type(self.save_name)
+                self.choose_lexer(file_type)
             #Update the settings manipulator with the new file
             self.main_form.settings.update_recent_list(self.save_name)
         else:
@@ -8067,7 +8358,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         #Set the marker color to blue
         marker_color = data.PyQt.QtGui.QColor(180, 180, 180, alpha=255)
         #Set the column number where the marker will be shown
-        marker_column = data.EDGE_MARKER_COLUMN 
+        marker_column = data.edge_marker_column 
         #Set the marker options
         self.setEdgeColor(marker_color)
         self.setEdgeColumn(marker_column)
@@ -8848,6 +9139,9 @@ class ReplLineEdit(data.QLineEdit):
         """QScintila keyPressEvent, to catch which key was pressed"""
         #Return the key event
         return data.QLineEdit.keyPressEvent(self, event)
+    
+    def contextMenuEvent(self, event):
+        event.accept()
 
     def focusInEvent(self, event):
         """Event that fires when the REPL gets focus"""
@@ -9021,7 +9315,6 @@ Scintilla class for inputting more than one line into the REPL
 -----------------------------------------------------
 """
 class ReplHelper(data.PyQt.Qsci.QsciScintilla):
-
     """
     REPL scintilla box for inputting multiple lines into the REPL.
     MUST BE PAIRED WITH A ReplLineEdit OBJECT!
@@ -9036,6 +9329,8 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
     indicated       = False
     #Default font
     default_font    = data.PyQt.QtGui.QFont('Courier', 10)
+    # Reference to the custom context menu
+    context_menu    = None
     #LineList object copied from the CustomEditor object
     line_list       = None
     
@@ -9044,7 +9339,7 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
     """
     def __init__(self, parent, repl_master):
         #Initialize superclass, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
-        super().__init__()
+        super().__init__(parent)
         #Save the reference to the parent(main window)
         self.parent = parent
         #Save the reference to the REPL object
@@ -9079,11 +9374,12 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         Functionality copied from the CustomEditor to copy some of 
         the neede editing functionality like commenting, ...
         """
-        # Add the attributes needed to imple
+        # Add the attributes needed to implement the line nist
         self.line_list = components.LineList(self, self.text())
-        self.line_list = [""]
         # Add the needed functions assigned from the CustomEditor
         self.set_theme = functools.partial(CustomEditor.set_theme, self)
+        self.set_line = functools.partial(CustomEditor.set_line, self)
+        self.set_lines = functools.partial(CustomEditor.set_lines, self)
         self.toggle_comment_uncomment = functools.partial(CustomEditor.toggle_comment_uncomment, self)
         self.comment_line = functools.partial(CustomEditor.comment_line, self)
         self.comment_lines = functools.partial(CustomEditor.comment_lines, self)
@@ -9103,6 +9399,9 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         self.set_lexer()
         #Set the initial autocompletions
         self.update_autocompletions()
+        #Setup the LineList object that will hold the custom editor text as a list of lines
+        self.line_list = components.LineList(self, self.text())
+        self.textChanged.connect(self.text_changed)
 
     def _filter_keypress(self, key_event):
         """Filter keypress for appropriate action"""
@@ -9190,6 +9489,31 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
             #Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
     
+    def delete_context_menu(self):
+        # Clean up the context menu
+        if self.context_menu != None:
+            self.context_menu.hide()
+            for b in self.context_menu.button_list:
+                b.setParent(None)
+            self.context_menu.setParent(None)
+            self.context_menu = None
+    
+    def contextMenuEvent(self, event):
+        # Built-in context menu
+        self.delete_context_menu()
+        # Show a context menu according to the current lexer
+        offset = (event.x(), event.y())
+        self.context_menu = helper_forms.ContextMenu(
+            self, self.parent, offset
+        )
+        height = self.size().height()
+        if height < 100:
+            self.context_menu.create_horizontal_multiline_repl_buttons()
+        else:
+            self.context_menu.create_multiline_repl_buttons()
+        self.context_menu.show()
+        event.accept()
+    
     def set_lexer(self):
         if self.lexer() != None:
             self.lexer().setParent(None)
@@ -9197,6 +9521,10 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         # Create the new lexer
         lexer = lexers.Python()
         lexer.setParent(self)
+        result = lexers.get_comment_style_for_lexer(lexer)
+        lexer.open_close_comment_style = result[0]
+        lexer.comment_string = result[1]
+        lexer.end_comment_string = result[2]
         #Set the lexers default font
         lexer.setDefaultFont(self.default_font)
         #Set the lexer with the initial autocompletions
@@ -9209,6 +9537,11 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         #Set the theme
         self.set_theme(data.theme)
         self.lexer().set_theme(data.theme)
+    
+    def text_changed(self):
+        """Event that fires when the scintilla document text changes"""
+        #Update the line list
+        self.line_list.update_text_to_list(self.text())
         
     
     """
@@ -9290,364 +9623,6 @@ class FunctionWheelOverlay(data.QGroupBox):
             self.extra_button       = input_extra_button
             self.check_text_differ  = input_check_text_differ
             self.tool_tip           = input_tool_tip
-    
-    class CustomButton(data.QLabel):
-        """
-        Custom button used for displaying and executing Ex.Co. functions
-        """
-        #Class variables
-        parent              = None
-        group_box_parent    = None
-        main_form           = None
-        stored_pixmap       = None
-        stored_font         = None
-        stored_hex          = None
-        function            = None
-        function_text       = None
-        stored_opacity      = 0.0
-        focus_last_widget   = True
-        no_tab_focus_disable       = False
-        no_document_focus_disable  = True
-        check_last_tab_type = False
-        check_text_differ   = None
-        tool_tip            = None
-        #Class constants
-        OPACITY_LOW         = 0.5
-        OPACITY_HIGH        = 1.0
-        
-        
-        def __init__(self, 
-                     parent, 
-                     main_form,
-                     input_pixmap, 
-                     input_function=None, 
-                     input_function_text="", 
-                     input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
-                                ), 
-                     input_focus_last_widget=data.HexButtonFocus.NONE, 
-                     input_no_tab_focus_disable=False, 
-                     input_no_document_focus_disable=True, 
-                     input_check_last_tab_type=False, 
-                     input_check_text_differ=False, 
-                     input_tool_tip=None):
-            #Initialize superclass
-            super().__init__(parent)
-            #Store the reference to the parent
-            self.parent = parent
-            #Store the reference to the main form
-            self.main_form = main_form
-            #Store the reference to the group box that holds the parent
-            #(the parent of the parent)
-            self.group_box_parent = parent.parent
-            #Store the main function image
-            self.stored_pixmap = input_pixmap
-            #Store the hex edge image
-            self.stored_hex = data.PyQt.QtGui.QPixmap(
-                os.path.join(
-                    data.resources_directory, 
-                    "various/hex-button-edge.png"
-                )
-            )
-            #Store the function that will be executed on the click event
-            self.function = input_function
-            #Store the function text
-            self.function_text = input_function_text
-            #Set the attribute that will be check if focus update is needed
-            #when the custom button executes its function
-            self.focus_last_widget = input_focus_last_widget
-            #Set the attribute that checks if any tab is focused
-            self.no_tab_focus_disable = input_no_tab_focus_disable
-            #Set the attribute that will be check if button will be disabled
-            #if there is no focused document tab
-            self.no_document_focus_disable = input_no_document_focus_disable
-            #Set checking the save state stored in the main form
-            self.check_last_tab_type = input_check_last_tab_type
-            #Set checking for if the focused tab is a text differer
-            self.check_text_differ  = input_check_text_differ
-            #Set the font that will be used with the button
-            self.stored_font = input_font
-            #Enable mouse move events
-            self.setMouseTracking(True)
-            #Set the image for displaying
-            self.setPixmap(input_pixmap)
-            #Image should scale to the button size
-            self.setScaledContents(True)
-            # Set the button mask, which sets the button area to the shape of
-            # the button image instead of a rectangle
-            self.setMask(self.stored_hex.mask())
-            #Set the initial opacity to low
-            self._set_opacity(self.OPACITY_LOW)
-            #Set the tooltip if it was set
-            if input_tool_tip != None:
-                self.setToolTip(input_tool_tip)
-
-        def _set_opacity(self, input_opacity):
-            """Set the opacity of the stored QPixmap image and display it"""
-            #Store the opacity
-            self.stored_opacity = input_opacity
-            #Create and initialize the QImage from the stored QPixmap
-            button_image = self.stored_pixmap
-            hex_image = self.stored_hex
-            image = data.PyQt.QtGui.QImage(
-                hex_image.size(), 
-                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
-            )
-            image.fill(data.PyQt.QtCore.Qt.transparent)
-            #Create and initialize the QPainter that will manipulate the QImage
-            button_painter = data.PyQt.QtGui.QPainter(image)
-            button_painter.setOpacity(input_opacity)
-            button_painter.drawPixmap(18, 13, button_image)
-            button_painter.end()
-            #Display the manipulated image
-            self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
-            # Set the button mask, which sets the button area to the shape of
-            # the button image instead of a rectangle
-            self.setMask(self.stored_hex.mask())
-        
-        def _set_opacity_with_hex_edge(self, input_opacity):
-            """
-            Set the opacity of the stored QPixmap image and display it
-            """
-            # Store the opacity
-            self.stored_opacity = input_opacity
-            # Create and initialize the QImage from the stored QPixmap
-            button_image = self.stored_pixmap
-            hex_image = self.stored_hex
-            image = data.PyQt.QtGui.QImage(
-                hex_image.size(), 
-                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
-            )
-            image.fill(data.PyQt.QtCore.Qt.transparent)
-            # Create and initialize the QPainter that will manipulate the QImage
-            button_painter = data.PyQt.QtGui.QPainter(image)
-            button_painter.setCompositionMode(data.PyQt.QtGui.QPainter.CompositionMode_Source)
-            button_painter.setOpacity(input_opacity)
-            button_painter.drawPixmap(0, 0, hex_image)
-            button_painter.drawPixmap(18, 13, button_image)
-            button_painter.end()
-            # Display the manipulated image
-            self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
-            # Set the button mask, which sets the button area to the shape of
-            # the button image instead of a rectangle
-            self.setMask(self.stored_hex.mask())
-            
-        
-        def mousePressEvent(self, event):
-            """Overloaded widget click event"""
-            #Execute the superclass mouse click event first
-            super().mousePressEvent(event)
-            #Execute the function if it was initialized
-            if self.function != None:
-                try:
-                    #Set focus to the last focused widget stored on the main form
-                    if self.focus_last_widget == data.HexButtonFocus.TAB:
-                        self.main_form.last_focused_widget.currentWidget().setFocus()
-                    elif self.focus_last_widget == data.HexButtonFocus.WINDOW:
-                        self.main_form.last_focused_widget.setFocus()
-                    #Store the executed function for next cursor placement
-                    self.main_form.view.last_executed_function_text = self.function_text
-                    #Execute the buttons stored function
-                    self.function()
-                except:
-                    traceback.print_exc()
-                    message = "You need to focus one of the editor windows first!"
-                    self.main_form.display.repl_display_message(
-                        message, 
-                        message_type=data.MessageType.ERROR
-                    )
-                #Close the function wheel
-                self.parent.hide()
-        
-        def mouseMoveEvent(self, event):
-            """Overloaded mouse move event"""
-            super().mouseMoveEvent(event)
-            if self.isEnabled() == True:
-                self.highlight()
-        
-        def enterEvent(self, event):
-            """Overloaded widget enter event"""
-            super().enterEvent(event)
-            #Bring the widget to the front of the Z-axis stack
-            self.raise_()
-            #Highlight the widget only if it's enabled
-            if self.isEnabled() == True:
-                self.highlight()
-        
-        def leaveEvent(self, event):
-            """Overloaded widget leave event"""
-            super().leaveEvent(event)
-            #Dim the widget only if it's enabled
-            if self.isEnabled() == True:
-                self.dim()
-        
-        def dim(self, clear_hex_edge=False):
-            """Set the buttons opacity to low and clear the function text"""
-            #Set the opacity to low
-            if clear_hex_edge == True:
-                self._set_opacity(self.OPACITY_LOW)
-            else:
-                self._set_opacity_with_hex_edge(self.OPACITY_LOW)
-            #Clear the text in the parent display label
-            self.parent.display("", self.stored_font)
-        
-        def highlight(self):
-            """Set the buttons opacity to high and display the buttons function text"""
-            #Set the opacity to full
-            self._set_opacity_with_hex_edge(self.OPACITY_HIGH)
-            #Display the stored function text
-            self.parent.display(self.function_text, self.stored_font)
-    
-    class DoubleButton(CustomButton):
-        """
-        A CustomButton with an extra button added to itself,
-        used for when double functionality is needed, for example when
-        a function has a version with or without a dialog window.
-        """
-        #The extra button reference
-        parent                      = None
-        main_form                   = None
-        extra_button                = None
-        extra_button_size_factor    = 1/3
-        extra_button_position       = data.PyQt.QtCore.QPoint(0, 0)
-        extra_button_stored_opacity = None
-        extra_button_stored_pixmap  = None
-        extra_button_function       = None
-        extra_button_function_text  = None
-        #Class constants
-        OPACITY_LOW                 = 0.5
-        OPACITY_HIGH                = 1.0
-        
-        def init_extra_button(self, 
-                              parent, 
-                              main_form, 
-                              input_extra_pixmap, 
-                              input_extra_function=None, 
-                              input_extra_function_text=""):   
-            #Store the parent and main form references
-            self.parent     = parent
-            self.main_form  = main_form
-            #Initialize the extra button
-            self.extra_button = data.QLabel(self)
-            width   = int(self.geometry().width() * self.extra_button_size_factor)
-            height  = int(self.geometry().height() * self.extra_button_size_factor)
-            self.extra_button_position = data.PyQt.QtCore.QPoint(
-                                            self.geometry().width()*2/3-width, 
-                                            self.geometry().height()*1/4
-                                         )
-            rectangle   = data.PyQt.QtCore.QRect(self.extra_button_position, data.PyQt.QtCore.QSize(width, height))
-            self.extra_button.setGeometry(rectangle)
-            self.extra_button_stored_pixmap = input_extra_pixmap
-            self.extra_button.setPixmap(input_extra_pixmap)
-            self.extra_button.setScaledContents(True)
-            #Store the function options
-            self.extra_button_function      = input_extra_function
-            self.extra_button_function_text = input_extra_function_text
-            #Set the extra button opacity to low
-            self._set_extra_button_opacity(self.OPACITY_LOW)
-            #Overridden the extra buttons events
-            self.extra_button.mousePressEvent   = self.extra_button_click
-            self.extra_button.enterEvent        = self.extra_button_enter_event
-            self.extra_button.leaveEvent        = self.extra_button_leave_event
-        
-        def extra_button_click(self, event):
-            """mousePressEvent for the extra button"""
-            #Execute the function if it was initialized
-            if self.extra_button_function != None:
-                try:
-                    #Set focus to the last focused widget stored on the main form
-                    if self.focus_last_widget == data.HexButtonFocus.TAB:
-                        self.main_form.last_focused_widget.currentWidget().setFocus()
-                    elif self.focus_last_widget == data.HexButtonFocus.WINDOW:
-                        self.main_form.last_focused_widget.setFocus()
-                    #Store the executed function for next cursor placement
-                    self.main_form.view.last_executed_function_text = self.function_text
-                    #Execute the buttons stored function
-                    self.extra_button_function()
-                except Exception as ex:
-                    print(ex)
-                    message = "You need to focus one of the editor windows first!"
-                    self.main_form.display.repl_display_message(
-                        message, 
-                        message_type=data.MessageType.ERROR
-                    )
-                #Close the function wheel
-                self.parent.hide()
-        
-        def extra_button_enter_event(self, event):
-            """Overloaded widget enter event"""
-            #Check if the button is enabled
-            if self.isEnabled() == True:
-                self._set_extra_button_opacity(self.OPACITY_HIGH)
-                #Display the stored extra buttons function text
-                extra_button_font = data.PyQt.QtGui.QFont(
-                    'Courier', 
-                    self.stored_font.pointSize()-2, 
-                    weight=data.PyQt.QtGui.QFont.Bold
-                )
-                self.parent.display(
-                    self.extra_button_function_text, 
-                    extra_button_font
-                )
-        
-        def extra_button_leave_event(self, event):
-            """Overloaded widget enter event"""
-            #Check if the button is enabled
-            if self.isEnabled() == True:
-                self._set_extra_button_opacity(self.OPACITY_LOW)
-                #Clear the function text
-                extra_button_font = data.PyQt.QtGui.QFont(
-                    'Courier', 
-                    self.stored_font.pointSize()-2, 
-                    weight=data.PyQt.QtGui.QFont.Bold
-                )
-                self.parent.display(
-                    "", 
-                    extra_button_font
-                )
-        
-        def extra_button_enable(self):
-            """Hide and disable the extra button"""
-            self.extra_button.setVisible(True)
-            self.extra_button.setEnabled(True)
-        
-        def extra_button_disable(self):
-            """Hide and disable the extra button"""
-            self.extra_button.setVisible(False)
-            self.extra_button.setEnabled(False)
-            self._set_extra_button_opacity(self.OPACITY_LOW)
-        
-        def resizeEvent(self, event):
-            """Overridden resize event"""
-            #Execute the superclass resize function
-            super().resizeEvent(event)
-            #Update the extra button geometry
-            width = int(self.geometry().width() * self.extra_button_size_factor)
-            height = int(self.geometry().height() * self.extra_button_size_factor)
-            rectangle   = data.PyQt.QtCore.QRect(
-                            self.extra_button_position, 
-                            data.PyQt.QtCore.QSize(width, height)
-                          )
-            self.extra_button.setGeometry(rectangle)
-        
-        def _set_extra_button_opacity(self, input_opacity):
-            """Set the opacity of the extra button"""
-            #Store the opacity
-            self.extra_button_stored_opacity = input_opacity
-            #Create and initialize the QImage from the stored QPixmap
-            button_image = self.extra_button_stored_pixmap
-            image = data.PyQt.QtGui.QImage(
-                button_image.size(), 
-                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
-            )
-            image.fill(data.PyQt.QtCore.Qt.transparent)
-            #Create and initialize the QPainter that will manipulate the QImage
-            button_painter = data.PyQt.QtGui.QPainter(image)
-            button_painter.setOpacity(input_opacity)
-            button_painter.drawPixmap(0, 0, button_image)
-            button_painter.end()
-            #Display the manipulated image
-            self.extra_button.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
 
     #Class variables
     parent                  = None
@@ -9687,7 +9662,7 @@ class FunctionWheelOverlay(data.QGroupBox):
                 data.function_wheel_image
             )
         )
-        self.picture    = data.QLabel(self)
+        self.picture = data.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())
         self.picture.setScaledContents(True)
@@ -9790,7 +9765,7 @@ class FunctionWheelOverlay(data.QGroupBox):
             self.ButtonInfo(
                 "button_7", 
                 (109, 26, 68, 60), 
-                "tango_icons/delete-end-line_32x32.png", 
+                "tango_icons/delete-end-line.png", 
                 form.menubar_functions["delete_end_of_line"], 
                 "Delete line\nending", 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
@@ -9798,7 +9773,7 @@ class FunctionWheelOverlay(data.QGroupBox):
             self.ButtonInfo(
                 "button_8", 
                 (63, 0, 68, 60), 
-                "tango_icons/delete-start-line_32x32.png", 
+                "tango_icons/delete-start-line.png", 
                 form.menubar_functions["delete_start_of_line"], 
                 "Delete line\nbeginning", 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
@@ -10113,7 +10088,7 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "button_user_funcs_reload", 
                 (64, 154, 68, 60), 
                 "tango_icons/file-user-funcs-reload.png", 
-                form.menubar_functions["reload_user_func_file"], 
+                form.menubar_functions["import_user_functions"], 
                 "Reload User\nFunctions", 
                 input_no_document_focus_disable=False, 
             ),
@@ -10475,20 +10450,20 @@ class FunctionWheelOverlay(data.QGroupBox):
         for button in hex_button_list:
             #Initialize the custom hex buttom
             if button.extra_button != None:
-                init_button = self.DoubleButton(
-                                self, 
-                                self.main_form, 
-                                input_pixmap=functions.create_pixmap(button.pixmap), 
-                                input_function=button.function, 
-                                input_function_text=button.function_text, 
-                                input_font=button.font, 
-                                input_focus_last_widget=button.focus_last_widget, 
-                                input_no_tab_focus_disable=button.no_tab_focus_disable, 
-                                input_no_document_focus_disable=button.no_document_focus_disable, 
-                                input_check_last_tab_type=button.check_last_tab_type, 
-                                input_check_text_differ=button.check_text_differ, 
-                                input_tool_tip=button.tool_tip, 
-                            )
+                init_button = helper_forms.DoubleButton(
+                    self, 
+                    self.main_form, 
+                    input_pixmap=functions.create_pixmap(button.pixmap), 
+                    input_function=button.function, 
+                    input_function_text=button.function_text, 
+                    input_font=button.font, 
+                    input_focus_last_widget=button.focus_last_widget, 
+                    input_no_tab_focus_disable=button.no_tab_focus_disable, 
+                    input_no_document_focus_disable=button.no_document_focus_disable, 
+                    input_check_last_tab_type=button.check_last_tab_type, 
+                    input_check_text_differ=button.check_text_differ, 
+                    input_tool_tip=button.tool_tip, 
+                )
                 init_button.init_extra_button(
                     self, 
                     self.main_form, 
@@ -10497,7 +10472,7 @@ class FunctionWheelOverlay(data.QGroupBox):
                     input_extra_function_text=button.extra_button[2], 
                 )
             else:
-                init_button = self.CustomButton(
+                init_button = helper_forms.CustomButton(
                     self, 
                     self.main_form, 
                     input_pixmap=functions.create_pixmap(button.pixmap), 
@@ -10523,13 +10498,13 @@ class FunctionWheelOverlay(data.QGroupBox):
         """Check the hex function button states when displaying the function wheel"""
         for child_widget in self.children():
             #Skip the child widget if it is not a hex or double button
-            if (isinstance(child_widget, self.CustomButton) == False and
-                isinstance(child_widget, self.DoubleButton) == False):
+            if (isinstance(child_widget, helper_forms.CustomButton) == False and
+                isinstance(child_widget, helper_forms.DoubleButton) == False):
                 continue
             #First display and enable the hex button
             child_widget.setVisible(True)
             child_widget.setEnabled(True)
-            if isinstance(child_widget, self.DoubleButton) == True:
+            if isinstance(child_widget, helper_forms.DoubleButton) == True:
                 child_widget.extra_button_enable()
             #If the button needs to focus on the last focused widget,
             #check if the last focused widget is valid
@@ -10595,14 +10570,14 @@ class FunctionWheelOverlay(data.QGroupBox):
         #First clear the hex edge from all of the buttons
         for child_widget in self.children():
             #Skip the child widget if it is not a hex or double button
-            if (isinstance(child_widget, self.CustomButton) == False and
-                isinstance(child_widget, self.DoubleButton) == False):
+            if (isinstance(child_widget, helper_forms.CustomButton) == False and
+                isinstance(child_widget, helper_forms.DoubleButton) == False):
                 continue
             #Dim the button and clear the hex edge
             child_widget.dim(clear_hex_edge=True)
             #Hide the button, fixes a leaveEvent issue with the "Open File" function.
             child_widget.setVisible(False)
-            if isinstance(child_widget, self.DoubleButton) == True:
+            if isinstance(child_widget, helper_forms.DoubleButton) == True:
                 child_widget.extra_button_disable()
         #Disable the function wheel
         self.setVisible(False)
@@ -10626,7 +10601,10 @@ class FunctionWheelOverlay(data.QGroupBox):
         geo = self.geometry()
         new_width = int(geo.width() * width_scale_factor)
         new_height = int(geo.height() * height_scale_factor)
-        rectangle   = data.PyQt.QtCore.QRect(geo.topLeft(), data.PyQt.QtCore.QSize(new_width, new_height))
+        rectangle = data.PyQt.QtCore.QRect(
+            geo.topLeft(), 
+            data.PyQt.QtCore.QSize(new_width, new_height)
+        )
         self.setGeometry(rectangle)
         #Scale all of the function wheel child widgets
         for button in self.children():
@@ -10663,7 +10641,7 @@ class FunctionWheelOverlay(data.QGroupBox):
             return
         #Loop through the buttons and check its function
         for button in self.children():
-            if isinstance(button, self.CustomButton):
+            if isinstance(button, helper_forms.CustomButton):
                 #Compare the stored function text with the buttons function text
                 if button.function_text == last_function_text:
                     #Only higlight the button if it is enabled

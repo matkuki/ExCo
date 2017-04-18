@@ -3,7 +3,7 @@
 
 """
 Copyright (c) 2013-2017 Matic Kukovec. 
-Release under the GNU GPL3 license.
+Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
@@ -60,7 +60,10 @@ def get_lexer_from_file_type(file_type):
     current_file_type = file_type
     lexer = None
     if file_type == "python":
-        lexer = CustomPython()
+        if nim_found == True:
+            lexer = CustomPython()
+        else:
+            lexer = Python()
     elif file_type == "cython":
         lexer = Cython()
     elif file_type == "c":
@@ -1224,7 +1227,7 @@ class Nim(data.PyQt.Qsci.QsciLexerCustom):
                     multi_doc_commenting = True
             #Style the tokens accordingly
             for i, token in enumerate(tokens):
-    #            print(str(token) + "  " + str(i))
+#                print(str(token) + "  " + str(i))
                 if commenting == True:
                     #Continuation of comment
                     setStyling(token[1], COM)

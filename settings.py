@@ -3,7 +3,7 @@
 
 """
 Copyright (c) 2013-2017 Matic Kukovec. 
-Release under the GNU GPL3 license.
+Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
@@ -57,8 +57,12 @@ class SettingsFileManipulator():
     application_directory           = ""
     resources_directory             = "resources/"
     level_spacing                   = "    "
+    max_number_of_recent_files      = 10
     recent_files                    = []
     stored_sessions                 = []
+    context_menu_functions          = {}
+    error_lock                      = False
+    # General settings
     main_window_side                = data.MainWindowSide.RIGHT
     theme                           = themes.Air
     
@@ -68,8 +72,11 @@ class SettingsFileManipulator():
         "",
         "# General Settings",  
         "main_window_side = 0", 
-        "theme = themes.Air", 
-        "", 
+        "theme = themes.Air",
+        "",
+        "# Custom context menu functions", 
+        "context_menu_functions = {}",
+        "",
         "# Recent files", 
         "recent_files = []", 
         "", 
@@ -107,25 +114,54 @@ class SettingsFileManipulator():
         #Close the file handle
         file.close()
     
-    def save_settings(self, main_window_side, theme):
-        """Save all settings to the settings file"""
+    def _parse_sessions(self, in_sessions):
+        parsed_sessions = []
+        for session in in_sessions:
+            current_session = Session(session)
+            current_session.group = in_sessions[session]['Group']
+            current_session.main_files = in_sessions[session]['Main window files']
+            current_session.upper_files = in_sessions[session]['Upper window files']
+            current_session.lower_files = in_sessions[session]['Lower window files']
+            parsed_sessions.append(current_session)
+        return parsed_sessions
+    
+    def write_settings_file(self,
+                            main_window_side,
+                            theme,
+                            recent_files,
+                            stored_sessions,
+                            context_menu_functions):
         settings_lines = []
         settings_lines.append("# Needed imports")
         settings_lines.append("import themes")
         settings_lines.append("")
         settings_lines.append("# General Settings")
         settings_lines.append("main_window_side = {}".format(main_window_side))
-        settings_lines.append("theme = {}".format(data.theme.__name__))
+        settings_lines.append("theme = {}".format(theme.__name__))
         settings_lines.append("")
+        # Recent file list
         settings_lines.append("# Recent files")
         settings_lines.append("recent_files = [")
-        for file in self.recent_files:
+        for file in recent_files:
             settings_lines.append("    '{}',".format(file))
         settings_lines.append("]")
         settings_lines.append("")
+        # Custom context menu functions
+        settings_lines.append("# Custom context menu functions")
+        settings_lines.append("context_menu_functions = {")
+        for func_type in context_menu_functions:
+            settings_lines.append("    '{}': {{".format(func_type))
+            for func in context_menu_functions[func_type]:
+                settings_lines.append("        {}: '{}',".format(
+                    func, context_menu_functions[func_type][func])
+                )
+            settings_lines.append("    },")
+        settings_lines.append("}")
+        settings_lines.append("")
+        # Sessions
         settings_lines.append("# Sessions")
         settings_lines.append("sessions = {")
-        for session in self.stored_sessions:
+        for session in stored_sessions:
             settings_lines.append("    '{}': {{".format(session.name))
             settings_lines.append("        'Group': {},".format(repr(session.group)))
             settings_lines.append("        'Main window files': [")
@@ -145,30 +181,85 @@ class SettingsFileManipulator():
         #Save the file to disk
         self.create_settings_file(settings_lines)
     
-    def load_settings(self):
-        """Load all setting from the settings file"""
+    def save_settings(self, 
+                      main_window_side, 
+                      theme,
+                      context_menu_functions=None):
+        """Save all settings to the settings file"""
+        if self.error_lock == True:
+            return
+        if context_menu_functions == None:
+            context_menu_functions = self.context_menu_functions
+        self.write_settings_file(
+            main_window_side,
+            theme,
+            self.recent_files,
+            self.stored_sessions,
+            context_menu_functions
+        )
+    
+    def update_recent_files(self):
+        """Update only the recent file list in settings file"""
+        if self.error_lock == True:
+            return
         # Import the init file as a python module
         init_module = imp.load_source(
             self.settings_filename, 
             self.settings_filename_with_path
         )
-        # Main window side
-        self.main_window_side = init_module.main_window_side
-        # Theme
-        self.theme = init_module.theme
-        # Recent files
-        self.recent_files = init_module.recent_files
-        # Sessions
-        self.stored_sessions = []
-        for session in init_module.sessions:
-            current_session = Session(session)
-            current_session.group = init_module.sessions[session]['Group']
-            current_session.main_files = init_module.sessions[session]['Main window files']
-            current_session.upper_files = init_module.sessions[session]['Upper window files']
-            current_session.lower_files = init_module.sessions[session]['Lower window files']
-            self.stored_sessions.append(current_session)
+        # Update only the recent file list
+        stored_sessions = self._parse_sessions(init_module.sessions)
+        # Save the updated settings
+        self.write_settings_file(
+            init_module.main_window_side,
+            init_module.theme,
+            self.recent_files,
+            stored_sessions,
+            self.context_menu_functions
+        )
+    
+    def load_settings(self):
+        """Load all setting from the settings file"""
+        try:
+            # Import the init file as a python module
+            init_module = imp.load_source(
+                self.settings_filename, 
+                self.settings_filename_with_path
+            )
+            # Main window side
+            self.main_window_side = init_module.main_window_side
+            # Theme
+            self.theme = init_module.theme
+            # Recent files
+            self.recent_files = init_module.recent_files
+            # Sessions
+            self.stored_sessions = self._parse_sessions(init_module.sessions)
+            # Load custom context menu functions
+            if hasattr(init_module, "context_menu_functions"):
+                self.context_menu_functions = init_module.context_menu_functions
+            else:
+                self.context_menu_functions = {}
+            # Return success
+            return True
+        except:
+            # Set the default settings values
+            self.main_window_side = data.MainWindowSide.LEFT
+            self.theme = themes.Air
+            self.recent_files = []
+            self.stored_sessions = []
+            self.context_menu_functions = {}
+            # Set the error flag
+            self.error_lock = True
+            # Return error
+            return False
+        
 
-    def add_session(self, session_name, session_group, main_files, upper_files, lower_files):
+    def add_session(self, 
+                    session_name, 
+                    session_group, 
+                    main_files, 
+                    upper_files, 
+                    lower_files):
         """Add a new session to the stored session list"""
         #Create the new session object
         session = Session(session_name)
@@ -186,7 +277,9 @@ class SettingsFileManipulator():
                 #Replace the session
                 self.stored_sessions[i] = session
                 #Save the new settings
-                self.save_settings(self.main_window_side, self.theme)
+                self.save_settings(
+                    self.main_window_side, self.theme
+                )
                 session_found = True
         #Check if the session was already found
         if session_found == False:
@@ -230,23 +323,26 @@ class SettingsFileManipulator():
 
     def add_recent_file(self, new_file):
         """Add a new file to the recent file list"""
-        #Replace back-slashes to forward-slashes on Windows
+        # Replace back-slashes to forward-slashes on Windows
         if platform.system() == "Windows":
-            new_file    = new_file.replace("\\", "/")
-        #Check recent files list length
-        while len(self.recent_files) > 10:
-            #The recent files list is to long
+            new_file = new_file.replace("\\", "/")
+        # Check recent files list length
+        while len(self.recent_files) > self.max_number_of_recent_files:
+            # The recent files list is to long
             self.recent_files.pop(0)
-        #Check if he new file is already in the list
+        # Check if he new file is already in the list
         if new_file in self.recent_files:
-            #Remove the old file with the same name as the new file from the list
+            # Check if the file is already at the top
+            if self.recent_files.index(new_file) == (self.max_number_of_recent_files-1):
+                return
+            # Remove the old file with the same name as the new file from the list
             self.recent_files.pop(self.recent_files.index(new_file))
-            #Add the new file to the end of the list
+            # Add the new file to the end of the list
             self.recent_files.append(new_file)
         else:
-            #The new file is not in the list, append it to the end of the list
+            # The new file is not in the list, append it to the end of the list
             self.recent_files.append(new_file)
-        #Save the new settings
-        self.save_settings(self.main_window_side, data.theme)
+        # Save the new settings
+        self.update_recent_files()
 
 
