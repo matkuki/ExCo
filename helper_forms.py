@@ -3633,16 +3633,6 @@ class ContextMenu(data.QGroupBox):
             if button == data.PyQt.QtCore.Qt.LeftButton:
                 # Execute the function if it was initialized
                 if self.function != None:
-                    try:
-                        # Execute the buttons stored function
-                        self.function()
-                    except:
-                        traceback.print_exc()
-                        message = "You need to focus one of the editor windows first!"
-                        self.main_form.display.repl_display_message(
-                            message, 
-                            message_type=data.MessageType.ERROR
-                        )
                     if self.main_form.click_drag_action != None:
                         function_name = self.main_form.click_drag_action.function.__name__
 #                        print(self.number, function_name)
@@ -3657,6 +3647,17 @@ class ContextMenu(data.QGroupBox):
                         # Reset cursor and stored action
                         data.application.restoreOverrideCursor()
                         self.main_form.click_drag_action = None
+                    else:
+                        try:
+                            # Execute the buttons stored function
+                            self.function()
+                        except:
+                            traceback.print_exc()
+                            message = "You need to focus one of the editor windows first!"
+                            self.main_form.display.repl_display_message(
+                                message, 
+                                message_type=data.MessageType.ERROR
+                            )
                     # Close the function wheel
                     self.parent.hide()
                     event.accept()
