@@ -60,6 +60,7 @@ Main window and its supporting objects
 class MainWindow(data.QMainWindow):
     """Main form that holds all Qt objects"""
     # Define main form control references
+    name                    = "Main Window"
     main_window             = None  # Main window
     upper_window            = None  # Upper sidebar
     lower_window            = None  # Lower sidebar
@@ -117,8 +118,6 @@ class MainWindow(data.QMainWindow):
     # Last focused widget and tab needed by the function wheel overlay
     last_focused_widget     = None
     last_focused_tab        = None
-    # Click&Drag action storage reference for the menubar
-    click_drag_action       = None
     """Namespace references for grouping functionality"""
     settings                = None
     sessions                = None
@@ -142,6 +141,7 @@ class MainWindow(data.QMainWindow):
         self.display    = self.Display(self)
         self.bookmarks  = self.Bookmarks(self)
         # Set the name of the main window
+        self.name = "Main Window"
         self.setObjectName("Form")
         # Initialize the main window 
         self.setWindowTitle("Ex.Co. " + data.application_version)
@@ -411,6 +411,8 @@ class MainWindow(data.QMainWindow):
         if event.button() != data.PyQt.QtCore.Qt.RightButton:
             if self.view.function_wheel_overlay != None:
                 self.view.hide_function_wheel()
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
     
     def _window_filter_keypress(self, key_event):
         """Filter keypress for appropriate action"""
@@ -558,65 +560,8 @@ class MainWindow(data.QMainWindow):
         This is a very long function that should be trimmed sometime!
         """
         self.menubar = data.QMenuBar(self)
-        # Object for connecting to the menubar events
-        class ClickEventFilter(data.PyQt.QtCore.QObject):
-            # Timers
-            click_timer = None
-            reset_timer = None
-            # Overridden filter method
-            def eventFilter(self, receiver, event):
-                if(event.type() == data.PyQt.QtCore.QEvent.MouseButtonPress):
-                    cursor = data.PyQt.QtGui.QCursor.pos()
-                    cursor = cursor - receiver.pos()
-                    if receiver.actionAt(cursor) != None:
-                        action = receiver.actionAt(cursor)
-#                        print(action.text())
-                        # Create the click&drag detect timer
-                        def click_and_drag():
-                            def hide_parents(obj):
-                                obj.hide()
-                                if obj.parent() != None and (isinstance(obj.parent(), data.QMenu)):
-                                    hide_parents(obj.parent())
-                            hide_parents(receiver)
-                            self.click_timer = None
-                            if hasattr(action, "pixmap"):
-                                cursor = data.PyQt.QtGui.QCursor(
-                                    action.pixmap
-                                )
-                                data.application.setOverrideCursor(cursor)
-                                self.parent().click_drag_action = action
-                                # Create the reset timer
-                                def reset():
-                                    data.application.restoreOverrideCursor()
-                                    self.reset_timer = None
-                                    self.parent().click_drag_action = None
-                                if self.reset_timer != None:
-                                    self.reset_timer.stop()
-                                self.reset_timer = data.PyQt.QtCore.QTimer(self)
-                                self.reset_timer.setInterval(10000)
-                                self.reset_timer.setSingleShot(True)
-                                self.reset_timer.timeout.connect(reset)
-                                self.reset_timer.start()
-                                self.parent().display.repl_display_message(
-                                    "The cursor icon will be reset in 10 seconds.", 
-                                    message_type=data.MessageType.WARNING
-                                )
-                        self.click_timer = data.PyQt.QtCore.QTimer(self)
-                        self.click_timer.setInterval(400)
-                        self.click_timer.setSingleShot(True)
-                        self.click_timer.timeout.connect(click_and_drag)
-                        self.click_timer.start()
-                elif(event.type() == data.PyQt.QtCore.QEvent.MouseButtonRelease):
-                    data.application.restoreOverrideCursor()
-                    if self.click_timer != None:
-                        self.click_timer.stop()
-                        self.click_timer = None
-                    if self.reset_timer != None:
-                        self.reset_timer.stop()
-                        self.parent().click_drag_action = None
-                return super().eventFilter(receiver, event)
         # Click filter for the menubar menus
-        click_filter = ClickEventFilter(self)
+        click_filter = components.ActionFilter(self)
         # Nested function for creating an action
         def create_action(name, key_combo, status_tip, icon, function, enabled=True):
             action = data.QAction(name, self)
@@ -2216,9 +2161,13 @@ class MainWindow(data.QMainWindow):
                 
             if new_tab != None:
                 try:
-                    #Read the whole file and display the text
+                    # Read the whole file and display the text
                     file_text = functions.read_file_to_string(in_file)
-                    new_tab.setText(file_text)
+                    # Remove the NULL characters
+                    if "\0" in file_text:
+                        new_tab.append(file_text)
+                    else:
+                        new_tab.setText(file_text)
                 except MemoryError:
                     message = "Insufficient memory to open the file!"
                     self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
@@ -4224,7 +4173,7 @@ class MainWindow(data.QMainWindow):
                 self.parent.statusbar_label_left.setText(statusbar_text)
         
         def repl_display_message(self, 
-                                 message, 
+                                 *message, 
                                  scroll_to_end=True, 
                                  focus_repl_messages=True, 
                                  message_type=None):
@@ -4299,6 +4248,11 @@ class MainWindow(data.QMainWindow):
                 rmt.icon_manipulator.set_icon(rmt, self.repl_messages_icon)
                 rmt.parent.setCornerWidget(parent.repl_messages_tab.corner_widget)
                 rmt.corner_widget.show()
+            # Parse the message arguments
+            if len(message) > 1:
+                message = " ".join(message)
+            else:
+                message = message[0]
             #Check if message is a string class, if not then make it a string
             if message == None:
                 return
@@ -5824,6 +5778,8 @@ class BasicWidget(data.QTabWidget):
             # Clear the cursor positions in the statusbar
             self.parent.display.update_cursor_position()
             data.print_log("Mouse click in: \"" + self.name + "\"")
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
 
     def wheelEvent(self, wheel_event):
         """QScintilla mouse wheel rotate event"""
@@ -6420,6 +6376,8 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
         #Hide the function wheel if it is shown
         if self.main_form.view.function_wheel_overlay != None:
             self.main_form.view.hide_function_wheel()
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
     
     def setFocus(self):
         """Overridden focus event"""
@@ -6861,6 +6819,8 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         # Hide the context menu if it is shown
         if self.context_menu != None:
             self.delete_context_menu()
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
     
     def delete_context_menu(self):
         # Clean up the context menu
@@ -9140,6 +9100,11 @@ class ReplLineEdit(data.QLineEdit):
         #Return the key event
         return data.QLineEdit.keyPressEvent(self, event)
     
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
+    
     def contextMenuEvent(self, event):
         event.accept()
 
@@ -9456,6 +9421,8 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
             # Need to set focus to self or the repl helper doesn't get focused,
             # don't know why?
             self.setFocus()
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
     
     def setFocus(self):
         """Overridden focus event"""

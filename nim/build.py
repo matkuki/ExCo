@@ -21,7 +21,7 @@ p = subprocess.Popen(" & ".join(commands), shell=True)
 p.wait()
 
 shutil.copyfile(
-    "C:/Users/Matic/Desktop/NIMROD/exco_lexers/nim_lexers.pyd",
+    "D:/Domaci_Projekti/ExCoEdit/nim/nim_lexers.pyd",
     "D:/Domaci_Projekti/ExCoEdit/nim_lexers.pyd"
 )
 print("nim_lexers.pyd kopiran.")

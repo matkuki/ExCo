@@ -182,7 +182,7 @@ class TreeDisplayType:
 Various stored settings for global use
 -------------------------------------------
 """
-application_version = "6.3"
+application_version = "6.4"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -325,7 +325,7 @@ line_selection_duplicate_keys = 'Ctrl+D'
 Various global functions and routines
 --------------------------------------
 """
-def print_log(message):
+def print_log(*args, **kwargs):
     """Internal module function that runs the append_message method of the log window"""
     if log_window != None:
-        log_window.append_message(message)
+        log_window.append_message(*args)

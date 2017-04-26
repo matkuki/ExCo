@@ -140,6 +140,8 @@ class SessionGuiManipulator(data.QTreeView):
         data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
         #Set Save/SaveAs buttons in the menubar
         self.parent._set_save_status()
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
     
     def setFocus(self):
         """Overridden focus event"""
@@ -762,6 +764,8 @@ class TreeDisplay(data.QTreeView):
         if event.button() == data.PyQt.QtCore.Qt.RightButton:
             index = self.indexAt(event.pos())
             self._item_click(index)
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
     
     def _item_click(self, model_index):
         if self.tree_display_type == data.TreeDisplayType.FILES:
@@ -2578,6 +2582,8 @@ class TextDiffer(data.QWidget):
         #Hide the function wheel if it is shown
         if self.main_form.view.function_wheel_overlay != None:
             self.main_form.view.hide_function_wheel()
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
     
     def setFocus(self):
         """Overridden focus event"""
@@ -3044,6 +3050,10 @@ Object for showing log messages across all widgets, mostly for debug purposes
 """
 class MessageLogger(data.QWidget):
     """Simple subclass for displaying log messages"""
+    class MessageTextBox(data.QTextEdit): 
+        def contextMenuEvent(self, event):
+            event.accept()
+    
     #Controls and variables of the log window  (class variables >> this means that these variables are shared accross instances of this class)
     displaybox  = None      #QTextEdit that will display log messages
     layout      = None      #The layout of the log window
@@ -3060,7 +3070,7 @@ class MessageLogger(data.QWidget):
         self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint)
         
         #Initialize the display box
-        self.displaybox = data.QTextEdit(self)
+        self.displaybox = MessageLogger.MessageTextBox(self)
         self.displaybox.setReadOnly(True)
         #Make displaybox click/doubleclick event also fire the log window click/doubleclick method
         self.displaybox.mousePressEvent         = self._event_mousepress
@@ -3086,7 +3096,8 @@ class MessageLogger(data.QWidget):
     
     def _event_mousepress(self, mouse_event):
         """Rereferenced/overloaded displaybox click event"""
-        pass
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
     
     def _keypress(self, key_event):
         """Rereferenced/overloaded MessageLogger keypress event"""
@@ -3098,8 +3109,12 @@ class MessageLogger(data.QWidget):
         """Clear all messages from the log display"""
         self.displaybox.clear()
         
-    def append_message(self,  message):
+    def append_message(self, *args, **kwargs):
         """Adds a message as a string to the log display if logging mode is enabled"""
+        if len(args) > 1:
+            message = " ".join(args)
+        else:
+            message = args[0]
         #Check if message is a string class, if not then make it a string
         if isinstance(message, str) == False:
             message = str(message)
@@ -3633,8 +3648,8 @@ class ContextMenu(data.QGroupBox):
             if button == data.PyQt.QtCore.Qt.LeftButton:
                 # Execute the function if it was initialized
                 if self.function != None:
-                    if self.main_form.click_drag_action != None:
-                        function_name = self.main_form.click_drag_action.function.__name__
+                    if components.ActionFilter.click_drag_action != None:
+                        function_name = components.ActionFilter.click_drag_action.function.__name__
 #                        print(self.number, function_name)
                         if self.parent.functions_type == "standard":
                             ContextMenu.standard_buttons[self.number] = function_name
@@ -3644,9 +3659,18 @@ class ContextMenu(data.QGroupBox):
                             ContextMenu.horizontal_buttons[self.number] = function_name
                         elif self.parent.functions_type == "special":
                             ContextMenu.special_buttons[self.number] = function_name
+                        # Show the newly added function
+                        message = "Added function '{}' at button number {}".format(
+                            components.ActionFilter.click_drag_action.text(),
+                            self.number
+                        )
+                        self.main_form.display.repl_display_message(
+                            message, 
+                            message_type=data.MessageType.SUCCESS
+                        )
                         # Reset cursor and stored action
                         data.application.restoreOverrideCursor()
-                        self.main_form.click_drag_action = None
+                        components.ActionFilter.click_drag_action = None
                     else:
                         try:
                             # Execute the buttons stored function

@@ -51,9 +51,9 @@ cdef inline char** to_cstring_array(string_list):
     # Loop through the python list of strings
     for i in range(len(string_list)):
         # Decode the python string to a byte array
-        temp_value = PyUnicode_AsEncodedString(string_list[i], 'utf-8', "strict")
-        # Allocate the current C string on the heap
-        temp_str = <char*>malloc(len(temp_value))
+        temp_str = PyUnicode_AsEncodedString(string_list[i], 'utf-8', "strict")
+        # Allocate the current C string on the heap (+1 is for the termination character)
+        temp_str = <char*>malloc((len(temp_value) * sizeof(char)) + 1)
         # Copy the decoded string into the allocated C string
         strcpy(temp_str, temp_value)
         # Set the reference of the C string in the allocated array at the current index
