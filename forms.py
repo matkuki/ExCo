@@ -194,6 +194,20 @@ class MainWindow(data.QMainWindow):
                 self.create_new()
         # Show the PyQt / QScintilla version in statusbar
         self.statusbar_label_left.setText(data.LIBRARY_VERSIONS)
+        self.display.repl_display_message(
+            "Using: {}".format(data.LIBRARY_VERSIONS),
+        )
+        # Show library data
+        if lexers.cython_found:
+            self.display.repl_display_message(
+                "Cython lexers imported.", 
+                message_type=data.MessageType.SUCCESS
+            )
+        if lexers.nim_found:
+            self.display.repl_display_message(
+                "Nim lexers imported.", 
+                message_type=data.MessageType.SUCCESS
+            )
     
     def _init_statusbar(self):
         self.statusbar  = data.QStatusBar(self)
@@ -1843,6 +1857,21 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/view-line-end.png', 
                 toggle_line_endings
             )
+            def toggle_cursor_line_highlighting():
+                try:
+                    self.get_tab_by_focus().toggle_cursor_line_highlighting()
+                except:
+                    traceback.print_exc()
+                    pass
+            temp_string = 'Toggle the visibility of the line that the cursor is'
+            temp_string += ' on for the currently selected document'
+            toggle_cursor_line_action = create_action(
+                'Toggle cursor line visibility',
+                None, 
+                temp_string, 
+                'tango_icons/edit-show-cursor-line.png', 
+                toggle_cursor_line_highlighting
+            )
             #Add all actions and menus
             view_menu.addAction(function_wheel_toggle_action)
             view_menu.addSeparator()
@@ -1864,6 +1893,7 @@ class MainWindow(data.QMainWindow):
             view_menu.addAction(toggle_edge_action)
             view_menu.addAction(reset_zoom_action)
             view_menu.addAction(toggle_lineend_action)
+            view_menu.addAction(toggle_cursor_line_action)
         #REPL menu
         def construct_repl_menu():
             repl_menu = self.menubar.addMenu("&REPL")
@@ -2165,7 +2195,13 @@ class MainWindow(data.QMainWindow):
                     file_text = functions.read_file_to_string(in_file)
                     # Remove the NULL characters
                     if "\0" in file_text:
+                        # Use append, it does not remove the NULL characters
                         new_tab.append(file_text)
+                        # Display a warning that the text has NULL characters
+                        message = "CAUTION: NULL ('\\0') characters in file:\n'{}'".format(in_file)
+                        self.display.repl_display_message(
+                            message, message_type=data.MessageType.WARNING
+                        )
                     else:
                         new_tab.setText(file_text)
                 except MemoryError:
@@ -2497,6 +2533,7 @@ class MainWindow(data.QMainWindow):
             self.manipulator.save_settings(
                 self.parent.view.main_window_side, 
                 data.theme,
+                data.cursor_line_visible,
                 helper_forms.ContextMenu.get_settings()
             )
             #Display message in statusbar
@@ -6481,6 +6518,8 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     corner_widget           = None
     # Reference to the custom context menu
     context_menu            = None
+    # Visible cursor line
+    cursor_line_visible     = False
     """Namespace references for grouping functionality"""
     hotspots                = None
     bookmarks               = None
@@ -6526,87 +6565,90 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     
     def __init__(self, parent, main_form, file_with_path=None):
         """Initialize the scintilla widget"""
-        #Initialize superclass, from which the current class is inherited,
-        #THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
+        # Initialize superclass, from which the current class is inherited,
+        # THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
         # Initialize components
         self.icon_manipulator = components.IconManipulator()
-        #Set encoding format to UTF-8 (Unicode)
+        # Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
-        #Set font family and size
+        # Set font family and size
         self.setFont(self.default_font)
-        #Set the margin type (0 is by default line numbers, 1 is for non code folding symbols and 2 is for code folding)
+        # Set the margin type (0 is by default line numbers, 1 is for non code folding symbols and 2 is for code folding)
         self.setMarginType(0, data.PyQt.Qsci.QsciScintilla.NumberMargin)
-        #Set margin width and font
+        # Set margin width and font
         self.setMarginWidth(0, "00")
         self.setMarginsFont(self.default_font)
-        #Reset the modified status of the document
+        # Reset the modified status of the document
         self.setModified(False)
-        #Set brace matching
+        # Set brace matching
         self.setBraceMatching(data.PyQt.Qsci.QsciScintilla.SloppyBraceMatch)
         self.setMatchedBraceBackgroundColor(self.brace_color)
-        #Autoindentation enabled when using "Enter" to indent to the same level as the previous line
+        # Autoindentation enabled when using "Enter" to indent to the same level as the previous line
         self.setAutoIndent(True)
-        #Tabs are spaces by default
+        # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
-        #Set tab space indentation width
+        # Set tab space indentation width
         self.setTabWidth(data.tab_width)
-        #Set backspace to delete by tab widths
+        # Set backspace to delete by tab widths
         self.setBackspaceUnindents(True)
-        #Scintilla widget must not accept drag/drop events, the cursor freezes if it does!!!
+        # Scintilla widget must not accept drag/drop events, the cursor freezes if it does!!!
         self.setAcceptDrops(False)
-        #Set line endings to be Unix style ("\n")
+        # Set line endings to be Unix style ("\n")
         self.setEolMode(data.default_eol)
-        #Set the initial zoom factor
+        # Set the initial zoom factor
         self.zoomTo(data.zoom_factor)
-        #Correct the file name if it is unspecified
+        # Correct the file name if it is unspecified
         if file_with_path == None:
             file_with_path = ""
-        #Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
+        # Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
         self.parent     = parent
         self.main_form  = main_form
         self.name       = os.path.basename(file_with_path)
-        #Set save name with path
+        # Set save name with path
         if os.path.dirname(file_with_path) != "":
             self.save_name  = file_with_path
         else:
             self.save_name  = ""
-        #Replace back-slashes to forward-slashes on Windows
+        # Replace back-slashes to forward-slashes on Windows
         if platform.system() == "Windows":
             self.save_name  = self.save_name.replace("\\", "/")
-        #Last directory browsed by the "Open File" and other dialogs
+        # Last directory browsed by the "Open File" and other dialogs
         if self.save_name != "":
             #If save_name was valid, extract the directory of the save file
             self.last_browsed_dir = os.path.dirname(self.save_name)
         else:
             self.last_browsed_dir = self.save_name
-        #Reset the file save status 
+        # Reset the file save status 
         self.save_status = data.FileStatus.OK
-        #Enable saving of the scintilla document
+        # Enable saving of the scintilla document
         self.savable = data.CanSave.YES
-        #Initialize instance variables
+        # Initialize instance variables
         self._init_special_functions()
-        #Make second margin (the one to the right of the line number margin),
-        #sensitive to mouseclicks
+        # Make second margin (the one to the right of the line number margin),
+        # sensitive to mouseclicks
         self.setMarginSensitivity(1, True)
-        #Add needed signals
+        # Add needed signals
         self.cursorPositionChanged.connect(self.parent._signal_editor_cursor_change)
         self.marginClicked.connect(self._margin_clicked)
         self.linesChanged.connect(self._lines_changed)
-        #Set the lexer to the default Plain Text
+        # Set the lexer to the default Plain Text
         self.choose_lexer("text")
-        #Setup autocompletion
+        # Setup autocompletion
         self.init_autocompletions()
-        #Initialize the corner widget
+        # Initialize the corner widget
         self._init_corner_widget()
-        #Setup the LineList object that will hold the custom editor text as a list of lines
+        # Setup the LineList object that will hold the custom editor text as a list of lines
         self.line_list = components.LineList(self, self.text())
-        #Bookmark initialization
+        # Bookmark initialization
         self._init_bookmark_marker()
-        #Initialize the namespace references
+        # Initialize the namespace references
         self.hotspots   = components.Hotspots()
         self.bookmarks  = self.Bookmarks(self)
         self.keyboard   = self.Keyboard(self)
+        # Set cursor line visibility and color
+        self.set_cursor_line_visibility(data.cursor_line_visible)
+        
     
     def __setattr__(self, name, value):
         """
@@ -7003,6 +7045,9 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         self.SendScintilla(
             data.PyQt.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
             theme.Cursor
+        )
+        self.setCaretLineBackgroundColor(
+            theme.Cursor_Line_Background
         )
     
     def get_line_number(self):
@@ -8430,6 +8475,31 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             self.setEolVisibility(True)
             self.main_form.display.repl_display_message(
                 "EOL characters shown", 
+                message_type=data.MessageType.WARNING
+            )
+    
+    def set_cursor_line_visibility(self, new_state):
+        self.setCaretLineVisible(new_state)
+        if new_state == True:
+            if hasattr(data.theme, "Cursor_Line_Background") == False:
+                self.main_form.display.repl_display_message(
+                    "'Cursor_Line_Background' color is not defined in the current theme!", 
+                    message_type=data.MessageType.ERROR
+                )
+            else:
+                self.setCaretLineBackgroundColor(data.theme.Cursor_Line_Background)
+    
+    def toggle_cursor_line_highlighting(self):
+        new_state = bool(not self.SendScintilla(self.SCI_GETCARETLINEVISIBLE))
+        self.set_cursor_line_visibility(new_state)
+        if new_state == True:
+            self.main_form.display.repl_display_message(
+                "Cursor line highlighted", 
+                message_type=data.MessageType.WARNING
+            )
+        else:
+            self.main_form.display.repl_display_message(
+                "Cursor line not highlighted", 
                 message_type=data.MessageType.WARNING
             )
     
@@ -10015,6 +10085,17 @@ class FunctionWheelOverlay(data.QGroupBox):
                 input_font=data.PyQt.QtGui.QFont(
                                     'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
                                 ), 
+                input_focus_last_widget=data.HexButtonFocus.TAB, 
+            ),
+            self.ButtonInfo(
+                "button_toggle_cursor_line_highlighting", 
+                (334, 53, 68, 60), 
+                "tango_icons/edit-show-cursor-line.png", 
+                form.menubar_functions["toggle_cursor_line_highlighting"], 
+                "Toggle\nCursor Line\nHighlighting", 
+                input_font=data.PyQt.QtGui.QFont(
+                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
+                ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
         ]

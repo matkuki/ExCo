@@ -9,7 +9,6 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-
 ##  FILE DESCRIPTION:
 ##      Cython Oberon programming language lexer
 

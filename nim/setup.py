@@ -15,8 +15,8 @@ nim_lexers = Extension(
     'nim_lexers', 
     nim_c_files,
     extra_compile_args = [
-        "-IC:\\Users\Matic\\Desktop\\NIMROD\\test\\nim_c_extension\\nimcache",
-        "-IC:\\Nim\\lib",
+        "-Inimcache",
+        "-IC:\\Nim64\\lib",
     ],
 )
 

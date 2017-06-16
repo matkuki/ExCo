@@ -190,6 +190,8 @@ class SettingsFileManipulator():
             return
         if context_menu_functions == None:
             context_menu_functions = self.context_menu_functions
+        else:
+            self.context_menu_functions = context_menu_functions
         self.write_settings_file(
             main_window_side,
             theme,

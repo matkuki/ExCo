@@ -1522,16 +1522,28 @@ def get_c_node_tree(c_code):
                     composite_0_type_count == curly_count):
                         # Typedef or union active
                         composite_0_typeing = False
-                        add_node(
-                            CNode(previous_token, composite_0_type, current_line, 0)
-                        )
+                        if previous_token.isidentifier():
+                            add_node(
+                                CNode(
+                                    previous_token, 
+                                    composite_0_type, 
+                                    current_line, 
+                                    0
+                                )
+                            )
                 elif (composite_1_typeing == True and 
                       composite_1_type_count == curly_count):
                         # Enum or struct active
                         composite_1_typeing = False
-                        add_node(
-                            CNode(composite_1_name, composite_1_type, current_line, 0)
-                        )
+                        if composite_1_name.isidentifier():
+                            add_node(
+                                CNode(
+                                    composite_1_name, 
+                                    composite_1_type, 
+                                    current_line, 
+                                    0
+                                )
+                            )
                 elif composite_0_typeing == False and composite_1_typeing == False:
                     """
                     Check for variable definitions and prototypes
@@ -1602,7 +1614,8 @@ def get_c_node_tree(c_code):
                                             next_tok != '[' and
                                             not (next_tok in sequence_chars.keys())):
                                                 subscript_flag = False
-                                                var_list.append(current_var)
+                                                if current_var.isidentifier():
+                                                    var_list.append(current_var)
                                     elif tok == '[':
                                         subscript_flag = True
                                         current_var = prev_tok + tok
@@ -1650,10 +1663,12 @@ def get_c_node_tree(c_code):
                                             var_list.append(current_line_tokens[x-1])
                                             break
                             else:
-                                var_list.append(current_line_tokens[-2])
+                                if current_line_tokens[-2].isidentifier():
+                                    var_list.append(current_line_tokens[-2])
                         # Add the variables to the node list
                         for v in var_list:
-                            add_node(CNode(v, "var", current_line, 0))
+                            if v.isidentifier():
+                                add_node(CNode(v, "var", current_line, 0))
                     elif condition_1 == True:
                         print(current_line_tokens)
         #Store the previous token

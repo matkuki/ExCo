@@ -178,9 +178,11 @@ class TreeDisplayType:
 
 
 """
--------------------------------------------
-Various stored settings for global use
--------------------------------------------
+--------------------------------------------------------
+Various stored settings for global use.
+These are the DEFAULT values, override them in the user
+configuration file 'user_functions.cfg'.
+--------------------------------------------------------
 """
 application_version = "6.4"
 # Global variable that holds state of logging mode
@@ -218,7 +220,8 @@ tree_display_font_size = 10
 default_eol = PyQt.Qsci.QsciScintilla.EolUnix
 # Current theme
 theme = themes.Air
-
+# Various settings
+cursor_line_visible = False
 
 # Show PyQt/QScintilla version that is being used and if running in 
 # QScintilla compatibility mode

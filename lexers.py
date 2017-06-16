@@ -373,6 +373,8 @@ class CustomPython(data.PyQt.Qsci.QsciLexerCustom):
         # Set the additional keywords
         self.additional_list = ["self"]
         self.additional_list.extend(additional_keywords)
+        if nim_found == True:
+            nim_lexers.python_set_keywords(additional_keywords)
         # Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultPaper(self.default_paper)
@@ -594,12 +596,6 @@ class Oberon(data.PyQt.Qsci.QsciLexerCustom):
         self.setDefaultColor(self.default_color)
         self.setDefaultPaper(self.default_paper)
         self.setDefaultFont(self.default_font)
-        try:
-            import nim_lexers
-            nim_lexers.python_style_text(0)
-        except Exception as ex:
-            print(ex)
-        
         #Reset autoindentation style
         self.setAutoIndentStyle(0)
         #Set the theme

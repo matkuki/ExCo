@@ -17,6 +17,7 @@ import data
 
 Form = "#f0f0f0"
 Cursor = data.PyQt.QtGui.QColor(0x00, 0x00, 0x00)
+Cursor_Line_Background = data.PyQt.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
 
 
 class FoldMargin:

@@ -43,7 +43,7 @@ var styles = {
 }.toTable()
 
 var 
-    keywords = [
+    base_keywords = [
         "del", "open", "ascii", "bool", "DeprecationWarning", "ReferenceError", "Warning", "yield", "KeyboardInterrupt", "NotADirectoryError", 
         "str","FileNotFoundError", "OverflowError", "is", "FloatingPointError", "with", "repr", "sorted", "WindowsError", "property", 
         "set","FutureWarning", "TimeoutError", "ConnectionAbortedError", "BufferError", "LookupError", "ImportError", "assert", "vars", "complex", 
@@ -64,9 +64,9 @@ var
         "lambda","__import__", "NotImplemented", "ConnectionRefusedError", "ZeroDivisionError", "list", "SystemExit", "RuntimeError", "NotImplementedError", "dict", 
         "else"
     ]
-    custom_keywords = [
-        "self"
-    ]
+    keywords = base_keywords
+    base_custom_keywords = @["self"]
+    custom_keywords = base_custom_keywords
     separator_list = [
         ' ', '\t', '\c', '\r', '\l', '(', ')', '[', ']', '{', '}'
     ]
@@ -125,7 +125,7 @@ var
     decorator = Sequence(
         start: @['@'], 
         stop: @[' '], 
-        stop_extra: @[], 
+        stop_extra: @['\l'], 
         negative_lookbehind: @[],
         style: styles["Decorator"]
     )
@@ -135,14 +135,49 @@ var
     multiline_sequence_list = [tqd, tqs]
 #    sequence_start_strings = lc[x.start | (x <- sequence_lists ), string]
 
-proc python_style_text*(self, args: PyObjectPtr): PyObjectPtr {.exportc, cdecl.} =
+proc python_set_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl.} =
+    GC_disable()
+    
     var
-        result_object: PyObjectPtr
+        parse_result: cint
+        new_list, temp_obj: ptr PyObject
+        list_size: Py_ssize_t
+        string_sequence = newSeq[string]()
+    # Parse the new keyword list
+    parse_result = PyArg_ParseTuple(
+        args, 
+        "O", 
+        addr(new_list),
+    )
+    if parse_result == 0:
+        echo "Nim: Error in function parameter conversion!"        
+        Py_RETURN_NONE()
+    
+    list_size = PyList_GET_SIZE(new_list)
+    
+    for i in 0..list_size-1:
+        temp_obj = PyUnicode_AsEncodedString(
+            PyList_GET_ITEM_MACRO(new_list, i), "utf-8", "strict"
+        )
+        string_sequence.add($PyBytes_AS_STRING(temp_obj))
+    
+    custom_keywords = base_custom_keywords & string_sequence
+    
+    GC_enable()
+    GC_fullCollect()
+    Py_RETURN_NONE()
+
+proc python_style_text*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl.} =
+    var
+        result_object: ptr PyObject
         value_start, value_end: cint
-        lexer, editor: PyObjectPtr
+        lexer, editor: ptr PyObject
         parse_result: cint
     
-    parse_result = argParseTuple(
+    # Disable the GC, this is needed on ARM (RPi)
+    GC_disable()
+    
+    parse_result = PyArg_ParseTuple(
         args, 
         "iiOO", 
         addr(value_start),
@@ -151,61 +186,67 @@ proc python_style_text*(self, args: PyObjectPtr): PyObjectPtr {.exportc, cdecl.}
         addr(editor),
     )    
     if parse_result == 0:
-        echo "Napaka v pretvarjanju argumentov v funkcijo!"        
-        returnNone()
+        echo "Nim: Error in parameter conversion!"        
+        Py_RETURN_NONE()
     var
-        text_method = objectGetAttr(editor, buildValue("s", cstring("text")))
-        text_object = objectCallObject(text_method, tupleNew(0))
-        string_object = unicodeAsEncodedString(text_object, "utf-8", nil)
-        cstring_whole_text = bytesAsString(string_object)
-        whole_text = $cstring_whole_text
-        text = whole_text[int(value_start)..int(value_end-1)]
+        text_method = PyObject_GetAttr(editor, Py_BuildValue("s", cstring("SendScintilla")))
+        in_text: cstring = " ".repeat(value_end-value_start)
+        c_text_obj = Py_BuildValue("y", in_text)
+        text_object = PyObject_CallObject(
+            text_method, 
+            Py_BuildValue(
+                "iiiO", #"iiiy", 
+                2162, value_start, value_end, c_text_obj
+            )
+        )
+        c_text = PyBytes_AsString(c_text_obj)
+        text = $c_text
         text_length = len(text)
         current_token: string = ""
     # Prepare the objects that will be called as functions
     var
-        start_styling_obj: PyObjectPtr
-        start_args: PyObjectPtr
-        set_styling_obj: PyObjectPtr
-        set_args: PyObjectPtr
-        send_scintilla_obj: PyObjectPtr
-        send_args: PyObjectPtr
-    start_styling_obj = objectGetAttr(lexer, buildValue("s", cstring("startStyling")))
-    start_args = tupleNew(1)
-    set_styling_obj = objectGetAttr(lexer, buildValue("s", cstring("setStyling")))
-    set_args = tupleNew(2)
-    send_scintilla_obj = objectGetAttr(editor, buildValue("s", cstring("SendScintilla")))
-    send_args = tupleNew(2)
+        start_styling_obj: ptr PyObject
+        start_args: ptr PyObject
+        set_styling_obj: ptr PyObject
+        set_args: ptr PyObject
+        send_scintilla_obj: ptr PyObject
+        send_args: ptr PyObject
+    start_styling_obj = PyObject_GetAttr(lexer, Py_BuildValue("s", cstring("startStyling")))
+    start_args = PyTuple_New(1)
+    set_styling_obj = PyObject_GetAttr(lexer, Py_BuildValue("s", cstring("setStyling")))
+    set_args = PyTuple_New(2)
+    send_scintilla_obj = PyObject_GetAttr(editor, Py_BuildValue("s", cstring("SendScintilla")))
+    send_args = PyTuple_New(2)
     
     # Template for final cleanup
     template clean_up() =
-        xDecref(text_method)
-        xDecref(text_object)
-        xDecref(string_object)
-        xDecref(args)
-        xDecref(result_object)
+        Py_XDECREF(text_method)
+        Py_XDECREF(text_object)
+        Py_XDECREF(c_text_obj)
+        Py_XDECREF(args)
+        Py_XDECREF(result_object)
         
-        xDecref(start_styling_obj)
-        xDecref(start_args)
-        xDecref(set_styling_obj)
-        xDecref(set_args)
-        xDecref(send_scintilla_obj)
-        xDecref(send_args)
+        Py_XDECREF(start_styling_obj)
+        Py_XDECREF(start_args)
+        Py_XDECREF(set_styling_obj)
+        Py_XDECREF(set_args)
+        Py_XDECREF(send_scintilla_obj)
+        Py_XDECREF(send_args)
     # Template for the lexers setStyling function
     template set_styling(length: int, style: int) =
-        discard tupleSetItem(set_args, 0, buildValue("i", length))
-        discard tupleSetItem(set_args, 1, buildValue("i", style))
-        discard objectCallObject(set_styling_obj, set_args)
+        discard PyTuple_SetItem(set_args, 0, Py_BuildValue("i", length))
+        discard PyTuple_SetItem(set_args, 1, Py_BuildValue("i", style))
+        discard PyObject_CallObject(set_styling_obj, set_args)
     # Procedure for getting previous style
     proc get_previous_style(): int =
-        discard tupleSetItem(send_args, 0, buildValue("i", SCI_GETSTYLEAT))
-        discard tupleSetItem(send_args, 1, buildValue("i", value_start - 1))
-        result = longAsLong(objectCallObject(send_scintilla_obj, send_args))
-        xDecref(send_args)
+        discard PyTuple_SetItem(send_args, 0, Py_BuildValue("i", SCI_GETSTYLEAT))
+        discard PyTuple_SetItem(send_args, 1, Py_BuildValue("i", value_start - 1))
+        result = PyLong_AsLong(PyObject_CallObject(send_scintilla_obj, send_args))
+        Py_XDECREF(send_args)
     # Template for starting styling
     template start_styling() =
-        discard tupleSetItem(start_args, 0, buildValue("i", value_start))
-        discard objectCallObject(start_styling_obj, start_args)
+        discard PyTuple_SetItem(start_args, 0, Py_BuildValue("i", value_start))
+        discard PyObject_CallObject(start_styling_obj, start_args)
     # Safety
     if set_styling_obj == nil:
         raise newException(FieldError, "Lexer doesn't contain the 'setStyling' method!")
@@ -257,12 +298,7 @@ proc python_style_text*(self, args: PyObjectPtr): PyObjectPtr {.exportc, cdecl.}
     
     template style_token(token_name: string, token_length: int) =
         if token_length > 0:
-            if token_name in keywords:
-                set_styling(token_length, styles["Keyword"])
-                previous_token = token_name
-            elif token_name in custom_keywords:
-                set_styling(token_length, styles["CustomKeyword"])
-            elif token_name[0].isdigit() or (token_name[0] == '.' and token_name[1].isdigit()):
+            if token_name[0].isdigit() or (token_name[0] == '.' and token_name[1].isdigit()):
                 set_styling(token_length, styles["Number"])
             elif previous_token == "class":
                 set_styling(token_length, styles["ClassName"])
@@ -270,6 +306,11 @@ proc python_style_text*(self, args: PyObjectPtr): PyObjectPtr {.exportc, cdecl.}
             elif previous_token == "def":
                 set_styling(token_length, styles["FunctionMethodName"])
                 previous_token = ""
+            elif token_name in keywords:
+                set_styling(token_length, styles["Keyword"])
+                previous_token = token_name
+            elif token_name in custom_keywords:
+                set_styling(token_length, styles["CustomKeyword"])
             else:
                 set_styling(token_length, styles["Default"])
     
@@ -351,8 +392,12 @@ proc python_style_text*(self, args: PyObjectPtr): PyObjectPtr {.exportc, cdecl.}
             token_length = i - token_start
             style_token(token_name, token_length)
     #------------------------------------------------------------------------------
+    # Reenable the GC
+    GC_enable()
+    GC_fullCollect()
+    
     clean_up()
-    returnNone()
+    Py_RETURN_NONE()
 
 
 echo "Nim lexers imported!"
