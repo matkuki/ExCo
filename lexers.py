@@ -320,6 +320,10 @@ class CustomPython(data.PyQt.Qsci.QsciLexerCustom):
             self.add_to_style = add_to_style
 
     # Class variables
+    # Lexer index counter for Nim styling
+    _index = 0
+    index = 0
+    # Styles
     styles = {
         "Default" : 0,
         "Comment" : 1,
@@ -370,11 +374,14 @@ class CustomPython(data.PyQt.Qsci.QsciLexerCustom):
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
+         # Set the lexer's index
+        self.index = CustomPython._index
+        CustomPython._index += 1
         # Set the additional keywords
         self.additional_list = ["self"]
         self.additional_list.extend(additional_keywords)
         if nim_found == True:
-            nim_lexers.python_set_keywords(additional_keywords)
+            nim_lexers.python_set_keywords(self.index, additional_keywords)
         # Set the default style values
         self.setDefaultColor(self.default_color)
         self.setDefaultPaper(self.default_paper)
@@ -403,8 +410,11 @@ class CustomPython(data.PyQt.Qsci.QsciLexerCustom):
             set_font(self, style, getattr(theme.Font.Python, style))
     
     if nim_found == True:
+        def __del__(self):
+            nim_lexers.python_delete_keywords(self.index)
+
         def styleText(self, start, end):
-            nim_lexers.python_style_text(start, end, self, self.editor())    
+            nim_lexers.python_style_text(self.index, start, end, self, self.editor())    
     else:
         def styleText(self, start, end):
             editor = self.editor()

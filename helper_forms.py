@@ -742,6 +742,17 @@ class TreeDisplay(data.QTreeView):
         self.file_icon      = functions.create_icon("tango_icons/file.png")
         self.folder_icon    = functions.create_icon("tango_icons/folder.png")
         self.goto_icon      = functions.create_icon('tango_icons/edit-goto.png')
+        
+        # Set the icon size for every node
+        self.update_icon_size()
+        
+            
+    def update_icon_size(self):
+        self.setIconSize(
+            data.PyQt.QtCore.QSize(
+                data.tree_display_icon_size, data.tree_display_icon_size
+            )
+        )
     
     def setFocus(self):
         """Overridden focus event"""

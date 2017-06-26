@@ -20,6 +20,8 @@ import os
 import argparse
 import data
 import forms
+import components
+
 
 def parse_arguments():
     """Parse Ex.Co. command line arguments"""
@@ -132,12 +134,14 @@ def main():
     #Save the Qt application to the global reference
     data.application = app
     #Create the main window, pass the filename that may have been passed as an argument
-    wnd = forms.MainWindow(
+    main_window = forms.MainWindow(
         new_document = options.new_document, 
         logging=data.logging_mode, 
         file_arguments=file_arguments
     )
-    wnd.show()
+    components.TheSquid.init_objects(main_window)
+    main_window.import_user_functions()
+    main_window.show()
     sys.exit(app.exec_())
     
 #Check if this is the main executing script

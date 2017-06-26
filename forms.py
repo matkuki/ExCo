@@ -504,8 +504,8 @@ class MainWindow(data.QMainWindow):
                 self.last_browsed_dir = focused_tab.last_browsed_dir
                 #Reimport the user configuration file and update the menubar
                 if functions.is_config_file(focused_tab.save_name) == True:
-                    self.import_user_functions()
                     self.update_menubar()
+                    self.import_user_functions()
     
     def file_saveas(self, encoding="utf-8"):
         """The function name says it all"""
@@ -522,8 +522,8 @@ class MainWindow(data.QMainWindow):
             self.last_browsed_dir = focused_tab.last_browsed_dir
             #Reimport the user configuration file and update the menubar
             if functions.is_config_file(focused_tab.save_name) == True:
-                self.import_user_functions()
                 self.update_menubar()
+                self.import_user_functions()
     
     def file_save_all(self, encoding="utf-8"):
         """Save all open modified files"""
@@ -574,6 +574,7 @@ class MainWindow(data.QMainWindow):
         This is a very long function that should be trimmed sometime!
         """
         self.menubar = data.QMenuBar(self)
+#        components.TheSquid.customize_menu_style(self.menubar)
         # Click filter for the menubar menus
         click_filter = components.ActionFilter(self)
         # Nested function for creating an action
@@ -2067,7 +2068,7 @@ class MainWindow(data.QMainWindow):
         if self._first_scan == True:
             self._first_scan = False
             self.repl._repl_eval(
-                "if callable(first_scan):\n    first_scan()", 
+                "if callable(first_scan):\n    first_scan();", 
                 display_action=False
             )
         # Update the REPL autocompletions
@@ -2087,6 +2088,10 @@ class MainWindow(data.QMainWindow):
             else:
                 user_function_autocompletions.append(func_name)
         self.repl.interpreter_add_references(user_function_autocompletions)
+        
+        # Update the styles of all objects
+        components.TheSquid.update_styles()
+        
         # Display the successful import
         self.display.write_to_statusbar("User functions imported successfully!")
     
@@ -2820,7 +2825,6 @@ class MainWindow(data.QMainWindow):
                                 if  window.widget(i).savable == data.CanSave.YES and
                                     window.widget(i).save_name != ""]
             return documents
-        
     
     class View:
         """
@@ -5688,31 +5692,52 @@ class BasicWidget(data.QTabWidget):
     custom_tab_bar          = None
     # Default font for textboxes
     default_editor_font     = data.PyQt.QtGui.QFont('Courier', 10)
+    # Default font and icon size for the tab bar
+    default_tab_font        = None
+    default_icon_size       = None
     # Attribute for indicating if the REPL is indicated
     indicated               = False
     
     
     def __init__(self, parent):
         """Initialization"""
-        #Initialize superclass, from which the current class is inherited,
-        #THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
+        # Initialize superclass, from which the current class is inherited,
+        # THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
-        #Set various events and attributes
-        #Save parent as a reference
+        # Set various events and attributes
+        # Save parent as a reference
         self.parent = parent
-        #Initialize the custom tab bar
+        # Initialize the custom tab bar
         self.custom_tab_bar = self.CustomTabBar(self)
         self.setTabBar(self.custom_tab_bar)
-        #Enable drag&drop events
+        # Enable drag&drop events
         self.setAcceptDrops(True)           
-        #Add close buttons to tabs
+        # Add close buttons to tabs
         self.setTabsClosable(True)
-        #Set tabs as movable, so that you can move tabs with the mouse
+        # Set tabs as movable, so that you can move tabs with the mouse
         self.setMovable(True)
-        #Add signal for coling a tab to the EVT_tabCloseRequested function
+        # Add signal for coling a tab to the EVT_tabCloseRequested function
         self.tabCloseRequested.connect(self._signal_editor_tabclose)
-        #Vonnect signal that fires when the tab index changes
+        # Connect signal that fires when the tab index changes
         self.currentChanged.connect(self._signal_editor_tabindex_change)
+        # Store the default settings
+        self.default_tab_font = self.tabBar().font()
+        self.default_icon_size = self.tabBar().iconSize()
+        # Customize the style as needed
+#        self.customize_tab_bar()
+    
+    def customize_tab_bar(self):
+        if data.custom_menu_scale != None and data.custom_menu_font != None:
+            components.TheSquid.customize_menu_style(self.tabBar())
+            self.tabBar().setFont(data.PyQt.QtGui.QFont(*data.custom_menu_font))
+            new_icon_size = data.PyQt.QtCore.QSize(
+                data.custom_menu_scale, data.custom_menu_scale
+            )
+            self.setIconSize(new_icon_size)
+        else:
+            components.TheSquid.customize_menu_style(self.tabBar())
+            self.tabBar().setFont(self.default_tab_font)
+            self.setIconSize(self.default_icon_size)
 
     def _drag_filter(self, event):
         self.drag_dropped_file  = None
@@ -6755,6 +6780,8 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             )
             cursor = data.PyQt.QtGui.QCursor.pos()
             lexers_menu.popup(cursor)
+            if data.custom_menu_scale != None:
+                components.TheSquid.customize_menu_style(lexers_menu)
         # Clean the corner widget if it already exists
         if self.corner_widget != None:
             self.corner_widget.setParent(None)
@@ -6768,6 +6795,12 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         button_show_lexers.clicked.connect(show_lexer_menu)
         button_show_lexers.hide()
         self.corner_widget = button_show_lexers
+        if data.custom_menu_scale != None:
+            self.corner_widget.setIconSize(
+                data.PyQt.QtCore.QSize(
+                    data.custom_menu_scale, data.custom_menu_scale
+                )
+            )
     
     def show_corner_widget(self):
         """

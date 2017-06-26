@@ -66,7 +66,7 @@ var
     ]
     keywords = base_keywords
     base_custom_keywords = @["self"]
-    custom_keywords = base_custom_keywords
+    custom_keywords = tables.initTable[int, seq[string]]()
     separator_list = [
         ' ', '\t', '\c', '\r', '\l', '(', ')', '[', ']', '{', '}'
     ]
@@ -139,18 +139,19 @@ proc python_set_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, cde
     GC_disable()
     
     var
-        parse_result: cint
+        lexer_index, parse_result: cint
         new_list, temp_obj: ptr PyObject
         list_size: Py_ssize_t
         string_sequence = newSeq[string]()
     # Parse the new keyword list
     parse_result = PyArg_ParseTuple(
         args, 
-        "O", 
+        "iO", 
+        addr(lexer_index),
         addr(new_list),
     )
     if parse_result == 0:
-        echo "Nim: Error in function parameter conversion!"        
+        echo "Nim: Error in function parameter conversion for proc: 'python_set_keywords'!"        
         Py_RETURN_NONE()
     
     list_size = PyList_GET_SIZE(new_list)
@@ -161,7 +162,30 @@ proc python_set_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, cde
         )
         string_sequence.add($PyBytes_AS_STRING(temp_obj))
     
-    custom_keywords = base_custom_keywords & string_sequence
+    custom_keywords[lexer_index] = base_custom_keywords & string_sequence
+    
+    GC_enable()
+    GC_fullCollect()
+    Py_RETURN_NONE()
+
+proc python_delete_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl.} =
+    GC_disable()
+    
+    var
+        lexer_index, parse_result: cint
+    
+    # Get the lexer's index
+    parse_result = PyArg_ParseTuple(
+        args, 
+        "i", 
+        addr(lexer_index),
+    )
+    if parse_result == 0:
+        echo "Nim: Error in function parameter conversion for proc: 'python_delete_keywords'!"        
+        Py_RETURN_NONE()
+    
+    # Reset the sequence at the deleted lexer's index
+    custom_keywords[lexer_index] = newSeq[string]()
     
     GC_enable()
     GC_fullCollect()
@@ -170,7 +194,7 @@ proc python_set_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, cde
 proc python_style_text*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl.} =
     var
         result_object: ptr PyObject
-        value_start, value_end: cint
+        lexer_index, value_start, value_end: cint
         lexer, editor: ptr PyObject
         parse_result: cint
     
@@ -179,7 +203,8 @@ proc python_style_text*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl
     
     parse_result = PyArg_ParseTuple(
         args, 
-        "iiOO", 
+        "iiiOO", 
+        addr(lexer_index),
         addr(value_start),
         addr(value_end),
         addr(lexer),
@@ -309,7 +334,7 @@ proc python_style_text*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl
             elif token_name in keywords:
                 set_styling(token_length, styles["Keyword"])
                 previous_token = token_name
-            elif token_name in custom_keywords:
+            elif token_name in custom_keywords[lexer_index]:
                 set_styling(token_length, styles["CustomKeyword"])
             else:
                 set_styling(token_length, styles["Default"])

@@ -10,7 +10,7 @@ import nim_styling
 
 
 var
-    nim_method_array: array[3, PyMethodDef] = [
+    nim_method_array: array[4, PyMethodDef] = [
         PyMethodDef(
             mlName:"python_style_text", 
             mlMeth:python_style_text, 
@@ -21,7 +21,13 @@ var
             mlName:"python_set_keywords", 
             mlMeth:python_set_keywords, 
             mlFlags:methVarargs, 
-            mlDoc:"style text in Python"
+            mlDoc:"Set Python lexer's keywords"
+        ), 
+        PyMethodDef(
+            mlName:"python_delete_keywords", 
+            mlMeth:python_delete_keywords, 
+            mlFlags:methVarargs, 
+            mlDoc:"Delete Python lexer's keywords"
         ), 
         PyMethodDef(mlName:nil, mlMeth:nil, mlFlags:0, mlDoc:nil)
     ]

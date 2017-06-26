@@ -24,7 +24,8 @@ moved_widgets = [
     "QGroupBox", "QTabWidget", "QTextEdit", "QTabBar", "QMenu", "QMenuBar",
     "QLabel", "QAction", "QGridLayout", "QStatusBar", "QVBoxLayout",
     "QSplitter", "QToolButton", "QToolBar", "QAbstractItemView", "QMessageBox",
-    "QFileDialog", "QTextEdit", "QWidget"
+    "QFileDialog", "QTextEdit", "QWidget", "QCommonStyle", "QStyleFactory",
+    "QStyle", 
 ]
 
 try:
@@ -184,7 +185,7 @@ These are the DEFAULT values, override them in the user
 configuration file 'user_functions.cfg'.
 --------------------------------------------------------
 """
-application_version = "6.4"
+application_version = "6.5"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -216,10 +217,19 @@ terminal = "lxterminal"
 zoom_factor = 0
 # Default tree display font size (file-tree, node-tree, ...)
 tree_display_font_size = 10
+tree_display_icon_size = 16
 # Default EOL style in editors (EolWindows-CRLF, EolUnix-LF, EolMac-CR)
 default_eol = PyQt.Qsci.QsciScintilla.EolUnix
 # Current theme
 theme = themes.Air
+# Custom MenuBar scale factor
+custom_menu_scale = None
+# Custom MenuBar scale font
+"""
+Windows Vista Default:
+    ("Segoe UI", 9, PyQt.QtGui.QFont.Normal)
+"""
+custom_menu_font = None
 # Various settings
 cursor_line_visible = False
 
