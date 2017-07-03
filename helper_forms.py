@@ -1387,6 +1387,8 @@ class TreeDisplay(data.QTreeView):
         include_text        = "INCLUDES:"
         pragma_text         = "PRAGMAS:"
         define_text         = "DEFINES:"
+        undefine_text       = "UN-DEFINES:"
+        error_text          = "ERRORS:"
         # Set the label properties
         label_brush = data.PyQt.QtGui.QBrush(
             data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
@@ -1403,6 +1405,8 @@ class TreeDisplay(data.QTreeView):
             include_list = []
             define_list = []
             pragma_list = []
+            undef_list = []
+            error_list = []
             for v in c_node.children:
                 if v.type == "function":
                     function_list.append(v)
@@ -1421,10 +1425,14 @@ class TreeDisplay(data.QTreeView):
                     define_list.append(v)
                 elif v.type == "pragma":
                     pragma_list.append(v)
+                elif v.type == "undef":
+                    undef_list.append(v)
+                elif v.type == "error":
+                    error_list.append(v)
                 else:
                     raise Exception("Unknown C node: {}".format(v.type))
             # Add The nodes to the tree using the parent tree node
-            for i in range(7):
+            for i in range(9):
                 if i == 0:
                     if include_list == []:
                         continue
@@ -1467,6 +1475,20 @@ class TreeDisplay(data.QTreeView):
                     item = data.PyQt.QtGui.QStandardItem(function_text)
                     icon = self.node_icon_procedure
                     current_list = function_list
+                
+                elif i == 7:
+                    if undef_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(undef_text)
+                    icon = self.node_icon_macro
+                    current_list = undef_list
+                elif i == 8:
+                    if error_list == []:
+                        continue
+                    item = data.PyQt.QtGui.QStandardItem(error_text)
+                    icon = self.node_icon_macro
+                    current_list = error_list
+                    
                 item.setEditable(False)
                 item.setForeground(label_brush)
                 item.setFont(label_font)

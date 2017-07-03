@@ -25,7 +25,7 @@ moved_widgets = [
     "QLabel", "QAction", "QGridLayout", "QStatusBar", "QVBoxLayout",
     "QSplitter", "QToolButton", "QToolBar", "QAbstractItemView", "QMessageBox",
     "QFileDialog", "QTextEdit", "QWidget", "QCommonStyle", "QStyleFactory",
-    "QStyle", 
+    "QStyle", "QMessageBox", 
 ]
 
 try:
@@ -185,7 +185,7 @@ These are the DEFAULT values, override them in the user
 configuration file 'user_functions.cfg'.
 --------------------------------------------------------
 """
-application_version = "6.5"
+application_version = "6.6"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -196,6 +196,74 @@ application = None
 application_directory = ""
 # User configuration file
 config_file = "user_functions.cfg"
+# Default user configuration file content
+default_config_file_content = '''
+# -*- coding: utf-8 -*-
+
+##  FILE DESCRIPTION:
+##      Normal module with a special name that holds custom user functions/variables.
+##      To manipulate the editors/windows, take a look at the QScintilla details at:
+##      http://pyqt.sourceforge.net/Docs/QScintilla2
+##
+##  NOTES:
+##      Built-in special function escape sequence: "lit#"
+##          (prepend it to escape built-ins like: cmain, set_all_text, lines, ...)
+
+"""
+# These imports are optional as they are already imported 
+# by the REPL, I added them here for clarity.
+import data
+import functions
+import settings
+import helper_forms
+
+# Imported for less typing
+from forms import *
+
+
+# Initialization function that gets executed only ONCE at startup
+def first_scan():
+    pass
+
+data.tab_width = 4
+data.terminal = "xterm"
+data.edge_marker_column = 80
+data.zoom_factor = 0
+data.tree_display_font_size = 10
+data.tree_display_icon_size = 16
+form.repl_helper.zoomTo(data.zoom_factor)
+
+# Custom keyboard shortcuts
+data.copy_keys = 'Ctrl+C'
+
+# Example of got to customize the menu font and menu font scaling
+#data.custom_menu_scale = 25
+#data.custom_menu_font = ("Segoe UI", 10, data.PyQt.QtGui.QFont.Bold)
+#data.custom_menu_scale = None
+#data.custom_menu_font = None
+
+# Example function definition with defined autocompletion string
+def delete_files_in_dir(extension=None, directory=None):
+    # Delete all files with the selected file extension from the directory
+    if isinstance(extension, str) == False:
+        print("File extension argument must be a string!")
+        return
+    if directory == None:
+        directory = os.getcwd()
+    elif os.path.isdir(directory) == False:
+        return
+    print("Deleting '{:s}' files in:".format(extension))
+    print(directory)
+    for file in os.listdir(directory):
+        file_extension = os.path.splitext(file)[1].lower()
+        if file_extension == extension or file_extension == "." + extension:
+            os.remove(os.path.join(directory, file))
+            print(" - deleted file: {:s}".format(file))
+    print("DONE")
+delete_files_in_dir.autocompletion = "delete_files_in_dir(extension=\"\", directory=None)"
+"""
+
+'''
 # Global string with the resources directory
 resources_directory = "resources"
 # Application icon image that will be displayed on all Qt widgets
@@ -248,7 +316,7 @@ Keyboard shortcuts
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 THESE BINDINGS ARE THE DEFAULT, DON'T CHANGE THEM HERE!
-CUSTOM BINDINGS SHOULD BE OVERRIDDEN IN THE USER CONFIGURATION FILE 'user_functions.cfg'!
+CUSTOM BINDINGS SHOULD BE OVERRIDDEN IN THE USER CONFIGURATION FILE!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 """
 new_file_keys = 'Ctrl+N'

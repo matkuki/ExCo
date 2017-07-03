@@ -688,18 +688,35 @@ class MainWindow(data.QMainWindow):
             load_settings_action = create_action('Load Settings', None, 'Load saved settings', 'tango_icons/file-settings-load.png', self.settings.restore)
             #Add the editing option for the user_functions file
             def open_user_func_file():
-                user_definitions_file = os.path.join(data.application_directory, data.config_file)
+                user_definitions_file = os.path.join(
+                    data.application_directory, data.config_file
+                )
                 #Test if user_functions file exists
                 if os.path.isfile(user_definitions_file) == False:
                     self.display.repl_display_message(
-                        "User functions file does not exist!", 
+                        "User definitions file does not exist!", 
                         message_type=data.MessageType.ERROR
                     )
-                    return
+                    message = "Do you wish to generate the default user definition and function file?"
+                    reply = data.QMessageBox.question(
+                        self, 
+                        'Generate default configuration file', 
+                        message, 
+                        data.QMessageBox.Yes, 
+                        data.QMessageBox.No
+                    )
+                    if reply == data.QMessageBox.Yes:
+                        functions.create_default_config_file()
+                        self.display.repl_display_message(
+                            "Default user definitions file generated!", 
+                            message_type=data.MessageType.SUCCESS
+                        )
+                    else:
+                        return
                 self.open_file(user_definitions_file)
-            edit_functions_action = create_action('Edit User Functions', None, 'Open the {} file for editing in the main window'.format(data.config_file), 'tango_icons/file-user-funcs.png', open_user_func_file)
+            edit_functions_action = create_action('Edit User Definitions', None, 'Open the {} file for editing in the main window'.format(data.config_file), 'tango_icons/file-user-funcs.png', open_user_func_file)
             #Add the reload option for the user_functions file
-            reload_functions_action = create_action('Reload User Functions', None, 'Reload the {} file to refresh user defined functions'.format(data.config_file), 'tango_icons/file-user-funcs-reload.png', self.import_user_functions)
+            reload_functions_action = create_action('Reload User Definitions', None, 'Reload the {} file to refresh user defined definitions and functions'.format(data.config_file), 'tango_icons/file-user-funcs-reload.png', self.import_user_functions)
             #Add reload themes function
             themes_reload_action = create_action('Reload Themes', None, 'Reload themes from modules to update any changes made in the theme files', 'tango_icons/themes-reload.png', self.view.reload_themes)
             #Add recent file list in the file menu
@@ -2053,6 +2070,20 @@ class MainWindow(data.QMainWindow):
                 message, 
                 message_type=data.MessageType.ERROR
             )
+            message = "Do you wish to generate the default user definition and function file?"
+            reply = data.QMessageBox.question(
+                self, 
+                'Generate default configuration file', 
+                message, 
+                data.QMessageBox.Yes, 
+                data.QMessageBox.No
+            )
+            if reply == data.QMessageBox.Yes:
+                functions.create_default_config_file()
+                self.display.repl_display_message(
+                    "Default user definitions file generated!", 
+                    message_type=data.MessageType.SUCCESS
+                )
             return
         user_file = open(user_file_path)
         user_code = user_file.read()
@@ -2060,7 +2091,7 @@ class MainWindow(data.QMainWindow):
         result = self.repl._repl_eval(user_code, display_action=False)
         if result != None:
             self.display.repl_display_message(
-                "ERROR IN USER FUNCTIONS FILE:\n" + result, 
+                "ERROR IN USER CONFIGURATION FILE:\n" + result, 
                 message_type=data.MessageType.ERROR
             )
             return
@@ -2729,9 +2760,9 @@ class MainWindow(data.QMainWindow):
         def remove(self, session_name, session_group=None):
             """Delete the session"""
             result = self.parent.settings.manipulator.remove_session(
-                         session_name, 
-                         session_group
-                     )
+                session_name, 
+                session_group
+            )
             #Adjust the group name string
             if session_group == None or session_group == "":
                 session_group = ""
@@ -3677,12 +3708,12 @@ class MainWindow(data.QMainWindow):
                     self.parent.set_cwd(search_dir)
             #Replace the text in files
             result = functions.replace_text_in_files_enum(
-                         search_text, 
-                         replace_text, 
-                         search_dir, 
-                         case_sensitive, 
-                         search_subdirs
-                     )
+                search_text, 
+                replace_text, 
+                search_dir, 
+                case_sensitive, 
+                search_subdirs
+            )
             #Check the return type
             if len(result) == 0:
                 self.parent.display.repl_display_message(
@@ -3759,11 +3790,11 @@ class MainWindow(data.QMainWindow):
                     basic_widget.widget(i).setCursorPosition(0, 0)
                 #Find the text
                 result = basic_widget.widget(i).find_text(
-                             search_text,
-                             case_sensitive, 
-                             True, # search_forward
-                             regular_expression  
-                         )
+                    search_text,
+                    case_sensitive, 
+                    True, # search_forward
+                    regular_expression  
+                )
                 #If a replace was done, return success
                 if result == data.SearchResult.FOUND:
                     return True
@@ -3812,11 +3843,11 @@ class MainWindow(data.QMainWindow):
             #Find the next instance
             for i in in_deque:
                 result = basic_widget.widget(i).find_and_replace(
-                             search_text, 
-                             replace_text, 
-                             case_sensitive, 
-                             regular_expression
-                         )
+                    search_text, 
+                    replace_text, 
+                    case_sensitive, 
+                    regular_expression
+                )
                 #If a replace was done, return success
                 if result == True:
                     message = "Found and replaced in " + basic_widget.name.lower()

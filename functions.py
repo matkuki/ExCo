@@ -1370,6 +1370,228 @@ def get_c_node_tree(c_code):
         "char", "double", "enum", "float", "int", "long", "short", "void", 
         "auto", "static", "struct", "signed", "unsigned", "register", "extern",
     ]
+    macros = ["define", "include", "pragma", "undef", "error"]
+    skip_macros = ["if", "ifdef", "ifndef", "else", "endif"]
+    """
+    Parsing
+    """
+    # Store the text
+    text = c_code
+    # Initialize state variables
+    main_node = CNode("module", "", 0, -1)#None
+    main_current_line = 1
+    main_node_list = [main_node]
+    # Function for adding a node
+    def add_node(in_node):
+        if main_node != None:
+            main_node.children.append(in_node)
+        else:
+            node_list.append(in_node)
+    # Debugging helpers
+    def debug_print(level, *args, **kwargs):
+        if True:
+            print(level * "    ", *args, **kwargs)
+    # Tokenize the text and remove the space characters
+    splitter = re.compile(r"(\#\s*\w+|\'|\"|\n|\s+|\w+|\W)")
+    main_tokens = [token for token in splitter.findall(text)]
+    
+    # Main parse function
+    def parse_loop(tokens, node_list, current_line, index, level):
+        curly_count = 0
+        parenthesis_count = 0
+        singleline_commenting = False
+        multiline_commenting = False
+        
+        macroing = False
+        macro_type = ""
+        macro_tokens = []
+        
+        composite_0_typeing = False
+        composite_1_typeing = False
+        stringing = False
+        
+        previous_token = ""
+        last_found_function = ""
+        last_line = 0
+        current_line_tokens = []
+        current_statement_tokens = []
+        previous_unfiltered_token = None
+        
+        skip_to_token = None
+        
+        # Main Loop for filtering tokens
+        for i, token in enumerate(tokens):
+            stripped_token = token.strip()
+            if "\n" in token:
+                # Increase the line counter
+                newline_count = token.count("\n")
+                current_line += newline_count
+                
+                # Reset the line token list
+                current_line_tokens = []
+                # Reset the single line comment and string flags
+                singleline_commenting = False
+                stringing = False
+            
+            if skip_to_token != None:
+                if skip_to_token >= i:
+                    continue
+                else:
+                    current_statement_tokens.append("{ ... }")
+                    skip_to_token = None
+            
+            # Check for various special characters
+            if '\n' in token:
+                if previous_token != "\\":
+                    # Check the macro type
+                    if macro_type == "include":
+                        include_string = "".join(macro_tokens)
+                        debug_print(
+                            level, "Found include:\n", (level+1)*"    ", include_string
+                        )
+                        add_node(CNode(include_string, "include", macro_line, 0))
+                    elif macro_type == "define":
+                        define_macro = macro_tokens[0]
+                        debug_print(
+                            level, "Found define:\n", (level+1)*"    ", define_macro
+                        )
+                        add_node(CNode(define_macro, "define", macro_line, 0))
+                    elif macro_type == "undef":
+                        undef_macro = macro_tokens[0]
+                        debug_print(
+                            level, "Found undef:\n", (level+1)*"    ", undef_macro
+                        )
+                        add_node(CNode(undef_macro, "undef", macro_line, 0))
+                    elif macro_type == "pragma":
+                        pragma_macro = macro_tokens[0]
+                        debug_print(
+                            level, "Found pragma:\n", (level+1)*"    ", pragma_macro
+                        )
+                        add_node(CNode(pragma_macro, "pragma", macro_line, 0))
+                    elif macro_type == "error":
+                        error_macro = " ".join(macro_tokens)[:10] + "..."
+                        debug_print(
+                            level, "Found error:\n", (level+1)*"    ", error_macro
+                        )
+                        add_node(CNode(error_macro, "error", macro_line, 0))
+                    # Reset the macroing flag
+                    macro_tokens = []
+                    macroing = False
+                    macro_type = ""
+            
+            # Check for an empty token
+            if stripped_token == "":
+                previous_unfiltered_token = stripped_token
+                continue
+            
+            if multiline_commenting == True:
+                if token == "/" and previous_token == "*":
+                    multiline_commenting = False
+            elif singleline_commenting == True:
+                pass
+            elif macroing == True:
+                macro_tokens.append(token)
+            elif stringing == True:
+                if token == '"' and previous_token != "\\":
+                    stringing = False
+            else:
+                current_line_tokens.append(token)
+                
+                if token == "*" and previous_unfiltered_token == "/":
+                    current_statement_tokens = current_statement_tokens[:-1]
+                    multiline_commenting = True
+                elif token == "/" and previous_unfiltered_token == "/":
+                    current_statement_tokens = current_statement_tokens[:-1]
+                    singleline_commenting = True
+                elif token == '"':
+                    stringing = True
+                elif token == ';':
+                    current_statement_tokens.append(token)
+#                    debug_print(level, " ".join(current_statement_tokens))
+                    first_word = current_statement_tokens[0]
+                    if first_word == "typedef":
+                        typedef = current_statement_tokens[-2]
+                        body_test = current_statement_tokens[-3] == "{ ... }"
+                        if typedef.isidentifier():
+                            debug_print(level, "Found typedef:\n", (level+1)*"    ", typedef)
+                            add_node(CNode(typedef, "typedef", current_line, 0))
+                    elif first_word == "struct":
+                        struct = current_statement_tokens[1]
+                        body_test = current_statement_tokens[-2] == "{ ... }"
+                        if struct.isidentifier() and body_test:
+                            debug_print(level, "Found struct:\n", (level+1)*"    ", struct)
+                            add_node(CNode(struct, "struct", current_line, 0))
+                    else:
+                        debug_print(level, " ".join(current_statement_tokens))
+                    current_statement_tokens = []
+                elif '#' in token and any(x for x in macros if x in token):
+                    macroing = True
+                    macro_type = token.replace('#', '').strip()
+                    macro_line = current_line
+                    macro_tokens = []
+                elif '#' in token and any(x for x in skip_macros if x in token):
+                    # Skip macros that do nothing
+                    macroing = True
+                elif token == '{':
+                    debug_print(level, '{', current_line, i)
+                    # Start of a block
+                    node_list, skip_to_token = parse_loop(
+                        tokens[i+1:], node_list, current_line, i+1, level+1
+                    )
+                elif token == '}':
+                    debug_print(level-1, '}', current_line, i+index)
+                    return node_list, i+index
+                else:
+                    current_statement_tokens.append(token)
+            
+            #Store the previous token
+            previous_unfiltered_token = token
+            if stripped_token != "":
+                previous_token = token
+        
+        # Return the accumulated node list
+        return node_list, skip_to_token
+    
+    main_node_list, skip_to_token = parse_loop(
+        main_tokens, main_node_list, main_current_line, 0, 0
+    )
+    
+    #Sort the nodes alphabetically
+    def compare_function(item):
+        return item.name.lower()
+    main_node_list = sorted(main_node_list, key=compare_function)
+    return main_node_list
+                
+    
+
+def get_c_node_tree_old(c_code):
+    # Node object
+    class CNode:
+        def __init__(self, 
+                     in_name, 
+                     in_type, 
+                     in_line_number, 
+                     in_level, 
+                     in_parent=None):
+            self.name = in_name
+            self.type = in_type
+            self.line_number = in_line_number
+            self.level = in_level
+            self.parent = in_parent
+            self.children = []
+    # C keywords
+    keywords = [
+        "auto", "break", "case", "const", "continue", "default", "do",
+        "else", "enum", "extern", "for", "goto", "if", "register", "return", 
+        "signed", "sizeof", "static", "struct", "switch", "typedef", "union", 
+        "unsigned", "volatile", "while",
+    ]
+    composite_0_types = ["typedef", "union"]
+    composite_1_types = ["enum", "struct"]
+    types = [
+        "char", "double", "enum", "float", "int", "long", "short", "void", 
+        "auto", "static", "struct", "signed", "unsigned", "register", "extern",
+    ]
     macros = ["#define", "#include", "#pragma"]
     """
     Parsing
@@ -1744,7 +1966,7 @@ def get_file_type(file_with_path):
     path, file = os.path.split(file_with_path)
     #Split file name and extension
     file_name, file_extension   = os.path.splitext(file)
-    if (file.lower() == "user_functions.cfg" or 
+    if (file.lower() == data.config_file or
         file.lower() == "exco.ini"):
         #First check to see if the user functions file has been opened
         file_type = "python"
@@ -2164,6 +2386,14 @@ def is_config_file(file_with_path):
         return True
     else:
         return False
+
+def create_default_config_file():
+    user_definitions_file = os.path.join(
+        data.application_directory, data.config_file
+    )
+    with open(user_definitions_file, "w") as f:
+        f.write(data.default_config_file_content)
+        f.close()
 
 def right_replace(string, search_str, replace_str, occurrence=1):
     """
