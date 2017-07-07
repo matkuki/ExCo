@@ -378,13 +378,7 @@ class MainWindow(data.QMainWindow):
         #Check if there are any modified documents
         if self.check_document_states() == True:
             quit_message = "You have modified documents!\nQuit anyway?"
-            reply = data.QMessageBox.question(
-                self, 
-                'Quit', 
-                quit_message,
-                data.QMessageBox.Yes,
-                data.QMessageBox.No
-            )
+            reply = helper_forms.YesNoDialog.question(quit_message)
             if reply != data.QMessageBox.Yes:
                 event.ignore()
 
@@ -574,7 +568,6 @@ class MainWindow(data.QMainWindow):
         This is a very long function that should be trimmed sometime!
         """
         self.menubar = data.QMenuBar(self)
-#        components.TheSquid.customize_menu_style(self.menubar)
         # Click filter for the menubar menus
         click_filter = components.ActionFilter(self)
         # Nested function for creating an action
@@ -698,13 +691,7 @@ class MainWindow(data.QMainWindow):
                         message_type=data.MessageType.ERROR
                     )
                     message = "Do you wish to generate the default user definition and function file?"
-                    reply = data.QMessageBox.question(
-                        self, 
-                        'Generate default configuration file', 
-                        message, 
-                        data.QMessageBox.Yes, 
-                        data.QMessageBox.No
-                    )
+                    reply = helper_forms.YesNoDialog.question(message)
                     if reply == data.QMessageBox.Yes:
                         functions.create_default_config_file()
                         self.display.repl_display_message(
@@ -2071,13 +2058,7 @@ class MainWindow(data.QMainWindow):
                 message_type=data.MessageType.ERROR
             )
             message = "Do you wish to generate the default user definition and function file?"
-            reply = data.QMessageBox.question(
-                self, 
-                'Generate default configuration file', 
-                message, 
-                data.QMessageBox.Yes, 
-                data.QMessageBox.No
-            )
+            reply = helper_forms.YesNoDialog.question(message)
             if reply == data.QMessageBox.Yes:
                 functions.create_default_config_file()
                 self.display.repl_display_message(
@@ -2203,13 +2184,7 @@ class MainWindow(data.QMainWindow):
                 warning +=  "A lot of RAM will be needed!\n"
                 warning +=  "Files larger than 300 MB can cause the system to hang!\n"
                 warning +=  "Are you sure you want to open it?"
-                reply = data.QMessageBox.question(
-                    self, 
-                    'OPENING HUGE FILE', 
-                    warning,
-                    data.QMessageBox.Yes,
-                    data.QMessageBox.No
-                )
+                reply = helper_forms.YesNoDialog.warning(warning)
                 if reply == data.QMessageBox.No:
                     return
             #Check selected window
@@ -2311,13 +2286,7 @@ class MainWindow(data.QMainWindow):
             #Close the log window if it is displayed
             self.view.set_log_window(False)
             message = "You have modified documents!\nClose all tabs?"
-            reply = data.QMessageBox.question(
-                self, 
-                'Close all tabs', 
-                message,
-                data.QMessageBox.Yes,
-                data.QMessageBox.No
-            )
+            reply = helper_forms.YesNoDialog.question(message)
             if reply == data.QMessageBox.No:
                 return
         #Close all tabs and remove all bookmarks from them
@@ -2662,13 +2631,7 @@ class MainWindow(data.QMainWindow):
                 self.parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
                 message += "Restore session '{:s}' anyway?".format(session_name)
-                reply = data.QMessageBox.question(
-                    self.parent, 
-                    'Restore Session', 
-                    message,
-                    data.QMessageBox.Yes,
-                    data.QMessageBox.No
-                )
+                reply = helper_forms.YesNoDialog.question(message)
                 if reply == data.QMessageBox.No:
                     return
             #Find the session
@@ -2719,12 +2682,7 @@ class MainWindow(data.QMainWindow):
                 self.parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
                 message += "Restore Ex.Co development session anyway?"
-                reply = data.QMessageBox.question(
-                    self.parent, 'Restore Session', 
-                    message,
-                    data.QMessageBox.Yes,
-                    data.QMessageBox.No
-                )
+                reply = helper_forms.YesNoDialog.question(message)
                 if reply == data.QMessageBox.No:
                     return
             #Clear all documents from the main and upper window
@@ -3690,13 +3648,7 @@ class MainWindow(data.QMainWindow):
             warning += "You better have a backup of the files if you are unsure,\n"
             warning += "because this action CANNOT be undone!\n"
             warning += "Do you want to continue?"
-            reply = data.QMessageBoxwarning(
-                        self.parent,
-                        'REPLACING IN FILES', 
-                        warning,
-                        data.QMessageBox.Yes,
-                        data.QMessageBox.No
-                    )
+            reply = helper_forms.YesNoDialog.warning(warning)
             if reply == data.QMessageBox.No:
                 return
             #Check if the search directory is none, then use a dialog window
@@ -5708,6 +5660,7 @@ class BasicWidget(data.QTabWidget):
                     self.addSeparator()
                     add_diff_actions()
     
+    
     # Class variables
     # Name of the basic widget                       
     name                    = ""
@@ -5754,8 +5707,6 @@ class BasicWidget(data.QTabWidget):
         # Store the default settings
         self.default_tab_font = self.tabBar().font()
         self.default_icon_size = self.tabBar().iconSize()
-        # Customize the style as needed
-#        self.customize_tab_bar()
     
     def customize_tab_bar(self):
         if data.custom_menu_scale != None and data.custom_menu_font != None:
@@ -5952,13 +5903,7 @@ class BasicWidget(data.QTabWidget):
                 #Display the close notification
                 close_message = "Document '" + self.tabText(emmited_tab_number)
                 close_message += "' has been modified!\nClose it anyway?"
-                reply = data.QMessageBox.question(
-                    self, 
-                    'Closing Tab', 
-                    close_message,
-                    data.QMessageBox.Yes,
-                    data.QMessageBox.No
-                )
+                reply = helper_forms.YesNoDialog.question(close_message)
                 if reply == data.QMessageBox.Yes:
                     clear_document_bookmarks()
                     #Close tab anyway
@@ -8458,13 +8403,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             self.main_form.view.set_log_window(False)
             #Display the close notification
             reload_message = "Document '" + self.name+ "' has been modified!\nReload it from disk anyway?"
-            reply = data.QMessageBox.question(
-                self, 
-                'Reloding Tab', 
-                reload_message,
-                data.QMessageBox.Yes,
-                data.QMessageBox.No
-            )
+            reply = helper_forms.YesNoDialog.question(reload_message)
             if reply == data.QMessageBox.No:
                 #Cancel tab file reloading
                 return

@@ -25,7 +25,7 @@ moved_widgets = [
     "QLabel", "QAction", "QGridLayout", "QStatusBar", "QVBoxLayout",
     "QSplitter", "QToolButton", "QToolBar", "QAbstractItemView", "QMessageBox",
     "QFileDialog", "QTextEdit", "QWidget", "QCommonStyle", "QStyleFactory",
-    "QStyle", "QMessageBox", 
+    "QStyle", "QMessageBox", "QDesktopWidget", 
 ]
 
 try:

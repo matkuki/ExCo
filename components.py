@@ -409,6 +409,7 @@ class TheSquid:
         TheSquid.customize_menu_style(TheSquid.main_form.menubar)
         TheSquid.customize_menu_style(TheSquid.main_form.sessions_menu)
         TheSquid.customize_menu_style(TheSquid.main_form.recent_files_menu)
+        TheSquid.customize_menu_style(TheSquid.main_form.save_in_encoding)
         
         def set_style(menu):
             if hasattr(menu, "actions"):
@@ -425,7 +426,6 @@ class TheSquid:
         
         for window in windows:
             window.customize_tab_bar()
-            TheSquid.customize_menu_style(window.custom_tab_bar)
         
             for i in range(window.count()):
                 if hasattr(window.widget(i), "corner_widget"):
@@ -448,6 +448,7 @@ class TheSquid:
     @staticmethod
     def customize_menu_style(menu):
         if data.custom_menu_scale != None and data.custom_menu_font != None:
+            # Customize the style
             try:
                 default_style_name = data.QApplication.style().objectName()
                 custom_style = CustomStyle(default_style_name)
@@ -459,6 +460,9 @@ class TheSquid:
                 else:
                     custom_style = CustomStyle("GTK")
                     menu.setStyle(custom_style)
+        else:
+            # Reset the style
+            menu.setStyle(data.QApplication.style())
     
 
 

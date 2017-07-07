@@ -22,6 +22,7 @@ import math
 import functools
 import difflib
 import re
+import time
 import settings
 import functions
 import forms
@@ -380,13 +381,10 @@ class SessionGuiManipulator(data.QTreeView):
             remove_group_name = selected_item.name
             message =  "Are you sure you want to delete group:\n"
             message += "'{:s}' ?".format(remove_group_name)
-            reply = data.QMessageBox.question(
-                        self.parent, 
-                        'Delete Session Group', 
-                        message,
-                        data.QMessageBox.Yes,
-                        data.QMessageBox.No
-                    )
+            reply = YesNoDialog(
+                self, 
+                message
+            ).exec_()
             if reply == data.QMessageBox.No:
                 return
             #Delete all of the session with the group name
@@ -409,13 +407,10 @@ class SessionGuiManipulator(data.QTreeView):
                 group_name += " / "
             message =  "Are you sure you want to delete session:\n"
             message += "'{:s}{:s}' ?".format(group_name, remove_session.name)
-            reply = data.QMessageBox.question(
-                        self.parent, 
-                        'Delete Session Group', 
-                        message,
-                        data.QMessageBox.Yes,
-                        data.QMessageBox.No
-                    )
+            reply = YesNoDialog(
+                self, 
+                message
+            ).exec_()
             if reply == data.QMessageBox.No:
                 return
             #Delete the session
@@ -4058,3 +4053,347 @@ class ContextMenu(data.QGroupBox):
 
 
 
+"""
+---------------------------------------------------------
+Custom Yes/No dialog window
+---------------------------------------------------------
+""" 
+class YesNoDialog(data.QDialog):
+    class Button(data.QLabel):
+        pixmap = None
+        text = None
+        return_code = None
+        scale = 1.0
+        
+        on_signal = data.PyQt.QtCore.pyqtSignal()
+        off_signal = data.PyQt.QtCore.pyqtSignal()
+        
+        def __init__(self, parent, image, text, return_code, scale=1.0):
+            # Initialize superclass
+            super().__init__(parent)
+            # Set the on/off images
+            self.pixmap = data.PyQt.QtGui.QPixmap(image)
+            self.scale = scale
+            if scale != 1.0:
+                self.pixmap = self.pixmap.scaled(
+                    self.pixmap.size() * scale, 
+                    transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+                )
+            # Set the text and return code
+            self.text = text
+            self.return_code = return_code
+            # Enable mouse move events
+            self.setMouseTracking(True)
+            self.setScaledContents(True)
+            # Disable the button on startup
+            self.off()
+        
+        def draw(self, opacity):
+            image = data.PyQt.QtGui.QImage(
+                self.pixmap.size(),
+                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+            )
+            image.fill(data.PyQt.QtCore.Qt.transparent)
+            painter = data.PyQt.QtGui.QPainter(image)
+            painter.setOpacity(opacity)
+            painter.drawPixmap(0, 0, self.pixmap)
+            
+            if opacity < 0.5:
+                painter.setPen(data.PyQt.QtGui.QColor(0, 0, 0))
+            else:
+                painter.setPen(data.PyQt.QtGui.QColor(255, 255, 255))
+            painter.setFont(
+                data.PyQt.QtGui.QFont(
+                    'Segoe UI', 16*self.scale, data.PyQt.QtGui.QFont.Bold
+                )
+            )
+            painter.setOpacity(1.0)
+            painter.drawText(
+                self.pixmap.rect(), data.PyQt.QtCore.Qt.AlignCenter, self.text
+            )
+            painter.end()
+            # Display the manipulated image
+            self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+            # Set the button mask, which sets the button area to the shape of
+            # the button image instead of a rectangle
+            self.setMask(self.pixmap.mask())
+        
+        def on(self):
+            self.draw(1.0)
+        
+        def off(self):
+            self.draw(0.0)
+        
+        def mouseMoveEvent(self, event):
+            super().mouseMoveEvent(event)
+            # Show the button
+            self.on()
+            self.on_signal.emit()
+        
+        def enterEvent(self, event):
+            super().enterEvent(event)
+            # Bring the widget to the front of the Z-axis stack
+            self.raise_()
+            # Show the button
+            self.on()
+            self.on_signal.emit()
+        
+        def leaveEvent(self, event):
+            super().leaveEvent(event)
+            # Hide the button
+            self.off()
+            self.off_signal.emit()
+        
+        def mousePressEvent(self, event):
+            #Execute the superclass mouse click event first
+            super().mousePressEvent(event)
+            self.parent().done(self.return_code)
+    
+    state = False
+    scale = 1.0
+    
+    def __init__(self, text, dialog_type=None):
+        super().__init__()
+        # Make the dialog stay on top
+        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint)
+        # Setup the image
+        original_dialog_image = data.PyQt.QtGui.QPixmap(
+            os.path.join(
+                data.application_directory,
+                data.resources_directory, 
+                "various/dialog-yes-no.png"
+            )
+        )
+        dialog_image = original_dialog_image.scaled(
+            original_dialog_image.size() * self.scale,
+            transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+        )
+        self.image = data.QLabel(self)
+        self.image.setPixmap(dialog_image)
+        self.image.setGeometry(
+            0,
+            0,
+            dialog_image.rect().width() * self.scale,
+            dialog_image.rect().height() * self.scale,
+        )
+        self.image.setScaledContents(True)
+        # Setup the image behind the label
+        if dialog_type != None:
+            if dialog_type == "question":
+                type_pixmap = data.PyQt.QtGui.QPixmap(
+                    os.path.join(
+                        data.resources_directory,
+                        "various/dialog-question.png"
+                    )
+                )
+            elif dialog_type == "warning":
+                type_pixmap = data.PyQt.QtGui.QPixmap(
+                    os.path.join(
+                        data.resources_directory,
+                        "various/dialog-warning.png"
+                    )
+                )
+            elif dialog_type == "error":
+                type_pixmap = data.PyQt.QtGui.QPixmap(
+                    os.path.join(
+                        data.resources_directory,
+                        "various/dialog-error.png"
+                    )
+                )
+            else:
+                raise Exception("Wrong dialog type!")
+            image = data.PyQt.QtGui.QImage(
+                type_pixmap.size(),
+                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+            )
+            image.fill(data.PyQt.QtCore.Qt.transparent)
+            painter = data.PyQt.QtGui.QPainter(image)
+            painter.setOpacity(0.2)
+            painter.drawPixmap(0, 0, type_pixmap)
+            painter.end()
+            type_pixmap = data.PyQt.QtGui.QPixmap.fromImage(image)
+            type_pixmap = type_pixmap.scaled(
+                type_pixmap.size() * 2.0 * self.scale, 
+                transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+            )
+            self.type_label = data.QLabel(self)
+            self.type_label.setPixmap(type_pixmap)
+            type_label_rect = data.PyQt.QtCore.QRect(
+                (self.image.rect().width() - type_pixmap.rect().width())/2 * self.scale,
+                (self.image.rect().height() - type_pixmap.rect().height())/2 * self.scale,
+                type_pixmap.rect().width() * self.scale,
+                type_pixmap.rect().height() * self.scale,
+            )
+            self.type_label.setGeometry(type_label_rect)
+        # Setup the text label
+        self.text = text
+        self.label = data.QLabel(self)
+        self.label.setFont(
+            data.PyQt.QtGui.QFont(
+                'Segoe UI', 12 * self.scale, data.PyQt.QtGui.QFont.Bold
+            )
+        )
+        self.label.setWordWrap(True)
+        self.label.setAlignment(data.PyQt.QtCore.Qt.AlignCenter)
+        self.label.setText(text)
+        width_diff = self.image.rect().width() - original_dialog_image.width()
+        height_diff = self.image.rect().height() - original_dialog_image.height()
+        x_offset = 20 * (self.scale - 1.0)
+        y_offset = 60 * (self.scale - 1.0)
+        label_rect = data.PyQt.QtCore.QRect(
+            dialog_image.rect().x() + 20 + x_offset,
+            dialog_image.rect().y() + 60 + y_offset,
+            dialog_image.rect().width() - (40 * self.scale),
+            dialog_image.rect().height() - (120* self.scale),
+        )
+        self.label.setGeometry(label_rect)
+        # Shrink text if needed
+        for i in range(10):
+            label_width = label_rect.width()
+            label_height = label_rect.height()
+            font_metrics = data.PyQt.QtGui.QFontMetrics(self.label.font())
+            bounding_rectangle = font_metrics.boundingRect(
+                data.PyQt.QtCore.QRect(0, 0, label_width, label_height),
+                self.label.alignment() | data.PyQt.QtCore.Qt.TextWordWrap,
+                text
+            )
+            if (bounding_rectangle.width() > label_width or 
+                bounding_rectangle.height() > label_height):
+                self.label.setFont(
+                    data.PyQt.QtGui.QFont(
+                        'Segoe UI', (12-i) * self.scale, data.PyQt.QtGui.QFont.Bold
+                    )
+                )
+            else:
+                break
+        # Setup the buttons
+        self.button_yes = self.Button(
+            self, 
+            os.path.join(
+                data.resources_directory,
+                "various/hex-green.png"
+            ),
+            "Yes", 
+            data.QMessageBox.Yes, 
+            self.scale
+        )
+        x_offset = 93 * (self.scale - 1.0)
+        y_offset = 3 * (self.scale - 1.0)
+        self.button_yes.setGeometry(
+            93+x_offset,
+            3+y_offset,
+            59 * self.scale,
+            50 * self.scale
+        )
+        self.button_yes.on_signal.connect(self.update_state_on)
+        self.button_yes.off_signal.connect(self.update_state_reset)
+        self.button_no = self.Button(
+            self, 
+            os.path.join(
+                data.resources_directory,
+                "various/hex-red.png"
+            ),
+            "No", 
+            data.QMessageBox.No, 
+            self.scale
+        )
+        x_offset = 93 * (self.scale - 1.0)
+        y_offset = 158 * (self.scale - 1.0)
+        self.button_no.setGeometry(
+            93+x_offset,
+            158+y_offset,
+            59 * self.scale,
+            50 * self.scale
+        )
+        self.button_no.on_signal.connect(self.update_state_off)
+        self.button_no.off_signal.connect(self.update_state_reset)
+        # Setup the layout
+        self.layout = data.QGridLayout()
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(data.PyQt.QtCore.QMargins(0,0,0,0))
+        self.layout.addWidget(self.image)
+        self.setLayout(self.layout)
+        # Setup tranparency and borders
+        self.image.setAttribute(data.PyQt.QtCore.Qt.WA_TranslucentBackground)
+        self.image.setStyleSheet(
+            "border:0;" +
+            "background-color:transparent;"
+        )
+        self.setAttribute(data.PyQt.QtCore.Qt.WA_TranslucentBackground)
+        self.setStyleSheet(
+            "border:0;" +
+            "background-color:transparent;"
+        )
+        
+        self.setGeometry(dialog_image.rect())
+        self.center()
+        self.setWindowFlags(data.PyQt.QtCore.Qt.FramelessWindowHint)
+    
+    def update_state_on(self):
+        self.state = True
+        self.button_no.off()
+    
+    def update_state_off(self):
+        self.state = False
+        self.button_yes.off()
+    
+    def update_state_reset(self):
+        self.state = None
+    
+    def state_on(self):
+        self.state = True
+        self.button_no.off()
+        self.button_yes.on()
+    
+    def state_off(self):
+        self.state = False
+        self.button_no.on()
+        self.button_yes.off()
+    
+    def state_reset(self):
+        self.state = None
+        self.button_no.off()
+        self.button_yes.off()
+    
+    def center(self):
+        qr = self.frameGeometry()
+        cp = data.QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+    
+    def keyPressEvent(self, key_event):
+        pressed_key = key_event.key()
+        #Check for escape keypress
+        if pressed_key == data.PyQt.QtCore.Qt.Key_Escape:
+            self.button_no.on()
+            self.repaint()
+            time.sleep(0.1)
+            self.done(data.QMessageBox.No)
+        elif pressed_key == data.PyQt.QtCore.Qt.Key_Down:
+            self.state_off()
+        elif pressed_key == data.PyQt.QtCore.Qt.Key_Up:
+            self.state_on()
+        elif pressed_key == data.PyQt.QtCore.Qt.Key_Enter or pressed_key == data.PyQt.QtCore.Qt.Key_Return:
+            if self.state == True:
+                self.done(data.QMessageBox.Yes)
+            elif self.state == False:
+                self.done(data.QMessageBox.No)
+    
+    @staticmethod
+    def blank(text):
+        return YesNoDialog(text).exec_()
+    
+    @staticmethod
+    def question(text):
+        return YesNoDialog(text, "question").exec_()
+    
+    @staticmethod
+    def warning(text):
+        return YesNoDialog(text, "warning").exec_()
+    
+    @staticmethod
+    def error(text):
+        return YesNoDialog(text, "error").exec_()
+    
+    
+    
