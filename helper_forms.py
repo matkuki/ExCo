@@ -4177,6 +4177,8 @@ class YesNoDialog(data.QDialog):
             dialog_image.rect().height() * self.scale,
         )
         self.image.setScaledContents(True)
+        # Set the dialog mask to match the image mask
+        self.setMask(dialog_image.mask())
         # Setup the image behind the label
         if dialog_type != None:
             if dialog_type == "question":
