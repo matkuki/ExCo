@@ -10,6 +10,7 @@ https://www.youtube.com/watch?v=v-7fqJGv7Ts&feature
 <img src="https://github.com/matkuki/ExCo/blob/master/screenshot_win32.png" align="top" width="600" height="480">
 <img src="https://github.com/matkuki/ExCo/blob/master/screenshot_lubuntu.png" align="top" width="600" height="480">
 <br>
+
 ### License: ###
 __GNU General Public License v3.0__
 
@@ -35,7 +36,7 @@ All additional licenses are specified at the beginning of every source code file
 <br><br>
 
 ### Supported platforms: ###
-- __Windows__ ([precompiled binaries available](https://github.com/matkuki/Ex-Co-Windows-Compiled))
+- __Windows__ ([precompiled binaries available](https://github.com/matkuki/ExCo/releases))
 - __GNU/Linux__ (tested on Lubuntu, Raspbian (Raspberry pi, pi2 and pi3))
 - __Mac OS__ (Many thanks to __zenlc2000__ for testing this on Mac OS 10.11)
 
