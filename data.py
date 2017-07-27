@@ -84,8 +84,8 @@ import themes
 """
 File extension lists
 """
-ext_python              = [".py", ".pyw", ".scons"]
-ext_cython             = [".pyx", ".pxd", ".pxi"]
+ext_python              = [".py", ".pyw", ".pyi", ".scons"]
+ext_cython              = [".pyx", ".pxd", ".pxi"]
 ext_c                   = [".c", ".h"]
 ext_cpp                 = [".c++", ".h++", ".cc", ".hh", ".cpp", ".hpp", ".cxx", ".hxx"]
 ext_pascal              = [".pas", ".pp", ".lpr", ".cyp"]
@@ -94,7 +94,7 @@ ext_ada                 = [".ads", ".adb"]
 ext_json                = [".json"]
 ext_lua                 = [".lua"]
 ext_d                   = [".d"]
-ext_nim                 = [".nim"]
+ext_nim                 = [".nim", ".nims"]
 ext_perl                = [".pl", ".pm"]
 ext_xml                 = [".xml", ".tpy"]
 ext_batch               = [".bat",  ".batch"]
@@ -185,7 +185,7 @@ These are the DEFAULT values, override them in the user
 configuration file 'user_functions.cfg'.
 --------------------------------------------------------
 """
-application_version = "6.6"
+application_version = "6.7"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere

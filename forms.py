@@ -5033,7 +5033,7 @@ class MainWindow(data.QMainWindow):
                 lexers_menu
             )
             SQL_action = create_action(
-                'RouterOS',
+                'SQL',
                 None, 
                 'Change document lexer to: SQL', 
                 'language_icons/logo_sql.png', 
@@ -5587,6 +5587,18 @@ class BasicWidget(data.QTabWidget):
                 update_cwd_action.triggered.connect(update_cwd)
                 self.addAction(update_cwd_action)
                 self.addSeparator()
+            # Add the 'copy file name to clipboard' action
+            clipboard_copy_action = data.QAction("Copy document name to clipboard", self)
+            def clipboard_copy():
+                cb = data.application.clipboard()
+                cb.clear(mode=cb.Clipboard)
+                cb.setText(editor_widget.name, mode=cb.Clipboard)
+            clipboard_copy_action.setIcon(
+                functions.create_icon('tango_icons/edit-copy.png')
+            )
+            clipboard_copy_action.triggered.connect(clipboard_copy)
+            self.addAction(clipboard_copy_action)
+            self.addSeparator()
             #Nested function for adding diff actions
             def add_diff_actions():
                 #Diff to main window

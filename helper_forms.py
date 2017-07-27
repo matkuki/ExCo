@@ -381,10 +381,7 @@ class SessionGuiManipulator(data.QTreeView):
             remove_group_name = selected_item.name
             message =  "Are you sure you want to delete group:\n"
             message += "'{:s}' ?".format(remove_group_name)
-            reply = YesNoDialog(
-                self, 
-                message
-            ).exec_()
+            reply = YesNoDialog(message).exec_()
             if reply == data.QMessageBox.No:
                 return
             #Delete all of the session with the group name
@@ -407,10 +404,7 @@ class SessionGuiManipulator(data.QTreeView):
                 group_name += " / "
             message =  "Are you sure you want to delete session:\n"
             message += "'{:s}{:s}' ?".format(group_name, remove_session.name)
-            reply = YesNoDialog(
-                self, 
-                message
-            ).exec_()
+            reply = YesNoDialog.warning(message)
             if reply == data.QMessageBox.No:
                 return
             #Delete the session
@@ -1474,7 +1468,7 @@ class TreeDisplay(data.QTreeView):
                 elif i == 7:
                     if undef_list == []:
                         continue
-                    item = data.PyQt.QtGui.QStandardItem(undef_text)
+                    item = data.PyQt.QtGui.QStandardItem(undefine_text)
                     icon = self.node_icon_macro
                     current_list = undef_list
                 elif i == 8:

@@ -23,6 +23,7 @@ import itertools
 import operator
 import timeit
 import data
+import traceback
 
 def create_icon(icon_name):
     """
@@ -1351,7 +1352,7 @@ def get_c_node_tree(c_code):
                      in_line_number, 
                      in_level, 
                      in_parent=None):
-            self.name = in_name
+            self.name = in_name.strip()
             self.type = in_type
             self.line_number = in_line_number
             self.level = in_level
@@ -1362,10 +1363,9 @@ def get_c_node_tree(c_code):
         "auto", "break", "case", "const", "continue", "default", "do",
         "else", "enum", "extern", "for", "goto", "if", "register", "return", 
         "signed", "sizeof", "static", "struct", "switch", "typedef", "union", 
-        "unsigned", "volatile", "while",
+        "unsigned", "volatile", "while", "pragma", 
     ]
-    composite_0_types = ["typedef", "union"]
-    composite_1_types = ["enum", "struct"]
+    composite_types = ["typedef", "union", "enum", "struct"]
     types = [
         "char", "double", "enum", "float", "int", "long", "short", "void", 
         "auto", "static", "struct", "signed", "unsigned", "register", "extern",
@@ -1389,7 +1389,7 @@ def get_c_node_tree(c_code):
             node_list.append(in_node)
     # Debugging helpers
     def debug_print(level, *args, **kwargs):
-        if True:
+        if False:
             print(level * "    ", *args, **kwargs)
     # Tokenize the text and remove the space characters
     splitter = re.compile(r"(\#\s*\w+|\'|\"|\n|\s+|\w+|\W)")
@@ -1422,6 +1422,10 @@ def get_c_node_tree(c_code):
         # Main Loop for filtering tokens
         for i, token in enumerate(tokens):
             stripped_token = token.strip()
+#            if (len(tokens)-1) > (i+1):
+#                next_token = tokens[i+1].strip()
+#            else:
+#                next_token = ""
             if "\n" in token:
                 # Increase the line counter
                 newline_count = token.count("\n")
@@ -1437,15 +1441,23 @@ def get_c_node_tree(c_code):
                 if skip_to_token >= i:
                     continue
                 else:
-                    current_statement_tokens.append("{ ... }")
                     skip_to_token = None
             
             # Check for various special characters
             if '\n' in token:
-                if previous_token != "\\":
+                if previous_unfiltered_token != "\\":
                     # Check the macro type
                     if macro_type == "include":
-                        include_string = "".join(macro_tokens)
+                        filtered_macro_tokens = []
+                        previous_token = ''
+                        for m in macro_tokens:
+                            if ((m == '*' and previous_token == '/') or
+                                (m == '/' and previous_token == '/')):
+                                    filtered_macro_tokens = filtered_macro_tokens[:-2]
+                                    break
+                            filtered_macro_tokens.append(m)
+                            previous_token = m
+                        include_string = "".join(filtered_macro_tokens)
                         debug_print(
                             level, "Found include:\n", (level+1)*"    ", include_string
                         )
@@ -1464,10 +1476,14 @@ def get_c_node_tree(c_code):
                         add_node(CNode(undef_macro, "undef", macro_line, 0))
                     elif macro_type == "pragma":
                         pragma_macro = macro_tokens[0]
+                        # Watcom compiler 'aux' keyword check
+                        if pragma_macro == "aux":
+                            pragma_macro = macro_tokens[1]
                         debug_print(
                             level, "Found pragma:\n", (level+1)*"    ", pragma_macro
                         )
                         add_node(CNode(pragma_macro, "pragma", macro_line, 0))
+#                        print("macro:", macro_tokens)
                     elif macro_type == "error":
                         error_macro = " ".join(macro_tokens)[:10] + "..."
                         debug_print(
@@ -1509,20 +1525,131 @@ def get_c_node_tree(c_code):
                     current_statement_tokens.append(token)
 #                    debug_print(level, " ".join(current_statement_tokens))
                     first_word = current_statement_tokens[0]
-                    if first_word == "typedef":
-                        typedef = current_statement_tokens[-2]
-                        body_test = current_statement_tokens[-3] == "{ ... }"
-                        if typedef.isidentifier():
-                            debug_print(level, "Found typedef:\n", (level+1)*"    ", typedef)
-                            add_node(CNode(typedef, "typedef", current_line, 0))
-                    elif first_word == "struct":
-                        struct = current_statement_tokens[1]
-                        body_test = current_statement_tokens[-2] == "{ ... }"
-                        if struct.isidentifier() and body_test:
-                            debug_print(level, "Found struct:\n", (level+1)*"    ", struct)
-                            add_node(CNode(struct, "struct", current_line, 0))
+                    if first_word in composite_types:
+                        type_desc = first_word
+                        if current_statement_tokens[-2].isidentifier():
+                            type_name = current_statement_tokens[-2]
+                        elif (current_statement_tokens[1].isidentifier() and 
+                              not(current_statement_tokens[1] in keywords)):
+                            type_name = current_statement_tokens[1]    
+                        else:
+                            for t in current_statement_tokens:
+                                if t.startswith("( *"):
+                                    type_name = t[3:-2]
+                                    break
+                            else:
+                                raise Exception("'{}' (line:{}) has unknown name! ({})".format(
+                                        type_desc, current_line, current_statement_tokens
+                                    )
+                                )
+                        body_test = (
+                            current_statement_tokens[-2] == "{ ... }" or
+                            current_statement_tokens[-3] == "{ ... }"
+                        ) 
+                        if type_name.isidentifier() and body_test:
+                            debug_print(level, "Found {}:\n".format(type_desc), (level+1)*"    ", type_name)
+                            add_node(CNode(type_name, type_desc, current_line, 0))
                     else:
-                        debug_print(level, " ".join(current_statement_tokens))
+#                        debug_print(level, " ".join(current_statement_tokens))
+#                        print(" ".join(current_statement_tokens), level, len(current_statement_tokens))
+                        def parse_funcs(in_list, pos=0):
+                            if in_list == None:
+                                return
+                            return_list = []
+                            for i,item in enumerate(in_list):
+                                if item.strip() == "":
+                                    continue
+                                elif item.startswith('('):
+                                    try:
+                                        if in_list[i-1].isidentifier() and not(in_list[i-1] in keywords):
+                                            func = return_list.pop()
+                                            return_list.append(func+item)
+                                    except:
+                                        return_list.append(item)
+                                else:
+                                    return_list.append(item)
+                            return return_list
+                        try:
+                            result = parse_funcs(current_statement_tokens)
+#                            print(result)
+                            length = len(result)
+                            if ('(' in result[-2] and ')' in result[-2] and 
+                                not('=' in result[-2]) and level == 0 and
+                                result[-2][:result[-2].find('(')].isidentifier()):
+                                    name = current_statement_tokens[-3]
+                                    if '(' in name and ')' in name and name[2] == '*':
+                                        prototype = name[3:-1]
+                                    else:
+                                        prototype = result[-2][:result[-2].find('(')]
+                                    add_node(
+                                        CNode(prototype, "prototype", current_line, 0)
+                                    )
+                                    debug_print(level, "Found prototype 0:\n", (level+1)*"    ", prototype)
+                            elif length == 3:
+                                if '(' in result[1] and ')' in result[1] and (level == 0):
+                                    prototype = result[1][:result[1].find("(")]
+                                    add_node(
+                                        CNode(prototype, "prototype", current_line, 0)
+                                    )
+                                    debug_print(level, "Found prototype 1:\n", (level+1)*"    ", prototype)
+                                elif result[1].isidentifier() and not('=' in result) and (level == 0):
+                                    variable = result[1]
+                                    add_node(
+                                        CNode(variable, "var", current_line, 0)
+                                    )
+                                    debug_print(level, "Found variable 0:\n", (level+1)*"    ", variable)
+                                else:
+                                    pass
+                            elif ',' in result:
+                                # Multiple variable declarations delimited with ','
+                                if level == 0:
+                                    groups = []
+                                    current_group = []
+                                    for t in result:
+                                        if t == ',' or t == ';':
+                                            groups.append(current_group)
+                                            current_group = []
+                                        else:
+                                            current_group.append(t)
+                                    for g in groups:
+                                        if '=' in g:
+                                            equal_index = g.index('=')
+                                            var_name = g[equal_index-1]
+                                        else:
+                                            if ('[' in g) and (']' in g):
+                                                open_index = g.index('[')
+                                                var_name = g[open_index-1]
+                                            else:
+                                                var_name = g[-1]
+#                                            print("       ", var_name)
+                                        if var_name.isidentifier():
+                                            add_node(
+                                                CNode(var_name, "var", current_line, 0)
+                                            )
+                                            debug_print(level, "Found variable 1:\n", (level+1)*"    ", var_name)
+                            elif result[-2].isidentifier() and not('=' in result) and (level == 0):
+                                variable = result[-2]
+                                add_node(
+                                    CNode(variable, "var", current_line, 0)
+                                )
+                                debug_print(level, "Found variable 2:\n", (level+1)*"    ", variable)
+                            elif '=' in result and result[result.index('=')-1].isidentifier() and (level == 0):
+                                variable = result[result.index('=')-1]
+                                add_node(
+                                    CNode(variable, "var", current_line, 0)
+                                )
+                                debug_print(level, "Found variable 3:\n", (level+1)*"    ", variable)
+                            elif ('[' in result) and (']' in result) and result[result.index("[")-1].isidentifier() and (level == 0):
+                                variable = result[result.index("[")-1]
+                                add_node(
+                                    CNode(variable, "var", current_line, 0)
+                                )
+                                debug_print(level, "Found array variable:\n", (level+1)*"    ", variable)
+                            else:
+                                pass
+                        except Exception as ex:
+                            debug_print(level-1, "**** UNKNOWN NODE ****", current_line, i+index)
+                        
                     current_statement_tokens = []
                 elif '#' in token and any(x for x in macros if x in token):
                     macroing = True
@@ -1533,14 +1660,81 @@ def get_c_node_tree(c_code):
                     # Skip macros that do nothing
                     macroing = True
                 elif token == '{':
-                    debug_print(level, '{', current_line, i)
+                    try:
+                        func_found = False
+                        if (current_statement_tokens[-1] == "( ... )" or 
+                            (current_statement_tokens[-1].startswith('(') and 
+                             current_statement_tokens[-1].endswith(')'))):
+                            func_name = current_statement_tokens[-2]
+                            if func_name.isidentifier() and not(func_name in keywords):
+                                add_node(
+                                    CNode(func_name, "function", current_line, 0)
+                                )
+                                debug_print(level, "Found function:\n", (level+1)*"    ", func_name)
+                                func_found = True
+                    except:
+                        pass
+                    if func_found == False and not(any(x in composite_types for x in current_statement_tokens)):
+                        next_level = level
+                    else:
+                        next_level = level + 1
                     # Start of a block
+                    debug_print(level, "{ ", current_statement_tokens)
+                    if func_found:
+                        debug_print(level, "function start '{}':".format(func_name),"level:",next_level,i)
                     node_list, skip_to_token = parse_loop(
-                        tokens[i+1:], node_list, current_line, i+1, level+1
+                        tokens[i+1:], node_list, current_line, i+1, next_level
                     )
+                    current_statement_tokens.append("{ ... }")
+                    if func_found:
+                        debug_print(level, "function end '{}':".format(func_name),skip_to_token)
+                        current_statement_tokens = []
                 elif token == '}':
-                    debug_print(level-1, '}', current_line, i+index)
+#                    debug_print(level-1, '}', current_line, i+index)
                     return node_list, i+index
+                elif token == '(':
+#                    print("**  ",current_statement_tokens)
+                    paren_tokens = ['(']
+                    paren_count = 0
+                    skip_to_token = i
+                    function_flag = False
+                    for j, t in enumerate(tokens[i+1:]):
+                        skip_to_token += 1
+                        paren_tokens.append(t)
+                        if t == '(':
+                            paren_count += 1
+                        if t == ')':
+                            if paren_count == 0:
+                                try:
+                                    tks = tokens[i+1:]
+                                    for k in range(3):
+                                        if '{' in tks[j+1+k].strip():
+                                            function_flag = True
+                                            break
+                                except:
+                                    pass
+                                break
+                            else:
+                                paren_count -= 1
+#                    print("parens:", " ".join(paren_tokens))
+                    if paren_tokens[1] == '*' and function_flag == False:
+                        current_statement_tokens.append("( {} )".format("".join(paren_tokens[1:-1])))
+                    elif (len(paren_tokens) > 4 and 
+                          paren_tokens[-3] == '*' and 
+                          paren_tokens[-2].isidentifier() and
+                          not(',' in "".join(paren_tokens)) and
+                          function_flag == False):
+                            current_statement_tokens.append(
+                                "( {} )".format("".join(paren_tokens[-3:-1]))
+                            )
+                    else:
+                        current_statement_tokens.append("( ... )")
+                    previous_unfiltered_token = ')'
+                    previous_token = ')'
+                    continue
+#                elif token == ')':
+#                    debug_print(level-1, ')', current_line, i+index)
+#                    return node_list, i+index
                 else:
                     current_statement_tokens.append(token)
             
@@ -1561,353 +1755,6 @@ def get_c_node_tree(c_code):
         return item.name.lower()
     main_node_list = sorted(main_node_list, key=compare_function)
     return main_node_list
-                
-    
-
-def get_c_node_tree_old(c_code):
-    # Node object
-    class CNode:
-        def __init__(self, 
-                     in_name, 
-                     in_type, 
-                     in_line_number, 
-                     in_level, 
-                     in_parent=None):
-            self.name = in_name
-            self.type = in_type
-            self.line_number = in_line_number
-            self.level = in_level
-            self.parent = in_parent
-            self.children = []
-    # C keywords
-    keywords = [
-        "auto", "break", "case", "const", "continue", "default", "do",
-        "else", "enum", "extern", "for", "goto", "if", "register", "return", 
-        "signed", "sizeof", "static", "struct", "switch", "typedef", "union", 
-        "unsigned", "volatile", "while",
-    ]
-    composite_0_types = ["typedef", "union"]
-    composite_1_types = ["enum", "struct"]
-    types = [
-        "char", "double", "enum", "float", "int", "long", "short", "void", 
-        "auto", "static", "struct", "signed", "unsigned", "register", "extern",
-    ]
-    macros = ["#define", "#include", "#pragma"]
-    """
-    Parsing
-    """
-    # Store the text
-    text = c_code
-    # Initialize state variables
-    curly_count = 0
-    parenthesis_count = 0
-    singleline_commenting = False
-    multiline_commenting = False
-    composite_0_typeing = False
-    composite_1_typeing = False
-    stringing = False
-    previous_token = ""
-    last_found_function = ""
-    last_line = 0
-    current_node = CNode("module", "", 0, -1)#None
-    current_line = 1
-    current_line_tokens = []
-    node_list = [current_node]
-    previous_unfiltered_token = None
-    # Function for adding a node
-    def add_node(in_node):
-        if current_node != None:
-            current_node.children.append(in_node)
-        else:
-            node_list.append(in_node)
-    # Tokenize the text and remove the space characters
-    splitter = re.compile(r"(\#\w+|\'|\"|\n|\s+|\w+|\W)")
-    tokens = [token for token in splitter.findall(text)]
-    # Main Loop for filtering tokens
-    for i, token in enumerate(tokens):
-        stripped_token = token.strip()
-        if "\n" in token:
-            newline_count = token.count("\n")
-            current_line += newline_count
-            # Reset the line token list
-            current_line_tokens = []
-            # Reset the single line comment and string flags
-            singleline_commenting = False
-            stringing = False
-        if stripped_token == "":
-            previous_unfiltered_token = stripped_token
-            continue
-        else:
-            current_line_tokens.append(token)
-
-        # Check for various state changes
-        if multiline_commenting == True:
-            if token == "/" and previous_token == "*":
-                multiline_commenting = False
-        elif singleline_commenting == True:
-            pass
-        elif stringing == True:
-            if token == '"' and previous_token != "\\":
-                stringing = False
-        else:
-            if token == "{":
-                # Check for function definition
-                if previous_token == ")" and not(last_found_function in keywords):
-                    #The function has passed the filter, add it to the list
-                    new_function_node = CNode(
-                        last_found_function, "function", last_line, curly_count
-                    )
-                    if current_node != None:
-                        # Add the new function node as a child of 
-                        # the current function node
-                        current_node.children.append(new_function_node)
-                        new_function_node.parent = current_node
-                        current_node = new_function_node
-                    else:
-                        node_list.append(new_function_node)
-                        current_node = new_function_node
-                # Increase curly brace count
-                curly_count += 1
-            elif token == "}":
-                curly_count -= 1
-                # Check if in a node
-                if current_node != None:
-                    if curly_count == current_node.level:
-                        if current_node.parent != None:
-                            current_node = current_node.parent
-                        else:
-                            current_node = None
-            elif token == "(":
-                # Check for function definition
-                if re.match(r"\w", previous_token) and parenthesis_count == 0:
-                    last_found_function = previous_token
-                    last_line = current_line
-                # Increase parenthesis count
-                parenthesis_count += 1
-            elif token == ")":
-                parenthesis_count -= 1
-            elif token == "*" and previous_unfiltered_token == "/":
-                multiline_commenting = True
-            elif token == "/" and previous_unfiltered_token == "/":
-                singleline_commenting = True
-            elif token == '"':
-                stringing = True
-            elif (composite_1_typeing == False and 
-                  composite_0_typeing == False and 
-                  token in composite_0_types):
-                # Typedef or union
-                composite_0_typeing = True
-                composite_0_type = token
-                composite_0_type_count = curly_count
-            elif (composite_1_typeing == False and 
-                  composite_0_typeing == False and 
-                  token in composite_1_types):
-                # Enum or struct
-                composite_1_typeing = True
-                composite_1_name = tokens[i+2]
-                composite_1_type = token
-                composite_1_type_count = curly_count
-            elif token in macros:
-                macro_type = token[1:]
-                if tokens[i+2] == '"' or tokens[i+2] == '<':
-                    macro = tokens[i+3]
-                    for x in range(i+4, len(tokens)):
-                        if tokens[x] == '"' or tokens[x] == '>':
-                            break
-                        else:
-                            macro += tokens[x]
-                else:
-                    macro = tokens[i+2]
-                    if macro_type == "define":
-                        for x in range(i+3, len(tokens)):
-                            if ((' ' in tokens[x]) or 
-                                ('\n' in tokens[x]) or 
-                                ('(' in tokens[x])):
-                                    break
-                            else:
-                                macro += tokens[x]
-                    elif macro_type == "pragma":
-                        for x in range(i+3, len(tokens)):
-                            if tokens[x].strip() == "":
-                                macro += tokens[x]
-                            elif tokens[x].isidentifier() == False:
-                                break
-                            else:
-                                macro += tokens[x]
-                macro_node = CNode(macro, macro_type, current_line, 0)
-                if current_node != None:
-                    current_node.children.append(macro_node)
-                else:
-                    node_list.append(macro_node)
-            elif token == ';':
-                if (composite_0_typeing == True and 
-                    composite_0_type_count == curly_count):
-                        # Typedef or union active
-                        composite_0_typeing = False
-                        if previous_token.isidentifier():
-                            add_node(
-                                CNode(
-                                    previous_token, 
-                                    composite_0_type, 
-                                    current_line, 
-                                    0
-                                )
-                            )
-                elif (composite_1_typeing == True and 
-                      composite_1_type_count == curly_count):
-                        # Enum or struct active
-                        composite_1_typeing = False
-                        if composite_1_name.isidentifier():
-                            add_node(
-                                CNode(
-                                    composite_1_name, 
-                                    composite_1_type, 
-                                    current_line, 
-                                    0
-                                )
-                            )
-                elif composite_0_typeing == False and composite_1_typeing == False:
-                    """
-                    Check for variable definitions and prototypes
-                    """
-                    # Remove empty tokens
-                    current_line_tokens = [
-                        x for x in current_line_tokens if x.strip() != ""
-                    ]
-                    # Set conditions
-                    condition_0 = current_line_tokens[0] in types
-                    condition_1 = current_line_tokens[0].isidentifier()
-                    condition_1 = condition_1 and not(current_line_tokens[0] in keywords)
-                    for x in range(1, len(current_line_tokens)):
-                        tok = current_line_tokens[x]
-                        if tok == '*':
-                            continue
-                        else:
-                            condition_1 = condition_1 and tok.isidentifier()
-                            break
-                    # Test the conditions
-                    if condition_0 == True or condition_1 == True:
-                        var_list = []
-                        pos = len(current_line_tokens) - 2
-                        var = current_line_tokens[pos]
-                        if var == ')':
-                            # Function prototype
-                            for x in range(pos,-1,-1):
-                                if current_line_tokens[x] == '(':
-                                    for y in range(x,-1,-1):
-                                        if (current_line_tokens[y] != ')' and
-                                            current_line_tokens[y].isidentifier() == True):
-                                                prototype = current_line_tokens[y]
-                                                add_node(
-                                                    CNode(
-                                                        prototype, 
-                                                        "prototype", 
-                                                        current_line, 
-                                                        0
-                                                    )
-                                                )
-                                                break
-                                    break
-                        elif ',' in current_line_tokens:
-                            list_length = len(current_line_tokens) - 1
-                            equals_flag = False
-                            sequence_flag = False
-                            sequence_chars = {
-                                '"': '"', 
-                                '(': ')', 
-                                '{': '}', 
-                                '[': ']',
-                            }
-                            sequence_stop_char = None
-                            subscript_flag = False
-                            for j, tok in enumerate(current_line_tokens):
-                                if j > 0:
-                                    prev_tok = current_line_tokens[j-1]
-                                else:
-                                    prev_tok = ""
-                                if j < list_length:
-                                    next_tok = current_line_tokens[j+1]
-                                else:
-                                    next_tok = ""
-                                if equals_flag == False:
-                                    if subscript_flag == True:
-                                        current_var += tok
-                                        if (tok == ']' and 
-                                            next_tok != '[' and
-                                            not (next_tok in sequence_chars.keys())):
-                                                subscript_flag = False
-                                                if current_var.isidentifier():
-                                                    var_list.append(current_var)
-                                    elif tok == '[':
-                                        subscript_flag = True
-                                        current_var = prev_tok + tok
-                                    elif tok == '=' or tok == ',' or tok == ';':
-                                        # Check the variable validity
-                                        if prev_tok.isidentifier():
-                                            var_list.append(prev_tok)
-                                        # Set the equals flag if necessary
-                                        if tok == '=':
-                                            equals_flag = True
-                                else:
-                                    if (sequence_flag == False and 
-                                        tok in sequence_chars.keys()):
-                                            sequence_stop_char = sequence_chars[tok]
-                                            sequence_flag = True
-                                    elif (sequence_flag == True and 
-                                          tok == sequence_stop_char and 
-                                          prev_tok != "\\"):
-                                            sequence_flag = False
-                                    if sequence_flag == False:
-                                        if tok == ',' or tok == ';':
-                                            equals_flag = False
-                        elif '=' in current_line_tokens:
-                            for j, tok in enumerate(current_line_tokens):
-                                if (tok == '=' and 
-                                    (j > 0 and current_line_tokens[j-1] != '=') and
-                                    (len(current_line_tokens) >= j and current_line_tokens[j+1] != '=')):
-                                        pos = j - 1
-                                        var = current_line_tokens[pos]
-                                        if var == ']':
-                                            for x in range(pos,-1,-1):
-                                                if ((current_line_tokens[x] == '[') and 
-                                                    (current_line_tokens[x-1].isidentifier() == True)):
-                                                        var_list.append(current_line_tokens[x-1])
-                                                        break
-                                        elif var.isidentifier() == True:
-                                            var_list.append(var)
-                        else:
-                            pos = len(current_line_tokens) - 2
-                            var = current_line_tokens[pos]
-                            if var == ']':
-                                for x in range(pos,-1,-1):
-                                    if ((current_line_tokens[x] == '[') and 
-                                        (current_line_tokens[x-1].isidentifier() == True)):
-                                            var_list.append(current_line_tokens[x-1])
-                                            break
-                            else:
-                                if current_line_tokens[-2].isidentifier():
-                                    var_list.append(current_line_tokens[-2])
-                        # Add the variables to the node list
-                        for v in var_list:
-                            if v.isidentifier():
-                                add_node(CNode(v, "var", current_line, 0))
-                    elif condition_1 == True:
-                        print(current_line_tokens)
-        #Store the previous token
-        previous_unfiltered_token = token
-        if stripped_token != "":
-            previous_token = token
-    #Sort the nodes alphabetically
-    def compare_function(item):
-        return item.name.lower()
-    node_list = sorted(node_list, key=compare_function)
-    #Return the node list
-#    for i, x in enumerate(node_list):
-#        print(i, "  ", x.name, "  ", x.type, "  ", x.line_number)
-#        if x.children:
-#            for y in x.children:
-#                print(i, "    ", y.name, "  ", y.type, "  ", y.line_number)
-    return node_list
     
 
 def test_text_file(file_with_path):
