@@ -2538,7 +2538,6 @@ class MainWindow(data.QMainWindow):
             self.manipulator.save_settings(
                 self.parent.view.main_window_side, 
                 data.theme,
-                data.cursor_line_visible,
                 helper_forms.ContextMenu.get_settings()
             )
             #Display message in statusbar
