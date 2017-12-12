@@ -16,7 +16,287 @@ import data
 import forms
 import helper_forms
 import re
-import platform
+import math
+
+
+class HexBuilder:
+    first_position = None
+    painter = None
+    edge_length = None
+    scale = None
+    
+    fill_color = None
+    line_width = None
+    line_color = None
+    
+    directions = {
+        0: "up",
+        1: "up-right",
+        2: "down-right",
+        3: "down",
+        4: "down-left",
+        5: "up-left",
+    }
+    steps = None
+    horizontal_step = None
+    vertical_step = None
+    grid_positions = None
+    
+    @staticmethod
+    def generate_hexagon_points(edge_length, offset):
+        """Generator for coordinates in a hexagon."""
+        x, y = offset
+        points = []
+        for angle in range(0, 360, 60):
+            x += math.cos(math.radians(angle)) * edge_length
+            y += math.sin(math.radians(angle)) * edge_length
+            points.append((x, y))
+        last = points.pop()
+        points.insert(0, last)
+        for p in points:
+            yield p[0], p[1]
+    
+    def __init__(self, 
+                 painter, 
+                 first_position, 
+                 edge_length, 
+                 scale=1.0,
+                 fill_color=data.QColor(255,255,255),
+                 line_width=1,
+                 line_color=data.QColor(255,255,255),):
+        self.set_first_position(first_position)
+        self.painter = painter
+        self.scale = scale
+        self.edge_length = scale * edge_length
+        
+        horizontal_step = (3 * self.edge_length) / 2
+        vertical_step = math.sin(math.pi / 3) * self.edge_length
+        self.steps = {
+            "down-left": (-horizontal_step, vertical_step),
+            "down-right": (horizontal_step, vertical_step),
+            "down": (0, 2*vertical_step),
+            "up-left": (-horizontal_step, -vertical_step),
+            "up-right": (horizontal_step, -vertical_step),
+            "up": (0, -2*vertical_step),
+        }
+        self.horizontal_step = horizontal_step
+        self.vertical_step = vertical_step
+        
+        self.fill_color = fill_color
+        self.line_width = line_width
+        self.line_color = line_color
+    
+    @staticmethod
+    def get_single_hex_size(edge_length, line_width):
+        width = None
+        height = None
+        width = 2 * edge_length
+        width += 2 * line_width
+        height = math.sqrt(3) * edge_length
+        height += 2 * line_width
+        return (width, height)
+    
+    def set_first_position(self, first_position):
+        self.first_position = first_position
+        self.grid_positions = [
+            first_position
+        ]
+    
+    def create_grid(self, *array_grid):
+        self.draw()
+        paint_all_edges = [False]
+        if isinstance(array_grid[0], bool):
+            paint_all_edges[0] = array_grid[0]
+            array_grid = array_grid[1:]
+        for ag in array_grid:
+            paint_all_edges.append(False)
+            if isinstance(ag, int):
+                self.next_step_draw(ag)
+            elif isinstance(ag, tuple):
+                self.next_step_draw(ag[0])
+                paint_all_edges[-1] = ag[1]
+            else:
+                raise Exception("create_grid item has to be an int (0 >= i < 6) or a tuple(int, bool)!")
+        # Paint the edges as needed
+        number_of_steps = len(self.directions)
+        steps = [self.steps[self.directions[x]] for x in range(number_of_steps)]
+        positions = [(int(x[0]), int(x[1])) for x in self.grid_positions]
+        for j, gp in enumerate(self.grid_positions):
+            paint_edge = [True, True, True, True, True, True]
+            if paint_all_edges[j] != True:
+                for i, s in enumerate(steps):
+                    test_step = (int(gp[0] + s[0]), int(gp[1] + s[1]))
+                    comparisons = [(abs(x[0]-test_step[0]) < 5 and abs(x[1]-test_step[1]) < 5) for x in positions]
+                    if any(comparisons):
+                        paint_edge[i] = False
+            self.draw_line_hexagon(
+                position = gp, 
+                line_width = self.line_width,
+                line_color = self.line_color,
+                paint_enabled = paint_edge,
+                shadow = True
+            )
+    
+    def next_step_draw(self, direction):
+        self.next_step_move(direction)
+        self.draw()
+        
+    def next_step_move(self, direction):
+        next_step = self.steps[self.directions[direction]]        
+        last_position = self.grid_positions[-1]
+        self.grid_positions.append(
+            (last_position[0] + next_step[0], last_position[1] + next_step[1])
+        )
+        return self.grid_positions[-1]
+    
+    def draw(self):
+        self.draw_filled_hexagon(
+            position = self.grid_positions[-1], 
+            fill_color = self.fill_color,
+        )
+    
+    def draw_line_hexagon(self, 
+                          position, 
+                          line_width, 
+                          line_color,
+                          paint_enabled=[True,True,True,True,True,True],
+                          shadow=False):
+        qpainter = self.painter
+        
+        if line_width == 0:
+            return
+        
+        pen = data.QPen(data.Qt.SolidLine)
+        pen.setCapStyle(data.Qt.RoundCap)
+        pen.setJoinStyle(data.Qt.RoundJoin)
+        pen.setWidth(line_width)
+        pen.setColor(line_color)
+        qpainter.setPen(pen)
+        hex_points = list(
+            HexBuilder.generate_hexagon_points(self.edge_length, position)
+        )
+        x_correction = self.edge_length / 2
+        y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
+        hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
+        hex_lines = []
+        for i in range(len(hex_points)):
+            if paint_enabled[i] == False:
+                continue
+            n = i + 1
+            if n > (len(hex_points)-1):
+                n = 0
+            hex_lines.append(
+                data.QLine(
+                    data.QPoint(*hex_points[i]), data.QPoint(*hex_points[n])
+                )
+            )
+        if hex_lines:
+            if shadow == True:
+                shadow_0_color = data.QColor(line_color)
+                shadow_0_color.setAlpha(64)
+                shadow_1_color = data.QColor(line_color)
+                shadow_1_color.setAlpha(128)
+                
+                pen.setWidth(line_width*2.0)
+                pen.setColor(shadow_0_color)
+                qpainter.setPen(pen)
+                qpainter.drawLines(*hex_lines)
+                pen.setWidth(line_width*1.5)
+                pen.setColor(shadow_1_color)
+                qpainter.setPen(pen)
+                qpainter.drawLines(*hex_lines)
+                pen.setWidth(line_width)
+                pen.setColor(line_color)
+                qpainter.setPen(pen)
+                qpainter.drawLines(*hex_lines)
+            else:
+                qpainter.drawLines(*hex_lines)
+    
+    def draw_filled_hexagon(self, position, fill_color):
+        qpainter = self.painter
+        
+        pen = data.QPen(data.Qt.SolidLine)
+        pen.setColor(fill_color)
+        brush = data.QBrush(data.Qt.SolidPattern)
+        brush.setColor(fill_color)
+        qpainter.setBrush(brush)
+        qpainter.setPen(pen)
+        hex_points = list(HexBuilder.generate_hexagon_points(self.edge_length, position))
+        x_correction = self.edge_length / 2
+        y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
+        hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
+        hex_qpoints = [data.QPoint(*x) for x in hex_points]
+        qpainter.drawPolygon(*hex_qpoints)
+    
+    def draw_full_hexagon(self,
+                          position,
+                          fill_color, 
+                          line_width, 
+                          line_color):
+        qpainter = self.painter
+        
+        pen = data.QPen(data.Qt.SolidLine)
+        pen.setColor(line_color)
+        pen.setCapStyle(data.Qt.RoundCap)
+        pen.setWidth(line_width)
+        brush = data.QBrush(data.Qt.SolidPattern)
+        brush.setColor(fill_color)
+        qpainter.setBrush(brush)
+        qpainter.setPen(pen)
+        hex_points = list(HexBuilder.generate_hexagon_points(self.edge_length, position))
+        x_correction = self.edge_length / 2
+        y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
+        hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
+        hex_qpoints = [data.QPoint(*x) for x in hex_points]
+        qpainter.drawPolygon(*hex_qpoints)
+    
+    def draw_full_hexagon_with_shadow(self,
+                                      position,
+                                      fill_color, 
+                                      line_width, 
+                                      line_color):
+        qpainter = self.painter
+        
+        self.draw_filled_hexagon(position, fill_color)
+        shadow_0_color = data.QColor(line_color)
+        shadow_0_color.setAlpha(64)
+        shadow_1_color = data.QColor(line_color)
+        shadow_1_color.setAlpha(128)
+        self.draw_line_hexagon(position, line_width*2.0, shadow_0_color)
+        self.draw_line_hexagon(position, line_width*1.5, shadow_1_color)
+        self.draw_line_hexagon(position, line_width, line_color)
+    
+    def get_last_position(self):
+        return self.grid_positions[-1]
+    
+    def generate_square_grid_list(self, row_length, count):
+        row_counter = 1
+        grid_list = []
+        direction = False
+        add_down_step = False
+        for i in range(count-1):
+            if add_down_step == True:
+                add_down_step = False
+                grid_list.append((3, True))
+            elif direction == True:
+                if (row_counter % 2) == 0:
+                    grid_list.append((4, True))
+                else:
+                    grid_list.append((5, True))
+                row_counter -= 1
+                if row_counter == 1:
+                    add_down_step = True
+                    direction = False
+            else:
+                if (row_counter % 2) == 0:
+                    grid_list.append((2, True))
+                else:
+                    grid_list.append((1, True))
+                row_counter += 1 
+                if row_counter == row_length:
+                    add_down_step = True
+                    direction = True
+        return grid_list
 
 
 class IconManipulator:
@@ -362,7 +642,7 @@ class Hotspots:
         Style the text from/to with a hotspot
         """
         send_scintilla = editor.SendScintilla
-        qscintilla_base = data.PyQt.Qsci.QsciScintillaBase
+        qscintilla_base = data.QsciScintillaBase
         #Use the scintilla low level messaging system to set the hotspot
         send_scintilla(qscintilla_base.SCI_STYLESETHOTSPOT, 2, True)
         send_scintilla(qscintilla_base.SCI_SETHOTSPOTACTIVEFORE, True, color)
@@ -434,13 +714,13 @@ class TheSquid:
                     )
                     if data.custom_menu_scale != None:
                         window.widget(i).corner_widget.setIconSize(
-                            data.PyQt.QtCore.QSize(
+                            data.QSize(
                                 data.custom_menu_scale, data.custom_menu_scale
                             )
                         )
                     else:
                         window.widget(i).corner_widget.setIconSize(
-                            data.PyQt.QtCore.QSize(16, 16)
+                            data.QSize(16, 16)
                         )
                 if isinstance(window.widget(i), helper_forms.TreeDisplay):
                     window.widget(i).update_icon_size()
@@ -454,7 +734,7 @@ class TheSquid:
                 custom_style = CustomStyle(default_style_name)
                 menu.setStyle(custom_style)
             except:
-                if platform.system() == "Windows":
+                if data.platform == "Windows":
                     custom_style = CustomStyle("Windows")
                     menu.setStyle(custom_style)
                 else:
@@ -466,7 +746,7 @@ class TheSquid:
     
 
 
-class ActionFilter(data.PyQt.QtCore.QObject):
+class ActionFilter(data.QObject):
     """
     Object for connecting to the menubar events and filtering
     the click&drag event for the context menu
@@ -478,8 +758,8 @@ class ActionFilter(data.PyQt.QtCore.QObject):
     
     # Overridden filter method
     def eventFilter(self, receiver, event):
-        if(event.type() == data.PyQt.QtCore.QEvent.MouseButtonPress):
-            cursor = data.PyQt.QtGui.QCursor.pos()
+        if(event.type() == data.QEvent.MouseButtonPress):
+            cursor = data.QCursor.pos()
             cursor = cursor - receiver.pos()
             if receiver.actionAt(cursor) != None:
                 action = receiver.actionAt(cursor)
@@ -493,17 +773,17 @@ class ActionFilter(data.PyQt.QtCore.QObject):
                     hide_parents(receiver)
                     ActionFilter.click_timer = None
                     if hasattr(action, "pixmap"):
-                        cursor = data.PyQt.QtGui.QCursor(
+                        cursor = data.QCursor(
                             action.pixmap
                         )
                         data.application.setOverrideCursor(cursor)
                         ActionFilter.click_drag_action = action
-                ActionFilter.click_timer = data.PyQt.QtCore.QTimer(self)
+                ActionFilter.click_timer = data.QTimer(self)
                 ActionFilter.click_timer.setInterval(400)
                 ActionFilter.click_timer.setSingleShot(True)
                 ActionFilter.click_timer.timeout.connect(click_and_drag)
                 ActionFilter.click_timer.start()
-        elif(event.type() == data.PyQt.QtCore.QEvent.MouseButtonRelease):
+        elif(event.type() == data.QEvent.MouseButtonRelease):
             ActionFilter.clear_action()
         return super().eventFilter(receiver, event)
 
@@ -543,8 +823,8 @@ class CustomStyle(data.QCommonStyle):
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         """
         self.scale_constant = data.custom_menu_scale
-        self.custom_font = data.PyQt.QtGui.QFont(*data.custom_menu_font)
-        self.custom_font_metrics = data.PyQt.QtGui.QFontMetrics(self.custom_font)
+        self.custom_font = data.QFont(*data.custom_menu_font)
+        self.custom_font_metrics = data.QFontMetrics(self.custom_font)
     
     def drawComplexControl(self, cc, opt, p, widget=None):
         self._style.drawComplexControl(cc, opt, p, widget)
@@ -554,7 +834,7 @@ class CustomStyle(data.QCommonStyle):
             # Store the item's pixmap
             pixmap = opt.icon.pixmap(self.scale_constant)
             # Disable the icon from being drawn automatically
-            opt.icon = data.PyQt.QtGui.QIcon()
+            opt.icon = data.QIcon()
             # Adjust the font
             opt.font = self.custom_font
             # Setup and draw everything except the icon
@@ -562,16 +842,16 @@ class CustomStyle(data.QCommonStyle):
             self._style.drawControl(element, opt, p, widget)
             if pixmap.isNull() == False:
                 # Manually draw the icon
-                alignment = data.PyQt.QtCore.Qt.AlignLeft
+                alignment = data.Qt.AlignLeft
                 self.drawItemPixmap(p, opt.rect, alignment, pixmap)
         elif element == data.QStyle.CE_MenuBarItem:
             text = opt.text.replace("&", "")
             opt.text = ""
             self._style.drawControl(element, opt, p, widget)
-            alignment = data.PyQt.QtCore.Qt.AlignCenter
+            alignment = data.Qt.AlignCenter
             p.setFont(self.custom_font)
             self.drawItemText(
-                p, opt.rect, alignment, opt.palette, opt.state, text, data.PyQt.QtGui.QPalette.NoRole
+                p, opt.rect, alignment, opt.palette, opt.state, text, data.QPalette.NoRole
             )
         else:
             self._style.drawControl(element, opt, p, widget)
@@ -586,7 +866,7 @@ class CustomStyle(data.QCommonStyle):
         )
         self._style.drawItemPixmap(painter, rect, alignment, scaled_pixmap)
     
-    def drawItemText(self, painter, rectangle, alignment, palette, enabled, text, textRole=data.PyQt.QtGui.QPalette.NoRole):
+    def drawItemText(self, painter, rectangle, alignment, palette, enabled, text, textRole=data.QPalette.NoRole):
         self._style.drawItemText(painter, rectangle, alignment, palette, enabled, text, textRole)
     
     def itemPixmapRect(self, r, flags, pixmap):
@@ -617,15 +897,15 @@ class CustomStyle(data.QCommonStyle):
         if ct == data.QStyle.CT_MenuItem:
             scaled_width = self.scale_constant*1.5
             resized_width = self.custom_font_metrics.width(opt.text) + scaled_width
-            result = data.PyQt.QtCore.QSize(resized_width, self.scale_constant)
+            result = data.QSize(resized_width, self.scale_constant)
             return result
         elif ct == data.QStyle.CT_MenuBarItem:
             base_width = self.custom_font_metrics.width(opt.text)
             scaled_width = self.scale_constant*1.5
             if base_width < scaled_width:
-                result = data.PyQt.QtCore.QSize(scaled_width, self.scale_constant)
+                result = data.QSize(scaled_width, self.scale_constant)
             else:
-                result = data.PyQt.QtCore.QSize(base_width, self.scale_constant)
+                result = data.QSize(base_width, self.scale_constant)
             return result
         else:
             return self._style.sizeFromContents(ct, opt, contentsSize, widget)

@@ -19,7 +19,6 @@ import code
 import re
 import subprocess
 import threading
-import platform
 import traceback
 import data
 
@@ -104,6 +103,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
         get_cwd                     = (r"^get_cwd\(\)$|^get_cwd$", r"get_cwd()"),
         set_cwd                     = (r"^set_cwd\(\)$|^set_cwd$", r"set_cwd()"),
         update_cwd                  = (r"^update_cwd\(\)$|^update_cwd$", r"update_cwd()"),
+        open_cwd                    = (r"^open_cwd\(\)$|^open_cwd$", r"open_cwd()"),
         toggle_main_window_side     = (r"^toggle_main_window_side$", r"toggle_main_window_side()"),
         append                      = (r"^append\(", r"cmain.append_to_lines("),
         append_all                  = (r"^append_all\((.*)\)", r"cmain.append_to_lines(\g<1>, 1,cmain.lines())"),
@@ -141,7 +141,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
             r"(?<!{:s})cupper\(\)|(?<!{:s})cupper".format(re_escape_sequence, re_escape_sequence), 
             r"upper.currentWidget()"
         ),
-        print           = ("p:", r"^p:((.*)((?=\n)|(?=$)))", r"print(\g<1>)"),
+        echo            = ("p:", r"^p:((.*)((?=\n)|(?=$)))", r"echo(\g<1>)"),
         print_log       = ("pl:", r"^pl:((.*)((?=\n)|(?=$)))", r"print_log(\g<1>)"),
         run             = ("r: ", 
                            [(r"^(r:\s*)((?!\s*\")(.*))((?=\n)|(?=$))", r"run('\g<2>', show_console=False)"), 
@@ -293,7 +293,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
     def run_cmd_process(self, command, show_console=True, output_to_repl=False):
         """Function for running a command line process and return the result"""
         #Check what is the current OS
-        if platform.system() == "Windows":
+        if data.platform == "Windows":
             #Remove the PYTHONHOME environment variable that Nuitka creates. It causes problems
             #when running the system's python interpreter!
             os.environ['PYTHONHOME'] = ''
@@ -350,31 +350,31 @@ class CustomInterpreter(code.InteractiveInterpreter):
                 if data.terminal == "lxterminal":
                     # LXTerminal
                     end_delimiter_string = "-------------------------"
-                    end_message_string = "Press any key to continue"
+                    end_message_string = "Press ENTER to continue ..."
                     process_commands = [
                         """subprocess.Popen(
-                                ["{:s}","-l","-e","{:s};echo {:s};read -p '{:s}'"]
+                                ["{:s}","-l","-e","{:s};echo {:s};python3 -c 'input(\\"{:s}\\")'"])"]
                         )""".format(
-                                    data.terminal, 
-                                    command, 
-                                    end_delimiter_string, 
-                                    end_message_string
-                                )
+                            data.terminal, 
+                            command, 
+                            end_delimiter_string, 
+                            end_message_string
+                        )
     
                     ]
                 else:
                     # Others terminals like XTerm
                     end_delimiter_string = "-------------------------"
-                    end_message_string = "\'Press any key to continue\'"
+                    end_message_string = "Press ENTER to continue ..."
                     process_commands = [
                         """subprocess.Popen(
-                                ["{:s}","-e","{:s};echo {:s};read -p {:s}"]
+                                ["{:s}","-e","{:s};echo {:s};python3 -c 'input(\\"{:s}\\")'"])"]
                         )""".format(
-                                    data.terminal, 
-                                    command, 
-                                    end_delimiter_string, 
-                                    end_message_string
-                                )
+                            data.terminal, 
+                            command, 
+                            end_delimiter_string, 
+                            end_message_string
+                        )
                     ]
             else:
                 if output_to_repl == True:
@@ -404,7 +404,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
                 #Return an evaluation error if exception occured (it's horribly side-effect-y but simple)
                 self.eval_error = "Invalid directory supplied to \"terminal()\""
         #Check OS and spawn a terminal accordingly
-        if platform.system() == "Windows":
+        if data.platform == "Windows":
             #Remove the PYTHONHOME environment variable that Nuitka creates. It causes problems
             #when running the systems python interpreter!
             os.environ['PYTHONHOME'] = ''

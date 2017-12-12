@@ -15,7 +15,6 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import os.path
-import platform
 import imp
 import data
 import themes
@@ -23,11 +22,206 @@ import functions
 
 
 """
+----------------------------------------------------------------
+Static Object for storing default editor settings that are used
+when a new editor is created
+----------------------------------------------------------------
+"""
+class Editor:
+    """
+    These are the built-in defaults, attributes should be changed
+    in other modules!
+    """
+    # Default EOL style in editors (EolWindows-CRLF, EolUnix-LF, EolMac-CR)
+    end_of_line_mode = data.QsciScintilla.EolUnix
+    # Font colors and styles
+    font = data.QFont('Courier', 10)
+    brace_color = data.QColor(255, 153, 0)
+    comment_font = b'Courier'
+    # Edge marker
+    edge_marker_color = data.QColor(180, 180, 180, alpha=255)
+    edge_marker_column = 90
+    # Various
+    cursor_line_visible = False
+    # Maximum limit of highlighting instances
+    maximum_highlights = 300
+    # Global width of tabs
+    tab_width = 4
+    # Zoom factor when a new editor is created (default is 0)
+    zoom_factor = 0
+    """
+    -------------------------------------------
+    Keyboard shortcuts
+    -------------------------------------------
+    """
+    class Keys:
+        # Custom editor commands
+        copy = 'Ctrl+C'
+        cut = 'Ctrl+X'
+        paste = 'Ctrl+V'
+        undo = 'Ctrl+Z'
+        redo = 'Ctrl+Y'
+        select_all = 'Ctrl+A'
+        indent = 'Tab'
+        unindent = 'Shift+Tab'
+        delete_start_of_word = 'Ctrl+BackSpace'
+        delete_end_of_word = 'Ctrl+Delete'
+        delete_start_of_line = 'Ctrl+Shift+BackSpace'
+        delete_end_of_line = 'Ctrl+Shift+Delete'
+        go_to_start = 'Ctrl+Home'
+        go_to_end = 'Ctrl+End'
+        select_page_up = 'Shift+PageUp'
+        select_page_down = 'Shift+PageDown'
+        select_to_start = 'Ctrl+Shift+Home'
+        select_to_end = 'Ctrl+Shift+End'
+        scroll_up = 'PageUp'
+        scroll_down = 'PageDown'
+        line_cut = 'Ctrl+L'
+        line_copy = 'Ctrl+Shift+T'
+        line_delete = 'Ctrl+Shift+L'
+        line_transpose = 'Ctrl+T'
+        line_selection_duplicate = 'Ctrl+D'
+        
+        @staticmethod
+        def check_function(function_name):
+            check_list = [x for x in dir(Editor.Keys) if not x.startswith('__')]
+            return function_name in check_list
+        
+        @staticmethod
+        def check_combination(combination):
+            if combination.startswith("#"):
+               combination = combination[1:] 
+            check_list = [
+                (x, getattr(Editor.Keys, x)) 
+                    for x in dir(Editor.Keys) 
+                        if not x.startswith('__')
+            ]
+            for name, keys in check_list:
+                if not(isinstance(keys, str)) and not(isinstance(keys, list)):
+                    continue
+                if isinstance(combination, list):
+                    if isinstance(keys, list):
+                        for k in keys:
+                            for c in combination:
+                                if k.strip().lower() == c.strip().lower():
+                                    return True
+                    else:
+                        for c in combination:
+                            if keys.strip().lower() == c.strip().lower():
+                                return True
+                elif isinstance(keys, str):
+                    if keys.strip().lower() == combination.strip().lower():
+                        return True
+            return False
+
+
+"""
+-------------------------------------------
+General keyboard shortcuts
+-------------------------------------------
+"""
+class Keys:
+    bookmark_goto = [
+        "Alt+0", "Alt+1", "Alt+2", "Alt+3", "Alt+4", 
+        "Alt+5", "Alt+6", "Alt+7", "Alt+8", "Alt+9",
+    ]
+    bookmark_store = [
+        "Alt+Shift+0", "Alt+Shift+1", "Alt+Shift+2", "Alt+Shift+3", 
+        "Alt+Shift+4", "Alt+Shift+5", "Alt+Shift+6", "Alt+Shift+7", 
+        "Alt+Shift+8", "Alt+Shift+9",
+    ]
+    bookmark_toggle = "Ctrl+B"
+    clear_highlights = 'Ctrl+Shift+G'
+    close_tab = 'Ctrl+W'
+    cwd_tree = 'F7'
+    find = 'Ctrl+F'
+    find_and_replace = 'Ctrl+Shift+F'
+    find_files = 'Ctrl+F1'
+    find_in_documents = 'Ctrl+F4'
+    find_in_files = 'Ctrl+F2'
+    find_replace_in_documents = 'Ctrl+F5'
+    function_wheel_toggle = 'F1'
+    goto_line = 'Ctrl+M'
+    highlight = 'Ctrl+G'
+    indent_to_cursor = 'Ctrl+I'
+    lower_focus = 'Ctrl+3'
+    main_focus = 'Ctrl+1'
+    maximize_window = 'F12'
+    move_tab_left = 'Ctrl+,'
+    move_tab_right = 'Ctrl+.'
+    new_file = 'Ctrl+N'
+    node_tree = 'F8'
+    open_file = 'Ctrl+O'
+    regex_find = 'Alt+F'
+    regex_find_and_replace = 'Alt+Shift+F'
+    regex_highlight = 'Alt+G'
+    regex_replace_all = 'Alt+Shift+H'
+    regex_replace_selection = 'Alt+H'
+    reload_file = 'F9'
+    repeat_eval = 'F3'
+    repl_focus_multi = 'Ctrl+5'
+    repl_focus_single_1 = 'Ctrl+R'
+    repl_focus_single_2 = 'Ctrl+4'
+    replace_all = 'Ctrl+Shift+H'
+    replace_all_in_documents = 'Ctrl+F6'
+    replace_in_files = 'Ctrl+F3'
+    replace_selection = 'Ctrl+H'
+    reset_zoom = "Alt+Z"
+    save_file = 'Ctrl+S'
+    saveas_file = 'Ctrl+Shift+S'
+    spin_clockwise = 'Ctrl+PgDown'
+    spin_counterclockwise = 'Ctrl+PgUp'
+    to_lowercase = 'Alt+L'
+    to_uppercase = 'Alt+U'
+    toggle_autocompletion = 'Ctrl+K'
+    toggle_comment = 'Ctrl+Shift+C'
+    toggle_edge = 'Ctrl+E'
+    toggle_log = 'F10'
+    toggle_main_window_side = 'F6'
+    toggle_mode = 'F5'
+    toggle_wrap = 'Ctrl+P'
+    upper_focus = 'Ctrl+2'
+    
+    @staticmethod
+    def check_function(function_name):
+        check_list = [
+            x for x in dir(Keys) 
+                if not x.startswith('__')
+        ]
+        return function_name in check_list
+    
+    @staticmethod
+    def check_combination(combination):
+        check_list = [
+            (x, getattr(Keys, x)) 
+                for x in dir(Keys) 
+                    if not x.startswith('__')
+        ]
+        for name, keys in check_list:
+            if not(isinstance(keys, str)) and not(isinstance(keys, list)):
+                continue
+            if isinstance(combination, list):
+                if isinstance(keys, list):
+                    for k in keys:
+                        for c in combination:
+                            if k.strip().lower() == c.strip().lower():
+                                return True
+                else:
+                    for c in combination:
+                        if keys.strip().lower() == c.strip().lower():
+                            return True
+            elif isinstance(keys, str):
+                if keys.strip().lower() == combination.strip().lower():
+                    return True
+        return False
+
+
+"""
 -------------------------------------------
 Structure for storing session information
 -------------------------------------------
 """
-class Session():
+class Session:
     """Structure for storing single session information"""
     name        = ""
     group       = None
@@ -49,7 +243,7 @@ class Session():
 Object for manipulating settings/sessions
 -------------------------------------------
 """
-class SettingsFileManipulator():
+class SettingsFileManipulator:
     """Object that will be used for saving, loading, ... all of the Ex.Co. settings """
     #Class variables
     settings_filename               = "exco.ini"
@@ -163,7 +357,13 @@ class SettingsFileManipulator():
         settings_lines.append("sessions = {")
         for session in stored_sessions:
             settings_lines.append("    '{}': {{".format(session.name))
-            settings_lines.append("        'Group': {},".format(repr(session.group)))
+            if isinstance(session.group, str) or (session.group == None):
+                settings_lines.append("        'Group': {},".format(repr(session.group)))
+            elif isinstance(session.group, tuple) and all([isinstance(x, str) for x in session.group]):
+                settings_lines.append("        'Group': {},".format(str(session.group)))
+            else:
+                print("'{}'".format(repr(session.name)))
+                raise Exception("[SETTINGS] Unknown session group type!")
             settings_lines.append("        'Main window files': [")
             for file in session.main_files:
                 settings_lines.append("            '{}',".format(file))
@@ -326,7 +526,7 @@ class SettingsFileManipulator():
     def add_recent_file(self, new_file):
         """Add a new file to the recent file list"""
         # Replace back-slashes to forward-slashes on Windows
-        if platform.system() == "Windows":
+        if data.platform == "Windows":
             new_file = new_file.replace("\\", "/")
         # Check recent files list length
         while len(self.recent_files) > self.max_number_of_recent_files:
@@ -346,5 +546,65 @@ class SettingsFileManipulator():
             self.recent_files.append(new_file)
         # Save the new settings
         self.update_recent_files()
+    
+    """
+    Session group functionality
+    """
+    class Group:
+        def __init__(self, name, parent=None, reference=None):
+            self.name = name
+            self.reference = reference
+            self.parent = parent
+            self.items = {}
+            self.subgroups = {}
+        
+        def subgroup_get(self, name):
+            if name in self.subgroups.keys():
+                return self.subgroups[name]
+            else:
+                return None
+        
+        def subgroup_get_recursive(self, group_list):
+            name = group_list[0]
+            if name in self.subgroups.keys():
+                if len(group_list) > 1:
+                    return self.subgroups[name].subgroup_get_recursive(group_list[1:])
+                else:
+                    return self.subgroups[name]
+            else:
+                return None
+        
+        def subgroup_create(self, name, reference):
+            if not(name in self.subgroups.keys()):
+                # Create an instance of the same class as self
+                self.subgroups[name] = self.__class__(name, self, reference)
+            return self.subgroups[name]
+    
+    def get_sorted_groups(self):
+        groups = []
+        # Sort the sessions
+        self.sort_sessions()
+        # Add the groups to the menu first
+        for session in self.stored_sessions:
+            if session.group != None:
+                if isinstance(session.group, str):
+                    session.group = (session.group, )
+                group_found = False
+                for group in groups:
+                    if session.group == group:
+                        # Group found, it's already in the list
+                        group_found = True
+                        break
+                if group_found == False:
+                    # Group is not in the list, add it as a tuple (name, reference)
+                    groups.append(session.group)
+        # Sort the group list and add the groups to the session menu
+        def sort_groups_func(arg=None):
+            if isinstance(arg, tuple) and all([isinstance(x, str) for x in arg]):
+                return " ".join(arg)
+            else:
+                return arg
+        groups.sort(key=sort_groups_func)
+        return groups
 
 

@@ -31,7 +31,8 @@ All additional licenses are specified at the beginning of every source code file
 - Code tree displaying for: 
     - Python 3
     - Nim
-    - C (very simplistic)
+    - C
+    - Many more to come ...
 <br><br>
 
 ### Supported platforms: ###
@@ -47,6 +48,8 @@ All additional licenses are specified at the beginning of every source code file
 __Optional dependencies:__
 - XTerm terminal editor is used by default on GNU/Linux (can be changed in the config file)
 - Cython (ONLY FOR BUILDING SPECIAL LEXERS)
+- Nim programming language (ONLY FOR BUILDING SPECIAL LEXERS)
+- Universal or Exuberant Ctags (Used with code tree displaying)
 <br>
 
 ### Installation notes: ###

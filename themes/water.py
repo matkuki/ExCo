@@ -14,10 +14,20 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import data
 
+name = "Water"
+tooltip = "Water"
+image_file = "tango_icons/theme-water.png"
 
 Form = "#295a88"
+Context_Menu_Background = data.PyQt.QtGui.QColor(0x29, 0x5a, 0x88)
 Cursor = data.PyQt.QtGui.QColor(0xffffffff)
 Cursor_Line_Background = data.PyQt.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
+Settings_Background = data.PyQt.QtGui.QColor("#3b82c4")
+Settings_Label_Background = data.PyQt.QtGui.QColor(0x29, 0x5a, 0x88)
+Settings_Hex_Edge = data.QColor("#e6e6e6")
+Settings_Hex_Background = data.QColor(0x29, 0x5a, 0x88)
+YesNoDialog_Edge = data.QColor("#e6e6e6")
+YesNoDialog_Background = data.QColor("#3b82c4")
 
 
 class FoldMargin:

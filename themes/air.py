@@ -14,10 +14,20 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import data
 
+name = "Air"
+tooltip = "Air"
+image_file = "tango_icons/theme-air.png"
 
 Form = "#f0f0f0"
+Context_Menu_Background = data.PyQt.QtGui.QColor(0xf0, 0xf0, 0xf0)
 Cursor = data.PyQt.QtGui.QColor(0x00, 0x00, 0x00)
 Cursor_Line_Background = data.PyQt.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
+Settings_Background = data.PyQt.QtGui.QColor(0xffffffff)
+Settings_Label_Background = data.PyQt.QtGui.QColor(0xffffffff)
+Settings_Hex_Edge = data.QColor(159,189,214)
+Settings_Hex_Background = data.QColor(0xff, 0xff, 0xff)
+YesNoDialog_Edge = data.QColor(159,189,214)
+YesNoDialog_Background = data.QColor(0xff, 0xff, 0xff)
 
 
 class FoldMargin:

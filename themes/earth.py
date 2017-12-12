@@ -14,10 +14,20 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import data
 
+name = "Earth"
+tooltip = "Earth"
+image_file = "tango_icons/theme-earth.png"
 
 Form = "#585a55"
+Context_Menu_Background = data.PyQt.QtGui.QColor(0x58, 0x5a, 0x55)
 Cursor = data.PyQt.QtGui.QColor(0xff, 0xff, 0xff)
 Cursor_Line_Background = data.PyQt.QtGui.QColor(0xe9, 0x89, 0x6e, 80)
+Settings_Background = data.PyQt.QtGui.QColor("#898c84")
+Settings_Label_Background = data.PyQt.QtGui.QColor(0x58, 0x5a, 0x55)
+Settings_Hex_Edge = data.QColor("#e6e6e6")
+Settings_Hex_Background = data.QColor(0x58, 0x5a, 0x55)
+YesNoDialog_Edge = data.QColor("#e6e6e6")
+YesNoDialog_Background = data.QColor("#898c84")
 
 
 class FoldMargin:

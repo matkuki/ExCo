@@ -20,6 +20,7 @@ import ast
 import inspect
 import math
 import functools
+import textwrap
 import difflib
 import re
 import time
@@ -34,14 +35,1179 @@ import themes
 
 """
 -------------------------------------------------
-Session manipulation object
+GUI Settings manipulator
+-------------------------------------------------
+"""
+class SettingsGuiManipulator(data.QGroupBox):
+    class EnlargeButton(data.QLabel):
+        name = None
+        animation_duration = 40
+        scale_factor = 1.0
+        enlargement_ration = 1.25
+        DEFAULT_SIZE = 25
+        original_size = None
+        animation = None
+        animating = None
+        state = False
+        queue = None
+        function = None
+        starting_position = None
+        end_position = None
+        enabled = None
+        enter_function = None
+        leave_function = None
+        valid_colors = ["default", "red", "green"]
+        current_color = None
+        properties = None
+        
+        def __init__(self, 
+                     name, 
+                     picture, 
+                     scale_factor=1.0, 
+                     function=None, 
+                     key_combination=None, 
+                     starting_position=None, 
+                     end_position=None, 
+                     parent=None):
+            super().__init__(parent)
+            
+            self.name = name
+            self.scale_factor = scale_factor
+            self.key_combination = key_combination
+            self.animating = False
+            self.starting_position = starting_position
+            self.end_position = end_position
+            self.disable()
+            self.properties = {}
+            # Button image
+            self.button_image = data.QPixmap(
+                os.path.join(
+                    data.resources_directory, 
+                    picture
+                )
+            )
+            adjusted_size = self.DEFAULT_SIZE * self.scale_factor
+            self.button_image = self.button_image.scaled(
+                data.QSize(
+                    math.ceil(adjusted_size),
+                    math.ceil(adjusted_size),
+                ),
+                transformMode=data.Qt.SmoothTransformation
+            )
+            
+            width, height = components.HexBuilder.get_single_hex_size(adjusted_size, 2)
+            def create_base_image():
+                hex_image = data.QImage(
+                    data.QSize(width, height),
+                    data.QImage.Format_ARGB32_Premultiplied
+                )
+                hex_image.fill(data.Qt.transparent)
+                qpainter = data.QPainter(hex_image)
+                qpainter.setRenderHints(
+                    data.QPainter.Antialiasing | 
+                    data.QPainter.TextAntialiasing | 
+                    data.QPainter.SmoothPixmapTransform
+                )
+                hb = components.HexBuilder(
+                    qpainter, 
+                    (width/2, height/2), 
+                    self.DEFAULT_SIZE, 
+                    self.scale_factor, 
+                    fill_color=data.theme.Settings_Hex_Background,
+                    line_width=2,
+                    line_color=data.QColor(64,64,64),
+                )
+                hb.create_grid(False)
+                qpainter.end()
+                return data.QPixmap.fromImage(hex_image)
+            self.hex_image = create_base_image()
+            self.hex_image = self.hex_image.scaled(
+                data.QSize(
+                    math.ceil(self.hex_image.size().width() * self.scale_factor),
+                    math.ceil(self.hex_image.size().height() * self.scale_factor),
+                ),
+                transformMode=data.Qt.SmoothTransformation
+            )
+            
+            # Green hex background
+            def create_color_image(color):
+                hex_image = data.QImage(
+                    data.QSize(width, height),
+                    data.QImage.Format_ARGB32_Premultiplied
+                )
+                hex_image.fill(data.Qt.transparent)
+                qpainter = data.QPainter(hex_image)
+                qpainter.setRenderHints(
+                    data.QPainter.Antialiasing | 
+                    data.QPainter.TextAntialiasing | 
+                    data.QPainter.SmoothPixmapTransform
+                )
+                hb = components.HexBuilder(
+                    qpainter, 
+                    (width/2, height/2), 
+                    self.DEFAULT_SIZE, 
+                    self.scale_factor, 
+                    fill_color=color,
+                    line_width=0,
+                    line_color=data.QColor(0,0,0),
+                )
+                hb.create_grid(False)
+                qpainter.end()
+                return data.QPixmap.fromImage(hex_image)
+            self.hex_image_green = create_color_image(data.QColor(138,226,52))
+            self.hex_image_green = self.hex_image_green.scaled(
+                data.QSize(
+                    math.ceil(self.hex_image_green.size().width() * self.scale_factor) - 1,
+                    math.ceil(self.hex_image_green.size().height() * self.scale_factor) - 1,
+                ),
+                transformMode=data.Qt.SmoothTransformation
+            )
+            # Red hex background
+            self.hex_image_red = create_color_image(data.QColor(239,41,41))
+            self.hex_image_red = self.hex_image_red.scaled(
+                data.QSize(
+                    math.ceil(self.hex_image_red.size().width() * self.scale_factor) - 1,
+                    math.ceil(self.hex_image_red.size().height() * self.scale_factor) - 1,
+                ),
+                transformMode=data.Qt.SmoothTransformation
+            )
+            
+            scaled_size = data.QSize(
+                self.hex_image.size().width(),
+                self.hex_image.size().height(),
+            )
+            image = data.QImage(
+                scaled_size,
+                data.QImage.Format_ARGB32_Premultiplied,
+            )
+            image.fill(data.Qt.transparent)
+            button_painter = data.QPainter(image)
+            button_painter.setCompositionMode(
+                data.QPainter.CompositionMode_SourceOver
+            )
+            button_painter.setOpacity(1.0)
+            # Adjust inner button positioning according to the scale
+            x = (self.hex_image.width() - self.button_image.width()) / 2
+            y = (self.hex_image.height() - self.button_image.height()) / 2
+            button_painter.drawPixmap(0, 0, self.hex_image)
+            
+            button_painter.drawPixmap(x, y, self.button_image)
+            button_painter.end()
+            
+            # Set properites
+            self.setParent(parent)
+            self.setPixmap(data.QPixmap.fromImage(image))
+            self.setGeometry(
+                0, 
+                0, 
+                image.width() * self.scale_factor, 
+                image.height() * self.scale_factor
+            )
+            self.setMask(self.hex_image.mask())
+            self.setScaledContents(True)
+            # Set the non-enlarged dimensions
+            self.original_size = (
+                self.geometry().width(), 
+                self.geometry().height()
+            )
+            
+            # Set the initial color state
+            self.current_color = "default"
+        
+        def set_property(self, property_name, property_value):
+            self.properties[property_name] = property_value
+        
+        def set_enter_function(self, func):
+            self.enter_function = func
+        
+        def set_leave_function(self, func):
+            self.leave_function = func
+        
+        def set_position(self, x, y):
+            self.setGeometry(
+                data.QRect(
+                    x, y, 
+                    self.geometry().width(), self.geometry().height()
+                )
+            )
+        
+        def goto_starting_position(self):
+            self.set_position(
+                self.starting_position[0],
+                self.starting_position[1],
+            )
+            self.set_start_position()
+        
+        def set_start_position(self):
+            self.enlarged_width = self.original_size[0] * self.enlargement_ration
+            self.enlarged_height = self.original_size[1] * self.enlargement_ration
+            x_offset = self.geometry().x()
+            x_offset += (self.original_size[0] - self.enlarged_width) / 2
+            y_offset = self.geometry().y()
+            y_offset += (self.original_size[1] - self.enlarged_height) / 2
+            x_offset = math.floor(x_offset)
+            y_offset = math.floor(y_offset)
+            self.x_offset = x_offset
+            self.y_offset = y_offset
+            
+            self.pre_enlarge_position = (
+                self.geometry().x(),
+                self.geometry().y(),
+            )
+            self.post_enlarge_position = (
+                self.x_offset,
+                self.y_offset,
+            )
+        
+        def add_to_queue(self, direction):
+            if self.queue == None:
+                self.queue = [direction]
+            else:
+                self.queue.append(direction)
+        
+        def add_animation(self, animation):
+            self.animation = animation
+
+        def animate(self):
+            self.animating = True
+            if self.queue != None and len(self.queue) != 0:
+                while len(self.queue) > 1:
+                    self.queue.pop(0)
+                q = self.queue.pop(0)
+                if q == "enter" and self.state == False:
+                    self.enlarge()
+                elif q == "leave" and self.state == True:
+                    self.shrink()
+                else:
+                    self.animate()
+            elif self.queue != None and len(self.queue) == 0:
+                scaled_pixmap = self.pixmap().scaled(
+                    self.size(),
+                    transformMode=data.Qt.SmoothTransformation
+                )
+                self.setMask(
+                    scaled_pixmap.mask()
+                )
+                self.animating = False
+        
+        def set_color(self, color):
+            if not(color in self.valid_colors):
+                raise Exception("Invalid EnlargeButton color selected!")
+            elif color == "red":
+                selected_image = self.hex_image_red
+            elif color == "green":
+                selected_image = self.hex_image_green
+            elif color == "default":
+                selected_image = None
+            
+            self.current_color = color
+            
+            scaled_size = data.QSize(
+                self.hex_image.size().width(),
+                self.hex_image.size().height(),
+            )
+            image = data.QImage(
+                scaled_size,
+                data.QImage.Format_ARGB32_Premultiplied,
+            )
+            image.fill(data.Qt.transparent)
+            button_painter = data.QPainter(image)
+            button_painter.setCompositionMode(
+                data.QPainter.CompositionMode_SourceOver
+            )
+            button_painter.setOpacity(1.0)
+            # Adjust inner button positioning according to the scale
+            x = (self.hex_image.width() - self.button_image.width()) / 2
+            y = (self.hex_image.height() - self.button_image.height()) / 2
+            button_painter.drawPixmap(0, 0, self.hex_image)
+            if selected_image != None:
+                button_painter.drawPixmap(
+                    (5 * (self.scale_factor - 1.0)), 
+                    (5 * (self.scale_factor - 1.0)), 
+                    selected_image
+                )
+            button_painter.drawPixmap(x, y, self.button_image)
+            button_painter.end()
+            # Set the image as the pixmap
+            self.setPixmap(data.QPixmap.fromImage(image))
+        
+        def reset_color(self):
+            if self.current_color != "default":
+                self.set_color("default")
+        
+        def set_green(self):
+            if self.current_color != "green":
+                self.set_color("green")
+        
+        def set_red(self):
+            if self.current_color != "red":
+                self.set_color("red")
+        
+        def enlarge(self):
+            self._start_animation(
+                True, 
+                # Start
+                self.pre_enlarge_position[0], 
+                self.pre_enlarge_position[1], 
+                self.original_size[0],
+                self.original_size[1],
+                # End
+                self.x_offset, 
+                self.y_offset,
+                self.enlarged_width,
+                self.enlarged_height,
+            )
+            self.raise_()
+        
+        def shrink(self):
+            self._start_animation(
+                False,
+                # Start
+                self.post_enlarge_position[0],
+                self.post_enlarge_position[1],
+                self.enlarged_width,
+                self.enlarged_height,
+                # End
+                self.pre_enlarge_position[0],
+                self.pre_enlarge_position[1],
+                self.original_size[0],
+                self.original_size[1],
+            )
+        
+        def _start_animation(self,
+                             state,
+                             start_position_x,
+                             start_position_y,
+                             start_width,
+                             start_height,
+                             end_position_x,
+                             end_position_y,
+                             end_width,
+                             end_height):
+            self.clearMask()
+            animation = data.QPropertyAnimation(self, b"geometry")
+            animation.setEasingCurve(data.QEasingCurve.Linear)
+            animation.setDuration(self.animation_duration)
+        
+            animation.setStartValue(
+                data.QRect(
+                    start_position_x,
+                    start_position_y,
+                    start_width,
+                    start_height,
+                )
+            )
+            animation.setEndValue(
+                data.QRect(
+                    end_position_x,
+                    end_position_y,
+                    end_width,
+                    end_height,
+                )
+            )
+            animation.setDirection(data.QAbstractAnimation.Forward)
+            self.state = state
+            animation.start()
+            self.add_animation(animation)
+            animation.stateChanged.connect(self.sig_animation_ended)
+        
+        def sig_animation_ended(self, new_state, old_state):
+            self.animate()
+        
+        def enable(self):
+            self.enabled = True
+        
+        def disable(self):
+            self.enabled = False
+        
+        """
+        Events
+        """
+        def enterEvent(self, e):
+#            print(self.name, "ENTER")
+            super().enterEvent(e)
+            if self.enabled == False:
+                return
+            self.add_to_queue("enter")
+            if self.animating == False:
+                self.add_to_queue("enter")
+                self.animate()
+            # Execute the additional enter function
+            if self.enter_function != None:
+                self.enter_function(self)
+        
+        def leaveEvent(self, e):
+#            print(self.name, "LEAVE")
+            super().leaveEvent(e)
+            if self.enabled == False:
+                return
+            self.add_to_queue("leave")
+            if self.animating == False:
+                self.animate()
+            # Execute the additional leave function
+            if self.leave_function != None:
+                self.leave_function(self)
+        
+        def mousePressEvent(self, event):
+            super().mousePressEvent(event)
+            if self.function != None:
+                pass
+            else:
+                print(self.name, self.key_combination)
+                self.add_to_queue("leave")
+                self.animate()
+                self.parent().hide()
+    
+    class GridGenerator:
+        horizontal_step = 38.4
+        vertical_step = 20.9
+        circular_directions = {
+            0: "up",
+            1: "up-right",
+            2: "down-right",
+            3: "down",
+            4: "down-left",
+            5: "up-left",
+        }
+        steps = None
+        covered_positions = None
+        current_direction = None
+        first_position = None
+        current_position = None
+        grid_type = None
+        
+        def __init__(self, 
+                     starting_position, 
+                     grid_type="circular",
+                     grid_columns=5,
+                     rectangular_grid_first_step="up-right",
+                     rectangular_grid_row_addition=3.0,
+                     in_scale=1.0):
+            self.first_position = (
+                starting_position[0],
+                starting_position[1]
+            )
+            self.covered_positions = []
+            self.add_position(self.first_position)
+            self.current_direction = 1
+            if (grid_type != "circular" and 
+                grid_type != "trapezoid" and
+                grid_type != "rectangular"):
+                    raise Exception("Unknown grid type specified!")
+            elif grid_type == "trapezoid":
+                self.grid_columns = grid_columns
+                self.step_direction = "down-right"
+                self.column_counter = 0
+            elif grid_type == "rectangular":
+                self.grid_columns = grid_columns
+                self.step_direction = rectangular_grid_first_step
+                self.rectangular_grid_row_addition = rectangular_grid_row_addition
+                self.column_counter = 0
+            self.grid_type = grid_type
+            
+            self.scaling = in_scale
+            self.horizontal_step = self.horizontal_step * self.scaling
+            self.vertical_step = self.vertical_step * self.scaling
+            self.steps = {
+                "down-left": (-self.horizontal_step, self.vertical_step),
+                "down-right": (self.horizontal_step, self.vertical_step),
+                "down": (0, 2*self.vertical_step),
+                "up-left": (-self.horizontal_step, -self.vertical_step),
+                "up-right": (self.horizontal_step, -self.vertical_step),
+                "up": (0, -2*self.vertical_step),
+            }
+                
+        
+        def add_position(self, position):
+            self.current_position = position
+            self.covered_positions.append(position)
+        
+        def get_position(self):
+            return self.current_position
+        
+        def next(self):
+            if self.grid_type == "circular":
+                return self.next_circular()
+            elif self.grid_type == "trapezoid":
+                return self.next_trapezoid()
+            elif self.grid_type == "rectangular":
+                return self.next_rectangular()
+        
+        def next_rectangular(self):
+            self.column_counter += 1
+            spacing_step_x = 0.45 * self.scaling
+            spacing_step_y = 0.15 * self.scaling
+            spacing = (0, 0)
+            if self.column_counter == self.grid_columns:
+                self.column_counter = 0
+                current_step = self.steps["down"]
+                current_step = (
+                    current_step[0],
+                    current_step[1] + self.rectangular_grid_row_addition
+                )
+                spacing = (0, 2 * spacing_step_y)
+                if self.step_direction == "down-right":
+                    self.step_direction = "down-left"
+                elif self.step_direction == "up-right":
+                    self.step_direction = "up-left"
+                elif self.step_direction == "down-left":
+                    self.step_direction = "down-right"
+                else:
+                    self.step_direction = "up-right"
+            else:
+                current_step = self.steps[self.step_direction]
+                if self.step_direction == "down-right":
+                    self.step_direction = "up-right"
+                    spacing = (spacing_step_x, spacing_step_y)
+                elif self.step_direction == "up-right":
+                    self.step_direction = "down-right"
+                    spacing = (spacing_step_x, -spacing_step_y)
+                elif self.step_direction == "down-left":
+                    self.step_direction = "up-left"
+                    spacing = (-spacing_step_x, spacing_step_y)
+                elif self.step_direction == "up-left":
+                    self.step_direction = "down-left"
+                    spacing = (-spacing_step_x, -spacing_step_y)
+            new_position = (
+                self.current_position[0] + current_step[0] + spacing[0],
+                self.current_position[1] + current_step[1] + spacing[1],
+            )
+            new_position = (new_position[0], new_position[1])
+            self.add_position(new_position)
+            return self.get_position()
+        
+        def next_trapezoid(self):
+            self.column_counter += 1
+            if self.column_counter == self.grid_columns:
+                self.column_counter = 0
+                current_step = self.steps["down"]
+                if self.step_direction == "down-right":
+                    self.step_direction = "up-left"
+                else:
+                    self.step_direction = "down-right"
+            else:
+                current_step = self.steps[self.step_direction]
+            new_position = (
+                self.current_position[0] + current_step[0],
+                self.current_position[1] + current_step[1],
+            )
+            self.add_position(new_position)
+            return self.get_position()
+        
+        def next_circular(self):
+            current_direction_name = self.circular_directions[self.current_direction]
+            current_step = self.steps[current_direction_name]
+            new_position = (
+                self.current_position[0] + current_step[0],
+                self.current_position[1] + current_step[1],
+            )
+            if new_position in self.covered_positions:
+                current_direction = self.current_direction
+                for i in range(6):
+                    current_direction -= 1
+                    if current_direction < 0:
+                        current_direction = 5
+                    current_direction_name = self.circular_directions[current_direction]
+                    current_step = self.steps[current_direction_name]
+                    new_position = (
+                        self.current_position[0] + current_step[0],
+                        self.current_position[1] + current_step[1],
+                    )
+                    if not(new_position in self.covered_positions):
+                        break
+                self.add_position(new_position)
+                return self.get_position()
+            else:
+                self.current_direction += 1
+                if self.current_direction > 5:
+                    self.current_direction = 0
+                self.add_position(new_position)
+                return self.get_position()
+    
+    
+    # Background image
+    settings_background_image = None
+    # Shown attribute
+    shown = False
+    # Scale factor which will affect every child widget size adjustment
+    scale_factor = 0.9 #0.9
+    # Button list
+    buttons = None
+    # Animation list
+    animations = []
+    # Default overlay size
+    DEFAULT_SIZE = (800, 600)
+    # Stored theme name
+    theme_name = None
+    
+    @staticmethod
+    def reset_background_image():
+        SettingsGuiManipulator.settings_background_image = None
+    
+    @staticmethod
+    def check_theme_state():
+        return SettingsGuiManipulator.theme_name != data.theme.name
+    
+    @staticmethod
+    def create_background_image(in_scale=1.0):
+        """
+        Dinamically create the settings manipulator's background image
+        """
+        # Check if the QPixmap has been created already
+        if SettingsGuiManipulator.settings_background_image == None:
+            scale = in_scale
+            edge_length = 30
+            scaled_edge_diff = (30 - (edge_length * scale)) / 30
+            back_color = data.theme.Settings_Background
+            edge_color = data.QColor(data.theme.Settings_Hex_Edge)
+            
+            SettingsGuiManipulator.theme_name = data.theme.name
+            
+            def add_offset(offset):
+                x_add = 64.0
+                y_add = 20.0
+                return (offset[0] + x_add, offset[1] + y_add)
+            
+            settings_background_image = data.QImage(
+                data.QSize(*SettingsGuiManipulator.DEFAULT_SIZE),
+                data.QImage.Format_ARGB32_Premultiplied
+            )
+            settings_background_image.fill(data.Qt.transparent)
+#            settings_background_image.fill(data.QColor(255,255,255))
+            qpainter = data.QPainter(settings_background_image)
+            qpainter.setRenderHints(
+                data.QPainter.Antialiasing | 
+                data.QPainter.TextAntialiasing | 
+                data.QPainter.SmoothPixmapTransform
+            )
+            
+            # Corner options
+            x = edge_length + 205
+            y = 1.8 * edge_length + 30
+            offset = (x, y)
+            hb = components.HexBuilder(
+                qpainter, 
+                offset, 
+                edge_length, 
+                scale, 
+                fill_color=back_color,
+                line_width=2,
+                line_color=edge_color,
+            )
+            grid_list = [
+                (3, True), (4, True), (4, True), (4, True), (5, True), (1, True),
+            ]
+            hb.create_grid(*grid_list)
+            # Label field
+            last_step = hb.get_last_position()
+            hb = components.HexBuilder(
+                qpainter, 
+                offset, 
+                edge_length, 
+                scale, 
+                fill_color=data.theme.Settings_Label_Background,
+                line_width=3,
+                line_color=data.QColor(146,146,146),
+            )
+            hb.set_first_position(last_step)
+            hb.create_grid(
+                5,5,0,2,0,2,3,1,0,2,3,4
+            )
+            
+            # Editor buttons
+            offset = (90, 280)
+            offset = add_offset(offset)
+            row_length = 6
+            editor_button_count = 30
+            hb = components.HexBuilder(
+                qpainter, 
+                offset, 
+                edge_length, 
+                scale, 
+                fill_color=back_color,
+                line_width=2,
+                line_color=edge_color,
+            )
+            grid_list = hb.generate_square_grid_list(
+                row_length, editor_button_count
+            )
+            hb.create_grid(*grid_list)
+            # Editor edge
+            hb.next_step_move(3)
+            first_edge_hex_position = hb.get_last_position()
+            hb = components.HexBuilder(
+                qpainter, 
+                first_edge_hex_position, 
+                edge_length, 
+                scale, 
+                fill_color=back_color,
+                line_width=2,
+                line_color=edge_color,
+            )
+            grid_list = [
+                (4, True), (5, True), (4, True), 
+                (5, True), (4, True), (5, True), 
+                (0, True), (0, True), (0, True),
+                (0, True), (0, True), (1, True),
+                (1, True), (2, True), (1, True),
+                (2, True), (1, True), (2, True),
+                (3, True), (3, True), (3, True),
+                (3, True), (3, True),
+            ]
+            hb.create_grid(*grid_list)
+            
+            # General buttons
+            offset = (offset[0]+(8*hb.horizontal_step), offset[1]-(6*hb.vertical_step))
+            row_length = 7
+            general_button_count = 56
+            hb = components.HexBuilder(
+                qpainter, 
+                offset, 
+                edge_length, 
+                scale, 
+                fill_color=back_color,
+                line_width=2,
+                line_color=edge_color,
+            )
+            grid_list = hb.generate_square_grid_list(
+                row_length, general_button_count
+            )
+            hb.create_grid(*grid_list)
+            # General edge
+            hb.next_step_move(3)
+            first_edge_hex_position = hb.get_last_position()
+            hb = components.HexBuilder(
+                qpainter, 
+                first_edge_hex_position, 
+                edge_length, 
+                scale, 
+                fill_color=back_color,
+                line_width=2,
+                line_color=edge_color,
+            )
+            grid_list = [
+                (1, True), (2, True), (1, True), (2, True), (1, True), (2, True), (1, True), 
+                (0, True), (0, True), (0, True), (0, True), (0, True), (0, True), (0, True), 
+                (0, True), (5, True), (5, True), (4, True), (5, True), (4, True), (5, True), 
+                (4, True), (4, True), (3, True), (3, True), (3, True), (3, True), (3, True), 
+                (3, True), (3, True), (3, True), 
+            ]
+            hb.create_grid(*grid_list)
+            
+            qpainter.end()
+            SettingsGuiManipulator.settings_background_image = data.QPixmap.fromImage(settings_background_image)
+        return SettingsGuiManipulator.settings_background_image
+    
+    def clean_up(self):
+        # Clean up main references
+        self.parent = None
+        self.main_form = None
+        # Function for deleting an attribute
+        def delete_attribute(att_name):
+            attr = getattr(self, att_name)
+            attr.setParent(None)
+            attr.deleteLater()
+            delattr(self, att_name)
+        # List of attributes for clean up
+        clean_up_list = [
+#            "display_label",
+#            "layout",
+        ]
+        for att in clean_up_list:
+            delete_attribute(att)
+        # Clean up self
+        self.setParent(None)
+        self.deleteLater()
+    
+    def __init__(self, parent=None, main_form=None):
+        # Initialize the superclass
+        super().__init__(parent)
+        # Store the reference to the main form
+        self.main_form = main_form
+        # Set the shown property to False
+        self.shown = False
+        # Initialize button list
+        self.buttons = []
+        # Initialize the background image
+        self._init_background()
+        # Position the overlay to the center of the screen
+        self.center(
+            data.QSize(*self.DEFAULT_SIZE)
+        )
+        # Scale the size if needed
+        self._init_scaling()
+        # Initialize the display label that will display the various information
+        self._init_info_label()
+        # Initialize the buttons
+        self._init_key_shortcut_buttons()
+    
+    def _init_scaling(self):
+        main_scale = 1.0
+        
+        """
+        All keyboard shortcut option
+        """
+        self.scale_factor = main_scale
+        self.button_scale_factor = main_scale + ((1.0 - main_scale) * (0.625)) #main_scale + ((1.0 - main_scale) * (0.625))
+        self.button_offset_factor = main_scale #main_scale * (((main_scale - 1.0) * 2) + 1.0)
+        self.scale(main_scale, main_scale)
+        # General buttons
+        x = 451
+        y = 141
+        x_offset = x * (main_scale - 1.0)
+        y_offset = y * (main_scale - 1.0)
+        x += x_offset
+        y += y_offset
+        self.buttons_general_position = (x, y)
+        # Editor buttons
+        x = 135
+        y = 277
+        x_offset = x * (main_scale - 1.0)
+        y_offset = y * (main_scale - 1.0)
+        x += x_offset
+        y += y_offset
+        self.buttons_editor_position = (x, y)
+    
+    def _init_info_label(self):
+        self.display_label = data.QLabel(self)
+        self.display_label.setGeometry(20, 50, 200, 100)
+        font = data.QFont('Courier', 14)
+        font.setBold(True)
+        self.display_label.setFont(font)
+        self.display_label.setStyleSheet(
+            'color: rgb({}, {}, {})'.format(
+                data.theme.Font.Default.red(),
+                data.theme.Font.Default.green(),
+                data.theme.Font.Default.blue(),
+            )
+        )
+        self.display_label.setAlignment(
+            data.Qt.AlignHCenter | data.Qt.AlignVCenter
+        )
+    
+    def _init_background(self):
+        self.background_image = data.QPixmap(
+            SettingsGuiManipulator.create_background_image(self.scale_factor)
+        )
+        sgm_picture = data.QPixmap(
+            SettingsGuiManipulator.create_background_image(self.scale_factor)
+        )
+        self.picture = data.QLabel(self)
+        self.picture.setPixmap(sgm_picture)
+        self.picture.setScaledContents(True)
+        self.layout = data.QGridLayout()
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(
+            data.QMargins(10,10,10,10)
+        )
+        self.layout.addWidget(self.picture)
+        self.setLayout(self.layout)
+
+        self.setStyleSheet("background-color:transparent;")
+        self.setStyleSheet("border:0;")
+        
+    def _init_key_shortcut_buttons(self):
+        def mouse_enter_function(button, info_text, key_combination, func=None):
+            info = info_text.split("\n")[0]
+            if '\t' in info:
+                info = info[:info.find('\t')]
+            keys = info_text.split("\n")[1]
+            if keys.startswith('(#'):
+                keys = '(' + keys[2:]
+            if "[" in keys and "]" in keys:
+                keys = keys.replace("[", "").replace("]", "").replace("\"", "").replace("'", "")
+            text = textwrap.fill(info + "\n" + keys, 14) 
+            self.display_label.setText(text)
+            # Execute the function
+            found_duplicate = False
+            for b in self.buttons:
+                if b.name != button.name:
+                    if b.key_combination == key_combination:
+                        b.set_red()
+                        found_duplicate = True
+            if found_duplicate == True:
+                button.set_red()
+            else:
+                button.set_green()
+            if func != None:
+                func()
+        def mouse_leave_function(button, key_combination, func=None):
+            self.display_label.setText("")
+            # Execute the function
+            for b in self.buttons:
+                b.reset_color()
+            button.reset_color()
+            if func != None:
+                func()
+        # Initialize button list
+        self.buttons = []
+        # Initialize the button icons and functions
+        buttons = []
+        editor_buttons = []
+        funcs = data.global_function_information
+        # Append the Bookmark goto and store button information
+        funcs["bookmark_goto"] = (
+            "Bookmark Goto", 
+            None, 
+            data.global_function_information["bookmark_goto_0"][2],
+            data.global_function_information["bookmark_goto_0"][3].replace("+0", ""),
+            "Goto a stored bookmark"
+        )
+        funcs["bookmark_store"] = (
+            "Bookmark Store", 
+            None, 
+            data.global_function_information["bookmark_store_0"][2],
+            data.global_function_information["bookmark_store_0"][3].replace("+0", ""),
+            "Store bookmark"
+        )
+        key_list = list(funcs.keys())
+        key_list.sort()
+        for k in key_list:
+            # Skip the individual bookmark goto and store key combinations
+            if k.startswith("bookmark_goto_") or k.startswith("bookmark_store_"):
+                continue
+            b_name = funcs[k][0] # Name
+            b_icon = funcs[k][2] # Icon
+            b_keys = funcs[k][3] # Key combination
+            if b_icon != None and b_keys != None:
+                # MouseEnter function
+                mef = functools.partial(
+                    mouse_enter_function, 
+                    info_text="{}\n({})".format(b_name, b_keys),
+                    key_combination=b_keys
+                )
+                # MouseLeave function
+                mlf = functools.partial(
+                    mouse_leave_function, 
+                    key_combination=b_keys,
+                    func=None
+                )
+                if settings.Keys.check_combination(b_keys):
+                    buttons.append(
+                        (b_name, b_icon, b_keys, mef, mlf)
+                    )
+                elif settings.Editor.Keys.check_combination(b_keys):
+                    editor_buttons.append(
+                        (b_name, b_icon, b_keys, mef, mlf)
+                    )
+                else:
+                    buttons.append(
+                        (b_name, b_icon, b_keys, mef, mlf)
+                    )
+        
+        # General button positions
+        first_button_position = (
+            self.buttons_general_position[0], 
+            self.buttons_general_position[1]
+        )
+        grid_generator = self.GridGenerator(
+            first_button_position, 
+            grid_type="rectangular", 
+            grid_columns=7,
+            in_scale=self.button_offset_factor
+        )
+        grid_steps = [grid_generator.get_position()]
+        for i in range(len(buttons)):
+            next_step = grid_generator.next()
+            x_add = 0.0
+            y_add = 0.0
+            grid_steps.append(
+                (next_step[0] + x_add, next_step[1] + y_add)
+            )
+        positions = [x for x in grid_steps]
+        if len(buttons) > len(positions):
+            raise Exception("Settings buttons have to have their positions defined!")
+        buttons = [((-positions[i][0], -100), positions[i], b[0], b[1], b[2], b[3], b[4]) 
+                        for i,b in enumerate(buttons)]
+        for b in buttons:
+            button = self.EnlargeButton(
+                b[2], 
+                b[3],
+                self.button_scale_factor,
+                key_combination=b[4],
+                starting_position = b[0],
+                end_position = b[1],
+                parent=self
+            )
+            button.set_enter_function(b[5])
+            button.set_leave_function(b[6])
+            button.goto_starting_position()
+            self.buttons.append(button)
+        
+        # Editor button positions
+        first_button_position = (
+            self.buttons_editor_position[0], 
+            self.buttons_editor_position[1]
+        )
+        grid_generator = self.GridGenerator(
+            first_button_position, 
+            grid_type="rectangular", 
+            grid_columns=6,
+            in_scale=self.button_offset_factor
+        )
+        grid_steps = [grid_generator.get_position()]
+        for i in range(len(editor_buttons)):
+            next_step = grid_generator.next()
+            x_add = 0.0
+            y_add = 0.0
+            grid_steps.append(
+                (next_step[0] + x_add, next_step[1] + y_add)
+            )
+        positions = [x for x in grid_steps]
+        if len(editor_buttons) > len(positions):
+            raise Exception("Settings buttons have to have their positions defined!")
+        editor_buttons = [
+            ((-positions[i][0], -100), positions[i], b[0], b[1], b[2], b[3], b[4]) 
+                for i,b in enumerate(editor_buttons)
+        ]
+        for b in editor_buttons:
+            button = self.EnlargeButton(
+                b[2], 
+                b[3],
+                self.button_scale_factor,
+                key_combination=b[4],
+                starting_position = b[0],
+                end_position = b[1],
+                parent=self
+            )
+            button.set_enter_function(b[5])
+            button.set_leave_function(b[6])
+            button.goto_starting_position()
+            self.buttons.append(button)
+    
+    def center(self, size):
+        """
+        Center the settings GUI manipulator to the main form,
+        according to the size parameter
+        """
+        x_offset = int((self.main_form.size().width() - size.width()) / 2)
+        y_offset = int((self.main_form.size().height()*93/100 - size.height()) / 2)
+        rectangle_top_left  = data.QPoint(x_offset, y_offset)
+        rectangle_size = size
+        rectangle = data.QRect(rectangle_top_left, rectangle_size)
+        self.setGeometry(rectangle)
+    
+    def get_center(self):
+        """
+        Find the center of the widget rectangle
+        """
+        geometry = self.geometry()
+        x = geometry.x()
+        y = geometry.y()
+        width = geometry.width()
+        height = geometry.height()
+        return (width / 2), (height / 2)
+    
+    def scale(self, width_scale_factor=1, height_scale_factor=1):
+        """Scale the size of the function wheel and all of its child widgets"""
+        #Scale the function wheel form
+        geo = self.geometry()
+        new_width = int(geo.width() * width_scale_factor)
+        new_height = int(geo.height() * height_scale_factor)
+        rectangle = data.QRect(
+            geo.topLeft(), 
+            data.QSize(new_width, new_height)
+        )
+        self.setGeometry(rectangle)
+        #Scale all of the function wheel child widgets
+        for button in self.children():
+            geo = button.geometry()
+            new_topLeft = data.QPoint(
+                int(geo.topLeft().x() * width_scale_factor),
+                int(geo.topLeft().y() * height_scale_factor)
+            )
+            new_width = int(geo.width() * width_scale_factor)
+            new_height = int(geo.height() * height_scale_factor)
+            new_size = data.QSize(new_width, new_height)
+            rectangle   = data.QRect(new_topLeft, new_size)
+            button.setGeometry(rectangle)
+        #Center to main form
+        self.center(self.size())
+    
+    def animate(self):
+        def end(new_state, old_state, button):
+            button.set_start_position()
+            if new_state == data.QPropertyAnimation.Stopped:
+#                button.set_green()
+                button.enable()
+                button.add_to_queue("leave")
+                if button.animating == False:
+                    button.animate()
+                
+        animation_time = 300
+        animation_delay = 20
+        def _animate(animation):
+            animation.start()
+        for i,b in enumerate(self.buttons):
+            b.raise_()
+            animation = data.QPropertyAnimation(b, b"geometry")
+            animation.setStartValue(
+                data.QRect(
+                    b.starting_position[0],
+                    b.starting_position[1],
+                    b.geometry().width(), 
+                    b.geometry().height()
+                )
+            )
+            animation.setEndValue(
+                data.QRect(
+                    b.end_position[0],
+                    b.end_position[1],
+                    b.geometry().width(), 
+                    b.geometry().height()
+                )
+            )
+            animation.stateChanged.connect(functools.partial(end, button=b))
+            animation.setDuration(animation_time)
+            animation_time += 5
+#            animation.setEasingCurve(data.QEasingCurve.InQuad)
+
+#            animation_timer = data.QTimer(self)
+#            animation_timer.setInterval(animation_delay)
+#            animation_delay += 5
+#            animation_timer.setSingleShot(True)
+#            animation_timer.timeout.connect(functools.partial(_animate, animation))
+#            animation_timer.start()
+            
+            animation.start()
+            self.animations.append(animation)
+    
+    def show(self):
+        self.display_label.setText("")
+        self.setVisible(True)
+        self.setEnabled(True)
+        #Center to main form
+        self.center(self.size())
+        self.setFocus()
+        self.animate()
+        self.shown = True
+    
+    def hide(self):
+        for b in self.buttons:
+            b.disable()
+        #Disable the function wheel
+        self.setVisible(False)
+        self.setEnabled(False)
+        self.shown = False
+    
+    def keyPressEvent(self, e):
+        super().keyPressEvent(e)
+        pressed_key = e.key()
+        if pressed_key == data.Qt.Key_Escape:
+            self.hide()
+
+
+
+"""
+-------------------------------------------------
+GUI Session manipulation object
 -------------------------------------------------
 """
 class SessionGuiManipulator(data.QTreeView):
     """
     GUI object for easier user editing of sessions
     """
-    class SessionItem(data.PyQt.QtGui.QStandardItem):
+    class SessionItem(data.QStandardItem):
         """QStandarItem with overridden methods"""
         #The session that the standard item will store
         my_parent   = None
@@ -228,9 +1394,9 @@ class SessionGuiManipulator(data.QTreeView):
                 #Display successful group deletion
                 self.main_form.display.repl_display_message(
                     "Group '{:s}' was renamed to '{:s}'!".format(
-                                                                old_group_name, 
-                                                                new_group_name
-                                                            ), 
+                        old_group_name, 
+                        new_group_name
+                    ), 
                     message_type=data.MessageType.SUCCESS
                 )
                 #Refresh the session tree
@@ -259,8 +1425,12 @@ class SessionGuiManipulator(data.QTreeView):
                 group_name = self.indexWidget(item.index()).text()
                 #When the item's name is change it refires the itemChanged signal,
                 #so a check of one of the properties is necessary to not repeat the operation
-                if item.name == "":
+                if item.name == None:
                     item.name = group_name
+                    if hasattr(item, "parent_group") == True:
+                        item.name = (group_name, )
+                        if item.parent_group != None:
+                            item.name = item.parent_group + (group_name, )
                     item.setEditable(False)
                     #Display the warning
                     message = "An empty group was created.\n"
@@ -288,33 +1458,56 @@ class SessionGuiManipulator(data.QTreeView):
         self.edit_flag      = False
         #Store which groups are expanded
         expanded_groups = []
-        for group in self.groups.items():
-            if self.isExpanded(group[1].index()):
-                expanded_groups.append(group[0])
+        for group in self.groups:
+            if self.isExpanded(group.index()):
+                expanded_groups.append(group)
         #Remove the empty node by refreshing the session tree
         self.show_sessions()
         #Expand the groups that were expanded before
         for exp_group in expanded_groups:
-            for group in self.groups.items():
-                if group[0] == exp_group:
-                    self.expand(group[1].index())
+            for group in self.groups:
+                if group.name == exp_group.name:
+                    self.expand(group.index())
+    
+    def _get_current_group(self):
+        if self.selectedIndexes() != []:
+            selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
+            if selected_item.type == self.ItemType.SESSION:
+                if selected_item.session.group != None:
+                    return selected_item.parent()
+                else:
+                    return None
+            elif (selected_item.type == self.ItemType.GROUP or 
+                  selected_item.type == self.ItemType.EMPTY_GROUP):
+                return selected_item
+            else:
+                return None
+        else:
+            return None
     
     def add_empty_group(self):
         #Check for various flags
         if self.edit_flag == True:
             return
         #Check if an empty group is already present
-        for session_node in self.session_nodes:
-            if session_node.type == self.ItemType.EMPTY_GROUP:
-                return
+#        for session_node in self.session_nodes:
+#            if session_node.type == self.ItemType.EMPTY_GROUP:
+#                return
         empty_group_node = self.SessionItem("")
         empty_group_node.parent    = self
-        empty_group_node.name      = ""
+        empty_group_node.name      = None
+        empty_group_node.parent_group   = None
         empty_group_node.session   = None
         empty_group_node.type      = self.ItemType.EMPTY_GROUP
         empty_group_node.setEditable(True)
         empty_group_node.setIcon(self.node_icon_group)
-        self.tree_model.appendRow(empty_group_node)
+        parent_group = self._get_current_group()
+        if parent_group != None:
+            empty_group_node.parent_group = parent_group.name
+            parent_group.appendRow(empty_group_node)
+        else:
+            self.tree_model.appendRow(empty_group_node)
+        self.scrollTo(empty_group_node.index())
         #Start editing the new empty group
         self.session_nodes.append(empty_group_node)
         self.edit(empty_group_node.index())
@@ -333,24 +1526,8 @@ class SessionGuiManipulator(data.QTreeView):
             if session_node.type == self.ItemType.EMPTY_SESSION:
                 return
         #Check where the session will be added
-        attachment_item = self.tree_model
-        has_group = False
-        if self.selectedIndexes() != []:
-            selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
-            if selected_item.type == self.ItemType.SESSION:
-                if selected_item.session.group != None:
-                    attachment_item = selected_item.parent()
-                    self.expand(attachment_item.index())
-                    has_group = True
-            elif (selected_item.type == self.ItemType.GROUP or 
-                  selected_item.type == self.ItemType.EMPTY_GROUP):
-                has_group = True
-                attachment_item = selected_item
-                self.expand(attachment_item.index())
         #Initialize the session
         empty_session = settings.Session("")
-        if has_group == True:
-            empty_session.group = attachment_item.name
         empty_session_node = self.SessionItem("")
         empty_session_node.parent    = self
         empty_session_node.name      = ""
@@ -358,7 +1535,14 @@ class SessionGuiManipulator(data.QTreeView):
         empty_session_node.type      = self.ItemType.EMPTY_SESSION
         empty_session_node.setEditable(True)
         empty_session_node.setIcon(self.node_icon_session)
-        attachment_item.appendRow(empty_session_node)
+        parent_group = self._get_current_group()
+        if parent_group != None:
+            empty_session.group = parent_group.name
+            parent_group.appendRow(empty_session_node)
+            self.expand(parent_group.index())
+        else:
+            self.tree_model.appendRow(empty_session_node)
+        self.scrollTo(empty_session_node.index())
         #Start editing the new empty session
         self.session_nodes.append(empty_session_node)
         self.edit(empty_session_node.index())
@@ -369,52 +1553,74 @@ class SessionGuiManipulator(data.QTreeView):
         self.last_created_item = self.ItemType.EMPTY_SESSION
     
     def remove_session(self):
-        #Check for various flags
+        # Check for various flags
         if self.edit_flag == True:
             return
-        #Check if an item is selected
+        # Check if an item is selected
         if self.selectedIndexes() == []:
             return
         selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
-        #Check the selected item type
+        # Check the selected item type
         if selected_item.type == self.ItemType.GROUP:
-            remove_group_name = selected_item.name
+            remove_group = selected_item.name
+            # Adjust the group name string
+            if remove_group == None:
+                selected_item.name = ""
+            remove_group_name = ""
+            if remove_group != "":
+                remove_group_name = "/".join(remove_group) + "/"
+            
+            # First add all of the groups, if any
+            groups = self.settings_manipulator.get_sorted_groups()
+            # Check if the group has subgroups
+            main_group = self.settings_manipulator.Group(
+                "BASE", parent=None, reference=self.tree_model
+            )
+            current_group = selected_item.name
+            for group in groups:
+                if (len(group) > len(remove_group)) and (set(remove_group).issubset(group)):
+                    message =  "Cannot delete group\n'{:s}'\n".format(remove_group_name)
+                    message += "because it contains subgroups!"
+                    reply = OkDialog.error(message)
+                    return
+            
             message =  "Are you sure you want to delete group:\n"
             message += "'{:s}' ?".format(remove_group_name)
-            reply = YesNoDialog(message).exec_()
+            reply = YesNoDialog.warning(message)
             if reply == data.QMessageBox.No:
                 return
-            #Delete all of the session with the group name
+            # Delete all of the session with the group name
             for session in self.settings_manipulator.stored_sessions:
-                if session.group == remove_group_name:
+                if session.group == remove_group:
                     self.main_form.sessions.remove(session.name, session.group)
-            #Display successful group deletion
+            # Display successful group deletion
             self.main_form.display.repl_display_message(
                 "Group '{:s}' was deleted!".format(remove_group_name), 
                 message_type=data.MessageType.SUCCESS
             )
-            #Refresh the tree
+            # Refresh the tree
             self.refresh_display()
         elif selected_item.type == self.ItemType.SESSION:
             remove_session = selected_item.session
-            group_name = remove_session.group
-            if group_name == None:
-                group_name = ""
-            else:
-                group_name += " / "
+            # Adjust the group name string
+            if remove_session.group == None:
+                remove_session.group = ""
+            group_name = ""
+            if remove_session.group != "":
+                group_name = "/".join(remove_session.group) + "/"
             message =  "Are you sure you want to delete session:\n"
             message += "'{:s}{:s}' ?".format(group_name, remove_session.name)
             reply = YesNoDialog.warning(message)
             if reply == data.QMessageBox.No:
                 return
-            #Delete the session
-            #Delete all of the session with the group name
+            # Delete the session
+            # Delete all of the session with the group name
             for session in self.settings_manipulator.stored_sessions:
                 if (session.name == remove_session.name and
                     session.group == remove_session.group):
                     self.main_form.sessions.remove(session.name, session.group)
                     break
-            #Refresh the tree
+            # Refresh the tree
             self.refresh_display()
         elif selected_item.type == self.ItemType.EMPTY_SESSION:
             #Display successful group deletion
@@ -478,7 +1684,7 @@ class SessionGuiManipulator(data.QTreeView):
     def show_sessions(self):
         """Show the current session in a tree structure"""
         #Initialize the display
-        self.tree_model = data.PyQt.QtGui.QStandardItemModel()
+        self.tree_model = data.QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["SESSIONS"])
         self.header().hide()
         self.clean_model()
@@ -486,24 +1692,32 @@ class SessionGuiManipulator(data.QTreeView):
         self.setUniformRowHeights(True)
         #Connect the tree model signals
         self.tree_model.itemChanged.connect(self._item_changed)
-        font    = data.PyQt.QtGui.QFont("Courier", 10, data.PyQt.QtGui.QFont.Bold)
+        font    = data.QFont("Courier", 10, data.QFont.Bold)
         #First add all of the groups, if any
-        self.groups = {}
-        for session in self.settings_manipulator.stored_sessions:
-            if session.group != None:
-                if not(session.group in self.groups):
-                    item_group_node = self.SessionItem(session.group)
+        groups = self.settings_manipulator.get_sorted_groups()
+        self.groups = []
+        # Create the Sessions menu
+        main_group = self.settings_manipulator.Group(
+            "BASE", parent=None, reference=self.tree_model
+        )
+        for group in groups:
+            current_node = main_group
+            level_counter = 1
+            for folder in group:
+                new_group = current_node.subgroup_get(folder)
+                if new_group == None:
+                    item_group_node = self.SessionItem(folder)
                     item_group_node.setFont(font)
                     item_group_node.my_parent   = self
-                    item_group_node.name        = session.group
+                    item_group_node.name        = group[:level_counter]
                     item_group_node.session     = None
                     item_group_node.type        = self.ItemType.GROUP
                     item_group_node.setEditable(False)
                     item_group_node.setIcon(self.node_icon_group)
-                    self.groups[session.group] = item_group_node
-        #Add the groups to the display
-        for self.group in collections.OrderedDict(sorted(self.groups.items())).items():
-            self.tree_model.appendRow(self.group[1])
+                    current_node.reference.appendRow(item_group_node)
+                current_node = current_node.subgroup_create(folder, item_group_node)
+                self.groups.append(item_group_node)
+                level_counter += 1
         #Initialize the list of session nodes
         self.session_nodes = []
         #Loop through the manipulators sessions and add them to the display
@@ -517,9 +1731,10 @@ class SessionGuiManipulator(data.QTreeView):
             item_session_node.setIcon(self.node_icon_session)
             #Check if the item is in a group
             if session.group != None:
-                self.groups[session.group].appendRow(item_session_node)
+                group = main_group.subgroup_get_recursive(session.group)
+                group.reference.appendRow(item_session_node)
             else:
-                self.tree_model.appendRow(item_session_node)
+                main_group.reference.appendRow(item_session_node)
             #Append the session to the stored node list
             self.session_nodes.append(item_session_node)
     
@@ -535,7 +1750,7 @@ class SessionGuiManipulator(data.QTreeView):
             self.session_toolbar = None
         #Create the find toolbar and buttons
         self.session_toolbar = data.QToolBar(parent)
-        self.session_toolbar.setIconSize(data.PyQt.QtCore.QSize(16,16))
+        self.session_toolbar.setIconSize(data.QSize(16,16))
         session_add_action = data.QAction(
             self.icon_session_add, 
             "session_add",
@@ -723,6 +1938,7 @@ class TreeDisplay(data.QTreeView):
         self.node_icon_template = functions.create_icon("various/node_template.png")
         self.node_icon_namespace= functions.create_icon("various/node_namespace.png")
         self.node_icon_pragma   = functions.create_icon("various/node_pragma.png")
+        self.node_icon_unknown  = functions.create_icon("various/node_unknown.png")
         self.node_icon_nothing  = functions.create_icon("tango_icons/dialog-warning.png")
         self.python_icon        = functions.create_icon("language_icons/logo_python.png")
         self.nim_icon           = functions.create_icon("language_icons/logo_nim.png")
@@ -738,7 +1954,7 @@ class TreeDisplay(data.QTreeView):
             
     def update_icon_size(self):
         self.setIconSize(
-            data.PyQt.QtCore.QSize(
+            data.QSize(
                 data.tree_display_icon_size, data.tree_display_icon_size
             )
         )
@@ -761,7 +1977,7 @@ class TreeDisplay(data.QTreeView):
         # Set Save/SaveAs buttons in the menubar
         self.parent._set_save_status()
         # Get the index of the clicked item and execute the item's procedure
-        if event.button() == data.PyQt.QtCore.Qt.RightButton:
+        if event.button() == data.Qt.RightButton:
             index = self.indexAt(event.pos())
             self._item_click(index)
         # Reset the click&drag context menu action
@@ -774,7 +1990,7 @@ class TreeDisplay(data.QTreeView):
                 hasattr(item, "is_base") == True):
                 def update_cwd():
                     self.main_form.set_cwd(item.full_name)
-                cursor = data.PyQt.QtGui.QCursor.pos()
+                cursor = data.QCursor.pos()
                 
                 if self.tree_menu != None:
                     self.tree_menu.setParent(None)
@@ -818,7 +2034,7 @@ class TreeDisplay(data.QTreeView):
             elif hasattr(item, "full_name") == True:
                 def open_file():
                     self.main_form.open_file(item.full_name)
-                cursor = data.PyQt.QtGui.QCursor.pos()
+                cursor = data.QCursor.pos()
                 
                 if self.tree_menu != None:
                     self.tree_menu.setParent(None)
@@ -853,8 +2069,10 @@ class TreeDisplay(data.QTreeView):
                 self.bound_tab.parent.setCurrentWidget(self.bound_tab)
             
             item = self.model().itemFromIndex(model_index)
+            if item == None:
+                return
             item_text = item.text()
-            cursor = data.PyQt.QtGui.QCursor.pos()
+            cursor = data.QCursor.pos()
             
             if self.tree_menu != None:
                 self.tree_menu.setParent(None)
@@ -947,7 +2165,7 @@ class TreeDisplay(data.QTreeView):
     def set_font_size(self, size_in_points):
         """Set the font size for the tree display items"""
         #Initialize the font with the new size
-        new_font = data.PyQt.QtGui.QFont('Courier', size_in_points)
+        new_font = data.QFont('Courier', size_in_points)
         #Set the new font
         self.setFont(new_font)
     
@@ -984,24 +2202,24 @@ class TreeDisplay(data.QTreeView):
         function_text       = "FUNCTIONS:"
         #Initialize the tree display to Python file type
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
-        tree_model = data.PyQt.QtGui.QStandardItemModel()
+        tree_model = data.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
         self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        description_font = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
-        item_document_name  = data.PyQt.QtGui.QStandardItem(document_name_text)
+        item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type = data.PyQt.QtGui.QStandardItem(document_type_text)
+        item_document_type = data.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1009,27 +2227,27 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         #Set the label properties
-        label_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        label_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        label_font  = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
         #Check if there was a parsing error
         if parse_error != False:
-            error_brush = data.PyQt.QtGui.QBrush(data.PyQt.QtGui.QColor(180, 0, 0))
-            error_font  = data.PyQt.QtGui.QFont(
-                "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+            error_brush = data.QBrush(data.QColor(180, 0, 0))
+            error_font  = data.QFont(
+                "Courier", data.tree_display_font_size, data.QFont.Bold
             )
-            item_error = data.PyQt.QtGui.QStandardItem("ERROR PARSING FILE!")
+            item_error = data.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
             item_error.setForeground(error_brush)
             item_error.setFont(error_font)
             item_error.setIcon(self.node_icon_nothing)
             tree_model.appendRow(item_error)
             #Show the error message
-            error_font = data.PyQt.QtGui.QFont("Courier", data.tree_display_font_size)
-            item_error_msg = data.PyQt.QtGui.QStandardItem(str(parse_error))
+            error_font = data.QFont("Courier", data.tree_display_font_size)
+            item_error_msg = data.QStandardItem(str(parse_error))
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
             item_error_msg.setFont(error_font)
@@ -1038,19 +2256,19 @@ class TreeDisplay(data.QTreeView):
             tree_model.appendRow(item_error_msg)
             return
         """Imported module filtering"""
-        item_imports = data.PyQt.QtGui.QStandardItem(import_text)
+        item_imports = data.QStandardItem(import_text)
         item_imports.setEditable(False)
         item_imports.setForeground(label_brush)
         item_imports.setFont(label_font)
         for node in import_nodes:
             node_text = str(node[0]) + " (line:"
             node_text += str(node[1]) + ")"
-            item_import_node = data.PyQt.QtGui.QStandardItem(node_text)
+            item_import_node = data.QStandardItem(node_text)
             item_import_node.setEditable(False)
             item_import_node.setIcon(self.node_icon_import)
             item_imports.appendRow(item_import_node)
         if import_nodes == []:
-            item_no_imports = data.PyQt.QtGui.QStandardItem("No imports found")
+            item_no_imports = data.QStandardItem("No imports found")
             item_no_imports.setEditable(False)
             item_no_imports.setIcon(self.node_icon_nothing)
             item_imports.appendRow(item_no_imports)
@@ -1059,7 +2277,7 @@ class TreeDisplay(data.QTreeView):
         if import_nodes == []:
             self.expand(item_imports.index())
         """Class nodes filtering"""
-        item_classes = data.PyQt.QtGui.QStandardItem(class_text)
+        item_classes = data.QStandardItem(class_text)
         item_classes.setEditable(False)
         item_classes.setForeground(label_brush)
         item_classes.setFont(label_font)
@@ -1078,7 +2296,7 @@ class TreeDisplay(data.QTreeView):
             #Construct the parent node
             node_text = str(node[0].name) + " (line:"
             node_text += str(node[0].lineno) + ")"
-            parent_tree_node = data.PyQt.QtGui.QStandardItem(node_text)
+            parent_tree_node = data.QStandardItem(node_text)
             parent_tree_node.setEditable(False)
             parent_tree_node.setIcon(self.node_icon_class)
             #Create a list that will hold the child nodes
@@ -1091,7 +2309,7 @@ class TreeDisplay(data.QTreeView):
                 child_object    = child[1]
                 child_text  = str(child_object.name) + " (line:"
                 child_text  += str(child_object.lineno) + ")"
-                child_tree_node = data.PyQt.QtGui.QStandardItem(child_text)
+                child_tree_node = data.QStandardItem(child_text)
                 child_tree_node.setEditable(False)
                 #Save the base node, its type for adding children to it
                 base_node_items[child_level]    = child_tree_node
@@ -1140,12 +2358,12 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_classes)
         #Check if there were any nodes found
         if class_nodes == []:
-            item_no_classes = data.PyQt.QtGui.QStandardItem("No classes found")
+            item_no_classes = data.QStandardItem("No classes found")
             item_no_classes.setEditable(False)
             item_no_classes.setIcon(self.node_icon_nothing)
             item_classes.appendRow(item_no_classes)
         """Function nodes filtering"""
-        item_functions = data.PyQt.QtGui.QStandardItem(function_text)
+        item_functions = data.QStandardItem(function_text)
         item_functions.setEditable(False)
         item_functions.setForeground(label_brush)
         item_functions.setFont(label_font)
@@ -1155,14 +2373,14 @@ class TreeDisplay(data.QTreeView):
             func_text = func.name + " (line:"
             func_text += str(func.lineno) + ")"
             #Construct the node and add it to the tree
-            function_node = data.PyQt.QtGui.QStandardItem(func_text)
+            function_node = data.QStandardItem(func_text)
             function_node.setEditable(False)
             function_node.setIcon(self.node_icon_procedure)
             item_functions.appendRow(function_node)
         item_functions.sortChildren(0)
         #Check if there were any nodes found
         if function_nodes == []:
-            item_no_functions = data.PyQt.QtGui.QStandardItem("No functions found")
+            item_no_functions = data.QStandardItem("No functions found")
             item_no_functions.setEditable(False)
             item_no_functions.setIcon(self.node_icon_nothing)
             item_functions.appendRow(item_no_functions)
@@ -1178,7 +2396,7 @@ class TreeDisplay(data.QTreeView):
         # Construct the node text
         node_text = str(node.name) + " (line:"
         node_text += str(node.line_number) + ")"
-        tree_node = data.PyQt.QtGui.QStandardItem(node_text)
+        tree_node = data.QStandardItem(node_text)
         tree_node.setEditable(False)
         if node.type == "class":
             tree_node.setIcon(self.node_icon_class)
@@ -1220,24 +2438,25 @@ class TreeDisplay(data.QTreeView):
         function_text       = "FUNCTIONS:"
         #Initialize the tree display to Python file type
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
-        tree_model = data.PyQt.QtGui.QStandardItemModel()
-        tree_model.setHorizontalHeaderLabels([document_name])
+        tree_model = data.QStandardItemModel()
+#        tree_model.setHorizontalHeaderLabels([document_name])
+        self.header().hide()
         self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        description_font = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
-        item_document_name  = data.PyQt.QtGui.QStandardItem(document_name_text)
+        item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type  = data.PyQt.QtGui.QStandardItem(document_type_text)
+        item_document_type  = data.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1245,27 +2464,27 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         #Set the label properties
-        label_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        label_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        label_font  = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
         #Check if there was a parsing error
         if parse_error != False:
-            error_brush = data.PyQt.QtGui.QBrush(data.PyQt.QtGui.QColor(180, 0, 0))
-            error_font  = data.PyQt.QtGui.QFont(
-                "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+            error_brush = data.QBrush(data.QColor(180, 0, 0))
+            error_font  = data.QFont(
+                "Courier", data.tree_display_font_size, data.QFont.Bold
             )
-            item_error = data.PyQt.QtGui.QStandardItem("ERROR PARSING FILE!")
+            item_error = data.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
             item_error.setForeground(error_brush)
             item_error.setFont(error_font)
             item_error.setIcon(self.node_icon_nothing)
             tree_model.appendRow(item_error)
             #Show the error message
-            error_font = data.PyQt.QtGui.QFont("Courier", data.tree_display_font_size)
-            item_error_msg = data.PyQt.QtGui.QStandardItem(str(parse_error))
+            error_font = data.QFont("Courier", data.tree_display_font_size)
+            item_error_msg = data.QStandardItem(str(parse_error))
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
             item_error_msg.setFont(error_font)
@@ -1282,19 +2501,19 @@ class TreeDisplay(data.QTreeView):
         function_nodes = [x for x in python_node_tree if x.type == "function"]
         globals_nodes = [x for x in python_node_tree if x.type == "global_variable"]
         """Imported module filtering"""
-        item_imports = data.PyQt.QtGui.QStandardItem(import_text)
+        item_imports = data.QStandardItem(import_text)
         item_imports.setEditable(False)
         item_imports.setForeground(label_brush)
         item_imports.setFont(label_font)
         for node in import_nodes:
             node_text = str(node.name) + " (line:"
             node_text += str(node.line_number) + ")"
-            item_import_node = data.PyQt.QtGui.QStandardItem(node_text)
+            item_import_node = data.QStandardItem(node_text)
             item_import_node.setEditable(False)
             item_import_node.setIcon(self.node_icon_import)
             item_imports.appendRow(item_import_node)
         if import_nodes == []:
-            item_no_imports = data.PyQt.QtGui.QStandardItem("No imports found")
+            item_no_imports = data.QStandardItem("No imports found")
             item_no_imports.setEditable(False)
             item_no_imports.setIcon(self.node_icon_nothing)
             item_imports.appendRow(item_no_imports)
@@ -1303,13 +2522,13 @@ class TreeDisplay(data.QTreeView):
         if import_nodes == []:
             self.expand(item_imports.index())
         """Global variable nodes filtering"""
-        item_globals = data.PyQt.QtGui.QStandardItem(global_vars_text)
+        item_globals = data.QStandardItem(global_vars_text)
         item_globals.setEditable(False)
         item_globals.setForeground(label_brush)
         item_globals.setFont(label_font)
         #Check if there were any nodes found
         if globals_nodes == []:
-            item_no_globals = data.PyQt.QtGui.QStandardItem("No global variables found")
+            item_no_globals = data.QStandardItem("No global variables found")
             item_no_globals.setEditable(False)
             item_no_globals.setIcon(self.node_icon_nothing)
             item_globals.appendRow(item_no_globals)
@@ -1322,13 +2541,13 @@ class TreeDisplay(data.QTreeView):
         if globals_nodes == []:
             self.expand(item_globals.index())
         """Class nodes filtering"""
-        item_classes = data.PyQt.QtGui.QStandardItem(class_text)
+        item_classes = data.QStandardItem(class_text)
         item_classes.setEditable(False)
         item_classes.setForeground(label_brush)
         item_classes.setFont(label_font)
         # Check if there were any nodes found
         if class_nodes == []:
-            item_no_classes = data.PyQt.QtGui.QStandardItem("No classes found")
+            item_no_classes = data.QStandardItem("No classes found")
             item_no_classes.setEditable(False)
             item_no_classes.setIcon(self.node_icon_nothing)
             item_classes.appendRow(item_no_classes)
@@ -1339,13 +2558,13 @@ class TreeDisplay(data.QTreeView):
         # Append the class nodes to the model
         tree_model.appendRow(item_classes)
         """Function nodes filtering"""
-        item_functions = data.PyQt.QtGui.QStandardItem(function_text)
+        item_functions = data.QStandardItem(function_text)
         item_functions.setEditable(False)
         item_functions.setForeground(label_brush)
         item_functions.setFont(label_font)
         #Check if there were any nodes found
         if function_nodes == []:
-            item_no_functions = data.PyQt.QtGui.QStandardItem("No functions found")
+            item_no_functions = data.QStandardItem("No functions found")
             item_no_functions.setEditable(False)
             item_no_functions.setIcon(self.node_icon_nothing)
             item_functions.appendRow(item_no_functions)
@@ -1368,115 +2587,59 @@ class TreeDisplay(data.QTreeView):
         self.bound_tab = custom_editor
         # Set the tree display type to NODE
         self.set_display_type(data.TreeDisplayType.NODES)
-        # Define the display structure texts
-        function_text       = "FUNCTIONS:"
-        prototype_text      = "PROTOTYPES:"
-        types_text          = "TYPES:"
-        variable_text       = "VARIABLES:"
-        include_text        = "INCLUDES:"
-        pragma_text         = "PRAGMAS:"
-        define_text         = "DEFINES:"
-        undefine_text       = "UN-DEFINES:"
-        error_text          = "ERRORS:"
         # Set the label properties
-        label_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        label_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        label_font  = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
         # Filter the nodes
         def display_node(tree_node, c_node):
-            function_list = []
-            var_list = []
-            prototype_list = []
-            type_list = []
-            include_list = []
-            define_list = []
-            pragma_list = []
-            undef_list = []
-            error_list = []
+            node_group = {}
             for v in c_node.children:
-                if v.type == "function":
-                    function_list.append(v)
-                elif v.type == "var":
-                    var_list.append(v)
-                elif v.type == "prototype":
-                    prototype_list.append(v)
-                elif (v.type == "typedef" or 
-                      v.type == "struct" or 
-                      v.type == "enum" or 
-                      v.type == "union"):
-                    type_list.append(v)
-                elif v.type == "include":
-                    include_list.append(v)
-                elif v.type == "define":
-                    define_list.append(v)
-                elif v.type == "pragma":
-                    pragma_list.append(v)
-                elif v.type == "undef":
-                    undef_list.append(v)
-                elif v.type == "error":
-                    error_list.append(v)
+                if v.type in node_group.keys():
+                    node_group[v.type].append(v)
                 else:
-                    raise Exception("Unknown C node: {}".format(v.type))
+                    node_group[v.type] = [v]
+            # Initialize a list of struct references for later addition of their members
+            struct_list = {}
             # Add The nodes to the tree using the parent tree node
-            for i in range(9):
-                if i == 0:
-                    if include_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(include_text)
-                    icon = self.node_icon_import
-                    current_list = include_list
-                elif i == 1:
-                    if pragma_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(pragma_text)
-                    icon = self.node_icon_pragma
-                    current_list = pragma_list
-                elif i == 2:
-                    if define_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(define_text)
-                    icon = self.node_icon_macro
-                    current_list = define_list
-                elif i == 3:
-                    if type_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(types_text)
-                    icon = self.node_icon_type
-                    current_list = type_list
-                elif i == 4:
-                    if var_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(variable_text)
-                    icon = self.node_icon_variable
-                    current_list = var_list
-                elif i == 5:
-                    if prototype_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(prototype_text)
-                    icon = self.node_icon_function
-                    current_list = prototype_list
-                elif i == 6:
-                    if function_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(function_text)
+            for k in sorted(node_group.keys()):
+                if k == "member":
+                    continue
+                group_name = k.upper()
+                item = data.QStandardItem("{}:".format(group_name))
+                current_list = node_group[k]
+                if k == "function":
                     icon = self.node_icon_procedure
-                    current_list = function_list
-                
-                elif i == 7:
-                    if undef_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(undefine_text)
+                elif k == "var" or k == "variable":
+                    icon = self.node_icon_variable
+                elif k == "prototype":
+                    icon = self.node_icon_function
+                elif (k == "typedef" or 
+                      k == "struct" or 
+                      k == "enum" or 
+                      k == "union"):
+                    icon = self.node_icon_type
+                elif k == "enumerator":
+                    icon = self.node_icon_const
+                elif k == "include":
+                    icon = self.node_icon_import
+                elif k == "define":
                     icon = self.node_icon_macro
-                    current_list = undef_list
-                elif i == 8:
-                    if error_list == []:
-                        continue
-                    item = data.PyQt.QtGui.QStandardItem(error_text)
+                elif k == "pragma":
+                    icon = self.node_icon_pragma
+                elif k == "undef":
                     icon = self.node_icon_macro
-                    current_list = error_list
+                elif k == "error":
+                    icon = self.node_icon_macro
+                elif k == "macro":
+                    icon = self.node_icon_macro
+                elif k == "member":
+                    icon = self.node_icon_method
+                else:
+                    icon = self.node_icon_unknown
                     
                 item.setEditable(False)
                 item.setForeground(label_brush)
@@ -1488,7 +2651,7 @@ class TreeDisplay(data.QTreeView):
                     node_text = n.name + " (line:"
                     node_text += str(n.line_number) + ")"
                     # Construct the node and add it to the tree
-                    node = data.PyQt.QtGui.QStandardItem(node_text)
+                    node = data.QStandardItem(node_text)
                     node.setEditable(False)
                     node.setIcon(icon)
                     
@@ -1496,13 +2659,27 @@ class TreeDisplay(data.QTreeView):
                         display_node(node, n)
                     
                     item.appendRow(node)
+                    
+                    if k == "struct":
+                        struct_list[n.name] = node
                 # Check if there were any nodes found
                 if current_list == []:
-                    item_no_nodes = data.PyQt.QtGui.QStandardItem("No items found")
+                    item_no_nodes = data.QStandardItem("No items found")
                     item_no_nodes.setEditable(False)
                     item.appendRow(item_no_nodes)
                 # Append the nodes to the parent node
                 tree_node.appendRow(item)
+            # Add the struct members directly to the structs
+            if "member" in node_group.keys():
+                for n in node_group["member"]:
+                    # Set the function node text
+                    node_text = n.name + " (line:"
+                    node_text += str(n.line_number) + ")"
+                    # Construct the node and add it to the tree
+                    node = data.QStandardItem(node_text)
+                    node.setEditable(False)
+                    node.setIcon(self.node_icon_method)
+                    struct_list[n.parent].appendRow(node)
         
         # Define the document name, type
         document_name       = os.path.basename(custom_editor.save_name)
@@ -1510,24 +2687,25 @@ class TreeDisplay(data.QTreeView):
         document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
         # Initialize the tree display
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
-        tree_model = data.PyQt.QtGui.QStandardItemModel()
-        tree_model.setHorizontalHeaderLabels([document_name])
+        tree_model = data.QStandardItemModel()
+#        tree_model.setHorizontalHeaderLabels([document_name])
+        self.header().hide()
         self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         # Add the file attributes to the tree display
-        description_brush   = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush   = data.QBrush(
+            data.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font    = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        description_font    = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
-        item_document_name  = data.PyQt.QtGui.QStandardItem(document_name_text)
+        item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type  = data.PyQt.QtGui.QStandardItem(document_type_text)
+        item_document_type  = data.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1551,24 +2729,25 @@ class TreeDisplay(data.QTreeView):
         document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
         #Initialize the tree display
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
-        tree_model = data.PyQt.QtGui.QStandardItemModel()
-        tree_model.setHorizontalHeaderLabels([document_name])
+        tree_model = data.QStandardItemModel()
+#        tree_model.setHorizontalHeaderLabels([document_name])
+        self.header().hide()
         self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
         self.set_font_size(data.tree_display_font_size)
         #Add the file attributes to the tree display
-        description_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        description_font = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
-        item_document_name  = data.PyQt.QtGui.QStandardItem(document_name_text)
+        item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
-        item_document_type  = data.PyQt.QtGui.QStandardItem(document_type_text)
+        item_document_type  = data.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
@@ -1576,11 +2755,11 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         """Add the nodes"""
-        label_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+        label_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        label_font  = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
         #Nested function for creating a tree node
         def create_tree_node(node_text, 
@@ -1588,7 +2767,7 @@ class TreeDisplay(data.QTreeView):
                              node_text_font, 
                              node_icon, 
                              node_line_number):
-            tree_node = data.PyQt.QtGui.QStandardItem(node_text)
+            tree_node = data.QStandardItem(node_text)
             tree_node.setEditable(False)
             if node_text_brush != None:
                 tree_node.setForeground(node_text_brush)
@@ -1842,7 +3021,7 @@ class TreeDisplay(data.QTreeView):
         #Initialize the tree display to the found files type
         self.horizontalScrollbarAction(1)
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
-        tree_model = data.PyQt.QtGui.QStandardItemModel()
+        tree_model = data.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["FOUND FILES TREE"])
         self.header().hide()
         self.clean_model()
@@ -1851,14 +3030,14 @@ class TreeDisplay(data.QTreeView):
         self.set_font_size(10)
         """Define the description details"""
         #Font
-        description_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.Keyword[1])
+        description_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.Keyword[1])
         )
-        description_font    = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        description_font    = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
         #Directory item
-        item_directory  = data.PyQt.QtGui.QStandardItem(
+        item_directory  = data.QStandardItem(
             "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
         )
         item_directory.setEditable(False)
@@ -1866,11 +3045,11 @@ class TreeDisplay(data.QTreeView):
         item_directory.setFont(description_font)
         #Search item, display according to the custom text parameter
         if custom_text == None:
-            item_search_text = data.PyQt.QtGui.QStandardItem(
+            item_search_text = data.QStandardItem(
                 "FILE HAS: {:s}".format(search_text)
             )
         else:
-            item_search_text = data.PyQt.QtGui.QStandardItem(custom_text)
+            item_search_text = data.QStandardItem(custom_text)
         item_search_text.setEditable(False)
         item_search_text.setForeground(description_brush)
         item_search_text.setFont(description_font)
@@ -1882,7 +3061,7 @@ class TreeDisplay(data.QTreeView):
         #Initialize the tree display to the found files type
         self.horizontalScrollbarAction(1)
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
-        tree_model = data.PyQt.QtGui.QStandardItemModel()
+        tree_model = data.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["REPLACED IN FILES TREE"])
         self.header().hide()
         self.clean_model()
@@ -1891,28 +3070,28 @@ class TreeDisplay(data.QTreeView):
         self.set_font_size(data.tree_display_font_size)
         """Define the description details"""
         #Font
-        description_brush = data.PyQt.QtGui.QBrush(
-            data.PyQt.QtGui.QColor(data.theme.Font.Python.Default[1])
+        description_brush = data.QBrush(
+            data.QColor(data.theme.Font.Python.Default[1])
         )
-        description_font = data.PyQt.QtGui.QFont(
-            "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+        description_font = data.QFont(
+            "Courier", data.tree_display_font_size, data.QFont.Bold
         )
         #Directory item
-        item_directory  = data.PyQt.QtGui.QStandardItem(
+        item_directory  = data.QStandardItem(
             "BASE DIRECTORY: {:s}".format(directory.replace("\\", "/"))
         )
         item_directory.setEditable(False)
         item_directory.setForeground(description_brush)
         item_directory.setFont(description_font)
         #Search item
-        item_search_text = data.PyQt.QtGui.QStandardItem(
+        item_search_text = data.QStandardItem(
                             "SEARCH TEXT: {:s}".format(search_text)
                            )
         item_search_text.setEditable(False)
         item_search_text.setForeground(description_brush)
         item_search_text.setFont(description_font)
         #Replace item
-        item_replace_text = data.PyQt.QtGui.QStandardItem(
+        item_replace_text = data.QStandardItem(
                             "REPLACE TEXT: {:s}".format(replace_text)
                            )
         item_replace_text.setEditable(False)
@@ -1953,18 +3132,18 @@ class TreeDisplay(data.QTreeView):
             #Set the UNIX file format to the directory
             directory = directory.replace("\\", "/")
             """Adding the files"""
-            label_brush = data.PyQt.QtGui.QBrush(
-                data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+            label_brush = data.QBrush(
+                data.QColor(data.theme.Font.Python.SingleQuotedString[1])
             )
-            label_font = data.PyQt.QtGui.QFont(
-                "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+            label_font = data.QFont(
+                "Courier", data.tree_display_font_size, data.QFont.Bold
             )
-            item_brush = data.PyQt.QtGui.QBrush(
-                data.PyQt.QtGui.QColor(data.theme.Font.Python.Default[1])
+            item_brush = data.QBrush(
+                data.QColor(data.theme.Font.Python.Default[1])
             )
-            item_font = data.PyQt.QtGui.QFont("Courier", data.tree_display_font_size)
+            item_font = data.QFont("Courier", data.tree_display_font_size)
             #Create the base directory item that will hold all of the found files
-            item_base_directory = data.PyQt.QtGui.QStandardItem(directory)
+            item_base_directory = data.QStandardItem(directory)
             item_base_directory.setEditable(False)
             item_base_directory.setForeground(label_brush)
             item_base_directory.setFont(label_font)
@@ -1989,7 +3168,7 @@ class TreeDisplay(data.QTreeView):
                     if directory_name.startswith("/"):
                         directory_name = directory_name[1:]
                     #Initialize the file item
-                    item_file = data.PyQt.QtGui.QStandardItem(file_name)
+                    item_file = data.QStandardItem(file_name)
                     item_file.setEditable(False)
                     item_file.setForeground(item_brush)
                     item_file.setFont(item_font)
@@ -2028,7 +3207,7 @@ class TreeDisplay(data.QTreeView):
                             current_directory = current_directory.directories[dir]
                         else:
                             #Create the new directory item
-                            item_new_directory = data.PyQt.QtGui.QStandardItem(dir)
+                            item_new_directory = data.QStandardItem(dir)
                             item_new_directory.setEditable(False)
                             item_new_directory.setIcon(self.folder_icon)
                             item_new_directory.setForeground(item_brush)
@@ -2050,7 +3229,7 @@ class TreeDisplay(data.QTreeView):
             #Resize the header so the horizontal scrollbar will have the correct width
             self.resize_horizontal_scrollbar()
         else:
-            item_no_files_found = data.PyQt.QtGui.QStandardItem("No items found")
+            item_no_files_found = data.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
             item_no_files_found.setIcon(self.node_icon_nothing)
             item_no_files_found.setForeground(label_brush)
@@ -2064,18 +3243,18 @@ class TreeDisplay(data.QTreeView):
             #Set the UNIX file format to the directory
             directory = directory.replace("\\", "/")
             """Adding the files"""
-            label_brush = data.PyQt.QtGui.QBrush(
-                data.PyQt.QtGui.QColor(data.theme.Font.Python.SingleQuotedString[1])
+            label_brush = data.QBrush(
+                data.QColor(data.theme.Font.Python.SingleQuotedString[1])
             )
-            label_font  = data.PyQt.QtGui.QFont(
-                "Courier", data.tree_display_font_size, data.PyQt.QtGui.QFont.Bold
+            label_font  = data.QFont(
+                "Courier", data.tree_display_font_size, data.QFont.Bold
             )
-            item_brush = data.PyQt.QtGui.QBrush(
-                data.PyQt.QtGui.QColor(data.theme.Font.Python.Default[1])
+            item_brush = data.QBrush(
+                data.QColor(data.theme.Font.Python.Default[1])
             )
-            item_font = data.PyQt.QtGui.QFont("Courier", data.tree_display_font_size)
+            item_font = data.QFont("Courier", data.tree_display_font_size)
             #Create the base directory item that will hold all of the found files
-            item_base_directory = data.PyQt.QtGui.QStandardItem(directory)
+            item_base_directory = data.QStandardItem(directory)
             item_base_directory.setEditable(False)
             item_base_directory.setForeground(label_brush)
             item_base_directory.setFont(label_font)
@@ -2097,7 +3276,7 @@ class TreeDisplay(data.QTreeView):
                     if directory_name.startswith("/"):
                         directory_name = directory_name[1:]
                     #Initialize the file item
-                    item_file = data.PyQt.QtGui.QStandardItem(file_name)
+                    item_file = data.QStandardItem(file_name)
                     item_file.setEditable(False)
                     file_type = functions.get_file_type(file_name)
                     item_file.setIcon(functions.get_language_file_icon(file_type))
@@ -2110,7 +3289,7 @@ class TreeDisplay(data.QTreeView):
                         #Adjust the line numbering to Ex.Co. (1 to end)
                         line += 1
                         #Create the goto line item
-                        item_line = data.PyQt.QtGui.QStandardItem("line {:d}".format(line))
+                        item_line = data.QStandardItem("line {:d}".format(line))
                         item_line.setEditable(False)
                         item_line.setIcon(self.goto_icon)
                         item_line.setForeground(item_brush)
@@ -2149,7 +3328,7 @@ class TreeDisplay(data.QTreeView):
                             current_directory = current_directory.directories[dir]
                         else:
                             #Create the new directory item
-                            item_new_directory = data.PyQt.QtGui.QStandardItem(dir)
+                            item_new_directory = data.QStandardItem(dir)
                             item_new_directory.setEditable(False)
                             item_new_directory.setIcon(self.folder_icon)
                             item_new_directory.setForeground(item_brush)
@@ -2170,7 +3349,7 @@ class TreeDisplay(data.QTreeView):
             #Resize the header so the horizontal scrollbar will have the correct width
             self.resize_horizontal_scrollbar()
         else:
-            item_no_files_found = data.PyQt.QtGui.QStandardItem("No items found")
+            item_no_files_found = data.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
             item_no_files_found.setIcon(self.node_icon_nothing)
             item_no_files_found.setForeground(item_brush)
@@ -2295,18 +3474,18 @@ class TextDiffer(data.QWidget):
     text_1_name             = None
     text_2_name             = None
     #Class constants
-    DEFAULT_FONT            = data.PyQt.QtGui.QFont('Courier', 10)
-    MARGIN_STYLE            = data.PyQt.Qsci.QsciScintilla.STYLE_LINENUMBER
+    DEFAULT_FONT            = data.QFont('Courier', 10)
+    MARGIN_STYLE            = data.QsciScintilla.STYLE_LINENUMBER
     INDICATOR_UNIQUE_1          = 1
-    Indicator_Unique_1_Color    = data.PyQt.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
+    Indicator_Unique_1_Color    = data.QColor(0x72, 0x9f, 0xcf, 80)
     INDICATOR_UNIQUE_2          = 2
-    Indicator_Unique_2_Color    = data.PyQt.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
+    Indicator_Unique_2_Color    = data.QColor(0xad, 0x7f, 0xa8, 80)
     INDICATOR_SIMILAR           = 3
-    Indicator_Similar_Color     = data.PyQt.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
-    GET_X_OFFSET    = data.PyQt.Qsci.QsciScintillaBase.SCI_GETXOFFSET
-    SET_X_OFFSET    = data.PyQt.Qsci.QsciScintillaBase.SCI_SETXOFFSET
-    UPDATE_H_SCROLL = data.PyQt.Qsci.QsciScintillaBase.SC_UPDATE_H_SCROLL
-    UPDATE_V_SCROLL = data.PyQt.Qsci.QsciScintillaBase.SC_UPDATE_V_SCROLL
+    Indicator_Similar_Color     = data.QColor(0x8a, 0xe2, 0x34, 80)
+    GET_X_OFFSET    = data.QsciScintillaBase.SCI_GETXOFFSET
+    SET_X_OFFSET    = data.QsciScintillaBase.SCI_SETXOFFSET
+    UPDATE_H_SCROLL = data.QsciScintillaBase.SC_UPDATE_H_SCROLL
+    UPDATE_V_SCROLL = data.QsciScintillaBase.SC_UPDATE_V_SCROLL
     #Diff icons
     icon_unique_1   = None
     icon_unique_2   = None
@@ -2394,7 +3573,7 @@ class TextDiffer(data.QWidget):
         self.icon_unique_2  = functions.create_icon("tango_icons/diff-unique-2.png")
         self.icon_similar   = functions.create_icon("tango_icons/diff-similar.png")
         # Create the horizontal splitter and two editor widgets
-        self.splitter = data.QSplitter(data.PyQt.QtCore.Qt.Horizontal, self)
+        self.splitter = data.QSplitter(data.Qt.Horizontal, self)
         self.editor_1 = forms.CustomEditor(self, main_form)
         self.init_editor(self.editor_1)
         self.editor_2 = forms.CustomEditor(self, main_form)
@@ -2602,8 +3781,7 @@ class TextDiffer(data.QWidget):
         self.main_form.last_focused_widget = self.parent
         data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
         #Hide the function wheel if it is shown
-        if self.main_form.view.function_wheel_overlay != None:
-            self.main_form.view.hide_function_wheel()
+        self.main_form.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
         components.ActionFilter.clear_action()
     
@@ -2628,15 +3806,15 @@ class TextDiffer(data.QWidget):
         #to the marker background color
         editor.setMarginWidth(1, "00")
         editor.setMarginWidth(2, 0)        
-        editor.setMarginType(0, data.PyQt.Qsci.QsciScintilla.TextMargin)
-        editor.setMarginType(1, data.PyQt.Qsci.QsciScintilla.SymbolMargin)
-        editor.setMarginType(2, data.PyQt.Qsci.QsciScintilla.SymbolMargin)
+        editor.setMarginType(0, data.QsciScintilla.TextMargin)
+        editor.setMarginType(1, data.QsciScintilla.SymbolMargin)
+        editor.setMarginType(2, data.QsciScintilla.SymbolMargin)
         #I DON'T KNOW THE ENTIRE LOGIC BEHIND MARKERS AND MARGINS! If you set 
         #something wrong in the margin mask, the markers on a different margin don't appear!
         #http://www.scintilla.org/ScintillaDoc.html#SCI_SETMARGINMASKN
         editor.setMarginMarkerMask(
             1,
-            ~data.PyQt.Qsci.QsciScintillaBase.SC_MASK_FOLDERS 
+            ~data.QsciScintillaBase.SC_MASK_FOLDERS 
         )
         editor.setMarginMarkerMask(
             2, 
@@ -2646,7 +3824,7 @@ class TextDiffer(data.QWidget):
     def init_markers(self):
         """Initialize all markers for showing diff symbols"""
         #Set the images
-        image_scale_size = data.PyQt.QtCore.QSize(16, 16)
+        image_scale_size = data.QSize(16, 16)
         image_unique_1  = functions.create_pixmap('tango_icons/diff-unique-1.png')
         image_unique_2  = functions.create_pixmap('tango_icons/diff-unique-2.png')
         image_similar   = functions.create_pixmap('tango_icons/diff-similar.png')
@@ -2655,9 +3833,9 @@ class TextDiffer(data.QWidget):
         image_unique_2  = image_unique_2.scaled(image_scale_size)
         image_similar   = image_similar.scaled(image_scale_size)
         #Markers for editor 1
-        self.marker_unique_1            = self.editor_1.markerDefine(data.PyQt.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
+        self.marker_unique_1            = self.editor_1.markerDefine(data.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
         self.marker_unique_symbol_1     = self.editor_1.markerDefine(image_unique_1, 1)
-        self.marker_similar_1           = self.editor_1.markerDefine(data.PyQt.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
+        self.marker_similar_1           = self.editor_1.markerDefine(data.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
         self.marker_similar_symbol_1    = self.editor_1.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
         self.editor_1.setMarkerBackgroundColor(self.Indicator_Unique_1_Color, self.marker_unique_1)
@@ -2671,9 +3849,9 @@ class TextDiffer(data.QWidget):
             self.marker_similar_symbol_1
         )
         #Markers for editor 2
-        self.marker_unique_2            = self.editor_2.markerDefine(data.PyQt.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
+        self.marker_unique_2            = self.editor_2.markerDefine(data.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
         self.marker_unique_symbol_2     = self.editor_2.markerDefine(image_unique_2, 1)
-        self.marker_similar_2           = self.editor_2.markerDefine(data.PyQt.Qsci.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
+        self.marker_similar_2           = self.editor_2.markerDefine(data.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
         self.marker_similar_symbol_2    = self.editor_2.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
         self.editor_2.setMarkerBackgroundColor(self.Indicator_Unique_2_Color, self.marker_unique_2)
@@ -2693,7 +3871,7 @@ class TextDiffer(data.QWidget):
                        color):
         """Set the indicator settings"""
         editor.indicatorDefine(
-            data.PyQt.Qsci.QsciScintillaBase.INDIC_ROUNDBOX,
+            data.QsciScintillaBase.INDIC_ROUNDBOX,
             indicator
         )
         editor.setIndicatorForegroundColor(
@@ -2701,7 +3879,7 @@ class TextDiffer(data.QWidget):
             indicator
         )
         editor.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_SETINDICATORCURRENT, 
+            data.QsciScintillaBase.SCI_SETINDICATORCURRENT, 
             indicator
         )
     
@@ -2711,10 +3889,10 @@ class TextDiffer(data.QWidget):
         editor.setUtf8(True)
         editor.setIndentationsUseTabs(False)
         editor.setFont(self.DEFAULT_FONT)
-        editor.setBraceMatching(data.PyQt.Qsci.QsciScintilla.SloppyBraceMatch)
-        editor.setMatchedBraceBackgroundColor(data.PyQt.QtGui.QColor(255, 153, 0))
+        editor.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
+        editor.setMatchedBraceBackgroundColor(data.QColor(255, 153, 0))
         editor.setAcceptDrops(False)
-        editor.setEolMode(data.default_eol)
+        editor.setEolMode(settings.Editor.end_of_line_mode)
         editor.setReadOnly(True)
         editor.savable = data.CanSave.NO
     
@@ -2744,7 +3922,7 @@ class TextDiffer(data.QWidget):
                 self.Indicator_Similar_Color
             )
         #Color the line background
-        scintilla_command = data.PyQt.Qsci.QsciScintillaBase.SCI_INDICATORFILLRANGE
+        scintilla_command = data.QsciScintillaBase.SCI_INDICATORFILLRANGE
         start   = editor.positionFromLineIndex(line, 0)
         length  = editor.lineLength(line)
         editor.SendScintilla(
@@ -2999,7 +4177,7 @@ class TextDiffer(data.QWidget):
             self.find_toolbar = None
         # Create the find toolbar and buttons
         self.find_toolbar = data.QToolBar(parent)
-        self.find_toolbar.setIconSize(data.PyQt.QtCore.QSize(16,16))
+        self.find_toolbar.setIconSize(data.QSize(16,16))
         unique_1_action = data.QAction(
             functions.create_icon("tango_icons/diff-unique-1.png"), 
             "unique_1_button",
@@ -3046,17 +4224,17 @@ class TextDiffer(data.QWidget):
             editor.setMarginsForegroundColor(theme.LineMargin.ForeGround)
             editor.setMarginsBackgroundColor(theme.LineMargin.BackGround)
             editor.SendScintilla(
-                data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-                data.PyQt.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+                data.QsciScintillaBase.SCI_STYLESETBACK, 
+                data.QsciScintillaBase.STYLE_DEFAULT, 
                 theme.Paper.Default
             )
             editor.SendScintilla(
-                data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-                data.PyQt.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+                data.QsciScintillaBase.SCI_STYLESETBACK, 
+                data.QsciScintillaBase.STYLE_LINENUMBER, 
                 theme.LineMargin.BackGround
             )
             editor.SendScintilla(
-                data.PyQt.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+                data.QsciScintillaBase.SCI_SETCARETFORE, 
                 theme.Cursor
             )
             editor.choose_lexer("text")
@@ -3089,7 +4267,7 @@ class MessageLogger(data.QWidget):
         #Initialize the log window
         self.setWindowTitle("LOGGING WINDOW")
         self.resize(500, 300)
-        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(data.Qt.WindowStaysOnTopHint)
         
         #Initialize the display box
         self.displaybox = MessageLogger.MessageTextBox(self)
@@ -3110,7 +4288,7 @@ class MessageLogger(data.QWidget):
         
         #Set the log window icon
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(data.PyQt.QtGui.QIcon(data.application_icon))
+            self.setWindowIcon(data.QIcon(data.application_icon))
     
     def _event_mouse_doubleclick(self, mouse_event):
         """Rereferenced/overloaded displaybox doubleclick event"""
@@ -3124,7 +4302,7 @@ class MessageLogger(data.QWidget):
     def _keypress(self, key_event):
         """Rereferenced/overloaded MessageLogger keypress event"""
         pressed_key = key_event.key()
-        if pressed_key == data.PyQt.QtCore.Qt.Key_Escape:
+        if pressed_key == data.Qt.Key_Escape:
             self.close()
     
     def clear_log(self):
@@ -3145,8 +4323,8 @@ class MessageLogger(data.QWidget):
             self.displaybox.append(message)
         #Bring cursor to the current message (this is in a QTextEdit not QScintilla)
         cursor = self.displaybox.textCursor()
-        cursor.movePosition(data.PyQt.QtGui.QTextCursor.End)
-        cursor.movePosition(data.PyQt.QtGui.QTextCursor.StartOfLine)
+        cursor.movePosition(data.QTextCursor.End)
+        cursor.movePosition(data.QTextCursor.StartOfLine)
         self.displaybox.setTextCursor(cursor)
 
 
@@ -3169,9 +4347,9 @@ class ExCoInfo(data.QDialog):
         super().__init__()
         #Setup the window
         self.setWindowTitle("About Ex.Co.")
-        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(data.Qt.WindowStaysOnTopHint)
         #Setup the picture
-        exco_picture = data.PyQt.QtGui.QPixmap(data.about_image)
+        exco_picture = data.QPixmap(data.about_image)
         self.picture = data.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())
@@ -3184,12 +4362,12 @@ class ExCoInfo(data.QDialog):
         self.layout.addWidget(self.picture)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(
-            data.PyQt.QtCore.QMargins(0,0,0,0)
+            data.QMargins(0,0,0,0)
         )
         self.setLayout(self.layout)
         #Set the log window icon
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(data.PyQt.QtGui.QIcon(data.application_icon))
+            self.setWindowIcon(data.QIcon(data.application_icon))
         #Save the info window geometry, the values were gotten by showing a dialog with the label containing
         #the ExCo info image with the size set to (50, 50), so it would automatically resize to the label image size
         my_width    = 610
@@ -3201,11 +4379,11 @@ class ExCoInfo(data.QDialog):
         parent_height   = parent.geometry().height()
         my_left = parent_left + (parent_width/2) - (my_width/2)
         my_top = parent_top + (parent_height/2) - (my_height/2)
-        self.setGeometry(data.PyQt.QtCore.QRect(my_left, my_top, my_width, my_height))
+        self.setGeometry(data.QRect(my_left, my_top, my_width, my_height))
         self.setFixedSize(my_width, my_height)
 #        self.setStyleSheet("background-color:transparent;")
-#        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint | data.PyQt.QtCore.Qt.Dialog | data.PyQt.QtCore.Qt.FramelessWindowHint)
-#        self.setAttribute(data.PyQt.QtCore.Qt.WA_TranslucentBackground)
+#        self.setWindowFlags(data.Qt.WindowStaysOnTopHint | data.Qt.Dialog | data.Qt.FramelessWindowHint)
+#        self.setAttribute(data.Qt.WA_TranslucentBackground)
     
     def _close(self, event):
         """Close the widget"""
@@ -3216,7 +4394,7 @@ class ExCoInfo(data.QDialog):
 
 """
 -----------------------------------------------------------------------------------
-Custom buttons used by the FunctionWheelOverlay and ContextMenu in the forms module
+Custom buttons used by the FunctionWheel and ContextMenu in the forms module
 -----------------------------------------------------------------------------------
 """
 class CustomButton(data.QLabel):
@@ -3259,8 +4437,8 @@ class CustomButton(data.QLabel):
                  input_pixmap, 
                  input_function=None, 
                  input_function_text="", 
-                 input_font=data.PyQt.QtGui.QFont(
-                 'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
+                 input_font=data.QFont(
+                 'Courier', 14, weight=data.QFont.Bold
                  ), 
                  input_focus_last_widget=data.HexButtonFocus.NONE, 
                  input_no_tab_focus_disable=False, 
@@ -3281,7 +4459,7 @@ class CustomButton(data.QLabel):
         #Store the main function image
         self.stored_pixmap = input_pixmap
         #Store the hex edge image
-        self.stored_hex = data.PyQt.QtGui.QPixmap(
+        self.stored_hex = data.QPixmap(
             os.path.join(
                 data.resources_directory, 
                 "various/hex-button-edge.png"
@@ -3308,14 +4486,14 @@ class CustomButton(data.QLabel):
         #Enable mouse move events
         self.setMouseTracking(True)
         #Set the image for displaying
-        self.setPixmap(input_pixmap)
-        #Image should scale to the button size
-        self.setScaledContents(True)
-        # Set the button mask, which sets the button area to the shape of
-        # the button image instead of a rectangle
-        self.setMask(self.stored_hex.mask())
-        #Set the initial opacity to low
-        self._set_opacity(self.OPACITY_LOW)
+#        self.setPixmap(input_pixmap)
+#        #Image should scale to the button size
+#        self.setScaledContents(True)
+#        # Set the button mask, which sets the button area to the shape of
+#        # the button image instead of a rectangle
+#        self.setMask(self.stored_hex.mask())
+#        #Set the initial opacity to low
+#        self._set_opacity_with_hex_edge(self.OPACITY_LOW)
         #Set the tooltip if it was set
         if input_tool_tip != None:
             self.setToolTip(input_tool_tip)
@@ -3330,25 +4508,25 @@ class CustomButton(data.QLabel):
         button_image = self.stored_pixmap
         # Resize the button image to scale
         button_image = button_image.scaled(
-            data.PyQt.QtCore.QSize(
+            data.QSize(
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+            transformMode=data.Qt.SmoothTransformation
         )
         # Scale the hex image
         hex_image = self.stored_hex
-        scaled_size = data.PyQt.QtCore.QSize(
+        scaled_size = data.QSize(
             math.ceil(hex_image.size().width() * self.scale[0]),
             math.ceil(hex_image.size().height() * self.scale[1]),
         )
-        image = data.PyQt.QtGui.QImage(
+        image = data.QImage(
             scaled_size, #hex_image.size(), 
-            data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+            data.QImage.Format_ARGB32_Premultiplied
         )
-        image.fill(data.PyQt.QtCore.Qt.transparent)
+        image.fill(data.Qt.transparent)
         # Create and initialize the QPainter that will manipulate the QImage
-        button_painter = data.PyQt.QtGui.QPainter(image)
+        button_painter = data.QPainter(image)
         button_painter.setOpacity(input_opacity)
         # Adjust inner button positioning according to the scale
         x_scaled = math.ceil(self.scale[0] * self.INNER_IMAGE_OFFSET[0])
@@ -3356,7 +4534,7 @@ class CustomButton(data.QLabel):
         button_painter.drawPixmap(x_scaled, y_scaled, button_image)
         button_painter.end()
         # Display the manipulated image
-        self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+        self.setPixmap(data.QPixmap.fromImage(image))
         # Set the button mask, which sets the button area to the shape of
         # the button image instead of a rectangle
         self.setMask(hex_image.mask())
@@ -3371,34 +4549,37 @@ class CustomButton(data.QLabel):
         button_image = self.stored_pixmap
         # Resize the button image to scale
         button_image = button_image.scaled(
-            data.PyQt.QtCore.QSize(
+            data.QSize(
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
-        )
+            transformMode=data.Qt.SmoothTransformation
+        )        
         # Scale the hex image
         hex_image = self.stored_hex
-        scaled_size = data.PyQt.QtCore.QSize(
+        scaled_size = data.QSize(
             math.ceil(hex_image.size().width() * self.scale[0]),
             math.ceil(hex_image.size().height() * self.scale[1]),
         )
-        image = data.PyQt.QtGui.QImage(
-            scaled_size, #hex_image.size(), 
-            data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+        image = data.QImage(
+            scaled_size,
+            data.QImage.Format_ARGB32_Premultiplied,
         )
-        image.fill(data.PyQt.QtCore.Qt.transparent)
+        image.fill(data.Qt.transparent)
+#        image.fill(data.theme.Context_Menu_Background)
         # Create and initialize the QPainter that will manipulate the QImage
-        button_painter = data.PyQt.QtGui.QPainter(image)
-        button_painter.setCompositionMode(data.PyQt.QtGui.QPainter.CompositionMode_Source)
+        button_painter = data.QPainter(image)
+        button_painter.setCompositionMode(
+            data.QPainter.CompositionMode_SourceOver
+        )
         button_painter.setOpacity(input_opacity)
         # Resize the hex image to scale
         hex_image = hex_image.scaled(
-            data.PyQt.QtCore.QSize(
+            data.QSize(
                 math.ceil(hex_image.size().width() * self.scale[0]),
                 math.ceil(hex_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+            transformMode=data.Qt.SmoothTransformation
         )
         # Adjust inner button positioning according to the scale
         button_painter.drawPixmap(0, 0, hex_image)
@@ -3407,7 +4588,7 @@ class CustomButton(data.QLabel):
         button_painter.drawPixmap(x_scaled, y_scaled, button_image)
         button_painter.end()
         # Display the manipulated image
-        self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+        self.setPixmap(data.QPixmap.fromImage(image))
         # Set the button mask, which sets the button area to the shape of
         # the button image instead of a rectangle
         self.setMask(hex_image.mask())
@@ -3496,7 +4677,7 @@ class DoubleButton(CustomButton):
     main_form                   = None
     extra_button                = None
     extra_button_size_factor    = 1/3
-    extra_button_position       = data.PyQt.QtCore.QPoint(0, 0)
+    extra_button_position       = data.QPoint(0, 0)
     extra_button_stored_opacity = None
     extra_button_stored_pixmap  = None
     extra_button_function       = None
@@ -3518,11 +4699,11 @@ class DoubleButton(CustomButton):
         self.extra_button = data.QLabel(self)
         width   = int(self.geometry().width() * self.extra_button_size_factor)
         height  = int(self.geometry().height() * self.extra_button_size_factor)
-        self.extra_button_position = data.PyQt.QtCore.QPoint(
+        self.extra_button_position = data.QPoint(
                                         self.geometry().width()*2/3-width, 
                                         self.geometry().height()*1/4
                                         )
-        rectangle   = data.PyQt.QtCore.QRect(self.extra_button_position, data.PyQt.QtCore.QSize(width, height))
+        rectangle   = data.QRect(self.extra_button_position, data.QSize(width, height))
         self.extra_button.setGeometry(rectangle)
         self.extra_button_stored_pixmap = input_extra_pixmap
         self.extra_button.setPixmap(input_extra_pixmap)
@@ -3567,10 +4748,10 @@ class DoubleButton(CustomButton):
         if self.isEnabled() == True:
             self._set_extra_button_opacity(self.OPACITY_HIGH)
             #Display the stored extra buttons function text
-            extra_button_font = data.PyQt.QtGui.QFont(
+            extra_button_font = data.QFont(
                 'Courier', 
                 self.stored_font.pointSize()-2, 
-                weight=data.PyQt.QtGui.QFont.Bold
+                weight=data.QFont.Bold
             )
             self.parent.display(
                 self.extra_button_function_text, 
@@ -3583,10 +4764,10 @@ class DoubleButton(CustomButton):
         if self.isEnabled() == True:
             self._set_extra_button_opacity(self.OPACITY_LOW)
             #Clear the function text
-            extra_button_font = data.PyQt.QtGui.QFont(
+            extra_button_font = data.QFont(
                 'Courier', 
                 self.stored_font.pointSize()-2, 
-                weight=data.PyQt.QtGui.QFont.Bold
+                weight=data.QFont.Bold
             )
             self.parent.display(
                 "", 
@@ -3611,9 +4792,9 @@ class DoubleButton(CustomButton):
         #Update the extra button geometry
         width = int(self.geometry().width() * self.extra_button_size_factor)
         height = int(self.geometry().height() * self.extra_button_size_factor)
-        rectangle   = data.PyQt.QtCore.QRect(
+        rectangle   = data.QRect(
                         self.extra_button_position, 
-                        data.PyQt.QtCore.QSize(width, height)
+                        data.QSize(width, height)
                         )
         self.extra_button.setGeometry(rectangle)
     
@@ -3623,18 +4804,18 @@ class DoubleButton(CustomButton):
         self.extra_button_stored_opacity = input_opacity
         #Create and initialize the QImage from the stored QPixmap
         button_image = self.extra_button_stored_pixmap
-        image = data.PyQt.QtGui.QImage(
+        image = data.QImage(
             button_image.size(), 
-            data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+            data.QImage.Format_ARGB32_Premultiplied
         )
-        image.fill(data.PyQt.QtCore.Qt.transparent)
+        image.fill(data.Qt.transparent)
         #Create and initialize the QPainter that will manipulate the QImage
-        button_painter = data.PyQt.QtGui.QPainter(image)
+        button_painter = data.QPainter(image)
         button_painter.setOpacity(input_opacity)
         button_painter.drawPixmap(0, 0, button_image)
         button_painter.end()
         #Display the manipulated image
-        self.extra_button.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+        self.extra_button.setPixmap(data.QPixmap.fromImage(image))
 
 
 """
@@ -3653,7 +4834,10 @@ class ContextMenu(data.QGroupBox):
         def _fill_background_color(self):
             self.setAutoFillBackground(True)
             p = self.palette()
-            p.setColor(self.backgroundRole(), data.PyQt.QtCore.Qt.white)
+            p.setColor(
+                self.backgroundRole(), 
+                data.theme.Context_Menu_Background
+            )
             self.setPalette(p)
         
         def _set_opacity(self, input_opacity):
@@ -3667,7 +4851,7 @@ class ContextMenu(data.QGroupBox):
         def mousePressEvent(self, event):
             """Overloaded widget click event"""
             button = event.button()
-            if button == data.PyQt.QtCore.Qt.LeftButton:
+            if button == data.Qt.LeftButton:
                 # Execute the function if it was initialized
                 if self.function != None:
                     if components.ActionFilter.click_drag_action != None:
@@ -3709,7 +4893,7 @@ class ContextMenu(data.QGroupBox):
                     event.accept()
                 else:
                     event.ignore()
-            elif button == data.PyQt.QtCore.Qt.RightButton:
+            elif button == data.Qt.RightButton:
                 # Close the function wheel
                 self.parent.hide()
                 event.accept()
@@ -3855,7 +5039,7 @@ class ContextMenu(data.QGroupBox):
         screen_resolution = data.application.desktop().screenGeometry()
         width, height = screen_resolution.width(), screen_resolution.height()
         self.setGeometry(
-            data.PyQt.QtCore.QRect(0, 0, width, height)
+            data.QRect(0, 0, width, height)
         )
     
     @staticmethod
@@ -3891,7 +5075,7 @@ class ContextMenu(data.QGroupBox):
             button_positions.extend(self.horizontal_button_positions)
         hex_x_size = self.ContextButton.HEX_IMAGE_SIZE[0] * self.x_scale
         hex_y_size = self.ContextButton.HEX_IMAGE_SIZE[1] * self.y_scale
-        window_size = self.parent().size() - data.PyQt.QtCore.QSize(hex_x_size, hex_y_size)
+        window_size = self.parent().size() - data.QSize(hex_x_size, hex_y_size)
         min_x = 0
         min_y = 0
         max_x = 0
@@ -4059,19 +5243,19 @@ class YesNoDialog(data.QDialog):
         return_code = None
         scale = 1.0
         
-        on_signal = data.PyQt.QtCore.pyqtSignal()
-        off_signal = data.PyQt.QtCore.pyqtSignal()
+        on_signal = data.pyqtSignal()
+        off_signal = data.pyqtSignal()
         
         def __init__(self, parent, image, text, return_code, scale=1.0):
             # Initialize superclass
             super().__init__(parent)
             # Set the on/off images
-            self.pixmap = data.PyQt.QtGui.QPixmap(image)
+            self.pixmap = data.QPixmap(image)
             self.scale = scale
             if scale != 1.0:
                 self.pixmap = self.pixmap.scaled(
                     self.pixmap.size() * scale, 
-                    transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+                    transformMode=data.Qt.SmoothTransformation
                 )
             # Set the text and return code
             self.text = text
@@ -4083,31 +5267,31 @@ class YesNoDialog(data.QDialog):
             self.off()
         
         def draw(self, opacity):
-            image = data.PyQt.QtGui.QImage(
+            image = data.QImage(
                 self.pixmap.size(),
-                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+                data.QImage.Format_ARGB32_Premultiplied
             )
-            image.fill(data.PyQt.QtCore.Qt.transparent)
-            painter = data.PyQt.QtGui.QPainter(image)
+            image.fill(data.Qt.transparent)
+            painter = data.QPainter(image)
             painter.setOpacity(opacity)
             painter.drawPixmap(0, 0, self.pixmap)
             
             if opacity < 0.5:
-                painter.setPen(data.PyQt.QtGui.QColor(0, 0, 0))
+                painter.setPen(data.theme.Font.Default)
             else:
-                painter.setPen(data.PyQt.QtGui.QColor(255, 255, 255))
+                painter.setPen(data.QColor(255, 255, 255))
             painter.setFont(
-                data.PyQt.QtGui.QFont(
-                    'Segoe UI', 16*self.scale, data.PyQt.QtGui.QFont.Bold
+                data.QFont(
+                    'Segoe UI', 16*self.scale, data.QFont.Bold
                 )
             )
             painter.setOpacity(1.0)
             painter.drawText(
-                self.pixmap.rect(), data.PyQt.QtCore.Qt.AlignCenter, self.text
+                self.pixmap.rect(), data.Qt.AlignCenter, self.text
             )
             painter.end()
             # Display the manipulated image
-            self.setPixmap(data.PyQt.QtGui.QPixmap.fromImage(image))
+            self.setPixmap(data.QPixmap.fromImage(image))
             # Set the button mask, which sets the button area to the shape of
             # the button image instead of a rectangle
             self.setMask(self.pixmap.mask())
@@ -4149,18 +5333,45 @@ class YesNoDialog(data.QDialog):
     def __init__(self, text, dialog_type=None):
         super().__init__()
         # Make the dialog stay on top
-        self.setWindowFlags(data.PyQt.QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(data.Qt.WindowStaysOnTopHint)
+        # Set the dialog icon and title
+        self.setWindowIcon(data.QIcon(data.application_icon))
+        self.setWindowTitle(dialog_type.title())
+        self.init_layout(text, dialog_type)
+
+    def init_layout(self, text, dialog_type):
         # Setup the image
-        original_dialog_image = data.PyQt.QtGui.QPixmap(
-            os.path.join(
-                data.application_directory,
-                data.resources_directory, 
-                "various/dialog-yes-no.png"
-            )
+        # First create the background image using the hex builder
+        back_image = data.QImage(
+            data.QSize(246, 211),
+            data.QImage.Format_ARGB32_Premultiplied
         )
+        back_image.fill(data.Qt.transparent)
+        painter = data.QPainter(back_image)
+        painter.setRenderHints(
+            data.QPainter.Antialiasing | 
+            data.QPainter.TextAntialiasing | 
+            data.QPainter.SmoothPixmapTransform
+        )
+        hex_builder = components.HexBuilder(
+            painter, 
+            (123,28), 
+            30, 
+            1.0, 
+            fill_color=data.theme.YesNoDialog_Background,
+            line_width=3,
+            line_color=data.theme.YesNoDialog_Edge,
+        )
+        hex_builder.create_grid(
+            True,2,2,3,4,0,5,3,(3,True),5,0,0,4,3 # YesNoDialog
+        )
+        painter.end()
+        original_dialog_image = data.QPixmap.fromImage(back_image)
+        
+        # Now add the images according to the type of dialog
         dialog_image = original_dialog_image.scaled(
             original_dialog_image.size() * self.scale,
-            transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+            transformMode=data.Qt.SmoothTransformation
         )
         self.image = data.QLabel(self)
         self.image.setPixmap(dialog_image)
@@ -4176,21 +5387,21 @@ class YesNoDialog(data.QDialog):
         # Setup the image behind the label
         if dialog_type != None:
             if dialog_type == "question":
-                type_pixmap = data.PyQt.QtGui.QPixmap(
+                type_pixmap = data.QPixmap(
                     os.path.join(
                         data.resources_directory,
                         "various/dialog-question.png"
                     )
                 )
             elif dialog_type == "warning":
-                type_pixmap = data.PyQt.QtGui.QPixmap(
+                type_pixmap = data.QPixmap(
                     os.path.join(
                         data.resources_directory,
                         "various/dialog-warning.png"
                     )
                 )
             elif dialog_type == "error":
-                type_pixmap = data.PyQt.QtGui.QPixmap(
+                type_pixmap = data.QPixmap(
                     os.path.join(
                         data.resources_directory,
                         "various/dialog-error.png"
@@ -4198,23 +5409,23 @@ class YesNoDialog(data.QDialog):
                 )
             else:
                 raise Exception("Wrong dialog type!")
-            image = data.PyQt.QtGui.QImage(
+            image = data.QImage(
                 type_pixmap.size(),
-                data.PyQt.QtGui.QImage.Format_ARGB32_Premultiplied
+                data.QImage.Format_ARGB32_Premultiplied
             )
-            image.fill(data.PyQt.QtCore.Qt.transparent)
-            painter = data.PyQt.QtGui.QPainter(image)
+            image.fill(data.Qt.transparent)
+            painter = data.QPainter(image)
             painter.setOpacity(0.2)
             painter.drawPixmap(0, 0, type_pixmap)
             painter.end()
-            type_pixmap = data.PyQt.QtGui.QPixmap.fromImage(image)
+            type_pixmap = data.QPixmap.fromImage(image)
             type_pixmap = type_pixmap.scaled(
                 type_pixmap.size() * 2.0 * self.scale, 
-                transformMode=data.PyQt.QtCore.Qt.SmoothTransformation
+                transformMode=data.Qt.SmoothTransformation
             )
             self.type_label = data.QLabel(self)
             self.type_label.setPixmap(type_pixmap)
-            type_label_rect = data.PyQt.QtCore.QRect(
+            type_label_rect = data.QRect(
                 (self.image.rect().width() - type_pixmap.rect().width())/2 * self.scale,
                 (self.image.rect().height() - type_pixmap.rect().height())/2 * self.scale,
                 type_pixmap.rect().width() * self.scale,
@@ -4225,18 +5436,25 @@ class YesNoDialog(data.QDialog):
         self.text = text
         self.label = data.QLabel(self)
         self.label.setFont(
-            data.PyQt.QtGui.QFont(
-                'Segoe UI', 12 * self.scale, data.PyQt.QtGui.QFont.Bold
+            data.QFont(
+                'Segoe UI', 12 * self.scale, data.QFont.Bold
             )
         )
         self.label.setWordWrap(True)
-        self.label.setAlignment(data.PyQt.QtCore.Qt.AlignCenter)
+        self.label.setAlignment(data.Qt.AlignCenter)
+        self.label.setStyleSheet(
+            'color: rgb({}, {}, {})'.format(
+                data.theme.Font.Default.red(),
+                data.theme.Font.Default.green(),
+                data.theme.Font.Default.blue(),
+            )
+        )
         self.label.setText(text)
         width_diff = self.image.rect().width() - original_dialog_image.width()
         height_diff = self.image.rect().height() - original_dialog_image.height()
         x_offset = 20 * (self.scale - 1.0)
         y_offset = 60 * (self.scale - 1.0)
-        label_rect = data.PyQt.QtCore.QRect(
+        label_rect = data.QRect(
             dialog_image.rect().x() + 20 + x_offset,
             dialog_image.rect().y() + 60 + y_offset,
             dialog_image.rect().width() - (40 * self.scale),
@@ -4247,17 +5465,17 @@ class YesNoDialog(data.QDialog):
         for i in range(10):
             label_width = label_rect.width()
             label_height = label_rect.height()
-            font_metrics = data.PyQt.QtGui.QFontMetrics(self.label.font())
+            font_metrics = data.QFontMetrics(self.label.font())
             bounding_rectangle = font_metrics.boundingRect(
-                data.PyQt.QtCore.QRect(0, 0, label_width, label_height),
-                self.label.alignment() | data.PyQt.QtCore.Qt.TextWordWrap,
+                data.QRect(0, 0, label_width, label_height),
+                self.label.alignment() | data.Qt.TextWordWrap,
                 text
             )
             if (bounding_rectangle.width() > label_width or 
                 bounding_rectangle.height() > label_height):
                 self.label.setFont(
-                    data.PyQt.QtGui.QFont(
-                        'Segoe UI', (12-i) * self.scale, data.PyQt.QtGui.QFont.Bold
+                    data.QFont(
+                        'Segoe UI', (12-i) * self.scale, data.QFont.Bold
                     )
                 )
             else:
@@ -4306,16 +5524,16 @@ class YesNoDialog(data.QDialog):
         # Setup the layout
         self.layout = data.QGridLayout()
         self.layout.setSpacing(0)
-        self.layout.setContentsMargins(data.PyQt.QtCore.QMargins(0,0,0,0))
+        self.layout.setContentsMargins(data.QMargins(0,0,0,0))
         self.layout.addWidget(self.image)
         self.setLayout(self.layout)
         # Setup tranparency and borders
-        self.image.setAttribute(data.PyQt.QtCore.Qt.WA_TranslucentBackground)
+        self.image.setAttribute(data.Qt.WA_TranslucentBackground)
         self.image.setStyleSheet(
             "border:0;" +
             "background-color:transparent;"
         )
-        self.setAttribute(data.PyQt.QtCore.Qt.WA_TranslucentBackground)
+        self.setAttribute(data.Qt.WA_TranslucentBackground)
         self.setStyleSheet(
             "border:0;" +
             "background-color:transparent;"
@@ -4323,7 +5541,7 @@ class YesNoDialog(data.QDialog):
         
         self.setGeometry(dialog_image.rect())
         self.center()
-        self.setWindowFlags(data.PyQt.QtCore.Qt.FramelessWindowHint)
+        self.setWindowFlags(data.Qt.FramelessWindowHint)
     
     def update_state_on(self):
         self.state = True
@@ -4360,36 +5578,237 @@ class YesNoDialog(data.QDialog):
     def keyPressEvent(self, key_event):
         pressed_key = key_event.key()
         #Check for escape keypress
-        if pressed_key == data.PyQt.QtCore.Qt.Key_Escape:
+        if pressed_key == data.Qt.Key_Escape:
             self.button_no.on()
             self.repaint()
             time.sleep(0.1)
             self.done(data.QMessageBox.No)
-        elif pressed_key == data.PyQt.QtCore.Qt.Key_Down:
+        elif pressed_key == data.Qt.Key_Down:
             self.state_off()
-        elif pressed_key == data.PyQt.QtCore.Qt.Key_Up:
+        elif pressed_key == data.Qt.Key_Up:
             self.state_on()
-        elif pressed_key == data.PyQt.QtCore.Qt.Key_Enter or pressed_key == data.PyQt.QtCore.Qt.Key_Return:
+        elif pressed_key == data.Qt.Key_Enter or pressed_key == data.Qt.Key_Return:
             if self.state == True:
                 self.done(data.QMessageBox.Yes)
             elif self.state == False:
                 self.done(data.QMessageBox.No)
     
-    @staticmethod
-    def blank(text):
-        return YesNoDialog(text).exec_()
+    @classmethod
+    def blank(cls, text):
+        return cls(text).exec_()
     
-    @staticmethod
-    def question(text):
-        return YesNoDialog(text, "question").exec_()
+    @classmethod
+    def question(cls, text):
+        return cls(text, "question").exec_()
     
-    @staticmethod
-    def warning(text):
-        return YesNoDialog(text, "warning").exec_()
+    @classmethod
+    def warning(cls, text):
+        return cls(text, "warning").exec_()
     
-    @staticmethod
-    def error(text):
-        return YesNoDialog(text, "error").exec_()
+    @classmethod
+    def error(cls, text):
+        return cls(text, "error").exec_()
+
+class OkDialog(YesNoDialog):
+    def init_layout(self, text, dialog_type):
+        # Setup the image
+        # First create the background image using the hex builder
+        back_image = data.QImage(
+            data.QSize(246, 211),
+            data.QImage.Format_ARGB32_Premultiplied
+        )
+        back_image.fill(data.Qt.transparent)
+        painter = data.QPainter(back_image)
+        painter.setRenderHints(
+            data.QPainter.Antialiasing | 
+            data.QPainter.TextAntialiasing | 
+            data.QPainter.SmoothPixmapTransform
+        )
+        hex_builder = components.HexBuilder(
+            painter, 
+            (123,28), 
+            30, 
+            1.0, 
+            fill_color=data.theme.YesNoDialog_Background,
+            line_width=3,
+            line_color=data.theme.YesNoDialog_Edge,
+        )
+        hex_builder.create_grid(
+            False,2,2,3,4,0,5,3,(3,True),5,0,0,4,3 # OkDialog
+        )
+        painter.end()
+        original_dialog_image = data.QPixmap.fromImage(back_image)
+        
+        # Now add the images according to the type of dialog
+        dialog_image = original_dialog_image.scaled(
+            original_dialog_image.size() * self.scale,
+            transformMode=data.Qt.SmoothTransformation
+        )
+        self.image = data.QLabel(self)
+        self.image.setPixmap(dialog_image)
+        self.image.setGeometry(
+            0,
+            0,
+            dialog_image.rect().width() * self.scale,
+            dialog_image.rect().height() * self.scale,
+        )
+        self.image.setScaledContents(True)
+        # Set the dialog mask to match the image mask
+        self.setMask(dialog_image.mask())
+        # Setup the image behind the label
+        if dialog_type != None:
+            if dialog_type == "question":
+                type_pixmap = data.QPixmap(
+                    os.path.join(
+                        data.resources_directory,
+                        "various/dialog-question.png"
+                    )
+                )
+            elif dialog_type == "warning":
+                type_pixmap = data.QPixmap(
+                    os.path.join(
+                        data.resources_directory,
+                        "various/dialog-warning.png"
+                    )
+                )
+            elif dialog_type == "error":
+                type_pixmap = data.QPixmap(
+                    os.path.join(
+                        data.resources_directory,
+                        "various/dialog-error.png"
+                    )
+                )
+            else:
+                raise Exception("Wrong dialog type!")
+            image = data.QImage(
+                type_pixmap.size(),
+                data.QImage.Format_ARGB32_Premultiplied
+            )
+            image.fill(data.Qt.transparent)
+            painter = data.QPainter(image)
+            painter.setOpacity(0.2)
+            painter.drawPixmap(0, 0, type_pixmap)
+            painter.end()
+            type_pixmap = data.QPixmap.fromImage(image)
+            type_pixmap = type_pixmap.scaled(
+                type_pixmap.size() * 2.0 * self.scale, 
+                transformMode=data.Qt.SmoothTransformation
+            )
+            self.type_label = data.QLabel(self)
+            self.type_label.setPixmap(type_pixmap)
+            type_label_rect = data.QRect(
+                (self.image.rect().width() - type_pixmap.rect().width())/2 * self.scale,
+                (self.image.rect().height() - type_pixmap.rect().height())/2 * self.scale,
+                type_pixmap.rect().width() * self.scale,
+                type_pixmap.rect().height() * self.scale,
+            )
+            self.type_label.setGeometry(type_label_rect)
+        # Setup the text label
+        self.text = text
+        self.label = data.QLabel(self)
+        self.label.setFont(
+            data.QFont(
+                'Segoe UI', 12 * self.scale, data.QFont.Bold
+            )
+        )
+        self.label.setWordWrap(True)
+        self.label.setAlignment(data.Qt.AlignCenter)
+        self.label.setStyleSheet(
+            'color: rgb({}, {}, {})'.format(
+                data.theme.Font.Default.red(),
+                data.theme.Font.Default.green(),
+                data.theme.Font.Default.blue(),
+            )
+        )
+        self.label.setText(text)
+        width_diff = self.image.rect().width() - original_dialog_image.width()
+        height_diff = self.image.rect().height() - original_dialog_image.height()
+        x_offset = 20 * (self.scale - 1.0)
+        y_offset = 60 * (self.scale - 1.0)
+        label_rect = data.QRect(
+            dialog_image.rect().x() + 20 + x_offset,
+            dialog_image.rect().y() + 60 + y_offset,
+            dialog_image.rect().width() - (40 * self.scale),
+            dialog_image.rect().height() - (120* self.scale),
+        )
+        self.label.setGeometry(label_rect)
+        # Shrink text if needed
+        for i in range(10):
+            label_width = label_rect.width()
+            label_height = label_rect.height()
+            font_metrics = data.QFontMetrics(self.label.font())
+            bounding_rectangle = font_metrics.boundingRect(
+                data.QRect(0, 0, label_width, label_height),
+                self.label.alignment() | data.Qt.TextWordWrap,
+                text
+            )
+            if (bounding_rectangle.width() > label_width or 
+                bounding_rectangle.height() > label_height):
+                self.label.setFont(
+                    data.QFont(
+                        'Segoe UI', (12-i) * self.scale, data.QFont.Bold
+                    )
+                )
+            else:
+                break
+        # Setup the buttons
+        self.button_no = self.Button(
+            self, 
+            os.path.join(
+                data.resources_directory,
+                "various/hex-red.png"
+            ),
+            "OK", 
+            data.QMessageBox.No, 
+            self.scale
+        )
+        x_offset = 93 * (self.scale - 1.0)
+        y_offset = 158 * (self.scale - 1.0)
+        self.button_no.setGeometry(
+            93+x_offset,
+            158+y_offset,
+            59 * self.scale,
+            50 * self.scale
+        )
+        self.button_no.on_signal.connect(self.update_state_off)
+        self.button_no.off_signal.connect(self.update_state_reset)
+        # Setup the layout
+        self.layout = data.QGridLayout()
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(data.QMargins(0,0,0,0))
+        self.layout.addWidget(self.image)
+        self.setLayout(self.layout)
+        # Setup tranparency and borders
+        self.image.setAttribute(data.Qt.WA_TranslucentBackground)
+        self.image.setStyleSheet(
+            "border:0;" +
+            "background-color:transparent;"
+        )
+        self.setAttribute(data.Qt.WA_TranslucentBackground)
+        self.setStyleSheet(
+            "border:0;" +
+            "background-color:transparent;"
+        )
+        
+        self.setGeometry(dialog_image.rect())
+        self.center()
+        self.setWindowFlags(data.Qt.FramelessWindowHint)
     
+    def update_state_off(self):
+        self.state = False
+    
+    def keyPressEvent(self, key_event):
+        pressed_key = key_event.key()
+        # Check for escape keypress
+        if pressed_key == data.Qt.Key_Escape:
+            self.button_no.on()
+            self.repaint()
+            time.sleep(0.1)
+            self.done(data.QMessageBox.No)
+        elif pressed_key == data.Qt.Key_Down:
+            self.state_off()
+        # Check for Enter/Return keypress
+        elif pressed_key == data.Qt.Key_Enter or pressed_key == data.Qt.Key_Return:
+            self.done(data.QMessageBox.No)
     
     

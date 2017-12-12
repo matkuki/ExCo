@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec. 
+Copyright (c) 2013-2017 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -31,7 +31,6 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import sys
-import platform
 import itertools
 import inspect
 import functools
@@ -155,6 +154,17 @@ class MainWindow(data.QMainWindow):
         self._init_repl()
         # Initialize the menubar
         self._init_menubar()
+        # Initialize the debug print function
+        def repl_print(*message):
+            if len(message) == 1 and isinstance(message, str):
+                message = ["REPL PRINT:\n", message[0]]
+            else:
+                message = ["REPL PRINT:\n", *[str(x) for x in message]]
+            self.display.repl_display_message(
+                *message, 
+                message_type=data.MessageType.WARNING
+            )
+        functions.repl_print = repl_print
         # Set the three basic widgets inside the splitters
         self.view.set_basic_widgets(
             main_widget     = self.main_window,
@@ -179,7 +189,7 @@ class MainWindow(data.QMainWindow):
         self._init_interpreter()
         # Set the main window icon if it exists
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(data.PyQt.QtGui.QIcon(data.application_icon))
+            self.setWindowIcon(data.QIcon(data.application_icon))
         # Set the repl type to a single line
         self.view.set_repl_type(data.ReplType.SINGLE_LINE)
         self.view.indication_check()
@@ -242,23 +252,24 @@ class MainWindow(data.QMainWindow):
             set_cwd         = self.set_cwd, 
             get_cwd         = self.get_cwd, 
             update_cwd      = self.update_cwd, 
+            open_cwd        = self.open_cwd, 
             close_all       = self.close_all_tabs, 
-            #Settings functions
+            # Settings functions
             settings        = self.settings.manipulator,
             save_settings   = self.settings.save, 
             load_settings   = self.settings.restore, 
-            #Session functions
+            # Session functions
             session_add     = self.sessions.add, 
             session_restore = self.sessions.restore, 
             session_remove  = self.sessions.remove, 
-            #View functions
+            # View functions
             spin                    = self.view.spin_basic_widgets, 
             toggle_main_window_side = self.view.toggle_main_window_side, 
-            #System function
+            # System function
             find_files       = self.system.find_files, 
             find_in_files    = self.system.find_in_files, 
             replace_in_files = self.system.replace_in_files, 
-            #Document editing references
+            # Document editing references
             find                    = self.editing.find, 
             regex_find              = self.editing.regex_find, 
             find_and_replace        = self.editing.find_and_replace, 
@@ -278,8 +289,8 @@ class MainWindow(data.QMainWindow):
             remove_line             = self.editing.line.remove, 
             get_line                = self.editing.line.get,
             set_line                = self.editing.line.set, 
-            #Display functions
-            print           = self.display.repl_display_message,
+            # Display functions
+            echo            = self.display.repl_display_message,
             clear_repl_tab  = self.display.repl_clear_tab, 
             show_node_tree  = self.display.show_nodes,
         )
@@ -323,6 +334,18 @@ class MainWindow(data.QMainWindow):
     def get_cwd(self):
         """Display the current working directory"""
         self.display.repl_display_message(os.getcwd())
+    
+    def open_cwd(self):
+        """Display the current working directory in the systems explorer"""
+        cwd = os.getcwd()
+        if data.platform == "Windows":
+            self.repl._repl_eval("r: explorer .")
+        elif data.platform == "Linux":
+            self.repl._repl_eval("r: xdg-open \"{}\"".format(cwd))
+        else:
+            self.display.repl_display_message(
+                "Not implemented on '{}' platform!".format(data.platform)
+            )
 
     def set_cwd(self, directory):
         """Set the current working directory and display it"""
@@ -390,8 +413,7 @@ class MainWindow(data.QMainWindow):
         #so that the REPL height is always the same
         self.view.refresh_main_splitter()
         #Hide the function whell if it is displayed
-        if self.view.function_wheel_overlay != None:
-            self.view.function_wheel_overlay.hide()
+        self.view.hide_all_overlay_widgets()
         #Accept the event
         event.setAccepted(False)
 
@@ -416,9 +438,8 @@ class MainWindow(data.QMainWindow):
         # Execute the superclass mouse press event
         super().mousePressEvent(event)
         # Hide the function wheel if it is shown
-        if event.button() != data.PyQt.QtCore.Qt.RightButton:
-            if self.view.function_wheel_overlay != None:
-                self.view.hide_function_wheel()
+        if event.button() != data.Qt.RightButton:
+            self.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
         components.ActionFilter.clear_action()
     
@@ -427,7 +448,7 @@ class MainWindow(data.QMainWindow):
         pressed_key = key_event.key()
         accept_keypress = False
         #Check for escape keypress
-        if pressed_key == data.PyQt.QtCore.Qt.Key_Escape:
+        if pressed_key == data.Qt.Key_Escape:
             #Check if the function wheel overlay is shown
             if self.view.function_wheel_overlay.isVisible() == True:
                 self.view.toggle_function_wheel()
@@ -574,23 +595,39 @@ class MainWindow(data.QMainWindow):
         def create_action(name, key_combo, status_tip, icon, function, enabled=True):
             action = data.QAction(name, self)
             # Key combination
-            if key_combo != None and key_combo != "" and key_combo != []:
+            keys = None
+            if key_combo != None and key_combo != "":
                 if isinstance(key_combo, list):
-                    action.setShortcuts(key_combo)
-                else:
-                    action.setShortcut(key_combo)
+                    if len(key_combo) == 1:
+                        keys = key_combo[0]
+                        if keys.startswith("#") == False:
+                            action.setShortcut(keys)
+                    elif any([isinstance(x, str) for x in key_combo]):
+                        keys = []
+                        for k in key_combo:
+                            if k.startswith("#") == False:
+                                keys.append(k)
+                        action.setShortcuts(keys)
+                    else:
+                        raise Exception("Key combination list has to contain only strings!")
+                elif isinstance(key_combo, str):
+                    keys = key_combo
+                    if keys.startswith("#") == False:
+                        action.setShortcut(keys)
             action.setStatusTip(status_tip)
             # Icon and pixmap
             action.pixmap = None
             if icon != None:
                 action.setIcon(functions.create_icon(icon))
-#                action.pixmap = functions.create_pixmap(icon)
                 action.pixmap = functions.create_pixmap_with_size(icon, 32, 32)
             # Function
             if function != None:
                 action.triggered.connect(function)
             action.function = function
             self.menubar_functions[function.__name__] = function
+            data.global_function_information[function.__name__] = (
+                name, function, icon, keys, status_tip
+            )
 #            print(function.__name__)
             # Check if there is a tab character in the function
             # name and remove the part of the string after it
@@ -617,20 +654,20 @@ class MainWindow(data.QMainWindow):
             # New file
             def special_create_new_file():
                 self.file_create_new()
-            new_file_action = create_action('New', data.new_file_keys, 'Create new empty file', 'tango_icons/document-new.png', special_create_new_file)
+            new_file_action = create_action('New', settings.Keys.new_file, 'Create new empty file', 'tango_icons/document-new.png', special_create_new_file)
             # Open file
             def special_open_file():
                 self.file_open()
-            open_file_action = create_action('Open', data.open_file_keys, 'Open file', 'tango_icons/document-open.png', special_open_file)
+            open_file_action = create_action('Open', settings.Keys.open_file, 'Open file', 'tango_icons/document-open.png', special_open_file)
             # Save options need to be saved to a reference for disabling/enabling
             # Save file
             def special_save_file():
                 self.file_save()
-            self.save_file_action = create_action('Save', data.save_file_keys, 'Save current file in the UTF-8 encoding', 'tango_icons/document-save.png', special_save_file, enabled=False)
+            self.save_file_action = create_action('Save', settings.Keys.save_file, 'Save current file in the UTF-8 encoding', 'tango_icons/document-save.png', special_save_file, enabled=False)
             # Save file as
             def special_saveas_file():
                 self.file_saveas()
-            self.saveas_file_action = create_action('Save As', data.saveas_file_keys, 'Save current file as a new file in the UTF-8 encoding', 'tango_icons/document-save-as.png', special_saveas_file, enabled=False)
+            self.saveas_file_action = create_action('Save As', settings.Keys.saveas_file, 'Save current file as a new file in the UTF-8 encoding', 'tango_icons/document-save-as.png', special_saveas_file, enabled=False)
             # Save all
             def special_save_all():
                 self.file_save_all()
@@ -673,7 +710,7 @@ class MainWindow(data.QMainWindow):
                     current_window.currentWidget().setFocus()
                 except:
                     pass
-            close_tab_action = create_action('Close Tab', data.close_tab_keys, 'Close the current tab', 'tango_icons/close-tab.png', close_tab)
+            close_tab_action = create_action('Close Tab', settings.Keys.close_tab, 'Close the current tab', 'tango_icons/close-tab.png', close_tab)
             # Close all
             close_all_action = create_action('Close All Tabs', None, 'Close all tabs in all windows', 'tango_icons/close-all-tabs.png', self.close_all_tabs)
             #Add load/save settings options
@@ -742,26 +779,48 @@ class MainWindow(data.QMainWindow):
                     pass
             temp_string = 'Copy any selected text in the currently '
             temp_string += 'selected window to the clipboard'
-            copy_action = create_action('Copy\t' + data.copy_keys, None, temp_string, 'tango_icons/edit-copy.png', copy)
+            copy_action = create_action(
+                'Copy\t' + settings.Editor.Keys.copy, 
+                "#" + settings.Editor.Keys.copy,
+                temp_string, 
+                'tango_icons/edit-copy.png', 
+                copy
+            )
             def cut():
                 try:
                     self.get_tab_by_focus().cut()
                 except:
                     pass
-            cut_action = create_action('Cut\t' + data.cut_keys, None, 'Cut any selected text in the currently selected window to the clipboard', 'tango_icons/edit-cut.png', cut)
+            cut_action = create_action(
+                'Cut\t' + settings.Editor.Keys.cut, 
+                "#" + settings.Editor.Keys.cut,  
+                'Cut any selected text in the currently selected window to the clipboard', 
+                'tango_icons/edit-cut.png', 
+                cut
+            )
             def paste():
                 try:
                     self.get_tab_by_focus().paste()
                 except:
                     pass
-            paste_action = create_action('Paste\t' + data.paste_keys, None, 'Paste the text in the clipboard to the currenty selected window', 'tango_icons/edit-paste.png', paste)
+            paste_action = create_action(
+                'Paste\t' + settings.Editor.Keys.paste, 
+                "#" + settings.Editor.Keys.paste,  
+                'Paste the text in the clipboard to the currenty selected window', 
+                'tango_icons/edit-paste.png', 
+                paste
+            )
             def undo():
                 try:
                     self.get_tab_by_focus().undo()
                 except:
                     pass
             undo_action = create_action(
-                'Undo\t' + data.undo_keys, None, 'Undo last editor action in the currenty selected window', 'tango_icons/edit-undo.png', undo
+                'Undo\t' + settings.Editor.Keys.undo, 
+                "#" + settings.Editor.Keys.undo, 
+                'Undo last editor action in the currenty selected window', 
+                'tango_icons/edit-undo.png', 
+                undo
             )
             def redo():
                 try:
@@ -769,7 +828,11 @@ class MainWindow(data.QMainWindow):
                 except:
                     pass
             redo_action = create_action(
-                'Redo\t' + data.redo_keys, None, 'Redo last undone editor action in the currenty selected window', 'tango_icons/edit-redo.png', redo
+                'Redo\t' + settings.Editor.Keys.redo, 
+                "#" + settings.Editor.Keys.redo, 
+                'Redo last undone editor action in the currenty selected window', 
+                'tango_icons/edit-redo.png', 
+                redo
             )
             def select_all():
                 try:
@@ -777,7 +840,11 @@ class MainWindow(data.QMainWindow):
                 except:
                     pass
             select_all_action = create_action(
-                'Select All\t' + data.select_all_keys, None, 'Select all of the text in the currenty selected window', 'tango_icons/edit-select-all.png', select_all
+                'Select All\t' + settings.Editor.Keys.select_all, 
+                "#" + settings.Editor.Keys.select_all, 
+                'Select all of the text in the currenty selected window', 
+                'tango_icons/edit-select-all.png', 
+                select_all
             )
             def indent():
                 try:
@@ -785,8 +852,8 @@ class MainWindow(data.QMainWindow):
                 except:
                     pass
             indent_action = create_action(
-                'Indent\t' + data.indent_keys, 
-                None, 
+                'Indent\t' + settings.Editor.Keys.indent, 
+                "#" + settings.Editor.Keys.indent, 
                 'Indent the selected lines by the default width (4 spaces) in the currenty selected window', 
                 'tango_icons/format-indent-more.png', 
                 indent
@@ -797,8 +864,8 @@ class MainWindow(data.QMainWindow):
                 except:
                     pass
             unindent_action = create_action(
-                'Unindent\t' + data.unindent_keys, 
-                None, 
+                'Unindent\t' + settings.Editor.Keys.unindent, 
+                "#" + settings.Editor.Keys.unindent,
                 'Unindent the selected lines by the default width (4 spaces) in the currenty selected window', 
                 'tango_icons/format-indent-less.png', 
                 unindent
@@ -806,12 +873,12 @@ class MainWindow(data.QMainWindow):
             def delete_start_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDLEFT)
+                    send_sci_message(data.QsciScintillaBase.SCI_DELWORDLEFT)
                 except:
                     pass
             del_start_word_action = create_action(
-                'Delete start of word\t' + data.delete_start_of_word_keys, 
-                None, 
+                'Delete start of word\t' + settings.Editor.Keys.delete_start_of_word, 
+                "#" + settings.Editor.Keys.delete_start_of_word, 
                 'Delete the current word from the cursor to the starting index of the word', 
                 'tango_icons/delete-start-word.png', 
                 delete_start_of_word
@@ -819,12 +886,12 @@ class MainWindow(data.QMainWindow):
             def delete_end_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDRIGHT)
+                    send_sci_message(data.QsciScintillaBase.SCI_DELWORDRIGHT)
                 except:
                     pass
             del_end_word_action = create_action(
-                'Delete end of word\t' + data.delete_end_of_word_keys,
-                None, 
+                'Delete end of word\t' + settings.Editor.Keys.delete_end_of_word,
+                "#" + settings.Editor.Keys.delete_end_of_word, 
                 'Delete the current word from the cursor to the ending index of the word', 
                 'tango_icons/delete-end-word.png', 
                 delete_end_of_word
@@ -832,12 +899,12 @@ class MainWindow(data.QMainWindow):
             def delete_start_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINELEFT)
+                    send_sci_message(data.QsciScintillaBase.SCI_DELLINELEFT)
                 except:
                     pass
             del_start_line_action = create_action(
-                'Delete start of line\t' + data.delete_start_of_line_keys,
-                None, 
+                'Delete start of line\t' + settings.Editor.Keys.delete_start_of_line,
+                "#" + settings.Editor.Keys.delete_start_of_line, 
                 'Delete the current line from the cursor to the starting index of the line', 
                 'tango_icons/delete-start-line.png', 
                 delete_start_of_line
@@ -845,12 +912,12 @@ class MainWindow(data.QMainWindow):
             def delete_end_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINERIGHT)
+                    send_sci_message(data.QsciScintillaBase.SCI_DELLINERIGHT)
                 except:
                     pass
             del_end_line_action = create_action(
-                'Delete end of line\t' + data.delete_end_of_line_keys,
-                None, 
+                'Delete end of line\t' + settings.Editor.Keys.delete_end_of_line,
+                "#" + settings.Editor.Keys.delete_end_of_line, 
                 'Delete the current line from the cursor to the ending index of the line', 
                 'tango_icons/delete-end-line.png', 
                 delete_end_of_line
@@ -858,12 +925,12 @@ class MainWindow(data.QMainWindow):
             def goto_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTART)
+                    send_sci_message(data.QsciScintillaBase.SCI_DOCUMENTSTART)
                 except:
                     pass
             go_to_start_action = create_action(
-                'Go to start\t' + data.go_to_start_keys,
-                None, 
+                'Go to start\t' + settings.Editor.Keys.go_to_start,
+                "#" + settings.Editor.Keys.go_to_start, 
                 'Move cursor up to the start of the currently selected document', 
                 'tango_icons/goto-start.png', 
                 goto_to_start
@@ -871,12 +938,12 @@ class MainWindow(data.QMainWindow):
             def goto_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTEND)
+                    send_sci_message(data.QsciScintillaBase.SCI_DOCUMENTEND)
                 except:
                     pass
             go_to_end_action = create_action(
-                'Go to end\t' + data.go_to_end_keys,
-                None, 
+                'Go to end\t' + settings.Editor.Keys.go_to_end,
+                "#" + settings.Editor.Keys.go_to_end, 
                 'Move cursor down to the end of the currently selected document', 
                 'tango_icons/goto-end.png', 
                 goto_to_end
@@ -884,12 +951,12 @@ class MainWindow(data.QMainWindow):
             def select_page_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUPEXTEND)
+                    send_sci_message(data.QsciScintillaBase.SCI_PAGEUPEXTEND)
                 except:
                     pass
             select_page_up_action = create_action(
-                'Select page up\t' + data.select_page_up_keys,
-                None, 
+                'Select page up\t' + settings.Editor.Keys.select_page_up,
+                "#" + settings.Editor.Keys.select_page_up, 
                 'Select text up one page of the currently selected document', 
                 None, 
                 select_page_up
@@ -897,12 +964,12 @@ class MainWindow(data.QMainWindow):
             def select_page_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWN)
+                    send_sci_message(data.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     pass
             select_page_down_action = create_action(
-                'Select page down\t' + data.select_page_down_keys,
-                None, 
+                'Select page down\t' + settings.Editor.Keys.select_page_down,
+                "#" + settings.Editor.Keys.select_page_down, 
                 'Select text down one page of the currently selected document', 
                 None, 
                 select_page_down
@@ -910,12 +977,12 @@ class MainWindow(data.QMainWindow):
             def select_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND)
+                    send_sci_message(data.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND)
                 except:
                     pass
             select_to_start_action = create_action(
-                'Select to start\t' + data.select_to_start_keys,
-                None, 
+                'Select to start\t' + settings.Editor.Keys.select_to_start,
+                "#" + settings.Editor.Keys.select_to_start, 
                 'Select all text up to the start of the currently selected document', 
                 None, 
                 select_to_start
@@ -923,12 +990,12 @@ class MainWindow(data.QMainWindow):
             def select_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTENDEXTEND)
+                    send_sci_message(data.QsciScintillaBase.SCI_DOCUMENTENDEXTEND)
                 except:
                     pass
             select_to_end_action = create_action(
-                'Select to end\t' + data.select_to_end_keys,
-                None, 
+                'Select to end\t' + settings.Editor.Keys.select_to_end,
+                "#" + settings.Editor.Keys.select_to_end, 
                 'Select all text down to the start of the currently selected document', 
                 None, 
                 select_to_end
@@ -936,12 +1003,12 @@ class MainWindow(data.QMainWindow):
             def scroll_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUP)
+                    send_sci_message(data.QsciScintillaBase.SCI_PAGEUP)
                 except:
                     pass
             scroll_up_action = create_action(
-                'Scroll up\t' + data.scroll_up_keys,
-                None, 
+                'Scroll up\t' + settings.Editor.Keys.scroll_up,
+                "#" + settings.Editor.Keys.scroll_up, 
                 'Scroll up one page of the currently selected document', 
                 'tango_icons/scroll-up.png', 
                 scroll_up
@@ -949,12 +1016,12 @@ class MainWindow(data.QMainWindow):
             def scroll_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWN)
+                    send_sci_message(data.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     pass
             scroll_down_action = create_action(
-                'Scroll down\t' + data.scroll_down_keys,
-                None, 
+                'Scroll down\t' + settings.Editor.Keys.scroll_down,
+                "#" + settings.Editor.Keys.scroll_down, 
                 'Scroll down one page of the currently selected document', 
                 'tango_icons/scroll-down.png', 
                 scroll_down
@@ -962,12 +1029,12 @@ class MainWindow(data.QMainWindow):
             def line_cut():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINECUT)
+                    send_sci_message(data.QsciScintillaBase.SCI_LINECUT)
                 except:
                     pass
             line_cut_action = create_action(
-                'Line Cut\t' + data.line_cut_keys,
-                None, 
+                'Line Cut\t' + settings.Editor.Keys.line_cut,
+                "#" + settings.Editor.Keys.line_cut, 
                 'Cut out the current line/lines of the currently selected document', 
                 'tango_icons/edit-line-cut.png', 
                 line_cut
@@ -975,12 +1042,12 @@ class MainWindow(data.QMainWindow):
             def line_copy():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINECOPY)
+                    send_sci_message(data.QsciScintillaBase.SCI_LINECOPY)
                 except:
                     pass
             line_copy_action = create_action(
-                'Line Copy\t' + data.line_copy_keys,
-                None, 
+                'Line Copy\t' + settings.Editor.Keys.line_copy,
+                "#" + settings.Editor.Keys.line_copy, 
                 'Copy the current line/lines of the currently selected document', 
                 'tango_icons/edit-line-copy.png', 
                 line_copy
@@ -988,12 +1055,12 @@ class MainWindow(data.QMainWindow):
             def line_delete():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDELETE)
+                    send_sci_message(data.QsciScintillaBase.SCI_LINEDELETE)
                 except:
                     pass
             line_delete_action = create_action(
-                'Line Delete\t' + data.line_delete_keys,
-                None, 
+                'Line Delete\t' + settings.Editor.Keys.line_delete,
+                "#" + settings.Editor.Keys.line_delete, 
                 'Delete the current line of the currently selected document', 
                 'tango_icons/edit-line-delete.png', 
                 line_delete
@@ -1001,12 +1068,12 @@ class MainWindow(data.QMainWindow):
             def line_transpose():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINETRANSPOSE)
+                    send_sci_message(data.QsciScintillaBase.SCI_LINETRANSPOSE)
                 except:
                     pass
             line_transpose_action = create_action(
-                'Line Transpose\t' + data.line_transpose_keys,
-                None, 
+                'Line Transpose\t' + settings.Editor.Keys.line_transpose,
+                "#" + settings.Editor.Keys.line_transpose, 
                 'Switch the current line with the line above it of the currently selected document', 
                 'tango_icons/edit-line-transpose.png', 
                 line_transpose
@@ -1014,13 +1081,13 @@ class MainWindow(data.QMainWindow):
             def line_duplicate():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    #send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDUPLICATE)
-                    send_sci_message(data.PyQt.Qsci.QsciScintillaBase.SCI_SELECTIONDUPLICATE)
+                    #send_sci_message(data.QsciScintillaBase.SCI_LINEDUPLICATE)
+                    send_sci_message(data.QsciScintillaBase.SCI_SELECTIONDUPLICATE)
                 except:
                     pass
             line_duplicate_action = create_action(
-                'Line/Selection Duplicate\t' + data.line_selection_duplicate_keys,
-                None, 
+                'Line/Selection Duplicate\t' + settings.Editor.Keys.line_selection_duplicate,
+                "#" + settings.Editor.Keys.line_selection_duplicate, 
                 'Duplicate the current line/selection of the currently selected document', 
                 'tango_icons/edit-line-duplicate.png', 
                 line_duplicate
@@ -1078,7 +1145,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             find_action = create_action(
                 'Find',
-                data.find_keys, 
+                settings.Keys.find, 
                 'Find text in the currently selected document', 
                 'tango_icons/edit-find.png', 
                 special_find
@@ -1101,7 +1168,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             regex_find_action = create_action(
                 'Regex Find',
-                data.regex_find_keys, 
+                settings.Keys.regex_find, 
                 'Find text in currently selected document using Python regular expressions', 
                 'tango_icons/edit-find-re.png', 
                 special_regex_find
@@ -1123,7 +1190,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             find_and_replace_action = create_action(
                 'Find and Replace',
-                data.find_and_replace_keys, 
+                settings.Keys.find_and_replace, 
                 'Find and replace one instance of text from cursor in currently selected document', 
                 'tango_icons/edit-find-replace.png', 
                 special_find_and_replace
@@ -1146,7 +1213,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             regex_find_and_replace_action = create_action(
                 'Regex Find and Replace',
-                data.regex_find_and_replace_keys, 
+                settings.Keys.regex_find_and_replace, 
                 'Find and replace one instance of text from cursor in currently selected document using Python regular expressions', 
                 'tango_icons/edit-find-replace-re.png', 
                 special_regex_find_and_replace
@@ -1166,7 +1233,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             highlight_action = create_action(
                 'Highlight',
-                data.highlight_keys, 
+                settings.Keys.highlight, 
                 'Highlight all instances of text in currently selected document', 
                 'tango_icons/edit-highlight.png', 
                 special_highlight
@@ -1186,7 +1253,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             regex_highlight_action = create_action(
                 'Regex Highlight',
-                data.regex_highlight_keys, 
+                settings.Keys.regex_highlight, 
                 'Highlight all instances of text in currently selected document using Python regular expressions', 
                 'tango_icons/edit-highlight-re.png', 
                 special_regex_highlight
@@ -1202,7 +1269,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(len(self.repl.text()))
             clear_highlights_action = create_action(
                 'Clear Highlights',
-                data.clear_highlights_keys, 
+                settings.Keys.clear_highlights, 
                 'Clear all higlights in currently selected document', 
                 'tango_icons/edit-clear-highlights.png', 
                 special_clear_highlights
@@ -1220,7 +1287,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('","",case_sensitive'))
             replace_selection_action = create_action(
                 'Replace In Selection',
-                data.replace_selection_keys, 
+                settings.Keys.replace_selection, 
                 'Replace all instances of text in the selected text of the current selected document', 
                 'tango_icons/edit-replace-in-selection.png', 
                 special_replace_in_selection
@@ -1241,7 +1308,7 @@ class MainWindow(data.QMainWindow):
             temp_string += 'using Python regular expressions'
             regex_replace_selection_action = create_action(
                 'Regex Replace In Selection',
-                data.regex_replace_selection_keys, 
+                settings.Keys.regex_replace_selection, 
                 temp_string, 
                 'tango_icons/edit-replace-in-selection-re.png', 
                 special_regex_replace_in_selection
@@ -1263,7 +1330,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             replace_all_action = create_action(
                 'Replace All',
-                data.replace_all_keys, 
+                settings.Keys.replace_all, 
                 'Replace all instances of text in currently selected document', 
                 'tango_icons/edit-replace-all.png', 
                 special_replace_all
@@ -1285,7 +1352,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             regex_replace_all_action = create_action(
                 'Regex Replace All',
-                data.regex_replace_all_keys, 
+                settings.Keys.regex_replace_all, 
                 'Replace all instances of text in currently selected document using Python regular expressions', 
                 'tango_icons/edit-replace-all-re.png', 
                 special_regex_replace_all
@@ -1298,7 +1365,7 @@ class MainWindow(data.QMainWindow):
                     print(ex)
             toggle_comment_action = create_action(
                 'Comment/Uncomment',
-                data.toggle_comment_keys, 
+                settings.Keys.toggle_comment, 
                 'Toggle comments for the selected lines or single line in the currently selected document', 
                 'tango_icons/edit-comment-uncomment.png', 
                 comment_uncomment
@@ -1310,7 +1377,7 @@ class MainWindow(data.QMainWindow):
                     pass
             toggle_autocompletion_action = create_action(
                 'Enable/Disable Autocompletion',
-                data.toggle_autocompletion_keys, 
+                settings.Keys.toggle_autocompletion, 
                 'Enable/Disable autocompletions for the currently selected document', 
                 'tango_icons/edit-autocompletion.png', 
                 toggle_autocompletions
@@ -1322,7 +1389,7 @@ class MainWindow(data.QMainWindow):
                     pass
             toggle_wrap_action = create_action(
                 'Enable/Disable Line Wrapping',
-                data.toggle_wrap_keys, 
+                settings.Keys.toggle_wrap, 
                 'Enable/Disable line wrapping for the currently selected document', 
                 'tango_icons/wordwrap.png', 
                 toggle_wordwrap
@@ -1334,7 +1401,7 @@ class MainWindow(data.QMainWindow):
                     pass
             reload_file_action = create_action(
                 'Reload file',
-                data.reload_file_keys, 
+                settings.Keys.reload_file, 
                 'Reload file from disk, will prompt if file contains changes', 
                 'tango_icons/view-refresh.png', 
                 reload_file
@@ -1352,7 +1419,7 @@ class MainWindow(data.QMainWindow):
                     )
             node_tree_action = create_action(
                 'Create/reload node tree (C / Nim / Python3)',
-                data.node_tree_keys, 
+                settings.Keys.node_tree, 
                 'Create a node tree for the code for the currently selected document (C / Nim / Python3)', 
                 'tango_icons/edit-node-tree.png', 
                 create_node_tree
@@ -1369,7 +1436,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setFocus()
             goto_line_action = create_action(
                 'Goto line',
-                data.goto_line_keys, 
+                settings.Keys.goto_line, 
                 'Go to the specified line in the current main window document', 
                 'tango_icons/edit-goto.png', 
                 special_goto_line
@@ -1383,7 +1450,7 @@ class MainWindow(data.QMainWindow):
             temp_string += '(SPACE ON THE LEFT SIDE OF LINES IS STRIPPED!)'
             indent_to_cursor_action = create_action(
                 'Indent to cursor',
-                data.indent_to_cursor_keys, 
+                settings.Keys.indent_to_cursor, 
                 temp_string, 
                 'tango_icons/edit-indent-to-cursor.png', 
                 special_indent_to_cursor
@@ -1393,7 +1460,7 @@ class MainWindow(data.QMainWindow):
                 self.editing.convert_to_uppercase(focused_tab.parent.name)
             to_uppercase_action = create_action(
                 'Selection to UPPERCASE',
-                data.to_uppercase_keys, 
+                settings.Keys.to_uppercase, 
                 'Convert selected text to UPPERCASE', 
                 'tango_icons/edit-case-to-upper.png', 
                 special_to_uppercase
@@ -1403,7 +1470,7 @@ class MainWindow(data.QMainWindow):
                 self.editing.convert_to_lowercase(focused_tab.parent.name)
             to_lowercase_action = create_action(
                 'Selection to lowercase',
-                data.to_lowercase_keys, 
+                settings.Keys.to_lowercase, 
                 'Convert selected text to lowercase', 
                 'tango_icons/edit-case-to-lower.png', 
                 special_to_lowercase
@@ -1424,7 +1491,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setFocus()
             find_in_documents_action = create_action(
                 'Find in open documents',
-                data.find_in_documents_keys, 
+                settings.Keys.find_in_documents, 
                 temp_string, 
                 'tango_icons/edit-find-in-open-documents.png', 
                 special_find_in_open_documents
@@ -1445,7 +1512,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setFocus()
             find_replace_in_documents_action = create_action(
                 'Find and replace in open documents',
-                data.find_replace_in_documents_keys, 
+                settings.Keys.find_replace_in_documents, 
                 temp_string, 
                 'tango_icons/edit-replace-in-open-documents.png', 
                 special_find_replace_in_open_documents
@@ -1466,7 +1533,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setFocus()
             replace_all_in_documents_action = create_action(
                 'Replace all in open documents',
-                data.replace_all_in_documents_keys, 
+                settings.Keys.replace_all_in_documents, 
                 'Replace all instances of search text across all open documents in the currently selected window', 
                 'tango_icons/edit-replace-all-in-open-documents.png', 
                 special_replace_all_in_open_documents
@@ -1525,7 +1592,7 @@ class MainWindow(data.QMainWindow):
             temp_string += 'that contain the search string'
             find_in_files_action = create_action(
                 'Find in files',
-                data.find_in_files_keys, 
+                settings.Keys.find_in_files, 
                 temp_string, 
                 'tango_icons/system-find-in-files.png', 
                 special_find_in
@@ -1547,7 +1614,7 @@ class MainWindow(data.QMainWindow):
             temp_string += 'that have the search string in them'
             find_files_action = create_action(
                 'Find files',
-                data.find_files_keys, 
+                settings.Keys.find_files, 
                 temp_string, 
                 'tango_icons/system-find-files.png', 
                 special_find_file
@@ -1574,7 +1641,7 @@ class MainWindow(data.QMainWindow):
             temp_string += 'instances in the file with the replace string'
             replace_in_files_action = create_action(
                 'Replace in files',
-                data.replace_in_files_keys, 
+                settings.Keys.replace_in_files, 
                 temp_string, 
                 'tango_icons/system-replace-in-files.png', 
                 special_replace_in_files
@@ -1595,7 +1662,7 @@ class MainWindow(data.QMainWindow):
                 self.display.show_directory_tree(os.getcwd())
             cwd_tree_action = create_action(
                 'Show current working directory tree',
-                data.cwd_tree_keys, 
+                settings.Keys.cwd_tree, 
                 'Create a node tree for the current working directory (CWD)', 
                 'tango_icons/system-show-cwd-tree.png', 
                 create_cwd_tree
@@ -1641,7 +1708,7 @@ class MainWindow(data.QMainWindow):
             #Show/hide the function wheel
             function_wheel_toggle_action = create_action(
                 'Show/Hide Function Wheel',
-                data.function_wheel_toggle_keys, 
+                settings.Keys.function_wheel_toggle, 
                 'Show/hide the Ex.Co. function wheel', 
                 data.application_icon, 
                 self.view.toggle_function_wheel
@@ -1649,7 +1716,7 @@ class MainWindow(data.QMainWindow):
             #Maximize/minimize entire Ex.Co. window
             maximize_window_action = create_action(
                 'Maximize/Normalize',
-                data.maximize_window_keys, 
+                settings.Keys.maximize_window, 
                 'Maximize/Normalize application window', 
                 'tango_icons/view-fullscreen.png', 
                 self.view.toggle_window_size
@@ -1658,7 +1725,7 @@ class MainWindow(data.QMainWindow):
                 self.view.set_window_focus("main")
             main_focus_action = create_action(
                 'Focus Main window',
-                data.main_focus_keys, 
+                settings.Keys.main_focus, 
                 'Set focus to the Main editing window', 
                 'tango_icons/view-focus-main.png', 
                 focus_main_window
@@ -1667,7 +1734,7 @@ class MainWindow(data.QMainWindow):
                 self.view.set_window_focus("upper")
             upper_focus_action = create_action(
                 'Focus Upper window',
-                data.upper_focus_keys, 
+                settings.Keys.upper_focus, 
                 'Set focus to the Upper editing window', 
                 'tango_icons/view-focus-upper.png', 
                 focus_upper_window
@@ -1676,42 +1743,42 @@ class MainWindow(data.QMainWindow):
                 self.view.set_window_focus("lower")
             lower_focus_action = create_action(
                 'Focus Lower window',
-                data.lower_focus_keys, 
+                settings.Keys.lower_focus, 
                 'Set focus to the Lower editing window', 
                 'tango_icons/view-focus-lower.png', 
                 focus_lower_window
             )
             toggle_log_action = create_action(
                 'Show/Hide Log Window',
-                data.toggle_log_keys, 
+                settings.Keys.toggle_log, 
                 'Toggle the display of the log window', 
                 'tango_icons/view-log.png', 
                 self.view.toggle_log_window
             )
             spin_clockwise_action = create_action(
                 'Spin view clockwise',
-                data.spin_clockwise_keys, 
+                settings.Keys.spin_clockwise, 
                 'Spin the editor windows clockwise', 
                 'tango_icons/view-spin-clock.png', 
                 self.view.spin_widgets_clockwise
             )
             spin_counterclockwise_action = create_action(
                 'Spin view counter-clockwise',
-                data.spin_counterclockwise_keys, 
+                settings.Keys.spin_counterclockwise, 
                 'Spin the editor windows counter-clockwise', 
                 'tango_icons/view-spin-counter.png', 
                 self.view.spin_widgets_counterclockwise
             )
             toggle_mode_action = create_action(
                 'Toggle window mode',
-                data.toggle_mode_keys, 
+                settings.Keys.toggle_mode, 
                 'Toggle between one and three window display', 
                 'tango_icons/view-toggle-window-mode.png', 
                 self.view.toggle_window_mode
             )
             toggle_main_window_side_action = create_action(
                 'Toggle main window side',
-                data.toggle_main_window_side_keys, 
+                settings.Keys.toggle_main_window_side, 
                 'Toggle which side the main window is on', 
                 'tango_icons/view-toggle-window-side.png', 
                 self.view.toggle_main_window_side
@@ -1723,7 +1790,7 @@ class MainWindow(data.QMainWindow):
                     pass
             move_tab_right_action = create_action(
                 'Move tab right',
-                data.move_tab_right_keys, 
+                settings.Keys.move_tab_right, 
                 'Move the current tab in the currently selected window one position to the right', 
                 'tango_icons/view-move-tab-right.png', 
                 move_tab_right
@@ -1735,7 +1802,7 @@ class MainWindow(data.QMainWindow):
                     pass
             move_tab_left_action = create_action(
                 'Move tab left',
-                data.move_tab_left_keys, 
+                settings.Keys.move_tab_left, 
                 'Move the current tab in the currently selected window one position to the left', 
                 'tango_icons/view-move-tab-left.png', 
                 move_tab_left
@@ -1747,7 +1814,7 @@ class MainWindow(data.QMainWindow):
                     pass
             toggle_edge_action = create_action(
                 'Toggle edge marker',
-                data.toggle_edge_keys, 
+                settings.Keys.toggle_edge, 
                 'Toggle the display of the edge marker that shows the prefered maximum chars in a line', 
                 'tango_icons/view-edge-marker.png', 
                 show_edge
@@ -1759,7 +1826,7 @@ class MainWindow(data.QMainWindow):
                     pass
             reset_zoom_action = create_action(
                 'Zoom reset',
-                data.reset_zoom_keys, 
+                settings.Keys.reset_zoom, 
                 'Reset the zoom level on the currently focused document', 
                 'tango_icons/view-zoom-reset.png', 
                 reset_zoom
@@ -1790,7 +1857,7 @@ class MainWindow(data.QMainWindow):
             bookmark_menu.setIcon(temp_icon)
             bookmark_toggle_action = create_action(
                 'Toggle Bookmark',
-                data.bookmark_toggle_keys, 
+                settings.Keys.bookmark_toggle, 
                 'Toggle a bookmark at the current document line', 
                 'tango_icons/bookmark.png', 
                 bookmark_toggle
@@ -1819,30 +1886,27 @@ class MainWindow(data.QMainWindow):
                 #Go To
                 def create_goto_bookmark():
                     func = functools.partial(bookmark_goto, i)
-                    func.__name__ = "goto_bookmark_{}".format(i)
+                    func.__name__ = "bookmark_goto_{}".format(i)
                     return func
                 bookmark_goto_action = create_action(
-                    'Bookmark {:d}'.format(i),
-                    "{}+{}".format(data.bookmark_goto_keys, i), 
+                    'Bookmark Goto {:d}'.format(i),
+#                    getattr(settings.Keys, "bookmark_goto_{}".format(i)),
+                    settings.Keys.bookmark_goto[i],
                     "Go to bookmark number:{:d}".format(i), 
                     'tango_icons/bookmarks-goto.png', 
                     create_goto_bookmark()
                 )
                 bookmark_goto_menu.addAction(bookmark_goto_action)
                 #Store
-                bookmark_store_action = data.QAction('Bookmark {:d}'.format(i), self)
-                bookmark_store_action.setShortcut("{}+{}".format(data.bookmark_store_keys, i))
-                bookmark_store_action.setStatusTip("Store bookmark number:{:d}".format(i))
-                temp_icon = functions.create_icon('tango_icons/bookmarks-store.png')
-                bookmark_store_action.setIcon(temp_icon)
-                bookmark_store_action.triggered.connect(functools.partial(bookmark_store, i))
                 def create_store_bookmark():
                     func = functools.partial(bookmark_store, i)
-                    func.__name__ = "store_bookmark_{}".format(i)
+#                    func.__name__ = "store_bookmark_{}".format(i)
+                    func.__name__ = "bookmark_store_{}".format(i)
                     return func
                 bookmark_store_action = create_action(
-                    'Bookmark {:d}'.format(i),
-                    "{}+{}".format(data.bookmark_store_keys, i), 
+                    'Bookmark Store {:d}'.format(i),
+#                    getattr(settings.Keys, "bookmark_store_{}".format(i)),
+                    settings.Keys.bookmark_store[i],
                     "Store bookmark number:{:d}".format(i), 
                     'tango_icons/bookmarks-store.png', 
                     create_store_bookmark()
@@ -1905,7 +1969,7 @@ class MainWindow(data.QMainWindow):
             repl_menu.installEventFilter(click_filter)
             repeat_eval_action = create_action(
                 'REPL Repeat Command',
-                data.repeat_eval_keys, 
+                settings.Keys.repeat_eval, 
                 'Repeat the last REPL command', 
                 'tango_icons/repl-repeat-command.png', 
                 self.repl.repeat_last_repl_eval
@@ -1915,7 +1979,7 @@ class MainWindow(data.QMainWindow):
                 self.repl.setFocus()
             repl_focus_action = create_action(
                 'Focus REPL(Single)',
-                [data.repl_focus_single_1_keys, data.repl_focus_single_2_keys], 
+                [settings.Keys.repl_focus_single_1, settings.Keys.repl_focus_single_2], 
                 'Set focus to the Python REPL(Single Line)', 
                 'tango_icons/repl-focus-single.png', 
                 repl_single_focus
@@ -1925,7 +1989,7 @@ class MainWindow(data.QMainWindow):
                 self.repl_helper.setFocus()
             repl_focus_multi_action = create_action(
                 'Focus REPL(Multi)',
-                data.repl_focus_multi_keys, 
+                settings.Keys.repl_focus_multi, 
                 'Set focus to the Python REPL(Multi Line)', 
                 'tango_icons/repl-focus-multi.png', 
                 repl_multi_focus
@@ -1970,6 +2034,21 @@ class MainWindow(data.QMainWindow):
             sessions_menu.addAction(session_editor_action)
             sessions_menu.addSeparator()
             sessions_menu.addMenu(self.sessions_menu)
+        # Settings menu
+        def construct_settings_menu():
+            settings_menu = self.menubar.addMenu("&Settings")
+            settings_menu.installEventFilter(click_filter)
+            def show_settings():
+                self.view.show_settings_gui_manipulator()
+            show_gui_action = create_action(
+                'Graphical Settings Editor',
+                None, 
+                'Graphical user friendly settings editor', 
+                'tango_icons/settings-gui.png', 
+                show_settings
+            )
+            # Add the items
+            settings_menu.addAction(show_gui_action)
         #Help menu
         def construct_help_menu():
             help_menu = self.menubar.addMenu("&Help")
@@ -1991,6 +2070,7 @@ class MainWindow(data.QMainWindow):
         construct_view_menu()
         construct_repl_menu()
         construct_sessions_menu()
+        construct_settings_menu()
         construct_help_menu()
         #Connect the triggered signal for hiding the function wheel on menubar clicks
         def hide_fw(action):
@@ -1998,8 +2078,7 @@ class MainWindow(data.QMainWindow):
             if isinstance(action, data.QAction):
                 if action.text() != "Show/Hide Function Wheel":
                     #Hide the function wheel if it is shown
-                    if self.view.function_wheel_overlay != None:
-                        self.view.hide_function_wheel()
+                    self.view.hide_function_wheel()
         self.menubar.triggered.connect(hide_fw)
         #Add the menubar to the MainWindow
         self.setMenuBar(self.menubar)
@@ -2066,7 +2145,7 @@ class MainWindow(data.QMainWindow):
                     message_type=data.MessageType.SUCCESS
                 )
             return
-        user_file = open(user_file_path)
+        user_file = open(user_file_path, "r", encoding="utf-8")
         user_code = user_file.read()
         user_file.close()
         result = self.repl._repl_eval(user_code, display_action=False)
@@ -2451,16 +2530,18 @@ class MainWindow(data.QMainWindow):
         Functions for manipulating the application settings
         (namespace/nested class to MainWindow)
         """
-        #Class varibles
+        # Class varibles
         parent = None
-        #Custom object for manipulating the settings of Ex.Co.
+        # Custom object for manipulating the settings of Ex.Co.
         manipulator = None
+        # GUI Settings manipulator
+        gui_manipulator = None 
         
         def __init__(self, parent):
             """Initialization of the Settings object instance"""
-            #Get the reference to the MainWindow parent object instance
+            # Get the reference to the MainWindow parent object instance
             self.parent = parent
-            #Initialize the Ex.Co. settings object with the current working directory
+            # Initialize the Ex.Co. settings object with the current working directory
             self.manipulator = settings.SettingsFileManipulator(
                 data.application_directory, 
                 data.resources_directory
@@ -2558,7 +2639,7 @@ class MainWindow(data.QMainWindow):
 
         def add(self, session_name, session_group=None):
             """Add the current opened documents in the main and upper window"""
-            #Check if the session name is too short
+            # Check if the session name is too short
             if len(session_name) < 3:
                 self.parent.display.repl_display_message(
                     "Session name is too short!", 
@@ -2566,25 +2647,27 @@ class MainWindow(data.QMainWindow):
                 )
                 return
             if session_group != None:
-                if isinstance(session_group, str) == False:
+                if (isinstance(session_group, str) == False and
+                    isinstance(session_group, tuple) == False and
+                    isinstance(session_group, list) == False):
                     self.parent.display.repl_display_message(
-                        "Group name must be a string!", 
+                        "Group name must be a string or a tuple/list of strings!", 
                         message_type=data.MessageType.ERROR
                     )
                     return
-            #Create lists of files in each window
+            # Create lists of files in each window
             try:
                 main_files = self.get_window_documents("main")
                 upper_files = self.get_window_documents("upper")
                 lower_files = self.get_window_documents("lower")
                 if (main_files != [] or upper_files != []):
-                    #Check if the session is already stored
+                    # Check if the session is already stored
                     session_found = False
                     for ssn in self.parent.settings.manipulator.stored_sessions:
                         if ssn.name == session_name and ssn.group == session_group:
                             session_found = True
                             break
-                    #Store the session
+                    # Store the session
                     self.parent.settings.manipulator.add_session(
                         session_name,
                         session_group,
@@ -2592,15 +2675,20 @@ class MainWindow(data.QMainWindow):
                         upper_files,
                         lower_files
                     )
-                    #Session added successfully
-                    if session_group == None or session_group == "":
+                    # Session added successfully
+                    if session_group == None:
                         session_group = ""
-                    else:
-                        session_group = session_group + "/"
+                    group_string = ""
+                    if session_group != "":
+                        group_string = "/".join(session_group) + "/"
                     if session_found == True:
-                        message = "Session '{:s}{:s}' overwritten!".format(session_group, session_name)
+                        message = "Session '{:s}{:s}' overwritten!".format(
+                            group_string, session_name
+                        )
                     else:
-                        message = "Session '{:s}{:s}' added!".format(session_group, session_name)
+                        message = "Session '{:s}{:s}' added!".format(
+                            group_string, session_name
+                        )
                     self.parent.display.repl_display_message(
                         message, 
                         message_type=data.MessageType.SUCCESS
@@ -2611,10 +2699,10 @@ class MainWindow(data.QMainWindow):
                         message_type=data.MessageType.ERROR
                     )
                     self.parent.display.write_to_statusbar("No documents to store!", 1500)
-                #Refresh the sessions menu in the menubar
+                # Refresh the sessions menu in the menubar
                 self.update_menu()
             except Exception as ex:
-                print(ex)
+                traceback.print_exc()
                 message = "Invalid document types in the main or upper window!"
                 self.parent.display.repl_display_message(
                     message, 
@@ -2662,11 +2750,14 @@ class MainWindow(data.QMainWindow):
                         self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
             else:
                 #Session was not found
-                if session_group == None or session_group == "":
+                if session_group == None:
                     session_group = ""
-                else:
-                    session_group = session_group + "/"
-                message = "Session '{:s}{:s}' was not found!".format(session_group, session_name)
+                group_string = ""
+                if session_group != "":
+                    group_string = "/".join(session_group) + "/"
+                message = "Session '{:s}{:s}' was not found!".format(
+                    group_string, session_name
+                )
                 self.parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.ERROR
@@ -2721,13 +2812,16 @@ class MainWindow(data.QMainWindow):
                 session_group
             )
             #Adjust the group name string
-            if session_group == None or session_group == "":
+            if session_group == None:
                 session_group = ""
-            else:
-                session_group = session_group + "/"
+            group_string = ""
+            if session_group != "":
+                group_string = "/".join(session_group) + "/"
             if result == False:
                 #Session was not found
-                message = "Session '{:s}{:s}' was not found!".format(session_group, session_name)
+                message = "Session '{:s}{:s}' was not found!".format(
+                    group_string, session_name
+                )
                 self.parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.ERROR
@@ -2735,7 +2829,9 @@ class MainWindow(data.QMainWindow):
                 self.parent.display.write_to_statusbar(message, 1500)
             else:
                 #Session was removed successfully
-                message = "Session '{:s}{:s}' was removed!".format(session_group, session_name)
+                message = "Session '{:s}{:s}' was removed!".format(
+                    group_string, session_name
+                )
                 self.parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.WARNING
@@ -2745,13 +2841,13 @@ class MainWindow(data.QMainWindow):
 
         def update_menu(self):
             """Update the displayed items in the Sessions menu in the menubar"""
-            #Nested function for retrieving the sessions name attribute case insensitively
+            # Nested function for retrieving the sessions name attribute case insensitively
             def get_case_insensitive_group_name(item):
                 name = item[0]
                 return name.lower()
-            #Clear the sessions list
+            # Clear the sessions list
             self.parent.sessions_menu.clear()
-            #First add the Ex.Co. session (all Ex.Co. source files)
+            # First add the Ex.Co. session (all Ex.Co. source files)
             session_name = "Ex.Co. source files"
             exco_session_action = data.QAction(session_name, self.parent)
             exco_session_action.setStatusTip("Open all Ex.Co. source files")
@@ -2760,50 +2856,38 @@ class MainWindow(data.QMainWindow):
             exco_session_action.triggered.connect(exco_session_method)
             self.parent.sessions_menu.addAction(exco_session_action)
             self.parent.sessions_menu.addSeparator()
-            #Create a list of groups that will be stored for reuse
-            groups = []
-            #Sort the sessions
-            self.parent.settings.manipulator.sort_sessions()
-            #Add the groups to the menu first
-            for session in self.parent.settings.manipulator.stored_sessions:
-                if session.group != None:
-                    group_found = False
-                    for group in groups:
-                        if session.group == group:
-                            #Group found, it's already in the list
-                            group_found = True
-                            break
-                    if group_found == False:
-                        #Group is not in the list, add it as a tuple (name, reference)
-                        groups.append(session.group)
-            #Sort the group list and add the groups to the session menu
-            groups.sort()
-            sorted_groups = []
+            # Create a list of groups that will be stored for reuse
+            groups = self.parent.settings.manipulator.get_sorted_groups()
+            # Create the Sessions menu
+            main_group = self.parent.settings.manipulator.Group(
+                "BASE", parent=None, reference=self.parent.sessions_menu
+            )
             for group in groups:
-                new_group = self.parent.sessions_menu.addMenu(group)
-                new_group.setIcon(functions.create_icon('tango_icons/folder.png'))
-                sorted_groups.append((group, new_group))
-            #Loop through all of the stored sessions and add them
+                current_node = main_group
+                for folder in group:
+                    new_group = current_node.subgroup_get(folder)
+                    if new_group == None:
+                        new_group = current_node.reference.addMenu(folder)
+                        new_group.setIcon(functions.create_icon('tango_icons/folder.png'))
+                    current_node = current_node.subgroup_create(folder, new_group)
+            # Loop through all of the stored sessions and add them
             for session in self.parent.settings.manipulator.stored_sessions:
-                #Add the session
+                # Add the session
                 new_session_action = data.QAction(session.name, self.parent)
                 new_session_action.setStatusTip("Restore Session: {:s}".format(session.name))
                 new_session_method = functools.partial(
-                                         self.restore,
-                                         session_name=session.name,
-                                         session_group=session.group
-                                     )
+                    self.restore,
+                    session_name=session.name,
+                    session_group=session.group
+                )
                 new_session_action.setIcon(functions.create_icon('tango_icons/sessions.png'))
                 new_session_action.triggered.connect(new_session_method)
-                #Check if the session is in a group
+                # Check if the session is in a group
                 if session.group != None:
-                    #Loop througt the groups and add the action to the correct one
-                    for group in sorted_groups:
-                        if group[0] == session.group:
-                           group[1].addAction(new_session_action)
-                           break
+                    group = main_group.subgroup_get_recursive(session.group)
+                    group.reference.addAction(new_session_action)
                 else:
-                    self.parent.sessions_menu.addAction(new_session_action)
+                    main_group.reference.addAction(new_session_action)
         
         def get_window_documents(self, window_name):
             """Return all the editor document paths in the selected window as a list"""
@@ -2813,6 +2897,7 @@ class MainWindow(data.QMainWindow):
                                 if  window.widget(i).savable == data.CanSave.YES and
                                     window.widget(i).save_name != ""]
             return documents
+    
     
     class View:
         """
@@ -2847,11 +2932,8 @@ class MainWindow(data.QMainWindow):
             #Get the reference to the MainWindow parent object instance
             self.parent = parent
             #Get the function wheel overlay image size
-            function_wheel_size = data.PyQt.QtGui.QPixmap(
-                os.path.join(
-                    data.resources_directory, 
-                    data.function_wheel_image
-                )
+            function_wheel_size = data.QPixmap(
+                FunctionWheel.create_background_image()
             ).size()
             self.FUNCTION_WHEEL_BOUNDS = (
                 function_wheel_size.width(), 
@@ -2885,7 +2967,7 @@ class MainWindow(data.QMainWindow):
                          self.parent.horizontal_splitter.width()*self.horizontal_width_1]
                     )
             #Set the REPL font
-            self.parent.repl.setFont(data.PyQt.QtGui.QFont("Arial", 12, data.PyQt.QtGui.QFont.Bold))
+            self.parent.repl.setFont(data.QFont("Arial", 12, data.QFont.Bold))
             #Refresh the size relation between the basic widgets and the REPL,
             #so that the REPL height is always the same
             self.refresh_main_splitter()
@@ -2935,11 +3017,11 @@ class MainWindow(data.QMainWindow):
             self.parent.last_focused_tab = focused_tab
             #Create QSplitters to split main window into three parts: 
             #editing(QScintilla), upper_window(QTabControl), lower_window(QTabControl)
-            vertical_splitter      = data.QSplitter(data.PyQt.QtCore.Qt.Vertical)
+            vertical_splitter      = data.QSplitter(data.Qt.Vertical)
             vertical_splitter.setObjectName("Vertical_Splitter")
-            horizontal_splitter    = data.QSplitter(data.PyQt.QtCore.Qt.Horizontal)
+            horizontal_splitter    = data.QSplitter(data.Qt.Horizontal)
             horizontal_splitter.setObjectName("Horizontal_Splitter")
-            main_splitter          = data.QSplitter(data.PyQt.QtCore.Qt.Vertical)
+            main_splitter          = data.QSplitter(data.Qt.Vertical)
             main_splitter.setObjectName("Main_Splitter")
             #Set new widget order to class attributes
             main_widget.name    = "Main"
@@ -2998,7 +3080,7 @@ class MainWindow(data.QMainWindow):
                 else:
                     focused_widget.setFocus()
             #Initialize the function wheel overlay over the QMainWindows central widget, if needed
-            self.function_wheel_overlay = FunctionWheelOverlay(
+            self.function_wheel_overlay = FunctionWheel(
                 parent=self.parent.main_groupbox, 
                 main_form=self.parent, 
             )
@@ -3007,6 +3089,10 @@ class MainWindow(data.QMainWindow):
                 self.function_wheel_overlay.show()
             else:
                 self.function_wheel_overlay.hide()
+            # Settings GUI Manipulator
+            if self.parent.settings.gui_manipulator != None:
+                self.parent.settings.gui_manipulator.clean_up()
+                self.parent.settings.gui_manipulator = None
     
         def set_log_window(self, show=True):
             """Show or hide the log window"""
@@ -3206,12 +3292,20 @@ class MainWindow(data.QMainWindow):
             else:
                 self.show_function_wheel()
         
+        def hide_all_overlay_widgets(self):
+            """
+            Hide every overlay widget: function wheel, settings gui manipulator, ...
+            """
+            self.hide_function_wheel()
+            self.hide_settings_gui_manipulator()
+        
         def show_function_wheel(self):
             """Show the function wheel overlay"""
+            self.hide_settings_gui_manipulator()
             # Check the windows size before displaying the overlay
             if (self.parent.width() < self.FUNCTION_WHEEL_BOUNDS[0] or 
                 self.parent.height() < self.FUNCTION_WHEEL_BOUNDS[1]):
-                new_size =  data.PyQt.QtCore.QSize(
+                new_size =  data.QSize(
                     self.FUNCTION_WHEEL_BOUNDS[0] + self.FUNCTION_WHEEL_BOUNDS[0]/5,
                     self.FUNCTION_WHEEL_BOUNDS[1] + self.FUNCTION_WHEEL_BOUNDS[1]/5
                 )
@@ -3233,6 +3327,30 @@ class MainWindow(data.QMainWindow):
             """Hide the function wheel overlay"""
             if self.function_wheel_overlay != None:
                 self.function_wheel_overlay.hide()
+        
+        def show_settings_gui_manipulator(self):
+            # Initialize the settings GUI manipulator if needed
+            if self.parent.settings.gui_manipulator == None:
+                compare_size = helper_forms.SettingsGuiManipulator.DEFAULT_SIZE
+                if (self.parent.width() < compare_size[0] or 
+                    self.parent.height() < compare_size[1]):
+                        new_size =  data.QSize(
+                            compare_size[0] + compare_size[0]/5,
+                            compare_size[1] + compare_size[1]/5
+                        )
+                        self.parent.resize(new_size)
+                self.parent.settings.gui_manipulator = helper_forms.SettingsGuiManipulator(
+                    parent=self.parent.main_groupbox, 
+                    main_form=self.parent, 
+                )
+            elif self.parent.settings.gui_manipulator.shown == True:
+                return
+            # Show the gui manipulator
+            self.parent.settings.gui_manipulator.show()
+        
+        def hide_settings_gui_manipulator(self):
+            if self.parent.settings.gui_manipulator != None:
+                self.parent.settings.gui_manipulator.hide()
         
         def init_style_sheet(self):            
             style_sheet = (
@@ -3483,6 +3601,23 @@ class MainWindow(data.QMainWindow):
             )
             # Update the taskbar menu
             self.parent.display.update_theme_taskbar_icon()
+            
+            # Reset the function wheel
+            if FunctionWheel.check_theme_state():
+                if self.function_wheel_overlay != None:
+                    self.function_wheel_overlay.clean_up()
+                self.function_wheel_overlay = FunctionWheel(
+                    parent=self.parent.main_groupbox, 
+                    main_form=self.parent, 
+                )
+                FunctionWheel.reset_background_image()
+            
+            # Reset the settings gui manipulator so it will update
+            if helper_forms.SettingsGuiManipulator.check_theme_state():
+                if self.parent.settings.gui_manipulator != None:
+                    self.parent.settings.gui_manipulator.clean_up()
+                self.parent.settings.gui_manipulator = None
+                helper_forms.SettingsGuiManipulator.reset_background_image()
         
         def reload_themes(self):
             global lexers, themes
@@ -3498,10 +3633,8 @@ class MainWindow(data.QMainWindow):
             current_theme_name = data.theme.__name__.split(".")[1]
             import themes
             import lexers
-            importlib.reload(themes.Air)
-            importlib.reload(themes.Earth)
-            importlib.reload(themes.Water)
-            importlib.reload(themes.MC)
+            for theme in themes.theme_list:
+                importlib.reload(theme)
             importlib.reload(lexers)
             # Set the theme again
             data.theme = getattr(themes, current_theme_name)
@@ -4034,27 +4167,17 @@ class MainWindow(data.QMainWindow):
                 def mouseReleaseEvent(self, event):
                     # Execute the superclass event method
                     super().mouseReleaseEvent(event)
-                    cursor = data.PyQt.QtGui.QCursor.pos()
+                    cursor = data.QCursor.pos()
                     self.parent.theme_menu.popup(cursor)
             
-            if data.theme == themes.Air:
-                tooltip = "Air"
-                image = "tango_icons/theme-air.png"
-            elif data.theme == themes.Earth:
-                tooltip = "Earth"
-                image = "tango_icons/theme-earth.png"
-            elif data.theme == themes.Water:
-                tooltip = "Water"
-                image = "tango_icons/theme-water.png"
-            elif data.theme == themes.MC:
-                tooltip = "MC"
-                image = "tango_icons/theme-mc.png"
-            raw_picture = data.PyQt.QtGui.QPixmap(
+            tooltip = data.theme.tooltip
+            image = data.theme.image_file
+            raw_picture = data.QPixmap(
                 os.path.join(
                     data.resources_directory, image
                 )
             )
-            picture = raw_picture.scaled(16, 16, data.PyQt.QtCore.Qt.KeepAspectRatio)
+            picture = raw_picture.scaled(16, 16, data.Qt.KeepAspectRatio)
             self.theme_indicatore = ThemeIndicator(self)
             self.theme_indicatore.setPixmap(picture)
             self.theme_indicatore.setToolTip(tooltip)
@@ -4081,24 +4204,14 @@ class MainWindow(data.QMainWindow):
             if self.theme_indicatore == None:
                 return
             # Set the theme icon and tooltip
-            if data.theme == themes.Air:
-                tooltip = "Air"
-                image = "tango_icons/theme-air.png"
-            elif data.theme == themes.Earth:
-                tooltip = "Earth"
-                image = "tango_icons/theme-earth.png"
-            elif data.theme == themes.Water:
-                tooltip = "Water"
-                image = "tango_icons/theme-water.png"
-            elif data.theme == themes.MC:
-                tooltip = "Midnight Commander"
-                image = "tango_icons/theme-mc.png"
-            raw_picture = data.PyQt.QtGui.QPixmap(
+            tooltip = data.theme.tooltip
+            image = data.theme.image_file
+            raw_picture = data.QPixmap(
                 os.path.join(
                     data.resources_directory, image
                 )
             )
-            picture = raw_picture.scaled(16, 16, data.PyQt.QtCore.Qt.KeepAspectRatio)
+            picture = raw_picture.scaled(16, 16, data.Qt.KeepAspectRatio)
             self.theme_indicatore.setPixmap(picture)
             self.theme_indicatore.setToolTip(tooltip)
             self.theme_indicatore.setStyleSheet(
@@ -4124,14 +4237,7 @@ class MainWindow(data.QMainWindow):
                 data.theme = theme
                 self.parent.view.refresh_theme()
                 self.update_theme_taskbar_icon()
-                if data.theme == themes.Air:
-                    current_theme = "Air"
-                elif data.theme == themes.Earth:
-                    current_theme = "Earth"
-                elif data.theme == themes.Water:
-                    current_theme = "Water"
-                elif data.theme == themes.MC:
-                    current_theme = "Midnight Commander"
+                current_theme = data.theme.tooltip
                 self.repl_display_message(
                     "Changed theme to: {}".format(current_theme), 
                     message_type=data.MessageType.SUCCESS
@@ -4146,38 +4252,15 @@ class MainWindow(data.QMainWindow):
                     action.deleteLater()
                     action = None
             self.theme_menu = data.QMenu()
-            # Air
-            action_air = data.QAction("Air", self.theme_menu)
-            action_air.triggered.connect(
-                functools.partial(choose_theme, themes.Air)
-            )
-            icon = functions.create_icon('tango_icons/theme-air.png')
-            action_air.setIcon(icon)
-            self.theme_menu.addAction(action_air)
-            # Earth
-            action_earth = data.QAction("Earth", self.theme_menu)
-            action_earth.triggered.connect(
-                functools.partial(choose_theme, themes.Earth)
-            )
-            icon = functions.create_icon('tango_icons/theme-earth.png')
-            action_earth.setIcon(icon)
-            self.theme_menu.addAction(action_earth)
-            # Water
-            action_water = data.QAction("Water", self.theme_menu)
-            action_water.triggered.connect(
-                functools.partial(choose_theme, themes.Water)
-            )
-            icon = functions.create_icon('tango_icons/theme-water.png')
-            action_water.setIcon(icon)
-            self.theme_menu.addAction(action_water)
-            # Midnight Commander
-            action_mc = data.QAction("MC", self.theme_menu)
-            action_mc.triggered.connect(
-                functools.partial(choose_theme, themes.MC)
-            )
-            icon = functions.create_icon('tango_icons/theme-mc.png')
-            action_mc.setIcon(icon)
-            self.theme_menu.addAction(action_mc)
+            # Add the theme actions
+            for theme in themes.theme_list:
+                action_theme = data.QAction(theme.name, self.theme_menu)
+                action_theme.triggered.connect(
+                    functools.partial(choose_theme, theme)
+                )
+                icon = functions.create_icon(theme.image_file)
+                action_theme.setIcon(icon)
+                self.theme_menu.addAction(action_theme)
         
         def write_to_statusbar(self, message, msec=0):
             """Write a message to the statusbar"""
@@ -4216,42 +4299,42 @@ class MainWindow(data.QMainWindow):
                       number for custom styling
                 """
                 parent.repl_messages_tab.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETFONT,
+                    data.QsciScintillaBase.SCI_STYLESETFONT,
                     lexer_number,
                     b'Ariel'
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETSIZE,
+                    data.QsciScintillaBase.SCI_STYLESETSIZE,
                     lexer_number,
                     10
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBOLD,
+                    data.QsciScintillaBase.SCI_STYLESETBOLD,
                     lexer_number,
                     True
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETUNDERLINE,
+                    data.QsciScintillaBase.SCI_STYLESETUNDERLINE,
                     lexer_number,
                     False
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETFORE,
+                    data.QsciScintillaBase.SCI_STYLESETFORE,
                     lexer_number,
                     color
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK,
+                    data.QsciScintillaBase.SCI_STYLESETBACK,
                     lexer_number,
                     data.theme.Paper.Default
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_STARTSTYLING,
+                    data.QsciScintillaBase.SCI_STARTSTYLING,
                     start,
                     lexer_number
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_SETSTYLING,
+                    data.QsciScintillaBase.SCI_SETSTYLING,
                     end - start,
                     lexer_number
                 )
@@ -4342,7 +4425,7 @@ class MainWindow(data.QMainWindow):
             #Check if REPL messages tab exists
             if self.parent.repl_messages_tab != None:
                 self.parent.repl_messages_tab.setText("")
-                self.parent.repl_messages_tab.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STYLECLEARALL)
+                self.parent.repl_messages_tab.SendScintilla(data.QsciScintillaBase.SCI_STYLECLEARALL)
                 self.parent.repl_messages_tab.set_theme(data.theme)
                 #Bring the REPL tab to the front
                 self.parent.repl_messages_tab.parent.setCurrentWidget(self.parent.repl_messages_tab)
@@ -4436,7 +4519,16 @@ class MainWindow(data.QMainWindow):
             elif parser == "C":
                 # Get all the file information
 #                function_nodes = functions.get_c_function_list(custom_editor.text())
-                c_nodes = functions.get_c_node_tree(custom_editor.text())
+#                c_nodes = functions.get_c_node_tree(custom_editor.text())
+                try:
+                    result = functions.get_c_node_tree_with_ctags(custom_editor.text())
+                except Exception as ex:
+                    parent.display.repl_display_message(
+                        str(ex), 
+                        message_type=data.MessageType.ERROR
+                    )
+                    return
+                c_nodes = result
                 # Display the information in the tree tab
                 parent.node_tree_tab.display_c_nodes(
                     custom_editor, 
@@ -4517,7 +4609,7 @@ class MainWindow(data.QMainWindow):
             #Set the NODE document to be ReadOnly
             parent.node_tree_tab.setReadOnly(True)
             parent.node_tree_tab.setText("")
-            parent.node_tree_tab.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STYLECLEARALL)
+            parent.node_tree_tab.SendScintilla(data.QsciScintillaBase.SCI_STYLECLEARALL)
             parent.node_tree_tab.parentWidget().setCurrentWidget(parent.node_tree_tab)
             #Check if the custom editor is valid
             if isinstance(custom_editor, CustomEditor) == False:
@@ -5390,24 +5482,24 @@ class BasicWidget(data.QTabWidget):
             event_button    = event.button()
             key_modifiers   = data.QApplication.keyboardModifiers()
             #Tab Drag&Drop functionality
-            if event_button == data.PyQt.QtCore.Qt.LeftButton:
-                if (key_modifiers == data.PyQt.QtCore.Qt.ControlModifier or
-                    key_modifiers == data.PyQt.QtCore.Qt.ShiftModifier):
+            if event_button == data.Qt.LeftButton:
+                if (key_modifiers == data.Qt.ControlModifier or
+                    key_modifiers == data.Qt.ShiftModifier):
                     tab_number = self.parent.tabBar().tabAt(event.pos())
                     if tab_number != -1:
-                        mime_data = data.PyQt.QtCore.QMimeData()
+                        mime_data = data.QMimeData()
                         mime_data.setText("{:s} {:d}".format(self.parent.name, tab_number))
-                        drag = data.PyQt.QtGui.QDrag(self.parent)
+                        drag = data.QDrag(self.parent)
                         drag.setMimeData(mime_data)
                         drag.setHotSpot(event.pos())
-                        drag.exec_(data.PyQt.QtCore.Qt.CopyAction | data.PyQt.QtCore.Qt.MoveAction)
+                        drag.exec_(data.Qt.CopyAction | data.Qt.MoveAction)
         
         def mouseReleaseEvent(self, event):
             # Execute the superclass event method
             super().mouseReleaseEvent(event)
             event_button = event.button()
             # Check for a right click
-            if event_button == data.PyQt.QtCore.Qt.RightButton:
+            if event_button == data.Qt.RightButton:
                 # Clean up the old menu
                 if self.tab_menu != None:
                     self.tab_menu.setParent(None)
@@ -5422,7 +5514,7 @@ class BasicWidget(data.QTabWidget):
                 )
                 self.tab_menu = menu
                 # Show the tab context menu
-                cursor = data.PyQt.QtGui.QCursor.pos()
+                cursor = data.QCursor.pos()
                 menu.popup(cursor)
                 # Accept the event
                 event.accept()
@@ -5686,7 +5778,7 @@ class BasicWidget(data.QTabWidget):
     # Custom tab bar
     custom_tab_bar          = None
     # Default font for textboxes
-    default_editor_font     = data.PyQt.QtGui.QFont('Courier', 10)
+    default_editor_font     = data.QFont('Courier', 10)
     # Default font and icon size for the tab bar
     default_tab_font        = None
     default_icon_size       = None
@@ -5722,8 +5814,8 @@ class BasicWidget(data.QTabWidget):
     def customize_tab_bar(self):
         if data.custom_menu_scale != None and data.custom_menu_font != None:
             components.TheSquid.customize_menu_style(self.tabBar())
-            self.tabBar().setFont(data.PyQt.QtGui.QFont(*data.custom_menu_font))
-            new_icon_size = data.PyQt.QtCore.QSize(
+            self.tabBar().setFont(data.QFont(*data.custom_menu_font))
+            new_icon_size = data.QSize(
                 data.custom_menu_scale, data.custom_menu_scale
             )
             self.setIconSize(new_icon_size)
@@ -5760,8 +5852,8 @@ class BasicWidget(data.QTabWidget):
         super().event(event)
         # Only check indication if the current widget is not indicated
         if self.indicated == False:
-            if (event.type() == data.PyQt.QtCore.QEvent.KeyPress or
-                event.type() == data.PyQt.QtCore.QEvent.KeyRelease):
+            if (event.type() == data.QEvent.KeyPress or
+                event.type() == data.QEvent.KeyRelease):
                 # Check indication
                 self.parent.view.indication_check()
         # Indicate that the event was processed by returning True
@@ -5784,8 +5876,8 @@ class BasicWidget(data.QTabWidget):
             name, str_index = self.drag_text.split()
             index = int(str_index)
             key_modifiers = data.QApplication.keyboardModifiers() 
-            if (key_modifiers == data.PyQt.QtCore.Qt.ControlModifier or
-                key_modifiers == data.PyQt.QtCore.Qt.AltModifier):
+            if (key_modifiers == data.Qt.ControlModifier or
+                key_modifiers == data.Qt.AltModifier):
                 self.copy_editor_in(self.drag_source, index)
                 data.print_log("Drag&Drop copied tab {:d} from the {:s} widget".format(index, name))
             else:
@@ -5819,9 +5911,8 @@ class BasicWidget(data.QTabWidget):
         self.parent.last_focused_widget = self
         data.print_log("Stored \"{:s}\" as last focused widget".format(self.name))
         # Hide the function wheel if it is shown
-        if self.parent.view.function_wheel_overlay != None:
-            self.parent.view.hide_function_wheel()
-        if (event.button() == data.PyQt.QtCore.Qt.RightButton and
+        self.parent.view.hide_all_overlay_widgets()
+        if (event.button() == data.Qt.RightButton and
             self.count() == 0):
             # Show the function wheel if right clicked
             self.parent.view.show_function_wheel()
@@ -5845,16 +5936,16 @@ class BasicWidget(data.QTabWidget):
             delta = wheel_event.angleDelta().y()
         if delta < 0:
             data.print_log("Mouse rotate down event")
-            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.Qt.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.zoom_out()
         else:
             data.print_log("Mouse rotate up event")
-            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.Qt.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.zoom_in()
         #Handle the event
-        if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
+        if key_modifiers == data.Qt.ControlModifier:
             #Accept the event, the event will not be propageted(sent forward) to the parent
             wheel_event.accept()
         else:
@@ -6068,8 +6159,8 @@ class BasicWidget(data.QTabWidget):
         #Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
         new_scintilla_tab.name = name
         #Initialize the scrollbars
-        new_scintilla_tab.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
-        new_scintilla_tab.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETHSCROLLBAR, True)
+        new_scintilla_tab.SendScintilla(data.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
+        new_scintilla_tab.SendScintilla(data.QsciScintillaBase.SCI_SETHSCROLLBAR, True)
         #Hide the margin
         new_scintilla_tab.setMarginWidth(1, 0)
         #Disable drops
@@ -6288,15 +6379,6 @@ class BasicWidget(data.QTabWidget):
         for i in range(2):
             self._signal_editor_tabindex_change(None)
             source_basic_widget._signal_editor_tabindex_change(None)
-#        """Move another CustomEditor widget into self with a copy"""
-#        moved_widget        = source_basic_widget.widget(source_index)
-#        # Check if the source tab is valid
-#        if moved_widget == None:
-#            return
-#        # Copy the tab into the new basic widget 
-#        self.copy_editor_in(source_basic_widget, source_index)
-#        # Close the tab in the current basic widget
-#        source_basic_widget._signal_editor_tabclose(source_index)
 
 
 """
@@ -6304,7 +6386,7 @@ class BasicWidget(data.QTabWidget):
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
 -----------------------------
 """ 
-class PlainEditor(data.PyQt.Qsci.QsciScintilla):
+class PlainEditor(data.QsciScintilla):
     # Class variables
     name            = None
     parent          = None
@@ -6312,7 +6394,6 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
     current_icon    = None
     icon_manipulator= None
     savable         = data.CanSave.NO
-    default_font    = data.PyQt.QtGui.QFont('Courier', 10)
     # Corner widget reference
     corner_widget   = None
     # Reference to the custom context menu
@@ -6359,11 +6440,11 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
         # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(data.default_eol)
+        self.setEolMode(settings.Editor.end_of_line_mode)
         # Initialize the namespace references
         self.hotspots = components.Hotspots()
         # Set the initial zoom factor
-        self.zoomTo(data.zoom_factor)
+        self.zoomTo(settings.Editor.zoom_factor)
         # Set the theme
         self.set_theme(data.theme)
     
@@ -6423,8 +6504,7 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
             "Stored \"{:s}\" as last focused widget".format(self.parent.name)
         )
         #Hide the function wheel if it is shown
-        if self.main_form.view.function_wheel_overlay != None:
-            self.main_form.view.hide_function_wheel()
+        self.main_form.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
         components.ActionFilter.clear_action()
     
@@ -6441,7 +6521,7 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
         self.setCursorPosition(line_number, 0)
         #Move the first displayed line to the top of the viewving area
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_GOTOLINE, 
+            data.QsciScintillaBase.SCI_GOTOLINE, 
             line_number
         )
     
@@ -6459,17 +6539,17 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
         self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
         self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.PyQt.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+            data.QsciScintillaBase.SCI_STYLESETBACK, 
+            data.QsciScintillaBase.STYLE_DEFAULT, 
             theme.Paper.Default
         )
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.PyQt.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+            data.QsciScintillaBase.SCI_STYLESETBACK, 
+            data.QsciScintillaBase.STYLE_LINENUMBER, 
             theme.LineMargin.BackGround
         )
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+            data.QsciScintillaBase.SCI_SETCARETFORE, 
             theme.Cursor
         )
 
@@ -6480,7 +6560,7 @@ class PlainEditor(data.PyQt.Qsci.QsciScintilla):
 Subclassed QScintilla widget used for editing
 ---------------------------------------------
 """ 
-class CustomEditor(data.PyQt.Qsci.QsciScintilla):
+class CustomEditor(data.QsciScintilla):
     """
     QScintilla widget with added custom functions
     
@@ -6498,11 +6578,6 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     savable                 = data.CanSave.NO
     embedded                = False
     last_browsed_dir        = ""
-    # Default fonts
-    default_font            = data.PyQt.QtGui.QFont('Courier', 10)
-    default_comment_font    = b'Courier'
-    # Brace matching color
-    brace_color             = data.PyQt.QtGui.QColor(255, 153, 0)
     # Current document type, initialized to text
     current_file_type       = "TEXT"
     # Current tab icon
@@ -6519,8 +6594,6 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     HIGHLIGHT_INDICATOR     = 0
     FIND_INDICATOR          = 2
     REPLACE_INDICATOR       = 3
-    # Status of the edge markes
-    edge_marker_state       = False
     # Line strings in a list, gets updated on every text change,
     # can be used like any other python list(append, extend, reverse, ...)
     line_list               = None
@@ -6530,8 +6603,6 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     corner_widget           = None
     # Reference to the custom context menu
     context_menu            = None
-    # Visible cursor line
-    cursor_line_visible     = False
     """Namespace references for grouping functionality"""
     hotspots                = None
     bookmarks               = None
@@ -6585,31 +6656,31 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         # Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         # Set font family and size
-        self.setFont(self.default_font)
+        self.setFont(settings.Editor.font)
         # Set the margin type (0 is by default line numbers, 1 is for non code folding symbols and 2 is for code folding)
-        self.setMarginType(0, data.PyQt.Qsci.QsciScintilla.NumberMargin)
+        self.setMarginType(0, data.QsciScintilla.NumberMargin)
         # Set margin width and font
         self.setMarginWidth(0, "00")
-        self.setMarginsFont(self.default_font)
+        self.setMarginsFont(settings.Editor.font)
         # Reset the modified status of the document
         self.setModified(False)
         # Set brace matching
-        self.setBraceMatching(data.PyQt.Qsci.QsciScintilla.SloppyBraceMatch)
-        self.setMatchedBraceBackgroundColor(self.brace_color)
+        self.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
+        self.setMatchedBraceBackgroundColor(settings.Editor.brace_color)
         # Autoindentation enabled when using "Enter" to indent to the same level as the previous line
         self.setAutoIndent(True)
         # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         # Set tab space indentation width
-        self.setTabWidth(data.tab_width)
+        self.setTabWidth(settings.Editor.tab_width)
         # Set backspace to delete by tab widths
         self.setBackspaceUnindents(True)
         # Scintilla widget must not accept drag/drop events, the cursor freezes if it does!!!
         self.setAcceptDrops(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(data.default_eol)
+        self.setEolMode(settings.Editor.end_of_line_mode)
         # Set the initial zoom factor
-        self.zoomTo(data.zoom_factor)
+        self.zoomTo(settings.Editor.zoom_factor)
         # Correct the file name if it is unspecified
         if file_with_path == None:
             file_with_path = ""
@@ -6623,7 +6694,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         else:
             self.save_name  = ""
         # Replace back-slashes to forward-slashes on Windows
-        if platform.system() == "Windows":
+        if data.platform == "Windows":
             self.save_name  = self.save_name.replace("\\", "/")
         # Last directory browsed by the "Open File" and other dialogs
         if self.save_name != "":
@@ -6659,7 +6730,9 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         self.bookmarks  = self.Bookmarks(self)
         self.keyboard   = self.Keyboard(self)
         # Set cursor line visibility and color
-        self.set_cursor_line_visibility(data.cursor_line_visible)
+        self.set_cursor_line_visibility(
+            settings.Editor.cursor_line_visible
+        )
         
     
     def __setattr__(self, name, value):
@@ -6706,7 +6779,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     
     def _init_bookmark_marker(self):
         """Initialize the marker for the bookmarks"""
-        image_scale_size = data.PyQt.QtCore.QSize(16, 16)
+        image_scale_size = data.QSize(16, 16)
         bookmark_image  = functions.create_pixmap('tango_icons/bookmark.png')
         bookmark_image  = bookmark_image.scaled(image_scale_size)
         self.bookmark_marker = self.markerDefine(bookmark_image, 1)
@@ -6765,7 +6838,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             lexers_menu = self.main_form.display.create_lexers_menu(
                 "Change lexer", set_lexer
             )
-            cursor = data.PyQt.QtGui.QCursor.pos()
+            cursor = data.QCursor.pos()
             lexers_menu.popup(cursor)
             if data.custom_menu_scale != None:
                 components.TheSquid.customize_menu_style(lexers_menu)
@@ -6784,7 +6857,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         self.corner_widget = button_show_lexers
         if data.custom_menu_scale != None:
             self.corner_widget.setIconSize(
-                data.PyQt.QtCore.QSize(
+                data.QSize(
                     data.custom_menu_scale, data.custom_menu_scale
                 )
             )
@@ -6812,12 +6885,12 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         key = event.key()
 #        char = event.text()
 #        key_modifiers = data.QApplication.keyboardModifiers()
-        if key == data.PyQt.QtCore.Qt.Key_Tab:
+        if key == data.Qt.Key_Tab:
             self.custom_indent()
-        elif key == data.PyQt.QtCore.Qt.Key_Backtab:
+        elif key == data.Qt.Key_Backtab:
             self.custom_unindent()
-        elif (key == data.PyQt.QtCore.Qt.Key_Enter or
-              key == data.PyQt.QtCore.Qt.Key_Return):
+        elif (key == data.Qt.Key_Enter or
+              key == data.Qt.Key_Return):
             super().keyPressEvent(event)
             #Check for autoindent character list
             if hasattr(self.lexer(), "autoindent_characters"):
@@ -6833,7 +6906,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                     stripped_line = self.line_list[line_number].strip()
                     if stripped_line == "":
                         self.line_list[line_number] = (self.line_list[line_number] +
-                                                       " " * data.tab_width)
+                                                       " " * settings.Editor.tab_width)
                         self.setCursorPosition(
                             line_number-1, 
                             len(self.line_list[line_number])
@@ -6841,13 +6914,13 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                     else:
                         whitespace = len(line) - len(line.lstrip())
                         self.line_list[line_number] = (" " * whitespace + 
-                                                       " " * data.tab_width + 
+                                                       " " * settings.Editor.tab_width + 
                                                        stripped_line)
                         #The line is not empty, move the cursor to the first
                         #non-whitespace character
                         self.setCursorPosition(
                             line_number-1, 
-                            whitespace + data.tab_width
+                            whitespace + settings.Editor.tab_width
                         )
         else:
             #Execute the superclass method first, the same trick as in __init__ !
@@ -6876,8 +6949,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         self.main_form.last_focused_widget = self.parent
         data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
         # Hide the function wheel if it is shown
-        if self.main_form.view.function_wheel_overlay != None:
-            self.main_form.view.hide_function_wheel()
+        self.main_form.view.hide_all_overlay_widgets()
         # Hide the context menu if it is shown
         if self.context_menu != None:
             self.delete_context_menu()
@@ -6923,7 +6995,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     def wheelEvent(self, event):
         """Mouse scroll event of the custom editor"""
         key_modifiers = data.QApplication.keyboardModifiers()
-        if key_modifiers != data.PyQt.QtCore.Qt.ControlModifier:
+        if key_modifiers != data.Qt.ControlModifier:
             #Execute the superclass method
             super().wheelEvent(event)
         else:
@@ -6966,7 +7038,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     def set_first_visible_line(self, line_number):
         """Move the top of the viewing area to the selected line"""
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_SETFIRSTVISIBLELINE, 
+            data.QsciScintillaBase.SCI_SETFIRSTVISIBLELINE, 
             line_number
         )
 
@@ -7053,17 +7125,17 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
         self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.PyQt.Qsci.QsciScintillaBase.STYLE_DEFAULT, 
+            data.QsciScintillaBase.SCI_STYLESETBACK, 
+            data.QsciScintillaBase.STYLE_DEFAULT, 
             theme.Paper.Default
         )
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.PyQt.Qsci.QsciScintillaBase.STYLE_LINENUMBER, 
+            data.QsciScintillaBase.SCI_STYLESETBACK, 
+            data.QsciScintillaBase.STYLE_LINENUMBER, 
             theme.LineMargin.BackGround
         )
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_SETCARETFORE, 
+            data.QsciScintillaBase.SCI_SETCARETFORE, 
             theme.Cursor
         )
         self.setCaretLineBackgroundColor(
@@ -7349,9 +7421,10 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         Scintila indents line-by-line, which is very slow for a large amount of lines. Try indenting 20000 lines.
         This is a custom indentation function that indents all lines in one operation.
         """
+        tab_width = settings.Editor.tab_width
         # Check QScintilla's tab width
-        if self.tabWidth() != data.tab_width:
-            self.setTabWidth(data.tab_width)
+        if self.tabWidth() != tab_width:
+            self.setTabWidth(tab_width)
         # Indent according to selection
         selection = self.getSelection()
         if selection == (-1, -1, -1, -1):
@@ -7364,7 +7437,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 for i, ch in enumerate(line_text):
                     # Find the first none space character
                     if ch != " ":
-                        diff = (data.tab_width - (i % data.tab_width))
+                        diff = (tab_width - (i % tab_width))
                         adding_text = diff * " "
                         new_line = adding_text + line_text
                         self.line_list[line_number] = new_line
@@ -7372,14 +7445,14 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                         break
                 else:
                     # No text in the current line
-                    diff = (data.tab_width - (position % data.tab_width))
+                    diff = (tab_width - (position % tab_width))
                     adding_text = diff * " "
                     new_line = line_text[:position] + adding_text + line_text[position:]
                     self.line_list[line_number] = new_line
                     self.setCursorPosition(line_number-1, len(new_line))
             else:
                 # There is text before the cursor
-                diff = (data.tab_width - (position % data.tab_width))
+                diff = (tab_width - (position % tab_width))
                 adding_text = diff * " "
                 new_line = line_text[:position] + adding_text + line_text[position:]
                 self.line_list[line_number] = new_line
@@ -7396,7 +7469,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             # Get the selected line list
             lines = self.line_list[line_from:line_to]
             # Set the indentation width
-            indentation_string = data.tab_width * " "
+            indentation_string = tab_width * " "
             ## # Select the indentation function
             ## if sys.version_info.minor <= 2:
             ##     def nested_indent(line, indent_string):
@@ -7414,11 +7487,11 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 if line.strip() != " ":
                     if line.startswith(" "):
                         leading_spaces = len(line) - len(line.lstrip())
-                        diff = (data.tab_width - (leading_spaces % data.tab_width))
+                        diff = (tab_width - (leading_spaces % tab_width))
                         adding_text = diff * " "
                         line = adding_text + line
                     else:
-                        line = (data.tab_width * " ") + line
+                        line = (tab_width * " ") + line
                 return line
             # Indent the line list in place
             for i, line in enumerate(lines):
@@ -7457,9 +7530,10 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         Scintila unindents line-by-line, which is very slow for a large amount of lines. Try unindenting 20000 lines.
         This is a custom unindentation function that unindents all lines in one operation.
         """
+        tab_width = settings.Editor.tab_width
         #Check QScintilla's tab width
-        if self.tabWidth() != data.tab_width:
-            self.setTabWidth(data.tab_width)
+        if self.tabWidth() != tab_width:
+            self.setTabWidth(tab_width)
         #Unindent according to selection
         selection = self.getSelection()
         if selection == (-1, -1, -1, -1):
@@ -7471,9 +7545,9 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 return
             elif line_text.strip() == "":
                 #The line contains only spaces
-                diff = len(line_text) % data.tab_width
+                diff = len(line_text) % tab_width
                 if diff == 0:
-                    diff = data.tab_width
+                    diff = tab_width
                 new_length = len(line_text) - diff
                 self.line_list[line_number] = self.line_list[line_number][:new_length]
                 self.setCursorPosition(line_number-1, new_length)
@@ -7482,25 +7556,25 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                     #Do not indent, just move the cursor back
                     if position == 0:
                         return
-                    diff = position % data.tab_width
+                    diff = position % tab_width
                     if diff == 0:
-                        diff = data.tab_width
+                        diff = tab_width
                     self.setCursorPosition(line_number-1, position-diff)
                 elif line_text[:position].strip() == "":
                     #The line has spaces in the beginning
                     for i, ch in enumerate(line_text):
                         if ch != " ":
-                            diff = i % data.tab_width
+                            diff = i % tab_width
                             if diff == 0:
-                                diff = data.tab_width
+                                diff = tab_width
                             self.line_list[line_number] = self.line_list[line_number][diff:]
                             self.setCursorPosition(line_number-1, i-diff)
                             break
                 else:
                     #Move the cursor to the first none space character then repeat above code
-                    diff = position % data.tab_width
+                    diff = position % tab_width
                     if diff == 0:
-                        diff = data.tab_width
+                        diff = tab_width
                     self.setCursorPosition(line_number-1, position-diff)
         else:
             #MULTILINE UNINDENT
@@ -7515,16 +7589,16 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             lines = self.line_list[line_from:line_to]
             ## Remove the leading tab-width number of spaces in every line
             ## for i in range(0, len(lines)):
-            ##     for j in range(0, data.tab_width):
+            ##     for j in range(0, tab_width):
             ##         if lines[i].startswith(" "):
             ##             lines[i] = lines[i].replace(" ", "", 1)                   
             # Smart unindentation that unindents each line to the nearest tab column
             def unindent_func(line):
                 if line.startswith(" "):
                     leading_spaces = len(line) - len(line.lstrip())
-                    diff = leading_spaces % data.tab_width
+                    diff = leading_spaces % tab_width
                     if diff == 0:
-                        diff = data.tab_width
+                        diff = tab_width
                     line = line.replace(diff * " ", "", 1)
                 return line
             #Unindent the line list in place
@@ -7562,22 +7636,22 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     def text_to_list(self, input_text):
         """Split the input text into a list of lines according to the document EOL delimiter"""
         out_list = []
-        if self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolUnix:
+        if self.eolMode() == data.QsciScintilla.EolUnix:
             out_list = input_text.split("\n")
-        elif self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolWindows:
+        elif self.eolMode() == data.QsciScintilla.EolWindows:
             out_list = input_text.split("\r\n")
-        elif self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolMac:
+        elif self.eolMode() == data.QsciScintilla.EolMac:
             out_list = input_text.split("\r")
         return out_list
     
     def list_to_text(self, line_list):
         """Convert a list of lines to one string according to the document EOL delimiter"""
         out_text = ""
-        if self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolUnix:
+        if self.eolMode() == data.QsciScintilla.EolUnix:
             out_text = "\n".join(line_list)
-        elif self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolWindows:
+        elif self.eolMode() == data.QsciScintilla.EolWindows:
             out_text = "\r\n".join(line_list)
-        elif self.eolMode() == data.PyQt.Qsci.QsciScintilla.EolMac:
+        elif self.eolMode() == data.QsciScintilla.EolMac:
             out_text = "\r".join(line_list)
         return out_text
 
@@ -7960,7 +8034,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                         )
                     )
                 #Display the replacements in the REPL tab
-                if len(corrected_matches) < data.maximum_highlights:
+                if len(corrected_matches) < settings.Editor.maximum_highlights:
                     message = "{:s} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
@@ -7988,7 +8062,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 self.highlight_raw(corrected_matches)
             else:
                 #Display the replacements in the REPL tab
-                if len(matches) < data.maximum_highlights:
+                if len(matches) < settings.Editor.maximum_highlights:
                     message = "{:s} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
@@ -8125,7 +8199,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         INFO:   This is done using the scintilla "INDICATORS" described in the official
                 scintilla API (http://www.scintilla.org/ScintillaDoc.html#Indicators)
         """
-        scintilla_command = data.PyQt.Qsci.QsciScintillaBase.SCI_INDICATORFILLRANGE
+        scintilla_command = data.QsciScintillaBase.SCI_INDICATORFILLRANGE
         for highlight in highlight_list:
             start   = highlight[1]
             length  = highlight[3] - highlight[1]
@@ -8167,7 +8241,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                        fore_color):
         """Set the indicator settings"""
         self.indicatorDefine(
-            data.PyQt.Qsci.QsciScintillaBase.INDIC_ROUNDBOX,
+            data.QsciScintillaBase.INDIC_ROUNDBOX,
             indicator
         )
         self.setIndicatorForegroundColor(
@@ -8175,7 +8249,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             indicator
         )
         self.SendScintilla(
-            data.PyQt.Qsci.QsciScintillaBase.SCI_SETINDICATORCURRENT, 
+            data.QsciScintillaBase.SCI_SETINDICATORCURRENT, 
             indicator
         )
 
@@ -8183,21 +8257,21 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         """Set the appearance of the highlight indicator (the default indicator is 0)"""
         self._set_indicator(
             self.HIGHLIGHT_INDICATOR, 
-            data.PyQt.QtGui.QColor(0, 255, 0, 80)
+            data.QColor(0, 255, 0, 80)
         )
 
     def set_indicator_replace(self):
         """Set the appearance of the highlight indicator"""
         self._set_indicator(
             self.REPLACE_INDICATOR, 
-            data.PyQt.QtGui.QColor(50, 180, 255, 80)
+            data.QColor(50, 180, 255, 80)
         )
 
     def set_indicator_find(self):
         """Set the appearance of the highlight indicator"""
         self._set_indicator(
             self.FIND_INDICATOR, 
-            data.PyQt.QtGui.QColor(255, 180, 50, 100)
+            data.QColor(255, 180, 50, 100)
         )
 
 
@@ -8241,7 +8315,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             if temp_save_name == "":
                 return
             #Replace back-slashes to forward-slashes on Windows
-            if platform.system() == "Windows":
+            if data.platform == "Windows":
                 temp_save_name = temp_save_name.replace("\\", "/")
             #Save the chosen file name to the document "save_name" attribute
             self.save_name = temp_save_name
@@ -8322,7 +8396,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         # Save the current file type to a string
         self.current_file_type = file_type.upper()
         # Set the lexer default font family
-        lexer.setDefaultFont(self.default_font)
+        lexer.setDefaultFont(settings.Editor.font)
         # Set the comment options
         result = lexers.get_comment_style_for_lexer(lexer)
         lexer.open_close_comment_style = result[0]
@@ -8332,13 +8406,13 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         lexer.setParent(self)
         self.setLexer(lexer)
         # Reset the brace matching color
-        self.setMatchedBraceBackgroundColor(self.brace_color)
+        self.setMatchedBraceBackgroundColor(settings.Editor.brace_color)
         # Change the font style of comments so that they are the same as the default scintilla text
         # This is done using the low-level API function "SendScintilla" that is documented here: http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciScintillaBase.html
         # With it you can invoke C functions documented here: http://www.scintilla.org/ScintillaDoc.html
-        self.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_STYLESETFONT, 1, self.default_comment_font)
+        self.SendScintilla(data.QsciScintillaBase.SCI_STYLESETFONT, 1, settings.Editor.comment_font)
         # Enable code folding for the file type
-        self.setFolding(data.PyQt.Qsci.QsciScintilla.PlainFoldStyle)
+        self.setFolding(data.QsciScintilla.PlainFoldStyle)
         # Set all fonts in the current lexer to the default style
         # and set the keyword styles to bold
         if (isinstance(lexer, lexers.Ada) or
@@ -8355,11 +8429,11 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
 
     def clear_editor(self):
         """Clear the text from the scintilla document"""
-        self.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_CLEARALL)
+        self.SendScintilla(data.QsciScintillaBase.SCI_CLEARALL)
     
     def tabs_to_spaces(self):
         """Convert all tab(\t) characters to spaces"""
-        spaces = " " * data.tab_width
+        spaces = " " * settings.Editor.tab_width
         self.setText(self.text().replace("\t", spaces))
 
     def undo_all(self):
@@ -8381,26 +8455,24 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
     def edge_marker_show(self):
         """Show the marker at the specified column number"""
         #Set the marker color to blue
-        marker_color = data.PyQt.QtGui.QColor(180, 180, 180, alpha=255)
+        marker_color = settings.Editor.edge_marker_color
         #Set the column number where the marker will be shown
-        marker_column = data.edge_marker_column 
+        marker_column = settings.Editor.edge_marker_column 
         #Set the marker options
         self.setEdgeColor(marker_color)
         self.setEdgeColumn(marker_column)
-        self.setEdgeMode(data.PyQt.Qsci.QsciScintilla.EdgeLine)
+        self.setEdgeMode(data.QsciScintilla.EdgeLine)
 
     def edge_marker_hide(self):
         """Hide the column marker"""
-        self.setEdgeMode(data.PyQt.Qsci.QsciScintilla.EdgeNone)
+        self.setEdgeMode(data.QsciScintilla.EdgeNone)
     
     def edge_marker_toggle(self):
         """Toggle edge marker display"""
-        if self.edge_marker_state == False:
+        if self.edgeMode() == data.QsciScintilla.EdgeNone:
             self.edge_marker_show()
-            self.edge_marker_state =True
         else:
             self.edge_marker_hide()
-            self.edge_marker_state =False
     
     def reload_file(self):
         """Reload current document from disk"""
@@ -8447,31 +8519,31 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         """ 
         Toggle word wrap on/off.
         Wrap modes:
-            data.PyQt.Qsci.QsciScintilla.WrapNone - Lines are not wrapped.
-            data.PyQt.Qsci.QsciScintilla.WrapWord - Lines are wrapped at word boundaries.
-            data.PyQt.Qsci.QsciScintilla.WrapCharacter - Lines are wrapped at character boundaries.
-            data.PyQt.Qsci.QsciScintilla.WrapWhitespace - Lines are wrapped at whitespace boundaries. 
+            data.QsciScintilla.WrapNone - Lines are not wrapped.
+            data.QsciScintilla.WrapWord - Lines are wrapped at word boundaries.
+            data.QsciScintilla.WrapCharacter - Lines are wrapped at character boundaries.
+            data.QsciScintilla.WrapWhitespace - Lines are wrapped at whitespace boundaries. 
         Wrap visual flags:
-            data.PyQt.Qsci.QsciScintilla.WrapFlagNone - No wrap flag is displayed.
-            data.PyQt.Qsci.QsciScintilla.WrapFlagByText - A wrap flag is displayed by the text.
-            data.PyQt.Qsci.QsciScintilla.WrapFlagByBorder - A wrap flag is displayed by the border.
-            data.PyQt.Qsci.QsciScintilla.WrapFlagInMargin - A wrap flag is displayed in the line number margin. 
+            data.QsciScintilla.WrapFlagNone - No wrap flag is displayed.
+            data.QsciScintilla.WrapFlagByText - A wrap flag is displayed by the text.
+            data.QsciScintilla.WrapFlagByBorder - A wrap flag is displayed by the border.
+            data.QsciScintilla.WrapFlagInMargin - A wrap flag is displayed in the line number margin. 
         Wrap indentation:
-            data.PyQt.Qsci.QsciScintilla.WrapIndentFixed - Wrapped sub-lines are indented by the amount set by setWrapVisualFlags().
-            data.PyQt.Qsci.QsciScintilla.WrapIndentSame - Wrapped sub-lines are indented by the same amount as the first sub-line.
-            data.PyQt.Qsci.QsciScintilla.WrapIndentIndented - Wrapped sub-lines are indented by the same amount as the first sub-line plus one more level of indentation. 
+            data.QsciScintilla.WrapIndentFixed - Wrapped sub-lines are indented by the amount set by setWrapVisualFlags().
+            data.QsciScintilla.WrapIndentSame - Wrapped sub-lines are indented by the same amount as the first sub-line.
+            data.QsciScintilla.WrapIndentIndented - Wrapped sub-lines are indented by the same amount as the first sub-line plus one more level of indentation. 
         """
-        if self.wrapMode() == data.PyQt.Qsci.QsciScintilla.WrapNone:
-            self.setWrapMode(data.PyQt.Qsci.QsciScintilla.WrapWord)
-            self.setWrapVisualFlags(data.PyQt.Qsci.QsciScintilla.WrapFlagByText)
-            self.setWrapIndentMode(data.PyQt.Qsci.QsciScintilla.WrapIndentSame)
+        if self.wrapMode() == data.QsciScintilla.WrapNone:
+            self.setWrapMode(data.QsciScintilla.WrapWord)
+            self.setWrapVisualFlags(data.QsciScintilla.WrapFlagByText)
+            self.setWrapIndentMode(data.QsciScintilla.WrapIndentSame)
             self.main_form.display.repl_display_message(
                 "Line wrapping ON", 
                 message_type=data.MessageType.WARNING
             )
         else:
-            self.setWrapMode(data.PyQt.Qsci.QsciScintilla.WrapNone)
-            self.setWrapVisualFlags(data.PyQt.Qsci.QsciScintilla.WrapFlagNone)
+            self.setWrapMode(data.QsciScintilla.WrapNone)
+            self.setWrapVisualFlags(data.QsciScintilla.WrapFlagNone)
             self.main_form.display.repl_display_message(
                 "Line wrapping OFF", 
                 message_type=data.MessageType.WARNING
@@ -8530,13 +8602,13 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         #Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         #Set the source from where the autocompletions will be fetched
-        self.setAutoCompletionSource(data.PyQt.Qsci.QsciScintilla.AcsDocument)
+        self.setAutoCompletionSource(data.QsciScintilla.AcsDocument)
         #Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
     
     def disable_autocompletions(self):
         """Disable the CustomEditor autocompletions"""
-        self.setAutoCompletionSource(data.PyQt.Qsci.QsciScintilla.AcsNone)
+        self.setAutoCompletionSource(data.QsciScintilla.AcsNone)
     
     def toggle_autocompletions(self):
         """Enable/disable autocompletions for the CustomEditor"""
@@ -8546,7 +8618,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         else:
             document_name = os.path.basename(self.save_name)
         #Check the autocompletion source
-        if self.autoCompletionSource() == data.PyQt.Qsci.QsciScintilla.AcsDocument:
+        if self.autoCompletionSource() == data.QsciScintilla.AcsDocument:
             self.disable_autocompletions()
             message = "Autocompletions DISABLED in {:s}".format(document_name)
             self.main_form.display.repl_display_message(
@@ -8615,121 +8687,127 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
         """
         parent = None
         #GNU/Linux and Windows bindings copied from Scintila source 'KeyMap.cxx'
-        bindings = {
-            "Down" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDOWN,
-            "Down+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDOWNEXTEND,
-            "Down+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINESCROLLDOWN,
-            "Down+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDOWNRECTEXTEND,
-            "Up" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEUP,
-            "Up+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEUPEXTEND,
-            "Up+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINESCROLLUP,
-            "Up+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEUPRECTEXTEND,
-            "[+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_PARAUP,
-            "[+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PARAUPEXTEND,
-            "]+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_PARADOWN,
-            "]+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PARADOWNEXTEND,
-            "Left" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARLEFT,
-            "Left+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARLEFTEXTEND,
-            "Left+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDLEFT,
-            "Left+Shift+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDLEFTEXTEND,
-            "Left+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARLEFTRECTEXTEND,
-            "Right" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARRIGHT,
-            "Right+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARRIGHTEXTEND,
-            "Right+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDRIGHT,
-            "Right+Shift+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDRIGHTEXTEND,
-            "Right+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CHARRIGHTRECTEXTEND,
-            "/+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDPARTLEFT,
-            "/+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDPARTLEFTEXTEND,
-            "\\+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDPARTRIGHT,
-            "\\+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_WORDPARTRIGHTEXTEND,
-            "Home" : data.PyQt.Qsci.QsciScintillaBase.SCI_VCHOME,
-            "Home+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_VCHOMEEXTEND,
-            data.go_to_start_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTART,
-            data.select_to_start_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
-            "Home+Alt" : data.PyQt.Qsci.QsciScintillaBase.SCI_HOMEDISPLAY,
-            "Home+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_VCHOMERECTEXTEND,
-            "End" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEEND,
-            "End+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEENDEXTEND,
-            data.go_to_end_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTEND,
-            data.select_to_end_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
-            "End+Alt" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEENDDISPLAY,
-            "End+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEENDRECTEXTEND,
-            data.scroll_up_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUP,
-            data.select_page_up_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUPEXTEND,
-            "PageUp+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEUPRECTEXTEND,
-            data.scroll_down_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWN,
-            data.select_page_down_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
-            "PageDown+Alt+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PAGEDOWNRECTEXTEND,
-            "Delete" : data.PyQt.Qsci.QsciScintillaBase.SCI_CLEAR,
-            "Delete+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_CUT,
-            data.delete_end_of_word_keys: data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDRIGHT,
-            data.delete_end_of_line_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINERIGHT,
-            "Insert" : data.PyQt.Qsci.QsciScintillaBase.SCI_EDITTOGGLEOVERTYPE,
-            "Insert+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_PASTE,
-            "Insert+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_COPY,
-            "Escape" : data.PyQt.Qsci.QsciScintillaBase.SCI_CANCEL,
-            "Backspace" : data.PyQt.Qsci.QsciScintillaBase.SCI_DELETEBACK,
-            "Backspace+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_DELETEBACK,
-            data.delete_start_of_word_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DELWORDLEFT,
-            "Backspace+Alt" : data.PyQt.Qsci.QsciScintillaBase.SCI_UNDO,
-            data.delete_start_of_line_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_DELLINELEFT,
-            data.undo_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_UNDO,
-            data.redo_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_REDO,
-            data.cut_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_CUT,
-            data.copy_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_COPY,
-            data.paste_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_PASTE,
-            data.select_all_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_SELECTALL,
-            data.indent_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_TAB,
-            data.unindent_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_BACKTAB,
-            "Return" : data.PyQt.Qsci.QsciScintillaBase.SCI_NEWLINE,
-            "Return+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_NEWLINE,
-            "Add+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_ZOOMIN,
-            "Subtract+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_ZOOMOUT,
-            "Divide+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_SETZOOM,
-            data.line_cut_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_LINECUT,
-            data.line_delete_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_LINEDELETE,
-            data.line_copy_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_LINECOPY,
-            data.line_transpose_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_LINETRANSPOSE,
-            data.line_selection_duplicate_keys : data.PyQt.Qsci.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
-            "U+Ctrl" : data.PyQt.Qsci.QsciScintillaBase.SCI_LOWERCASE,
-            "U+Ctrl+Shift" : data.PyQt.Qsci.QsciScintillaBase.SCI_UPPERCASE,
-        }
-        scintilla_keys = {
-            "down" : data.PyQt.Qsci.QsciScintillaBase.SCK_DOWN,
-            "up" : data.PyQt.Qsci.QsciScintillaBase.SCK_UP,
-            "left" : data.PyQt.Qsci.QsciScintillaBase.SCK_LEFT,
-            "right" : data.PyQt.Qsci.QsciScintillaBase.SCK_RIGHT,
-            "home" : data.PyQt.Qsci.QsciScintillaBase.SCK_HOME,
-            "end" : data.PyQt.Qsci.QsciScintillaBase.SCK_END,
-            "pageup" : data.PyQt.Qsci.QsciScintillaBase.SCK_PRIOR,
-            "pagedown" : data.PyQt.Qsci.QsciScintillaBase.SCK_NEXT,
-            "delete" : data.PyQt.Qsci.QsciScintillaBase.SCK_DELETE,
-            "insert" : data.PyQt.Qsci.QsciScintillaBase.SCK_INSERT,
-            "escape" : data.PyQt.Qsci.QsciScintillaBase.SCK_ESCAPE,
-            "backspace" : data.PyQt.Qsci.QsciScintillaBase.SCK_BACK,
-            "tab" : data.PyQt.Qsci.QsciScintillaBase.SCK_TAB,
-            "return" : data.PyQt.Qsci.QsciScintillaBase.SCK_RETURN,
-            "add" : data.PyQt.Qsci.QsciScintillaBase.SCK_ADD,
-            "subtract" : data.PyQt.Qsci.QsciScintillaBase.SCK_SUBTRACT,
-            "divide" : data.PyQt.Qsci.QsciScintillaBase.SCK_DIVIDE,
-            "win" : data.PyQt.Qsci.QsciScintillaBase.SCK_WIN,
-            "rwin" : data.PyQt.Qsci.QsciScintillaBase.SCK_RWIN,
-            "menu" : data.PyQt.Qsci.QsciScintillaBase.SCK_MENU,
-        }
-        valid_modifiers = [
-            data.PyQt.Qsci.QsciScintillaBase.SCMOD_NORM, 
-            data.PyQt.Qsci.QsciScintillaBase.SCMOD_SHIFT, 
-            data.PyQt.Qsci.QsciScintillaBase.SCMOD_CTRL, 
-            data.PyQt.Qsci.QsciScintillaBase.SCMOD_ALT, 
-            data.PyQt.Qsci.QsciScintillaBase.SCMOD_SUPER, 
-            data.PyQt.Qsci.QsciScintillaBase.SCMOD_META
-        ]
+        bindings = None
+        scintilla_keys = None
+        valid_modifiers = None
+        
+        def init_bindings(self):
+            self.bindings = {
+                "Down" : data.QsciScintillaBase.SCI_LINEDOWN,
+                "Down+Shift" : data.QsciScintillaBase.SCI_LINEDOWNEXTEND,
+                "Down+Ctrl" : data.QsciScintillaBase.SCI_LINESCROLLDOWN,
+                "Down+Alt+Shift" : data.QsciScintillaBase.SCI_LINEDOWNRECTEXTEND,
+                "Up" : data.QsciScintillaBase.SCI_LINEUP,
+                "Up+Shift" : data.QsciScintillaBase.SCI_LINEUPEXTEND,
+                "Up+Ctrl" : data.QsciScintillaBase.SCI_LINESCROLLUP,
+                "Up+Alt+Shift" : data.QsciScintillaBase.SCI_LINEUPRECTEXTEND,
+                "[+Ctrl" : data.QsciScintillaBase.SCI_PARAUP,
+                "[+Ctrl+Shift" : data.QsciScintillaBase.SCI_PARAUPEXTEND,
+                "]+Ctrl" : data.QsciScintillaBase.SCI_PARADOWN,
+                "]+Ctrl+Shift" : data.QsciScintillaBase.SCI_PARADOWNEXTEND,
+                "Left" : data.QsciScintillaBase.SCI_CHARLEFT,
+                "Left+Shift" : data.QsciScintillaBase.SCI_CHARLEFTEXTEND,
+                "Left+Ctrl" : data.QsciScintillaBase.SCI_WORDLEFT,
+                "Left+Shift+Ctrl" : data.QsciScintillaBase.SCI_WORDLEFTEXTEND,
+                "Left+Alt+Shift" : data.QsciScintillaBase.SCI_CHARLEFTRECTEXTEND,
+                "Right" : data.QsciScintillaBase.SCI_CHARRIGHT,
+                "Right+Shift" : data.QsciScintillaBase.SCI_CHARRIGHTEXTEND,
+                "Right+Ctrl" : data.QsciScintillaBase.SCI_WORDRIGHT,
+                "Right+Shift+Ctrl" : data.QsciScintillaBase.SCI_WORDRIGHTEXTEND,
+                "Right+Alt+Shift" : data.QsciScintillaBase.SCI_CHARRIGHTRECTEXTEND,
+                "/+Ctrl" : data.QsciScintillaBase.SCI_WORDPARTLEFT,
+                "/+Ctrl+Shift" : data.QsciScintillaBase.SCI_WORDPARTLEFTEXTEND,
+                "\\+Ctrl" : data.QsciScintillaBase.SCI_WORDPARTRIGHT,
+                "\\+Ctrl+Shift" : data.QsciScintillaBase.SCI_WORDPARTRIGHTEXTEND,
+                "Home" : data.QsciScintillaBase.SCI_VCHOME,
+                "Home+Shift" : data.QsciScintillaBase.SCI_VCHOMEEXTEND,
+                settings.Editor.Keys.go_to_start : data.QsciScintillaBase.SCI_DOCUMENTSTART,
+                settings.Editor.Keys.select_to_start : data.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
+                "Home+Alt" : data.QsciScintillaBase.SCI_HOMEDISPLAY,
+                "Home+Alt+Shift" : data.QsciScintillaBase.SCI_VCHOMERECTEXTEND,
+                "End" : data.QsciScintillaBase.SCI_LINEEND,
+                "End+Shift" : data.QsciScintillaBase.SCI_LINEENDEXTEND,
+                settings.Editor.Keys.go_to_end : data.QsciScintillaBase.SCI_DOCUMENTEND,
+                settings.Editor.Keys.select_to_end : data.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
+                "End+Alt" : data.QsciScintillaBase.SCI_LINEENDDISPLAY,
+                "End+Alt+Shift" : data.QsciScintillaBase.SCI_LINEENDRECTEXTEND,
+                settings.Editor.Keys.scroll_up : data.QsciScintillaBase.SCI_PAGEUP,
+                settings.Editor.Keys.select_page_up : data.QsciScintillaBase.SCI_PAGEUPEXTEND,
+                "PageUp+Alt+Shift" : data.QsciScintillaBase.SCI_PAGEUPRECTEXTEND,
+                settings.Editor.Keys.scroll_down : data.QsciScintillaBase.SCI_PAGEDOWN,
+                settings.Editor.Keys.select_page_down : data.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
+                "PageDown+Alt+Shift" : data.QsciScintillaBase.SCI_PAGEDOWNRECTEXTEND,
+                "Delete" : data.QsciScintillaBase.SCI_CLEAR,
+                "Delete+Shift" : data.QsciScintillaBase.SCI_CUT,
+                settings.Editor.Keys.delete_end_of_word: data.QsciScintillaBase.SCI_DELWORDRIGHT,
+                settings.Editor.Keys.delete_end_of_line : data.QsciScintillaBase.SCI_DELLINERIGHT,
+                "Insert" : data.QsciScintillaBase.SCI_EDITTOGGLEOVERTYPE,
+                "Insert+Shift" : data.QsciScintillaBase.SCI_PASTE,
+                "Insert+Ctrl" : data.QsciScintillaBase.SCI_COPY,
+                "Escape" : data.QsciScintillaBase.SCI_CANCEL,
+                "Backspace" : data.QsciScintillaBase.SCI_DELETEBACK,
+                "Backspace+Shift" : data.QsciScintillaBase.SCI_DELETEBACK,
+                settings.Editor.Keys.delete_start_of_word : data.QsciScintillaBase.SCI_DELWORDLEFT,
+                "Backspace+Alt" : data.QsciScintillaBase.SCI_UNDO,
+                settings.Editor.Keys.delete_start_of_line : data.QsciScintillaBase.SCI_DELLINELEFT,
+                settings.Editor.Keys.undo : data.QsciScintillaBase.SCI_UNDO,
+                settings.Editor.Keys.redo : data.QsciScintillaBase.SCI_REDO,
+                settings.Editor.Keys.cut : data.QsciScintillaBase.SCI_CUT,
+                settings.Editor.Keys.copy : data.QsciScintillaBase.SCI_COPY,
+                settings.Editor.Keys.paste : data.QsciScintillaBase.SCI_PASTE,
+                settings.Editor.Keys.select_all : data.QsciScintillaBase.SCI_SELECTALL,
+                settings.Editor.Keys.indent : data.QsciScintillaBase.SCI_TAB,
+                settings.Editor.Keys.unindent : data.QsciScintillaBase.SCI_BACKTAB,
+                "Return" : data.QsciScintillaBase.SCI_NEWLINE,
+                "Return+Shift" : data.QsciScintillaBase.SCI_NEWLINE,
+                "Add+Ctrl" : data.QsciScintillaBase.SCI_ZOOMIN,
+                "Subtract+Ctrl" : data.QsciScintillaBase.SCI_ZOOMOUT,
+                "Divide+Ctrl" : data.QsciScintillaBase.SCI_SETZOOM,
+                settings.Editor.Keys.line_cut : data.QsciScintillaBase.SCI_LINECUT,
+                settings.Editor.Keys.line_delete : data.QsciScintillaBase.SCI_LINEDELETE,
+                settings.Editor.Keys.line_copy : data.QsciScintillaBase.SCI_LINECOPY,
+                settings.Editor.Keys.line_transpose : data.QsciScintillaBase.SCI_LINETRANSPOSE,
+                settings.Editor.Keys.line_selection_duplicate : data.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
+                "U+Ctrl" : data.QsciScintillaBase.SCI_LOWERCASE,
+                "U+Ctrl+Shift" : data.QsciScintillaBase.SCI_UPPERCASE,
+            }
+            self.scintilla_keys = {
+                "down" : data.QsciScintillaBase.SCK_DOWN,
+                "up" : data.QsciScintillaBase.SCK_UP,
+                "left" : data.QsciScintillaBase.SCK_LEFT,
+                "right" : data.QsciScintillaBase.SCK_RIGHT,
+                "home" : data.QsciScintillaBase.SCK_HOME,
+                "end" : data.QsciScintillaBase.SCK_END,
+                "pageup" : data.QsciScintillaBase.SCK_PRIOR,
+                "pagedown" : data.QsciScintillaBase.SCK_NEXT,
+                "delete" : data.QsciScintillaBase.SCK_DELETE,
+                "insert" : data.QsciScintillaBase.SCK_INSERT,
+                "escape" : data.QsciScintillaBase.SCK_ESCAPE,
+                "backspace" : data.QsciScintillaBase.SCK_BACK,
+                "tab" : data.QsciScintillaBase.SCK_TAB,
+                "return" : data.QsciScintillaBase.SCK_RETURN,
+                "add" : data.QsciScintillaBase.SCK_ADD,
+                "subtract" : data.QsciScintillaBase.SCK_SUBTRACT,
+                "divide" : data.QsciScintillaBase.SCK_DIVIDE,
+                "win" : data.QsciScintillaBase.SCK_WIN,
+                "rwin" : data.QsciScintillaBase.SCK_RWIN,
+                "menu" : data.QsciScintillaBase.SCK_MENU,
+            }
+            self.valid_modifiers = [
+                data.QsciScintillaBase.SCMOD_NORM, 
+                data.QsciScintillaBase.SCMOD_SHIFT, 
+                data.QsciScintillaBase.SCMOD_CTRL, 
+                data.QsciScintillaBase.SCMOD_ALT, 
+                data.QsciScintillaBase.SCMOD_SUPER, 
+                data.QsciScintillaBase.SCMOD_META
+            ]
         
         def __init__(self, parent):
             """Initialization of the Keyboard object instance"""
             #Get the reference to the MainWindow parent object instance
             self.parent = parent
             #Assign keyboard commands
+            self.init_bindings()
             self.clear_all_keys()
             bindings = self.bindings
             set_key_combination = self.set_key_combination
@@ -8748,16 +8826,16 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             modifiers = []
             key_combination = 0
             if "ctrl" in split_keys:
-                modifiers.append(data.PyQt.Qsci.QsciScintillaBase.SCMOD_CTRL)
+                modifiers.append(data.QsciScintillaBase.SCMOD_CTRL)
                 split_keys.remove("ctrl")
             if "alt" in split_keys:
-                modifiers.append(data.PyQt.Qsci.QsciScintillaBase.SCMOD_ALT)
+                modifiers.append(data.QsciScintillaBase.SCMOD_ALT)
                 split_keys.remove("alt")
             if "shift" in split_keys:
-                modifiers.append(data.PyQt.Qsci.QsciScintillaBase.SCMOD_SHIFT)
+                modifiers.append(data.QsciScintillaBase.SCMOD_SHIFT)
                 split_keys.remove("shift")
             if "meta" in split_keys:
-                modifiers.append(data.PyQt.Qsci.QsciScintillaBase.SCMOD_META)
+                modifiers.append(data.QsciScintillaBase.SCMOD_META)
                 split_keys.remove("meta")
             base_key = split_keys[0]
             if len(split_keys) == 0:
@@ -8800,7 +8878,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             Clear all mappings from the internal Scintilla mapping table
             """
             self.parent.SendScintilla(
-                data.PyQt.Qsci.QsciScintillaBase.SCI_CLEARALLCMDKEYS
+                data.QsciScintillaBase.SCI_CLEARALLCMDKEYS
             )
         
         def clear_key_combination(self, key, modifier=None):
@@ -8808,8 +8886,8 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
             Clear the key combination from the internal Scintilla Mapping
             Raw example of clearing the CTRL+X (Cut text function) combination:
                 cmain.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_CLEARCMDKEY, 
-                    ord('X') + (data.PyQt.Qsci.QsciScintillaBase.SCMOD_CTRL << 16)
+                    data.QsciScintillaBase.SCI_CLEARCMDKEY, 
+                    ord('X') + (data.QsciScintillaBase.SCMOD_CTRL << 16)
                 )
             """
             try:
@@ -8821,7 +8899,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 )
                 return
             self.parent.SendScintilla(
-                data.PyQt.Qsci.QsciScintillaBase.SCI_CLEARCMDKEY, 
+                data.QsciScintillaBase.SCI_CLEARCMDKEY, 
                 key_combination
             )
         
@@ -8834,9 +8912,9 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 modifier - Ctrl, Alt, ...
             Raw example of assigning CTRL+D to the Cut function:
                 cmain.SendScintilla(
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
-                    ord('D') + (data.PyQt.Qsci.QsciScintillaBase.SCMOD_CTRL << 16),
-                    data.PyQt.Qsci.QsciScintillaBase.SCI_CUT
+                    data.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
+                    ord('D') + (data.QsciScintillaBase.SCMOD_CTRL << 16),
+                    data.QsciScintillaBase.SCI_CUT
                 )
             """
             try:
@@ -8848,7 +8926,7 @@ class CustomEditor(data.PyQt.Qsci.QsciScintilla):
                 )
                 return
             self.parent.SendScintilla(
-                data.PyQt.Qsci.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
+                data.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
                 key_combination,
                 command
             )
@@ -8941,8 +9019,8 @@ class ReplLineEdit(data.QLineEdit):
         elif pressed_key == 16777219:
             #A new character has been typed, reset the input buffer counter
             self._input_buffer["count"] = 0
-        elif (pressed_key == data.PyQt.QtCore.Qt.Key_Enter or
-                pressed_key == data.PyQt.QtCore.Qt.Key_Return):
+        elif (pressed_key == data.Qt.Key_Enter or
+                pressed_key == data.Qt.Key_Return):
             if self.selectedText() != "":
                 self.setCursorPosition(len(self.text()))
             else:
@@ -9166,7 +9244,7 @@ class ReplLineEdit(data.QLineEdit):
     """
     def event(self, event):
         """Rereferenced/overloaded main QWidget event, that is executed before all other events of the widget"""
-        if (event.type() == data.PyQt.QtCore.QEvent.KeyPress) and (event.key() == data.PyQt.QtCore.Qt.Key_Tab):
+        if (event.type() == data.QEvent.KeyPress) and (event.key() == data.Qt.Key_Tab):
             self._cycle_autocompletion()
             return True
         return data.QLineEdit.event(self, event)
@@ -9204,8 +9282,7 @@ class ReplLineEdit(data.QLineEdit):
         self.parent.last_focused_widget = None
         data.print_log("Reset last focused widget attribute")
         #Hide the function wheel if it is shown
-        if self.parent.view.function_wheel_overlay != None:
-            self.parent.view.hide_function_wheel()
+        self.parent.view.hide_all_overlay_widgets()
         #Ignore the event
         event.ignore()
         #Return the focus event
@@ -9236,16 +9313,16 @@ class ReplLineEdit(data.QLineEdit):
             delta = wheel_event.angleDelta().y()
         if delta < 0:
             data.print_log("REPL helper mouse rotate down event")
-            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.Qt.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.decrease_text_size()
         else:
             data.print_log("REPL helper mouse rotate up event")
-            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.Qt.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.increase_text_size()
         #Handle the event
-        if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
+        if key_modifiers == data.Qt.ControlModifier:
             #Accept the event, the event will not be propageted(sent forward) to the parent
             wheel_event.accept()
         else:
@@ -9259,7 +9336,7 @@ class ReplLineEdit(data.QLineEdit):
             return
         new_font.setPointSize(new_font.pointSize() + 1)
         self.setFont(new_font)
-        new_font_metric = data.PyQt.QtGui.QFontMetrics(new_font)
+        new_font_metric = data.QFontMetrics(new_font)
         self.parent.view.main_relation = new_font_metric.height() + 48
         self.parent.view.refresh_main_splitter()
     
@@ -9270,7 +9347,7 @@ class ReplLineEdit(data.QLineEdit):
             return
         new_font.setPointSize(new_font.pointSize() - 1)
         self.setFont(new_font)
-        new_font_metric = data.PyQt.QtGui.QFontMetrics(new_font)
+        new_font_metric = data.QFontMetrics(new_font)
         self.parent.view.main_relation = new_font_metric.height() + 48
         self.parent.view.refresh_main_splitter()
     
@@ -9363,7 +9440,7 @@ class ReplLineEdit(data.QLineEdit):
 Scintilla class for inputting more than one line into the REPL
 -----------------------------------------------------
 """
-class ReplHelper(data.PyQt.Qsci.QsciScintilla):
+class ReplHelper(data.QsciScintilla):
     """
     REPL scintilla box for inputting multiple lines into the REPL.
     MUST BE PAIRED WITH A ReplLineEdit OBJECT!
@@ -9371,13 +9448,11 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
     #Class variables
     parent          = None
     repl_master     = None
-    #The scintilla api object(data.PyQt.Qsci.QsciAPIs) must be an instace variable, or the underlying c++
+    #The scintilla api object(data.QsciAPIs) must be an instace variable, or the underlying c++
     #mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
     api             = None
     #Attribute for indicating if the REPL helper is indicated
     indicated       = False
-    #Default font
-    default_font    = data.PyQt.QtGui.QFont('Courier', 10)
     # Reference to the custom context menu
     context_menu    = None
     #LineList object copied from the CustomEditor object
@@ -9394,8 +9469,8 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         #Save the reference to the REPL object
         self.repl_master = repl_master
         #Hide the horizontal and show the vertical scrollbar
-        self.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
-        self.SendScintilla(data.PyQt.Qsci.QsciScintillaBase.SCI_SETHSCROLLBAR, False)
+        self.SendScintilla(data.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
+        self.SendScintilla(data.QsciScintillaBase.SCI_SETHSCROLLBAR, False)
         #Hide the margin
         self.setMarginWidth(1, 0)
         #Autoindentation enabled when using "Enter" to indent to the same level as the previous line
@@ -9403,12 +9478,12 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         #Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         #Set tab space indentation width
-        self.setTabWidth(data.tab_width)
+        self.setTabWidth(settings.Editor.tab_width)
         #Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         #Set brace matching
-        self.setBraceMatching(data.PyQt.Qsci.QsciScintilla.SloppyBraceMatch)
-        self.setMatchedBraceBackgroundColor(data.PyQt.QtGui.QColor(255, 153, 0))
+        self.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
+        self.setMatchedBraceBackgroundColor(data.QColor(255, 153, 0))
         #Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         #Set backspace to delete by tab widths
@@ -9416,9 +9491,9 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         #Disable drops
         self.setAcceptDrops(False)
         #Set line endings to be Unix style ("\n")
-        self.setEolMode(data.default_eol)
+        self.setEolMode(settings.Editor.end_of_line_mode)
         #Set the initial zoom factor
-        self.zoomTo(data.zoom_factor)
+        self.zoomTo(settings.Editor.zoom_factor)
         """
         Functionality copied from the CustomEditor to copy some of 
         the neede editing functionality like commenting, ...
@@ -9458,8 +9533,8 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         accept_keypress = False
         #Get key modifiers and check if the Ctrl+Enter was pressed
         key_modifiers = data.QApplication.keyboardModifiers()
-        if ((key_modifiers == data.PyQt.QtCore.Qt.ControlModifier and pressed_key == data.PyQt.QtCore.Qt.Key_Return) or
-            pressed_key == data.PyQt.QtCore.Qt.Key_Enter):
+        if ((key_modifiers == data.Qt.ControlModifier and pressed_key == data.Qt.Key_Return) or
+            pressed_key == data.Qt.Key_Enter):
                 #ON MY KEYBOARD Ctrl+Enter CANNOT BE DETECTED!
                 #Qt.ControlModifier  MODIFIER SHOWS FALSE WHEN USING data.QApplication.keyboardModifiers() + Enter
                 self.repl_master.external_eval_request(self.text(), self)
@@ -9500,11 +9575,10 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         # Set focus to the clicked helper
         self.setFocus()
         # Hide the function wheel if it is shown
-        if self.parent.view.function_wheel_overlay != None:
-            self.parent.view.hide_function_wheel()
-            # Need to set focus to self or the repl helper doesn't get focused,
-            # don't know why?
-            self.setFocus()
+        self.parent.view.hide_all_overlay_widgets()
+        # Need to set focus to self or the repl helper doesn't get focused,
+        # don't know why?
+        self.setFocus()
         # Reset the click&drag context menu action
         components.ActionFilter.clear_action()
     
@@ -9524,16 +9598,16 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
             delta = wheel_event.angleDelta().y()
         if delta < 0:
             data.print_log("REPL helper mouse rotate down event")
-            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.Qt.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.zoomOut()
         else:
             data.print_log("REPL helper mouse rotate up event")
-            if key_modifiers == data.PyQt.QtCore.Qt.ControlModifier:
+            if key_modifiers == data.Qt.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.zoomIn()
         #Handle the event
-        if key_modifiers != data.PyQt.QtCore.Qt.ControlModifier:
+        if key_modifiers != data.Qt.ControlModifier:
             #Execute the superclass method
             super().wheelEvent(wheel_event)
         else:
@@ -9577,7 +9651,7 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         lexer.comment_string = result[1]
         lexer.end_comment_string = result[2]
         #Set the lexers default font
-        lexer.setDefaultFont(self.default_font)
+        lexer.setDefaultFont(settings.Editor.font)
         #Set the lexer with the initial autocompletions
         self.setLexer(lexer)
         #Set the theme
@@ -9603,7 +9677,7 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         #Set the lexer
         self.refresh_lexer()
         #Set the scintilla api for the autocompletions (MUST BE AN INSTANCE VARIABLE)
-        self.api = data.PyQt.Qsci.QsciAPIs(self.lexer())
+        self.api = data.QsciAPIs(self.lexer())
         #Populate the api with all of the python keywords
         for kw in keyword.kwlist:
             self.api.add(kw)
@@ -9613,7 +9687,7 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
         #Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         #Set the source from where the autocompletions will be fetched
-        self.setAutoCompletionSource(data.PyQt.Qsci.QsciScintilla.AcsAll)
+        self.setAutoCompletionSource(data.QsciScintilla.AcsAll)
         #Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
 
@@ -9623,7 +9697,7 @@ class ReplHelper(data.PyQt.Qsci.QsciScintilla):
 Overlay helper widget for visually selecting an Ex.Co. function
 ----------------------------------------------------------------
 """
-class FunctionWheelOverlay(data.QGroupBox):
+class FunctionWheel(data.QGroupBox):
     #Class custom objects/types
     class ButtonInfo:
         """
@@ -9650,8 +9724,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                      input_pixmap, 
                      input_function, 
                      input_function_text, 
-                     input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
+                     input_font=data.QFont(
+                                    'Courier', 14, weight=data.QFont.Bold
                                 ), 
                      input_focus_last_widget=data.HexButtonFocus.NONE, 
                      input_no_tab_focus_disable=False, 
@@ -9681,6 +9755,102 @@ class FunctionWheelOverlay(data.QGroupBox):
     background_image        = None
     display_label           = None
     cursor_show_position    = None
+    theme_name              = None
+    function_wheel_background_image = None
+    
+    @staticmethod
+    def reset_background_image():
+        FunctionWheel.function_wheel_background_image = None
+    
+    @staticmethod
+    def check_theme_state():
+        return FunctionWheel.theme_name != data.theme.name
+    
+    @staticmethod
+    def create_background_image():
+        """
+        Dinamically create the function wheel's background image
+        """
+        # Check if the QPixmap has been created already
+        if FunctionWheel.function_wheel_background_image == None:
+            edge_length = 30
+            
+            FunctionWheel.theme_name = data.theme.name
+            
+            function_wheel_background_image = data.QImage(
+                data.QSize(600, 555),
+                data.QImage.Format_ARGB32_Premultiplied
+            )
+            function_wheel_background_image.fill(data.Qt.transparent)
+            painter = data.QPainter(function_wheel_background_image)
+            painter.setRenderHints(
+                data.QPainter.Antialiasing | 
+                data.QPainter.TextAntialiasing | 
+                data.QPainter.SmoothPixmapTransform
+            )
+            
+            offset = (53, 57)
+            edge_length = 30
+            # Bottom grid
+            hex_builder = components.HexBuilder(
+                painter, 
+                offset, 
+                edge_length, 
+                1.0, 
+                fill_color=data.theme.Settings_Background,
+                line_width=2,
+                line_color=data.theme.Settings_Hex_Edge,
+            )
+            
+            grid_list = [(1, True)]
+            grid_list.extend(5 * [(2, True), (1, True)] + [(3, True)])
+            for i in range(4):
+                grid_list.extend(5 * [(4, True), (5, True)] + [(4, True), (3, True)])
+                grid_list.extend(5 * [(1, True), (2, True)] + [(1, True), (3, True)])
+            grid_list.extend(5 * [(4, True), (5, True)] + [(4, True)])
+            hex_builder.create_grid(*grid_list)
+            # Label field
+            hex_builder = components.HexBuilder(
+                painter, 
+                (0, 0), 
+                edge_length, 
+                1.0, 
+                fill_color=data.theme.Settings_Hex_Background,
+                line_width=3,
+                line_color=data.QColor(146,146,146),
+            )
+            hex_builder.set_first_position((offset[0], offset[1] + (16*hex_builder.vertical_step)))
+            hex_builder.create_grid(
+                2, 1, 5
+            )
+            
+            painter.end()
+            original_dialog_image = data.QPixmap.fromImage(function_wheel_background_image)
+            FunctionWheel.function_wheel_background_image = data.QPixmap.fromImage(function_wheel_background_image)
+        # Return the QPixmap
+        return FunctionWheel.function_wheel_background_image
+    
+    def clean_up(self):
+        self.parent = None
+        self.main_form = None
+        # Function for deleting an attribute
+        def delete_attribute(att_name):
+            attr = getattr(self, att_name)
+            attr.setParent(None)
+            attr.deleteLater()
+            delattr(self, att_name)
+        # List of attributes for clean up
+        clean_up_list = [
+            "picture",
+            "display_label",
+        ]
+        for att in clean_up_list:
+            delete_attribute(att)
+        for child_widget in self.children():
+            child_widget.deleteLater()
+        # Clean up self
+        self.setParent(None)
+        self.deleteLater()
     
     def __init__(self, parent=None, main_form=None):
         #Initialize the superclass
@@ -9689,38 +9859,27 @@ class FunctionWheelOverlay(data.QGroupBox):
         self.parent = parent
         #Store the reference to the main form
         self.main_form = main_form
+        # Reset the class variable
+        FunctionWheel.function_wheel_background_image = None
         #Store the background image for sizing details
-        self.background_image = data.PyQt.QtGui.QPixmap(
-            os.path.join(
-                data.resources_directory, 
-                data.function_wheel_image
-            )
+        self.background_image = data.QPixmap(
+            FunctionWheel.create_background_image()
         )
         #Set the background color
-        self.setStyleSheet(
-            "QGroupBox {" +
-                "background-color: rgb(238, 238, 236);" +
-                "border-image: url(" + data.resources_directory.replace("\\", "/") +
-                "/various/function-wheel.png);" +
-            "}"
-        )
         self.setStyleSheet("background-color:transparent;")
         self.setStyleSheet("border:0;")
         #Setup the picture
-        exco_picture    = data.PyQt.QtGui.QPixmap(
-            os.path.join(
-                data.resources_directory, 
-                data.function_wheel_image
-            )
+        fw_picture = data.QPixmap(
+            FunctionWheel.create_background_image()
         )
         self.picture = data.QLabel(self)
-        self.picture.setPixmap(exco_picture)
+        self.picture.setPixmap(fw_picture)
         self.picture.setGeometry(self.frameGeometry())
         self.picture.setScaledContents(True)
         self.layout = data.QGridLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(
-            data.PyQt.QtCore.QMargins(0,0,0,0)
+            data.QMargins(0,0,0,0)
         )
         self.layout.addWidget(self.picture)
         self.setLayout(self.layout)
@@ -9729,11 +9888,18 @@ class FunctionWheelOverlay(data.QGroupBox):
         #when the mouse cursor is over a function button
         self.display_label = data.QLabel(self)
         self.display_label.setGeometry(36, 448, 120, 50)
-        font = data.PyQt.QtGui.QFont('Courier', 14)
+        font = data.QFont('Courier', 14)
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            data.PyQt.QtCore.Qt.AlignHCenter | data.PyQt.QtCore.Qt.AlignVCenter
+            data.Qt.AlignHCenter | data.Qt.AlignVCenter
+        )
+        self.display_label.setStyleSheet(
+            'color: rgb({}, {}, {})'.format(
+                data.theme.Font.Default.red(),
+                data.theme.Font.Default.green(),
+                data.theme.Font.Default.blue(),
+            )
         )
         #Initialize all of the hex function buttons
         self._init_all_buttons()
@@ -9950,8 +10116,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-replace-in-selection-re.png", 
                 form.menubar_functions["special_regex_replace_in_selection"], 
                 "Regex Replace\nin selection", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 11, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 11, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -9985,8 +10151,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-autocompletion.png", 
                 form.menubar_functions["toggle_autocompletions"], 
                 "Toggle\nAutocompletions", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 10, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 10, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -9996,8 +10162,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-case-to-upper.png", 
                 form.menubar_functions["special_to_uppercase"], 
                 "Selection to\nUPPERCASE", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 12, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10007,8 +10173,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-case-to-lower.png", 
                 form.menubar_functions["special_to_lowercase"], 
                 "Selection to\nlowercase", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 12, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10018,8 +10184,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-node-tree.png", 
                 form.menubar_functions["create_node_tree"], 
                 "Create/Reload\n Node Tree", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 11, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 11, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB,  
                 input_tool_tip=("Create a node tree from the currently\n" +
@@ -10041,8 +10207,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-find-in-open-documents.png", 
                 form.menubar_functions["special_find_in_open_documents"], 
                 "Find in open\ndocuments", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 12, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10052,8 +10218,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-replace-in-open-documents.png", 
                 form.menubar_functions["special_find_replace_in_open_documents"], 
                 "Find and Replace\nin open documents", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 9, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 9, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10063,8 +10229,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-replace-all-in-open-documents.png", 
                 form.menubar_functions["special_replace_all_in_open_documents"], 
                 "Replace all in\nopen documents", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 10, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 10, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10074,8 +10240,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/bookmark.png", 
                 form.menubar_functions["bookmark_toggle"], 
                 "Toggle\nBookmark", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 14, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10085,8 +10251,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/wordwrap.png", 
                 form.menubar_functions["toggle_wordwrap"], 
                 "Toggle\nWord Wrap", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 14, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10096,8 +10262,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/view-line-end.png", 
                 form.menubar_functions["toggle_line_endings"], 
                 "Toggle\nLine Ending\nVisibility", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 12, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10107,8 +10273,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/edit-show-cursor-line.png", 
                 form.menubar_functions["toggle_cursor_line_highlighting"], 
                 "Toggle\nCursor Line\nHighlighting", 
-                input_font=data.PyQt.QtGui.QFont(
-                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                    'Courier', 12, weight=data.QFont.Bold
                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -10148,7 +10314,7 @@ class FunctionWheelOverlay(data.QGroupBox):
             ),
             self.ButtonInfo(
                 "button_user_funcs_reload", 
-                (64, 154, 68, 60), 
+                (64, 156, 68, 60), 
                 "tango_icons/file-user-funcs-reload.png", 
                 form.menubar_functions["import_user_functions"], 
                 "Reload User\nFunctions", 
@@ -10297,8 +10463,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 form.view.spin_widgets_clockwise, 
                 "Spin Windows\nClockwise", 
                 input_focus_last_widget=False, 
-                input_font=data.PyQt.QtGui.QFont(
-                                'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                'Courier', 12, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10309,8 +10475,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 form.view.spin_widgets_counterclockwise, 
                 "Spin Windows\nCounter\nClockwise",  
                 input_focus_last_widget=False, 
-                input_font=data.PyQt.QtGui.QFont(
-                                'Courier', 10, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                'Courier', 10, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10321,8 +10487,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 form.view.toggle_window_mode, 
                 "Toggle\nWindow Mode",  
                 input_focus_last_widget=False, 
-                input_font=data.PyQt.QtGui.QFont(
-                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                'Courier', 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10333,8 +10499,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 form.view.toggle_main_window_side, 
                 "Toggle\nWindow Side",  
                 input_focus_last_widget=False, 
-                input_font=data.PyQt.QtGui.QFont(
-                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                'Courier', 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10364,8 +10530,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/close-tab.png", 
                 form.menubar_functions["close_tab"], 
                 "Close Current\nTab", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 11, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 11, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_no_tab_focus_disable=True,
@@ -10430,8 +10596,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 form.menubar_functions["show_session_editor"], 
                 "Show Session\nEditor", 
                 input_no_document_focus_disable=False,
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 12, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 12, weight=data.QFont.Bold
                                 ), 
             ),
             self.ButtonInfo(
@@ -10440,8 +10606,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/system-show-cwd-tree.png", 
                 form.menubar_functions["create_cwd_tree"], 
                 "Show CWD\nFile/Directory\nTree", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 10, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 10, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.NONE, 
                 input_tool_tip=("Create a file/directory tree for the " + 
@@ -10454,8 +10620,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 "tango_icons/bookmarks-clear.png", 
                 form.menubar_functions["bookmarks_clear"], 
                 "Clear All\nBookmarks", 
-                input_font=data.PyQt.QtGui.QFont(
-                                    'Courier', 14, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                    'Courier', 14, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.NONE, 
                 input_no_document_focus_disable=False,
@@ -10475,8 +10641,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 form.menubar_functions["repl_single_focus"], 
                 "REPL Focus\n(Single Line)",  
                 input_focus_last_widget=False, 
-                input_font=data.PyQt.QtGui.QFont(
-                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                'Courier', 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10487,8 +10653,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 form.menubar_functions["repl_multi_focus"], 
                 "REPL Focus\n(Multi Line)",  
                 input_focus_last_widget=False, 
-                input_font=data.PyQt.QtGui.QFont(
-                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                'Courier', 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10499,8 +10665,8 @@ class FunctionWheelOverlay(data.QGroupBox):
                 form.repl.repeat_last_repl_eval, 
                 "Repeat Last\nREPL Command",  
                 input_focus_last_widget=False, 
-                input_font=data.PyQt.QtGui.QFont(
-                                'Courier', 13, weight=data.PyQt.QtGui.QFont.Bold
+                input_font=data.QFont(
+                                'Courier', 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -10622,7 +10788,7 @@ class FunctionWheelOverlay(data.QGroupBox):
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            data.PyQt.QtCore.Qt.AlignHCenter | data.PyQt.QtCore.Qt.AlignVCenter
+            data.Qt.AlignHCenter | data.Qt.AlignVCenter
         )
         #Display the string
         self.display_label.setText(string)
@@ -10663,22 +10829,22 @@ class FunctionWheelOverlay(data.QGroupBox):
         geo = self.geometry()
         new_width = int(geo.width() * width_scale_factor)
         new_height = int(geo.height() * height_scale_factor)
-        rectangle = data.PyQt.QtCore.QRect(
+        rectangle = data.QRect(
             geo.topLeft(), 
-            data.PyQt.QtCore.QSize(new_width, new_height)
+            data.QSize(new_width, new_height)
         )
         self.setGeometry(rectangle)
         #Scale all of the function wheel child widgets
         for button in self.children():
             geo = button.geometry()
-            new_topLeft = data.PyQt.QtCore.QPoint(
+            new_topLeft = data.QPoint(
                 int(geo.topLeft().x() * width_scale_factor),
                 int(geo.topLeft().y() * height_scale_factor)
             )
             new_width = int(geo.width() * width_scale_factor)
             new_height = int(geo.height() * height_scale_factor)
-            new_size = data.PyQt.QtCore.QSize(new_width, new_height)
-            rectangle   = data.PyQt.QtCore.QRect(new_topLeft, new_size)
+            new_size = data.QSize(new_width, new_height)
+            rectangle   = data.QRect(new_topLeft, new_size)
             button.setGeometry(rectangle)
         #Center to main form
         self.center(self.size())
@@ -10690,9 +10856,9 @@ class FunctionWheelOverlay(data.QGroupBox):
         """
         x_offset = int((self.main_form.size().width() - size.width()) / 2)
         y_offset = int((self.main_form.size().height()*93/100 - size.height()) / 2)
-        rectangle_top_left  = data.PyQt.QtCore.QPoint(x_offset, y_offset)
-        rectangle_size      = size
-        rectangle   = data.PyQt.QtCore.QRect(rectangle_top_left, rectangle_size)
+        rectangle_top_left = data.QPoint(x_offset, y_offset)
+        rectangle_size = size
+        rectangle = data.QRect(rectangle_top_left, rectangle_size)
         self.setGeometry(rectangle)
     
     def highlight_last_clicked_button(self):
@@ -10710,7 +10876,7 @@ class FunctionWheelOverlay(data.QGroupBox):
                     if button.isEnabled() == True:
                         button.highlight()
                     button_position = self.mapToGlobal(button.geometry().topLeft())
-                    cursor = data.PyQt.QtGui.QCursor()
+                    cursor = data.QCursor()
                     cursor.setPos(
                         button_position.x() + int(button.geometry().width()/2), 
                         button_position.y() + int(button.geometry().height()/2)

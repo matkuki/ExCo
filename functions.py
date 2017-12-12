@@ -24,12 +24,16 @@ import operator
 import timeit
 import data
 import traceback
+import subprocess
+
+# REPL message displaying function (that needs to be assigned at runtime!)
+repl_print = None
 
 def create_icon(icon_name):
     """
     Function for initializing and returning an QIcon object
     """
-    return data.PyQt.QtGui.QIcon(
+    return data.QIcon(
         os.path.join(
             data.resources_directory, 
             icon_name
@@ -40,7 +44,7 @@ def create_pixmap(pixmap_name):
     """
     Function for initializing and returning an QPixmap object
     """
-    return data.PyQt.QtGui.QPixmap(
+    return data.QPixmap(
         os.path.join(
             data.resources_directory, 
             pixmap_name
@@ -51,14 +55,14 @@ def create_pixmap_with_size(pixmap_name, height, width):
     """
     Function for initializing and returning an QPixmap object with a size
     """
-    pixmap = data.PyQt.QtGui.QPixmap(
+    pixmap = data.QPixmap(
         os.path.join(
             data.resources_directory, 
             pixmap_name
         )
     )
-    pixmap = pixmap.scaledToWidth(32, data.PyQt.QtCore.Qt.SmoothTransformation)
-    pixmap = pixmap.scaledToHeight(32, data.PyQt.QtCore.Qt.SmoothTransformation)
+    pixmap = pixmap.scaledToWidth(32, data.Qt.SmoothTransformation)
+    pixmap = pixmap.scaledToHeight(32, data.Qt.SmoothTransformation)
     return pixmap
 
 def get_language_file_icon(language_name):
@@ -1343,7 +1347,178 @@ def get_c_function_list(c_code):
     #Return the function list
     return function_list
 
+def get_c_node_tree_with_ctags(c_code):
+    # Node object
+    class CNode:
+        def __init__(self, 
+                     in_name, 
+                     in_type, 
+                     in_line_number, 
+                     in_level, 
+                     in_parent=None):
+            self.name = in_name.strip()
+            self.type = in_type
+            self.line_number = in_line_number
+            self.level = in_level
+            self.parent = in_parent
+            self.children = []
+    
+#    # Ctags symbol dictionary
+#    ctags_description_string = """
+#        #LETTER NAME       ENABLED REFONLY NROLES MASTER DESCRIPTION
+#        L       label      no      no      0      C      goto labels
+#        d       macro      yes     no      1      C      macro definitions
+#        e       enumerator yes     no      0      C      enumerators (values inside an enumeration)
+#        f       function   yes     no      0      C      function definitions
+#        g       enum       yes     no      0      C      enumeration names
+#        h       header     yes     yes     2      C      included header files
+#        l       local      no      no      0      C      local variables
+#        m       member     yes     no      0      C      struct, and union members
+#        p       prototype  no      no      0      C      function prototypes
+#        s       struct     yes     no      0      C      structure names
+#        t       typedef    yes     no      0      C      typedefs
+#        u       union      yes     no      0      C      union names
+#        v       variable   yes     no      0      C      variable definitions
+#        x       externvar  no      no      0      C      external and forward variable declarations
+#        z       parameter  no      no      0      C      function parameters inside function definitions
+#    """
+#    c_symbols = dict(
+#        [(x.split()[0], x.split()[1]) 
+#            for x in ctags_description_string.splitlines()
+#                if x.strip() != ""][1:]
+#    )
+    
+    global ctags_program
+    # Test for ctags on the system
+    ctags_test = ('ctags_present' in locals()) or ('ctags_present' in globals())
+    if ctags_test == False:
+        global ctags_present
+        ctags_present = False
+        ctags_program = "ctags"
+        try:
+            if data.platform == "Windows":
+                # SW_HIDE option hides the poping up of the console window on Windows 
+                si = subprocess.STARTUPINFO()
+                si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+                si.wShowWindow = subprocess.SW_HIDE
+                output = subprocess.Popen(
+                    [ctags_program, "--version"], 
+                    stdout=subprocess.PIPE,
+                    startupinfo=si,
+                    shell=False
+                ).communicate()[0]
+            else:
+                output = subprocess.Popen(
+                    [ctags_program, "--version"], 
+                    stdout=subprocess.PIPE,
+                    shell=False
+                ).communicate()[0]
+            output_utf = output.decode("utf-8")
+            if output_utf.startswith("Exuberant Ctags") or output_utf.startswith("Universal Ctags"):
+                ctags_present = True
+        except Exception as ex:
+            if data.platform == "Windows":
+                repl_print(
+                    "Windows operating system detected.\n " + 
+                    "Using Universal Ctags program from the resources directory."
+                )
+                ctags_program = os.path.join(
+                    data.resources_directory, 
+                    "programs/ctags.exe"
+                ).replace("\\", "/")
+                ctags_present = True
+            else:
+                repl_print(ex)
+                ctags_present = False
+                raise Exception(
+                    "Exuberant or Universal Ctags (ctags) could not be found on the system!\n" +
+                    "If you are using a Debian based operating system,\n" + 
+                    "try executing 'sudo apt-get install exuberant-ctags' to install Exuberant-Ctags."
+                )
+    # Create the file for parsing
+    filename = "temporary_ctags_file.c"
+    with open(filename, "w+") as f:
+        f.write(c_code)
+        f.close()
+    # Parse the file with ctags
+    try:
+        if data.platform == "Windows":
+            # SW_HIDE option hides the poping up of the console window on Windows 
+            si = subprocess.STARTUPINFO()
+            si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = subprocess.SW_HIDE
+            output = subprocess.Popen(
+                [ctags_program, "-R", "--fields=-f-k-t+K+n", "--excmd=number", filename], 
+                stdout=subprocess.PIPE,
+                startupinfo=si,
+                shell=False
+            ).communicate()[0]
+        else:
+            output = subprocess.Popen(
+                [ctags_program, "-R", "--fields=-f-k-t+K+n", "--excmd=number", filename], 
+                stdout=subprocess.PIPE,
+                shell=False
+            ).communicate()[0]
+        output_utf = output.decode("utf-8")
+    except Exception as ex:
+        repl_print(ex)
+        raise Exception("Parse error!")
+    # Read the tag file
+    lines = []
+    try:
+        tag_filename = "tags"
+        with open(tag_filename, 'r') as f:
+            lines = f.readlines()
+            f.close()
+        # Delete the tag file
+        os.remove(tag_filename)
+    except Exception as ex:
+        repl_print(ex)
+        raise Exception("Tag file parse error!")
+    # Initialize state variables
+    main_node = CNode("module", "", 0, -1)
+    main_node_list = []
+    main_current_line = 1
+    # Function for adding a node
+    def add_node(in_node):
+        if main_node != None:
+            main_node.children.append(in_node)
+        else:
+            main_node_list.append(in_node)
+    main_node = CNode("module", "", 0, -1)
+    # Parse the output
+    for line in lines:
+        if line.startswith("!_TAG"):
+            continue
+        split_line = line.split('\t')
+        if len(split_line) == 5:
+            name, file, ex_data, typ, line_number = split_line
+            line_number = int(line_number.split(':')[1])
+            add_node(
+                CNode(name, typ, line_number, 0)
+            )
+        elif len(split_line) == 6:
+            name, file, ex_data, typ, line_number, parent = split_line
+            line_number = int(line_number.split(':')[1])
+            parent = parent.split(':')[1].strip()
+            add_node(
+                CNode(name, typ, line_number, 0, parent)
+            )
+    # Delete the temporary parsing file
+    os.remove(filename)
+    # Sort the nodes alphabetically
+    def compare_function(item):
+        return item.name.lower()
+    main_node_list = sorted(main_node_list, key=compare_function)
+    main_node_list.append(main_node)
+    return main_node_list
+        
+    
+
 def get_c_node_tree(c_code):
+    """
+    THIS IS A WORK IN PROGRESS ROUTINE!!! IT IS IN A SOMEWHAT USABLE STATE.
+    """
     # Node object
     class CNode:
         def __init__(self, 
@@ -1392,7 +1567,8 @@ def get_c_node_tree(c_code):
         if False:
             print(level * "    ", *args, **kwargs)
     # Tokenize the text and remove the space characters
-    splitter = re.compile(r"(\#\s*\w+|\'|\"|\n|\s+|\w+|\W)")
+#    splitter = re.compile(r"(\#\s*\w+|\'|\"|\n|\s+|\w+|\W)")
+    splitter = re.compile(r"(\#\s*\w+|\n|\s+|\w+|\W)")
     main_tokens = [token for token in splitter.findall(text)]
     
     # Main parse function
@@ -1409,6 +1585,7 @@ def get_c_node_tree(c_code):
         composite_0_typeing = False
         composite_1_typeing = False
         stringing = False
+        charactering = False
         
         previous_token = ""
         last_found_function = ""
@@ -1422,10 +1599,20 @@ def get_c_node_tree(c_code):
         # Main Loop for filtering tokens
         for i, token in enumerate(tokens):
             stripped_token = token.strip()
-#            if (len(tokens)-1) > (i+1):
-#                next_token = tokens[i+1].strip()
-#            else:
-#                next_token = ""
+            # Store the previous token
+            if i > 0:
+                previous_unfiltered_token = tokens[i-1]
+                if stripped_token != "":
+                    previous_token = token
+            else:
+                previous_unfiltered_token = ""
+                previous_token = ""
+            # Store the next token 
+            if i < len(tokens)-2:
+                next_token = tokens[i+1]
+            else:
+                next_token = ""
+            
             if "\n" in token:
                 # Increase the line counter
                 newline_count = token.count("\n")
@@ -1483,7 +1670,6 @@ def get_c_node_tree(c_code):
                             level, "Found pragma:\n", (level+1)*"    ", pragma_macro
                         )
                         add_node(CNode(pragma_macro, "pragma", macro_line, 0))
-#                        print("macro:", macro_tokens)
                     elif macro_type == "error":
                         error_macro = " ".join(macro_tokens)[:10] + "..."
                         debug_print(
@@ -1510,6 +1696,9 @@ def get_c_node_tree(c_code):
             elif stringing == True:
                 if token == '"' and previous_token != "\\":
                     stringing = False
+            elif charactering == True:
+                if token == '\'' and previous_token != "\\":
+                    charactering = False
             else:
                 current_line_tokens.append(token)
                 
@@ -1521,9 +1710,10 @@ def get_c_node_tree(c_code):
                     singleline_commenting = True
                 elif token == '"':
                     stringing = True
+                elif token == '\'':
+                    charactering = True
                 elif token == ';':
                     current_statement_tokens.append(token)
-#                    debug_print(level, " ".join(current_statement_tokens))
                     first_word = current_statement_tokens[0]
                     if first_word in composite_types:
                         type_desc = first_word
@@ -1550,8 +1740,6 @@ def get_c_node_tree(c_code):
                             debug_print(level, "Found {}:\n".format(type_desc), (level+1)*"    ", type_name)
                             add_node(CNode(type_name, type_desc, current_line, 0))
                     else:
-#                        debug_print(level, " ".join(current_statement_tokens))
-#                        print(" ".join(current_statement_tokens), level, len(current_statement_tokens))
                         def parse_funcs(in_list, pos=0):
                             if in_list == None:
                                 return
@@ -1621,7 +1809,6 @@ def get_c_node_tree(c_code):
                                                 var_name = g[open_index-1]
                                             else:
                                                 var_name = g[-1]
-#                                            print("       ", var_name)
                                         if var_name.isidentifier():
                                             add_node(
                                                 CNode(var_name, "var", current_line, 0)
@@ -1659,7 +1846,7 @@ def get_c_node_tree(c_code):
                 elif '#' in token and any(x for x in skip_macros if x in token):
                     # Skip macros that do nothing
                     macroing = True
-                elif token == '{':
+                elif token == '{' and previous_token != '\'' and next_token != '\'':
                     try:
                         func_found = False
                         if (current_statement_tokens[-1] == "( ... )" or 
@@ -1689,22 +1876,33 @@ def get_c_node_tree(c_code):
                     if func_found:
                         debug_print(level, "function end '{}':".format(func_name),skip_to_token)
                         current_statement_tokens = []
-                elif token == '}':
-#                    debug_print(level-1, '}', current_line, i+index)
+                elif token == '}' and previous_token != '\'' and next_token != '\'':
                     return node_list, i+index
-                elif token == '(':
-#                    print("**  ",current_statement_tokens)
+#                elif token == ')' and previous_token != '\'' and next_token != '\'':
+#                    debug_print(level-1, ')', current_line, i+index)
+#                    return node_list, i+index
+                elif token == '(' and previous_token != '\'' and next_token != '\'':
+#                    repl_print(previous_token, token, next_token, tokens[i+2], tokens[i+3], tokens[i+4], tokens[i+5], tokens[i+6], tokens[i+7])
+#                    repl_print(tokens[i+1],tokens[i+2],tokens[i+3],tokens[i+4],tokens[i+5])
                     paren_tokens = ['(']
                     paren_count = 0
                     skip_to_token = i
                     function_flag = False
+                    previous_t = None
+                    next_t = None
                     for j, t in enumerate(tokens[i+1:]):
+                        print(paren_count)
                         skip_to_token += 1
                         paren_tokens.append(t)
-                        if t == '(':
+                        if j > 0:
+                            previous_t = tokens[i+1:][j-1]
+                        if j < len(tokens[i+1:])-1:
+                            next_t = tokens[i+1:][j+1]
+                        if t == '(' and previous_t != '\'' and next_t != '\'':
                             paren_count += 1
-                        if t == ')':
+                        if t == ')' and previous_t != '\'' and next_t != '\'':
                             if paren_count == 0:
+#                                repl_print(previous_t, t, next_t)
                                 try:
                                     tks = tokens[i+1:]
                                     for k in range(3):
@@ -1716,7 +1914,6 @@ def get_c_node_tree(c_code):
                                 break
                             else:
                                 paren_count -= 1
-#                    print("parens:", " ".join(paren_tokens))
                     if paren_tokens[1] == '*' and function_flag == False:
                         current_statement_tokens.append("( {} )".format("".join(paren_tokens[1:-1])))
                     elif (len(paren_tokens) > 4 and 
@@ -1729,20 +1926,10 @@ def get_c_node_tree(c_code):
                             )
                     else:
                         current_statement_tokens.append("( ... )")
-                    previous_unfiltered_token = ')'
-                    previous_token = ')'
                     continue
-#                elif token == ')':
-#                    debug_print(level-1, ')', current_line, i+index)
-#                    return node_list, i+index
                 else:
                     current_statement_tokens.append(token)
-            
-            #Store the previous token
-            previous_unfiltered_token = token
-            if stripped_token != "":
-                previous_token = token
-        
+
         # Return the accumulated node list
         return node_list, skip_to_token
     

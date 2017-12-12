@@ -136,7 +136,9 @@ var
 #    sequence_start_strings = lc[x.start | (x <- sequence_lists ), string]
 
 proc python_set_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl.} =
-    GC_disable()
+#    GC_disable()
+    # Only disabling the mark-and-sweep phase seems to be working now (tested on updated Raspbian - RPi3)
+    GC_disableMarkAndSweep()
     
     var
         lexer_index, parse_result: cint
@@ -164,12 +166,15 @@ proc python_set_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, cde
     
     custom_keywords[lexer_index] = base_custom_keywords & string_sequence
     
-    GC_enable()
+#    GC_enable()
+    GC_enableMarkAndSweep()
     GC_fullCollect()
     Py_RETURN_NONE()
 
 proc python_delete_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl.} =
-    GC_disable()
+#    GC_disable()
+    # Only disabling the mark-and-sweep phase seems to be working now (tested on updated Raspbian - RPi3)
+    GC_disableMarkAndSweep()
     
     var
         lexer_index, parse_result: cint
@@ -187,7 +192,8 @@ proc python_delete_keywords*(self, args: ptr PyObject): ptr PyObject {.exportc, 
     # Reset the sequence at the deleted lexer's index
     custom_keywords[lexer_index] = newSeq[string]()
     
-    GC_enable()
+#    GC_enable()
+    GC_enableMarkAndSweep()
     GC_fullCollect()
     Py_RETURN_NONE()
 
@@ -199,7 +205,9 @@ proc python_style_text*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl
         parse_result: cint
     
     # Disable the GC, this is needed on ARM (RPi)
-    GC_disable()
+#    GC_disable()
+    # Only disabling the mark-and-sweep phase seems to be working now (tested on updated Raspbian - RPi3)
+    GC_disableMarkAndSweep()
     
     parse_result = PyArg_ParseTuple(
         args, 
@@ -418,7 +426,8 @@ proc python_style_text*(self, args: ptr PyObject): ptr PyObject {.exportc, cdecl
             style_token(token_name, token_length)
     #------------------------------------------------------------------------------
     # Reenable the GC
-    GC_enable()
+#    GC_enable()
+    GC_enableMarkAndSweep()
     GC_fullCollect()
     
     clean_up()
