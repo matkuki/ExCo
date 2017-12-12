@@ -218,5 +218,3 @@ __6. Run a terminal/shell command from Ex&#46;Co&#46;:__
 
 ### Todo: ###
 - add a curses version of Ex&#46;Co&#46; (only an idea at the moment)
-- better C code tree displaying
-- add more examples
