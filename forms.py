@@ -159,7 +159,7 @@ class MainWindow(data.QMainWindow):
             if len(message) == 1 and isinstance(message, str):
                 message = ["REPL PRINT:\n", message[0]]
             else:
-                message = ["REPL PRINT:\n", *[str(x) for x in message]]
+                message = ["REPL PRINT:\n"] + [str(x) for x in message]
             self.display.repl_display_message(
                 *message, 
                 message_type=data.MessageType.WARNING
