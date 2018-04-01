@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec. 
+Copyright (c) 2013-2018 Matic Kukovec. 
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -15,7 +15,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import os.path
-import imp
+import runpy
 import data
 import themes
 import functions
@@ -236,6 +236,38 @@ class Session:
         self.main_files     = []
         self.upper_files    = []
         self.lower_files    = []
+    
+    @staticmethod
+    def parse(session_dict):
+        """
+        Parse a session dictionary into a session object.
+        Example dictionary:
+            
+            'application': {
+                'Group': ('embedoffice',),
+                'Main window files': [
+                    'D:/embedoffice_stuff/embedoffice/data.py',
+                    'D:/embedoffice_stuff/embedoffice/embedoffice.py',
+                    'D:/embedoffice_stuff/embedoffice/gui/forms/mainwindow.py',
+                    'D:/embedoffice_stuff/embedoffice/gui/forms/basicwidget.py',
+                    'D:/embedoffice_stuff/embedoffice/gui/helpers/projectdisplay.py',
+                    'D:/embedoffice_stuff/embedoffice/project/project.py',
+                    'D:/embedoffice_stuff/embedoffice/gui/helpers/projectwizard.py',
+                    'D:/embedoffice_stuff/embedoffice/gui/helpers/buttons.py',
+                    'D:/embedoffice_stuff/embedoffice/components/hexbuilding.py',
+                    'D:/embedoffice_stuff/embedoffice/components/hexpainting.py',
+                ],
+                'Upper window files': [
+                ],
+                'Lower window files': [
+                ],
+            },
+        """
+        session = Session(session)
+        session.group = in_sessions[session]['Group']
+        session.main_files = in_sessions[session]['Main window files']
+        session.upper_files = in_sessions[session]['Upper window files']
+        session.lower_files = in_sessions[session]['Lower window files']
 
 
 """
@@ -244,7 +276,9 @@ Object for manipulating settings/sessions
 -------------------------------------------
 """
 class SettingsFileManipulator:
-    """Object that will be used for saving, loading, ... all of the Ex.Co. settings """
+    """
+    Object that will be used for saving, loading, ... all of the Ex.Co. settings
+    """
     #Class variables
     settings_filename               = "exco.ini"
     settings_filename_with_path     = ""
@@ -405,16 +439,13 @@ class SettingsFileManipulator:
         if self.error_lock == True:
             return
         # Import the init file as a python module
-        init_module = imp.load_source(
-            self.settings_filename, 
-            self.settings_filename_with_path
-        )
+        init_module = runpy.run_path(self.settings_filename_with_path)
         # Update only the recent file list
-        stored_sessions = self._parse_sessions(init_module.sessions)
+        stored_sessions = self._parse_sessions(init_module["sessions"])
         # Save the updated settings
         self.write_settings_file(
-            init_module.main_window_side,
-            init_module.theme,
+            init_module["main_window_side"],
+            init_module["theme"],
             self.recent_files,
             stored_sessions,
             self.context_menu_functions
@@ -424,21 +455,18 @@ class SettingsFileManipulator:
         """Load all setting from the settings file"""
         try:
             # Import the init file as a python module
-            init_module = imp.load_source(
-                self.settings_filename, 
-                self.settings_filename_with_path
-            )
+            init_module = runpy.run_path(self.settings_filename_with_path)
             # Main window side
-            self.main_window_side = init_module.main_window_side
+            self.main_window_side = init_module["main_window_side"]
             # Theme
-            self.theme = init_module.theme
+            self.theme = init_module["theme"]
             # Recent files
-            self.recent_files = init_module.recent_files
+            self.recent_files = init_module["recent_files"]
             # Sessions
-            self.stored_sessions = self._parse_sessions(init_module.sessions)
+            self.stored_sessions = self._parse_sessions(init_module["sessions"])
             # Load custom context menu functions
-            if hasattr(init_module, "context_menu_functions"):
-                self.context_menu_functions = init_module.context_menu_functions
+            if "context_menu_functions" in init_module.keys():
+                self.context_menu_functions = init_module["context_menu_functions"]
             else:
                 self.context_menu_functions = {}
             # Return success
@@ -491,18 +519,39 @@ class SettingsFileManipulator:
             self.save_settings(self.main_window_side, self.theme)
 
     def remove_session(self, session_name, session_group=None):
-        """Remove a session from the stored session list"""
-        #Loop through the stored sessions
+        """
+        Remove a session from the stored session list
+        """
+        # Loop through the stored sessions
         for session in self.stored_sessions:
-            #Check if the session names and groups match 
+            # Check if the session names and groups match 
             if session.name == session_name and session_group == session.group:
-                #Remove the session from the stored session list
+                # Remove the session from the stored session list
                 self.stored_sessions.remove(session)
-                #Save the new settings
+                # Save the new settings
                 self.save_settings(self.main_window_side, self.theme)
                 return True
-        #Signal that the session was not removed
+        # Signal that the session was not removed
         return False
+    
+    def remove_group(self, remove_group):
+        """
+        Remove an entire group from the stored session list
+        """
+        found_group = False
+        filtered_sessions = []
+        for i, session in enumerate(self.stored_sessions):
+            if session.group != remove_group:
+                filtered_sessions.append(session)
+            else:
+                found_group = True
+        if found_group == True:
+            # Overwrite the old session list
+            self.stored_sessions = filtered_sessions
+            # Save the new settings
+            self.save_settings(self.main_window_side, self.theme)
+            # Signal that the session was not removed
+        return found_group
 
     def get_session(self, session_name, session_group=None):
         """Return the session from the stored sessions list if it exists"""
@@ -601,9 +650,10 @@ class SettingsFileManipulator:
         # Sort the group list and add the groups to the session menu
         def sort_groups_func(arg=None):
             if isinstance(arg, tuple) and all([isinstance(x, str) for x in arg]):
-                return " ".join(arg)
+                lowercase_group_tree = [x.lower() for x in arg]
+                return " ".join(lowercase_group_tree)
             else:
-                return arg
+                return arg.lower()
         groups.sort(key=sort_groups_func)
         return groups
 

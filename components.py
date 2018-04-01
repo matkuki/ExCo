@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec. 
+Copyright (c) 2013-2018 Matic Kukovec. 
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -29,23 +29,21 @@ class HexBuilder:
     line_width = None
     line_color = None
     
-    directions = {
-        0: "up",
-        1: "up-right",
-        2: "down-right",
-        3: "down",
-        4: "down-left",
-        5: "up-left",
-    }
     steps = None
     horizontal_step = None
     vertical_step = None
     grid_positions = None
     
+    painted_hex_counter = 0
+    SHOW_FIELD_NUMBERS = False
+    
+    # List of already painted lines
+    stored_lines = []
+    
     @staticmethod
-    def generate_hexagon_points(edge_length, offset):
+    def generate_hexagon_points(edge_length, offset_position):
         """Generator for coordinates in a hexagon."""
-        x, y = offset
+        x, y = offset_position
         points = []
         for angle in range(0, 360, 60):
             x += math.cos(math.radians(angle)) * edge_length
@@ -69,22 +67,15 @@ class HexBuilder:
         self.scale = scale
         self.edge_length = scale * edge_length
         
-        horizontal_step = (3 * self.edge_length) / 2
-        vertical_step = math.sin(math.pi / 3) * self.edge_length
-        self.steps = {
-            "down-left": (-horizontal_step, vertical_step),
-            "down-right": (horizontal_step, vertical_step),
-            "down": (0, 2*vertical_step),
-            "up-left": (-horizontal_step, -vertical_step),
-            "up-right": (horizontal_step, -vertical_step),
-            "up": (0, -2*vertical_step),
-        }
-        self.horizontal_step = horizontal_step
-        self.vertical_step = vertical_step
+        self.horizontal_step, self.vertical_step, self.steps = GridGenerator.init_steps(
+            self.edge_length, self.scale
+        )
         
         self.fill_color = fill_color
         self.line_width = line_width
         self.line_color = line_color
+        
+        self.stored_lines = []
     
     @staticmethod
     def get_single_hex_size(edge_length, line_width):
@@ -118,8 +109,8 @@ class HexBuilder:
             else:
                 raise Exception("create_grid item has to be an int (0 >= i < 6) or a tuple(int, bool)!")
         # Paint the edges as needed
-        number_of_steps = len(self.directions)
-        steps = [self.steps[self.directions[x]] for x in range(number_of_steps)]
+        number_of_steps = len(GridGenerator.directions)
+        steps = [self.steps[GridGenerator.directions[x]] for x in range(number_of_steps)]
         positions = [(int(x[0]), int(x[1])) for x in self.grid_positions]
         for j, gp in enumerate(self.grid_positions):
             paint_edge = [True, True, True, True, True, True]
@@ -142,7 +133,7 @@ class HexBuilder:
         self.draw()
         
     def next_step_move(self, direction):
-        next_step = self.steps[self.directions[direction]]        
+        next_step = self.steps[GridGenerator.directions[direction]]        
         last_position = self.grid_positions[-1]
         self.grid_positions.append(
             (last_position[0] + next_step[0], last_position[1] + next_step[1])
@@ -153,7 +144,103 @@ class HexBuilder:
         self.draw_filled_hexagon(
             position = self.grid_positions[-1], 
             fill_color = self.fill_color,
+            number = self.painted_hex_counter,
         )
+        self.painted_hex_counter += 1
+    
+    def draw_line_hexagon_no_double_paint(self, 
+                                          position, 
+                                          line_width, 
+                                          line_color,
+                                          paint_enabled=[
+                                            True,True,True,True,True,True
+                                          ],
+                                          shadow=False):
+        qpainter = self.painter
+        
+        if line_width == 0:
+            return
+        
+        pen = data.QPen(data.Qt.SolidLine)
+        pen.setCapStyle(data.Qt.RoundCap)
+        pen.setJoinStyle(data.Qt.RoundJoin)
+        pen.setWidth(line_width)
+        pen.setColor(line_color)
+        qpainter.setPen(pen)
+        hex_points = list(
+            HexBuilder.generate_hexagon_points(self.edge_length, position)
+        )
+        x_correction = self.edge_length / 2
+        y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
+        hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
+        hex_lines = []
+        
+        def line_test(in_line):
+            DIFF = 3
+            line = in_line
+            reversed_line = (line[1], line[0])
+            x1, y1 = line[0]
+            x2, y2 = line[1]
+            xr1, yr1 = reversed_line[0]
+            xr2, yr2 = reversed_line[1]
+            for l in self.stored_lines:
+                xl1, yl1 = l[0]
+                xl2, yl2 = l[1]
+                if (abs(xl1 - x1) < DIFF and 
+                    abs(yl1 - y1) < DIFF and
+                    abs(xl2 - x2) < DIFF and 
+                    abs(yl2 - y2) < DIFF):
+                        if not(line in self.stored_lines):
+                            self.stored_lines.append(line)
+                            #self.stored_lines.append(reversed_line)
+                        return False
+                elif (abs(xl1 - xr1) < DIFF and 
+                    abs(yl1 - yr1) < DIFF and
+                    abs(xl2 - xr2) < DIFF and 
+                    abs(yl2 - yr2) < DIFF):
+                        if not(reversed_line in self.stored_lines):
+                            self.stored_lines.append(line)
+                            #self.stored_lines.append(reversed_line)
+                        return False
+            else:
+                self.stored_lines.append(line)
+                self.stored_lines.append(reversed_line)
+                return True
+        
+        for i in range(len(hex_points)):
+            if paint_enabled[i] == False:
+                continue
+            n = i + 1
+            if n > (len(hex_points)-1):
+                n = 0
+            if line_test((hex_points[i], hex_points[n])) == True:
+                hex_lines.append(
+                    data.QLine(
+                        data.QPoint(*hex_points[i]), 
+                        data.QPoint(*hex_points[n])
+                    )
+                )
+        if hex_lines:
+            if shadow == True:
+                shadow_0_color = data.QColor(line_color)
+                shadow_0_color.setAlpha(64)
+                shadow_1_color = data.QColor(line_color)
+                shadow_1_color.setAlpha(128)
+                
+                pen.setWidth(line_width*2.0)
+                pen.setColor(shadow_0_color)
+                qpainter.setPen(pen)
+                qpainter.drawLines(*hex_lines)
+                pen.setWidth(line_width*1.5)
+                pen.setColor(shadow_1_color)
+                qpainter.setPen(pen)
+                qpainter.drawLines(*hex_lines)
+                pen.setWidth(line_width)
+                pen.setColor(line_color)
+                qpainter.setPen(pen)
+                qpainter.drawLines(*hex_lines)
+            else:
+                qpainter.drawLines(*hex_lines)
     
     def draw_line_hexagon(self, 
                           position, 
@@ -179,6 +266,7 @@ class HexBuilder:
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
         hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
         hex_lines = []
+        
         for i in range(len(hex_points)):
             if paint_enabled[i] == False:
                 continue
@@ -187,7 +275,8 @@ class HexBuilder:
                 n = 0
             hex_lines.append(
                 data.QLine(
-                    data.QPoint(*hex_points[i]), data.QPoint(*hex_points[n])
+                    data.QPoint(*hex_points[i]), 
+                    data.QPoint(*hex_points[n])
                 )
             )
         if hex_lines:
@@ -212,7 +301,7 @@ class HexBuilder:
             else:
                 qpainter.drawLines(*hex_lines)
     
-    def draw_filled_hexagon(self, position, fill_color):
+    def draw_filled_hexagon(self, position, fill_color, number=None):
         qpainter = self.painter
         
         pen = data.QPen(data.Qt.SolidLine)
@@ -227,6 +316,20 @@ class HexBuilder:
         hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
         hex_qpoints = [data.QPoint(*x) for x in hex_points]
         qpainter.drawPolygon(*hex_qpoints)
+        
+        if (self.SHOW_FIELD_NUMBERS == True) and (number != None):
+            font = data.QFont('Courier', 8)
+            font.setBold(True)
+            qpainter.setFont(font)
+            pen = data.QPen(data.Qt.SolidLine)
+            pen.setColor(data.QColor(0,0,0))
+            qpainter.setPen(pen)
+            
+            font_metric = data.QFontMetrics(font)
+            x = position[0] - font_metric.width(str(number)) / 2
+            y = position[1] + font_metric.height() / 4
+            
+            qpainter.drawText(data.QPoint(x, y), str(number))
     
     def draw_full_hexagon(self,
                           position,
@@ -297,6 +400,182 @@ class HexBuilder:
                     add_down_step = True
                     direction = True
         return grid_list
+
+class GridGenerator:
+    directions = {
+        0: "up",
+        1: "up-right",
+        2: "down-right",
+        3: "down",
+        4: "down-left",
+        5: "up-left",
+    }
+    steps = None
+    covered_positions = None
+    current_direction = None
+    first_position = None
+    current_position = None
+    grid_type = None
+    horizontal_step = None
+    vertical_step = None
+    
+    def __init__(self, 
+                 starting_position, 
+                 edge_length, 
+                 grid_type="circular",
+                 grid_columns=5,
+                 rectangular_grid_first_step="up-right",
+                 rectangular_grid_row_addition=0.0,
+                 in_scale=1.0):
+        self.first_position = (
+            starting_position[0],
+            starting_position[1]
+        )
+        self.covered_positions = []
+        self.add_position(self.first_position)
+        self.current_direction = 1
+        if (grid_type != "circular" and 
+            grid_type != "trapezoid" and
+            grid_type != "rectangular"):
+                raise Exception("Unknown grid type specified!")
+        elif grid_type == "trapezoid":
+            self.grid_columns = grid_columns
+            self.step_direction = "down-right"
+            self.column_counter = 0
+        elif grid_type == "rectangular":
+            self.grid_columns = grid_columns
+            self.step_direction = rectangular_grid_first_step
+            self.rectangular_grid_row_addition = rectangular_grid_row_addition
+            self.column_counter = 0
+        self.grid_type = grid_type
+        
+        self.scaling = in_scale
+        self.edge_length = edge_length
+        self.horizontal_step, self.vertical_step, self.steps = GridGenerator.init_steps(
+            self.edge_length, self.scaling
+        )
+    
+    @staticmethod
+    def init_steps(edge_length, scaling):
+        horizontal_step = (3 * edge_length) / 2
+        vertical_step = math.sin(math.pi / 3) * edge_length
+        horizontal_step *= scaling
+        vertical_step *= scaling
+        steps = {
+            "down-left": (-horizontal_step, vertical_step),
+            "down-right": (horizontal_step, vertical_step),
+            "down": (0, 2*vertical_step),
+            "up-left": (-horizontal_step, -vertical_step),
+            "up-right": (horizontal_step, -vertical_step),
+            "up": (0, -2*vertical_step),
+        }
+        return horizontal_step, vertical_step, steps
+    
+    def add_position(self, position):
+        self.current_position = position
+        self.covered_positions.append(position)
+    
+    def get_position(self):
+        return self.current_position
+    
+    def next(self):
+        if self.grid_type == "circular":
+            return self.next_circular()
+        elif self.grid_type == "trapezoid":
+            return self.next_trapezoid()
+        elif self.grid_type == "rectangular":
+            return self.next_rectangular()
+    
+    def next_rectangular(self):
+        self.column_counter += 1
+        spacing_step_x = 0
+        spacing_step_y = 0
+        spacing = (0, 0)
+        if self.column_counter == self.grid_columns:
+            self.column_counter = 0
+            current_step = self.steps["down"]
+            current_step = (
+                current_step[0],
+                current_step[1] + self.rectangular_grid_row_addition
+            )
+            spacing = (0, 2 * spacing_step_y)
+            if self.step_direction == "down-right":
+                self.step_direction = "down-left"
+            elif self.step_direction == "up-right":
+                self.step_direction = "up-left"
+            elif self.step_direction == "down-left":
+                self.step_direction = "down-right"
+            else:
+                self.step_direction = "up-right"
+        else:
+            current_step = self.steps[self.step_direction]
+            if self.step_direction == "down-right":
+                self.step_direction = "up-right"
+                spacing = (spacing_step_x, spacing_step_y)
+            elif self.step_direction == "up-right":
+                self.step_direction = "down-right"
+                spacing = (spacing_step_x, -spacing_step_y)
+            elif self.step_direction == "down-left":
+                self.step_direction = "up-left"
+                spacing = (-spacing_step_x, spacing_step_y)
+            elif self.step_direction == "up-left":
+                self.step_direction = "down-left"
+                spacing = (-spacing_step_x, -spacing_step_y)
+        new_position = (
+            self.current_position[0] + current_step[0] + spacing[0],
+            self.current_position[1] + current_step[1] + spacing[1],
+        )
+        new_position = (new_position[0], new_position[1])
+        self.add_position(new_position)
+        return self.get_position()
+    
+    def next_trapezoid(self):
+        self.column_counter += 1
+        if self.column_counter == self.grid_columns:
+            self.column_counter = 0
+            current_step = self.steps["down"]
+            if self.step_direction == "down-right":
+                self.step_direction = "up-left"
+            else:
+                self.step_direction = "down-right"
+        else:
+            current_step = self.steps[self.step_direction]
+        new_position = (
+            self.current_position[0] + current_step[0],
+            self.current_position[1] + current_step[1],
+        )
+        self.add_position(new_position)
+        return self.get_position()
+    
+    def next_circular(self):
+        current_direction_name = self.directions[self.current_direction]
+        current_step = self.steps[current_direction_name]
+        new_position = (
+            self.current_position[0] + current_step[0],
+            self.current_position[1] + current_step[1],
+        )
+        if new_position in self.covered_positions:
+            current_direction = self.current_direction
+            for i in range(6):
+                current_direction -= 1
+                if current_direction < 0:
+                    current_direction = 5
+                current_direction_name = self.directions[current_direction]
+                current_step = self.steps[current_direction_name]
+                new_position = (
+                    self.current_position[0] + current_step[0],
+                    self.current_position[1] + current_step[1],
+                )
+                if not(new_position in self.covered_positions):
+                    break
+            self.add_position(new_position)
+            return self.get_position()
+        else:
+            self.current_direction += 1
+            if self.current_direction > 5:
+                self.current_direction = 0
+            self.add_position(new_position)
+            return self.get_position()
 
 
 class IconManipulator:
@@ -797,7 +1076,7 @@ class ActionFilter(data.QObject):
             click_timer = None
         if reset_timer != None:
             reset_timer.stop()
-            click_drag_action = None
+        ActionFilter.click_drag_action = None
 
 
 class CustomStyle(data.QCommonStyle):

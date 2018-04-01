@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec. 
+Copyright (c) 2013-2018 Matic Kukovec. 
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -30,7 +30,6 @@ import forms
 import data
 import components
 import themes
-
 
 
 """
@@ -450,6 +449,8 @@ class SettingsGuiManipulator(data.QGroupBox):
         
         def mousePressEvent(self, event):
             super().mousePressEvent(event)
+            if self.enabled == False:
+                return
             if self.function != None:
                 pass
             else:
@@ -458,179 +459,13 @@ class SettingsGuiManipulator(data.QGroupBox):
                 self.animate()
                 self.parent().hide()
     
-    class GridGenerator:
-        horizontal_step = 38.4
-        vertical_step = 20.9
-        circular_directions = {
-            0: "up",
-            1: "up-right",
-            2: "down-right",
-            3: "down",
-            4: "down-left",
-            5: "up-left",
-        }
-        steps = None
-        covered_positions = None
-        current_direction = None
-        first_position = None
-        current_position = None
-        grid_type = None
-        
-        def __init__(self, 
-                     starting_position, 
-                     grid_type="circular",
-                     grid_columns=5,
-                     rectangular_grid_first_step="up-right",
-                     rectangular_grid_row_addition=3.0,
-                     in_scale=1.0):
-            self.first_position = (
-                starting_position[0],
-                starting_position[1]
-            )
-            self.covered_positions = []
-            self.add_position(self.first_position)
-            self.current_direction = 1
-            if (grid_type != "circular" and 
-                grid_type != "trapezoid" and
-                grid_type != "rectangular"):
-                    raise Exception("Unknown grid type specified!")
-            elif grid_type == "trapezoid":
-                self.grid_columns = grid_columns
-                self.step_direction = "down-right"
-                self.column_counter = 0
-            elif grid_type == "rectangular":
-                self.grid_columns = grid_columns
-                self.step_direction = rectangular_grid_first_step
-                self.rectangular_grid_row_addition = rectangular_grid_row_addition
-                self.column_counter = 0
-            self.grid_type = grid_type
-            
-            self.scaling = in_scale
-            self.horizontal_step = self.horizontal_step * self.scaling
-            self.vertical_step = self.vertical_step * self.scaling
-            self.steps = {
-                "down-left": (-self.horizontal_step, self.vertical_step),
-                "down-right": (self.horizontal_step, self.vertical_step),
-                "down": (0, 2*self.vertical_step),
-                "up-left": (-self.horizontal_step, -self.vertical_step),
-                "up-right": (self.horizontal_step, -self.vertical_step),
-                "up": (0, -2*self.vertical_step),
-            }
-                
-        
-        def add_position(self, position):
-            self.current_position = position
-            self.covered_positions.append(position)
-        
-        def get_position(self):
-            return self.current_position
-        
-        def next(self):
-            if self.grid_type == "circular":
-                return self.next_circular()
-            elif self.grid_type == "trapezoid":
-                return self.next_trapezoid()
-            elif self.grid_type == "rectangular":
-                return self.next_rectangular()
-        
-        def next_rectangular(self):
-            self.column_counter += 1
-            spacing_step_x = 0.45 * self.scaling
-            spacing_step_y = 0.15 * self.scaling
-            spacing = (0, 0)
-            if self.column_counter == self.grid_columns:
-                self.column_counter = 0
-                current_step = self.steps["down"]
-                current_step = (
-                    current_step[0],
-                    current_step[1] + self.rectangular_grid_row_addition
-                )
-                spacing = (0, 2 * spacing_step_y)
-                if self.step_direction == "down-right":
-                    self.step_direction = "down-left"
-                elif self.step_direction == "up-right":
-                    self.step_direction = "up-left"
-                elif self.step_direction == "down-left":
-                    self.step_direction = "down-right"
-                else:
-                    self.step_direction = "up-right"
-            else:
-                current_step = self.steps[self.step_direction]
-                if self.step_direction == "down-right":
-                    self.step_direction = "up-right"
-                    spacing = (spacing_step_x, spacing_step_y)
-                elif self.step_direction == "up-right":
-                    self.step_direction = "down-right"
-                    spacing = (spacing_step_x, -spacing_step_y)
-                elif self.step_direction == "down-left":
-                    self.step_direction = "up-left"
-                    spacing = (-spacing_step_x, spacing_step_y)
-                elif self.step_direction == "up-left":
-                    self.step_direction = "down-left"
-                    spacing = (-spacing_step_x, -spacing_step_y)
-            new_position = (
-                self.current_position[0] + current_step[0] + spacing[0],
-                self.current_position[1] + current_step[1] + spacing[1],
-            )
-            new_position = (new_position[0], new_position[1])
-            self.add_position(new_position)
-            return self.get_position()
-        
-        def next_trapezoid(self):
-            self.column_counter += 1
-            if self.column_counter == self.grid_columns:
-                self.column_counter = 0
-                current_step = self.steps["down"]
-                if self.step_direction == "down-right":
-                    self.step_direction = "up-left"
-                else:
-                    self.step_direction = "down-right"
-            else:
-                current_step = self.steps[self.step_direction]
-            new_position = (
-                self.current_position[0] + current_step[0],
-                self.current_position[1] + current_step[1],
-            )
-            self.add_position(new_position)
-            return self.get_position()
-        
-        def next_circular(self):
-            current_direction_name = self.circular_directions[self.current_direction]
-            current_step = self.steps[current_direction_name]
-            new_position = (
-                self.current_position[0] + current_step[0],
-                self.current_position[1] + current_step[1],
-            )
-            if new_position in self.covered_positions:
-                current_direction = self.current_direction
-                for i in range(6):
-                    current_direction -= 1
-                    if current_direction < 0:
-                        current_direction = 5
-                    current_direction_name = self.circular_directions[current_direction]
-                    current_step = self.steps[current_direction_name]
-                    new_position = (
-                        self.current_position[0] + current_step[0],
-                        self.current_position[1] + current_step[1],
-                    )
-                    if not(new_position in self.covered_positions):
-                        break
-                self.add_position(new_position)
-                return self.get_position()
-            else:
-                self.current_direction += 1
-                if self.current_direction > 5:
-                    self.current_direction = 0
-                self.add_position(new_position)
-                return self.get_position()
-    
     
     # Background image
     settings_background_image = None
     # Shown attribute
     shown = False
     # Scale factor which will affect every child widget size adjustment
-    scale_factor = 0.9 #0.9
+    scale_factor = 1.0 #0.9
     # Button list
     buttons = None
     # Animation list
@@ -656,8 +491,8 @@ class SettingsGuiManipulator(data.QGroupBox):
         # Check if the QPixmap has been created already
         if SettingsGuiManipulator.settings_background_image == None:
             scale = in_scale
-            edge_length = 30
-            scaled_edge_diff = (30 - (edge_length * scale)) / 30
+            edge_length = 27
+            scaled_edge_diff = (edge_length - (edge_length * scale)) / edge_length
             back_color = data.theme.Settings_Background
             edge_color = data.QColor(data.theme.Settings_Hex_Edge)
             
@@ -695,7 +530,8 @@ class SettingsGuiManipulator(data.QGroupBox):
                 line_color=edge_color,
             )
             grid_list = [
-                (3, True), (4, True), (4, True), (4, True), (5, True), (1, True),
+                (3, True), (4, True), (4, True), 
+                (4, True), (5, True), (1, True),
             ]
             hb.create_grid(*grid_list)
             # Label field
@@ -886,9 +722,6 @@ class SettingsGuiManipulator(data.QGroupBox):
         )
     
     def _init_background(self):
-        self.background_image = data.QPixmap(
-            SettingsGuiManipulator.create_background_image(self.scale_factor)
-        )
         sgm_picture = data.QPixmap(
             SettingsGuiManipulator.create_background_image(self.scale_factor)
         )
@@ -939,6 +772,7 @@ class SettingsGuiManipulator(data.QGroupBox):
             button.reset_color()
             if func != None:
                 func()
+        
         # Initialize button list
         self.buttons = []
         # Initialize the button icons and functions
@@ -995,13 +829,17 @@ class SettingsGuiManipulator(data.QGroupBox):
                         (b_name, b_icon, b_keys, mef, mlf)
                     )
         
+        # Adjusted button edge length relative to the background
+        # HexBuilder edge length.
+        button_edge_length = 26
         # General button positions
         first_button_position = (
             self.buttons_general_position[0], 
             self.buttons_general_position[1]
         )
-        grid_generator = self.GridGenerator(
+        grid_generator = components.GridGenerator(
             first_button_position, 
+            edge_length=button_edge_length,
             grid_type="rectangular", 
             grid_columns=7,
             in_scale=self.button_offset_factor
@@ -1039,8 +877,9 @@ class SettingsGuiManipulator(data.QGroupBox):
             self.buttons_editor_position[0], 
             self.buttons_editor_position[1]
         )
-        grid_generator = self.GridGenerator(
-            first_button_position, 
+        grid_generator = components.GridGenerator(
+            first_button_position,
+            edge_length=button_edge_length,
             grid_type="rectangular", 
             grid_columns=6,
             in_scale=self.button_offset_factor
@@ -1358,7 +1197,7 @@ class SessionGuiManipulator(data.QTreeView):
                 if group_name == None:
                     group_name = ""
                 else:
-                    group_name += " / "
+                    group_name = " / ".join(group_name) + " / "
                 self.main_form.display.repl_display_message(
                     "Session '{:s}{:s}' was renamed to '{:s}{:s}'!".format(
                        group_name, 
@@ -1393,7 +1232,7 @@ class SessionGuiManipulator(data.QTreeView):
                 self.main_form.sessions.update_menu()
                 #Display successful group deletion
                 self.main_form.display.repl_display_message(
-                    "Group '{:s}' was renamed to '{:s}'!".format(
+                    "Group '{}' was renamed to '{}'!".format(
                         old_group_name, 
                         new_group_name
                     ), 
@@ -1589,15 +1428,21 @@ class SessionGuiManipulator(data.QTreeView):
             reply = YesNoDialog.warning(message)
             if reply == data.QMessageBox.No:
                 return
-            # Delete all of the session with the group name
-            for session in self.settings_manipulator.stored_sessions:
-                if session.group == remove_group:
-                    self.main_form.sessions.remove(session.name, session.group)
-            # Display successful group deletion
-            self.main_form.display.repl_display_message(
-                "Group '{:s}' was deleted!".format(remove_group_name), 
-                message_type=data.MessageType.SUCCESS
-            )
+            # Delete the group
+            result = self.settings_manipulator.remove_group(remove_group)
+            # Display the deletion result
+            if result == True:
+                self.main_form.display.repl_display_message(
+                    "Group '{:s}' was deleted!".format(remove_group_name), 
+                    message_type=data.MessageType.SUCCESS
+                )
+            else:
+                message = "An error occured while deleting session "
+                message += "group '{:s}'!".format(remove_group_name)
+                self.main_form.display.repl_display_message(
+                    message, 
+                    message_type=data.MessageType.ERROR
+                )
             # Refresh the tree
             self.refresh_display()
         elif selected_item.type == self.ItemType.SESSION:
@@ -2002,6 +1847,20 @@ class TreeDisplay(data.QTreeView):
                 icon = functions.create_icon('tango_icons/update-cwd.png')
                 action_update_cwd.setIcon(icon)
                 self.tree_menu.addAction(action_update_cwd)
+                self.tree_menu.addSeparator()
+                
+                clipboard_copy_action = data.QAction("Copy directory name to clipboard", self)
+                def clipboard_copy():
+                    cb = data.application.clipboard()
+                    cb.clear(mode=cb.Clipboard)
+                    cb.setText(item.text(), mode=cb.Clipboard)
+                clipboard_copy_action.setIcon(
+                    functions.create_icon('tango_icons/edit-copy.png')
+                )
+                clipboard_copy_action.triggered.connect(clipboard_copy)
+                self.tree_menu.addAction(clipboard_copy_action)
+                self.tree_menu.addSeparator()
+                
                 if hasattr(item, "is_base") == True:
                     def update_to_parent():
                         parent_directory = os.path.abspath(
@@ -2047,6 +1906,19 @@ class TreeDisplay(data.QTreeView):
                 action_open_file.setIcon(icon)
                 self.tree_menu.addAction(action_open_file)
                 self.tree_menu.addSeparator()
+                
+                clipboard_copy_action = data.QAction("Copy file name to clipboard", self)
+                def clipboard_copy():
+                    cb = data.application.clipboard()
+                    cb.clear(mode=cb.Clipboard)
+                    cb.setText(item.text(), mode=cb.Clipboard)
+                clipboard_copy_action.setIcon(
+                    functions.create_icon('tango_icons/edit-copy.png')
+                )
+                clipboard_copy_action.triggered.connect(clipboard_copy)
+                self.tree_menu.addAction(clipboard_copy_action)
+                self.tree_menu.addSeparator()
+                
                 def update_to_parent():
                     directory = os.path.dirname(item.full_name)
                     self.main_form.set_cwd(directory)
@@ -3027,7 +2899,7 @@ class TreeDisplay(data.QTreeView):
         self.clean_model()
         self.setModel(tree_model)
         self.setUniformRowHeights(True)
-        self.set_font_size(10)
+        self.set_font_size(data.tree_display_font_size)
         """Define the description details"""
         #Font
         description_brush = data.QBrush(
@@ -5330,8 +5202,8 @@ class YesNoDialog(data.QDialog):
     state = False
     scale = 1.0
     
-    def __init__(self, text, dialog_type=None):
-        super().__init__()
+    def __init__(self, text, dialog_type=None, parent=None):
+        super().__init__(parent)
         # Make the dialog stay on top
         self.setWindowFlags(data.Qt.WindowStaysOnTopHint)
         # Set the dialog icon and title
@@ -5528,11 +5400,17 @@ class YesNoDialog(data.QDialog):
         self.layout.addWidget(self.image)
         self.setLayout(self.layout)
         # Setup tranparency and borders
-        self.image.setAttribute(data.Qt.WA_TranslucentBackground)
-        self.image.setStyleSheet(
-            "border:0;" +
-            "background-color:transparent;"
-        )
+        if data.on_rpi == True:
+            self.image.setStyleSheet(
+                "border:0;" +
+                "background-color:white;"
+            )
+        else:
+            self.image.setAttribute(data.Qt.WA_TranslucentBackground)
+            self.image.setStyleSheet(
+                "border:0;" +
+                "background-color:transparent;"
+            )
         self.setAttribute(data.Qt.WA_TranslucentBackground)
         self.setStyleSheet(
             "border:0;" +
@@ -5570,10 +5448,19 @@ class YesNoDialog(data.QDialog):
         self.button_yes.off()
     
     def center(self):
-        qr = self.frameGeometry()
-        cp = data.QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
+        if self.parent() != None:
+            qr = self.frameGeometry()
+            geo = self.parent().frameGeometry()
+            cp = data.QPoint(
+                (geo.width() / 2) - (qr.width() / 2),
+                (geo.height() / 2) - (qr.height() / 2)
+            )
+            self.move(cp)
+        else:
+            qr = self.frameGeometry()
+            cp = data.QDesktopWidget().availableGeometry().center()
+            qr.moveCenter(cp)
+            self.move(qr.topLeft())
     
     def keyPressEvent(self, key_event):
         pressed_key = key_event.key()
@@ -5779,11 +5666,17 @@ class OkDialog(YesNoDialog):
         self.layout.addWidget(self.image)
         self.setLayout(self.layout)
         # Setup tranparency and borders
-        self.image.setAttribute(data.Qt.WA_TranslucentBackground)
-        self.image.setStyleSheet(
-            "border:0;" +
-            "background-color:transparent;"
-        )
+        if data.on_rpi == True:
+            self.image.setStyleSheet(
+                "border:0;" +
+                "background-color:white;"
+            )
+        else:
+            self.image.setAttribute(data.Qt.WA_TranslucentBackground)
+            self.image.setStyleSheet(
+                "border:0;" +
+                "background-color:transparent;"
+            )
         self.setAttribute(data.Qt.WA_TranslucentBackground)
         self.setStyleSheet(
             "border:0;" +

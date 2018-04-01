@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec. 
+Copyright (c) 2013-2018 Matic Kukovec. 
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -1062,7 +1062,7 @@ class Nim(data.QsciLexerCustom):
     ]
     #Custom keyword created with templates/macros
     user_keyword_list = [
-        "heap_object", "namespace", "property", "stack_object"
+        "class", "namespace", "property",
     ]
     #Keywords that define a proc-like definition
     def_keyword_list = ["proc", "method", "template", "macro", "converter", "iterator"]

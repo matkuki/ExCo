@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec. 
+Copyright (c) 2013-2018 Matic Kukovec. 
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -12,6 +12,7 @@ For complete license information of the dependencies, check the 'additional_lice
 ##  FILE DESCRIPTION:
 ##      Module that holds objects that will be used across modules.
 
+import os
 import sys
 import platform
 
@@ -167,7 +168,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "6.8"
+application_version = "6.9"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -176,8 +177,12 @@ log_window = None
 application = None
 # Global string with the application directory
 application_directory = ""
-# Global string variable for the current platform name ("Windows", "Linux", ...)
+# Global string variable for the current platform name ("Windows", "Linux", ...),
+# and a flag if running on the Raspberry PI
 platform = platform.system()
+on_rpi = False
+if os.name == "posix":
+    on_rpi = (os.uname()[1] == "raspberrypi")
 # User configuration file
 config_file = "user_functions.cfg"
 # Default user configuration file content

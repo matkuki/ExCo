@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec. 
+Copyright (c) 2013-2018 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -202,6 +202,7 @@ def find_files_with_text(search_text,
             else:
                 compare_file_text = file_text
                 compare_search_text = search_text
+            print(compare_search_text)
             #Check if file contains the search string
             if compare_search_text in compare_file_text:
                 return_file_list.append(file)
@@ -222,9 +223,12 @@ def find_files_with_text_enum(search_text,
     Search for the specified text in files in the specified directory and return a file list and
     lines where the text was found at.
     """
-    #Check if the directory is valid
+    # Check if the directory is valid
     if os.path.isdir(search_dir) == False:
-        return None
+        return -1
+    # Check if searching over multiple lines
+    elif '\n' in search_text:
+        return -2
     #Create an empty file list
     text_file_list = []
     #Check if subdirectories should be included
@@ -284,11 +288,11 @@ def replace_text_in_files(search_text,
     """
     #Get the files with the search string in them
     found_files = find_files_with_text(
-                      search_text, 
-                      search_dir, 
-                      case_sensitive, 
-                      search_subdirs 
-                  )
+        search_text, 
+        search_dir, 
+        case_sensitive, 
+        search_subdirs 
+    )
     if found_files == None:
         return []
     #Loop through the found list and replace the text
@@ -317,13 +321,19 @@ def replace_text_in_files_enum(search_text,
     and replaces found instances and stores the line numbers,
     at which the replacements were made
     """
+    # Check if the directory is valid
+    if os.path.isdir(search_dir) == False:
+        return -1
+    # Check if searching over multiple lines
+    elif '\n' in search_text:
+        return -2
     #Get the files with the search string in them
     found_files = find_files_with_text(
-                      search_text, 
-                      search_dir, 
-                      case_sensitive, 
-                      search_subdirs 
-                  )
+        search_text, 
+        search_dir, 
+        case_sensitive, 
+        search_subdirs 
+    )
     if found_files == None:
         return {}
     #Compile the regex expression according to case sensitivity
@@ -518,8 +528,7 @@ def get_nim_node_tree(nim_code):
             #The procedure/macro/... has no parameters, but has a return type
             node.name = current_line.replace(search_string, "", 1).split(":")[0].strip()
             #Special parsing for classes
-            if (search_string == "heap_object" or 
-                search_string == "stack_object" or
+            if (search_string == "class" or
                 search_string == "property"):
                 node.name = node.name.split()[0]
         else:
@@ -563,8 +572,7 @@ def get_nim_node_tree(nim_code):
                     local_skip_to_line = len(line_list) - 1
                 starting_line_number += previous_offset
                 node = parse_node(node, sub_node_lines, line_offset=starting_line_number)
-        elif (search_string == "heap_object" or 
-              search_string == "stack_object" or
+        elif (search_string == "class" or
               search_string == "namespace" or
               search_string == "property"):
             """special macro identifiers: class, namespace, ..."""
@@ -956,12 +964,9 @@ def get_nim_node_tree(nim_code):
                 input_node.templates.append(template_node)
                 #Set the template flag
                 template_statement = True
-            elif line.startswith("heap_object ") or line.startswith("stack_object "):
+            elif line.startswith("class "):
                 #Create and add the class node
-                if line.startswith("heap_object "):
-                    search_term = "heap_object"
-                else:
-                    search_term = "stack_object"
+                search_term = "class"
                 object_node = NimNode()
                 object_node, skip_to_line    =   create_node(
                                                     object_node, 
@@ -1448,14 +1453,28 @@ def get_c_node_tree_with_ctags(c_code):
             si.dwFlags = subprocess.STARTF_USESHOWWINDOW
             si.wShowWindow = subprocess.SW_HIDE
             output = subprocess.Popen(
-                [ctags_program, "-R", "--fields=-f-k-t+K+n", "--excmd=number", filename], 
+                [
+                    ctags_program, 
+                    "-R", 
+                    "--fields=-f-k-t+K+n", 
+                    "--kinds-C=+p+x", 
+                    "--excmd=number", 
+                    filename
+                ], 
                 stdout=subprocess.PIPE,
                 startupinfo=si,
                 shell=False
             ).communicate()[0]
         else:
             output = subprocess.Popen(
-                [ctags_program, "-R", "--fields=-f-k-t+K+n", "--excmd=number", filename], 
+                [
+                    ctags_program, 
+                    "-R", 
+                    "--fields=-f-k-t+K+n", 
+                    "--kinds-C=+p+x", 
+                    "--excmd=number", 
+                    filename
+                ], 
                 stdout=subprocess.PIPE,
                 shell=False
             ).communicate()[0]

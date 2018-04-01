@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec. 
+Copyright (c) 2013-2018 Matic Kukovec. 
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -353,7 +353,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
                     end_message_string = "Press ENTER to continue ..."
                     process_commands = [
                         """subprocess.Popen(
-                                ["{:s}","-l","-e","{:s};echo {:s};python3 -c 'input(\\"{:s}\\")'"])"]
+                                ["{:s}","-l","-e","{:s};echo {:s};python3 -c 'input(\\"{:s}\\")'"]
                         )""".format(
                             data.terminal, 
                             command, 
@@ -368,7 +368,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
                     end_message_string = "Press ENTER to continue ..."
                     process_commands = [
                         """subprocess.Popen(
-                                ["{:s}","-e","{:s};echo {:s};python3 -c 'input(\\"{:s}\\")'"])"]
+                                ["{:s}","-e","{:s};echo {:s};python3 -c 'input(\\"{:s}\\")'"]
                         )""".format(
                             data.terminal, 
                             command, 

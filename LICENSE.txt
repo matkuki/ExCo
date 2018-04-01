@@ -1,5 +1,5 @@
 
-Copyright (c) 2013-2016 Matic Kukovec. All rights reserved.
+Copyright (c) 2013-2018 Matic Kukovec. All rights reserved.
 
 For complete licences of the dependencies, check the 'additional_licenses' directory.
 

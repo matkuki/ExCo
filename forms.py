@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2017 Matic Kukovec.
+Copyright (c) 2013-2018 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -588,7 +588,7 @@ class MainWindow(data.QMainWindow):
         first parameter is always "checked: bool").
         This is a very long function that should be trimmed sometime!
         """
-        self.menubar = data.QMenuBar(self)
+        self.menubar = data.QMenuBar()
         # Click filter for the menubar menus
         click_filter = components.ActionFilter(self)
         # Nested function for creating an action
@@ -1132,11 +1132,11 @@ class MainWindow(data.QMainWindow):
             def special_find():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    temp_string = 'find("{:s}",'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    temp_string = 'find("{}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'search_forward=True,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('find("",case_sensitive=False)')
@@ -1155,11 +1155,11 @@ class MainWindow(data.QMainWindow):
             def special_regex_find():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    temp_string = 'regex_find(r"{:s}",'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    temp_string = 'regex_find(r"{}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'search_forward=True,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_find(r"",case_sensitive=False)')
@@ -1177,11 +1177,11 @@ class MainWindow(data.QMainWindow):
             def special_find_and_replace():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    temp_string = 'find_and_replace("{:s}","",'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    temp_string = 'find_and_replace("{}","",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'search_forward=True,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('find_and_replace("","",case_sensitive=False)')
@@ -1200,11 +1200,11 @@ class MainWindow(data.QMainWindow):
             def special_regex_find_and_replace():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    temp_string = 'regex_find_and_replace(r"{:s}",r"",'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    temp_string = 'regex_find_and_replace(r"{}",r"",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'search_forward=True,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_find_and_replace(r"",r"",case_sensitive=False)')
@@ -1221,10 +1221,10 @@ class MainWindow(data.QMainWindow):
             def special_highlight():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    temp_string = 'highlight("{:s}",'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    temp_string = 'highlight("{}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('highlight("",case_sensitive=False)')
@@ -1241,10 +1241,10 @@ class MainWindow(data.QMainWindow):
             def special_regex_highlight():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    temp_string = 'regex_highlight(r"{:s}",'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    temp_string = 'regex_highlight(r"{}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_highlight(r"",case_sensitive=False)')
@@ -1261,7 +1261,7 @@ class MainWindow(data.QMainWindow):
             def special_clear_highlights():
                 try:
                     focused_tab = self.get_used_tab()
-                    self.repl.setText('clear_highlights(window_name="{:s}")'.format(focused_tab.parent.name))
+                    self.repl.setText('clear_highlights(window_name="{}")'.format(focused_tab.parent.name))
                 except:
                     self.repl.setText('clear_highlights()')
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
@@ -1278,7 +1278,7 @@ class MainWindow(data.QMainWindow):
                 try:
                     focused_tab = self.get_used_tab()
                     temp_string = 'replace_in_selection("","",case_sensitive=False,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)                                  
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)                                  
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('replace_in_selection("","",case_sensitive=False)')
@@ -1296,7 +1296,7 @@ class MainWindow(data.QMainWindow):
                 try:
                     focused_tab = self.get_used_tab()
                     temp_string = 'regex_replace_in_selection(r"",r"",case_sensitive=False,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)                                  
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)                                  
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_replace_in_selection(r"",r"",case_sensitive=False)')
@@ -1318,10 +1318,10 @@ class MainWindow(data.QMainWindow):
             def special_replace_all():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    temp_string = 'replace_all("{:s}","",'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    temp_string = 'replace_all("{}","",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('replace_all("","",case_sensitive=False)')
@@ -1340,10 +1340,10 @@ class MainWindow(data.QMainWindow):
             def special_regex_replace_all():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    temp_string = 'regex_replace_all(r"{:s}",r"",'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    temp_string = 'regex_replace_all(r"{}",r"",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
-                    temp_string += 'window_name="{:s}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_replace_all(r"",r"",case_sensitive=False)')
@@ -1427,7 +1427,7 @@ class MainWindow(data.QMainWindow):
             def special_goto_line():
                 try:
                     focused_tab = self.get_used_tab()
-                    self.repl.setText('goto_line(,window_name="{:s}")'.format(focused_tab.parent.name))
+                    self.repl.setText('goto_line(,window_name="{}")'.format(focused_tab.parent.name))
                     self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                     self.repl.setCursorPosition(self.repl.text().find(',window_name'))
                 except:
@@ -1479,10 +1479,10 @@ class MainWindow(data.QMainWindow):
             def special_find_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    repl_text = 'find_in_open_documents("{:s}"'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    repl_text = 'find_in_open_documents("{}"'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
-                    repl_text += ',window_name="{:s}")'.format(focused_tab.parent.name)
+                    repl_text += ',window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('find_in_open_documents("",case_sensitive=False,regular_expression=False)')
@@ -1500,10 +1500,10 @@ class MainWindow(data.QMainWindow):
             def special_find_replace_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    repl_text = 'find_replace_in_open_documents("{:s}",""'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    repl_text = 'find_replace_in_open_documents("{}",""'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
-                    repl_text += ',window_name="{:s}")'.format(focused_tab.parent.name)
+                    repl_text += ',window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('find_replace_in_open_documents("","",case_sensitive=False,regular_expression=False)')
@@ -1521,10 +1521,10 @@ class MainWindow(data.QMainWindow):
             def special_replace_all_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"")
-                    repl_text = 'replace_all_in_open_documents("{:s}",""'.format(selected_text)
+                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    repl_text = 'replace_all_in_open_documents("{}",""'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
-                    repl_text += ',window_name="{:s}")'.format(focused_tab.parent.name)
+                    repl_text += ',window_name="{}")'.format(focused_tab.parent.name)
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('replace_all_in_open_documents("","",case_sensitive=False,regular_expression=False)')
@@ -1684,7 +1684,7 @@ class MainWindow(data.QMainWindow):
                     lexer_instance = lexer()
                     focused_tab.set_lexer(lexer_instance, lexer_name)
                     #Display the lexer change
-                    message = "Lexer changed to: {:s}".format(lexer_name)
+                    message = "Lexer changed to: {}".format(lexer_name)
                     self.display.repl_display_message(message)
                 except Exception as ex:
                     message = "Error with lexer selection!\n"
@@ -1999,7 +1999,7 @@ class MainWindow(data.QMainWindow):
             repl_menu.addAction(repl_focus_multi_action)
         #Sessions menu
         def construct_sessions_menu():
-            sessions_menu = self.menubar.addMenu("&Sessions")
+            sessions_menu = self.menubar.addMenu("Sessions")
             sessions_menu.installEventFilter(click_filter)
             def add_session():
                 repl_text_input(text='session_add("", session_group=None)', cursor_position=13)
@@ -2036,7 +2036,7 @@ class MainWindow(data.QMainWindow):
             sessions_menu.addMenu(self.sessions_menu)
         # Settings menu
         def construct_settings_menu():
-            settings_menu = self.menubar.addMenu("&Settings")
+            settings_menu = self.menubar.addMenu("Settings")
             settings_menu.installEventFilter(click_filter)
             def show_settings():
                 self.view.show_settings_gui_manipulator()
@@ -2219,7 +2219,7 @@ class MainWindow(data.QMainWindow):
             self, 
             "Open File",  
             self.last_browsed_dir, 
-            "All Files (*);;Ex.Co. Files({:s})".format(' '.join(self.exco_file_exts))
+            "All Files (*);;Ex.Co. Files({})".format(' '.join(self.exco_file_exts))
         )
         if data.PYQT_MODE == 5:
             # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
@@ -2249,7 +2249,7 @@ class MainWindow(data.QMainWindow):
             #Check if file exists
             if os.path.isfile(in_file) == False:
                 self.display.repl_display_message(
-                    "File: {:s}\ndoesn't exist!".format(in_file), 
+                    "File: {}\ndoesn't exist!".format(in_file), 
                     message_type=data.MessageType.ERROR
                 )
                 return
@@ -2576,9 +2576,9 @@ class MainWindow(data.QMainWindow):
                 # Check if the filename has too many characters
                 if len(recent_file_name) > 30:
                     # Shorten the name that will appear in the menubar
-                    recent_file_name = "...{:s}".format(os.path.splitdrive(recent_file)[1][-30:])
+                    recent_file_name = "...{}".format(os.path.splitdrive(recent_file)[1][-30:])
                 new_file_action = data.QAction(recent_file_name, recent_files_menu) #self.parent)
-                new_file_action.setStatusTip("Open: {:s}".format(recent_file))
+                new_file_action.setStatusTip("Open: {}".format(recent_file))
                 # Create a function reference for opening the recent file
                 temp_function = functools.partial(new_file_function, recent_file)
                 new_file_action.triggered.connect(temp_function)
@@ -2682,11 +2682,11 @@ class MainWindow(data.QMainWindow):
                     if session_group != "":
                         group_string = "/".join(session_group) + "/"
                     if session_found == True:
-                        message = "Session '{:s}{:s}' overwritten!".format(
+                        message = "Session '{}{}' overwritten!".format(
                             group_string, session_name
                         )
                     else:
-                        message = "Session '{:s}{:s}' added!".format(
+                        message = "Session '{}{}' added!".format(
                             group_string, session_name
                         )
                     self.parent.display.repl_display_message(
@@ -2717,7 +2717,7 @@ class MainWindow(data.QMainWindow):
                 #Close the log window if it is displayed
                 self.parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
-                message += "Restore session '{:s}' anyway?".format(session_name)
+                message += "Restore session '{}' anyway?".format(session_name)
                 reply = helper_forms.YesNoDialog.question(message)
                 if reply == data.QMessageBox.No:
                     return
@@ -2755,7 +2755,7 @@ class MainWindow(data.QMainWindow):
                 group_string = ""
                 if session_group != "":
                     group_string = "/".join(session_group) + "/"
-                message = "Session '{:s}{:s}' was not found!".format(
+                message = "Session '{}{}' was not found!".format(
                     group_string, session_name
                 )
                 self.parent.display.repl_display_message(
@@ -2819,7 +2819,7 @@ class MainWindow(data.QMainWindow):
                 group_string = "/".join(session_group) + "/"
             if result == False:
                 #Session was not found
-                message = "Session '{:s}{:s}' was not found!".format(
+                message = "Session '{}{}' was not found!".format(
                     group_string, session_name
                 )
                 self.parent.display.repl_display_message(
@@ -2829,7 +2829,7 @@ class MainWindow(data.QMainWindow):
                 self.parent.display.write_to_statusbar(message, 1500)
             else:
                 #Session was removed successfully
-                message = "Session '{:s}{:s}' was removed!".format(
+                message = "Session '{}{}' was removed!".format(
                     group_string, session_name
                 )
                 self.parent.display.repl_display_message(
@@ -2874,7 +2874,7 @@ class MainWindow(data.QMainWindow):
             for session in self.parent.settings.manipulator.stored_sessions:
                 # Add the session
                 new_session_action = data.QAction(session.name, self.parent)
-                new_session_action.setStatusTip("Restore Session: {:s}".format(session.name))
+                new_session_action.setStatusTip("Restore Session: {}".format(session.name))
                 new_session_method = functools.partial(
                     self.restore,
                     session_name=session.name,
@@ -3072,7 +3072,7 @@ class MainWindow(data.QMainWindow):
                 #Store the last focused widget
                 self.parent.last_focused_widget = focused_widget
                 data.print_log(
-                    "Stored \"{:s}\" as last focused widget".format(focused_widget.name)
+                    "Stored \"{}\" as last focused widget".format(focused_widget.name)
                 )
                 #Set focus to the last focused widget
                 if focused_tab != None:
@@ -3357,6 +3357,9 @@ class MainWindow(data.QMainWindow):
                 "#Form {" +
                 "   background-color: {0};".format(data.theme.Form) +
                 "}" + 
+                "#Main_Groupbox {" +
+                    "border: 0px;" +
+                "}" +
                 "QSplitter::handle {" +
                 "   background: {0};".format(data.theme.Form) +
                 "}"
@@ -3581,6 +3584,7 @@ class MainWindow(data.QMainWindow):
             self.parent.main_splitter.setSizes(
                 [self.parent.height() - self.main_relation, self.main_relation]
             )
+            self.reset_entire_style_sheet()
         
         def refresh_theme(self):
             windows = [
@@ -3706,7 +3710,7 @@ class MainWindow(data.QMainWindow):
                 return
             #Display the found files
             self.parent.display.show_found_files(
-                "'{:s}' in its name".format(file_name), 
+                "'{}' in its name".format(file_name), 
                 found_files, 
                 search_dir
             )
@@ -3727,23 +3731,29 @@ class MainWindow(data.QMainWindow):
                     self.parent.set_cwd(search_dir)
             try:
                 #Execute the find function
-                found_files = functions.find_files_with_text_enum(
+                result = functions.find_files_with_text_enum(
                     search_text, 
                     search_dir, 
                     case_sensitive, 
                     search_subdirs, 
                     break_on_find
                 )
-                #Check of the function return is valid
-                if found_files == None:
-                    #Check if directory is valid
+                # Check of the function return is valid
+                if result == -1:
                     self.parent.display.repl_display_message(
                         "Invalid search directory!", 
                         message_type=data.MessageType.ERROR
                     )
                     self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
                     return
-                elif found_files == {}:
+                elif result == -2:
+                    self.parent.display.repl_display_message(
+                        "Cannot search over multiple lines!", 
+                        message_type=data.MessageType.ERROR
+                    )
+                    self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                    return
+                elif result == {}:
                     #Check if any files were found
                     self.parent.display.repl_display_message(
                         "No files found!", 
@@ -3753,8 +3763,8 @@ class MainWindow(data.QMainWindow):
                     return
                 #Display the found files
                 self.parent.display.show_found_files_with_lines_in_tree(
-                    "'{:s}' in its content".format(search_text), 
-                    found_files, 
+                    "'{}' in its content".format(search_text), 
+                    result, 
                     search_dir
                 )
             except Exception as ex:
@@ -3798,10 +3808,24 @@ class MainWindow(data.QMainWindow):
                 case_sensitive, 
                 search_subdirs
             )
+            if result == -1:
+                self.parent.display.repl_display_message(
+                    "Invalid search&replace in files directory!", 
+                    message_type=data.MessageType.ERROR
+                )
+                self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                return
+            elif result == -2:
+                self.parent.display.repl_display_message(
+                    "Cannot search&replace in files over multiple lines!", 
+                    message_type=data.MessageType.ERROR
+                )
+                self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                return
             #Check the return type
             if len(result) == 0:
                 self.parent.display.repl_display_message(
-                    "No files with '{:s}' in its text were found!".format(search_text), 
+                    "No files with '{}' in its text were found!".format(search_text), 
                     message_type=data.MessageType.WARNING
                 )
             elif isinstance(result, dict):
@@ -3880,7 +3904,8 @@ class MainWindow(data.QMainWindow):
                     regular_expression  
                 )
                 #If a replace was done, return success
-                if result == data.SearchResult.FOUND:
+                if (result == data.SearchResult.FOUND or
+                    result == data.SearchResult.CYCLED):
                     return True
             #Nothing found
             basic_widget.setCurrentIndex(saved_index)
@@ -3995,7 +4020,7 @@ class MainWindow(data.QMainWindow):
                 #Argument list has to be preceded by the '*' character
                 method(*argument_list)
             else:
-                message = "No document in {:s} window!".format(window_name)
+                message = "No document in {} window!".format(window_name)
                 self.parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.WARNING
@@ -4377,7 +4402,7 @@ class MainWindow(data.QMainWindow):
                 if start < 0:
                     start = 0
                 #Add the error message
-                parent.repl_messages_tab.append("{:s}\n".format(message))
+                parent.repl_messages_tab.append("{}\n".format(message))
                 #Convert the text to a byte array to get the correct length of the text
                 #if it contains non-ASCII characters
                 end_bytes = parent.repl_messages_tab.text().encode("utf-8")
@@ -4402,7 +4427,7 @@ class MainWindow(data.QMainWindow):
                     style_repl_text(start, end, data.theme.Font.Repl.Diff_Similar, 6)
             else:
                 #Add REPL message to the REPL message tab
-                parent.repl_messages_tab.append("{:s}\n".format(message))
+                parent.repl_messages_tab.append("{}\n".format(message))
             #Bring the REPL tab to the front
             if focus_repl_messages == True:
                 parent.repl_messages_tab.parent.setCurrentWidget(parent.repl_messages_tab)
@@ -4591,7 +4616,7 @@ class MainWindow(data.QMainWindow):
                 #Check if the document was modified
                 if document_tab == None:
                     #Then it has stars(*) in the name
-                    document_tab = parent.get_tab_by_name("*{:s}*".format(document_name))
+                    document_tab = parent.get_tab_by_name("*{}*".format(document_name))
                 try:
                     document_tab.parent.setCurrentWidget(document_tab)
                     document_tab.goto_line(goto_line_number)
@@ -4630,9 +4655,9 @@ class MainWindow(data.QMainWindow):
                 extra_space = "     "
                 #Display document name, used for finding the tab when clicking the hotspot
                 document_name = os.path.basename(custom_editor.save_name)
-                document_text = "DOCUMENT: {:s}\n".format(document_name)
+                document_text = "DOCUMENT: {}\n".format(document_name)
                 parent.node_tree_tab.append(document_text)
-                parent.node_tree_tab.append("TYPE: {:s}\n\n".format(parser))
+                parent.node_tree_tab.append("TYPE: {}\n\n".format(parser))
                 #Display class nodes
                 parent.node_tree_tab.append("CLASS/METHOD TREE:\n")
                 for node in class_tree_nodes:
@@ -4668,9 +4693,9 @@ class MainWindow(data.QMainWindow):
                 extra_space     = "     "
                 #Display document name, used for finding the tab when clicking the hotspot
                 document_name = os.path.basename(custom_editor.save_name)
-                document_text = "DOCUMENT: {:s}\n".format(document_name)
+                document_text = "DOCUMENT: {}\n".format(document_name)
                 parent.node_tree_tab.append(document_text)
-                parent.node_tree_tab.append("TYPE: {:s}\n\n".format(parser))
+                parent.node_tree_tab.append("TYPE: {}\n\n".format(parser))
                 #Display functions
                 parent.node_tree_tab.append("FUNCTION LIST:\n")
                 for func in function_nodes:
@@ -4701,7 +4726,7 @@ class MainWindow(data.QMainWindow):
             #Create lines that will be displayed in the REPL messages window
             display_file_info = []
             for file in file_list:
-                display_file_info.append("{:s} ({:s})".format(os.path.basename(file), file))
+                display_file_info.append("{} ({})".format(os.path.basename(file), file))
             #Display all found files
             self.parent.display.repl_display_message("Found {:d} files:".format(len(file_list)))
             #Use scintilla HOTSPOTS to create clickable file links
@@ -4834,7 +4859,7 @@ class MainWindow(data.QMainWindow):
             #Create a new FOUND FILES tab in the upper basic widget
             parent.found_files_tab = parent.upper_window.tree_add_tab(found_files_tab_name)
             parent.found_files_tab.icon_manipulator.set_icon(
-                parent.found_files_tab, system_replace_in_files_icon
+                parent.found_files_tab, self.system_replace_in_files_icon
             )
             #Focus the node tree tab
             parent.found_files_tab.parent.setCurrentWidget(parent.found_files_tab)
@@ -4873,7 +4898,7 @@ class MainWindow(data.QMainWindow):
             #Add the created text differ to the main window
             diff_index = parent.main_window.addTab(
                 text_differ, 
-                "DIFF({:s} / {:s})".format(text_name_1, text_name_2)
+                "DIFF({} / {})".format(text_name_1, text_name_2)
             )
             #Set focus to the text differ tab
             parent.main_window.setCurrentIndex(diff_index)
@@ -5488,7 +5513,7 @@ class BasicWidget(data.QTabWidget):
                     tab_number = self.parent.tabBar().tabAt(event.pos())
                     if tab_number != -1:
                         mime_data = data.QMimeData()
-                        mime_data.setText("{:s} {:d}".format(self.parent.name, tab_number))
+                        mime_data.setText("{} {:d}".format(self.parent.name, tab_number))
                         drag = data.QDrag(self.parent)
                         drag.setMimeData(mime_data)
                         drag.setHotSpot(event.pos())
@@ -5879,10 +5904,10 @@ class BasicWidget(data.QTabWidget):
             if (key_modifiers == data.Qt.ControlModifier or
                 key_modifiers == data.Qt.AltModifier):
                 self.copy_editor_in(self.drag_source, index)
-                data.print_log("Drag&Drop copied tab {:d} from the {:s} widget".format(index, name))
+                data.print_log("Drag&Drop copied tab {:d} from the {} widget".format(index, name))
             else:
                 self.move_editor_in(self.drag_source, index)
-                data.print_log("Drag&Drop moved tab {:d} from the {:s} widget".format(index, name))
+                data.print_log("Drag&Drop moved tab {:d} from the {} widget".format(index, name))
             event.accept()
         #Reset the drag&drop data attributes
         self.drag_dropped_file  = None
@@ -5909,7 +5934,7 @@ class BasicWidget(data.QTabWidget):
         self._set_save_status()
         # Store the last focused widget to the parent
         self.parent.last_focused_widget = self
-        data.print_log("Stored \"{:s}\" as last focused widget".format(self.name))
+        data.print_log("Stored \"{}\" as last focused widget".format(self.name))
         # Hide the function wheel if it is shown
         self.parent.view.hide_all_overlay_widgets()
         if (event.button() == data.Qt.RightButton and
@@ -6464,6 +6489,12 @@ class PlainEditor(data.QsciScintilla):
         button_clear_repl_messages.clicked.connect(clear)
         button_clear_repl_messages.hide()
         self.corner_widget = button_clear_repl_messages
+        if data.custom_menu_scale != None:
+            self.corner_widget.setIconSize(
+                data.QSize(
+                    data.custom_menu_scale, data.custom_menu_scale
+                )
+            )
     
     def show_repl_corner_widget(self):
         if self.corner_widget != None:
@@ -6501,7 +6532,7 @@ class PlainEditor(data.QsciScintilla):
         #Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self.parent
         data.print_log(
-            "Stored \"{:s}\" as last focused widget".format(self.parent.name)
+            "Stored \"{}\" as last focused widget".format(self.parent.name)
         )
         #Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
@@ -6825,7 +6856,7 @@ class CustomEditor(data.QsciScintilla):
                     # Change the corner widget (button) icon
                     self.parent.cornerWidget().setIcon(self.current_icon)
                     # Display the lexer change
-                    message = "Lexer changed to: {:s}".format(lexer_name)
+                    message = "Lexer changed to: {}".format(lexer_name)
                     self.main_form.display.repl_display_message(message)
                 except Exception as ex:
                     message = "Error with lexer selection!\n"
@@ -6947,7 +6978,7 @@ class CustomEditor(data.QsciScintilla):
         self.main_form.display.update_cursor_position(self.getCursorPosition()[0], self.getCursorPosition()[1])
         # Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self.parent
-        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
+        data.print_log("Stored \"{}\" as last focused widget".format(self.parent.name))
         # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Hide the context menu if it is shown
@@ -7999,7 +8030,7 @@ class CustomEditor(data.QsciScintilla):
         else:
             search_result = self.find_text(search_text, case_sensitive)
         if search_result == data.SearchResult.NOT_FOUND:
-            message = "No matches were found in '{:s}'!".format(file_name)
+            message = "No matches were found in '{}'!".format(file_name)
             self.main_form.display.repl_display_message(
                 message, 
                 message_type=data.MessageType.WARNING
@@ -8035,7 +8066,7 @@ class CustomEditor(data.QsciScintilla):
                     )
                 #Display the replacements in the REPL tab
                 if len(corrected_matches) < settings.Editor.maximum_highlights:
-                    message = "{:s} replacements:".format(file_name)
+                    message = "{} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
                         message_type=data.MessageType.SUCCESS
@@ -8049,7 +8080,7 @@ class CustomEditor(data.QsciScintilla):
                             message_type=data.MessageType.SUCCESS
                         )
                 else:
-                    message = "{:d} replacements made in {:s}!\n".format(
+                    message = "{:d} replacements made in {}!\n".format(
                                                                     len(corrected_matches), 
                                                                     file_name
                                                                 )
@@ -8063,7 +8094,7 @@ class CustomEditor(data.QsciScintilla):
             else:
                 #Display the replacements in the REPL tab
                 if len(matches) < settings.Editor.maximum_highlights:
-                    message = "{:s} replacements:".format(file_name)
+                    message = "{} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
                         message_type=data.MessageType.SUCCESS
@@ -8071,7 +8102,7 @@ class CustomEditor(data.QsciScintilla):
                     for match in matches:
                         line    = self.lineIndexFromPosition(match[1])[0] + 1
                         index   = self.lineIndexFromPosition(match[1])[1]
-                        message = "    replaced \"{:s}\" in line:{:d} column:{:d}".format(
+                        message = "    replaced \"{}\" in line:{:d} column:{:d}".format(
                                                                                 search_text, 
                                                                                 line, 
                                                                                 index
@@ -8081,7 +8112,7 @@ class CustomEditor(data.QsciScintilla):
                             message_type=data.MessageType.SUCCESS
                         )
                 else:
-                    message = "{:d} replacements made in {:s}!\n".format(
+                    message = "{:d} replacements made in {}!\n".format(
                                                                     len(matches), 
                                                                     file_name
                                                                 )
@@ -8620,7 +8651,7 @@ class CustomEditor(data.QsciScintilla):
         #Check the autocompletion source
         if self.autoCompletionSource() == data.QsciScintilla.AcsDocument:
             self.disable_autocompletions()
-            message = "Autocompletions DISABLED in {:s}".format(document_name)
+            message = "Autocompletions DISABLED in {}".format(document_name)
             self.main_form.display.repl_display_message(
                 message, 
                 message_type=data.MessageType.WARNING
@@ -8628,7 +8659,7 @@ class CustomEditor(data.QsciScintilla):
             self.main_form.display.write_to_statusbar("Autocompletions DISABLED")
         else:
             self.enable_autocompletions()
-            message = "Autocompletions ENABLED in {:s}".format(document_name)
+            message = "Autocompletions ENABLED in {}".format(document_name)
             self.main_form.display.repl_display_message(
                 message, 
                 message_type=data.MessageType.SUCCESS
