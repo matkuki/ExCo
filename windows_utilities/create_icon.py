@@ -30,11 +30,16 @@ with open("exco.nim", "w+") as f:
 ]#
 
 import os
+import ospaths
 import osproc
 
 # Parse the arguments
 let arguments = os.commandLineParams()
-var parameters = @["main.py"]
+let main_script_path = ospaths.joinPath(
+    ospaths.parentDir(os.getAppFilename()), "main.py"
+)
+echo main_script_path
+var parameters = @[main_script_path]
 for arg in arguments:
     parameters.add(arg)
 # Run ExCo process
