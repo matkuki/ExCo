@@ -6634,6 +6634,8 @@ class CustomEditor(data.QsciScintilla):
     corner_widget           = None
     # Reference to the custom context menu
     context_menu            = None
+    # Selection anti-recursion lock
+    selection_lock          = None
     """Namespace references for grouping functionality"""
     hotspots                = None
     bookmarks               = None
@@ -6746,6 +6748,7 @@ class CustomEditor(data.QsciScintilla):
         self.cursorPositionChanged.connect(self.parent._signal_editor_cursor_change)
         self.marginClicked.connect(self._margin_clicked)
         self.linesChanged.connect(self._lines_changed)
+        self.selectionChanged.connect(self._selection_changed)
         # Set the lexer to the default Plain Text
         self.choose_lexer("text")
         # Setup autocompletion
@@ -6754,6 +6757,8 @@ class CustomEditor(data.QsciScintilla):
         self._init_corner_widget()
         # Setup the LineList object that will hold the custom editor text as a list of lines
         self.line_list = components.LineList(self, self.text())
+        # Reset the selection anti-recursion lock
+        self.selection_lock = False
         # Bookmark initialization
         self._init_bookmark_marker()
         # Initialize the namespace references
@@ -6829,6 +6834,21 @@ class CustomEditor(data.QsciScintilla):
         for i in bookmarks:
             if bookmarks[i][0] == self:
                 self.bookmarks.add_marker_at_line(bookmarks[i][1])
+    
+    def _selection_changed(self):
+        """
+        Signal that fires when selected text changes
+        """
+        selected_text = self.selectedText()
+        # This function seems to be asynchronous so a lock
+        # is required in order to prevent recursive access to
+        # Python's objects
+        if self.selection_lock == False:
+            self.selection_lock = True
+            self.clear_highlights()
+            if selected_text.isidentifier():
+                self._highlight_text(selected_text)
+            self.selection_lock = False
     
     def _skip_next_repl_focus(self):
         """
@@ -8202,11 +8222,11 @@ class CustomEditor(data.QsciScintilla):
         self.set_indicator_highlight()
         #Get all instances of the text using list comprehension and the re module
         matches = self.find_all(
-                      highlight_text, 
-                      case_sensitive, 
-                      regular_expression, 
-                      text_to_bytes=True
-                  )
+            highlight_text, 
+            case_sensitive, 
+            regular_expression, 
+            text_to_bytes=True
+        )
         #Check if the match list is empty
         if matches:
             #Use the raw highlight function to set the highlight indicators
@@ -8239,6 +8259,28 @@ class CustomEditor(data.QsciScintilla):
                 start, 
                 length
             )
+    
+    def _highlight_text(self, 
+                        highlight_text, 
+                        case_sensitive=False, 
+                        regular_expression=False):
+        """
+        Same as the highlight_text function, but adapted for the use
+        with the _selection_changed functionality.
+        """
+        # Setup the indicator style, the highlight indicator will be 0
+        self.set_indicator_highlight()
+        # Get all instances of the text using list comprehension and the re module
+        matches = self.find_all(
+            highlight_text, 
+            case_sensitive, 
+            regular_expression, 
+            text_to_bytes=True
+        )
+        # Check if the match list is empty
+        if matches:
+            # Use the raw highlight function to set the highlight indicators
+            self.highlight_raw(matches)
     
     def clear_highlights(self):
         """Clear all highlighted text"""
