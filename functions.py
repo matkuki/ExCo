@@ -2225,11 +2225,47 @@ def index_strings_in_linelist(search_text, list_of_lines, case_sensitive=False):
         list_of_matches.extend(line_matches)
     return list_of_matches
 
+#def index_strings_in_text(search_text, 
+#                          text, 
+#                          case_sensitive=False, 
+#                          regular_expression=False, 
+#                          text_to_bytes=False):
+#    """ 
+#    Return all instances of the searched text in the text string
+#    as a list of tuples(0, match_start_position, 0, match_end_position).
+#    
+#    Parameters:
+#        - search_text:
+#            the text/expression to search for in the text parameter
+#        - text:
+#            the text that will be searched through
+#        - case_sensitive:
+#            case sensitivity of the performed search
+#        - regular_expression:
+#            selection of whether the search string is a regular expression or not
+#        - text_to_bytes:
+#            whether to transform the search_text and text parameters into byte objects
+#    """
+#    if text_to_bytes == True:
+#        search_text = bytes(search_text, "utf-8")
+#        text = bytes(text, "utf-8")
+#    #Set the search text according to the regular expression selection
+#    if regular_expression == False:
+#        search_text     = re.escape(search_text)
+#    #Compile expression according to case sensitivity flag
+#    if case_sensitive == True:
+#        compiled_search_re = re.compile(search_text)
+#    else:
+#        compiled_search_re = re.compile(search_text, re.IGNORECASE)
+#    #Create the list with all of the matches
+#    list_of_matches = [(0, match.start(), 0, match.end()) for match in re.finditer(compiled_search_re, text)]
+#    return list_of_matches
 def index_strings_in_text(search_text, 
                           text, 
                           case_sensitive=False, 
                           regular_expression=False, 
-                          text_to_bytes=False):
+                          text_to_bytes=False,
+                          whole_words=False):
     """ 
     Return all instances of the searched text in the text string
     as a list of tuples(0, match_start_position, 0, match_end_position).
@@ -2245,19 +2281,25 @@ def index_strings_in_text(search_text,
             selection of whether the search string is a regular expression or not
         - text_to_bytes:
             whether to transform the search_text and text parameters into byte objects
+        - whole_words:
+            match only whole words
     """
+    # Check if whole words only should be matched
+    if whole_words == True:
+        search_text = r"\b(" + search_text + r")\b"
+    # Convert text to bytes so that utf-8 characters will be parsed correctly
     if text_to_bytes == True:
         search_text = bytes(search_text, "utf-8")
         text = bytes(text, "utf-8")
-    #Set the search text according to the regular expression selection
+    # Set the search text according to the regular expression selection
     if regular_expression == False:
-        search_text     = re.escape(search_text)
-    #Compile expression according to case sensitivity flag
+        search_text = re.escape(search_text)
+    # Compile expression according to case sensitivity flag
     if case_sensitive == True:
         compiled_search_re = re.compile(search_text)
     else:
         compiled_search_re = re.compile(search_text, re.IGNORECASE)
-    #Create the list with all of the matches
+    # Create the list with all of the matches
     list_of_matches = [(0, match.start(), 0, match.end()) for match in re.finditer(compiled_search_re, text)]
     return list_of_matches
 

@@ -113,7 +113,12 @@ def main():
     if file_arguments == ['']:
         file_arguments = None
     #Get the application directory
-    data.application_directory = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
+    if getattr(sys, 'frozen', False):
+        # frozen
+        data.application_directory = os.path.dirname(sys.executable).replace("\\", "/")
+    else:
+        # unfrozen
+        data.application_directory = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
     #Check if Ex.Co. is run as a cx_freeze executable (the path will contain library.zip)
     if data.application_directory.endswith(".zip"):
         data.application_directory = os.path.dirname(data.application_directory)

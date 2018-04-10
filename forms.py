@@ -6847,7 +6847,11 @@ class CustomEditor(data.QsciScintilla):
             self.selection_lock = True
             self.clear_highlights()
             if selected_text.isidentifier():
-                self._highlight_text(selected_text)
+                self._highlight_text(
+                    selected_text,
+                    case_sensitive=False, 
+                    regular_expression=True
+                )
             self.selection_lock = False
     
     def _skip_next_repl_focus(self):
@@ -7947,7 +7951,8 @@ class CustomEditor(data.QsciScintilla):
                  search_text, 
                  case_sensitive=False, 
                  regular_expression=False, 
-                 text_to_bytes=False):
+                 text_to_bytes=False,
+                 whole_words=False):
         """Find all instances of a string and return a list of (line, index_start, index_end)"""
         #Find all instances of the search string and return the list
         matches = functions.index_strings_in_text(
@@ -7955,7 +7960,8 @@ class CustomEditor(data.QsciScintilla):
             self.text(), 
             case_sensitive, 
             regular_expression, 
-            text_to_bytes
+            text_to_bytes,
+            whole_words
         )
         return matches
     
@@ -8275,7 +8281,8 @@ class CustomEditor(data.QsciScintilla):
             highlight_text, 
             case_sensitive, 
             regular_expression, 
-            text_to_bytes=True
+            text_to_bytes=True,
+            whole_words=True
         )
         # Check if the match list is empty
         if matches:
