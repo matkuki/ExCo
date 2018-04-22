@@ -76,6 +76,8 @@ def get_language_file_icon(language_name):
         return create_icon('language_icons/logo_cython.png')
     elif language_name  == "c":
         return create_icon('language_icons/logo_c.png')
+    elif language_name  == "awk":
+        return create_icon('language_icons/logo_awk.png')
     elif language_name  == "c++":
         return create_icon('language_icons/logo_cpp.png')
     elif language_name  == "c / c++":
@@ -2037,6 +2039,8 @@ def get_file_type(file_with_path):
         file_type = "oberon/modula"
     elif file_extension.lower() in data.ext_ada:
         file_type = "ada"
+    elif file_extension.lower() in data.ext_awk:
+        file_type = "awk"
     elif file_extension.lower() in data.ext_xml:
         file_type = "xml"
     elif file_extension.lower() in data.ext_d:

@@ -78,6 +78,16 @@ class Font:
         Type = ('Courier', 0xff2389da, 10, None)
         Package = ('Courier', 0xfff5b0cb, 10, None)
     
+    class AWK:
+        Default = ('Courier', 0xff000000, 10, None)
+        Comment = ('Courier', 0xff007f00, 10, None)
+        Keyword = ('Courier', 0xff00007f, 10, True)
+        BuiltInVariable = ('Courier', 0xffc07f40, 10, None)
+        BuiltInFunction = ('Courier', 0xff407fc0, 10, True)
+        String = ('Courier', 0xff7f007f, 10, None)
+        Number = ('Courier', 0xff007f7f, 10, None)
+        Operator = ('Courier', 0xff7f7f7f, 10, None)
+    
     class Nim:
         Default = ('Courier', 0xffffffff, 10, None)
         Comment = ('Courier', 0xff6cab9d, 10, None)
@@ -1195,6 +1205,16 @@ class Paper:
         Number = 0xff112435
         Type = 0xff112435
         Package = 0xff112435
+    
+    class AWK:
+        Default = 0xff112435
+        Comment = 0xff112435
+        Keyword = 0xff112435
+        BuiltInVariable = 0xff112435
+        BuiltInFunction = 0xff112435
+        String = 0xff112435
+        Number = 0xff112435
+        Operator = 0xff112435
     
     class Nim:
         Default = 0xff112435

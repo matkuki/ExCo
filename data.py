@@ -98,6 +98,7 @@ ext_idl                 = [".idl"]
 ext_ruby                = [".rb", ".rbw"]
 ext_html                = [".html", ".htm"]
 ext_css                 = [".css"]
+ext_awk                 = [".awk"]
 
 
 """
