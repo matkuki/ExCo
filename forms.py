@@ -1695,7 +1695,10 @@ class MainWindow(data.QMainWindow):
                     )
                     self.display.write_to_statusbar(message)
             lexers_menu = self.display.create_lexers_menu(
-                "Change lexer", set_lexer, store_menu_to_mainform=False, custom_parent=parent
+                "Change lexer", 
+                set_lexer, 
+                store_menu_to_mainform=False, 
+                custom_parent=parent
             )
             lexers_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/lexers.png')
@@ -5004,6 +5007,14 @@ class MainWindow(data.QMainWindow):
                 create_lexer(lexers.Ada, 'Ada'),
                 lexers_menu
             )
+            AWK_action = create_action(
+                'AWK',
+                None, 
+                'Change document lexer to: AWK', 
+                'language_icons/logo_awk.png', 
+                create_lexer(lexers.AWK, 'AWK'),
+                lexers_menu
+            )
             BASH_action = create_action(
                 'Bash',
                 None, 
@@ -5277,6 +5288,7 @@ class MainWindow(data.QMainWindow):
             lexers_menu.addAction(NONE_action)
             lexers_menu.addSeparator()
             lexers_menu.addAction(ADA_action)
+            lexers_menu.addAction(AWK_action)
             lexers_menu.addAction(BASH_action)
             lexers_menu.addAction(BATCH_action)
             lexers_menu.addAction(CMAKE_action)
