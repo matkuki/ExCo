@@ -5303,6 +5303,14 @@ class MainWindow(data.QMainWindow):
                 create_lexer(lexers.IDL, 'IDL'),
                 lexers_menu
             )
+            cicode_action = create_action(
+                'CiCode',
+                None, 
+                'Change document lexer to: CiCode', 
+                'language_icons/logo_cicode.png', 
+                create_lexer(lexers.CiCode, 'CiCode'),
+                lexers_menu
+            )
             lexers_menu.addAction(NONE_action)
             lexers_menu.addSeparator()
             lexers_menu.addAction(ADA_action)
@@ -5311,6 +5319,7 @@ class MainWindow(data.QMainWindow):
             lexers_menu.addAction(BATCH_action)
             lexers_menu.addAction(CMAKE_action)
             lexers_menu.addAction(C_CPP_action)
+            lexers_menu.addAction(cicode_action)
             if data.compatibility_mode == False:
                 lexers_menu.addAction(CoffeeScript_action)
             lexers_menu.addAction(CSharp_action)

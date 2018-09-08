@@ -82,6 +82,8 @@ def get_language_file_icon(language_name):
         return create_icon('language_icons/logo_cpp.png')
     elif language_name  == "c / c++":
         return create_icon('language_icons/logo_c_cpp.png')
+    elif language_name  == "cicode":
+        return create_icon('language_icons/logo_cicode.png')
     elif language_name  == "oberon/modula":
         return create_icon('language_icons/logo_oberon.png')
     elif language_name  == "d":
