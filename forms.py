@@ -208,12 +208,12 @@ class MainWindow(data.QMainWindow):
             "Using: {}".format(data.LIBRARY_VERSIONS),
         )
         # Show library data
-        if lexers.cython_found:
+        if lexers.cython_lexers_found:
             self.display.repl_display_message(
                 "Cython lexers imported.", 
                 message_type=data.MessageType.SUCCESS
             )
-        if lexers.nim_found:
+        if lexers.nim_lexers_found:
             self.display.repl_display_message(
                 "Nim lexers imported.", 
                 message_type=data.MessageType.SUCCESS
@@ -1667,11 +1667,21 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/system-show-cwd-tree.png', 
                 create_cwd_tree
             )
+            def show_explorer():
+                self.system.show_explorer()
+            show_explorer_action = create_action(
+                'Show current working directory explorer',
+                settings.Keys.cwd_explorer, 
+                'Show the current working directory in the systems explorer', 
+                'tango_icons/system-show-cwd.png', 
+                show_explorer
+            )
             # Add the menu items
             system_menu.addAction(find_files_action)
             system_menu.addAction(find_in_files_action)
             system_menu.addAction(replace_in_files_action)
             system_menu.addAction(cwd_tree_action)
+            system_menu.addAction(show_explorer_action)
             system_menu.addAction(run_command_action)
         #Lexers menu
         def construct_lexers_menu(parent):
@@ -3843,6 +3853,13 @@ class MainWindow(data.QMainWindow):
                     "Unknown error!", 
                     message_type=data.MessageType.ERROR
                 )
+        
+        def show_explorer(self):
+            if data.platform == "Windows":
+                command = "explorer ."
+            else:
+                raise Exception("Unimplemented yet!")
+            self.parent.repl.interpreter.run_cmd_process(command, show_console=False)
     
     class Editing:
         """
@@ -4491,8 +4508,10 @@ class MainWindow(data.QMainWindow):
                 parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
                 return
             # Check if the document type is Python or C
-            if parser != "PYTHON" and parser != "C" and parser != "NIM":
-                message = "Document is not C, Nim or Python 3!"
+            valid_parsers = ["PYTHON", "C", "NIM"]
+            if not(parser in valid_parsers):
+                parsers = ", ".join([x[0] + x[1:].lower() for x in valid_parsers[:-1]])
+                message = "Document is not of type: {}!".format(parsers)
                 parent.display.repl_display_message(
                         message, 
                         message_type=data.MessageType.ERROR
@@ -4546,8 +4565,6 @@ class MainWindow(data.QMainWindow):
                 )
             elif parser == "C":
                 # Get all the file information
-#                function_nodes = functions.get_c_function_list(custom_editor.text())
-#                c_nodes = functions.get_c_node_tree(custom_editor.text())
                 try:
                     result = functions.get_c_node_tree_with_ctags(custom_editor.text())
                 except Exception as ex:
@@ -4576,9 +4593,10 @@ class MainWindow(data.QMainWindow):
             Show the node tree of a parsed file in a "NODE TREE" Scintilla
             document in the upper window
             """
-            #Define references directly to the parent and mainform for performance and clarity
+            # Define references directly to the parent and 
+            # mainform for performance and clarity
             parent = self.parent
-            #Check if the custom editor is valid
+            # Check if the custom editor is valid
             if custom_editor == None:
                 parent.display.repl_display_message(
                         "No document selected for node tree creation!", 
@@ -4586,7 +4604,7 @@ class MainWindow(data.QMainWindow):
                 )
                 parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
                 return
-            #Check if the document type is Python or C
+            # Check if the document type is Python or C
             if parser != "PYTHON" and parser != "C":
                 parent.display.repl_display_message(
                         "Document is not Python or C!", 
@@ -4594,7 +4612,7 @@ class MainWindow(data.QMainWindow):
                 )
                 parent.display.write_to_statusbar("Document is not Python or C", 5000)
                 return
-            #Nested hotspot function
+            # Nested hotspot function
             def create_hotspot(node_tab):
                 #Create the hotspot boundaries
                 hotspot_line        = node_tab.lines()-2
@@ -4607,18 +4625,18 @@ class MainWindow(data.QMainWindow):
                 node_tab.hotspots.style(
                     node_tab, hotspot_start, hotspot_length, color=0xff0000
                 )
-            #Create the function and connect the hotspot release signal to it
+            # Create the function and connect the hotspot release signal to it
             def hotspot_release(position, modifiers):
-                #Get the line and index at where the hotspot was clicked
+                # Get the line and index at where the hotspot was clicked
                 line, index = parent.node_tree_tab.lineIndexFromPosition(position)
-                #Get the document name and focus on the tab with the document
+                # Get the document name and focus on the tab with the document
                 document_name       = re.search("DOCUMENT\:\s*(.*)\n", parent.node_tree_tab.text(0)).group(1)
                 goto_line_number    = int(re.search(".*\(line\:(\d+)\).*", parent.node_tree_tab.text(line)).group(1))
-                #Find the document, set focus to it and go to the line the hotspot points to
+                # Find the document, set focus to it and go to the line the hotspot points to
                 document_tab = parent.get_tab_by_name(document_name)
-                #Check if the document was modified
+                # Check if the document was modified
                 if document_tab == None:
-                    #Then it has stars(*) in the name
+                    # Then it has stars(*) in the name
                     document_tab = parent.get_tab_by_name("*{}*".format(document_name))
                 try:
                     document_tab.parent.setCurrentWidget(document_tab)
@@ -6637,6 +6655,7 @@ class CustomEditor(data.QsciScintilla):
     HIGHLIGHT_INDICATOR     = 0
     FIND_INDICATOR          = 2
     REPLACE_INDICATOR       = 3
+    SELECTION_INDICATOR     = 4
     # Line strings in a list, gets updated on every text change,
     # can be used like any other python list(append, extend, reverse, ...)
     line_list               = None
@@ -6857,9 +6876,9 @@ class CustomEditor(data.QsciScintilla):
         # Python's objects
         if self.selection_lock == False:
             self.selection_lock = True
-            self.clear_highlights()
+            self.clear_selection_highlights()
             if selected_text.isidentifier():
-                self._highlight_text(
+                self._highlight_selected_text(
                     selected_text,
                     case_sensitive=False, 
                     regular_expression=True
@@ -6968,7 +6987,9 @@ class CustomEditor(data.QsciScintilla):
                 elif len(self.line_list[line_number-1].rstrip()) == 0:
                     return
                 last_character = self.line_list[line_number-1].rstrip()[-1]
-                if last_character in self.lexer().autoindent_characters:
+                last_word = self.line_list[line_number-1].split()[-1].lower()
+                if (last_character in self.lexer().autoindent_characters or
+                    last_word in self.lexer().autoindent_characters):
                     line = self.line_list[line_number]
                     stripped_line = self.line_list[line_number].strip()
                     if stripped_line == "":
@@ -7498,7 +7519,12 @@ class CustomEditor(data.QsciScintilla):
             line_number, position = self.getCursorPosition()
             # Adjust index to the line list indexing
             line_number += 1
-            line_text = self.line_list[line_number]
+            # Check if the indentation is the first function
+            # that is exected in an empty editor
+            if len(self.line_list) == 0:
+                line_text = ""
+            else:
+                line_text = self.line_list[line_number]
             # Check if there is no text before the cursor position in the current line
             if line_text[:position].strip() == "":
                 for i, ch in enumerate(line_text):
@@ -8049,7 +8075,7 @@ class CustomEditor(data.QsciScintilla):
         #Clear all previous highlights
         self.clear_highlights()
         #Setup the indicator style, the replace indicator is 1
-        self.set_indicator_replace()
+        self.set_indicator("replace")
         #Correct the displayed file name
         if self.save_name == None or self.save_name == "":
             file_name = self.parent.tabText(self.parent.currentIndex())
@@ -8180,14 +8206,14 @@ class CustomEditor(data.QsciScintilla):
         #Get the start and end point of the selected text
         start_line, start_index,  end_line, end_index = self.getSelection()
         #Get the currently selected text and use the re module to replace the text
-        selected_text   = self.selectedText()
-        replaced_text   = functions.regex_replace_text(
-                              selected_text, 
-                              search_text, 
-                              replace_text, 
-                              case_sensitive, 
-                              regular_expression
-                        )
+        selected_text = self.selectedText()
+        replaced_text = functions.regex_replace_text(
+                selected_text, 
+                search_text, 
+                replace_text, 
+                case_sensitive, 
+                regular_expression
+        )
         #Check if any replacements were made
         if replaced_text != selected_text:
             #Put the text back into the selection space and select it again
@@ -8237,7 +8263,7 @@ class CustomEditor(data.QsciScintilla):
         Highlight all instances of the selected text with a selected colour
         """
         #Setup the indicator style, the highlight indicator will be 0
-        self.set_indicator_highlight()
+        self.set_indicator("highlight")
         #Get all instances of the text using list comprehension and the re module
         matches = self.find_all(
             highlight_text, 
@@ -8278,7 +8304,7 @@ class CustomEditor(data.QsciScintilla):
                 length
             )
     
-    def _highlight_text(self, 
+    def _highlight_selected_text(self, 
                         highlight_text, 
                         case_sensitive=False, 
                         regular_expression=False):
@@ -8287,7 +8313,7 @@ class CustomEditor(data.QsciScintilla):
         with the _selection_changed functionality.
         """
         # Setup the indicator style, the highlight indicator will be 0
-        self.set_indicator_highlight()
+        self.set_indicator("selection")
         # Get all instances of the text using list comprehension and the re module
         matches = self.find_all(
             highlight_text, 
@@ -8327,6 +8353,16 @@ class CustomEditor(data.QsciScintilla):
             self.lineLength(self.lines()-1), 
             self.FIND_INDICATOR
         )
+        
+    def clear_selection_highlights(self):
+        #Clear the selection indicators
+        self.clearIndicatorRange(
+            0, 
+            0, 
+            self.lines(), 
+            self.lineLength(self.lines()-1), 
+            self.SELECTION_INDICATOR
+        )
     
     def _set_indicator(self,
                        indicator, 
@@ -8345,26 +8381,33 @@ class CustomEditor(data.QsciScintilla):
             indicator
         )
 
-    def set_indicator_highlight(self):
-        """Set the appearance of the highlight indicator (the default indicator is 0)"""
-        self._set_indicator(
-            self.HIGHLIGHT_INDICATOR, 
-            data.QColor(0, 255, 0, 80)
-        )
-
-    def set_indicator_replace(self):
-        """Set the appearance of the highlight indicator"""
-        self._set_indicator(
-            self.REPLACE_INDICATOR, 
-            data.QColor(50, 180, 255, 80)
-        )
-
-    def set_indicator_find(self):
-        """Set the appearance of the highlight indicator"""
-        self._set_indicator(
-            self.FIND_INDICATOR, 
-            data.QColor(255, 180, 50, 100)
-        )
+    def set_indicator(self, indicator):
+        """
+        Select the indicator that will be used for use with
+        Scintilla's indicator functionality
+        """
+        if indicator == "highlight":
+            self._set_indicator(
+                self.HIGHLIGHT_INDICATOR, 
+                data.theme.Indication.Highlight
+            )
+        elif indicator == "selection":
+            self._set_indicator(
+                self.SELECTION_INDICATOR, 
+                data.theme.Indication.Selection
+            )
+        elif indicator == "replace":
+            self._set_indicator(
+                self.REPLACE_INDICATOR, 
+                data.theme.Indication.Replace
+            )
+        elif indicator == "find":
+            self._set_indicator(
+                self.FIND_INDICATOR, 
+                data.theme.Indication.Find
+            )
+        else:
+            raise Exception("Unknown indicator: {}".format(indicator))
 
 
     """

@@ -99,6 +99,7 @@ ext_ruby                = [".rb", ".rbw"]
 ext_html                = [".html", ".htm"]
 ext_css                 = [".css"]
 ext_awk                 = [".awk"]
+ext_cicode              = [".ci"]
 
 
 """
@@ -169,7 +170,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "6.9"
+application_version = "6.10"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere

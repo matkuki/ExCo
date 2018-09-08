@@ -134,6 +134,7 @@ class Keys:
     clear_highlights = 'Ctrl+Shift+G'
     close_tab = 'Ctrl+W'
     cwd_tree = 'F7'
+    cwd_explorer = 'Ctrl+F7'
     find = 'Ctrl+F'
     find_and_replace = 'Ctrl+Shift+F'
     find_files = 'Ctrl+F1'
@@ -294,10 +295,7 @@ class SettingsFileManipulator:
     main_window_side                = data.MainWindowSide.RIGHT
     theme                           = themes.Air
     
-    empty_settings_list = [   
-        "# Needed imports", 
-        "import themes", 
-        "",
+    empty_settings_list = [
         "# General Settings",  
         "main_window_side = 0", 
         "theme = themes.Air",
@@ -360,9 +358,6 @@ class SettingsFileManipulator:
                             stored_sessions,
                             context_menu_functions):
         settings_lines = []
-        settings_lines.append("# Needed imports")
-        settings_lines.append("import themes")
-        settings_lines.append("")
         settings_lines.append("# General Settings")
         settings_lines.append("main_window_side = {}".format(main_window_side))
         settings_lines.append("theme = {}".format(theme.__name__))
@@ -439,7 +434,10 @@ class SettingsFileManipulator:
         if self.error_lock == True:
             return
         # Import the init file as a python module
-        init_module = runpy.run_path(self.settings_filename_with_path)
+        init_module = runpy.run_path(
+            self.settings_filename_with_path,
+            init_globals = {"themes": themes, "data": data}
+        )
         # Update only the recent file list
         stored_sessions = self._parse_sessions(init_module["sessions"])
         # Save the updated settings
@@ -455,7 +453,10 @@ class SettingsFileManipulator:
         """Load all setting from the settings file"""
         try:
             # Import the init file as a python module
-            init_module = runpy.run_path(self.settings_filename_with_path)
+            init_module = runpy.run_path(
+                self.settings_filename_with_path,
+                init_globals = {"themes": themes, "data": data}
+            )
             # Main window side
             self.main_window_side = init_module["main_window_side"]
             # Theme

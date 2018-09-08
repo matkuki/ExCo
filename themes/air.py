@@ -19,11 +19,11 @@ tooltip = "Air"
 image_file = "tango_icons/theme-air.png"
 
 Form = "#f0f0f0"
-Context_Menu_Background = data.PyQt.QtGui.QColor(0xf0, 0xf0, 0xf0)
-Cursor = data.PyQt.QtGui.QColor(0x00, 0x00, 0x00)
-Cursor_Line_Background = data.PyQt.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
-Settings_Background = data.PyQt.QtGui.QColor(0xffffffff)
-Settings_Label_Background = data.PyQt.QtGui.QColor(0xffffffff)
+Context_Menu_Background = data.QColor(0xf0, 0xf0, 0xf0)
+Cursor = data.QColor(0x00, 0x00, 0x00)
+Cursor_Line_Background = data.QColor(0x72, 0x9f, 0xcf, 80)
+Settings_Background = data.QColor(0xffffffff)
+Settings_Label_Background = data.QColor(0xffffffff)
 Settings_Hex_Edge = data.QColor(159,189,214)
 Settings_Hex_Background = data.QColor(0xff, 0xff, 0xff)
 YesNoDialog_Edge = data.QColor(159,189,214)
@@ -31,13 +31,13 @@ YesNoDialog_Background = data.QColor(0xff, 0xff, 0xff)
 
 
 class FoldMargin:
-    ForeGround = data.PyQt.QtGui.QColor(0x000000)
-    BackGround = data.PyQt.QtGui.QColor(0x000000)
+    ForeGround = data.QColor(0x000000)
+    BackGround = data.QColor(0x000000)
 
 
 class LineMargin:
-    ForeGround = data.PyQt.QtGui.QColor(0x000000)
-    BackGround = data.PyQt.QtGui.QColor(0xe0e0e0)
+    ForeGround = data.QColor(0x000000)
+    BackGround = data.QColor(0xe0e0e0)
 
 
 class Indication:
@@ -46,16 +46,21 @@ class Indication:
     ActiveBorder = "#204a87"
     PassiveBackGround = "#f0f0f0"
     PassiveBorder = "#a0a0a0"
+    # Editor indicator colors
+    Highlight = data.QColor(0, 255, 0, 80)
+    Selection = data.QColor(200, 200, 200, 100)
+    Replace = data.QColor(50, 180, 255, 80)
+    Find = data.QColor(255, 180, 50, 100)
 
 
 class TextDifferColors:
-    Indicator_Unique_1_Color = data.PyQt.QtGui.QColor(0x72, 0x9f, 0xcf, 80)
-    Indicator_Unique_2_Color = data.PyQt.QtGui.QColor(0xad, 0x7f, 0xa8, 80)
-    Indicator_Similar_Color = data.PyQt.QtGui.QColor(0x8a, 0xe2, 0x34, 80)
+    Indicator_Unique_1_Color = data.QColor(0x72, 0x9f, 0xcf, 80)
+    Indicator_Unique_2_Color = data.QColor(0xad, 0x7f, 0xa8, 80)
+    Indicator_Similar_Color = data.QColor(0x8a, 0xe2, 0x34, 80)
 
 
 class Font:
-    Default = data.PyQt.QtGui.QColor(0xff000000)
+    Default = data.QColor(0xff000000)
     
     class Repl:
         """
@@ -87,6 +92,17 @@ class Font:
         String = ('Courier', 0xff7f007f, 10, None)
         Number = ('Courier', 0xff007f7f, 10, None)
         Operator = ('Courier', 0xff7f7f7f, 10, None)
+    
+    class CiCode:
+        Default = ('Courier', 0xff000000, 10, None)
+        Comment = ('Courier', 0xff007f00, 10, None)
+        MultilineComment = ('Courier', 0xff006f00, 10, None)
+        Keyword = ('Courier', 0xff00007f, 10, True)
+        BuiltInFunction = ('Courier', 0xff407fc0, 10, True)
+        String = ('Courier', 0xff7f007f, 10, None)
+        Number = ('Courier', 0xff007f7f, 10, None)
+        Operator = ('Courier', 0xff7f7f7f, 10, None)
+        Function = ('Courier', 0xff007f7f, 10, None)
     
     class Nim:
         Default = ('Courier', 0xff000000, 10, None)
@@ -1194,7 +1210,7 @@ class Font:
 
 
 class Paper:
-    Default = data.PyQt.QtGui.QColor(0xffffffff)
+    Default = data.QColor(0xffffffff)
     
     class Ada:
         Default = 0xffffffff
@@ -1207,6 +1223,16 @@ class Paper:
         Package = 0xffffffff
     
     class AWK:
+        Default = 0xffffffff
+        Comment = 0xffffffff
+        Keyword = 0xffffffff
+        BuiltInVariable = 0xffffffff
+        BuiltInFunction = 0xffffffff
+        String = 0xffffffff
+        Number = 0xffffffff
+        Operator = 0xffffffff
+        
+    class CiCode:
         Default = 0xffffffff
         Comment = 0xffffffff
         Keyword = 0xffffffff
