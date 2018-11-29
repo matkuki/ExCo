@@ -1698,6 +1698,7 @@ class TreeDisplay(data.QTreeView):
     tree_display_type       = None
     tree_menu               = None
     bound_tab               = None
+    worker_thread           = None
     #Attributes specific to the display data
     bound_node_tab          = None
     #Node icons
@@ -1739,6 +1740,11 @@ class TreeDisplay(data.QTreeView):
         if self.tree_menu != None:
             self.tree_menu.setParent(None)
             self.tree_menu = None
+        if self.worker_thread != None:
+            self.worker_thread.stop()
+            self.worker_thread.wait()
+            self.worker_thread.quit()
+            self.worker_thread = None
         # Clean up self
         self.setParent(None)
         self.deleteLater()
@@ -1746,7 +1752,8 @@ class TreeDisplay(data.QTreeView):
     def parent_destroyed(self, event):
         # Connect the bound tab 'destroy' signal to this function
         # for automatic closing of this tree widget
-        self.parent.close_tab(self)
+        if parent != None:
+            self.parent.close_tab(self)
     
     def __init__(self, parent=None, main_form=None):
         """Initialization"""
@@ -3001,59 +3008,79 @@ class TreeDisplay(data.QTreeView):
         """ Helper function for adding files to a tree view """
         #Check if any files were found
         if items != []:
-            #Set the UNIX file format to the directory
-            directory = directory.replace("\\", "/")
-            """Adding the files"""
-            label_brush = data.QBrush(
-                data.QColor(data.theme.Font.Python.SingleQuotedString[1])
-            )
-            label_font = data.QFont(
-                "Courier", data.tree_display_font_size, data.QFont.Bold
-            )
-            item_brush = data.QBrush(
-                data.QColor(data.theme.Font.Python.Default[1])
-            )
-            item_font = data.QFont("Courier", data.tree_display_font_size)
-            #Create the base directory item that will hold all of the found files
-            item_base_directory = data.QStandardItem(directory)
-            item_base_directory.setEditable(False)
-            item_base_directory.setForeground(label_brush)
-            item_base_directory.setFont(label_font)
-            item_base_directory.setIcon(self.folder_icon)
-            #Add an indicating attribute that shows the item is a directory.
-            #It's a python object, attributes can be added dynamically!
-            item_base_directory.is_base = True
-            item_base_directory.full_name = directory
-            #Create the base directory object that will hold everything else
-            base_directory = self.Directory(item_base_directory)
-            #Create the files that will be added last directly to the base directory
-            base_files = {}
-            #Sort the the item list so that all of the directories are before the files
-            sorted_items = self._sort_item_list(items, directory)
-            #Loop through the files while creating the directory tree
-            for item_with_path in sorted_items:
-                if os.path.isfile(item_with_path):
-                    file = item_with_path.replace(directory, "")
-                    file_name       = os.path.basename(file)
-                    directory_name  = os.path.dirname(file)
-                    #Strip the first "/" from the files directory
-                    if directory_name.startswith("/"):
-                        directory_name = directory_name[1:]
-                    #Initialize the file item
-                    item_file = data.QStandardItem(file_name)
-                    item_file.setEditable(False)
-                    item_file.setForeground(item_brush)
-                    item_file.setFont(item_font)
-                    file_type = functions.get_file_type(file_name)
-                    item_file.setIcon(functions.get_language_file_icon(file_type))
-                    #Add an atribute that will hold the full file name to the QStandartItem.
-                    #It's a python object, attributes can be added dynamically!
-                    item_file.full_name = item_with_path
-                    #Check if the file is in the base directory
-                    if directory_name == "":
-                        #Store the file item for adding to the bottom of the tree
-                        base_files[file_name] = item_file
+            def add_items(directory, items, thread):
+                #Set the UNIX file format to the directory
+                directory = directory.replace("\\", "/")
+                """Adding the files"""
+                label_brush = data.QBrush(
+                    data.QColor(data.theme.Font.Python.SingleQuotedString[1])
+                )
+                label_font = data.QFont(
+                    "Courier", data.tree_display_font_size, data.QFont.Bold
+                )
+                item_brush = data.QBrush(
+                    data.QColor(data.theme.Font.Python.Default[1])
+                )
+                item_font = data.QFont("Courier", data.tree_display_font_size)
+                #Create the base directory item that will hold all of the found files
+                item_base_directory = data.QStandardItem(directory)
+                item_base_directory.setEditable(False)
+                item_base_directory.setForeground(label_brush)
+                item_base_directory.setFont(label_font)
+                item_base_directory.setIcon(self.folder_icon)
+                #Add an indicating attribute that shows the item is a directory.
+                #It's a python object, attributes can be added dynamically!
+                item_base_directory.is_base = True
+                item_base_directory.full_name = directory
+                #Create the base directory object that will hold everything else
+                base_directory = self.Directory(item_base_directory)
+                #Create the files that will be added last directly to the base directory
+                base_files = {}
+                #Sort the the item list so that all of the directories are before the files
+                sorted_items = self._sort_item_list(items, directory)
+                #Loop through the files while creating the directory tree
+                for item_with_path in sorted_items:
+                    
+                    if thread.stop_flag:
+                        return None
+                    
+                    if os.path.isfile(item_with_path):
+                        file = item_with_path.replace(directory, "")
+                        file_name       = os.path.basename(file)
+                        directory_name  = os.path.dirname(file)
+                        #Strip the first "/" from the files directory
+                        if directory_name.startswith("/"):
+                            directory_name = directory_name[1:]
+                        #Initialize the file item
+                        item_file = data.QStandardItem(file_name)
+                        item_file.setEditable(False)
+                        item_file.setForeground(item_brush)
+                        item_file.setFont(item_font)
+                        file_type = functions.get_file_type(file_name)
+                        item_file.setIcon(functions.get_language_file_icon(file_type))
+                        #Add an atribute that will hold the full file name to the QStandartItem.
+                        #It's a python object, attributes can be added dynamically!
+                        item_file.full_name = item_with_path
+                        #Check if the file is in the base directory
+                        if directory_name == "":
+                            #Store the file item for adding to the bottom of the tree
+                            base_files[file_name] = item_file
+                        else:
+                            #Check the previous file items directory structure
+                            parsed_directory_list = directory_name.split("/")
+                            #Create the new directories
+                            current_directory = base_directory
+                            for dir in parsed_directory_list:
+                                #Check if the current loop directory already exists
+                                if dir in current_directory.directories:
+                                    current_directory = current_directory.directories[dir]
+                            #Add the file to the directory
+                            current_directory.add_file(file_name, item_file)
                     else:
+                        directory_name  = item_with_path.replace(directory, "")
+                        #Strip the first "/" from the files directory
+                        if directory_name.startswith("/"):
+                            directory_name = directory_name[1:]
                         #Check the previous file items directory structure
                         parsed_directory_list = directory_name.split("/")
                         #Create the new directories
@@ -3062,44 +3089,59 @@ class TreeDisplay(data.QTreeView):
                             #Check if the current loop directory already exists
                             if dir in current_directory.directories:
                                 current_directory = current_directory.directories[dir]
-                        #Add the file to the directory
-                        current_directory.add_file(file_name, item_file)
-                else:
-                    directory_name  = item_with_path.replace(directory, "")
-                    #Strip the first "/" from the files directory
-                    if directory_name.startswith("/"):
-                        directory_name = directory_name[1:]
-                    #Check the previous file items directory structure
-                    parsed_directory_list = directory_name.split("/")
-                    #Create the new directories
-                    current_directory = base_directory
-                    for dir in parsed_directory_list:
-                        #Check if the current loop directory already exists
-                        if dir in current_directory.directories:
-                            current_directory = current_directory.directories[dir]
-                        else:
-                            #Create the new directory item
-                            item_new_directory = data.QStandardItem(dir)
-                            item_new_directory.setEditable(False)
-                            item_new_directory.setIcon(self.folder_icon)
-                            item_new_directory.setForeground(item_brush)
-                            item_new_directory.setFont(item_font)
-                            #Add an indicating attribute that shows the item is a directory.
-                            #It's a python object, attributes can be added dynamically!
-                            item_new_directory.is_dir = True
-                            item_new_directory.full_name = item_with_path
-                            current_directory = current_directory.add_directory(
-                                dir, 
-                                item_new_directory
-                            )
-            #Add the base level files from the stored dictionary, first sort them
-            for file_key in sorted(base_files, key=str.lower):
-                base_directory.add_file(file_key, base_files[file_key])
-            tree_model.appendRow(item_base_directory)
-            #Expand the base directory item
-            self.expand(item_base_directory.index())
-            #Resize the header so the horizontal scrollbar will have the correct width
-            self.resize_horizontal_scrollbar()
+                            else:
+                                #Create the new directory item
+                                item_new_directory = data.QStandardItem(dir)
+                                item_new_directory.setEditable(False)
+                                item_new_directory.setIcon(self.folder_icon)
+                                item_new_directory.setForeground(item_brush)
+                                item_new_directory.setFont(item_font)
+                                #Add an indicating attribute that shows the item is a directory.
+                                #It's a python object, attributes can be added dynamically!
+                                item_new_directory.is_dir = True
+                                item_new_directory.full_name = item_with_path
+                                current_directory = current_directory.add_directory(
+                                    dir, 
+                                    item_new_directory
+                                )
+                #Add the base level files from the stored dictionary, first sort them
+                for file_key in sorted(base_files, key=str.lower):
+                    base_directory.add_file(file_key, base_files[file_key])
+                return item_base_directory, base_directory
+            
+            class ProcessThread(data.QThread):
+                finished = data.pyqtSignal(data.QStandardItem, self.Directory)
+                stop_flag = False
+                
+                def stop(self):
+                    self.stop_flag = True
+                
+                def run(self):
+                    result = add_items(directory, items, self)
+                    if result == None:
+                        return None
+                    item_base_directory, base_directory = result
+                    self.finished.emit(item_base_directory, base_directory)
+            
+            def completed(directory_base, base_directory):
+                tree_model.appendRow(directory_base)
+                # Check if the TreeDisplay underlying C++ object is alive
+                if self.parent == None:
+                    return
+                # Expand the base directory item
+                self.expand(directory_base.index())
+                # Resize the header so the horizontal scrollbar will have the correct width
+                self.resize_horizontal_scrollbar()
+                # Hide the wait animation
+                if self.parent != None:
+                    self.parent._set_wait_animation(self.parent.indexOf(self), False)
+            
+            if self.worker_thread != None:
+                self.worker_thread.wait()
+            self.worker_thread = ProcessThread()
+            self.worker_thread.setTerminationEnabled(True)
+            self.worker_thread.finished.connect(completed)
+            self.worker_thread.start()
         else:
             item_no_files_found = data.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
@@ -3249,17 +3291,39 @@ class TreeDisplay(data.QTreeView):
             directory, 
             custom_text="DISPLAYING ALL FILES/SUBDIRECTORIES"
         )
-        #Initialize the list that will hold both the directories and files
-        found_items = []
-        for item in walk_generator:
-            base_directory = item[0]
-            for dir in item[1]:
-                found_items.append(os.path.join(base_directory, dir).replace("\\", "/"))
-            for file in item[2]:
-                found_items.append(os.path.join(base_directory, file).replace("\\", "/"))
-        #Add the items to the treeview
-        self._add_items_to_tree(tree_model, directory, found_items)
-    
+        
+        class ProcessThread(data.QThread):
+            finished = data.pyqtSignal(list)
+            stop_flag = False
+                
+            def stop(self):
+                self.stop_flag = True
+            
+            def run(self):
+                #Initialize the list that will hold both the directories and files
+                found_items = []
+                for item in walk_generator:
+                    if self.stop_flag:
+                        return
+                    base_directory = item[0]
+                    for dir in item[1]:
+                        found_items.append(os.path.join(base_directory, dir).replace("\\", "/"))
+                    for file in item[2]:
+                        found_items.append(os.path.join(base_directory, file).replace("\\", "/"))
+                self.finished.emit(found_items)
+        
+        def completed(items):
+            #Add the items to the treeview
+            self._add_items_to_tree(tree_model, directory, items)
+        
+        if self.worker_thread != None:
+            self.worker_thread.wait()
+        self.parent._set_wait_animation(self.parent.indexOf(self), True)
+        self.worker_thread = ProcessThread()
+        self.worker_thread.setTerminationEnabled(True)
+        self.worker_thread.finished.connect(completed)
+        self.worker_thread.start()
+
     def display_found_files(self, search_text, found_files, directory):
         """
         Display files that were found using the 'functions' module's
@@ -3867,7 +3931,9 @@ class TextDiffer(data.QWidget):
                 elif line.startswith("? "):
                     #The line is similar
                     if (list_sum[i-1].startswith("- ") and
+                        len(list_sum) > (i+1) and
                         list_sum[i+1].startswith("+ ") and
+                        len(list_sum) > (i+2) and
                         list_sum[i+2].startswith("? ")):
                         """
                         Line order:
@@ -5703,5 +5769,5 @@ class OkDialog(YesNoDialog):
         # Check for Enter/Return keypress
         elif pressed_key == data.Qt.Key_Enter or pressed_key == data.Qt.Key_Return:
             self.done(data.QMessageBox.No)
-    
-    
+
+

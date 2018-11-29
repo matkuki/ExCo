@@ -221,7 +221,8 @@ class CiCode(data.QsciLexerCustom):
     sequence_lists = [strseq, comment, mcomment, func]
     multiline_sequence_list = [mcomment]
     sequence_start_chrs = [x.start for x in sequence_lists]
-    splitter = re.compile(r"(/\*|\*/|\\\"|\(\*|\*\)|//|\n|\"+|\'+|\#+|\s+|\w+|\W)")
+#    splitter = re.compile(r"(/\*|\*/|\\\"|\(\*|\*\)|//|\n|\"+|\'+|\#+|\s+|\w+|\W)")
+    splitter = re.compile(r"(/\*|\*/|\(\*|\*\)|//|\n|\"+|\'+|\#+|\s+|\w+|\W)")
     # Characters that autoindent one level on pressing Return/Enter
     autoindent_characters = ["then", "do", ")"]
 

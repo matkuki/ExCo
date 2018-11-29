@@ -3422,7 +3422,7 @@ class MainWindow(data.QMainWindow):
                     "color: {0};".format(border) +
                     "background-color: {0};".format(data.theme.Indication.PassiveBackGround) +
                     "border: 2px solid {0};".format(border) +
-                    "border-radius: 5px;" +
+                    "border-radius: 0px;" +
                     "margin-top: 5px;" +
                     "margin-bottom: 0px;" +
                     "margin-left: 0px;" +
@@ -3526,7 +3526,6 @@ class MainWindow(data.QMainWindow):
                 data.theme.Indication.ActiveBorder, 
                 data.theme.Indication.ActiveBackGround
             )
-            self.parent.setStyleSheet(style_sheet)
             windows = ["Main", "Upper", "Lower"]
             windows.remove(window_name)
             for window in windows:
@@ -3535,12 +3534,10 @@ class MainWindow(data.QMainWindow):
                     data.theme.Indication.PassiveBorder, 
                     data.theme.Indication.PassiveBackGround
                 )
-                self.parent.setStyleSheet(style_sheet)
             style_sheet += self.generate_repl_colors(
                 data.theme.Indication.PassiveBorder, 
                 data.theme.Indication.PassiveBackGround
             )
-            self.parent.setStyleSheet(style_sheet)
             style_sheet += self.generate_treedisplay_colors("TreeDisplay")
             style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
             self.parent.setStyleSheet(style_sheet)
@@ -3876,19 +3873,20 @@ class MainWindow(data.QMainWindow):
             #Initialize the namespace classes
             self.line   = self.Line(self)
         
-        def find_in_open_documents(self, 
-                                   search_text, 
-                                   case_sensitive=False, 
-                                   regular_expression=False, 
+        def find_in_open_documents(self,
+                                   search_text,
+                                   case_sensitive=False,
+                                   regular_expression=False,
                                    window_name=None):
             """
-            Find instances of search text accross all open document in the selected window
+            Find instances of search text accross all open documents
+            in the selected window
             """
-            #Get the current widget
+            # Get the current widget
             basic_widget = self.parent.get_window_by_name(window_name)
             if window_name == None:
                 window_name = "Main"
-            #Check if there are any documents in the basic widget
+            # Check if there are any documents in the basic widget
             if basic_widget.count() == 0:
                 message = "No documents in " + basic_widget.name.lower()
                 message += " editing window"
@@ -3897,37 +3895,41 @@ class MainWindow(data.QMainWindow):
                     message_type=data.MessageType.WARNING
                 )
                 return
-            #Save the current index to reset focus to it if no instances of search string are found
+            # Save the current index to reset focus to it if no
+            # instances of search string are found
             saved_index = basic_widget.currentIndex()
-            #Create a deque of the tab index order and start with the current index,
-            #deque is used, because it can be rotated by default
+            # Create a deque of the tab index order and start with the current
+            # index, deque is used, because it can be rotated by default
             in_deque = collections.deque(range(basic_widget.count()))
-            #Rotate the deque until the first element is the current index
+            # Rotate the deque until the first element is the current index
             while in_deque[0] != basic_widget.currentIndex():
                 in_deque.rotate(1)
-            #Set a flag for the first document
+            # Set a flag for the first document
             first_document = True
             for i in in_deque:
-                #Skip the current widget if it's not an editor
+                # Skip the current widget if it's not an editor
                 if isinstance(basic_widget.widget(i), CustomEditor) == False:
                     continue
-                #Place the cursor to the top of the document if it is not the current document
+                # Place the cursor to the top of the document
+                # if it is not the current document
                 if first_document == True:
                     first_document = False
                 else:
                     basic_widget.widget(i).setCursorPosition(0, 0)
-                #Find the text
+                # Find the text
                 result = basic_widget.widget(i).find_text(
                     search_text,
                     case_sensitive, 
                     True, # search_forward
                     regular_expression  
                 )
-                #If a replace was done, return success
-                if (result == data.SearchResult.FOUND or
-                    result == data.SearchResult.CYCLED):
+                # If a replace was done, return success
+# I can't remember why CYCLED was added here???
+#                if (result == data.SearchResult.FOUND or
+#                    result == data.SearchResult.CYCLED):
+                if result == data.SearchResult.FOUND:
                     return True
-            #Nothing found
+            # Nothing found
             basic_widget.setCurrentIndex(saved_index)
             message = "No instances of '" + search_text + "' found in "
             message += basic_widget.name.lower() + " editing window"
@@ -3944,9 +3946,9 @@ class MainWindow(data.QMainWindow):
                                            regular_expression=False, 
                                            window_name=None):
             """
-            Find and replace instaces of search string with replace string across
-            all of the open documents in the selected window, one instance at a time,
-            starting from the currently selected widget.
+            Find and replace instaces of search string with replace string 
+            across all of the open documents in the selected window, one
+            instance at a time, starting from the currently selected widget.
             """
             #Get the current widget
             basic_widget = self.parent.get_window_by_name(window_name)
@@ -4793,7 +4795,6 @@ class MainWindow(data.QMainWindow):
             parent.found_files_tab = parent.get_tab_by_name(found_files_tab_name)
             if parent.found_files_tab:
                 parent.found_files_tab.parent.close_tab(found_files_tab_name)
-            found_files_tab = parent.found_files_tab
             #Create a new FOUND FILES tab in the upper basic widget
             found_files_tab = parent.upper_window.tree_add_tab(found_files_tab_name)
             found_files_tab.icon_manipulator.set_icon(
@@ -5223,7 +5224,7 @@ class MainWindow(data.QMainWindow):
                 lexers_menu
             )
             XML_action = create_action(
-                'VHDL',
+                'XML',
                 None, 
                 'Change document lexer to: XML', 
                 'language_icons/logo_xml.png', 
@@ -6144,6 +6145,29 @@ class BasicWidget(data.QTabWidget):
                 self.setTabText(self.currentIndex(), "*" + self.tabText(self.currentIndex()) + "*")
         #Update margin width
         self.editor_update_margin()
+    
+    def _set_wait_animation(self, index, show):
+        tabBar = self.tabBar()
+        if show:
+            lbl = data.QLabel(self)
+            movie = data.QMovie(
+                os.path.join(
+                    data.resources_directory, 
+                    "animations/wait.gif"
+                ),
+                parent=lbl
+            )
+            movie.setCacheMode(data.QMovie.CacheAll)
+            if data.custom_menu_scale != None:
+                size = tuple([(x * data.custom_menu_scale / 16) for x in (16, 16)])
+            else:
+                size = (16, 16)
+            movie.setScaledSize(data.QSize(*size))
+            lbl.setMovie(movie)
+            movie.start()
+            tabBar.setTabButton(index, data.QTabBar.LeftSide, lbl)
+        else:
+            tabBar.setTabButton(index, data.QTabBar.LeftSide, None)
 
     def reset_text_changed(self, index=None):
         """Reset the changed status of the current widget (remove the * symbols from the tab name)"""
@@ -6875,16 +6899,17 @@ class CustomEditor(data.QsciScintilla):
             if bookmarks[i][0] == self:
                 self.bookmarks.add_marker_at_line(bookmarks[i][1])
     
+    selection_lock = False
     def _selection_changed(self):
         """
         Signal that fires when selected text changes
         """
-        selected_text = self.selectedText()
         # This function seems to be asynchronous so a lock
         # is required in order to prevent recursive access to
         # Python's objects
-        if self.selection_lock == False:
-            self.selection_lock = True
+        if CustomEditor.selection_lock == False:
+            CustomEditor.selection_lock = True
+            selected_text = self.selectedText()
             self.clear_selection_highlights()
             if selected_text.isidentifier():
                 self._highlight_selected_text(
@@ -6892,7 +6917,7 @@ class CustomEditor(data.QsciScintilla):
                     case_sensitive=False, 
                     regular_expression=True
                 )
-            self.selection_lock = False
+            CustomEditor.selection_lock = False
     
     def _skip_next_repl_focus(self):
         """

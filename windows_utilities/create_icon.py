@@ -56,7 +56,7 @@ discard osproc.startProcess(
 # Create the resource file
 os.system("windres exco.rs -O coff -o exco.res")
 # Compile with Nim and pass the resource file to the underlying C compiler
-os.system('nim c --out:ExCo.exe --passL:exco.res exco.nim')
+os.system('nim c --app:gui --out:ExCo.exe --passL:exco.res exco.nim')
 
 # Clean up
 os.remove("exco.rs")
