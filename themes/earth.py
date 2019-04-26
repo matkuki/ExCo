@@ -31,7 +31,7 @@ YesNoDialog_Background = data.QColor("#898c84")
 
 
 class FoldMargin:
-    ForeGround = data.QColor(0xffffffff)
+    ForeGround = data.QColor(0xff4e5456)
     BackGround = data.QColor(0xff2e3436)
 
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2018 Matic Kukovec.
+Copyright (c) 2013-2019 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -628,7 +628,7 @@ class MainWindow(data.QMainWindow):
             data.global_function_information[function.__name__] = (
                 name, function, icon, keys, status_tip
             )
-#            print(function.__name__)
+            #print(function.__name__)
             # Check if there is a tab character in the function
             # name and remove the part of the string after it
             if '\t' in name:
@@ -641,6 +641,10 @@ class MainWindow(data.QMainWindow):
             # Enable/disable action according to passed 
             # parameter and return the action
             action.setEnabled(enabled)
+            
+            if hasattr(self.menubar, "stored_actions") == False:
+                self.menubar.stored_actions = []
+            self.menubar.stored_actions.append(action)
             return action
         # Nested function for writing text to the REPL
         def repl_text_input(text, cursor_position):
@@ -1136,7 +1140,7 @@ class MainWindow(data.QMainWindow):
                     temp_string = 'find("{}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'search_forward=True,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('find("",case_sensitive=False)')
@@ -1159,7 +1163,7 @@ class MainWindow(data.QMainWindow):
                     temp_string = 'regex_find(r"{}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'search_forward=True,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_find(r"",case_sensitive=False)')
@@ -1181,7 +1185,7 @@ class MainWindow(data.QMainWindow):
                     temp_string = 'find_and_replace("{}","",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'search_forward=True,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('find_and_replace("","",case_sensitive=False)')
@@ -1204,7 +1208,7 @@ class MainWindow(data.QMainWindow):
                     temp_string = 'regex_find_and_replace(r"{}",r"",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
                     temp_string += 'search_forward=True,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_find_and_replace(r"",r"",case_sensitive=False)')
@@ -1224,7 +1228,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
                     temp_string = 'highlight("{}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('highlight("",case_sensitive=False)')
@@ -1244,7 +1248,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
                     temp_string = 'regex_highlight(r"{}",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_highlight(r"",case_sensitive=False)')
@@ -1261,7 +1265,7 @@ class MainWindow(data.QMainWindow):
             def special_clear_highlights():
                 try:
                     focused_tab = self.get_used_tab()
-                    self.repl.setText('clear_highlights(window_name="{}")'.format(focused_tab.parent.name))
+                    self.repl.setText('clear_highlights(window_name="{}")'.format(focused_tab._parent.name))
                 except:
                     self.repl.setText('clear_highlights()')
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
@@ -1278,7 +1282,7 @@ class MainWindow(data.QMainWindow):
                 try:
                     focused_tab = self.get_used_tab()
                     temp_string = 'replace_in_selection("","",case_sensitive=False,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)                                  
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)                                  
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('replace_in_selection("","",case_sensitive=False)')
@@ -1296,7 +1300,7 @@ class MainWindow(data.QMainWindow):
                 try:
                     focused_tab = self.get_used_tab()
                     temp_string = 'regex_replace_in_selection(r"",r"",case_sensitive=False,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)                                  
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)                                  
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_replace_in_selection(r"",r"",case_sensitive=False)')
@@ -1321,7 +1325,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
                     temp_string = 'replace_all("{}","",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('replace_all("","",case_sensitive=False)')
@@ -1343,7 +1347,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
                     temp_string = 'regex_replace_all(r"{}",r"",'.format(selected_text)
                     temp_string += 'case_sensitive=False,'
-                    temp_string += 'window_name="{}")'.format(focused_tab.parent.name)
+                    temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_replace_all(r"",r"",case_sensitive=False)')
@@ -1427,7 +1431,7 @@ class MainWindow(data.QMainWindow):
             def special_goto_line():
                 try:
                     focused_tab = self.get_used_tab()
-                    self.repl.setText('goto_line(,window_name="{}")'.format(focused_tab.parent.name))
+                    self.repl.setText('goto_line(,window_name="{}")'.format(focused_tab._parent.name))
                     self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                     self.repl.setCursorPosition(self.repl.text().find(',window_name'))
                 except:
@@ -1457,7 +1461,7 @@ class MainWindow(data.QMainWindow):
             )
             def special_to_uppercase():
                 focused_tab = self.get_used_tab()
-                self.editing.convert_to_uppercase(focused_tab.parent.name)
+                self.editing.convert_to_uppercase(focused_tab._parent.name)
             to_uppercase_action = create_action(
                 'Selection to UPPERCASE',
                 settings.Keys.to_uppercase, 
@@ -1467,7 +1471,7 @@ class MainWindow(data.QMainWindow):
             )
             def special_to_lowercase():
                 focused_tab = self.get_used_tab()
-                self.editing.convert_to_lowercase(focused_tab.parent.name)
+                self.editing.convert_to_lowercase(focused_tab._parent.name)
             to_lowercase_action = create_action(
                 'Selection to lowercase',
                 settings.Keys.to_lowercase, 
@@ -1482,7 +1486,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
                     repl_text = 'find_in_open_documents("{}"'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
-                    repl_text += ',window_name="{}")'.format(focused_tab.parent.name)
+                    repl_text += ',window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('find_in_open_documents("",case_sensitive=False,regular_expression=False)')
@@ -1503,7 +1507,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
                     repl_text = 'find_replace_in_open_documents("{}",""'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
-                    repl_text += ',window_name="{}")'.format(focused_tab.parent.name)
+                    repl_text += ',window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('find_replace_in_open_documents("","",case_sensitive=False,regular_expression=False)')
@@ -1524,7 +1528,7 @@ class MainWindow(data.QMainWindow):
                     selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
                     repl_text = 'replace_all_in_open_documents("{}",""'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
-                    repl_text += ',window_name="{}")'.format(focused_tab.parent.name)
+                    repl_text += ',window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('replace_all_in_open_documents("","",case_sensitive=False,regular_expression=False)')
@@ -1676,12 +1680,23 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/system-show-cwd.png', 
                 show_explorer
             )
+            def show_terminal():
+                self.repl.interpreter.create_terminal()
+            show_terminal_action = create_action(
+                'Show Console/Terminal window',
+                None, 
+                'Show a Console(Windows) / Terminal(Linux) ' +
+                    'window at the current working directory', 
+                'tango_icons/utilities-terminal.png', 
+                show_terminal
+            )
             # Add the menu items
             system_menu.addAction(find_files_action)
             system_menu.addAction(find_in_files_action)
             system_menu.addAction(replace_in_files_action)
             system_menu.addAction(cwd_tree_action)
             system_menu.addAction(show_explorer_action)
+            system_menu.addAction(show_terminal_action)
             system_menu.addAction(run_command_action)
         #Lexers menu
         def construct_lexers_menu(parent):
@@ -1834,7 +1849,7 @@ class MainWindow(data.QMainWindow):
             )
             def reset_zoom():
                 try:
-                    self.get_tab_by_focus().parent.zoom_reset()
+                    self.get_tab_by_focus()._parent.zoom_reset()
                 except:
                     pass
             reset_zoom_action = create_action(
@@ -1895,6 +1910,7 @@ class MainWindow(data.QMainWindow):
             bookmark_store_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/bookmarks-store.png')
             bookmark_store_menu.setIcon(temp_icon)
+            self.bookmark_menu = bookmark_menu
             for i in range(10):
                 #Go To
                 def create_goto_bookmark():
@@ -2346,9 +2362,13 @@ class MainWindow(data.QMainWindow):
         if isinstance(file, str) == True:
             if file != None and file != "":
                 open_file_function(file, basic_widget)
+                self.repaint()
+                data.QCoreApplication.processEvents()
         elif isinstance(file, list) == True:
             for f in file:
                 open_file_function(f, basic_widget)
+                self.repaint()
+                data.QCoreApplication.processEvents()
         else:
             self.display.repl_display_message(
                 "Unknown parameter type to 'open file' function!", 
@@ -2544,7 +2564,7 @@ class MainWindow(data.QMainWindow):
         (namespace/nested class to MainWindow)
         """
         # Class varibles
-        parent = None
+        _parent = None
         # Custom object for manipulating the settings of Ex.Co.
         manipulator = None
         # GUI Settings manipulator
@@ -2553,7 +2573,7 @@ class MainWindow(data.QMainWindow):
         def __init__(self, parent):
             """Initialization of the Settings object instance"""
             # Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
             # Initialize the Ex.Co. settings object with the current working directory
             self.manipulator = settings.SettingsFileManipulator(
                 data.application_directory, 
@@ -2565,15 +2585,15 @@ class MainWindow(data.QMainWindow):
             # Nested function for opening the recent file
             def new_file_function(file):
                 try:
-                    self.parent.open_file(file=file, basic_widget=None)
-                    self.parent.main_window.currentWidget().setFocus()
+                    self._parent.open_file(file=file, basic_widget=None)
+                    self._parent.main_window.currentWidget().setFocus()
                 except:
                     pass
             # Update the file manipulator
             if new_file != None:
                 self.manipulator.add_recent_file(new_file)
             # Refresh the menubar recent list
-            recent_files_menu = self.parent.recent_files_menu
+            recent_files_menu = self._parent.recent_files_menu
             # !!Clear all of the actions from the menu OR YOU'LL HAVE MEMORY LEAKS!!
             for action in recent_files_menu.actions():
                 recent_files_menu.removeAction(action)
@@ -2590,7 +2610,7 @@ class MainWindow(data.QMainWindow):
                 if len(recent_file_name) > 30:
                     # Shorten the name that will appear in the menubar
                     recent_file_name = "...{}".format(os.path.splitdrive(recent_file)[1][-30:])
-                new_file_action = data.QAction(recent_file_name, recent_files_menu) #self.parent)
+                new_file_action = data.QAction(recent_file_name, recent_files_menu)
                 new_file_action.setStatusTip("Open: {}".format(recent_file))
                 # Create a function reference for opening the recent file
                 temp_function = functools.partial(new_file_function, recent_file)
@@ -2602,18 +2622,18 @@ class MainWindow(data.QMainWindow):
             # Load the settings from the initialization file
             result = self.manipulator.load_settings()
             # Set main window side
-            self.parent.view.set_main_window_side(
+            self._parent.view.set_main_window_side(
                 self.manipulator.main_window_side
             )
             # Update the theme
             data.theme = self.manipulator.theme
-            self.parent.view.refresh_theme()
+            self._parent.view.refresh_theme()
             # Update recent files list in the menubar
             self.update_recent_list()
             # Update sessions list in the menubar
-            self.parent.sessions.update_menu()
+            self._parent.sessions.update_menu()
             # Display message in statusbar
-            self.parent.display.write_to_statusbar("Restored settings", 1000)
+            self._parent.display.write_to_statusbar("Restored settings", 1000)
             # Update custon context menu functions
             for func_type in self.manipulator.context_menu_functions.keys():
                 funcs = self.manipulator.context_menu_functions[func_type]
@@ -2622,7 +2642,7 @@ class MainWindow(data.QMainWindow):
             # Display the settings load error AFTER the theme has been set
             # Otherwise the error text color will not be styled correctly
             if result == False:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Error loading the settings file, using the default settings values!\nTHE SETTINGS FILE WILL NOT BE UPDATED!", 
                     message_type=data.MessageType.ERROR
                 )
@@ -2630,12 +2650,12 @@ class MainWindow(data.QMainWindow):
         def save(self):
             """Save the current settings"""
             self.manipulator.save_settings(
-                self.parent.view.main_window_side, 
+                self._parent.view.main_window_side, 
                 data.theme,
                 helper_forms.ContextMenu.get_settings()
             )
             #Display message in statusbar
-            self.parent.display.write_to_statusbar("Saved settings", 1000)
+            self._parent.display.write_to_statusbar("Saved settings", 1000)
     
     class Sessions:
         """
@@ -2643,18 +2663,18 @@ class MainWindow(data.QMainWindow):
         (namespace/nested class to MainWindow)
         """
         #Class varibles
-        parent = None
+        _parent = None
     
         def __init__(self, parent):
             """Initialization of the Sessions object instance"""
             #Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
 
         def add(self, session_name, session_group=None):
             """Add the current opened documents in the main and upper window"""
             # Check if the session name is too short
             if len(session_name) < 3:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Session name is too short!", 
                     message_type=data.MessageType.ERROR
                 )
@@ -2663,7 +2683,7 @@ class MainWindow(data.QMainWindow):
                 if (isinstance(session_group, str) == False and
                     isinstance(session_group, tuple) == False and
                     isinstance(session_group, list) == False):
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         "Group name must be a string or a tuple/list of strings!", 
                         message_type=data.MessageType.ERROR
                     )
@@ -2676,12 +2696,12 @@ class MainWindow(data.QMainWindow):
                 if (main_files != [] or upper_files != []):
                     # Check if the session is already stored
                     session_found = False
-                    for ssn in self.parent.settings.manipulator.stored_sessions:
+                    for ssn in self._parent.settings.manipulator.stored_sessions:
                         if ssn.name == session_name and ssn.group == session_group:
                             session_found = True
                             break
                     # Store the session
-                    self.parent.settings.manipulator.add_session(
+                    self._parent.settings.manipulator.add_session(
                         session_name,
                         session_group,
                         main_files,
@@ -2702,65 +2722,66 @@ class MainWindow(data.QMainWindow):
                         message = "Session '{}{}' added!".format(
                             group_string, session_name
                         )
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         message, 
                         message_type=data.MessageType.SUCCESS
                     )
                 else:
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         "No documents to store!", 
                         message_type=data.MessageType.ERROR
                     )
-                    self.parent.display.write_to_statusbar("No documents to store!", 1500)
+                    self._parent.display.write_to_statusbar("No documents to store!", 1500)
                 # Refresh the sessions menu in the menubar
                 self.update_menu()
             except Exception as ex:
                 traceback.print_exc()
                 message = "Invalid document types in the main or upper window!"
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.ERROR
                 )
-                self.parent.display.write_to_statusbar(message, 1500)
+                self._parent.display.write_to_statusbar(message, 1500)
 
         def restore(self, session_name, session_group=None):
             """Restore the files as stored in the selected session"""
             #Check if there are any modified documents
-            if self.parent.check_document_states() == True:
+            if self._parent.check_document_states() == True:
                 #Close the log window if it is displayed
-                self.parent.view.set_log_window(False)
+                self._parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
                 message += "Restore session '{}' anyway?".format(session_name)
                 reply = helper_forms.YesNoDialog.question(message)
                 if reply == data.QMessageBox.No:
                     return
             #Find the session
-            session = self.parent.settings.manipulator.get_session(
+            session = self._parent.settings.manipulator.get_session(
                 session_name,
                 session_group
             )
             #Check if session was found
             if session != None:
                 #Clear all documents from the main and upper window
-                self.parent.close_all_tabs()
+                self._parent.close_all_tabs()
                 #Add files to upper window
                 for file in session.upper_files:
                     try:
-                        self.parent.open_file(file, self.parent.upper_window)
+                        self._parent.open_file(file, self._parent.upper_window)
                     except:
-                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
+                        self._parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
                 #Add files to lower window
                 for file in session.lower_files:
                     try:
-                        self.parent.open_file(file, self.parent.lower_window)
+                        self._parent.open_file(file, self._parent.lower_window)
                     except:
-                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
+                        self._parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
                 #Add files to main window
                 for file in session.main_files:
                     try:
-                        self.parent.open_file(file, self.parent.main_window)
-                    except:
-                        self.parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
+                        self._parent.open_file(file, self._parent.main_window)
+                    except Exception as ex:
+                        print(ex)
+                        self._parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
             else:
                 #Session was not found
                 if session_group == None:
@@ -2771,29 +2792,29 @@ class MainWindow(data.QMainWindow):
                 message = "Session '{}{}' was not found!".format(
                     group_string, session_name
                 )
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.ERROR
                 )
-                self.parent.display.write_to_statusbar(message, 1500)
+                self._parent.display.write_to_statusbar(message, 1500)
         
         def exco_restore(self):
             """Open all the source files for Ex.Co."""
             #Check if there are any modified documents
-            if self.parent.check_document_states() == True:
+            if self._parent.check_document_states() == True:
                 #Close the log window if it is displayed
-                self.parent.view.set_log_window(False)
+                self._parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
                 message += "Restore Ex.Co development session anyway?"
                 reply = helper_forms.YesNoDialog.question(message)
                 if reply == data.QMessageBox.No:
                     return
             #Clear all documents from the main and upper window
-            self.parent.main_window.clear()
-            self.parent.upper_window.clear()
+            self._parent.main_window.clear()
+            self._parent.upper_window.clear()
             #Loop through the aplication directory and add the relevant files
             exco_main_files = []
-            exco_dir = self.parent.settings.manipulator.application_directory
+            exco_dir = self._parent.settings.manipulator.application_directory
             exco_dirs = [
                 exco_dir,
                 os.path.join(exco_dir, "themes"),
@@ -2816,11 +2837,11 @@ class MainWindow(data.QMainWindow):
             exco_main_files.sort()
             #Add the files to the main window
             for file in exco_main_files:
-                self.parent.open_file(file, self.parent.main_window)
+                self._parent.open_file(file, self._parent.main_window)
 
         def remove(self, session_name, session_group=None):
             """Delete the session"""
-            result = self.parent.settings.manipulator.remove_session(
+            result = self._parent.settings.manipulator.remove_session(
                 session_name, 
                 session_group
             )
@@ -2835,17 +2856,17 @@ class MainWindow(data.QMainWindow):
                 message = "Session '{}{}' was not found!".format(
                     group_string, session_name
                 )
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.ERROR
                 )
-                self.parent.display.write_to_statusbar(message, 1500)
+                self._parent.display.write_to_statusbar(message, 1500)
             else:
                 #Session was removed successfully
                 message = "Session '{}{}' was removed!".format(
                     group_string, session_name
                 )
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.WARNING
                 )
@@ -2859,21 +2880,21 @@ class MainWindow(data.QMainWindow):
                 name = item[0]
                 return name.lower()
             # Clear the sessions list
-            self.parent.sessions_menu.clear()
+            self._parent.sessions_menu.clear()
             # First add the Ex.Co. session (all Ex.Co. source files)
             session_name = "Ex.Co. source files"
-            exco_session_action = data.QAction(session_name, self.parent)
+            exco_session_action = data.QAction(session_name, self._parent)
             exco_session_action.setStatusTip("Open all Ex.Co. source files")
             exco_session_method = self.exco_restore
             exco_session_action.setIcon(functions.create_icon('Exco_Icon.png'))
             exco_session_action.triggered.connect(exco_session_method)
-            self.parent.sessions_menu.addAction(exco_session_action)
-            self.parent.sessions_menu.addSeparator()
+            self._parent.sessions_menu.addAction(exco_session_action)
+            self._parent.sessions_menu.addSeparator()
             # Create a list of groups that will be stored for reuse
-            groups = self.parent.settings.manipulator.get_sorted_groups()
+            groups = self._parent.settings.manipulator.get_sorted_groups()
             # Create the Sessions menu
-            main_group = self.parent.settings.manipulator.Group(
-                "BASE", parent=None, reference=self.parent.sessions_menu
+            main_group = self._parent.settings.manipulator.Group(
+                "BASE", parent=None, reference=self._parent.sessions_menu
             )
             for group in groups:
                 current_node = main_group
@@ -2884,9 +2905,9 @@ class MainWindow(data.QMainWindow):
                         new_group.setIcon(functions.create_icon('tango_icons/folder.png'))
                     current_node = current_node.subgroup_create(folder, new_group)
             # Loop through all of the stored sessions and add them
-            for session in self.parent.settings.manipulator.stored_sessions:
+            for session in self._parent.settings.manipulator.stored_sessions:
                 # Add the session
-                new_session_action = data.QAction(session.name, self.parent)
+                new_session_action = data.QAction(session.name, self._parent)
                 new_session_action.setStatusTip("Restore Session: {}".format(session.name))
                 new_session_method = functools.partial(
                     self.restore,
@@ -2904,7 +2925,7 @@ class MainWindow(data.QMainWindow):
         
         def get_window_documents(self, window_name):
             """Return all the editor document paths in the selected window as a list"""
-            window = self.parent.get_window_by_name(window_name)
+            window = self._parent.get_window_by_name(window_name)
             documents = [window.widget(i).save_name 
                             for i in range(window.count()) 
                                 if  window.widget(i).savable == data.CanSave.YES and
@@ -2918,7 +2939,7 @@ class MainWindow(data.QMainWindow):
         (namespace/nested class to MainWindow)
         """
         #Class varibles
-        parent                  = None
+        _parent                  = None
         #Default widths and heights of the windows
         vertical_width_1        = 2/3
         vertical_width_2        = 1/3
@@ -2943,7 +2964,7 @@ class MainWindow(data.QMainWindow):
         def __init__(self, parent):
             """Initialization of the View object instance"""
             #Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
             #Get the function wheel overlay image size
             function_wheel_size = data.QPixmap(
                 FunctionWheel.create_background_image()
@@ -2962,25 +2983,25 @@ class MainWindow(data.QMainWindow):
             if window_mode == data.WindowMode.THREE:
                 #Set vertical and horizontal splitter heights
                 if main_window_side == data.MainWindowSide.LEFT:
-                    self.parent.vertical_splitter.setSizes(
-                        [self.parent.vertical_splitter.width()*self.vertical_width_1, 
-                         self.parent.vertical_splitter.width()*self.vertical_width_2]
+                    self._parent.vertical_splitter.setSizes(
+                        [self._parent.vertical_splitter.width()*self.vertical_width_1, 
+                         self._parent.vertical_splitter.width()*self.vertical_width_2]
                     )
-                    self.parent.horizontal_splitter.setSizes(
-                        [self.parent.horizontal_splitter.width()*self.horizontal_width_1, 
-                         self.parent.horizontal_splitter.width()*self.horizontal_width_2]
+                    self._parent.horizontal_splitter.setSizes(
+                        [self._parent.horizontal_splitter.width()*self.horizontal_width_1, 
+                         self._parent.horizontal_splitter.width()*self.horizontal_width_2]
                     )
                 elif main_window_side   == data.MainWindowSide.RIGHT:
-                    self.parent.vertical_splitter.setSizes(
-                        [self.parent.vertical_splitter.width()*self.vertical_width_1, 
-                         self.parent.vertical_splitter.width()*self.vertical_width_2]
+                    self._parent.vertical_splitter.setSizes(
+                        [self._parent.vertical_splitter.width()*self.vertical_width_1, 
+                         self._parent.vertical_splitter.width()*self.vertical_width_2]
                     )
-                    self.parent.horizontal_splitter.setSizes(
-                        [self.parent.horizontal_splitter.width()*self.horizontal_width_2, 
-                         self.parent.horizontal_splitter.width()*self.horizontal_width_1]
+                    self._parent.horizontal_splitter.setSizes(
+                        [self._parent.horizontal_splitter.width()*self.horizontal_width_2, 
+                         self._parent.horizontal_splitter.width()*self.horizontal_width_1]
                     )
             #Set the REPL font
-            self.parent.repl.setFont(data.QFont("Arial", 12, data.QFont.Bold))
+            self._parent.repl.setFont(data.QFont("Arial", 12, data.QFont.Bold))
             #Refresh the size relation between the basic widgets and the REPL,
             #so that the REPL height is always the same
             self.refresh_main_splitter()
@@ -2990,27 +3011,27 @@ class MainWindow(data.QMainWindow):
             #Check if the splitters are filled correctly
             if self.layout_save_block == True:
                 return
-            if self.parent.vertical_splitter.count() < 2 or self.parent.horizontal_splitter.count() < 2:
+            if self._parent.vertical_splitter.count() < 2 or self._parent.horizontal_splitter.count() < 2:
                 return
             #Check which window mode is active
-            if (self.parent.window_mode == data.WindowMode.THREE and
-                self.parent.vertical_splitter.height() > 0 and
-                self.parent.horizontal_splitter.width() > 0):
-                self.vertical_width_1   = (self.parent.vertical_splitter.sizes()[0] / 
-                                           self.parent.vertical_splitter.height())
-                self.vertical_width_2   = (self.parent.vertical_splitter.sizes()[1] / 
-                                           self.parent.vertical_splitter.height())
+            if (self._parent.window_mode == data.WindowMode.THREE and
+                self._parent.vertical_splitter.height() > 0 and
+                self._parent.horizontal_splitter.width() > 0):
+                self.vertical_width_1   = (self._parent.vertical_splitter.sizes()[0] / 
+                                           self._parent.vertical_splitter.height())
+                self.vertical_width_2   = (self._parent.vertical_splitter.sizes()[1] / 
+                                           self._parent.vertical_splitter.height())
                 #Save the horizontal positions according to the main window side
                 if self.main_window_side    == data.MainWindowSide.LEFT:
-                    self.horizontal_width_1     = (self.parent.horizontal_splitter.sizes()[0] / 
-                                                   self.parent.horizontal_splitter.width())
-                    self.horizontal_width_2     = (self.parent.horizontal_splitter.sizes()[1] / 
-                                                   self.parent.horizontal_splitter.width())
+                    self.horizontal_width_1     = (self._parent.horizontal_splitter.sizes()[0] / 
+                                                   self._parent.horizontal_splitter.width())
+                    self.horizontal_width_2     = (self._parent.horizontal_splitter.sizes()[1] / 
+                                                   self._parent.horizontal_splitter.width())
                 elif self.main_window_side  == data.MainWindowSide.RIGHT:
-                    self.horizontal_width_1     = (self.parent.horizontal_splitter.sizes()[1] / 
-                                                   self.parent.horizontal_splitter.width())
-                    self.horizontal_width_2     = (self.parent.horizontal_splitter.sizes()[0] / 
-                                                   self.parent.horizontal_splitter.width())
+                    self.horizontal_width_1     = (self._parent.horizontal_splitter.sizes()[1] / 
+                                                   self._parent.horizontal_splitter.width())
+                    self.horizontal_width_2     = (self._parent.horizontal_splitter.sizes()[0] / 
+                                                   self._parent.horizontal_splitter.width())
         
         def set_basic_widgets(self, 
                               main_widget, 
@@ -3022,12 +3043,12 @@ class MainWindow(data.QMainWindow):
             put the QSplitters on the main form
             """
             #Save the currently focused widget
-            focused_widget  = self.parent.get_window_by_child_tab()
-            focused_tab     = self.parent.get_tab_by_focus()
+            focused_widget  = self._parent.get_window_by_child_tab()
+            focused_tab     = self._parent.get_tab_by_focus()
             if focused_widget == None:
-                focused_widget = self.parent.get_window_by_focus()
+                focused_widget = self._parent.get_window_by_focus()
             #Store the last focused tab
-            self.parent.last_focused_tab = focused_tab
+            self._parent.last_focused_tab = focused_tab
             #Create QSplitters to split main window into three parts: 
             #editing(QScintilla), upper_window(QTabControl), lower_window(QTabControl)
             vertical_splitter      = data.QSplitter(data.Qt.Vertical)
@@ -3058,32 +3079,32 @@ class MainWindow(data.QMainWindow):
                 horizontal_splitter.addWidget(main_widget)
             #Vertically split edit fields with the REPL
             main_splitter.addWidget(horizontal_splitter)
-            main_splitter.addWidget(self.parent.repl_box)
+            main_splitter.addWidget(self._parent.repl_box)
             #Set the window mode attribute to one
-            self.parent.window_mode = data.WindowMode.THREE
+            self._parent.window_mode = data.WindowMode.THREE
             #Initialize the main groupbox
-            main_groupbox = data.QGroupBox(self.parent)
+            main_groupbox = data.QGroupBox(self._parent)
             main_groupbox_layout = data.QVBoxLayout(main_groupbox)
             main_groupbox_layout.addWidget(main_splitter)
             main_groupbox.setLayout(main_groupbox_layout)
             main_groupbox.setObjectName("Main_Groupbox")
             #Add the splitters combined in the groupbox to the main form
-            self.parent.setCentralWidget(main_groupbox)
+            self._parent.setCentralWidget(main_groupbox)
             #Save references to the MainWindow
-            self.parent.main_window    = main_window
-            self.parent.upper_window   = upper_window
-            self.parent.lower_window   = lower_window
-            self.parent.vertical_splitter       = vertical_splitter
-            self.parent.horizontal_splitter     = horizontal_splitter
-            self.parent.main_splitter           = main_splitter
-            self.parent.main_groupbox           = main_groupbox
-            self.parent.main_groupbox_layout    = main_groupbox_layout
+            self._parent.main_window    = main_window
+            self._parent.upper_window   = upper_window
+            self._parent.lower_window   = lower_window
+            self._parent.vertical_splitter       = vertical_splitter
+            self._parent.horizontal_splitter     = horizontal_splitter
+            self._parent.main_splitter           = main_splitter
+            self._parent.main_groupbox           = main_groupbox
+            self._parent.main_groupbox_layout    = main_groupbox_layout
             #Resize the splitters as needed
-            self.refresh_layout(self.parent.window_mode, self.main_window_side)
+            self.refresh_layout(self._parent.window_mode, self.main_window_side)
             #Set focus back to the last focused widget
             if focused_widget != None:
                 #Store the last focused widget
-                self.parent.last_focused_widget = focused_widget
+                self._parent.last_focused_widget = focused_widget
                 data.print_log(
                     "Stored \"{}\" as last focused widget".format(focused_widget.name)
                 )
@@ -3094,8 +3115,8 @@ class MainWindow(data.QMainWindow):
                     focused_widget.setFocus()
             #Initialize the function wheel overlay over the QMainWindows central widget, if needed
             self.function_wheel_overlay = FunctionWheel(
-                parent=self.parent.main_groupbox, 
-                main_form=self.parent, 
+                parent=self._parent.main_groupbox, 
+                main_form=self._parent, 
             )
             self.function_wheel_overlay.setObjectName("Function_Wheel")
             if show_overlay == True:
@@ -3103,9 +3124,9 @@ class MainWindow(data.QMainWindow):
             else:
                 self.function_wheel_overlay.hide()
             # Settings GUI Manipulator
-            if self.parent.settings.gui_manipulator != None:
-                self.parent.settings.gui_manipulator.clean_up()
-                self.parent.settings.gui_manipulator = None
+            if self._parent.settings.gui_manipulator != None:
+                self._parent.settings.gui_manipulator.clean_up()
+                self._parent.settings.gui_manipulator = None
     
         def set_log_window(self, show=True):
             """Show or hide the log window"""
@@ -3114,7 +3135,7 @@ class MainWindow(data.QMainWindow):
                 data.log_window.show()
             else:
                 data.log_window.hide()
-            self.parent.activateWindow()
+            self._parent.activateWindow()
                 
         def toggle_log_window(self):
             """Toggle the display of the log window"""
@@ -3125,7 +3146,7 @@ class MainWindow(data.QMainWindow):
         
         def show_about(self):
             """Show ExCo information"""
-            about = helper_forms.ExCoInfo(self.parent, app_dir=self.parent.settings.manipulator.application_directory)
+            about = helper_forms.ExCoInfo(self._parent, app_dir=self._parent.settings.manipulator.application_directory)
             #The exec_() function shows the dialog in MODAL mode (the parent is unclickable while the dialog is shown)
             about.exec_()
         
@@ -3135,9 +3156,9 @@ class MainWindow(data.QMainWindow):
             self.main_window_side = main_window_side
             #Refresh the layout
             self.set_basic_widgets(
-                main_widget=self.parent.main_window,
-                upper_widget=self.parent.upper_window,
-                lower_widget=self.parent.lower_window
+                main_widget=self._parent.main_window,
+                upper_widget=self._parent.upper_window,
+                lower_widget=self._parent.lower_window
             )
         
         def spin_basic_widgets(self, direction=data.SpinDirection.CLOCKWISE):
@@ -3159,14 +3180,14 @@ class MainWindow(data.QMainWindow):
                 else:
                     direction = data.SpinDirection.CLOCKWISE
                 #Save current positioning
-                temp_widget_main    = self.parent.horizontal_splitter.widget(1)
-                temp_widget_upper   = self.parent.vertical_splitter.widget(0)
-                temp_widget_lower   = self.parent.vertical_splitter.widget(1)
+                temp_widget_main    = self._parent.horizontal_splitter.widget(1)
+                temp_widget_upper   = self._parent.vertical_splitter.widget(0)
+                temp_widget_lower   = self._parent.vertical_splitter.widget(1)
             else:
                 #Save current positioning
-                temp_widget_main    = self.parent.horizontal_splitter.widget(0)
-                temp_widget_upper   = self.parent.vertical_splitter.widget(0)
-                temp_widget_lower   = self.parent.vertical_splitter.widget(1)
+                temp_widget_main    = self._parent.horizontal_splitter.widget(0)
+                temp_widget_upper   = self._parent.vertical_splitter.widget(0)
+                temp_widget_lower   = self._parent.vertical_splitter.widget(1)
             #Spin according to direction
             if direction == data.SpinDirection.CLOCKWISE:
                 self.set_basic_widgets(
@@ -3181,10 +3202,10 @@ class MainWindow(data.QMainWindow):
                     lower_widget=temp_widget_main
                 )
             #Update the basic widget references with the new layout
-            self.parent.repl.interpreter_update_windows(
-                self.parent.main_window, 
-                self.parent.upper_window, 
-                self.parent.lower_window
+            self._parent.repl.interpreter_update_windows(
+                self._parent.main_window, 
+                self._parent.upper_window, 
+                self._parent.lower_window
             )
             self.layout_save_block = False
             if direction == data.SpinDirection.CLOCKWISE:
@@ -3203,17 +3224,17 @@ class MainWindow(data.QMainWindow):
         def toggle_window_mode(self):
             """Toggle one/three window mode"""
             if self.window_mode     == data.WindowMode.THREE:
-                self.parent.upper_window.hide()
-                self.parent.lower_window.hide()
+                self._parent.upper_window.hide()
+                self._parent.lower_window.hide()
                 self.window_mode = data.WindowMode.ONE
                 #Focus on the main window as the other two windows are hidden
                 self.set_window_focus("main")
-                self.parent.display.write_to_statusbar("Window mode changed to: ONE", 1000)
+                self._parent.display.write_to_statusbar("Window mode changed to: ONE", 1000)
             elif self.window_mode   == data.WindowMode.ONE:
-                self.parent.upper_window.show()
-                self.parent.lower_window.show()
+                self._parent.upper_window.show()
+                self._parent.lower_window.show()
                 self.window_mode = data.WindowMode.THREE
-                self.parent.display.write_to_statusbar("Window mode changed to: THREE", 1000)
+                self._parent.display.write_to_statusbar("Window mode changed to: THREE", 1000)
         
         def toggle_main_window_side(self):
             """Toggle main window side"""
@@ -3228,11 +3249,11 @@ class MainWindow(data.QMainWindow):
             window = window.lower()
             #Choose a window based on the string argument
             if window == "main" or self.window_mode == data.WindowMode.ONE:
-                window  = self.parent.main_window
+                window  = self._parent.main_window
             elif window == "upper":
-                window  = self.parent.upper_window
+                window  = self._parent.upper_window
             elif window == "lower":
-                window  = self.parent.lower_window
+                window  = self._parent.lower_window
             try:
                 #If the window does not have focus, set focus to it
                 window.currentWidget().setFocus()
@@ -3243,18 +3264,18 @@ class MainWindow(data.QMainWindow):
                     #Update the cursor position
                     line    = window.currentWidget().getCursorPosition()[0]
                     column  = window.currentWidget().getCursorPosition()[1]
-                    self.parent.display.update_cursor_position(line, column)
+                    self._parent.display.update_cursor_position(line, column)
                 else:
                     #Clear the cursor position
-                    self.parent.display.update_cursor_position()
+                    self._parent.display.update_cursor_position()
             except:
                 window.setFocus()
-                self.parent.display.write_to_statusbar("Empty window '" + window.name + "' focused!", 1000)
+                self._parent.display.write_to_statusbar("Empty window '" + window.name + "' focused!", 1000)
                 #Clear the cursor position
-                self.parent.display.update_cursor_position()
+                self._parent.display.update_cursor_position()
             finally:
                 #Store the last focused widget
-                self.parent.last_focused_widget = window
+                self._parent.last_focused_widget = window
         
         def set_repl_type(self, type=data.ReplType.SINGLE_LINE):
             """Set REPL input as a one line ReplLineEdit or a multiline ReplHelper"""
@@ -3266,36 +3287,36 @@ class MainWindow(data.QMainWindow):
                 self.repl_state == data.ReplType.MULTI_LINE):
                 return
             #Initialize the groupbox that the REPL will be in, and place the REPL widget into it
-            self.parent.repl_box = data.QGroupBox("Python Interactive Interpreter (REPL)")
-            self.parent.repl_box.setObjectName("REPL_Box")
+            self._parent.repl_box = data.QGroupBox("Python Interactive Interpreter (REPL)")
+            self._parent.repl_box.setObjectName("REPL_Box")
             repl_layout = data.QVBoxLayout()
-            repl_layout.addWidget(self.parent.repl)
-            repl_layout.addWidget(self.parent.repl_helper)
+            repl_layout.addWidget(self._parent.repl)
+            repl_layout.addWidget(self._parent.repl_helper)
             #Set which REPL widget will be displayed
             if type == data.ReplType.SINGLE_LINE:
-                self.parent.repl.setVisible(True)
-                self.parent.repl_helper.setVisible(False)
+                self._parent.repl.setVisible(True)
+                self._parent.repl_helper.setVisible(False)
                 self.repl_state = data.ReplType.SINGLE_LINE
                 self.main_relation = 55
             else:
-                self.parent.repl.setVisible(False)
-                self.parent.repl_helper.setVisible(True)
+                self._parent.repl.setVisible(False)
+                self._parent.repl_helper.setVisible(True)
                 self.repl_state = data.ReplType.MULTI_LINE
                 self.main_relation = 100
-            self.parent.repl_box.setLayout(repl_layout)
+            self._parent.repl_box.setLayout(repl_layout)
             #Refresh the layout
-            self.parent.view.set_basic_widgets(
-                main_widget=self.parent.main_window,
-                upper_widget=self.parent.upper_window,
-                lower_widget=self.parent.lower_window
+            self._parent.view.set_basic_widgets(
+                main_widget=self._parent.main_window,
+                upper_widget=self._parent.upper_window,
+                lower_widget=self._parent.lower_window
             )
         
         def toggle_window_size(self):
             """Maximize the main application window"""
-            if self.parent.isMaximized() == True:
-                self.parent.showNormal()
+            if self._parent.isMaximized() == True:
+                self._parent.showNormal()
             else:
-                self.parent.showMaximized()
+                self._parent.showMaximized()
             self.refresh_layout(self.window_mode, self.main_window_side)
         
         def toggle_function_wheel(self):
@@ -3316,23 +3337,23 @@ class MainWindow(data.QMainWindow):
             """Show the function wheel overlay"""
             self.hide_settings_gui_manipulator()
             # Check the windows size before displaying the overlay
-            if (self.parent.width() < self.FUNCTION_WHEEL_BOUNDS[0] or 
-                self.parent.height() < self.FUNCTION_WHEEL_BOUNDS[1]):
+            if (self._parent.width() < self.FUNCTION_WHEEL_BOUNDS[0] or 
+                self._parent.height() < self.FUNCTION_WHEEL_BOUNDS[1]):
                 new_size =  data.QSize(
                     self.FUNCTION_WHEEL_BOUNDS[0] + self.FUNCTION_WHEEL_BOUNDS[0]/5,
                     self.FUNCTION_WHEEL_BOUNDS[1] + self.FUNCTION_WHEEL_BOUNDS[1]/5
                 )
-                self.parent.resize(new_size)
+                self._parent.resize(new_size)
             # Check if the function wheel overlay is initialized
             if self.function_wheel_overlay != None:
                 # Save the currently focused widget
-                focused_widget  = self.parent.get_window_by_child_tab()
-                focused_tab     = self.parent.get_tab_by_focus()
+                focused_widget  = self._parent.get_window_by_child_tab()
+                focused_tab     = self._parent.get_tab_by_focus()
                 if focused_widget == None:
-                    focused_widget = self.parent.get_window_by_focus()
+                    focused_widget = self._parent.get_window_by_focus()
                 # Store the last focused widget and tab
-                self.parent.last_focused_widget = focused_widget
-                self.parent.last_focused_tab    = focused_tab
+                self._parent.last_focused_widget = focused_widget
+                self._parent.last_focused_tab    = focused_tab
                 # Show the function wheel overlay
                 self.function_wheel_overlay.show()
         
@@ -3343,27 +3364,27 @@ class MainWindow(data.QMainWindow):
         
         def show_settings_gui_manipulator(self):
             # Initialize the settings GUI manipulator if needed
-            if self.parent.settings.gui_manipulator == None:
+            if self._parent.settings.gui_manipulator == None:
                 compare_size = helper_forms.SettingsGuiManipulator.DEFAULT_SIZE
-                if (self.parent.width() < compare_size[0] or 
-                    self.parent.height() < compare_size[1]):
+                if (self._parent.width() < compare_size[0] or 
+                    self._parent.height() < compare_size[1]):
                         new_size =  data.QSize(
                             compare_size[0] + compare_size[0]/5,
                             compare_size[1] + compare_size[1]/5
                         )
-                        self.parent.resize(new_size)
-                self.parent.settings.gui_manipulator = helper_forms.SettingsGuiManipulator(
-                    parent=self.parent.main_groupbox, 
-                    main_form=self.parent, 
+                        self._parent.resize(new_size)
+                self._parent.settings.gui_manipulator = helper_forms.SettingsGuiManipulator(
+                    parent=self._parent.main_groupbox, 
+                    main_form=self._parent, 
                 )
-            elif self.parent.settings.gui_manipulator.shown == True:
+            elif self._parent.settings.gui_manipulator.shown == True:
                 return
             # Show the gui manipulator
-            self.parent.settings.gui_manipulator.show()
+            self._parent.settings.gui_manipulator.show()
         
         def hide_settings_gui_manipulator(self):
-            if self.parent.settings.gui_manipulator != None:
-                self.parent.settings.gui_manipulator.hide()
+            if self._parent.settings.gui_manipulator != None:
+                self._parent.settings.gui_manipulator.hide()
         
         def init_style_sheet(self):            
             style_sheet = (
@@ -3404,7 +3425,7 @@ class MainWindow(data.QMainWindow):
             style_sheet = self.init_style_sheet()
             style_sheet = self.reset_window_colors(style_sheet)
             style_sheet = self.reset_repl_colors(style_sheet)
-            self.parent.setStyleSheet(style_sheet)
+            self._parent.setStyleSheet(style_sheet)
         
         def generate_window_colors(self, window_name, border, background):
             style_sheet = (
@@ -3441,7 +3462,7 @@ class MainWindow(data.QMainWindow):
                 "}"
             )
             # REPL and REPL helper have to be set directly
-            self.parent.repl.setStyleSheet(
+            self._parent.repl.setStyleSheet(
                 "color: rgb({0}, {1}, {2});".format(
                     data.theme.Font.Default.red(), 
                     data.theme.Font.Default.green(), 
@@ -3513,7 +3534,7 @@ class MainWindow(data.QMainWindow):
                 )
             style_sheet += self.generate_treedisplay_colors("TreeDisplay")
             style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
-            self.parent.setStyleSheet(style_sheet)
+            self._parent.setStyleSheet(style_sheet)
         
         def indicate_window(self, window_name):
             if (window_name != "Main" and 
@@ -3540,22 +3561,22 @@ class MainWindow(data.QMainWindow):
             )
             style_sheet += self.generate_treedisplay_colors("TreeDisplay")
             style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
-            self.parent.setStyleSheet(style_sheet)
+            self._parent.setStyleSheet(style_sheet)
         
         def indication_check(self):
             """
             Check if any of the main windows or the REPL is focused
             and indicate the focused widget if needed
             """
-            if (self.parent.main_window == None or 
-                self.parent.upper_window == None or 
-                self.parent.lower_window == None or 
-                self.parent.repl == None):
+            if (self._parent.main_window == None or 
+                self._parent.upper_window == None or 
+                self._parent.lower_window == None or 
+                self._parent.repl == None):
                 return
             #Check the focus for all of the windows
-            windows = [self.parent.main_window, 
-                       self.parent.upper_window, 
-                       self.parent.lower_window]
+            windows = [self._parent.main_window, 
+                       self._parent.upper_window, 
+                       self._parent.lower_window]
             for window in windows:
                 if window.count() == 0:
                     if window.hasFocus() == True:
@@ -3580,9 +3601,9 @@ class MainWindow(data.QMainWindow):
                                 self.indicate_window(window.name)
                                 return
             #Check the REPL focus
-            if (self.parent.repl.hasFocus() == True or
-                self.parent.repl_helper.hasFocus() == True):
-                self.parent.repl.indicated = True
+            if (self._parent.repl.hasFocus() == True or
+                self._parent.repl_helper.hasFocus() == True):
+                self._parent.repl.indicated = True
                 self.indicate_repl()
                 return
             #If no widget has focus, reset the QMainWindows stylesheet
@@ -3591,16 +3612,16 @@ class MainWindow(data.QMainWindow):
         def refresh_main_splitter(self):
             #Refresh the size relation between the basic widgets and the REPL,
             #so that the REPL height is always the same
-            self.parent.main_splitter.setSizes(
-                [self.parent.height() - self.main_relation, self.main_relation]
+            self._parent.main_splitter.setSizes(
+                [self._parent.height() - self.main_relation, self.main_relation]
             )
             self.reset_entire_style_sheet()
         
         def refresh_theme(self):
             windows = [
-                self.parent.main_window, 
-                self.parent.upper_window, 
-                self.parent.lower_window
+                self._parent.main_window, 
+                self._parent.upper_window, 
+                self._parent.lower_window
             ]
             for window in windows:
                 for i in range(window.count()):
@@ -3608,29 +3629,29 @@ class MainWindow(data.QMainWindow):
                         window.widget(i).refresh_lexer()
                     elif hasattr(window.widget(i), "set_theme") == True:
                         window.widget(i).set_theme(data.theme)
-            self.parent.repl_helper.refresh_lexer()
+            self._parent.repl_helper.refresh_lexer()
             self.indication_check()
-            self.parent.statusbar.setStyleSheet(
+            self._parent.statusbar.setStyleSheet(
                 "color: {0};".format(data.theme.Indication.Font)
             )
             # Update the taskbar menu
-            self.parent.display.update_theme_taskbar_icon()
+            self._parent.display.update_theme_taskbar_icon()
             
             # Reset the function wheel
             if FunctionWheel.check_theme_state():
                 if self.function_wheel_overlay != None:
                     self.function_wheel_overlay.clean_up()
                 self.function_wheel_overlay = FunctionWheel(
-                    parent=self.parent.main_groupbox, 
-                    main_form=self.parent, 
+                    parent=self._parent.main_groupbox, 
+                    main_form=self._parent, 
                 )
                 FunctionWheel.reset_background_image()
             
             # Reset the settings gui manipulator so it will update
             if helper_forms.SettingsGuiManipulator.check_theme_state():
-                if self.parent.settings.gui_manipulator != None:
-                    self.parent.settings.gui_manipulator.clean_up()
-                self.parent.settings.gui_manipulator = None
+                if self._parent.settings.gui_manipulator != None:
+                    self._parent.settings.gui_manipulator.clean_up()
+                self._parent.settings.gui_manipulator = None
                 helper_forms.SettingsGuiManipulator.reset_background_image()
         
         def reload_themes(self):
@@ -3658,14 +3679,14 @@ class MainWindow(data.QMainWindow):
             """
     
         def create_recent_file_list_menu(self):
-            self.parent.recent_files_menu = data.QMenu("Recent Files")
+            self._parent.recent_files_menu = data.QMenu("Recent Files")
             temp_icon = functions.create_icon('tango_icons/file-recent-files.png')
-            self.parent.recent_files_menu.setIcon(temp_icon)
-            return self.parent.recent_files_menu
+            self._parent.recent_files_menu.setIcon(temp_icon)
+            return self._parent.recent_files_menu
         
         def delete_recent_file_list_menu(self):
-            self.parent.recent_files_menu.setParent(None)
-            self.parent.recent_files_menu = None
+            self._parent.recent_files_menu.setParent(None)
+            self._parent.recent_files_menu = None
 
     
     class System:
@@ -3674,12 +3695,12 @@ class MainWindow(data.QMainWindow):
         (namespace/nested class to MainWindow)
         """
         #Class varibles
-        parent = None
+        _parent = None
         
         def __init__(self, parent):
             """Initialization of the System object instance"""
             #Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
         
         def find_files(self, 
                        file_name, 
@@ -3690,10 +3711,10 @@ class MainWindow(data.QMainWindow):
             #Check if the search directory is none, then use a dialog window
             #to select the real search directory
             if search_dir == None:
-                search_dir = self.parent._get_directory_with_dialog()
+                search_dir = self._parent._get_directory_with_dialog()
                 #Update the current working directory
                 if os.path.isdir(search_dir):
-                    self.parent.set_cwd(search_dir)
+                    self._parent.set_cwd(search_dir)
             #Execute the find function
             found_files = functions.find_files_by_name(
                               file_name, 
@@ -3704,22 +3725,22 @@ class MainWindow(data.QMainWindow):
             #Check of the function return is valid
             if found_files == None:
                 #Check if directory is valid
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Invalid search directory!", 
                     message_type=data.MessageType.ERROR
                 )
-                self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
                 return
             elif found_files == []:
                 #Check if any files were found
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "No files found!", 
                     message_type=data.MessageType.WARNING
                 )
-                self.parent.display.write_to_statusbar("No files found!", 2000)
+                self._parent.display.write_to_statusbar("No files found!", 2000)
                 return
             #Display the found files
-            self.parent.display.show_found_files(
+            self._parent.display.show_found_files(
                 "'{}' in its name".format(file_name), 
                 found_files, 
                 search_dir
@@ -3735,10 +3756,10 @@ class MainWindow(data.QMainWindow):
             #Check if the search directory is none, then use a dialog window
             #to select the real search directory
             if search_dir == None:
-                search_dir = self.parent._get_directory_with_dialog()
+                search_dir = self._parent._get_directory_with_dialog()
                 #Update the current working directory
                 if os.path.isdir(search_dir):
-                    self.parent.set_cwd(search_dir)
+                    self._parent.set_cwd(search_dir)
             try:
                 #Execute the find function
                 result = functions.find_files_with_text_enum(
@@ -3750,35 +3771,35 @@ class MainWindow(data.QMainWindow):
                 )
                 # Check of the function return is valid
                 if result == -1:
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         "Invalid search directory!", 
                         message_type=data.MessageType.ERROR
                     )
-                    self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                    self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
                     return
                 elif result == -2:
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         "Cannot search over multiple lines!", 
                         message_type=data.MessageType.ERROR
                     )
-                    self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                    self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
                     return
                 elif result == {}:
                     #Check if any files were found
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         "No files found!", 
                         message_type=data.MessageType.WARNING
                     )
-                    self.parent.display.write_to_statusbar("No files found!", 2000)
+                    self._parent.display.write_to_statusbar("No files found!", 2000)
                     return
                 #Display the found files
-                self.parent.display.show_found_files_with_lines_in_tree(
+                self._parent.display.show_found_files_with_lines_in_tree(
                     "'{}' in its content".format(search_text), 
                     result, 
                     search_dir
                 )
             except Exception as ex:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     str(ex), 
                     message_type=data.MessageType.ERROR
                 )
@@ -3795,7 +3816,7 @@ class MainWindow(data.QMainWindow):
             that contain the search string in the search_dir.
             """
             #Close the log window if it is displayed
-            self.parent.view.set_log_window(False)
+            self._parent.view.set_log_window(False)
             warning = "The replaced content will be saved back into the files!\n"
             warning += "You better have a backup of the files if you are unsure,\n"
             warning += "because this action CANNOT be undone!\n"
@@ -3806,10 +3827,10 @@ class MainWindow(data.QMainWindow):
             #Check if the search directory is none, then use a dialog window
             #to select the real search directory
             if search_dir == None:
-                search_dir = self.parent._get_directory_with_dialog()
+                search_dir = self._parent._get_directory_with_dialog()
                 #Update the current working directory
                 if os.path.isdir(search_dir):
-                    self.parent.set_cwd(search_dir)
+                    self._parent.set_cwd(search_dir)
             #Replace the text in files
             result = functions.replace_text_in_files_enum(
                 search_text, 
@@ -3819,34 +3840,34 @@ class MainWindow(data.QMainWindow):
                 search_subdirs
             )
             if result == -1:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Invalid search&replace in files directory!", 
                     message_type=data.MessageType.ERROR
                 )
-                self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
                 return
             elif result == -2:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Cannot search&replace in files over multiple lines!", 
                     message_type=data.MessageType.ERROR
                 )
-                self.parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
                 return
             #Check the return type
             if len(result) == 0:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "No files with '{}' in its text were found!".format(search_text), 
                     message_type=data.MessageType.WARNING
                 )
             elif isinstance(result, dict):
-                self.parent.display.show_replaced_text_in_files_in_tree(
+                self._parent.display.show_replaced_text_in_files_in_tree(
                     search_text, 
                     replace_text, 
                     result, 
                     search_dir
                 )
             else:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Unknown error!", 
                     message_type=data.MessageType.ERROR
                 )
@@ -3856,7 +3877,7 @@ class MainWindow(data.QMainWindow):
                 command = "explorer ."
             else:
                 raise Exception("Unimplemented yet!")
-            self.parent.repl.interpreter.run_cmd_process(command, show_console=False)
+            self._parent.repl.interpreter.run_cmd_process(command, show_console=False)
     
     class Editing:
         """
@@ -3864,12 +3885,12 @@ class MainWindow(data.QMainWindow):
         (namespace/nested class to MainWindow)
         """
         #Class varibles
-        parent = None
+        _parent = None
         
         def __init__(self, parent):
             """Initialization of the Editing object instance"""
             #Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
             #Initialize the namespace classes
             self.line   = self.Line(self)
         
@@ -3883,14 +3904,14 @@ class MainWindow(data.QMainWindow):
             in the selected window
             """
             # Get the current widget
-            basic_widget = self.parent.get_window_by_name(window_name)
+            basic_widget = self._parent.get_window_by_name(window_name)
             if window_name == None:
                 window_name = "Main"
             # Check if there are any documents in the basic widget
             if basic_widget.count() == 0:
                 message = "No documents in " + basic_widget.name.lower()
                 message += " editing window"
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.WARNING
                 )
@@ -3933,7 +3954,7 @@ class MainWindow(data.QMainWindow):
             basic_widget.setCurrentIndex(saved_index)
             message = "No instances of '" + search_text + "' found in "
             message += basic_widget.name.lower() + " editing window"
-            self.parent.display.repl_display_message(
+            self._parent.display.repl_display_message(
                 message, 
                 message_type=data.MessageType.WARNING
             )
@@ -3951,14 +3972,14 @@ class MainWindow(data.QMainWindow):
             instance at a time, starting from the currently selected widget.
             """
             #Get the current widget
-            basic_widget = self.parent.get_window_by_name(window_name)
+            basic_widget = self._parent.get_window_by_name(window_name)
             if window_name == None:
                 window_name = "Main"
             #Check if there are any documents in the basic widget
             if basic_widget.count() == 0:
                 message = "No documents in the " + basic_widget.name.lower()
                 message += " editing window"
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.WARNING
                 )
@@ -3983,13 +4004,13 @@ class MainWindow(data.QMainWindow):
                 if result == True:
                     message = "Found and replaced in " + basic_widget.name.lower()
                     message += " editing window"
-                    self.parent.display.write_to_statusbar(message)
+                    self._parent.display.write_to_statusbar(message)
                     return True
             #Nothing found
             basic_widget.setCurrentIndex(saved_index)
             message = "No instances of '" + search_text + "' found in the "
             message += basic_widget.name.lower() + " editing window"
-            self.parent.display.repl_display_message(
+            self._parent.display.repl_display_message(
                 message, 
                 message_type=data.MessageType.WARNING
             )
@@ -4006,7 +4027,7 @@ class MainWindow(data.QMainWindow):
             all of the open documents in the selected window
             """
             #Get the current widget
-            basic_widget = self.parent.get_window_by_name(window_name)
+            basic_widget = self._parent.get_window_by_name(window_name)
             if window_name == None:
                 window_name = "Main"
             #Loop over each widget and replace all instances of the search text
@@ -4018,7 +4039,7 @@ class MainWindow(data.QMainWindow):
                     regular_expression
                 )
             message = "Replacing all in open documents completed"
-            self.parent.display.repl_display_message(
+            self._parent.display.repl_display_message(
                 message, 
                 message_type=data.MessageType.SUCCESS
             )
@@ -4033,7 +4054,7 @@ class MainWindow(data.QMainWindow):
                                        window_name=None):
             """Execute a focused widget method"""
             #Get the current widget
-            widget = self.parent.get_current_tab_by_parent_name(window_name)
+            widget = self._parent.get_current_tab_by_parent_name(window_name)
             if window_name == None:
                 window_name = "Main"
             #None-check the current widget in the selected window
@@ -4043,7 +4064,7 @@ class MainWindow(data.QMainWindow):
                 method(*argument_list)
             else:
                 message = "No document in {} window!".format(window_name)
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.WARNING
                 )
@@ -4132,32 +4153,32 @@ class MainWindow(data.QMainWindow):
             def __init__(self, parent):
                 """Initialization of the Editing object instance"""
                 #Get the reference to the MainWindow parent object instance
-                self.parent = parent
+                self._parent = parent
                 
             def goto(self, line_number, window_name=None):
                 """Set focus and cursor to the selected line in the currently focused window"""
                 argument_list = [line_number]
-                self.parent._run_focused_widget_method("goto_line", argument_list, window_name)
+                self._parent._run_focused_widget_method("goto_line", argument_list, window_name)
             
             def replace(self, replace_text, line_number, window_name=None):
                 """Replace the selected line in the currently focused window"""
                 argument_list = [replace_text, line_number]
-                self.parent._run_focused_widget_method("replace_line", argument_list, window_name)
+                self._parent._run_focused_widget_method("replace_line", argument_list, window_name)
             
             def remove(self, line_number, window_name=None):
                 """Remove the selected line in the currently focused window"""
                 argument_list = [line_number]
-                self.parent._run_focused_widget_method("remove_line", argument_list, window_name)
+                self._parent._run_focused_widget_method("remove_line", argument_list, window_name)
             
             def get(self, line_number, window_name=None):
                 """Replace the selected line in the currently focused window"""
                 argument_list = [line_number]
-                self.parent._run_focused_widget_method("get_line", argument_list, window_name)
+                self._parent._run_focused_widget_method("get_line", argument_list, window_name)
             
             def set(self, line_text, line_number, window_name=None):
                 """Replace the selected line in the currently focused window"""
                 argument_list = [line_text, line_number]
-                self.parent._run_focused_widget_method("set_line", argument_list, window_name)
+                self._parent._run_focused_widget_method("set_line", argument_list, window_name)
     
     class Display:
         """
@@ -4166,7 +4187,7 @@ class MainWindow(data.QMainWindow):
         (namespace/nested class to MainWindow)
         """
         # Class varibles
-        parent              = None
+        _parent             = None
         # Attribute for storing which type of tab is used for dispaying node trees
         node_view_type      = data.NodeDisplayType.TREE
         # Theme indicator label
@@ -4191,7 +4212,7 @@ class MainWindow(data.QMainWindow):
         def __init__(self, parent):
             """ Initialization of the Display object instance """
             # Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
             # Initialize the stored icons
             self.node_tree_icon = functions.create_icon('tango_icons/edit-node-tree.png')
             self.repl_messages_icon = functions.create_icon('tango_icons/repl-messages.png')
@@ -4209,13 +4230,13 @@ class MainWindow(data.QMainWindow):
                     # Initialize superclass
                     super().__init__()
                     # Store the reference to the parent
-                    self.parent = parent
+                    self._parent = parent
                 
                 def mouseReleaseEvent(self, event):
                     # Execute the superclass event method
                     super().mouseReleaseEvent(event)
                     cursor = data.QCursor.pos()
-                    self.parent.theme_menu.popup(cursor)
+                    self._parent.theme_menu.popup(cursor)
             
             tooltip = data.theme.tooltip
             image = data.theme.image_file
@@ -4244,7 +4265,7 @@ class MainWindow(data.QMainWindow):
                     "    padding-right: 0px;" + 
                     "}"
             )
-            self.parent.statusbar.addPermanentWidget(self.theme_indicatore)
+            self._parent.statusbar.addPermanentWidget(self.theme_indicatore)
         
         def update_theme_taskbar_icon(self):
             # Check if the indicator is initialized
@@ -4282,7 +4303,7 @@ class MainWindow(data.QMainWindow):
             """ Initialization of the theme menu used by the theme indicator """
             def choose_theme(theme):
                 data.theme = theme
-                self.parent.view.refresh_theme()
+                self._parent.view.refresh_theme()
                 self.update_theme_taskbar_icon()
                 current_theme = data.theme.tooltip
                 self.repl_display_message(
@@ -4311,19 +4332,19 @@ class MainWindow(data.QMainWindow):
         
         def write_to_statusbar(self, message, msec=0):
             """Write a message to the statusbar"""
-            self.parent.statusbar.setStyleSheet(
+            self._parent.statusbar.setStyleSheet(
                 "color: {0};".format(data.theme.Indication.Font)
             )
-            self.parent.statusbar.showMessage(message, msec)
+            self._parent.statusbar.showMessage(message, msec)
         
         def update_cursor_position(self, cursor_line=None, cursor_column=None):
             """Update the position of the cursor in the current widget to the statusbar"""
             if cursor_line == None and cursor_column == None:
-                self.parent.statusbar_label_left.setText("")
+                self._parent.statusbar_label_left.setText("")
             else:
                 statusbar_text = "LINE: " + str(cursor_line+1)
                 statusbar_text += " COLUMN: " + str(cursor_column+1)
-                self.parent.statusbar_label_left.setText(statusbar_text)
+                self._parent.statusbar_label_left.setText(statusbar_text)
         
         def repl_display_message(self, 
                                  *message, 
@@ -4386,7 +4407,7 @@ class MainWindow(data.QMainWindow):
                     lexer_number
                 )
             #Define references directly to the parent and mainform for performance and clarity
-            parent = self.parent
+            parent = self._parent
             #Set the tab name for displaying REPL messages
             repl_messages_tab_name = "REPL MESSAGES"
             #Find the "REPL Message" tab in the basic widgets
@@ -4397,10 +4418,7 @@ class MainWindow(data.QMainWindow):
                     repl_messages_tab_name
                 )
                 rmt = parent.repl_messages_tab
-                rmt._init_clear_repl_corner_widget()
                 rmt.icon_manipulator.set_icon(rmt, self.repl_messages_icon)
-                rmt.parent.setCornerWidget(parent.repl_messages_tab.corner_widget)
-                rmt.corner_widget.show()
             # Parse the message arguments
             if len(message) > 1:
                 message = " ".join(message)
@@ -4452,38 +4470,50 @@ class MainWindow(data.QMainWindow):
                 parent.repl_messages_tab.append("{}\n".format(message))
             #Bring the REPL tab to the front
             if focus_repl_messages == True:
-                parent.repl_messages_tab.parent.setCurrentWidget(parent.repl_messages_tab)
+                parent.repl_messages_tab._parent.setCurrentWidget(
+                    parent.repl_messages_tab
+                )
             #Bring cursor to the current message 
             if scroll_to_end == True:
-                parent.repl_messages_tab.setCursorPosition(parent.repl_messages_tab.lines(), 0)
-                parent.repl_messages_tab.setFirstVisibleLine(parent.repl_messages_tab.lines())
+                parent.repl_messages_tab.setCursorPosition(
+                    parent.repl_messages_tab.lines(), 0
+                )
+                parent.repl_messages_tab.setFirstVisibleLine(
+                    parent.repl_messages_tab.lines()
+                )
         
         def repl_scroll_to_bottom(self):
             """Scroll the REPL MESSAGES tab to the bottom"""
             #Find the "REPL Message" tab in the basic widgets
-            self.parent.repl_messages_tab = self.find_repl_messages_tab()
-            if self.parent.repl_messages_tab != None:
-                self.parent.repl_messages_tab.goto_line(self.parent.repl_messages_tab.lines())
+            self._parent.repl_messages_tab = self.find_repl_messages_tab()
+            if self._parent.repl_messages_tab != None:
+                self._parent.repl_messages_tab.goto_line(
+                    self._parent.repl_messages_tab.lines()
+                )
         
         def repl_clear_tab(self):
             """Clear text from the REPL messages tab"""
             #Find the "REPL Message" tab in the basic widgets
-            self.parent.repl_messages_tab = self.find_repl_messages_tab()
+            self._parent.repl_messages_tab = self.find_repl_messages_tab()
             #Check if REPL messages tab exists
-            if self.parent.repl_messages_tab != None:
-                self.parent.repl_messages_tab.setText("")
-                self.parent.repl_messages_tab.SendScintilla(data.QsciScintillaBase.SCI_STYLECLEARALL)
-                self.parent.repl_messages_tab.set_theme(data.theme)
+            if self._parent.repl_messages_tab != None:
+                self._parent.repl_messages_tab.setText("")
+                self._parent.repl_messages_tab.SendScintilla(
+                    data.QsciScintillaBase.SCI_STYLECLEARALL
+                )
+                self._parent.repl_messages_tab.set_theme(data.theme)
                 #Bring the REPL tab to the front
-                self.parent.repl_messages_tab.parent.setCurrentWidget(self.parent.repl_messages_tab)
+                self._parent.repl_messages_tab._parent.setCurrentWidget(
+                    self._parent.repl_messages_tab
+                )
         
         def find_repl_messages_tab(self):
             """Find the "REPL Message" tab in the basic widgets of the MainForm"""
             #Set the tab name for displaying REPL messages
             repl_messages_tab_name = "REPL MESSAGES"
             #Call the MainForm function to find the repl tab by name
-            self.parent.repl_messages_tab = self.parent.get_tab_by_name(repl_messages_tab_name)
-            return self.parent.repl_messages_tab
+            self._parent.repl_messages_tab = self._parent.get_tab_by_name(repl_messages_tab_name)
+            return self._parent.repl_messages_tab
         
         def show_nodes(self, custom_editor, parser):
             """
@@ -4500,7 +4530,7 @@ class MainWindow(data.QMainWindow):
             display widget in the upper window
             """
             # Define references directly to the parent and mainform for performance and clarity
-            parent = self.parent
+            parent = self._parent
             # Check if the custom editor is valid
             if custom_editor == None:
                 parent.display.repl_display_message(
@@ -4525,20 +4555,20 @@ class MainWindow(data.QMainWindow):
             # Find the "NODE TREE/LIST" tab in the basic widgets
             parent.node_tree_tab = parent.get_tab_by_name(node_tree_tab_name)
             if parent.node_tree_tab:
-                parent.node_tree_tab.parent.close_tab(node_tree_tab_name)
+                parent.node_tree_tab._parent.close_tab(node_tree_tab_name)
             # Create a new NODE tab in the upper basic widget and set its icon
             parent.node_tree_tab = parent.upper_window.tree_add_tab(node_tree_tab_name)
             parent.node_tree_tab.current_icon = self.node_tree_icon
             node_tree_tab = parent.node_tree_tab
-            node_tree_tab_index = node_tree_tab.parent.indexOf(node_tree_tab)
-            node_tree_tab.parent.setTabIcon(
+            node_tree_tab_index = node_tree_tab._parent.indexOf(node_tree_tab)
+            node_tree_tab._parent.setTabIcon(
                 node_tree_tab_index, 
                 self.node_tree_icon
             )
             # Connect the editor destruction signal to the tree display
             custom_editor.destroyed.connect(node_tree_tab.parent_destroyed)
             # Focus the node tree tab
-            parent.node_tree_tab.parent.setCurrentWidget(parent.node_tree_tab)
+            parent.node_tree_tab._parent.setCurrentWidget(parent.node_tree_tab)
             # Display the nodes according to file type
             if parser == "PYTHON":
                 # Get all the file information
@@ -4597,7 +4627,7 @@ class MainWindow(data.QMainWindow):
             """
             # Define references directly to the parent and 
             # mainform for performance and clarity
-            parent = self.parent
+            parent = self._parent
             # Check if the custom editor is valid
             if custom_editor == None:
                 parent.display.repl_display_message(
@@ -4641,7 +4671,7 @@ class MainWindow(data.QMainWindow):
                     # Then it has stars(*) in the name
                     document_tab = parent.get_tab_by_name("*{}*".format(document_name))
                 try:
-                    document_tab.parent.setCurrentWidget(document_tab)
+                    document_tab._parent.setCurrentWidget(document_tab)
                     document_tab.goto_line(goto_line_number)
                 except:
                     return
@@ -4650,7 +4680,7 @@ class MainWindow(data.QMainWindow):
             #Find the "NODE" tab in the basic widgets
             parent.node_tree_tab = parent.get_tab_by_name(node_tree_tab_name)
             if parent.node_tree_tab:
-                parent.node_tree_tab.parent.close_tab(node_tree_tab_name)
+                parent.node_tree_tab._parent.close_tab(node_tree_tab_name)
             #Create a new NODE tab in the upper basic widget
             parent.node_tree_tab = parent.upper_window.plain_add_document(node_tree_tab_name)
             parent.node_tree_tab.current_icon = self.node_tree_icon
@@ -4751,33 +4781,33 @@ class MainWindow(data.QMainWindow):
             for file in file_list:
                 display_file_info.append("{} ({})".format(os.path.basename(file), file))
             #Display all found files
-            self.parent.display.repl_display_message("Found {:d} files:".format(len(file_list)))
+            self._parent.display.repl_display_message("Found {:d} files:".format(len(file_list)))
             #Use scintilla HOTSPOTS to create clickable file links
             #Create the function and connect the hotspot release signal to it
             def hotspot_release(position, modifiers):
                 #Get the line and index at where the hotspot was clicked
-                line, index = self.parent.repl_messages_tab.lineIndexFromPosition(position)
+                line, index = self._parent.repl_messages_tab.lineIndexFromPosition(position)
                 file =  re.search(
                             ".*\((.*)\)", 
-                            self.parent.repl_messages_tab.text(line)
+                            self._parent.repl_messages_tab.text(line)
                         ).group(1).replace("\n", "")
                 #Open the files
-                self.parent.open_file(file, self.parent.main_window)
+                self._parent.open_file(file, self._parent.main_window)
                 #Because open_file updates the new CWD in the REPL MESSAGES,
                 #it is needed to set the cursor back to where the hotspot was clicked
-                self.parent.repl_messages_tab.setCursorPosition(line, index)
-            self.parent.repl_messages_tab.SCN_HOTSPOTRELEASECLICK.connect(hotspot_release)
+                self._parent.repl_messages_tab.setCursorPosition(line, index)
+            self._parent.repl_messages_tab.SCN_HOTSPOTRELEASECLICK.connect(hotspot_release)
             #Get the start position
-            pos           = self.parent.repl_messages_tab.getCursorPosition()
-            hotspot_start = self.parent.repl_messages_tab.positionFromLineIndex(pos[0], pos[1])
+            pos           = self._parent.repl_messages_tab.getCursorPosition()
+            hotspot_start = self._parent.repl_messages_tab.positionFromLineIndex(pos[0], pos[1])
             #self.display.repl_display_message("\n".join(found_files))
-            self.parent.display.repl_display_message("\n".join(display_file_info))
+            self._parent.display.repl_display_message("\n".join(display_file_info))
             #Get the end position
-            pos         = self.parent.repl_messages_tab.getCursorPosition()
-            hotspot_end = self.parent.repl_messages_tab.positionFromLineIndex(pos[0], pos[1])
+            pos         = self._parent.repl_messages_tab.getCursorPosition()
+            hotspot_end = self._parent.repl_messages_tab.positionFromLineIndex(pos[0], pos[1])
             #Style the hotspot on the node tab
-            self.parent.repl_messages_tab.hotspots.style(
-                self.parent.repl_messages_tab, 
+            self._parent.repl_messages_tab.hotspots.style(
+                self._parent.repl_messages_tab, 
                 hotspot_start, 
                 hotspot_end, 
                 color=0xff0000
@@ -4788,20 +4818,20 @@ class MainWindow(data.QMainWindow):
             Display the directory information in a TreeDisplay widget
             """
             #Define references directly to the parent and mainform for performance and clarity
-            parent = self.parent
+            parent = self._parent
             #Define a name for the FOUND FILES tab
             found_files_tab_name = "FILE/DIRECTORY TREE"
             #Find the "FILE/DIRECTORY TREE" tab in the basic widgets
             parent.found_files_tab = parent.get_tab_by_name(found_files_tab_name)
             if parent.found_files_tab:
-                parent.found_files_tab.parent.close_tab(found_files_tab_name)
+                parent.found_files_tab._parent.close_tab(found_files_tab_name)
             #Create a new FOUND FILES tab in the upper basic widget
             found_files_tab = parent.upper_window.tree_add_tab(found_files_tab_name)
             found_files_tab.icon_manipulator.set_icon(
                 found_files_tab, self.system_show_cwd_tree_icon
             )
             #Focus the node tree tab
-            found_files_tab.parent.setCurrentWidget(found_files_tab)
+            found_files_tab._parent.setCurrentWidget(found_files_tab)
             #Display the directory information in the tree tab
             found_files_tab.display_directory_tree(directory)
         
@@ -4811,13 +4841,13 @@ class MainWindow(data.QMainWindow):
             in a TreeDisplay widget
             """
             #Define references directly to the parent and mainform for performance and clarity
-            parent = self.parent
+            parent = self._parent
             #Define a name for the FOUND FILES tab
             found_files_tab_name = "FOUND FILES"
             #Find the "FOUND FILES" tab in the basic widgets
             parent.found_files_tab = parent.get_tab_by_name(found_files_tab_name)
             if parent.found_files_tab:
-                parent.found_files_tab.parent.close_tab(found_files_tab_name)
+                parent.found_files_tab._parent.close_tab(found_files_tab_name)
             found_files_tab = parent.found_files_tab
             #Create a new FOUND FILES tab in the upper basic widget
             found_files_tab = parent.upper_window.tree_add_tab(found_files_tab_name)
@@ -4825,7 +4855,7 @@ class MainWindow(data.QMainWindow):
                 found_files_tab, self.system_found_files_icon
             )
             #Focus the node tree tab
-            found_files_tab.parent.setCurrentWidget(found_files_tab)
+            found_files_tab._parent.setCurrentWidget(found_files_tab)
             #Display the found files information in the tree tab
             found_files_tab.display_found_files(
                 search_text, 
@@ -4839,13 +4869,13 @@ class MainWindow(data.QMainWindow):
             find_in_files and replace_in_files system function in a TreeDisplay
             """
             #Define references directly to the parent and mainform for performance and clarity
-            parent = self.parent
+            parent = self._parent
             #Define a name for the FOUND FILES tab
             found_files_tab_name = "FOUND FILES"
             #Find the FOUND FILES tab in the basic widgets
             parent.found_files_tab = parent.get_tab_by_name(found_files_tab_name)
             if parent.found_files_tab:
-                parent.found_files_tab.parent.close_tab(found_files_tab_name)
+                parent.found_files_tab._parent.close_tab(found_files_tab_name)
             found_files_tab = parent.found_files_tab
             #Create a new FOUND FILES tab in the upper basic widget
             found_files_tab = parent.upper_window.tree_add_tab(found_files_tab_name)
@@ -4853,7 +4883,7 @@ class MainWindow(data.QMainWindow):
                 found_files_tab, self.system_found_files_icon
             )
             #Focus the node tree tab
-            found_files_tab.parent.setCurrentWidget(found_files_tab)
+            found_files_tab._parent.setCurrentWidget(found_files_tab)
             #Display the found files information in the tree tab
             found_files_tab.display_found_files_with_lines(
                 search_text, 
@@ -4871,20 +4901,20 @@ class MainWindow(data.QMainWindow):
             find_in_files and replace_in_files system function in a TreeDisplay
             """
             #Define references directly to the parent and mainform for performance and clarity
-            parent = self.parent
+            parent = self._parent
             #Define a name for the FOUND FILES tab
             found_files_tab_name = "REPLACEMENTS IN FILES"
             #Find the FOUND FILES tab in the basic widgets
             parent.found_files_tab = parent.get_tab_by_name(found_files_tab_name)
             if parent.found_files_tab:
-                parent.found_files_tab.parent.close_tab(found_files_tab_name)
+                parent.found_files_tab._parent.close_tab(found_files_tab_name)
             #Create a new FOUND FILES tab in the upper basic widget
             parent.found_files_tab = parent.upper_window.tree_add_tab(found_files_tab_name)
             parent.found_files_tab.icon_manipulator.set_icon(
                 parent.found_files_tab, self.system_replace_in_files_icon
             )
             #Focus the node tree tab
-            parent.found_files_tab.parent.setCurrentWidget(parent.found_files_tab)
+            parent.found_files_tab._parent.setCurrentWidget(parent.found_files_tab)
             #Display the found files information in the tree tab
             parent.found_files_tab.display_replacements_in_files(
                 search_text, 
@@ -4901,7 +4931,7 @@ class MainWindow(data.QMainWindow):
             if text_name_2 == None:
                 text_name_2 = "TEXT 2"
             #Create a reference to the main form for less typing
-            parent = self.parent
+            parent = self._parent
             #Create and initialize a text differ
             text_differ = helper_forms.TextDiffer(
                 parent.main_window,
@@ -4915,8 +4945,8 @@ class MainWindow(data.QMainWindow):
             diff_tab_string = "DIFF("
             diff_tab = parent.get_tab_by_string_in_name(diff_tab_string)
             if diff_tab:
-                diff_tab_index = diff_tab.parent.indexOf(diff_tab)
-                diff_tab.parent.close_tab(diff_tab_index)
+                diff_tab_index = diff_tab._parent.indexOf(diff_tab)
+                diff_tab._parent.close_tab(diff_tab_index)
             #Add the created text differ to the main window
             diff_index = parent.main_window.addTab(
                 text_differ, 
@@ -4928,26 +4958,26 @@ class MainWindow(data.QMainWindow):
         def show_session_editor(self):
             """Display a window for editing sessions"""
             #Create the SessionGuiManipulator
-            settings_manipulator = self.parent.settings.manipulator
+            settings_manipulator = self._parent.settings.manipulator
             sessions_manipulator = helper_forms.SessionGuiManipulator(
                 settings_manipulator, 
-                self.parent.upper_window, 
-                self.parent
+                self._parent.upper_window, 
+                self._parent
             )
             #Find the old "SESSIONS" tab in the basic widgets and close it
             sessions_tab_name = "SESSIONS"
-            sessions_tab = self.parent.get_tab_by_name(sessions_tab_name)
+            sessions_tab = self._parent.get_tab_by_name(sessions_tab_name)
             if sessions_tab:
-                sessions_tab.parent.close_tab(sessions_tab_name)
+                sessions_tab._parent.close_tab(sessions_tab_name)
             #Show the sessions in the manipulator
             sessions_manipulator.show_sessions()
             #Add the created session manipulator to the upper window
-            sm_index = self.parent.upper_window.addTab(
+            sm_index = self._parent.upper_window.addTab(
                 sessions_manipulator,
                 "SESSIONS"
             )
             #Set focus to the text differ tab
-            self.parent.upper_window.setCurrentIndex(sm_index)
+            self._parent.upper_window.setCurrentIndex(sm_index)
         
         def create_lexers_menu(self, 
                                menu_name, 
@@ -4986,7 +5016,7 @@ class MainWindow(data.QMainWindow):
                 if function != None:
                     action.triggered.connect(function)
                 action.function = function
-                self.parent.menubar_functions[function.__name__] = function
+                self._parent.menubar_functions[function.__name__] = function
                 # Check if there is a tab character in the function
                 # name and remove the part of the string after it
                 if '\t' in name:
@@ -5004,7 +5034,7 @@ class MainWindow(data.QMainWindow):
             if custom_parent != None:
                 parent = custom_parent
             else:
-                parent = self.parent
+                parent = self._parent
             lexers_menu = data.QMenu(menu_name, parent)
             def create_lexer(lexer, description):
                 func = functools.partial(set_lexer, lexer, description)
@@ -5374,14 +5404,14 @@ class MainWindow(data.QMainWindow):
         All bookmark functionality
         """
         #Class varibles
-        parent = None
+        _parent = None
         #List of all the bookmarks
         marks = None
         
         def __init__(self, parent):
             """Initialization of the Bookmarks object instance"""
             #Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
             #Initialize all the bookmarks
             self.init()
         
@@ -5397,13 +5427,13 @@ class MainWindow(data.QMainWindow):
             for i in range(10):
                 if self.marks[i] == (None, None):
                     self.marks[i] = (editor, line)
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         "Bookmark '{:d}' was added!".format(i), 
                         message_type=data.MessageType.SUCCESS
                     )
                     return i
             else:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "All ten bookmarks are occupied!", 
                     message_type=data.MessageType.ERROR
                 )
@@ -5425,7 +5455,7 @@ class MainWindow(data.QMainWindow):
             #Set and store the marker on the editor
             self.marks[mark_number] = (editor, line)
             editor.bookmarks.add_marker_at_line(line)
-            self.parent.display.repl_display_message(
+            self._parent.display.repl_display_message(
                 "Bookmark '{:d}' was added!".format(mark_number), 
                 message_type=data.MessageType.SUCCESS
             )
@@ -5438,7 +5468,7 @@ class MainWindow(data.QMainWindow):
                     self.marks[i] = (None, None)
                     cleared_any = True
             if cleared_any == False:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Bookmarks are clear.", 
                     message_type=data.MessageType.WARNING
                 )
@@ -5453,13 +5483,13 @@ class MainWindow(data.QMainWindow):
             for i in range(10):
                 if self.marks[i][0] == editor and self.marks[i][1] == line:
                     self.marks[i] = (None, None)
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         "Bookmark '{:d}' was removed!".format(i), 
                         message_type=data.MessageType.SUCCESS
                     )
                     break
             else:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Bookmark not found!", 
                     message_type=data.MessageType.ERROR
                 )
@@ -5475,7 +5505,7 @@ class MainWindow(data.QMainWindow):
                 close_message = "Bookmarks: "
                 close_message += ", ".join(str(mark) for mark in removed_bookmarks)
                 close_message += "\nwere removed."
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     close_message, 
                     message_type=data.MessageType.SUCCESS
                 )
@@ -5489,7 +5519,7 @@ class MainWindow(data.QMainWindow):
         
         def bounds_check(self, mark_number):
             if mark_number < 0 or mark_number > 9:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Bookmarks only go from 0 to 9!", 
                     message_type=data.MessageType.ERROR
                 )
@@ -5501,7 +5531,7 @@ class MainWindow(data.QMainWindow):
             if self.bounds_check(mark_number) == False:
                 return
             if self.marks[mark_number] == (None, None):
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     "Bookmark '{:d}' is empty!".format(mark_number), 
                     message_type=data.MessageType.WARNING
                 )
@@ -5509,8 +5539,8 @@ class MainWindow(data.QMainWindow):
                 editor = self.marks[mark_number][0]
                 line = self.marks[mark_number][1]
                 #Focus the stored editor and it's parent basic widget
-                editor.parent.setCurrentWidget(editor)
-                self.parent.view.set_window_focus(editor.parent.name)
+                editor._parent.setCurrentWidget(editor)
+                self._parent.view.set_window_focus(editor._parent.name)
                 #Go to the stored line
                 editor.goto_line(line)
 
@@ -5526,7 +5556,7 @@ class BasicWidget(data.QTabWidget):
     class CustomTabBar(data.QTabBar):
         """Custom tab bar used to capture tab clicks, ..."""
         # Reference to the parent widget
-        parent      = None
+        _parent      = None
         # Reference to the main form
         main_form   = None
         # Reference to the tab menu
@@ -5537,9 +5567,9 @@ class BasicWidget(data.QTabWidget):
             #Initialize superclass
             super().__init__(parent)
             #Store the parent reference
-            self.parent = parent
+            self._parent = parent
             #Store the main form reference
-            self.main_form = self.parent.parent
+            self.main_form = self._parent._parent
         
         def mousePressEvent(self, event):
             #Execute the superclass event method
@@ -5550,11 +5580,11 @@ class BasicWidget(data.QTabWidget):
             if event_button == data.Qt.LeftButton:
                 if (key_modifiers == data.Qt.ControlModifier or
                     key_modifiers == data.Qt.ShiftModifier):
-                    tab_number = self.parent.tabBar().tabAt(event.pos())
+                    tab_number = self._parent.tabBar().tabAt(event.pos())
                     if tab_number != -1:
                         mime_data = data.QMimeData()
-                        mime_data.setText("{} {:d}".format(self.parent.name, tab_number))
-                        drag = data.QDrag(self.parent)
+                        mime_data.setText("{} {:d}".format(self._parent.name, tab_number))
+                        drag = data.QDrag(self._parent)
                         drag.setMimeData(mime_data)
                         drag.setHotSpot(event.pos())
                         drag.exec_(data.Qt.CopyAction | data.Qt.MoveAction)
@@ -5570,11 +5600,11 @@ class BasicWidget(data.QTabWidget):
                     self.tab_menu.setParent(None)
                     self.tab_menu = None
                 # Create the popup tab context menu
-                menu = self.parent.TabMenu(
+                menu = self._parent.TabMenu(
                     self, 
                     self.main_form, 
-                    self.parent, 
-                    self.parent.widget(self.tabAt(event.pos())), 
+                    self._parent, 
+                    self._parent.widget(self.tabAt(event.pos())), 
                     event.pos()
                 )
                 self.tab_menu = menu
@@ -5839,7 +5869,7 @@ class BasicWidget(data.QTabWidget):
     # The source widgets of the drag&drop event
     drag_source             = None
     # QMainWindow
-    parent                  = None
+    _parent                 = None
     # Custom tab bar
     custom_tab_bar          = None
     # Default font for textboxes
@@ -5858,7 +5888,7 @@ class BasicWidget(data.QTabWidget):
         super().__init__(parent)
         # Set various events and attributes
         # Save parent as a reference
-        self.parent = parent
+        self._parent = parent
         # Initialize the custom tab bar
         self.custom_tab_bar = self.CustomTabBar(self)
         self.setTabBar(self.custom_tab_bar)
@@ -5920,7 +5950,7 @@ class BasicWidget(data.QTabWidget):
             if (event.type() == data.QEvent.KeyPress or
                 event.type() == data.QEvent.KeyRelease):
                 # Check indication
-                self.parent.view.indication_check()
+                self._parent.view.indication_check()
         # Indicate that the event was processed by returning True
         return True
 
@@ -5934,7 +5964,7 @@ class BasicWidget(data.QTabWidget):
             #Displays the file name with path
             data.print_log("Drag&Dropped: " + str(self.drag_dropped_file))
             #Open file in a new scintilla tab
-            self.parent.open_file(self.drag_dropped_file,  self)
+            self._parent.open_file(self.drag_dropped_file,  self)
             event.accept()
         elif self.drag_text != None:
             #Drag&drop widget event occured
@@ -5960,10 +5990,10 @@ class BasicWidget(data.QTabWidget):
             #Check if the current widget is a custom editor or a QTextEdit widget
             if isinstance(cw, CustomEditor):
                 #Get currently selected tab in the basic widget and display its name and lexer
-                self.parent.display.write_to_statusbar(cw.name)
+                self._parent.display.write_to_statusbar(cw.name)
             else:
                 #Display only the QTextEdit name
-                self.parent.display.write_to_statusbar(cw.name)
+                self._parent.display.write_to_statusbar(cw.name)
         data.print_log("Entered BasicWidget: " + str(self.name))
 
     def mousePressEvent(self, event):
@@ -5973,21 +6003,21 @@ class BasicWidget(data.QTabWidget):
         # Set Save/SaveAs buttons in the menubar
         self._set_save_status()
         # Store the last focused widget to the parent
-        self.parent.last_focused_widget = self
+        self._parent.last_focused_widget = self
         data.print_log("Stored \"{}\" as last focused widget".format(self.name))
         # Hide the function wheel if it is shown
-        self.parent.view.hide_all_overlay_widgets()
+        self._parent.view.hide_all_overlay_widgets()
         if (event.button() == data.Qt.RightButton and
             self.count() == 0):
             # Show the function wheel if right clicked
-            self.parent.view.show_function_wheel()
+            self._parent.view.show_function_wheel()
         # Display the tab name in the log window
         if self.currentWidget() != None:
             tab_name = self.currentWidget().name
             data.print_log("Mouse click in: \"" + str(tab_name) + "\"")
         else:
             # Clear the cursor positions in the statusbar
-            self.parent.display.update_cursor_position()
+            self._parent.display.update_cursor_position()
             data.print_log("Mouse click in: \"" + self.name + "\"")
         # Reset the click&drag context menu action
         components.ActionFilter.clear_action()
@@ -6022,7 +6052,7 @@ class BasicWidget(data.QTabWidget):
         #First execute the superclass resize event function
         super().resizeEvent(event)
         #Save the size relations between basic widgets
-        self.parent.view.save_layout()
+        self._parent.view.save_layout()
         event.setAccepted(False)
     
     def setFocus(self):
@@ -6030,7 +6060,7 @@ class BasicWidget(data.QTabWidget):
         #Execute the supeclass focus function
         super().setFocus()
         #Check indication
-        self.parent.view.indication_check()
+        self._parent.view.indication_check()
 
     def _signal_editor_tabindex_change(self, change_event):
         """Signal when the tab index changes"""
@@ -6045,7 +6075,7 @@ class BasicWidget(data.QTabWidget):
             self.update_tab_icon(self.widget(i))
         # Update the corner widgets
         if current_tab != None and hasattr(current_tab, "icon_manipulator"):
-            if current_tab.icon_manipulator.update_corner_widget(current_tab, self) == False:
+            if current_tab.icon_manipulator.update_corner_widget(current_tab) == False:
                 # Remove the corner widget if the current widget is of an unknown type
                 self.setCornerWidget(None)
         else:
@@ -6058,7 +6088,7 @@ class BasicWidget(data.QTabWidget):
         def clear_document_bookmarks():
             #Check if bookmarks need to be cleared
             if isinstance(self.widget(emmited_tab_number), CustomEditor):
-                self.parent.bookmarks.remove_editor_all(self.widget(emmited_tab_number))
+                self._parent.bookmarks.remove_editor_all(self.widget(emmited_tab_number))
         data.print_log("Closing tab: " + str(self.tabText(emmited_tab_number)))
         # Store the tab reference
         tab = self.widget(emmited_tab_number)
@@ -6066,7 +6096,7 @@ class BasicWidget(data.QTabWidget):
         if tab.savable == data.CanSave.YES:
             if tab.save_status == data.FileStatus.MODIFIED:
                 #Close the log window if it is displayed
-                self.parent.view.set_log_window(False)
+                self._parent.view.set_log_window(False)
                 #Display the close notification
                 close_message = "Document '" + self.tabText(emmited_tab_number)
                 close_message += "' has been modified!\nClose it anyway?"
@@ -6091,25 +6121,10 @@ class BasicWidget(data.QTabWidget):
             tab.clean_up()
         # Just in case, decrement the refcount of the tab (that's what del does)
         del tab
-#        import ctypes
-#        _decref = ctypes.pythonapi.Py_DecRef
-#        _decref.argtypes = [ctypes.py_object]
-#        _decref.restype = None
-#        _decref(tab)
-        
-#        #for r in gc.get_referents(tab):
-#        for r in gc.get_referrers(tab):
-#            print(r)
-#            if isinstance(r, BasicWidget):
-#                print(r.name)
-#                for i in dir(r):
-#                    if isinstance(getattr(r, i), helper_forms.TreeDisplay):
-#                        print("    " + i)
-#        print(sys.getrefcount(tab))
 
     def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
         """Signal that fires when cursor position changes"""
-        self.parent.display.update_cursor_position(cursor_line, cursor_column)
+        self._parent.display.update_cursor_position(cursor_line, cursor_column)
     
     def _set_save_status(self):
         """Enable/disable save/saveas buttons in the menubar"""
@@ -6118,17 +6133,17 @@ class BasicWidget(data.QTabWidget):
             #Check if the current widget is a custom editor or a QTextEdit widget
             if isinstance(cw, CustomEditor):
                 #Get currently selected tab in the basic widget and display its name and lexer
-                self.parent.display.write_to_statusbar(cw.name)
+                self._parent.display.write_to_statusbar(cw.name)
             else:
                 #Display only the QTextEdit name
-                self.parent.display.write_to_statusbar(cw.name)
+                self._parent.display.write_to_statusbar(cw.name)
             #Set the Save/SaveAs status of the menubar
             if cw.savable == data.CanSave.YES:
-                self.parent.set_save_file_state(True)
+                self._parent.set_save_file_state(True)
             else:
-                self.parent.set_save_file_state(False)
+                self._parent.set_save_file_state(False)
         if self.count() == 0:
-            self.parent.set_save_file_state(False)
+            self._parent.set_save_file_state(False)
     
     def _signal_text_changed(self):
         """Signal that is emmited when the document text changes"""
@@ -6242,7 +6257,7 @@ class BasicWidget(data.QTabWidget):
     def plain_create_document(self, name):
         """Create a plain vanilla scintilla document"""
         #Initialize the custom editor
-        new_scintilla_tab = PlainEditor(self, self.parent)
+        new_scintilla_tab = PlainEditor(self, self._parent)
         new_scintilla_tab.setFont(self.default_editor_font)
         #Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
         new_scintilla_tab.name = name
@@ -6282,7 +6297,7 @@ class BasicWidget(data.QTabWidget):
     def editor_create_document(self, file_with_path=None):
         """Create and initialize a custom scintilla document"""
         #Initialize the custom editor
-        new_scintilla_tab = CustomEditor(self, self.parent, file_with_path)
+        new_scintilla_tab = CustomEditor(self, self._parent, file_with_path)
         #Connect the signals
         new_scintilla_tab.textChanged.connect(new_scintilla_tab.text_changed)
         return new_scintilla_tab
@@ -6297,7 +6312,7 @@ class BasicWidget(data.QTabWidget):
             if file_type != "unknown" or bypass_check == True:
                 # Test if file can be read
                 if functions.test_text_file(document_name) == None:
-                    self.parent.display.repl_display_message(
+                    self._parent.display.repl_display_message(
                         "Testing for TEXT file failed!", 
                         message_type=data.MessageType.ERROR
                     )
@@ -6316,7 +6331,7 @@ class BasicWidget(data.QTabWidget):
                 return self.widget(new_editor_tab_index)
             else:
                 data.print_log("!! Document is not a text file or has an unsupported format")
-                self.parent.display.write_to_statusbar("Document is not a text file, doesn't exist or has an unsupported format!", 1500)
+                self._parent.display.write_to_statusbar("Document is not a text file, doesn't exist or has an unsupported format!", 1500)
                 return None
         else:
             ## New tab is an empty tab
@@ -6333,7 +6348,7 @@ class BasicWidget(data.QTabWidget):
     def tree_create_tab(self, tree_tab_name):
         """Create and initialize a tree display widget"""
         #Initialize the custom editor
-        new_tree_tab = helper_forms.TreeDisplay(self, self.parent)
+        new_tree_tab = helper_forms.TreeDisplay(self, self._parent)
         #Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
         new_tree_tab.name      = tree_tab_name
         new_tree_tab.savable   = data.CanSave.NO
@@ -6402,13 +6417,13 @@ class BasicWidget(data.QTabWidget):
             return
         #PlainEditor tabs should not be copied
         if isinstance(source_widget, CustomEditor) == False:
-            self.parent.display.repl_display_message(
+            self._parent.display.repl_display_message(
                 "Only custom editor tabs can be copied!", 
                 message_type=data.MessageType.ERROR
             )
             return
         #Check if the source file already exists in the target basic widget
-        check_index = self.parent.check_open_file(source_widget.save_name, self)
+        check_index = self._parent.check_open_file(source_widget.save_name, self)
         if check_index != None:
             #File is already open, focus it
             self.setCurrentIndex(check_index)
@@ -6429,9 +6444,9 @@ class BasicWidget(data.QTabWidget):
         self.reset_text_changed(new_index)
         #Set Focus to the copied widget parent
         if focus_name == None:
-            self.parent.view.set_window_focus(self.drag_source.name)
+            self._parent.view.set_window_focus(self.drag_source.name)
         else:
-            self.parent.view.set_window_focus(focus_name) 
+            self._parent.view.set_window_focus(focus_name) 
         #Update the margin in the copied widget
         self.editor_update_margin()
 
@@ -6446,7 +6461,7 @@ class BasicWidget(data.QTabWidget):
         # PlainEditor tabs should not evaluate its name
         if isinstance(moved_widget, CustomEditor) == True:
             # Check if the source file already exists in the target basic widget
-            check_index = self.parent.check_open_file(moved_widget.save_name, self)
+            check_index = self._parent.check_open_file(moved_widget.save_name, self)
             if check_index != None:
                 # File is already open, focus it
                 self.setCurrentIndex(check_index)
@@ -6456,9 +6471,10 @@ class BasicWidget(data.QTabWidget):
         # Set focus to the copied widget
         self.setCurrentIndex(new_index)
         # Change the custom editor parent
-        self.widget(new_index).parent = self
+        self.widget(new_index)._parent = self
+        self.widget(new_index).icon_manipulator.update_basic_widget(self)
         # Set Focus to the copied widget parent
-        self.parent.view.set_window_focus(source_basic_widget.name)
+        self._parent.view.set_window_focus(source_basic_widget.name)
         # Update corner widget
         """
         This has to be done multiple times! 
@@ -6477,13 +6493,11 @@ Subclassed QScintilla widget used for displaying REPL messages, Python/C node tr
 class PlainEditor(data.QsciScintilla):
     # Class variables
     name            = None
-    parent          = None
+    _parent         = None
     main_form       = None
     current_icon    = None
     icon_manipulator= None
     savable         = data.CanSave.NO
-    # Corner widget reference
-    corner_widget   = None
     # Reference to the custom context menu
     context_menu    = None
     """Namespace references for grouping functionality"""
@@ -6500,15 +6514,13 @@ class PlainEditor(data.QsciScintilla):
             pass
         try:
             # REPL MESSAGES only clean up
-            self.corner_widget.setParent(None)
-            self.corner_widget = None
             self.main_form.repl_messages_tab = None
         except:
             pass
         # Clean up the decorated mouse press event
         self.mousePressEvent = None
         # Clean up references
-        self.parent = None
+        self._parent = None
         self.main_form = None
         self.icon_manipulator = None
         # Destroy self
@@ -6519,10 +6531,11 @@ class PlainEditor(data.QsciScintilla):
         # Initialize the superclass
         super().__init__()
         # Initialize components
-        self.icon_manipulator = components.IconManipulator()
+        self.icon_manipulator = components.IconManipulator(self, parent)
+        self.add_corner_buttons()
         # Store the main form and parent widget references
-        self.parent     = parent
-        self.main_form  = main_form
+        self._parent = parent
+        self.main_form = main_form
         # Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         # Tabs are spaces by default
@@ -6536,33 +6549,15 @@ class PlainEditor(data.QsciScintilla):
         # Set the theme
         self.set_theme(data.theme)
     
-    def _init_clear_repl_corner_widget(self):
+    def add_corner_buttons(self):
         def clear():
             self.main_form.display.repl_clear_tab()
-        # Clean the corner widget if it already exists
-        if self.corner_widget != None:
-            self.corner_widget.setParent(None)
-            self.corner_widget.deleteLater()
-            self.corner_widget = None
-        # Create the new corner button
-        button_clear_repl_messages = data.QToolButton(self)
-        button_clear_repl_messages.setIcon(functions.create_icon('tango_icons/edit-clear.png'))
-        button_clear_repl_messages.setPopupMode(data.QToolButton.InstantPopup)
-        button_clear_repl_messages.setToolTip("Clear messages")
-        button_clear_repl_messages.clicked.connect(clear)
-        button_clear_repl_messages.hide()
-        self.corner_widget = button_clear_repl_messages
-        if data.custom_menu_scale != None:
-            self.corner_widget.setIconSize(
-                data.QSize(
-                    data.custom_menu_scale, data.custom_menu_scale
-                )
-            )
-    
-    def show_repl_corner_widget(self):
-        if self.corner_widget != None:
-            self.parent.setCornerWidget(self.corner_widget)
-            self.corner_widget.show()
+        # Clear messages
+        self.icon_manipulator.add_corner_button(
+            "tango_icons/edit-clear.png",
+            "Clear messages",
+            clear
+        )
     
     def delete_context_menu(self):
         # Clean up the context menu
@@ -6593,9 +6588,9 @@ class PlainEditor(data.QsciScintilla):
         #Set focus to the clicked editor
         self.setFocus()
         #Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self.parent
+        self.main_form.last_focused_widget = self._parent
         data.print_log(
-            "Stored \"{}\" as last focused widget".format(self.parent.name)
+            "Stored \"{}\" as last focused widget".format(self._parent.name)
         )
         #Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
@@ -6664,7 +6659,7 @@ class CustomEditor(data.QsciScintilla):
         This is done because scintilla displays line numbers from index 1.
     """
     # Class variables
-    parent                  = None
+    _parent                 = None
     main_form               = None
     name                    = ""
     save_name               = ""
@@ -6694,8 +6689,6 @@ class CustomEditor(data.QsciScintilla):
     line_list               = None
     # List that holds the line numbers, gets updated on every text change
     line_count              = None
-    # Reference to the editor's corner widget
-    corner_widget           = None
     # Reference to the custom context menu
     context_menu            = None
     # Selection anti-recursion lock
@@ -6713,7 +6706,7 @@ class CustomEditor(data.QsciScintilla):
         # Clean up references
         self.line_list.parent = None
         self.line_list._clear()
-        self.parent = None
+        self._parent = None
         self.main_form = None
         # Disconnect signals
         self.cursorPositionChanged.disconnect()
@@ -6731,8 +6724,6 @@ class CustomEditor(data.QsciScintilla):
         self.clear = None
         self.highlight = None
         # Clean up the corner widget
-        self.corner_widget.setParent(None)
-        self.corner_widget = None
         self.current_icon = None
         self.icon_manipulator = None
         # Clear the lexer
@@ -6748,8 +6739,6 @@ class CustomEditor(data.QsciScintilla):
         # Initialize superclass, from which the current class is inherited,
         # THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
-        # Initialize components
-        self.icon_manipulator = components.IconManipulator()
         # Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         # Set font family and size
@@ -6782,7 +6771,7 @@ class CustomEditor(data.QsciScintilla):
         if file_with_path == None:
             file_with_path = ""
         # Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
-        self.parent     = parent
+        self._parent     = parent
         self.main_form  = main_form
         self.name       = os.path.basename(file_with_path)
         # Set save name with path
@@ -6809,16 +6798,21 @@ class CustomEditor(data.QsciScintilla):
         # sensitive to mouseclicks
         self.setMarginSensitivity(1, True)
         # Add needed signals
-        self.cursorPositionChanged.connect(self.parent._signal_editor_cursor_change)
+        self.cursorPositionChanged.connect(
+            self._parent._signal_editor_cursor_change
+        )
         self.marginClicked.connect(self._margin_clicked)
         self.linesChanged.connect(self._lines_changed)
         self.selectionChanged.connect(self._selection_changed)
+        # Initialize components
+        self.icon_manipulator = components.IconManipulator(
+            parent=self, basic_widget=parent
+        )
         # Set the lexer to the default Plain Text
         self.choose_lexer("text")
+        self.add_corner_buttons()
         # Setup autocompletion
         self.init_autocompletions()
-        # Initialize the corner widget
-        self._init_corner_widget()
         # Setup the LineList object that will hold the custom editor text as a list of lines
         self.line_list = components.LineList(self, self.text())
         # Reset the selection anti-recursion lock
@@ -6928,13 +6922,9 @@ class CustomEditor(data.QsciScintilla):
         #Disable REPL focus after the REPL evaluation
         self.main_form.repl.skip_next_repl_focus()
         #Set focus to the basic widget that holds this document
-        self.main_form.view.set_window_focus(self.parent.name.lower())
+        self.main_form.view.set_window_focus(self._parent.name.lower())
     
-    def _init_corner_widget(self):
-        """
-        Create the corner widget and store it's reference for use by
-        the parent BasicWidget.
-        """
+    def add_corner_buttons(self):
         def show_lexer_menu():
             def set_lexer(lexer, lexer_name):
                 try:
@@ -6943,11 +6933,15 @@ class CustomEditor(data.QsciScintilla):
                     lexer_instance = lexer()
                     self.set_lexer(lexer_instance, lexer_name)
                     # Change the corner widget (button) icon
-                    self.parent.cornerWidget().setIcon(self.current_icon)
+                    self.icon_manipulator.update_corner_button_icon(
+                        self.current_icon
+                    )
+                    self.icon_manipulator.update_icon(self)
                     # Display the lexer change
                     message = "Lexer changed to: {}".format(lexer_name)
                     self.main_form.display.repl_display_message(message)
                 except Exception as ex:
+                    print(ex)
                     message = "Error with lexer selection!\n"
                     message += "Select a window widget with an opened document first."
                     self.main_form.display.repl_display_message(
@@ -6962,34 +6956,12 @@ class CustomEditor(data.QsciScintilla):
             lexers_menu.popup(cursor)
             if data.custom_menu_scale != None:
                 components.TheSquid.customize_menu_style(lexers_menu)
-        # Clean the corner widget if it already exists
-        if self.corner_widget != None:
-            self.corner_widget.setParent(None)
-            self.corner_widget.deleteLater()
-            self.corner_widget = None
-        # Create the new corner button
-        button_show_lexers = data.QToolButton(self)
-        button_show_lexers.setIcon(self.current_icon)
-        button_show_lexers.setPopupMode(data.QToolButton.InstantPopup)
-        button_show_lexers.setToolTip("Change the current lexer")
-        button_show_lexers.clicked.connect(show_lexer_menu)
-        button_show_lexers.hide()
-        self.corner_widget = button_show_lexers
-        if data.custom_menu_scale != None:
-            self.corner_widget.setIconSize(
-                data.QSize(
-                    data.custom_menu_scale, data.custom_menu_scale
-                )
-            )
-    
-    def show_corner_widget(self):
-        """
-        Display the editor's corner widget in the parent BasicWidget
-        """
-        if self.corner_widget != None:
-            self.parent.setCornerWidget(self.corner_widget)
-            self.corner_widget.setIcon(self.current_icon)
-            self.corner_widget.show()
+        # Edit session
+        self.icon_manipulator.add_corner_button(
+            self.current_icon,
+            "Change the current lexer",
+            show_lexer_menu
+        )
 
 
     """
@@ -7064,12 +7036,12 @@ class CustomEditor(data.QsciScintilla):
         # Set focus to the clicked editor
         self.setFocus()
         # Set Save/SaveAs buttons in the menubar
-        self.parent._set_save_status()
+        self._parent._set_save_status()
         # Update the cursor positions in the statusbar
         self.main_form.display.update_cursor_position(self.getCursorPosition()[0], self.getCursorPosition()[1])
         # Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self.parent
-        data.print_log("Stored \"{}\" as last focused widget".format(self.parent.name))
+        self.main_form.last_focused_widget = self._parent
+        data.print_log("Stored \"{}\" as last focused widget".format(self._parent.name))
         # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Hide the context menu if it is shown
@@ -7131,14 +7103,14 @@ class CustomEditor(data.QsciScintilla):
         #Update the line count list with a list comprehention
         self.line_count = [line for line in range(1, self.lines()+1)]
         #Execute the parent basic widget signal
-        self.parent._signal_text_changed()
+        self._parent._signal_text_changed()
     
     def setFocus(self):
         """Overridden focus event"""
         #Execute the supeclass focus function
         super().setFocus()
         #Check the save button status of the menubar
-        self.parent._set_save_status()
+        self._parent._set_save_status()
         #Check indication
         self.main_form.view.indication_check()
 
@@ -7904,7 +7876,7 @@ class CustomEditor(data.QsciScintilla):
             self.setCursorPosition(position[0], 0)
             self.setSelection(position[0], position[1], position[2], position[3])
         # Set focus to the tab that will be searched
-        self.parent.setCurrentWidget(self)
+        self._parent.setCurrentWidget(self)
         if regular_expression == True:
             # Get the absolute cursor index from line/index position
             line, index = self.getCursorPosition()
@@ -8112,7 +8084,7 @@ class CustomEditor(data.QsciScintilla):
         self.set_indicator("replace")
         #Correct the displayed file name
         if self.save_name == None or self.save_name == "":
-            file_name = self.parent.tabText(self.parent.currentIndex())
+            file_name = self._parent.tabText(self._parent.currentIndex())
         else:
             file_name = os.path.basename(self.save_name)
         #Check if there are any instances of the search text in the document
@@ -8493,7 +8465,7 @@ class CustomEditor(data.QsciScintilla):
         #Set the tab name by filtering it out from the QFileDialog result
         self.name = os.path.basename(self.save_name)
         #Change the displayed name of the tab in the basic widget
-        self.parent.set_tab_name(self, self.name)
+        self._parent.set_tab_name(self, self.name)
         #Check if a line ending was specified
         if line_ending == None:
             #Write contents of the tab into the specified file
@@ -8514,7 +8486,7 @@ class CustomEditor(data.QsciScintilla):
         #Check result of the functions.write_to_file function
         if save_result == True:
             #Saving has succeded
-            self.parent.reset_text_changed(self.parent.indexOf(self))
+            self._parent.reset_text_changed(self._parent.indexOf(self))
             #Update the lexer for the document only if the lexer is not set
             if isinstance(self.lexer(), lexers.Text):
                 file_type = functions.get_file_type(self.save_name)
@@ -8595,6 +8567,9 @@ class CustomEditor(data.QsciScintilla):
         self.icon_manipulator.update_icon(self)
         # Set the theme
         self.set_theme(data.theme)
+        # Update corner icons
+        self.icon_manipulator.update_corner_button_icon(self.current_icon)
+        self.icon_manipulator.update_icon(self)
 
     def clear_editor(self):
         """Clear the text from the scintilla document"""
@@ -8783,7 +8758,7 @@ class CustomEditor(data.QsciScintilla):
         """Enable/disable autocompletions for the CustomEditor"""
         #Initilize the document name for displaying
         if self.save_name == None or self.save_name == "":
-            document_name = self.parent.tabText(self.parent.currentIndex())
+            document_name = self._parent.tabText(self._parent.currentIndex())
         else:
             document_name = os.path.basename(self.save_name)
         #Check the autocompletion source
@@ -8811,12 +8786,12 @@ class CustomEditor(data.QsciScintilla):
         def __init__(self, parent):
             """Initialization of the Editing object instance"""
             #Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
         
         def toggle(self):
             """Add/Remove a bookmark at the current line"""
             #Get the cursor line position
-            current_line = self.parent.getCursorPosition()[0] + 1
+            current_line = self._parent.getCursorPosition()[0] + 1
             #Toggle the bookmark
             self.toggle_at_line(current_line)
         
@@ -8828,22 +8803,22 @@ class CustomEditor(data.QsciScintilla):
             #MarkerAdd function needs the standard line indexing
             scintilla_line = line - 1
             #Check if the line is already bookmarked
-            if self.parent.main_form.bookmarks.check(self.parent, line) == None:
-                if self.parent.main_form.bookmarks.add(self.parent, line) != None:
-                    self.parent.markerAdd(scintilla_line, self.parent.bookmark_marker)
+            if self._parent.main_form.bookmarks.check(self._parent, line) == None:
+                if self._parent.main_form.bookmarks.add(self._parent, line) != None:
+                    self._parent.markerAdd(scintilla_line, self._parent.bookmark_marker)
             else:
-                self.parent.main_form.bookmarks.remove_by_reference(self.parent, line)
-                self.parent.markerDelete(scintilla_line, self.parent.bookmark_marker)
+                self._parent.main_form.bookmarks.remove_by_reference(self._parent, line)
+                self._parent.markerDelete(scintilla_line, self._parent.bookmark_marker)
         
         def add_marker_at_line(self, line):
             #MarkerAdd function needs the standard line indexing
             scintilla_line = line - 1
-            self.parent.markerAdd(scintilla_line, self.parent.bookmark_marker)
+            self._parent.markerAdd(scintilla_line, self._parent.bookmark_marker)
         
         def remove_marker_at_line(self, line):
             #MarkerAdd function needs the standard line indexing
             scintilla_line = line - 1
-            self.parent.markerDelete(scintilla_line, self.parent.bookmark_marker)
+            self._parent.markerDelete(scintilla_line, self._parent.bookmark_marker)
     
     class Keyboard:
         """
@@ -8854,7 +8829,7 @@ class CustomEditor(data.QsciScintilla):
             SCI_CLEARALLCMDKEYS
             SCI_NULL
         """
-        parent = None
+        _parent = None
         #GNU/Linux and Windows bindings copied from Scintila source 'KeyMap.cxx'
         bindings = None
         scintilla_keys = None
@@ -8974,7 +8949,7 @@ class CustomEditor(data.QsciScintilla):
         def __init__(self, parent):
             """Initialization of the Keyboard object instance"""
             #Get the reference to the MainWindow parent object instance
-            self.parent = parent
+            self._parent = parent
             #Assign keyboard commands
             self.init_bindings()
             self.clear_all_keys()
@@ -9046,7 +9021,7 @@ class CustomEditor(data.QsciScintilla):
             """
             Clear all mappings from the internal Scintilla mapping table
             """
-            self.parent.SendScintilla(
+            self._parent.SendScintilla(
                 data.QsciScintillaBase.SCI_CLEARALLCMDKEYS
             )
         
@@ -9062,12 +9037,12 @@ class CustomEditor(data.QsciScintilla):
             try:
                 key_combination = self._check_keys(key, modifier)
             except Exception as ex:
-                self.parent.main_form.display.repl_display_message(
+                self._parent.main_form.display.repl_display_message(
                     str(ex), 
                     message_type=data.MessageType.ERROR
                 )
                 return
-            self.parent.SendScintilla(
+            self._parent.SendScintilla(
                 data.QsciScintillaBase.SCI_CLEARCMDKEY, 
                 key_combination
             )
@@ -9089,12 +9064,12 @@ class CustomEditor(data.QsciScintilla):
             try:
                 key_combination = self._check_keys(key, modifier)
             except Exception as ex:
-                self.parent.main_form.display.repl_display_message(
+                self._parent.main_form.display.repl_display_message(
                     str(ex), 
                     message_type=data.MessageType.ERROR
                 )
                 return
-            self.parent.SendScintilla(
+            self._parent.SendScintilla(
                 data.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
                 key_combination,
                 command
@@ -9110,7 +9085,7 @@ Python REPL widget
 class ReplLineEdit(data.QLineEdit):
     """Custom QLineEdit used for the REPL functionality"""
     #Class variables  (class variables >> this means that these variables are shared accross instances of this class, until you assign a new value to them, then they become instance variables)
-    parent                          = None          #Main window reference
+    _parent                         = None          #Main window reference
     interpreter                     = None          #Custom interpreter used with the REPL
     #Attribute for indicating if the REPL is indicated
     indicated                       = False
@@ -9135,7 +9110,7 @@ class ReplLineEdit(data.QLineEdit):
         #Initialize superclass class, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__()
         #Initialize the parent references and update the autocompletion lists
-        self.parent = parent
+        self._parent = parent
         #Initialize the interpreter
         self.interpreter = interpreter.CustomInterpreter(
             interpreter_references, 
@@ -9208,21 +9183,21 @@ class ReplLineEdit(data.QLineEdit):
         #Display evaluated command if specified
         current_rm_index = None
         if display_action == True:
-            repl_messages = self.parent.display.find_repl_messages_tab()
+            repl_messages = self._parent.display.find_repl_messages_tab()
             if repl_messages != None:
-                if repl_messages.parent.count() > 1:
-                    current_rm_index = repl_messages.parent.currentIndex()
+                if repl_messages._parent.count() > 1:
+                    current_rm_index = repl_messages._parent.currentIndex()
             #Display the evaluated command (this sets the focus to the REPL messages tab)
             split_command = current_command.split("\n")
             for i, command in enumerate(split_command):
                 if i != 0:
-                    self.parent.display.repl_display_message("... " + command)
+                    self._parent.display.repl_display_message("... " + command)
                 else:
-                    self.parent.display.repl_display_message(">>> " + command)
+                    self._parent.display.repl_display_message(">>> " + command)
             if current_rm_index != None:
                 #Revert the focus of the BasicWidget that hold the REPL messages tab to
                 #whichever widget was focused before
-                repl_messages.parent.setCurrentIndex(current_rm_index)
+                repl_messages._parent.setCurrentIndex(current_rm_index)
         #Evaluate the REPL text and store the result
         eval_return = self.interpreter.eval_command(current_command, display_action)
         #Save text into the input buffer
@@ -9240,7 +9215,7 @@ class ReplLineEdit(data.QLineEdit):
         if eval_return != None:
             data.print_log(eval_return)
             if display_action == True:
-                self.parent.display.repl_display_message(
+                self._parent.display.repl_display_message(
                     eval_return,
                     message_type=data.MessageType.ERROR
                 )
@@ -9441,17 +9416,17 @@ class ReplLineEdit(data.QLineEdit):
 
     def focusInEvent(self, event):
         """Event that fires when the REPL gets focus"""
-        self.parent._key_events_lock()
+        self._parent._key_events_lock()
         #Set the focus to the REPL
         self.setFocus()
         #Clear the cursor position from the statusbar
-        self.parent.display.update_cursor_position()
+        self._parent.display.update_cursor_position()
         data.print_log("Entered REPL")
         #Reset the main forms last focused widget
-        self.parent.last_focused_widget = None
+        self._parent.last_focused_widget = None
         data.print_log("Reset last focused widget attribute")
         #Hide the function wheel if it is shown
-        self.parent.view.hide_all_overlay_widgets()
+        self._parent.view.hide_all_overlay_widgets()
         #Ignore the event
         event.ignore()
         #Return the focus event
@@ -9462,11 +9437,11 @@ class ReplLineEdit(data.QLineEdit):
         #Execute the supeclass focus function
         super().setFocus()
         #Check indication
-        self.parent.view.indication_check()
+        self._parent.view.indication_check()
 
     def focusOutEvent(self, event):
         """Event that fires when the REPL loses focus"""
-        self.parent._key_events_unlock()
+        self._parent._key_events_unlock()
         data.print_log("Left REPL")
         #Ignore the event
         event.ignore()
@@ -9506,8 +9481,8 @@ class ReplLineEdit(data.QLineEdit):
         new_font.setPointSize(new_font.pointSize() + 1)
         self.setFont(new_font)
         new_font_metric = data.QFontMetrics(new_font)
-        self.parent.view.main_relation = new_font_metric.height() + 48
-        self.parent.view.refresh_main_splitter()
+        self._parent.view.main_relation = new_font_metric.height() + 48
+        self._parent.view.refresh_main_splitter()
     
     def decrease_text_size(self):
         """Decrease size of the REPL text"""
@@ -9517,8 +9492,8 @@ class ReplLineEdit(data.QLineEdit):
         new_font.setPointSize(new_font.pointSize() - 1)
         self.setFont(new_font)
         new_font_metric = data.QFontMetrics(new_font)
-        self.parent.view.main_relation = new_font_metric.height() + 48
-        self.parent.view.refresh_main_splitter()
+        self._parent.view.main_relation = new_font_metric.height() + 48
+        self._parent.view.refresh_main_splitter()
     
 
     """
@@ -9595,7 +9570,7 @@ class ReplLineEdit(data.QLineEdit):
             #Evaluate REPL text
             self._repl_eval()
         else:
-            self.parent.display.write_to_statusbar("No commands in REPL input buffer!", 1000)
+            self._parent.display.write_to_statusbar("No commands in REPL input buffer!", 1000)
 
     def external_eval_request(self, eval_string, calling_widget):
         """An external evaluation request from the ReplHelper or another widget"""
@@ -9615,7 +9590,7 @@ class ReplHelper(data.QsciScintilla):
     MUST BE PAIRED WITH A ReplLineEdit OBJECT!
     """
     #Class variables
-    parent          = None
+    _parent         = None
     repl_master     = None
     #The scintilla api object(data.QsciAPIs) must be an instace variable, or the underlying c++
     #mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
@@ -9634,7 +9609,7 @@ class ReplHelper(data.QsciScintilla):
         #Initialize superclass, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
         #Save the reference to the parent(main window)
-        self.parent = parent
+        self._parent = parent
         #Save the reference to the REPL object
         self.repl_master = repl_master
         #Hide the horizontal and show the vertical scrollbar
@@ -9715,7 +9690,7 @@ class ReplHelper(data.QsciScintilla):
         #Only check indication if the current widget is not indicated
         if self.indicated == False:
             #Check indication
-            self.parent.view.indication_check()
+            self._parent.view.indication_check()
         return False
 
     """
@@ -9739,12 +9714,12 @@ class ReplHelper(data.QsciScintilla):
         # Execute the superclass mouse click event
         super().mousePressEvent(event)
         # Reset the main forms last focused widget
-        self.parent.last_focused_widget = None
+        self._parent.last_focused_widget = None
         data.print_log("Reset last focused widget attribute")
         # Set focus to the clicked helper
         self.setFocus()
         # Hide the function wheel if it is shown
-        self.parent.view.hide_all_overlay_widgets()
+        self._parent.view.hide_all_overlay_widgets()
         # Need to set focus to self or the repl helper doesn't get focused,
         # don't know why?
         self.setFocus()
@@ -9756,7 +9731,7 @@ class ReplHelper(data.QsciScintilla):
         # Execute the supeclass focus function
         super().setFocus()
         # Check indication
-        self.parent.view.indication_check()
+        self._parent.view.indication_check()
     
     def wheelEvent(self, wheel_event):
         """Overridden mouse wheel rotate event"""
@@ -9798,7 +9773,7 @@ class ReplHelper(data.QsciScintilla):
         # Show a context menu according to the current lexer
         offset = (event.x(), event.y())
         self.context_menu = helper_forms.ContextMenu(
-            self, self.parent, offset
+            self, self._parent, offset
         )
         height = self.size().height()
         if height < 100:
@@ -9919,7 +9894,7 @@ class FunctionWheel(data.QGroupBox):
             self.tool_tip           = input_tool_tip
 
     #Class variables
-    parent                  = None
+    _parent                 = None
     main_form               = None
     background_image        = None
     display_label           = None
@@ -10000,7 +9975,7 @@ class FunctionWheel(data.QGroupBox):
         return FunctionWheel.function_wheel_background_image
     
     def clean_up(self):
-        self.parent = None
+        self._parent = None
         self.main_form = None
         # Function for deleting an attribute
         def delete_attribute(att_name):
@@ -10025,7 +10000,7 @@ class FunctionWheel(data.QGroupBox):
         #Initialize the superclass
         super().__init__(parent)
         #Store the reference to the parent
-        self.parent = parent
+        self._parent = parent
         #Store the reference to the main form
         self.main_form = main_form
         # Reset the class variable

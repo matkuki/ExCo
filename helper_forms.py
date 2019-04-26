@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2018 Matic Kukovec. 
+Copyright (c) 2013-2019 Matic Kukovec. 
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -636,7 +636,7 @@ class SettingsGuiManipulator(data.QGroupBox):
     
     def clean_up(self):
         # Clean up main references
-        self.parent = None
+        self._parent = None
         self.main_form = None
         # Function for deleting an attribute
         def delete_attribute(att_name):
@@ -1075,7 +1075,7 @@ class SessionGuiManipulator(data.QTreeView):
     refresh_lock            = False
     edit_flag               = False
     last_created_item       = None
-    session_toolbar         = None
+    session_groupbox        = None
     #Icons
     node_icon_group         = None
     node_icon_session       = None
@@ -1090,13 +1090,14 @@ class SessionGuiManipulator(data.QTreeView):
         # Disconnect signals
         self.doubleClicked.disconnect()
         # Clean up main references
-        self.parent = None
+        self._parent = None
         self.main_form = None
         self.settings_manipulator = None
         self.icon_manipulator = None
-        self.session_toolbar.setParent(None)
-        self.session_toolbar.deleteLater()
-        self.session_toolbar = None
+        if self.session_groupbox != None:
+            self.session_groupbox.setParent(None)
+            self.session_groupbox.deleteLater()
+            self.session_groupbox = None
         # Clean up self
         self.setParent(None)
         self.deleteLater()
@@ -1106,9 +1107,12 @@ class SessionGuiManipulator(data.QTreeView):
         #Initialize the superclass
         super().__init__(parent)
         # Initialize components
-        self.icon_manipulator = components.IconManipulator()
+        self.icon_manipulator = components.IconManipulator(
+            parent=self, basic_widget=parent
+        )
+        self.add_corner_buttons()
         #Store the reference to the parent BasicWidget from the "forms" module
-        self.parent = parent
+        self._parent = parent
         #Store the reference to the MainWindow form from the "forms" module
         self.main_form = main_form
         #Store the reference to the active SettingsManipulator
@@ -1142,10 +1146,10 @@ class SessionGuiManipulator(data.QTreeView):
         #Set the focus
         self.setFocus()
         #Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self.parent
-        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
+        self.main_form.last_focused_widget = self._parent
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self._parent.name))
         #Set Save/SaveAs buttons in the menubar
-        self.parent._set_save_status()
+        self._parent._set_save_status()
         # Reset the click&drag context menu action
         components.ActionFilter.clear_action()
     
@@ -1583,72 +1587,37 @@ class SessionGuiManipulator(data.QTreeView):
             #Append the session to the stored node list
             self.session_nodes.append(item_session_node)
     
-    def show_session_buttons(self, parent):
-        """
-        Create and display buttons for manipulating sessions
-        on the parent basic widget
-        """
-        # Clean up the toolbar if it exists
-        if self.session_toolbar != None:
-            self.session_toolbar.setParent(None)
-            self.session_toolbar.deleteLater()
-            self.session_toolbar = None
-        #Create the find toolbar and buttons
-        self.session_toolbar = data.QToolBar(parent)
-        self.session_toolbar.setIconSize(data.QSize(16,16))
-        session_add_action = data.QAction(
-            self.icon_session_add, 
-            "session_add",
-            parent
+    def add_corner_buttons(self):
+        # Edit session
+        self.icon_manipulator.add_corner_button(
+            "tango_icons/session-edit.png",
+            "Edit the selected item",
+            self.edit_item
         )
-        session_add_action.setToolTip(
-            "Add a new session"
+        # Overwrite session
+        self.icon_manipulator.add_corner_button(
+            "tango_icons/session-overwrite.png",
+            "Overwrite the selected session",
+            self.overwrite_session
         )
-        session_add_action.triggered.connect(self.add_empty_session)
-        session_remove_action = data.QAction(
-            self.icon_session_remove, 
-            "session_remove",
-            parent
+        # Add group
+        self.icon_manipulator.add_corner_button(
+            "tango_icons/folder-add.png",
+            "Add a new group",
+            self.add_empty_group
         )
-        session_remove_action.setToolTip(
-            "Remove the selected session"
+        # Add session
+        self.icon_manipulator.add_corner_button(
+            "tango_icons/session-add.png",
+            "Add a new session",
+            self.add_empty_session
         )
-        session_remove_action.triggered.connect(self.remove_session)
-        session_overwrite_action = data.QAction(
-            self.icon_session_overwrite, 
-            "session_overwrite",
-            parent
+        # Remove session
+        self.icon_manipulator.add_corner_button(
+            "tango_icons/session-remove.png",
+            "Remove the selected session",
+            self.remove_session
         )
-        session_overwrite_action.setToolTip(
-            "Overwrite the selected session"
-        )
-        session_overwrite_action.triggered.connect(self.overwrite_session)
-        session_add_group_action = data.QAction(
-            self.icon_group_add, 
-            "session_add_group",
-            parent
-        )
-        session_add_group_action.setToolTip(
-            "Add a new group"
-        )
-        session_add_group_action.triggered.connect(self.add_empty_group)
-        session_edit_action = data.QAction(
-            self.icon_session_edit, 
-            "session_edit",
-            parent
-        )
-        session_edit_action.setToolTip(
-            "Edit the selected item"
-        )
-        session_edit_action.triggered.connect(self.edit_item)
-        self.session_toolbar.addAction(session_edit_action)
-        self.session_toolbar.addAction(session_overwrite_action)
-        self.session_toolbar.addAction(session_add_group_action)
-        self.session_toolbar.addAction(session_add_action)
-        self.session_toolbar.addAction(session_remove_action)
-        self.session_toolbar.show()
-        #Set the corner widget of the parent
-        parent.setCornerWidget(self.session_toolbar)
 
 
 
@@ -1733,7 +1702,7 @@ class TreeDisplay(data.QTreeView):
         self.expanded.disconnect()
         # Clean up main references
         self.main_form.node_tree_tab = None
-        self.parent = None
+        self._parent = None
         self.main_form = None
         self.icon_manipulator = None
         self.bound_tab = None
@@ -1752,8 +1721,8 @@ class TreeDisplay(data.QTreeView):
     def parent_destroyed(self, event):
         # Connect the bound tab 'destroy' signal to this function
         # for automatic closing of this tree widget
-        if parent != None:
-            self.parent.close_tab(self)
+        if self._parent != None:
+            self._parent.close_tab(self)
     
     def __init__(self, parent=None, main_form=None):
         """Initialization"""
@@ -1762,7 +1731,7 @@ class TreeDisplay(data.QTreeView):
         # Initialize components
         self.icon_manipulator = components.IconManipulator()
         # Store the reference to the parent
-        self.parent = parent
+        self._parent = parent
         # Store the reference to the main form
         self.main_form = main_form
         # Store name of self
@@ -1824,10 +1793,10 @@ class TreeDisplay(data.QTreeView):
         # Set the focus
         self.setFocus()
         # Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self.parent
-        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
+        self.main_form.last_focused_widget = self._parent
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self._parent.name))
         # Set Save/SaveAs buttons in the menubar
-        self.parent._set_save_status()
+        self._parent._set_save_status()
         # Get the index of the clicked item and execute the item's procedure
         if event.button() == data.Qt.RightButton:
             index = self.indexAt(event.pos())
@@ -1907,11 +1876,23 @@ class TreeDisplay(data.QTreeView):
                     self.tree_menu = None
                 
                 self.tree_menu = data.QMenu()
+                # Open in Ex.Co.
                 action_open_file = data.QAction("Open", self.tree_menu)
                 action_open_file.triggered.connect(open_file)
                 icon = functions.create_icon('tango_icons/document-open.png')
                 action_open_file.setIcon(icon)
                 self.tree_menu.addAction(action_open_file)
+                # Open with system
+                def open_system():
+                    if data.platform == 'Windows':
+                        os.startfile(item.full_name)
+                    else:
+                        subprocess.call(["xdg-open", item.full_name])
+                action_open = data.QAction("Open with system", self.tree_menu)
+                action_open.triggered.connect(open_system)
+                icon = functions.create_icon('tango_icons/open-with-default-app.png')
+                action_open.setIcon(icon)
+                self.tree_menu.addAction(action_open)
                 self.tree_menu.addSeparator()
                 
                 clipboard_copy_action = data.QAction("Copy file name to clipboard", self)
@@ -1943,9 +1924,17 @@ class TreeDisplay(data.QTreeView):
                 #Parse the node
                 self._node_item_parse(item)
             
+            def copy_node_to_clipboard():
+                try:
+                    cb = data.application.clipboard()
+                    cb.clear(mode=cb.Clipboard)
+                    cb.setText(item_text.split()[0], mode=cb.Clipboard)
+                except:
+                    pass
+            
             def open_document():
                 #Focus the bound tab in its parent window
-                self.bound_tab.parent.setCurrentWidget(self.bound_tab)
+                self.bound_tab._parent.setCurrentWidget(self.bound_tab)
             
             item = self.model().itemFromIndex(model_index)
             if item == None:
@@ -1965,6 +1954,11 @@ class TreeDisplay(data.QTreeView):
                 icon = functions.create_icon('tango_icons/edit-goto.png')
                 action_goto_line.setIcon(icon)
                 self.tree_menu.addAction(action_goto_line)
+                action_copy = data.QAction("Copy name", self.tree_menu)
+                action_copy.triggered.connect(copy_node_to_clipboard)
+                icon = functions.create_icon('tango_icons/edit-copy.png')
+                action_copy.setIcon(icon)
+                self.tree_menu.addAction(action_copy)
             elif "DOCUMENT" in item_text:
                 action_open = data.QAction("Focus document", self.tree_menu)
                 action_open.triggered.connect(open_document)
@@ -2011,7 +2005,7 @@ class TreeDisplay(data.QTreeView):
     
     def _node_item_parse(self, item):
         # Check if the bound tab has been cleaned up and has no parent
-        if self.bound_tab == None or self.bound_tab.parent == None:
+        if self.bound_tab == None or self.bound_tab._parent == None:
             self.main_form.display.repl_display_message(
                 "The bound tab has been closed! Reload the tree display.", 
                 message_type=data.MessageType.ERROR
@@ -2021,7 +2015,7 @@ class TreeDisplay(data.QTreeView):
         item_text = item.text()
         if hasattr(item, "line_number") == True:
             # Goto the stored line number
-            self.bound_tab.parent.setCurrentWidget(self.bound_tab)
+            self.bound_tab._parent.setCurrentWidget(self.bound_tab)
             self.bound_tab.goto_line(item.line_number)
         elif "line:" in item_text:
             # Parse the line number out of the item text
@@ -2030,12 +2024,12 @@ class TreeDisplay(data.QTreeView):
             end_index   = -1
             line_number = int(line[start_index:end_index])
             # Focus the bound tab in its parent window
-            self.bound_tab.parent.setCurrentWidget(self.bound_tab)
+            self.bound_tab._parent.setCurrentWidget(self.bound_tab)
             # Go to the item line number
             self.bound_tab.goto_line(line_number)
         elif "DOCUMENT" in item_text:
             # Focus the bound tab in its parent window
-            self.bound_tab.parent.setCurrentWidget(self.bound_tab)
+            self.bound_tab._parent.setCurrentWidget(self.bound_tab)
     
     def _check_contents(self):
         #Update the horizontal scrollbar width
@@ -3110,7 +3104,7 @@ class TreeDisplay(data.QTreeView):
                 return item_base_directory, base_directory
             
             class ProcessThread(data.QThread):
-                finished = data.pyqtSignal(data.QStandardItem, self.Directory)
+                finished = data.pyqtSignal(object, object)
                 stop_flag = False
                 
                 def stop(self):
@@ -3123,18 +3117,19 @@ class TreeDisplay(data.QTreeView):
                     item_base_directory, base_directory = result
                     self.finished.emit(item_base_directory, base_directory)
             
+            @data.pyqtSlot(object, object)
             def completed(directory_base, base_directory):
                 tree_model.appendRow(directory_base)
                 # Check if the TreeDisplay underlying C++ object is alive
-                if self.parent == None:
+                if self._parent == None:
                     return
                 # Expand the base directory item
                 self.expand(directory_base.index())
                 # Resize the header so the horizontal scrollbar will have the correct width
                 self.resize_horizontal_scrollbar()
                 # Hide the wait animation
-                if self.parent != None:
-                    self.parent._set_wait_animation(self.parent.indexOf(self), False)
+                if self._parent != None:
+                    self._parent._set_wait_animation(self._parent.indexOf(self), False)
             
             if self.worker_thread != None:
                 self.worker_thread.wait()
@@ -3318,7 +3313,7 @@ class TreeDisplay(data.QTreeView):
         
         if self.worker_thread != None:
             self.worker_thread.wait()
-        self.parent._set_wait_animation(self.parent.indexOf(self), True)
+        self._parent._set_wait_animation(self._parent.indexOf(self), True)
         self.worker_thread = ProcessThread()
         self.worker_thread.setTerminationEnabled(True)
         self.worker_thread.finished.connect(completed)
@@ -3398,7 +3393,7 @@ Object for displaying text difference between two files
 class TextDiffer(data.QWidget):
     """A widget that holds two PlainEditors for displaying text difference"""
     #Class variables
-    parent                  = None
+    _parent                 = None
     main_form               = None
     name                    = ""
     savable                 = data.CanSave.NO
@@ -3440,7 +3435,6 @@ class TextDiffer(data.QWidget):
     editor_1    = None
     editor_2    = None
     layout      = None
-    find_toolbar= None
     
         
     def clean_up(self):
@@ -3454,14 +3448,11 @@ class TextDiffer(data.QWidget):
         self.editor_2.clean_up()
         self.editor_1 = None
         self.editor_2 = None
-        if self.find_toolbar != None:
-            self.find_toolbar.setParent(None)
-            self.find_toolbar = None
         self.focused_editor = None
         self.splitter.setParent(None)
         self.splitter = None
         self.layout = None
-        self.parent = None
+        self._parent = None
         self.main_form = None
         self.icon_manipulator = None
         # Clean up self
@@ -3484,17 +3475,17 @@ class TextDiffer(data.QWidget):
         # Initialize the superclass
         super().__init__(parent)
         # Initialize components
-        self.icon_manipulator = components.IconManipulator()
+        self.icon_manipulator = components.IconManipulator(self, parent)
         # Initialize colors according to theme
         self.Indicator_Unique_1_Color = data.theme.TextDifferColors.Indicator_Unique_1_Color
         self.Indicator_Unique_2_Color = data.theme.TextDifferColors.Indicator_Unique_2_Color
         self.Indicator_Similar_Color = data.theme.TextDifferColors.Indicator_Similar_Color
         # Store the reference to the parent
-        self.parent = parent
+        self._parent = parent
         # Store the reference to the main form
         self.main_form = main_form
         # Set the differ icon
-        self.current_icon = functions.create_icon('tango_icons/compare-text.png')
+        self.current_icon = functions.create_icon('icons/files/compare_text.png')
         #Set the name of the differ widget
         if text_1_name != None and text_2_name != None:
             self.name = "Text difference: {:s} / {:s}".format(text_1_name, text_2_name)
@@ -3529,8 +3520,8 @@ class TextDiffer(data.QWidget):
         self.editor_1.cursorPositionChanged.connect(self._cursor_change_1)
         self.editor_2.cursorPositionChanged.connect(self._cursor_change_2)
         # Overwrite the CustomEditor parent widgets to point to the TextDiffers' PARENT
-        self.editor_1.parent = self.parent
-        self.editor_2.parent = self.parent
+        self.editor_1._parent = self._parent
+        self.editor_2._parent = self._parent
         # Add a new attribute to the CustomEditor that will hold the TextDiffer reference
         self.editor_1.actual_parent = self
         self.editor_2.actual_parent = self
@@ -3559,6 +3550,8 @@ class TextDiffer(data.QWidget):
             self.editor_2.wheelEvent,
             self.editor_2
         )
+        # Add corner buttons
+        self.add_corner_buttons()
         # Focus the first editor on initialization
         self.focused_editor = self.editor_1
         self.focused_editor.setFocus()
@@ -3714,8 +3707,8 @@ class TextDiffer(data.QWidget):
         #Set focus to the clicked editor
         self.setFocus()
         #Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self.parent
-        data.print_log("Stored \"{:s}\" as last focused widget".format(self.parent.name))
+        self.main_form.last_focused_widget = self._parent
+        data.print_log("Stored \"{:s}\" as last focused widget".format(self._parent.name))
         #Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
@@ -4101,54 +4094,29 @@ class TextDiffer(data.QWidget):
                 "Scrolled back to the start of the document!"
             )
     
-    def show_find_buttons(self, parent):
-        """
-        Create and display buttons for finding unique/similar differences
-        on the parent basic widget
-        """
-        # Check if the parent is a basic widget
-        if isinstance(parent, forms.BasicWidget) == False:
-            return
-        # Clean up the toolbar if needed
-        if self.find_toolbar != None:
-            self.find_toolbar.setParent(None)
-            self.find_toolbar = None
-        # Create the find toolbar and buttons
-        self.find_toolbar = data.QToolBar(parent)
-        self.find_toolbar.setIconSize(data.QSize(16,16))
-        unique_1_action = data.QAction(
+    def add_corner_buttons(self):
+        # Unique 1 button
+        self.icon_manipulator.add_corner_button(
             functions.create_icon("tango_icons/diff-unique-1.png"), 
-            "unique_1_button",
-            parent
+            "Scroll to next unique line\nin document: '{:s}'".format(
+                self.text_1_name
+            ),
+            self.find_next_unique_1
         )
-        unique_1_action.setToolTip(
-            "Scroll to next unique line\nin document: '{:s}'".format(self.text_1_name)
-        )
-        unique_1_action.triggered.connect(self.find_next_unique_1)
-        unique_2_action =   data.QAction(
+        # Unique 2 button
+        self.icon_manipulator.add_corner_button(
             functions.create_icon("tango_icons/diff-unique-2.png"), 
-            "unique_2_button",
-            parent
+            "Scroll to next unique line\nin document: '{:s}'".format(
+                self.text_2_name
+            ),
+            self.find_next_unique_2
         )
-        unique_2_action.setToolTip(
-            "Scroll to next unique line\nin document: '{:s}'".format(self.text_2_name)
-        )
-        unique_2_action.triggered.connect(self.find_next_unique_2)
-        similar_action = data.QAction(
+        # Similar button
+        self.icon_manipulator.add_corner_button(
             functions.create_icon("tango_icons/diff-similar.png"), 
-            "unique_2_button",
-            parent
+            "Scroll to next similar line\nin both documents",
+            self.find_next_similar
         )
-        similar_action.setToolTip(
-            "Scroll to next similar line\nin both documents"
-        )
-        similar_action.triggered.connect(self.find_next_similar)
-        self.find_toolbar.addAction(unique_1_action)
-        self.find_toolbar.addAction(unique_2_action)
-        self.find_toolbar.addAction(similar_action)
-        self.find_toolbar.show()
-        # Set the corner widget of the parent
-        parent.setCornerWidget(self.find_toolbar)
     
     def set_theme(self, theme):
         def set_editor_theme(editor):
@@ -4222,7 +4190,7 @@ class MessageLogger(data.QWidget):
         
         self.append_message("Ex.Co. debug log window loaded")
         self.append_message("LOGGING Mode is enabled")
-        self.parent = parent
+        self._parent = parent
         
         #Set the log window icon
         if os.path.isfile(data.application_icon) == True:
@@ -4388,7 +4356,7 @@ class CustomButton(data.QLabel):
         #Initialize superclass
         super().__init__(parent)
         #Store the reference to the parent
-        self.parent = parent
+        self._parent = parent
         #Store the reference to the main form
         self.main_form = main_form
         #Store the reference to the group box that holds the parent
@@ -4563,7 +4531,7 @@ class CustomButton(data.QLabel):
                     message_type=data.MessageType.ERROR
                 )
             #Close the function wheel
-            self.parent.hide()
+            self._parent.hide()
     
     def mouseMoveEvent(self, event):
         """Overloaded mouse move event"""
@@ -4595,14 +4563,14 @@ class CustomButton(data.QLabel):
         else:
             self._set_opacity_with_hex_edge(self.OPACITY_LOW)
         #Clear the text in the parent display label
-        self.parent.display("", self.stored_font)
+        self._parent.display("", self.stored_font)
     
     def highlight(self):
         """Set the buttons opacity to high and display the buttons function text"""
         #Set the opacity to full
         self._set_opacity_with_hex_edge(self.OPACITY_HIGH)
         #Display the stored function text
-        self.parent.display(self.function_text, self.stored_font)
+        self._parent.display(self.function_text, self.stored_font)
 
 class DoubleButton(CustomButton):
     """
@@ -4631,7 +4599,7 @@ class DoubleButton(CustomButton):
                           input_extra_function=None, 
                           input_extra_function_text=""):   
         #Store the parent and main form references
-        self.parent     = parent
+        self._parent     = parent
         self.main_form  = main_form
         #Initialize the extra button
         self.extra_button = data.QLabel(self)
@@ -4678,7 +4646,7 @@ class DoubleButton(CustomButton):
                     message_type=data.MessageType.ERROR
                 )
             #Close the function wheel
-            self.parent.hide()
+            self._parent.hide()
     
     def extra_button_enter_event(self, event):
         """Overloaded widget enter event"""
@@ -4691,7 +4659,7 @@ class DoubleButton(CustomButton):
                 self.stored_font.pointSize()-2, 
                 weight=data.QFont.Bold
             )
-            self.parent.display(
+            self._parent.display(
                 self.extra_button_function_text, 
                 extra_button_font
             )
@@ -4707,7 +4675,7 @@ class DoubleButton(CustomButton):
                 self.stored_font.pointSize()-2, 
                 weight=data.QFont.Bold
             )
-            self.parent.display(
+            self._parent.display(
                 "", 
                 extra_button_font
             )
@@ -4795,13 +4763,13 @@ class ContextMenu(data.QGroupBox):
                     if components.ActionFilter.click_drag_action != None:
                         function_name = components.ActionFilter.click_drag_action.function.__name__
 #                        print(self.number, function_name)
-                        if self.parent.functions_type == "standard":
+                        if self._parent.functions_type == "standard":
                             ContextMenu.standard_buttons[self.number] = function_name
-                        elif self.parent.functions_type == "plain":
+                        elif self._parent.functions_type == "plain":
                             ContextMenu.standard_buttons[self.number] = function_name
-                        elif self.parent.functions_type == "horizontal":
+                        elif self._parent.functions_type == "horizontal":
                             ContextMenu.horizontal_buttons[self.number] = function_name
-                        elif self.parent.functions_type == "special":
+                        elif self._parent.functions_type == "special":
                             ContextMenu.special_buttons[self.number] = function_name
                         # Show the newly added function
                         message = "Added function '{}' at button number {}".format(
@@ -4827,13 +4795,13 @@ class ContextMenu(data.QGroupBox):
                                 message_type=data.MessageType.ERROR
                             )
                     # Close the function wheel
-                    self.parent.hide()
+                    self._parent.hide()
                     event.accept()
                 else:
                     event.ignore()
             elif button == data.Qt.RightButton:
                 # Close the function wheel
-                self.parent.hide()
+                self._parent.hide()
                 event.accept()
             else:
                 event.ignore()
