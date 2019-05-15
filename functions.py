@@ -157,6 +157,10 @@ def get_language_file_icon(language_name):
     else:
         return create_icon("tango_icons/file.png")
 
+def create_language_document_icon_from_path(path):
+    file_type = get_file_type(path)
+    return get_language_file_icon(file_type)
+
 def get_file_size_Mb(file_with_path):
     """Get the file size in Mb"""
     size_bytes = os.path.getsize(file_with_path)
@@ -2693,3 +2697,42 @@ def get_line_indentation(line):
         else:
             break
     return indentation
+
+def unixify_path(path):
+    return os.path.realpath(path).replace("\\", "/")
+
+def unixify_path_join(first_path, second_path):
+    return unixify_path(os.path.join(first_path, second_path))
+
+def unixify_path_remove(whole_path, path_to_remove):
+    return unixify_path(os.path.relpath(whole_path, path_to_remove))
+
+def change_icon_opacity(qicon, opacity):
+    pixmap = qicon.pixmap(qicon.actualSize(data.QSize(256, 256)))
+    pixmap = change_opacity(pixmap, opacity)
+    return data.QIcon(pixmap)
+
+def change_opacity(pixmap_or_file, opacity):
+    """
+    Changes the opacity of a pixmap or image from a file
+    """
+    base_image = data.QImage(pixmap_or_file)
+    image = data.QImage(
+        base_image.size(),
+        data.QImage.Format_ARGB32_Premultiplied
+    )
+    image.fill(data.Qt.transparent)    
+    painter = data.QPainter(image)
+    painter.setRenderHints(
+        data.QPainter.Antialiasing | 
+        data.QPainter.TextAntialiasing | 
+        data.QPainter.SmoothPixmapTransform
+    )
+    painter.setOpacity(opacity)
+    painter.drawImage(
+        data.QRect(0, 0, image.width(), image.height()),
+        base_image
+    )
+    painter.end()
+    pixmap = data.QPixmap.fromImage(image)
+    return pixmap

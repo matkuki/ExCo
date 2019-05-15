@@ -1690,13 +1690,27 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/utilities-terminal.png', 
                 show_terminal
             )
+            def open_general_explorer():
+                file_explorer = self.upper_window.tree_add_tab(
+                    "FILE EXPLORER", helper_forms.TreeExplorer
+                )
+                file_explorer.display_directory(os.getcwd())
+                file_explorer.open_file_signal.connect(self.open_file)
+                self.upper_window.setCurrentWidget(file_explorer)
+            show_new_explorer_tree_action = create_action(
+                'Show current working directory in tree explorer',
+                settings.Keys.new_cwd_tree, 
+                'Show the current working directory in the tree explorer', 
+                'tango_icons/system-show-cwd-tree-blue.png', 
+                open_general_explorer
+            )
             # Add the menu items
             system_menu.addAction(find_files_action)
             system_menu.addAction(find_in_files_action)
             system_menu.addAction(replace_in_files_action)
             system_menu.addAction(cwd_tree_action)
+            system_menu.addAction(show_new_explorer_tree_action)
             system_menu.addAction(show_explorer_action)
-            system_menu.addAction(show_terminal_action)
             system_menu.addAction(run_command_action)
         #Lexers menu
         def construct_lexers_menu(parent):
@@ -6345,23 +6359,26 @@ class BasicWidget(data.QTabWidget):
             # Return the reference to the new added scintilla tab widget
             return self.widget(new_editor_tab_index)
     
-    def tree_create_tab(self, tree_tab_name):
+    def tree_create_tab(self, tree_tab_name, tree_type=None):
         """Create and initialize a tree display widget"""
-        #Initialize the custom editor
-        new_tree_tab = helper_forms.TreeDisplay(self, self._parent)
-        #Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
+        # Initialize the custom editor
+        if tree_type != None:
+            new_tree_tab = tree_type(self, self._parent)
+        else:
+            new_tree_tab = helper_forms.TreeDisplay(self, self._parent)
+        # Add attributes for status of the document
         new_tree_tab.name      = tree_tab_name
         new_tree_tab.savable   = data.CanSave.NO
-        #Return the reference to the new added tree tab widget
+        # Return the reference to the new added tree tab widget
         return new_tree_tab
     
-    def tree_add_tab(self, tree_tab_name):
+    def tree_add_tab(self, tree_tab_name, tree_type=None):
         """Create and initialize a tree display widget"""
-        #Initialize the custom editor
-        new_tree_tab = self.tree_create_tab(tree_tab_name)
-        #Add the tree tab to the tab widget
+        # Initialize the custom editor
+        new_tree_tab = self.tree_create_tab(tree_tab_name, tree_type)
+        # Add the tree tab to the tab widget
         new_tree_tab_index = self.addTab(new_tree_tab, tree_tab_name)
-        #Return the reference to the new added tree tab widget
+        # Return the reference to the new added tree tab widget
         return self.widget(new_tree_tab_index)
 
     def editor_update_margin(self):
@@ -7131,6 +7148,8 @@ class CustomEditor(data.QsciScintilla):
     
     def set_first_visible_line(self, line_number):
         """Move the top of the viewing area to the selected line"""
+        if line_number < 0:
+            line_number = 0
         self.SendScintilla(
             data.QsciScintillaBase.SCI_SETFIRSTVISIBLELINE, 
             line_number

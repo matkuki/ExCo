@@ -1541,7 +1541,7 @@ class SessionGuiManipulator(data.QTreeView):
         self.setUniformRowHeights(True)
         #Connect the tree model signals
         self.tree_model.itemChanged.connect(self._item_changed)
-        font    = data.QFont("Courier", 10, data.QFont.Bold)
+        font = data.QFont("Courier", 10, data.QFont.Bold)
         #First add all of the groups, if any
         groups = self.settings_manipulator.get_sorted_groups()
         self.groups = []
@@ -2103,7 +2103,7 @@ class TreeDisplay(data.QTreeView):
         label_brush = data.QBrush(
             data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
-        label_font  = data.QFont(
+        label_font = data.QFont(
             "Courier", data.tree_display_font_size, data.QFont.Bold
         )
         #Check if there was a parsing error
@@ -5738,4 +5738,928 @@ class OkDialog(YesNoDialog):
         elif pressed_key == data.Qt.Key_Enter or pressed_key == data.Qt.Key_Return:
             self.done(data.QMessageBox.No)
 
+
+##
+##  Tree display for viewing/editing the filesystem
+##
+
+import os
+import enum
+import types
+import shutil
+import traceback
+import data
+import functions
+import components
+if data.platform == "Windows":
+    import win32api, win32con
+
+class TreeDisplayBase(data.QTreeView):
+    # Class variables
+    _parent = None
+    main_form = None
+    name = ""
+    savable = data.CanSave.NO
+    tree_menu = None
+    icon_manipulator = None
+    # Background image stuff
+    BACKGROUND_IMAGE_SIZE = (217, 217)
+    BACKGROUND_IMAGE_OFFSET = (-55, -8)
+    BACKGROUND_IMAGE_HEX_EDGE_LENGTH = 18
+    
+    
+    def __del__(self):
+        try:
+            self.clean_up()
+        except Exception as ex:
+            print(ex)
+    
+    def clean_up(self):
+        model = self.model()
+        if model:
+            root = model.invisibleRootItem()
+            for item in self.iterate_items(root):
+                if item == None:
+                    continue
+                item.setData(None)
+                for row in range(item.rowCount()):
+                    item.removeRow(row)
+                for col in range(item.columnCount()):
+                    item.removeRow(col)
+                    
+        # Clean up the tree model
+        self._clean_model()
+        # Disconnect signals
+        try:
+            self.doubleClicked.disconnect()
+        except:
+            pass
+        try:
+            self.expanded.disconnect()
+        except:
+            pass
+        self._parent = None
+        self.main_form = None
+        self.icon_manipulator = None
+        if self.tree_menu != None:
+            self.tree_menu.setParent(None)
+            self.tree_menu = None
+        # Clean up self
+        self.setParent(None)
+        self.deleteLater()
+    
+    
+    def __init__(self, parent, main_form, name):
+        # Initialize the superclass
+        super().__init__(parent)
+        # Initialize everything else
+        self._parent = parent
+        self.main_form = main_form
+        self.name = name
+        self.icon_manipulator = components.IconManipulator()
+        # Set the icon size for every node
+        self.update_icon_size()
+        # Set the nodes to be animated on expand/contract
+        self.setAnimated(True)
+        # Disable node expansion on double click
+        self.setExpandsOnDoubleClick(False)
+    
+    """
+    Private/Internal functions
+    """
+    def _create_standard_item(self, text, bold=False, icon=None):
+        # Font
+        brush = data.QBrush(data.QColor(data.theme.Font.Python.Keyword[1]))
+        font = data.QFont("Courier", data.tree_display_font_size)
+        font.setBold(bold)
+        # Item initialization
+        item = data.QStandardItem(text)
+        item.setEditable(False)
+        item.setForeground(brush)
+        item.setFont(font)
+        # Set icon if needed
+        if icon != None:
+            item.setIcon(icon)
+        return item
+    
+    def _create_menu(self):
+        self.tree_menu = data.QMenu()
+        self.default_menu_font = self.tree_menu.font()
+        self.customize_context_menu()
+        return self.tree_menu
+    
+    def _clean_model(self):
+        if self.model() != None:
+            self.model().setParent(None)
+            self.setModel(None)
+    
+    def _set_font_size(self, size_in_points):
+        """
+        Set the font size for the tree display items
+        """
+        # Initialize the font with the new size
+        new_font = data.QFont("Courier", size_in_points)
+        # Set the new font
+        self.setFont(new_font)
+        # Set the header font
+        header_font = data.QFont(self._parent.default_tab_font)
+        header_font.setPointSize(size_in_points)
+        header_font.setBold(True)
+        self.header().setFont(header_font)
+    
+    def _check_contents(self):
+        #Update the horizontal scrollbar width
+        self._resize_horizontal_scrollbar()
+    
+    def _resize_horizontal_scrollbar(self):
+        """
+        Resize the header so the horizontal scrollbar will have the correct width
+        """
+        for i in range(self.model().rowCount()):
+            self.resizeColumnToContents(i)
+    
+    """
+    Overridden functions
+    """
+    def setFocus(self):
+        """
+        Overridden focus event
+        """
+        # Execute the supeclass focus function
+        super().setFocus()
+        # Check indication
+        self.main_form.view.indication_check()
+    
+    def mousePressEvent(self, event):
+        """Function connected to the clicked signal of the tree display"""
+        super().mousePressEvent(event)
+        # Clear the selection if the index is invalid
+        index = self.indexAt(event.pos())
+        if index.isValid() == False:
+            self.clearSelection()
+        # Set the focus
+        self.setFocus()
+        # Set the last focused widget to the parent basic widget
+        self.main_form.last_focused_widget = self._parent
+        # Set Save/SaveAs buttons in the menubar
+        self._parent._set_save_status()
+        # Reset the click&drag context menu action
+        components.ActionFilter.clear_action()
+    
+    
+    """
+    Public functions
+    """
+    def update_icon_size(self):
+        self.setIconSize(
+            data.QSize(
+                data.tree_display_icon_size, 
+                data.tree_display_icon_size
+            )
+        )
+
+    def _customize_context_menu(self, menu, default_menu_font):
+        """
+        This needs to be called in a subclass as needed
+        """
+        if data.custom_menu_scale != None and data.custom_menu_font != None:
+            components.TheSquid.customize_menu_style(menu)
+            self._set_font_size(data.tree_display_font_size)
+            font = data.QFont("Courier", data.tree_display_font_size)
+            if menu != None:
+                menu.setFont(font)
+            # Recursively change the fonts of all items
+            root = self.model().invisibleRootItem()
+            for item in self.iterate_items(root):
+                if item == None:
+                    continue
+                font.setBold(item.font().bold())
+                item.setFont(font)
+        else:
+            if default_menu_font == None:
+                return
+            components.TheSquid.customize_menu_style(menu)
+            self._set_font_size(default_menu_font.pointSize())
+            if menu != None:
+                menu.setFont(default_menu_font)
+            # Recursively change the fonts of all items
+            root = self.model().invisibleRootItem()
+            for item in self.iterate_items(root):
+                if item == None:
+                    continue
+                default_menu_font.setBold(item.font().bold())
+                item.setFont(default_menu_font)
+    
+    def iterate_items(self, root):
+        """
+        Iterator that returns all tree items recursively
+        """
+        if root is not None:
+            stack = [root]
+            while stack:
+                parent = stack.pop(0)
+                for row in range(parent.rowCount()):
+                    for column in range(parent.columnCount()):
+                        child = parent.child(row, column)
+                        yield child
+                        if child != None:
+                            if child.hasChildren():
+                                stack.append(child)
+
+class TreeExplorer(TreeDisplayBase):
+    # Item type enumeration
+    class ItemType(enum.Enum):
+        FILE = 0
+        DIRECTORY = 1
+        DISK = 2
+        NEW_FILE = 3
+        NEW_DIRECTORY = 4
+        RENAME_FILE = 5
+        RENAME_DIRECTORY = 6
+        COMPUTER = 7
+    
+    # Signals
+    open_file_signal = data.pyqtSignal(str)
+    open_directory_signal = data.pyqtSignal()
+    
+    # Attributes
+    current_viewed_directory = None
+    default_menu_font = None
+    base_item = None
+    added_item = None
+    renamed_item = None
+    cut_item = None
+    copy_item = None
+    
+    def __init__(self, parent, main_form):
+        # Initialize the superclass
+        super().__init__(parent, main_form, "Tree Explorer")
+        self.setAnimated(True)
+        self.setObjectName("TreeExplorer")
+        # Icons
+        self.project_icon = functions.create_icon("tango_icons/project.png")
+        self.file_icon = functions.create_icon("tango_icons/file.png")
+        self.folder_icon = functions.create_icon("tango_icons/document-open.png")
+        self.disk_icon = functions.create_icon("tango_icons/harddisk.png")
+        self.computer = functions.create_icon("tango_icons/computer.png")
+        self.goto_icon = functions.create_icon('tango_icons/edit-goto.png')
+        # Connect the click and doubleclick signal
+        self.doubleClicked.connect(self._item_double_click)
+    
+    def _init_tree_model(self):
+        self.horizontalScrollbarAction(1)
+        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        tree_model = data.QStandardItemModel()
+        tree_model.setHorizontalHeaderLabels(["TREE FILE EXPLORER"])
+        self.header().hide()
+        self._clean_model()
+        self.setModel(tree_model)
+        self.setUniformRowHeights(True)
+        self._set_font_size(data.tree_display_font_size)
+        return tree_model
+    
+    def _create_item_attribute(self, 
+                               itype, 
+                               path, 
+                               hidden=False, 
+                               disk=False,
+                               hide_menu=False):
+        return types.SimpleNamespace(
+            itype=itype,
+            path=path,
+            hidden=hidden,
+            disk=disk,
+            hide_menu=hide_menu
+        )
+    
+    def _is_hidden_item(self, item):
+        try:
+            if data.platform == "Windows":
+                # Windows
+                attribute = win32api.GetFileAttributes(item)
+                hidden = (
+                    attribute & 
+                    (win32con.FILE_ATTRIBUTE_HIDDEN | 
+                        win32con.FILE_ATTRIBUTE_SYSTEM)
+                )
+            else:
+                # Linux / OSX
+                hidden = os.path.basename(item).startswith('.')
+            return hidden
+        except:
+            return False
+    
+    def _edit_item(self):
+        """
+        Edit the selected item
+        """
+        if self.edit_flag == True:
+            return
+        #Check if an item is selected
+        if self.selectedIndexes() == []:
+            return
+        selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
+        selected_item.setEditable(True)
+        self.edit(selected_item.index())
+        #Add the session signal when editing is canceled
+#        delegate = self.itemDelegate(selected_item.index())
+#        delegate.closeEditor.connect(self._item_editing_closed)
+        #Set the editing flag
+        self.edit_flag = True
+    
+    def _item_editing_closed(self, widget):
+        """
+        Signal that fires when editing was canceled/ended
+        """
+#        print(widget.text())
+#        self.display_directory(self.current_viewed_directory)
+        # Check if the directory name is valid
+        if self.added_item != None and self.added_item.text() == "":
+            self.base_item.removeRow(self.added_item.row())
+            self.added_item = None
+            return
+        elif self.renamed_item != None:
+            self.renamed_item.setEditable(False)
+            self.renamed_item = None
+            return
+    
+    def _item_changed(self, item):
+        """
+        Callback connected to the displays 
+        QStandardItemModel 'itemChanged' signal
+        """
+#        print("Changed item:\n    ", str(item))
+        if not hasattr(item, "attributes"):
+            return
+        if (item.attributes.itype == TreeExplorer.ItemType.RENAME_FILE or
+            item.attributes.itype == TreeExplorer.ItemType.RENAME_DIRECTORY):
+            # Reset the type first
+            if item.attributes.itype == TreeExplorer.ItemType.RENAME_DIRECTORY:
+                item.attributes.itype = TreeExplorer.ItemType.DIRECTORY
+                item_text = "Directory"
+            else:
+                item.attributes.itype = TreeExplorer.ItemType.FILE
+                item_text = "File"
+            # Initialize the names
+            old_name = item.attributes.path
+            new_name = os.path.join(
+                os.path.dirname(item.attributes.path),
+                item.text()
+            )
+            # Check if the names are different
+            old_name = functions.unixify_path(old_name)
+            new_name = functions.unixify_path(new_name)
+            if old_name == new_name:
+                return
+            # Check if an item with the same name as the
+            # renamed item already exists
+            item.setEditable(False)
+            if os.path.exists(new_name):
+                self.main_form.display.repl_display_message(
+                    "{} '{}' already exits!".format(item_text, new_name),
+                    message_type=data.MessageType.ERROR
+                )
+                self.display_directory(self.current_viewed_directory)
+                return
+            # Rename the item
+            try:
+                os.rename(old_name, new_name)
+                item.attributes.path = new_name
+                self.main_form.display.repl_display_message(
+                    "Renamed {}:\n    '{}'\n  to:\n    '{}'!".format(
+                        item_text.lower(), old_name, new_name),
+                    message_type=data.MessageType.SUCCESS
+                )
+            except:
+                self.main_form.display.repl_display_message(
+                    "Error while renaming {}: '{}'!".format(
+                        item_text.lower(), item.attributes.path),
+                    message_type=data.MessageType.ERROR
+                )
+                self.display_directory(self.current_viewed_directory)
+                return
+            # Finish editing and reset the view
+            self.renamed_item = None
+            self.display_directory(self.current_viewed_directory)
+            
+        elif (item.attributes.itype == TreeExplorer.ItemType.NEW_DIRECTORY or
+              item.attributes.itype == TreeExplorer.ItemType.NEW_FILE):
+            path = os.path.join(item.attributes.path, item.text())
+            item.attributes.path = functions.unixify_path(path)
+            if item.attributes.itype == TreeExplorer.ItemType.NEW_DIRECTORY:
+                item.attributes.itype = TreeExplorer.ItemType.DIRECTORY
+                item_text = "Directory"
+            else:
+                item.attributes.itype = TreeExplorer.ItemType.FILE
+                item_text = "File"
+            if os.path.exists(item.attributes.path):
+                self.base_item.removeRow(item.index())
+                self.main_form.display.repl_display_message(
+                    "{} '{}' already exits!".format(
+                        item_text, item.attributes.path),
+                    message_type=data.MessageType.ERROR
+                )
+                return
+            # Create the directory
+            try:
+                if item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+                    os.mkdir(item.attributes.path)
+                else:
+                    open(item.attributes.path, 'a').close()
+                self.main_form.display.repl_display_message(
+                    "Created {}: '{}'!".format(
+                        item_text.lower(), item.attributes.path),
+                    message_type=data.MessageType.SUCCESS
+                )
+            except:
+                self.base_item.removeRow(item.index())
+                self.main_form.display.repl_display_message(
+                    "Error while creating {}: '{}'!".format(
+                        item_text.lower(), item.attributes.path),
+                    message_type=data.MessageType.ERROR
+                )
+                return
+            # Finish editing and reset the view
+            item.setEditable(False)
+            self.added_item = None
+            self.display_directory(self.current_viewed_directory)
+    
+    def _item_right_click(self, model_index):
+        item = self.model().itemFromIndex(model_index)
+        cursor = data.QCursor.pos()  
+        # Clean up the menu if needed
+        if self.tree_menu != None:
+            self.tree_menu.setParent(None)
+            self.tree_menu.deleteLater()
+        # Initialize the menu
+        self.tree_menu = data.QMenu()
+        self.default_menu_font = self.tree_menu.font()
+        self.customize_context_menu()
+        
+        # The paste function is always shown when applicable,
+        # so this function needs to be defined at the top
+        def paste_item():
+            if self.cut_item != None:
+                itype = self.cut_item.attributes.itype
+                it = self.cut_item
+            elif self.copy_item != None:
+                itype = self.copy_item.attributes.itype
+                it = self.copy_item
+            if itype == TreeExplorer.ItemType.DIRECTORY:
+                base_name = os.path.basename(
+                    it.attributes.path
+                )
+                new_path = os.path.join(
+                    self.current_viewed_directory,
+                    base_name
+                )
+                if os.path.exists(new_path):
+                    message = "The PASTE directory already exists! "
+                    message += "Do you wish to overwrite it?"
+                    reply = gui.YesNoDialog.question(message)
+                    if reply != data.QMessageBox.Yes:
+                        return
+                if self.cut_item != None:
+                    shutil.move(self.cut_item.attributes.path, new_path)
+                    self.cut_item = None
+                    self.copy_item = None
+                elif self.copy_item != None:
+                    shutil.copytree(self.copy_item.attributes.path, new_path)
+            else:
+                base_name = os.path.basename(
+                    it.attributes.path
+                )
+                new_path = os.path.join(
+                    self.current_viewed_directory,
+                    base_name
+                )
+                if os.path.exists(new_path):
+                    message = "The PASTE file already exists! "
+                    message += "Do you wish to overwrite it?"
+                    reply = gui.YesNoDialog.question(message)
+                    if reply != data.QMessageBox.Yes:
+                        return
+                if self.cut_item != None:
+                    shutil.move(self.cut_item.attributes.path, new_path)
+                    self.cut_item = None
+                    self.copy_item = None
+                elif self.copy_item != None:
+                    shutil.copy(self.copy_item.attributes.path, new_path)
+            self.display_directory(self.current_viewed_directory)
+        
+        # First check if the click was in an empty space
+        # and create item actions accordingly
+        if item != None:
+#            # Update current working directory
+#            def update_cwd():
+#                if item.attributes.itype == TreeExplorer.ItemType.FILE:
+#                    path = os.path.dirname(item.attributes.path)
+#                else:
+#                    path = item.attributes.path
+#                self.main_form.set_cwd(path)
+#            title = "Update CWD"
+#            if item.attributes.itype == TreeExplorer.ItemType.FILE:
+#                title = "Update CWD to parent directory"
+#            action_update_cwd = data.QAction(title, self.tree_menu)
+#            action_update_cwd.triggered.connect(update_cwd)
+#            icon = functions.create_icon('icons/folders/yellow_small/open/update_cwd.png')
+#            action_update_cwd.setIcon(icon)
+#            self.tree_menu.addAction(action_update_cwd)
+            # Open the current item
+            def open_item():
+                self._open_item(item)
+            title = "Open directory"
+            icon = 'tango_icons/update-cwd.png'
+            if hasattr(item, "attributes") == False:
+                return
+            elif item.attributes.hide_menu == True:
+                return
+            if item.attributes.itype == TreeExplorer.ItemType.FILE:
+                title = "Open file"
+                icon = 'tango_icons/document-open.png'
+            open_action = data.QAction(title, self.tree_menu)
+            open_action.triggered.connect(open_item)
+            icon = functions.create_icon(icon)
+            open_action.setIcon(icon)
+            self.tree_menu.addAction(open_action)
+            # Copy item name to clipboard
+            def copy_item_path_to_clipboard():
+                text = item.attributes.path
+                cb = data.application.clipboard()
+                cb.clear(mode=cb.Clipboard)
+                cb.setText(text, mode=cb.Clipboard)
+                self.main_form.display.repl_display_message(
+                    "Copied to clipboard: \"{}\"".format(text)
+                )
+            action_copy_clipboard = data.QAction(
+                "Copy item path to clipboard", self.tree_menu
+            )
+            action_copy_clipboard.triggered.connect(
+                copy_item_path_to_clipboard
+            )
+            icon = functions.create_icon('tango_icons/edit-copy.png')
+            action_copy_clipboard.setIcon(icon)
+            self.tree_menu.addAction(action_copy_clipboard)
+            # Separator
+            self.tree_menu.addSeparator()
+            # Cut item
+            def cut_item():
+                if item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+                    text = "directory"
+                elif item.attributes.itype == TreeExplorer.ItemType.FILE:    
+                    text = "file"
+                self.cut_item = item
+                self.copy_item = None
+                self.main_form.display.repl_display_message(
+                    "Cut {}: \"{}\"".format(text, item.attributes.path)
+                ) 
+            cut_item_action = data.QAction(
+                "Cut", self.tree_menu
+            )
+            cut_item_action.triggered.connect(cut_item)
+            icon = functions.create_icon('tango_icons/edit-cut.png')
+            cut_item_action.setIcon(icon)
+            self.tree_menu.addAction(cut_item_action)
+            # Copy item
+            def copy_item():
+                if item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+                    text = "directory"
+                elif item.attributes.itype == TreeExplorer.ItemType.FILE:    
+                    text = "file"
+                self.cut_item = None
+                self.copy_item = item
+                self.main_form.display.repl_display_message(
+                    "Copied {}: \"{}\"".format(text, item.attributes.path)
+                ) 
+            copy_item_action = data.QAction(
+                "Copy", self.tree_menu
+            )
+            copy_item_action.triggered.connect(copy_item)
+            icon = functions.create_icon('tango_icons/edit-copy.png')
+            copy_item_action.setIcon(icon)
+            self.tree_menu.addAction(copy_item_action)
+            # Paste item
+            paste_item_action = data.QAction(
+                "Paste", self.tree_menu
+            )
+            paste_item_action.triggered.connect(paste_item)
+            icon = functions.create_icon('tango_icons/edit-paste.png')
+            paste_item_action.setIcon(icon)
+            if self.cut_item != None or self.copy_item != None:
+                self.tree_menu.addAction(paste_item_action)
+            # Separator
+            self.tree_menu.addSeparator()
+            # Rename item
+            def rename_item():
+                item.setEditable(True)
+                if item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+                    item.attributes.itype = TreeExplorer.ItemType.RENAME_DIRECTORY
+                else:
+                    item.attributes.itype = TreeExplorer.ItemType.RENAME_FILE
+                index = item.index()
+                self.scrollTo(index)
+                # Start editing the new empty directory name
+                self.edit(index)
+                # Add the session signal when editing is canceled
+                delegate = self.itemDelegate(index)
+                delegate.closeEditor.connect(self._item_editing_closed)
+                self.renamed_item = item
+            rename_item_action = data.QAction(
+                "Rename", self.tree_menu
+            )
+            rename_item_action.triggered.connect(rename_item)
+            icon = functions.create_icon('tango_icons/delete-end-line.png')
+            rename_item_action.setIcon(icon)
+            self.tree_menu.addAction(rename_item_action)
+            # Delete item
+            def delete_item():
+                path = item.attributes.path
+                if os.path.exists(path):
+                    message = "Are you sure you want to delete:\n{}\n?".format(
+                        path
+                    )
+                    reply = gui.YesNoDialog.question(message)
+                    if reply != data.QMessageBox.Yes:
+                        return
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    else:
+                        os.remove(path)
+                    self.display_directory(self.current_viewed_directory)
+                else:
+                    self.main_form.display.repl_display_message(
+                        "Item '{}'\n does not seem to exist!!".format(
+                            item.attributes.path),
+                        message_type=data.MessageType.WARNING
+                    )
+            delete_item_action = data.QAction(
+                "Delete", self.tree_menu
+            )
+            delete_item_action.triggered.connect(delete_item)
+            icon = functions.create_icon('tango_icons/session-remove.png')
+            delete_item_action.setIcon(icon)
+            self.tree_menu.addAction(delete_item_action)
+        else:
+            # Paste item
+            paste_item_action = data.QAction(
+                "Paste", self.tree_menu
+            )
+            paste_item_action.triggered.connect(paste_item)
+            icon = functions.create_icon('tango_icons/edit-paste.png')
+            paste_item_action.setIcon(icon)
+            if self.cut_item != None or self.copy_item != None:
+                self.tree_menu.addAction(paste_item_action)
+        # Add the actions that are on every menu
+        # Separator
+        self.tree_menu.addSeparator()
+        # New file
+        def refresh():
+            self.display_directory(self.current_viewed_directory)
+        refresh_action = data.QAction(
+            "Refresh view", self.tree_menu
+        )
+        refresh_action.triggered.connect(refresh)
+        icon = functions.create_icon('tango_icons/view-refresh.png')
+        refresh_action.setIcon(icon)
+        self.tree_menu.addAction(refresh_action)
+        # New file
+        def new_file():
+            # Get the path
+            path = self.current_viewed_directory
+            # Create a new directory item for editing
+            create_file_item = self._create_standard_item(
+                    "", bold=True, icon=self.file_icon
+            )
+            create_file_item.attributes = self._create_item_attribute(
+                TreeExplorer.ItemType.NEW_FILE,
+                path
+            )
+            create_file_item.setEditable(True)
+            self.base_item.appendRow(create_file_item)
+            self.added_item = create_file_item
+            index = create_file_item.index()
+            self.scrollTo(index)
+            # Start editing the new empty directory name
+            self.edit(index)
+            # Add the session signal when editing is canceled
+            delegate = self.itemDelegate(index)
+            delegate.closeEditor.connect(self._item_editing_closed)
+        new_file_action = data.QAction(
+            "New file", self.tree_menu
+        )
+        new_file_action.triggered.connect(new_file)
+        icon = functions.create_icon('tango_icons/document-new.png')
+        new_file_action.setIcon(icon)
+        self.tree_menu.addAction(new_file_action)
+        # New directory
+        def new_directory():
+            # Get the path
+            path = self.current_viewed_directory
+            # Create a new directory item for editing
+            create_directory_item = self._create_standard_item(
+                    "", bold=True, icon=self.folder_icon
+            )
+            create_directory_item.attributes = self._create_item_attribute(
+                TreeExplorer.ItemType.NEW_DIRECTORY,
+                path
+            )
+            create_directory_item.setEditable(True)
+            self.base_item.appendRow(create_directory_item)
+            self.added_item = create_directory_item
+            index = create_directory_item.index()
+            self.scrollTo(index)
+            # Start editing the new empty directory name
+            self.edit(index)
+            # Add the session signal when editing is canceled
+            delegate = self.itemDelegate(index)
+            delegate.closeEditor.connect(self._item_editing_closed)
+            
+        new_directory_action = data.QAction(
+            "New Directory", self.tree_menu
+        )
+        new_directory_action.triggered.connect(new_directory)
+        icon = functions.create_icon('tango_icons/folder-new.png')
+        new_directory_action.setIcon(icon)
+        self.tree_menu.addAction(new_directory_action)
+        # Show the menu
+        self.tree_menu.popup(cursor)
+    
+    def _item_double_click(self, model_index):
+        item = self.model().itemFromIndex(model_index)
+        self._open_item(item)
+    
+    def _open_item(self, item):
+        if hasattr(item, "attributes") == False:
+            index = item.index()
+            if self.isExpanded(index):
+                self.collapse(index)
+            else:
+                self.expand(index)
+            return
+        if item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+            self._clean_model()
+            self.display_directory(
+                item.attributes.path, 
+                disk=item.attributes.disk
+            )
+        if item.attributes.itype == TreeExplorer.ItemType.FILE:    
+            self.open_file_signal.emit(item.attributes.path)
+        if item.attributes.itype == TreeExplorer.ItemType.DISK:    
+            if data.platform == "Windows":
+                self.display_windows_disks()
+    
+    def display_windows_disks(self):
+        self._clean_model()
+        tree_model = self._init_tree_model()
+        base_item = self._create_standard_item(
+            "Computer", bold=True, icon=self.computer
+        )
+        base_item.attributes = self._create_item_attribute(
+            TreeExplorer.ItemType.COMPUTER,
+            None
+        )
+        tree_model.appendRow(base_item)
+        drives = win32api.GetLogicalDriveStrings()
+        drives = drives.split('\000')[:-1]
+        for d in drives:
+            d = functions.unixify_path(d)
+            item = self._create_standard_item(
+                d, bold=True, icon=self.disk_icon
+            )
+            item.attributes = self._create_item_attribute(
+                TreeExplorer.ItemType.DIRECTORY,
+                d,
+                disk=True
+            )
+            base_item.appendRow(item)
+        self.base_item = base_item
+        # Set the tree model
+        self.setModel(tree_model)
+        # Connect the signals
+        tree_model.itemChanged.connect(self._item_changed)
+        # Expand the base item
+        self.expand(base_item.index())
+
+    def _create_directory_list(self, directory):
+        dir_items = []
+        file_items = []
+        dir_list = os.listdir(directory)
+        for i in dir_list:
+            full_path = os.path.join(directory, i)
+            full_path = functions.unixify_path(full_path)
+            hidden = self._is_hidden_item(full_path)
+            if os.path.isdir(full_path):
+                icon = self.folder_icon
+                if hidden:
+                    icon = functions.change_icon_opacity(icon, 0.3)
+                item = self._create_standard_item(
+                    i, bold=True, icon=icon
+                )
+                item.attributes = self._create_item_attribute(
+                    TreeExplorer.ItemType.DIRECTORY,
+                    full_path,
+                    hidden
+                )
+                dir_items.append(item)
+            else:
+#                icon = functions.get_file_icon_from_path(full_path)
+                icon = functions.create_language_document_icon_from_path(
+                    full_path
+                )
+                if hidden:
+                    icon = functions.change_icon_opacity(icon, 0.3)
+                item = self._create_standard_item(
+                    i, bold=True, icon=icon
+                )
+                item.attributes = self._create_item_attribute(
+                    TreeExplorer.ItemType.FILE,
+                    full_path,
+                    hidden
+                )
+                file_items.append(item)
+        dir_items.sort(key=lambda s: s.text().lower())
+        file_items.sort(key=lambda s: s.text().lower())
+        item_list = dir_items + file_items
+        return item_list
+                
+    
+    """
+    Overriden events
+    """
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        # Get the index of the clicked item and execute the item's procedure
+        if event.button() == data.Qt.RightButton:
+            index = self.indexAt(event.pos())
+            self._item_right_click(index)
+    
+    
+    """
+    Public functions
+    """
+    def display_directory(self, directory, disk=False):
+        # Store the directory
+        self.current_viewed_directory = directory
+        # Create the directory list
+        tree_model = self._init_tree_model()
+        sd = os.path.splitdrive(directory)
+        if disk == True:
+            base_item = self._create_standard_item(
+                directory, bold=True, icon=self.disk_icon
+            )
+            base_item.attributes = self._create_item_attribute(
+                TreeExplorer.ItemType.DISK,
+                directory
+            )
+            tree_model.appendRow(base_item)
+        elif (sd[1] != "" and sd[1] != "\\"):
+            parent_dir = os.path.abspath(
+                os.path.join(directory, os.pardir)
+            )
+            base_item = self._create_standard_item(
+                functions.unixify_path(directory), 
+                bold=True, 
+                icon=self.folder_icon
+            )
+            up_item = self._create_standard_item(
+                "..", bold=True, icon=self.folder_icon
+            )
+            up_item.attributes = self._create_item_attribute(
+                TreeExplorer.ItemType.DIRECTORY,
+                parent_dir,
+                hide_menu=True
+            )
+            base_item.appendRow(up_item)
+            tree_model.appendRow(base_item)
+        else:
+            base_item = self._create_standard_item(
+                sd[0], bold=True, icon=self.disk_icon
+            )
+            base_item.attributes = self._create_item_attribute(
+                TreeExplorer.ItemType.DISK,
+                directory
+            )
+            tree_model.appendRow(base_item)
+        try:
+            lst = self._create_directory_list(directory)
+            for i in lst:
+                base_item.appendRow(i)
+        except:
+            self.main_form.display.repl_display_message(
+                "Error while parsing directory:\n  '{}'".format(
+                    directory),
+                message_type=data.MessageType.ERROR
+            )
+        self.base_item = base_item
+        # Set the tree model
+        self.setModel(tree_model)
+        # Connect the signals
+        tree_model.itemChanged.connect(self._item_changed)
+        # Expand the base item
+        self.expand(base_item.index())
+    
+    def customize_context_menu(self):
+        self._customize_context_menu(
+            self.tree_menu, self.default_menu_font
+        )
 
