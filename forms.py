@@ -1696,6 +1696,12 @@ class MainWindow(data.QMainWindow):
                 )
                 file_explorer.display_directory(os.getcwd())
                 file_explorer.open_file_signal.connect(self.open_file)
+                file_explorer.icon_manipulator.set_icon(
+                    file_explorer,
+                    functions.create_icon(
+                        'tango_icons/system-show-cwd-tree-blue.png'
+                    )
+                )
                 self.upper_window.setCurrentWidget(file_explorer)
             show_new_explorer_tree_action = create_action(
                 'Show current working directory in tree explorer',
@@ -6367,8 +6373,8 @@ class BasicWidget(data.QTabWidget):
         else:
             new_tree_tab = helper_forms.TreeDisplay(self, self._parent)
         # Add attributes for status of the document
-        new_tree_tab.name      = tree_tab_name
-        new_tree_tab.savable   = data.CanSave.NO
+        new_tree_tab.name = tree_tab_name
+        new_tree_tab.savable = data.CanSave.NO
         # Return the reference to the new added tree tab widget
         return new_tree_tab
     
