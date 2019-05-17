@@ -2425,15 +2425,40 @@ class MainWindow(data.QMainWindow):
         for i in range(self.main_window.count()):
             if isinstance(self.main_window.widget(0), CustomEditor):
                 self.bookmarks.remove_editor_all(self.main_window.widget(0))
-            self.main_window.close_tab(0)
+            self.main_window.close_tab(0, force=True)
         for i in range(self.upper_window.count()):
             if isinstance(self.upper_window.widget(0), CustomEditor):
                 self.bookmarks.remove_editor_all(self.upper_window.widget(0))
-            self.upper_window.close_tab(0)
+            self.upper_window.close_tab(0, force=True)
         for i in range(self.lower_window.count()):
             if isinstance(self.lower_window.widget(0), CustomEditor):
                 self.bookmarks.remove_editor_all(self.lower_window.widget(0))
-            self.lower_window.close_tab(0)
+            self.lower_window.close_tab(0, force=True)
+        # Force a garbage collection cycle
+        gc.collect()
+    
+    def close_window_tabs(self, basic_widget, widget):
+        """
+        Clear all other documents except the selected one
+        in a specified basic widget
+        """
+        #Check if there are any modified documents
+        if self.check_document_states(basic_widget) == True:
+            #Close the log window if it is displayed
+            self.view.set_log_window(False)
+            message = "You have modified documents!\nClose all tabs?"
+            reply = helper_forms.YesNoDialog.question(message)
+            if reply == data.QMessageBox.No:
+                return
+        #Close all tabs and remove all bookmarks from them
+        clear_index = 0
+        for i in range(basic_widget.count()):
+            if basic_widget.widget(clear_index) == widget:
+                clear_index += 1
+                continue
+            if isinstance(basic_widget.widget(clear_index), CustomEditor):
+                self.bookmarks.remove_editor_all(basic_widget.widget(clear_index))
+            basic_widget.close_tab(clear_index, force=True)
         # Force a garbage collection cycle
         gc.collect()
     
@@ -2552,10 +2577,10 @@ class MainWindow(data.QMainWindow):
         #No tab in the basic widgets has focus
         return None
     
-    def check_document_states(self):
+    def check_document_states(self, basic_widget=None):
         """Check if there are any modified documents in the editor windows"""
-        #Nested function for checking modified documents in a single basic widget
-        #(just to play with nested functions)
+        # Nested function for checking modified documents in a single basic widget
+        # (just to play with nested functions)
         def check_documents_in_window(window):
             if window.count() > 0:
                 for i in range(0, window.count()):
@@ -2563,15 +2588,18 @@ class MainWindow(data.QMainWindow):
                         if window.widget(i).save_status == data.FileStatus.MODIFIED:
                             return True
             return False
-        #Check all widget in all three windows for changes
-        if (check_documents_in_window(self.main_window)     == True or
-            check_documents_in_window(self.upper_window)    == True or
-            check_documents_in_window(self.lower_window)    == True):
-            #Modified document found
-            return True
+        if basic_widget is None:
+            # Check all widget in all three windows for changes
+            if (check_documents_in_window(self.main_window) == True or
+                check_documents_in_window(self.upper_window) == True or
+                check_documents_in_window(self.lower_window) == True):
+                # Modified document found
+                return True
+            else:
+                # No changes found
+                return False
         else:
-            #No changes found
-            return False
+            return check_documents_in_window(basic_widget)
 
     def exit(self, event=None):
         """Exit application"""
@@ -5877,6 +5905,22 @@ class BasicWidget(data.QTabWidget):
                     #Diff functions for plain and custom editors
                     self.addSeparator()
                     add_diff_actions()
+            # Closing
+            self.addSeparator()
+            close_other_action = data.QAction(
+                "Close all other tabs in this window", self
+            )
+            close_other_action.setIcon(
+                functions.create_icon('tango_icons/close-all-tabs.png')
+            )
+            close_other_action.triggered.connect(
+                functools.partial(
+                    main_form.close_window_tabs,
+                    basic_widget,
+                    editor_widget
+                )
+            )
+            self.addAction(close_other_action)
     
     
     # Class variables
@@ -6102,7 +6146,7 @@ class BasicWidget(data.QTabWidget):
             # Remove the corner widget if there is no current tab active
             self.setCornerWidget(None)
 
-    def _signal_editor_tabclose(self, emmited_tab_number):
+    def _signal_editor_tabclose(self, emmited_tab_number, force=False):
         """Event that fires when a tab close"""
         #Nested function for clearing all bookmarks in the document
         def clear_document_bookmarks():
@@ -6114,7 +6158,7 @@ class BasicWidget(data.QTabWidget):
         tab = self.widget(emmited_tab_number)
         #Check if the document is modified
         if tab.savable == data.CanSave.YES:
-            if tab.save_status == data.FileStatus.MODIFIED:
+            if tab.save_status == data.FileStatus.MODIFIED and force == False:
                 #Close the log window if it is displayed
                 self._parent.view.set_log_window(False)
                 #Display the close notification
@@ -6216,7 +6260,7 @@ class BasicWidget(data.QTabWidget):
                 self.widget(index).save_status = data.FileStatus.OK
                 self.setTabText(index, self.tabText(index).strip("*"))
 
-    def close_tab(self, tab=None):
+    def close_tab(self, tab=None, force=False):
         """Close a tab in the basic widget"""
         # Return if there are no tabs open
         if self.count == 0:
@@ -6226,20 +6270,20 @@ class BasicWidget(data.QTabWidget):
             for i in range(0, self.count()):
                 if self.tabText(i) == tab:
                     # Tab found, close it
-                    self._signal_editor_tabclose(i)
+                    self._signal_editor_tabclose(i, force)
                     break
         elif isinstance(tab, int):
             # Close the tab
-            self._signal_editor_tabclose(tab)
+            self._signal_editor_tabclose(tab, force)
         elif tab == None:
             # No tab number given, select the current tab for closing
-            self._signal_editor_tabclose(self.currentIndex())
+            self._signal_editor_tabclose(self.currentIndex(), force)
         else:
             for i in range(0, self.count()):
                 # Close tab by reference
                 if self.widget(i) == tab:
                     # Tab found, close it
-                    self._signal_editor_tabclose(i)
+                    self._signal_editor_tabclose(i, force)
                     break
 
     def zoom_in(self):

@@ -6216,7 +6216,7 @@ class TreeExplorer(TreeDisplayBase):
                 if os.path.exists(new_path):
                     message = "The PASTE directory already exists! "
                     message += "Do you wish to overwrite it?"
-                    reply = gui.YesNoDialog.question(message)
+                    reply = YesNoDialog.question(message)
                     if reply != data.QMessageBox.Yes:
                         return
                 if self.cut_item != None:
@@ -6236,7 +6236,7 @@ class TreeExplorer(TreeDisplayBase):
                 if os.path.exists(new_path):
                     message = "The PASTE file already exists! "
                     message += "Do you wish to overwrite it?"
-                    reply = gui.YesNoDialog.question(message)
+                    reply = YesNoDialog.question(message)
                     if reply != data.QMessageBox.Yes:
                         return
                 if self.cut_item != None:
@@ -6378,7 +6378,7 @@ class TreeExplorer(TreeDisplayBase):
                     message = "Are you sure you want to delete:\n{}\n?".format(
                         path
                     )
-                    reply = gui.YesNoDialog.question(message)
+                    reply = YesNoDialog.question(message)
                     if reply != data.QMessageBox.Yes:
                         return
                     if os.path.isdir(path):
