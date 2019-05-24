@@ -164,7 +164,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
     """
     
     
-    def __init__(self,  initial_references, repl_print):
+    def __init__(self, initial_references, repl_print):
         """Initialize the interactive interpreter"""
         #Get the default references and add them to the initial_references list
         initial_references.update(self.get_default_references())
@@ -411,7 +411,14 @@ class CustomInterpreter(code.InteractiveInterpreter):
             subprocess.Popen("cmd.exe")
         else:
             #GNU/Linux (Lubuntu tested)
-            subprocess.Popen([data.terminal])
+            try:
+                subprocess.Popen([data.terminal])
+            except Exception as ex:
+                self.repl_print(
+                    "Error creating a '{}' terminal!".format(data.terminal) +
+                    "To change the terminal application, edit the user settings.",
+                    data.MessageType.ERROR
+                )
     
     def get_default_references(self):
         """Return the references that will be available in for execution"""

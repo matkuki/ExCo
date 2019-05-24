@@ -1714,10 +1714,13 @@ class MainWindow(data.QMainWindow):
             system_menu.addAction(find_files_action)
             system_menu.addAction(find_in_files_action)
             system_menu.addAction(replace_in_files_action)
+            system_menu.addSeparator()
             system_menu.addAction(cwd_tree_action)
             system_menu.addAction(show_new_explorer_tree_action)
             system_menu.addAction(show_explorer_action)
+            system_menu.addSeparator()
             system_menu.addAction(run_command_action)
+            system_menu.addAction(show_terminal_action)
         #Lexers menu
         def construct_lexers_menu(parent):
             def set_lexer(lexer, lexer_name):

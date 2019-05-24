@@ -157,8 +157,8 @@ def get_language_file_icon(language_name):
     else:
         return create_icon("tango_icons/file.png")
 
-def create_language_document_icon_from_path(path):
-    file_type = get_file_type(path)
+def create_language_document_icon_from_path(path, check_content=True):
+    file_type = get_file_type(path, check_content)
     return get_language_file_icon(file_type)
 
 def get_file_size_Mb(file_with_path):
@@ -2197,7 +2197,7 @@ def test_binary_file(file_with_path):
     #Return the result
     return binary_text
 
-def get_file_type(file_with_path):
+def get_file_type(file_with_path, check_content=True):
     """Get file extension and return file type as string"""
     #Initialize it as unknown and change it in the if statement 
     file_type = "unknown"   
@@ -2276,12 +2276,15 @@ def get_file_type(file_with_path):
     elif file_extension.lower() in data.ext_css:
         file_type = "css"
     else:
-        #The file extension was not recognized, 
-        #try the file contents for more information
-        file_type = test_file_content_for_type(file_with_path)
-        #If the file content did not give any useful information,
-        #set the content as text
-        if file_type == "unknown":
+        if check_content == True:
+            #The file extension was not recognized, 
+            #try the file contents for more information
+            file_type = test_file_content_for_type(file_with_path)
+            #If the file content did not give any useful information,
+            #set the content as text
+            if file_type == "unknown":
+                file_type = "text"
+        else:
             file_type = "text"
     #Return file type string
     return file_type

@@ -1852,12 +1852,14 @@ class TreeDisplay(data.QTreeView):
                     self.tree_menu.addAction(action_update_to_parent)
                     self.tree_menu.addSeparator()
                     def one_dir_up():
-                        parent_directory = os.path.abspath(
-                            os.path.join(item.full_name, os.pardir)
-                        )
-                        self.main_form.display.show_directory_tree(
-                            parent_directory
-                        )
+                        def func():
+                            parent_directory = os.path.abspath(
+                                os.path.join(item.full_name, os.pardir)
+                            )
+                            self.main_form.display.show_directory_tree(
+                                parent_directory
+                            )
+                        data.QTimer.singleShot(250, func)
                     action_one_dir_up = data.QAction(
                         "One directory up ..", self.tree_menu
                     )
@@ -6250,26 +6252,11 @@ class TreeExplorer(TreeDisplayBase):
         # First check if the click was in an empty space
         # and create item actions accordingly
         if item != None:
-#            # Update current working directory
-#            def update_cwd():
-#                if item.attributes.itype == TreeExplorer.ItemType.FILE:
-#                    path = os.path.dirname(item.attributes.path)
-#                else:
-#                    path = item.attributes.path
-#                self.main_form.set_cwd(path)
-#            title = "Update CWD"
-#            if item.attributes.itype == TreeExplorer.ItemType.FILE:
-#                title = "Update CWD to parent directory"
-#            action_update_cwd = data.QAction(title, self.tree_menu)
-#            action_update_cwd.triggered.connect(update_cwd)
-#            icon = functions.create_icon('icons/folders/yellow_small/open/update_cwd.png')
-#            action_update_cwd.setIcon(icon)
-#            self.tree_menu.addAction(action_update_cwd)
             # Open the current item
             def open_item():
                 self._open_item(item)
             title = "Open directory"
-            icon = 'tango_icons/update-cwd.png'
+            icon = 'tango_icons/document-open.png'
             if hasattr(item, "attributes") == False:
                 return
             elif item.attributes.hide_menu == True:
@@ -6300,6 +6287,21 @@ class TreeExplorer(TreeDisplayBase):
             icon = functions.create_icon('tango_icons/edit-copy.png')
             action_copy_clipboard.setIcon(icon)
             self.tree_menu.addAction(action_copy_clipboard)
+            # Update current working directory
+            def update_cwd():
+                if item.attributes.itype == TreeExplorer.ItemType.FILE:
+                    path = os.path.dirname(item.attributes.path)
+                else:
+                    path = item.attributes.path
+                self.main_form.set_cwd(path)
+            title = "Update CWD"
+            if item.attributes.itype == TreeExplorer.ItemType.FILE:
+                title = "Update CWD to parent directory"
+            action_update_cwd = data.QAction(title, self.tree_menu)
+            action_update_cwd.triggered.connect(update_cwd)
+            icon = functions.create_icon('tango_icons/update-cwd.png')
+            action_update_cwd.setIcon(icon)
+            self.tree_menu.addAction(action_update_cwd)
             # Separator
             self.tree_menu.addSeparator()
             # Cut item
@@ -6562,9 +6564,8 @@ class TreeExplorer(TreeDisplayBase):
                 )
                 dir_items.append(item)
             else:
-#                icon = functions.get_file_icon_from_path(full_path)
                 icon = functions.create_language_document_icon_from_path(
-                    full_path
+                    full_path, check_content=False
                 )
                 if hidden:
                     icon = functions.change_icon_opacity(icon, 0.3)
