@@ -701,6 +701,9 @@ class IconManipulator:
             return
         basic_widget.setCornerWidget(self.corner_groupbox)
         self.corner_groupbox.show()
+        self.corner_groupbox.setStyleSheet(
+            "QGroupBox {border: 0px;}"
+        )
 
 
 class LineList(list):
