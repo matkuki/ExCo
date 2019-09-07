@@ -3927,7 +3927,8 @@ class MainWindow(data.QMainWindow):
             if data.platform == "Windows":
                 command = "explorer ."
             else:
-                raise Exception("Unimplemented yet!")
+                self._parent.display.display_warning("Unimplemented yet!")
+                return
             self._parent.repl.interpreter.run_cmd_process(command, show_console=False)
     
     class Editing:

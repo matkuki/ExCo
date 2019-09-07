@@ -13,6 +13,7 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      Various helper PyQt forms used by the forms module
 
 import os
+import sip
 import os.path
 import collections
 import traceback
@@ -6079,11 +6080,10 @@ class TreeExplorer(TreeDisplayBase):
         if self.added_item != None and self.added_item.text() == "":
             self.base_item.removeRow(self.added_item.row())
             self.added_item = None
-            return
         elif self.renamed_item != None:
-            self.renamed_item.setEditable(False)
-            self.renamed_item = None
-            return
+            if not sip.isdeleted(self.renamed_item):
+                self.renamed_item.setEditable(False)
+                self.renamed_item = None
     
     def _item_changed(self, item):
         """
@@ -6270,6 +6270,24 @@ class TreeExplorer(TreeDisplayBase):
             open_action.setIcon(icon)
             self.tree_menu.addAction(open_action)
             # Copy item name to clipboard
+            def copy_item_name_to_clipboard():
+                text = os.path.basename(item.attributes.path)
+                cb = data.application.clipboard()
+                cb.clear(mode=cb.Clipboard)
+                cb.setText(text, mode=cb.Clipboard)
+                self.main_form.display.repl_display_message(
+                    "Copied to clipboard: \"{}\"".format(text)
+                )
+            action_copy_clipboard = data.QAction(
+                "Copy item name to clipboard", self.tree_menu
+            )
+            action_copy_clipboard.triggered.connect(
+                copy_item_name_to_clipboard
+            )
+            icon = functions.create_icon('tango_icons/edit-copy.png')
+            action_copy_clipboard.setIcon(icon)
+            self.tree_menu.addAction(action_copy_clipboard)
+            # Copy item path to clipboard
             def copy_item_path_to_clipboard():
                 text = item.attributes.path
                 cb = data.application.clipboard()
