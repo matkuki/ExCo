@@ -347,7 +347,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
         else:
             #GNU/Linux (Lubuntu tested)
             if show_console == True:
-                if data.terminal == "lxterminal":
+                if data.terminal == "x-terminal-emulator":
                     # LXTerminal
                     end_delimiter_string = "-------------------------"
                     end_message_string = "Press ENTER to continue ..."

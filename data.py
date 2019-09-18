@@ -263,7 +263,7 @@ application_icon = "exco-icon.png"
 # action is clicked in the menubar "Help" menu
 about_image = "exco-info.png"
 # Terminal console program used on GNU/Linux
-terminal = "lxterminal"
+terminal = "x-terminal-emulator"
 # Default tree display font size (file-tree, node-tree, ...)
 tree_display_font_size = 10
 tree_display_icon_size = 16
