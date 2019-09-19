@@ -6036,17 +6036,23 @@ class BasicWidget(data.QTabWidget):
             event.accept()
         elif self.drag_text != None:
             #Drag&drop widget event occured
-            name, str_index = self.drag_text.split()
-            index = int(str_index)
-            key_modifiers = data.QApplication.keyboardModifiers() 
-            if (key_modifiers == data.Qt.ControlModifier or
-                key_modifiers == data.Qt.AltModifier):
-                self.copy_editor_in(self.drag_source, index)
-                data.print_log("Drag&Drop copied tab {:d} from the {} widget".format(index, name))
-            else:
-                self.move_editor_in(self.drag_source, index)
-                data.print_log("Drag&Drop moved tab {:d} from the {} widget".format(index, name))
-            event.accept()
+            try:
+                name, str_index = self.drag_text.split()
+                index = int(str_index)
+                key_modifiers = data.QApplication.keyboardModifiers() 
+                if (key_modifiers == data.Qt.ControlModifier or
+                    key_modifiers == data.Qt.AltModifier):
+                    self.copy_editor_in(self.drag_source, index)
+                    data.print_log("Drag&Drop copied tab {:d} from the {} widget".format(index, name))
+                else:
+                    self.move_editor_in(self.drag_source, index)
+                    data.print_log("Drag&Drop moved tab {:d} from the {} widget".format(index, name))
+                event.accept()
+            except:
+                self._parent.display.repl_display_message(
+                    traceback.format_exc(), 
+                    message_type=data.MessageType.ERROR
+                )
         #Reset the drag&drop data attributes
         self.drag_dropped_file  = None
         self.drag_text          = None
