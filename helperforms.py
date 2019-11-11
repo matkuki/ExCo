@@ -5974,12 +5974,14 @@ class TreeExplorer(TreeDisplayBase):
     class ItemType(enum.Enum):
         FILE = 0
         DIRECTORY = 1
-        DISK = 2
-        NEW_FILE = 3
-        NEW_DIRECTORY = 4
-        RENAME_FILE = 5
-        RENAME_DIRECTORY = 6
-        COMPUTER = 7
+        BASE_DIRECTORY = 2
+        ONE_UP_DIRECTORY = 3
+        DISK = 4
+        NEW_FILE = 5
+        NEW_DIRECTORY = 6
+        RENAME_FILE = 7
+        RENAME_DIRECTORY = 8
+        COMPUTER = 9
     
     # Signals
     open_file_signal = data.pyqtSignal(str)
@@ -6268,7 +6270,9 @@ class TreeExplorer(TreeDisplayBase):
             open_action.triggered.connect(open_item)
             icon = functions.create_icon(icon)
             open_action.setIcon(icon)
-            self.tree_menu.addAction(open_action)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                         TreeExplorer.ItemType.DIRECTORY]:
+                self.tree_menu.addAction(open_action)
             # Copy item name to clipboard
             def copy_item_name_to_clipboard():
                 text = os.path.basename(item.attributes.path)
@@ -6286,7 +6290,9 @@ class TreeExplorer(TreeDisplayBase):
             )
             icon = functions.create_icon('tango_icons/edit-copy.png')
             action_copy_clipboard.setIcon(icon)
-            self.tree_menu.addAction(action_copy_clipboard)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                         TreeExplorer.ItemType.DIRECTORY]:
+                self.tree_menu.addAction(action_copy_clipboard)
             # Copy item path to clipboard
             def copy_item_path_to_clipboard():
                 text = item.attributes.path
@@ -6304,7 +6310,9 @@ class TreeExplorer(TreeDisplayBase):
             )
             icon = functions.create_icon('tango_icons/edit-copy.png')
             action_copy_clipboard.setIcon(icon)
-            self.tree_menu.addAction(action_copy_clipboard)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                         TreeExplorer.ItemType.DIRECTORY]:
+                self.tree_menu.addAction(action_copy_clipboard)
             # Update current working directory
             def update_cwd():
                 if item.attributes.itype == TreeExplorer.ItemType.FILE:
@@ -6319,7 +6327,10 @@ class TreeExplorer(TreeDisplayBase):
             action_update_cwd.triggered.connect(update_cwd)
             icon = functions.create_icon('tango_icons/update-cwd.png')
             action_update_cwd.setIcon(icon)
-            self.tree_menu.addAction(action_update_cwd)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                         TreeExplorer.ItemType.DIRECTORY,
+                                         TreeExplorer.ItemType.BASE_DIRECTORY]:
+                self.tree_menu.addAction(action_update_cwd)
             # Separator
             self.tree_menu.addSeparator()
             # Cut item
@@ -6339,7 +6350,9 @@ class TreeExplorer(TreeDisplayBase):
             cut_item_action.triggered.connect(cut_item)
             icon = functions.create_icon('tango_icons/edit-cut.png')
             cut_item_action.setIcon(icon)
-            self.tree_menu.addAction(cut_item_action)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                         TreeExplorer.ItemType.DIRECTORY]:
+                self.tree_menu.addAction(cut_item_action)
             # Copy item
             def copy_item():
                 if item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
@@ -6357,7 +6370,9 @@ class TreeExplorer(TreeDisplayBase):
             copy_item_action.triggered.connect(copy_item)
             icon = functions.create_icon('tango_icons/edit-copy.png')
             copy_item_action.setIcon(icon)
-            self.tree_menu.addAction(copy_item_action)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                         TreeExplorer.ItemType.DIRECTORY]:
+                self.tree_menu.addAction(copy_item_action)
             # Paste item
             paste_item_action = data.QAction(
                 "Paste", self.tree_menu
@@ -6365,8 +6380,11 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action.triggered.connect(paste_item)
             icon = functions.create_icon('tango_icons/edit-paste.png')
             paste_item_action.setIcon(icon)
-            if self.cut_item != None or self.copy_item != None:
-                self.tree_menu.addAction(paste_item_action)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE,
+                                         TreeExplorer.ItemType.DIRECTORY,
+                                         TreeExplorer.ItemType.BASE_DIRECTORY]:
+                if self.cut_item != None or self.copy_item != None:
+                    self.tree_menu.addAction(paste_item_action)
             # Separator
             self.tree_menu.addSeparator()
             # Rename item
@@ -6390,7 +6408,9 @@ class TreeExplorer(TreeDisplayBase):
             rename_item_action.triggered.connect(rename_item)
             icon = functions.create_icon('tango_icons/delete-end-line.png')
             rename_item_action.setIcon(icon)
-            self.tree_menu.addAction(rename_item_action)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                         TreeExplorer.ItemType.DIRECTORY]:
+                self.tree_menu.addAction(rename_item_action)
             # Delete item
             def delete_item():
                 path = item.attributes.path
@@ -6418,7 +6438,9 @@ class TreeExplorer(TreeDisplayBase):
             delete_item_action.triggered.connect(delete_item)
             icon = functions.create_icon('tango_icons/session-remove.png')
             delete_item_action.setIcon(icon)
-            self.tree_menu.addAction(delete_item_action)
+            if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                         TreeExplorer.ItemType.DIRECTORY]:
+                self.tree_menu.addAction(delete_item_action)
         else:
             # Paste item
             paste_item_action = data.QAction(
@@ -6516,7 +6538,8 @@ class TreeExplorer(TreeDisplayBase):
             else:
                 self.expand(index)
             return
-        if item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+        if item.attributes.itype in [TreeExplorer.ItemType.DIRECTORY, 
+                                     TreeExplorer.ItemType.ONE_UP_DIRECTORY]:
             self._clean_model()
             self.display_directory(
                 item.attributes.path, 
@@ -6640,11 +6663,15 @@ class TreeExplorer(TreeDisplayBase):
                 bold=True, 
                 icon=self.folder_icon
             )
+            base_item.attributes = self._create_item_attribute(
+                TreeExplorer.ItemType.BASE_DIRECTORY,
+                directory
+            )
             up_item = self._create_standard_item(
                 "..", bold=True, icon=self.folder_icon
             )
             up_item.attributes = self._create_item_attribute(
-                TreeExplorer.ItemType.DIRECTORY,
+                TreeExplorer.ItemType.ONE_UP_DIRECTORY,
                 parent_dir,
                 hide_menu=True
             )

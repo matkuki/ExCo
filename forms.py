@@ -42,7 +42,7 @@ import importlib
 import data
 import components
 import themes
-import helper_forms
+import helperforms
 import functions
 import interpreter
 import settings
@@ -83,8 +83,6 @@ class MainWindow(data.QMainWindow):
     key_lock                = False
     # Flag indicating the first time the user config file was imported
     _first_scan             = True
-    # Last directory browsed by the "Open File" and other dialogs
-    last_browsed_dir        = ""
     # Generator for supplying the number when a new document is created
     new_file_count          = itertools.count(0, 1)
     # References for enabling/disabling saving of the current document in the menubar
@@ -145,7 +143,7 @@ class MainWindow(data.QMainWindow):
         # Initialize the main window 
         self.setWindowTitle("Ex.Co. " + data.application_version)
         # Initialize the log dialog window
-        data.log_window = helper_forms.MessageLogger(self)
+        data.log_window = helperforms.MessageLogger(self)
         # Initialize basic window widgets(main, side_up, side_down)
         self._init_basic_widgets()
         # Initialize statusbar
@@ -354,8 +352,6 @@ class MainWindow(data.QMainWindow):
         repl_text = self.repl.text()
         #Reset the interpreter and update its references
         self._reset_interpreter()
-        #Update the last browsed directory to the class/instance variable
-        self.last_browsed_dir = directory
         #Display the selected directory
         self.display.repl_display_message("CWD changed to:")
         self.get_cwd()
@@ -401,7 +397,7 @@ class MainWindow(data.QMainWindow):
         #Check if there are any modified documents
         if self.check_document_states() == True:
             quit_message = "You have modified documents!\nQuit anyway?"
-            reply = helper_forms.YesNoDialog.question(quit_message)
+            reply = helperforms.YesNoDialog.question(quit_message)
             if reply != data.QMessageBox.Yes:
                 event.ignore()
 
@@ -508,15 +504,12 @@ class MainWindow(data.QMainWindow):
         if isinstance(focused_tab, CustomEditor) == True:
             if focused_tab != None and focused_tab.savable == data.CanSave.YES:
                 focused_tab.save_document(
-                    saveas=False, 
-                    last_dir=self.last_browsed_dir,  
+                    saveas=False,
                     encoding=encoding, 
                     line_ending=line_ending
                 )
                 #Set the icon if it was set by the lexer
                 focused_tab.icon_manipulator.update_icon(focused_tab)
-                #Save the last browsed directory from the editor widget to the main form
-                self.last_browsed_dir = focused_tab.last_browsed_dir
                 #Reimport the user configuration file and update the menubar
                 if functions.is_config_file(focused_tab.save_name) == True:
                     self.update_menubar()
@@ -527,14 +520,11 @@ class MainWindow(data.QMainWindow):
         focused_tab = self.get_tab_by_focus()
         if focused_tab != None:
             focused_tab.save_document(
-                saveas=True, 
-                last_dir=self.last_browsed_dir, 
+                saveas=True,
                 encoding=encoding
             )
             #Set the icon if it was set by the lexer
             focused_tab.icon_manipulator.update_icon(focused_tab)
-            #Save the last browsed directory from the editor widget to the main form
-            self.last_browsed_dir = focused_tab.last_browsed_dir
             #Reimport the user configuration file and update the menubar
             if functions.is_config_file(focused_tab.save_name) == True:
                 self.update_menubar()
@@ -556,7 +546,7 @@ class MainWindow(data.QMainWindow):
                 if (tab.savable == data.CanSave.YES and 
                     tab.save_status == data.FileStatus.MODIFIED):
                     #Save the file
-                    tab.save_document(saveas=False, last_dir=None, encoding=encoding)
+                    tab.save_document(saveas=False, encoding=encoding)
                     #Set the icon if it was set by the lexer
                     tab.icon_manipulator.update_icon(tab)
                     #Set the saved something flag
@@ -635,7 +625,7 @@ class MainWindow(data.QMainWindow):
                 name = name[:name.find('\t')]
             # Add the action to the context menu 
             # function list in the helper forms module
-            helper_forms.ContextMenu.add_function(
+            helperforms.ContextMenu.add_function(
                 function.__name__, action.pixmap, function, name
             )
             # Enable/disable action according to passed 
@@ -720,19 +710,19 @@ class MainWindow(data.QMainWindow):
             #Add load/save settings options
             save_settings_action = create_action('Save Settings', None, 'Save current settings', 'tango_icons/file-settings-save.png', self.settings.save)
             load_settings_action = create_action('Load Settings', None, 'Load saved settings', 'tango_icons/file-settings-load.png', self.settings.restore)
-            #Add the editing option for the user_functions file
+            #Add the editing option for the userfunctions file
             def open_user_func_file():
                 user_definitions_file = os.path.join(
                     data.application_directory, data.config_file
                 )
-                #Test if user_functions file exists
+                #Test if userfunctions file exists
                 if os.path.isfile(user_definitions_file) == False:
                     self.display.repl_display_message(
                         "User definitions file does not exist!", 
                         message_type=data.MessageType.ERROR
                     )
                     message = "Do you wish to generate the default user definition and function file?"
-                    reply = helper_forms.YesNoDialog.question(message)
+                    reply = helperforms.YesNoDialog.question(message)
                     if reply == data.QMessageBox.Yes:
                         functions.create_default_config_file()
                         self.display.repl_display_message(
@@ -743,7 +733,7 @@ class MainWindow(data.QMainWindow):
                         return
                 self.open_file(user_definitions_file)
             edit_functions_action = create_action('Edit User Definitions', None, 'Open the {} file for editing in the main window'.format(data.config_file), 'tango_icons/file-user-funcs.png', open_user_func_file)
-            #Add the reload option for the user_functions file
+            #Add the reload option for the userfunctions file
             reload_functions_action = create_action('Reload User Definitions', None, 'Reload the {} file to refresh user defined definitions and functions'.format(data.config_file), 'tango_icons/file-user-funcs-reload.png', self.import_user_functions)
             #Add reload themes function
             themes_reload_action = create_action('Reload Themes', None, 'Reload themes from modules to update any changes made in the theme files', 'tango_icons/themes-reload.png', self.view.reload_themes)
@@ -1547,7 +1537,7 @@ class MainWindow(data.QMainWindow):
                 None, 
                 'Reset functions of ALL context menus (right-click menus)', 
                 'tango_icons/reset-context-menu.png', 
-                helper_forms.ContextMenu.reset_functions
+                helperforms.ContextMenu.reset_functions
             )
             #Adding the edit menu and constructing all of the options
             edit_menu.addAction(find_action)
@@ -1692,7 +1682,7 @@ class MainWindow(data.QMainWindow):
             )
             def open_general_explorer():
                 file_explorer = self.upper_window.tree_add_tab(
-                    "FILE EXPLORER", helper_forms.TreeExplorer
+                    "FILE EXPLORER", helperforms.TreeExplorer
                 )
                 file_explorer.display_directory(os.getcwd())
                 file_explorer.open_file_signal.connect(self.open_file)
@@ -1833,6 +1823,30 @@ class MainWindow(data.QMainWindow):
                 'Toggle which side the main window is on', 
                 'tango_icons/view-toggle-window-side.png', 
                 self.view.toggle_main_window_side
+            )
+            def select_tab_right():
+                try:
+                    self.get_window_by_child_tab().select_tab(data.Direction.RIGHT)
+                except:
+                    pass
+            select_tab_right_action = create_action(
+                'Select tab right',
+                settings.Keys.select_tab_right, 
+                'Select one tab to the right in the currently selected window', 
+                'tango_icons/view-move-tab-right.png', 
+                select_tab_right
+            )
+            def select_tab_left():
+                try:
+                    self.get_window_by_child_tab().select_tab(data.Direction.LEFT)
+                except:
+                    pass
+            select_tab_left_action = create_action(
+                'Select tab left',
+                settings.Keys.select_tab_left, 
+                'Select one tab to the left in the currently selected window', 
+                'tango_icons/view-move-tab-left.png', 
+                select_tab_left
             )
             def move_tab_right():
                 try:
@@ -2009,6 +2023,8 @@ class MainWindow(data.QMainWindow):
             view_menu.addAction(spin_counterclockwise_action)
             view_menu.addAction(toggle_mode_action)
             view_menu.addAction(toggle_main_window_side_action)
+            view_menu.addAction(select_tab_right_action)
+            view_menu.addAction(select_tab_left_action)
             view_menu.addAction(move_tab_right_action)
             view_menu.addAction(move_tab_left_action)
             view_menu.addAction(toggle_edge_action)
@@ -2175,10 +2191,10 @@ class MainWindow(data.QMainWindow):
         self.import_user_functions()
 
     def import_user_functions(self):
-        """Import the user defined functions form the user_functions.cfg file"""
+        """Import the user defined functions form the userfunctions.cfg file"""
         self.repl.skip_next_repl_focus()
         user_file_path = os.path.join(data.application_directory, data.config_file)
-        # Test if user_functions file exists
+        # Test if userfunctions file exists
         if os.path.isfile(user_file_path) == False:
             message = "User functions file does not exist!\n"
             message += "Create an empty file named '{}' ".format(data.config_file)
@@ -2189,7 +2205,7 @@ class MainWindow(data.QMainWindow):
                 message_type=data.MessageType.ERROR
             )
             message = "Do you wish to generate the default user definition and function file?"
-            reply = helper_forms.YesNoDialog.question(message)
+            reply = helperforms.YesNoDialog.question(message)
             if reply == data.QMessageBox.Yes:
                 functions.create_default_config_file()
                 self.display.repl_display_message(
@@ -2270,7 +2286,7 @@ class MainWindow(data.QMainWindow):
         files = file_dialog.getOpenFileNames(
             self, 
             "Open File",  
-            self.last_browsed_dir, 
+            os.getcwd(), 
             "All Files (*);;Ex.Co. Files({})".format(' '.join(self.exco_file_exts))
         )
         if data.PYQT_MODE == 5:
@@ -2315,7 +2331,7 @@ class MainWindow(data.QMainWindow):
                 warning +=  "A lot of RAM will be needed!\n"
                 warning +=  "Files larger than 300 MB can cause the system to hang!\n"
                 warning +=  "Are you sure you want to open it?"
-                reply = helper_forms.YesNoDialog.warning(warning)
+                reply = helperforms.YesNoDialog.warning(warning)
                 if reply == data.QMessageBox.No:
                     return
             #Check selected window
@@ -2421,7 +2437,7 @@ class MainWindow(data.QMainWindow):
             #Close the log window if it is displayed
             self.view.set_log_window(False)
             message = "You have modified documents!\nClose all tabs?"
-            reply = helper_forms.YesNoDialog.question(message)
+            reply = helperforms.YesNoDialog.question(message)
             if reply == data.QMessageBox.No:
                 return
         #Close all tabs and remove all bookmarks from them
@@ -2450,7 +2466,7 @@ class MainWindow(data.QMainWindow):
             #Close the log window if it is displayed
             self.view.set_log_window(False)
             message = "You have modified documents!\nClose all tabs?"
-            reply = helper_forms.YesNoDialog.question(message)
+            reply = helperforms.YesNoDialog.question(message)
             if reply == data.QMessageBox.No:
                 return
         #Close all tabs and remove all bookmarks from them
@@ -2504,7 +2520,7 @@ class MainWindow(data.QMainWindow):
         #Loop through all the basic widgets/windows and check the tab focus
         for window in windows:
             for i in range(0, window.count()):
-                if isinstance(window.widget(i), helper_forms.TextDiffer) == True:
+                if isinstance(window.widget(i), helperforms.TextDiffer) == True:
                     if window.widget(i).editor_1.hasFocus() == True:
                         return window.widget(i).editor_1
                     elif window.widget(i).editor_2.hasFocus() == True:
@@ -2570,7 +2586,7 @@ class MainWindow(data.QMainWindow):
         #Loop through all the basic widgets/windows and check the tab focus
         for window in windows:
             for i in range(0, window.count()):
-                if isinstance(window.widget(i), helper_forms.TextDiffer) == True:
+                if isinstance(window.widget(i), helperforms.TextDiffer) == True:
                     if (window.widget(i).editor_1.hasFocus() == True or
                         window.widget(i).editor_2.hasFocus() == True):
                         return window
@@ -2689,7 +2705,7 @@ class MainWindow(data.QMainWindow):
             for func_type in self.manipulator.context_menu_functions.keys():
                 funcs = self.manipulator.context_menu_functions[func_type]
                 for func_key in funcs.keys():
-                    getattr(helper_forms.ContextMenu, func_type)[func_key] = funcs[func_key]
+                    getattr(helperforms.ContextMenu, func_type)[func_key] = funcs[func_key]
             # Display the settings load error AFTER the theme has been set
             # Otherwise the error text color will not be styled correctly
             if result == False:
@@ -2703,7 +2719,7 @@ class MainWindow(data.QMainWindow):
             self.manipulator.save_settings(
                 self._parent.view.main_window_side, 
                 data.theme,
-                helper_forms.ContextMenu.get_settings()
+                helperforms.ContextMenu.get_settings()
             )
             #Display message in statusbar
             self._parent.display.write_to_statusbar("Saved settings", 1000)
@@ -2802,7 +2818,7 @@ class MainWindow(data.QMainWindow):
                 self._parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
                 message += "Restore session '{}' anyway?".format(session_name)
-                reply = helper_forms.YesNoDialog.question(message)
+                reply = helperforms.YesNoDialog.question(message)
                 if reply == data.QMessageBox.No:
                     return
             #Find the session
@@ -2857,7 +2873,7 @@ class MainWindow(data.QMainWindow):
                 self._parent.view.set_log_window(False)
                 message =  "You have modified documents!\n"
                 message += "Restore Ex.Co development session anyway?"
-                reply = helper_forms.YesNoDialog.question(message)
+                reply = helperforms.YesNoDialog.question(message)
                 if reply == data.QMessageBox.No:
                     return
             #Clear all documents from the main and upper window
@@ -3197,7 +3213,7 @@ class MainWindow(data.QMainWindow):
         
         def show_about(self):
             """Show ExCo information"""
-            about = helper_forms.ExCoInfo(self._parent, app_dir=self._parent.settings.manipulator.application_directory)
+            about = helperforms.ExCoInfo(self._parent, app_dir=self._parent.settings.manipulator.application_directory)
             #The exec_() function shows the dialog in MODAL mode (the parent is unclickable while the dialog is shown)
             about.exec_()
         
@@ -3416,7 +3432,7 @@ class MainWindow(data.QMainWindow):
         def show_settings_gui_manipulator(self):
             # Initialize the settings GUI manipulator if needed
             if self._parent.settings.gui_manipulator == None:
-                compare_size = helper_forms.SettingsGuiManipulator.DEFAULT_SIZE
+                compare_size = helperforms.SettingsGuiManipulator.DEFAULT_SIZE
                 if (self._parent.width() < compare_size[0] or 
                     self._parent.height() < compare_size[1]):
                         new_size =  data.QSize(
@@ -3424,7 +3440,7 @@ class MainWindow(data.QMainWindow):
                             compare_size[1] + compare_size[1]/5
                         )
                         self._parent.resize(new_size)
-                self._parent.settings.gui_manipulator = helper_forms.SettingsGuiManipulator(
+                self._parent.settings.gui_manipulator = helperforms.SettingsGuiManipulator(
                     parent=self._parent.main_groupbox, 
                     main_form=self._parent, 
                 )
@@ -3639,7 +3655,7 @@ class MainWindow(data.QMainWindow):
                 else:
                     window.indicated = False
                     for i in range(window.count()):
-                        if isinstance(window.widget(i), helper_forms.TextDiffer) == True:
+                        if isinstance(window.widget(i), helperforms.TextDiffer) == True:
                             if (window.widget(i).hasFocus() == True or
                                 window.widget(i).editor_1.hasFocus() == True or
                                 window.widget(i).editor_2.hasFocus() == True):
@@ -3699,11 +3715,11 @@ class MainWindow(data.QMainWindow):
                 FunctionWheel.reset_background_image()
             
             # Reset the settings gui manipulator so it will update
-            if helper_forms.SettingsGuiManipulator.check_theme_state():
+            if helperforms.SettingsGuiManipulator.check_theme_state():
                 if self._parent.settings.gui_manipulator != None:
                     self._parent.settings.gui_manipulator.clean_up()
                 self._parent.settings.gui_manipulator = None
-                helper_forms.SettingsGuiManipulator.reset_background_image()
+                helperforms.SettingsGuiManipulator.reset_background_image()
         
         def reload_themes(self):
             global lexers, themes
@@ -3872,7 +3888,7 @@ class MainWindow(data.QMainWindow):
             warning += "You better have a backup of the files if you are unsure,\n"
             warning += "because this action CANNOT be undone!\n"
             warning += "Do you want to continue?"
-            reply = helper_forms.YesNoDialog.warning(warning)
+            reply = helperforms.YesNoDialog.warning(warning)
             if reply == data.QMessageBox.No:
                 return
             #Check if the search directory is none, then use a dialog window
@@ -4985,7 +5001,7 @@ class MainWindow(data.QMainWindow):
             #Create a reference to the main form for less typing
             parent = self._parent
             #Create and initialize a text differ
-            text_differ = helper_forms.TextDiffer(
+            text_differ = helperforms.TextDiffer(
                 parent.main_window,
                 parent,
                 text_1,
@@ -5011,7 +5027,7 @@ class MainWindow(data.QMainWindow):
             """Display a window for editing sessions"""
             #Create the SessionGuiManipulator
             settings_manipulator = self._parent.settings.manipulator
-            sessions_manipulator = helper_forms.SessionGuiManipulator(
+            sessions_manipulator = helperforms.SessionGuiManipulator(
                 settings_manipulator, 
                 self._parent.upper_window, 
                 self._parent
@@ -5075,7 +5091,7 @@ class MainWindow(data.QMainWindow):
                     name = name[:name.find('\t')]
                 # Add the action to the context menu 
                 # function list in the helper forms module
-                helper_forms.ContextMenu.add_function(
+                helperforms.ContextMenu.add_function(
                     function.__name__, action.pixmap, function, name
                 )
                 # Enable/disable action according to passed 
@@ -6174,7 +6190,7 @@ class BasicWidget(data.QTabWidget):
                 #Display the close notification
                 close_message = "Document '" + self.tabText(emmited_tab_number)
                 close_message += "' has been modified!\nClose it anyway?"
-                reply = helper_forms.YesNoDialog.question(close_message)
+                reply = helperforms.YesNoDialog.question(close_message)
                 if reply == data.QMessageBox.Yes:
                     clear_document_bookmarks()
                     #Close tab anyway
@@ -6425,7 +6441,7 @@ class BasicWidget(data.QTabWidget):
         if tree_type != None:
             new_tree_tab = tree_type(self, self._parent)
         else:
-            new_tree_tab = helper_forms.TreeDisplay(self, self._parent)
+            new_tree_tab = helperforms.TreeDisplay(self, self._parent)
         # Add attributes for status of the document
         new_tree_tab.name = tree_tab_name
         new_tree_tab.savable = data.CanSave.NO
@@ -6455,14 +6471,30 @@ class BasicWidget(data.QTabWidget):
                 #Set the new text of the tab
                 self.setTabText(i, new_text)
                 break
-
+    
+    def select_tab(self, direction=data.Direction.RIGHT):
+        """
+        Select tab left/right of the currently selected tab
+        """
+        current_index = self.currentIndex()
+        if direction == data.Direction.RIGHT:
+            # Check if the widget is already at the far right
+            if current_index < self.tabBar().count()-1:
+                new_index = current_index + 1
+                self.setCurrentIndex(new_index)
+        else:
+            # Check if the widget is already at the far left
+            if current_index > 0:
+                new_index = current_index - 1
+                self.setCurrentIndex(new_index)
+    
     def move_tab(self, direction=data.Direction.RIGHT):
         """
         Change the position of the current tab in the basic widget,
         according to the selected direction
         """
         #Store the current index and widget
-        current_index   = self.currentIndex()
+        current_index = self.currentIndex()
         #Check the move direction
         if direction == data.Direction.RIGHT:
             #Check if the widget is already at the far right
@@ -6651,7 +6683,7 @@ class PlainEditor(data.QsciScintilla):
         self.delete_context_menu()
         # Show a context menu according to the current lexer
         offset = (event.x(), event.y())
-        self.context_menu = helper_forms.ContextMenu(
+        self.context_menu = helperforms.ContextMenu(
             self, self.main_form, offset
         )
         self.context_menu.create_plain_buttons()
@@ -6743,7 +6775,6 @@ class CustomEditor(data.QsciScintilla):
     save_status             = data.FileStatus.OK
     savable                 = data.CanSave.NO
     embedded                = False
-    last_browsed_dir        = ""
     # Current document type, initialized to text
     current_file_type       = "TEXT"
     # Current tab icon
@@ -6859,12 +6890,6 @@ class CustomEditor(data.QsciScintilla):
         # Replace back-slashes to forward-slashes on Windows
         if data.platform == "Windows":
             self.save_name  = self.save_name.replace("\\", "/")
-        # Last directory browsed by the "Open File" and other dialogs
-        if self.save_name != "":
-            #If save_name was valid, extract the directory of the save file
-            self.last_browsed_dir = os.path.dirname(self.save_name)
-        else:
-            self.last_browsed_dir = self.save_name
         # Reset the file save status 
         self.save_status = data.FileStatus.OK
         # Enable saving of the scintilla document
@@ -7145,7 +7170,7 @@ class CustomEditor(data.QsciScintilla):
         self.delete_context_menu()
         # Show a context menu according to the current lexer
         offset = (event.x(), event.y())
-        self.context_menu = helper_forms.ContextMenu(
+        self.context_menu = helperforms.ContextMenu(
             self, self.main_form, offset
         )
         if (self.current_file_type == "C" or
@@ -8512,19 +8537,16 @@ class CustomEditor(data.QsciScintilla):
             line_number = self.lines()-1
         return line_number
     
-    def save_document(self, saveas=False, last_dir=None, encoding="utf-8", line_ending=None):
+    def save_document(self, saveas=False, encoding="utf-8", line_ending=None):
         """Save a document to a file"""
         if self.save_name == "" or saveas != False:
             #Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QfileDialog
             file_dialog = data.QFileDialog
-            #Check if the custom editors last browsed dir was previously set
-            if self.last_browsed_dir == "" and last_dir != None:
-                self.last_browsed_dir = last_dir
             #Get the filename from the QfileDialog window
             temp_save_name = file_dialog.getSaveFileName(
                 self, 
                 "Save File", 
-                self.last_browsed_dir + self.save_name, 
+                os.getcwd() + self.save_name, 
                 "All Files(*)"
             )
             if data.PYQT_MODE == 5:
@@ -8539,8 +8561,6 @@ class CustomEditor(data.QsciScintilla):
                 temp_save_name = temp_save_name.replace("\\", "/")
             #Save the chosen file name to the document "save_name" attribute
             self.save_name = temp_save_name
-        #Update the last browsed directory to the class/instance variable
-        self.last_browsed_dir = os.path.dirname(self.save_name)
         #Set the tab name by filtering it out from the QFileDialog result
         self.name = os.path.basename(self.save_name)
         #Change the displayed name of the tab in the basic widget
@@ -8709,7 +8729,7 @@ class CustomEditor(data.QsciScintilla):
             self.main_form.view.set_log_window(False)
             #Display the close notification
             reload_message = "Document '" + self.name+ "' has been modified!\nReload it from disk anyway?"
-            reply = helper_forms.YesNoDialog.question(reload_message)
+            reply = helperforms.YesNoDialog.question(reload_message)
             if reply == data.QMessageBox.No:
                 #Cancel tab file reloading
                 return
@@ -9851,7 +9871,7 @@ class ReplHelper(data.QsciScintilla):
         self.delete_context_menu()
         # Show a context menu according to the current lexer
         offset = (event.x(), event.y())
-        self.context_menu = helper_forms.ContextMenu(
+        self.context_menu = helperforms.ContextMenu(
             self, self._parent, offset
         )
         height = self.size().height()
@@ -10901,7 +10921,7 @@ class FunctionWheel(data.QGroupBox):
         for button in hex_button_list:
             #Initialize the custom hex buttom
             if button.extra_button != None:
-                init_button = helper_forms.DoubleButton(
+                init_button = helperforms.DoubleButton(
                     self, 
                     self.main_form, 
                     input_pixmap=functions.create_pixmap(button.pixmap), 
@@ -10923,7 +10943,7 @@ class FunctionWheel(data.QGroupBox):
                     input_extra_function_text=button.extra_button[2], 
                 )
             else:
-                init_button = helper_forms.CustomButton(
+                init_button = helperforms.CustomButton(
                     self, 
                     self.main_form, 
                     input_pixmap=functions.create_pixmap(button.pixmap), 
@@ -10949,13 +10969,13 @@ class FunctionWheel(data.QGroupBox):
         """Check the hex function button states when displaying the function wheel"""
         for child_widget in self.children():
             #Skip the child widget if it is not a hex or double button
-            if (isinstance(child_widget, helper_forms.CustomButton) == False and
-                isinstance(child_widget, helper_forms.DoubleButton) == False):
+            if (isinstance(child_widget, helperforms.CustomButton) == False and
+                isinstance(child_widget, helperforms.DoubleButton) == False):
                 continue
             #First display and enable the hex button
             child_widget.setVisible(True)
             child_widget.setEnabled(True)
-            if isinstance(child_widget, helper_forms.DoubleButton) == True:
+            if isinstance(child_widget, helperforms.DoubleButton) == True:
                 child_widget.extra_button_enable()
             #If the button needs to focus on the last focused widget,
             #check if the last focused widget is valid
@@ -10981,7 +11001,7 @@ class FunctionWheel(data.QGroupBox):
                 child_widget.setEnabled(False)
             elif (child_widget.no_document_focus_disable == True and
                   hasattr(last_tab, "actual_parent") == True and
-                  isinstance(last_tab.actual_parent, helper_forms.TextDiffer) == True):
+                  isinstance(last_tab.actual_parent, helperforms.TextDiffer) == True):
                 #Check if tab is a TextDiffer, enable only the supported functions
                 if (child_widget.function_text != "Find" and
                     child_widget.function_text != "Regex Find" and
@@ -11021,14 +11041,14 @@ class FunctionWheel(data.QGroupBox):
         #First clear the hex edge from all of the buttons
         for child_widget in self.children():
             #Skip the child widget if it is not a hex or double button
-            if (isinstance(child_widget, helper_forms.CustomButton) == False and
-                isinstance(child_widget, helper_forms.DoubleButton) == False):
+            if (isinstance(child_widget, helperforms.CustomButton) == False and
+                isinstance(child_widget, helperforms.DoubleButton) == False):
                 continue
             #Dim the button and clear the hex edge
             child_widget.dim(clear_hex_edge=True)
             #Hide the button, fixes a leaveEvent issue with the "Open File" function.
             child_widget.setVisible(False)
-            if isinstance(child_widget, helper_forms.DoubleButton) == True:
+            if isinstance(child_widget, helperforms.DoubleButton) == True:
                 child_widget.extra_button_disable()
         #Disable the function wheel
         self.setVisible(False)
@@ -11092,7 +11112,7 @@ class FunctionWheel(data.QGroupBox):
             return
         #Loop through the buttons and check its function
         for button in self.children():
-            if isinstance(button, helper_forms.CustomButton):
+            if isinstance(button, helperforms.CustomButton):
                 #Compare the stored function text with the buttons function text
                 if button.function_text == last_function_text:
                     #Only higlight the button if it is enabled

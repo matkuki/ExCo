@@ -186,7 +186,7 @@ on_rpi = False
 if os.name == "posix":
     on_rpi = (os.uname()[1] == "raspberrypi")
 # User configuration file
-config_file = "user_functions.cfg"
+config_file = "userfunctions.cfg"
 # Default user configuration file content
 default_config_file_content = '''
 # -*- coding: utf-8 -*-
@@ -206,7 +206,7 @@ default_config_file_content = '''
 import data
 import functions
 import settings
-import helper_forms
+import helperforms
 
 # Imported for less typing
 from forms import *

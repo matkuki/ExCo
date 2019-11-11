@@ -15,7 +15,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import data
 import functions
 import forms
-import helper_forms
+import helperforms
 import re
 import math
 import typing
@@ -616,7 +616,7 @@ class IconManipulator:
             if isinstance(basic_widget, forms.BasicWidget):
                 basic_widget.update_tab_icon(obj)
                 self.update_corner_widget(obj)
-            elif isinstance(basic_widget, helper_forms.TextDiffer):
+            elif isinstance(basic_widget, helperforms.TextDiffer):
                 basic_widget._parent.update_tab_icon(obj)
         elif isinstance(obj, forms.PlainEditor):
             if isinstance(basic_widget, forms.BasicWidget):
@@ -1084,7 +1084,7 @@ class TheSquid:
                         )
                 if hasattr(window.widget(i), "icon_manipulator"):
                     window.widget(i).icon_manipulator.restyle_corner_button_icons()
-                if isinstance(window.widget(i), helper_forms.TreeDisplay):
+                if isinstance(window.widget(i), helperforms.TreeDisplay):
                     window.widget(i).update_icon_size()
     
     @staticmethod
