@@ -44,6 +44,7 @@ All additional licenses are specified at the beginning of every source code file
 - Python 3
 - PyQt5 version 5.7 (or higher) or PyQt4 version 4.10 (or higher)
 - QScintilla 2.9 or higher (is bundled in the PyQt installer on Windows)
+- pywin32 (required on Windows only)
 
 __Optional dependencies:__
 - XTerm terminal editor is used by default on GNU/Linux (can be changed in the config file)
@@ -59,12 +60,15 @@ __Optional dependencies:__
     your version of Python3 (QScintilla2 is bundled with the installer). Run Ex.Co. using the command described below in the 'Starting Ex&#46;Co&#46;' section.
 
   Method 2 - using __pip__:<br>
-  If you have pip installed with your Python 3 installation (needs to be Python 3.5 or higher), you can install PyQt5 and QScintilla2 with the following commands (You will need to run the commands as administrator!):<br>
+  If you have pip installed with your Python 3 installation (needs to be Python 3.5 or higher), you can install PyQt5 and QScintilla with the following commands (You will need to run the commands as administrator!):<br>
 ```sh 
 $ pip install PyQt5
 ```
 ```sh
-$ pip install qscintilla2
+$ pip install Qscintilla
+```
+```sh
+$ pip install pywin32
 ```
 - __GNU/Linux__:<br>
   Method 1 - using __apt-get__:<br>
@@ -76,18 +80,18 @@ $ pip install qscintilla2
      Update the repositories and try again. If that still doesn't help, try using Ubuntu's 'Universe' repositories.)
 
   Method 2 - using __pip__:<br>
-  If you have pip installed with your Python 3 installation (needs to be Python 3.5 or higher) , you can install PyQt5 and QScintilla2 with the following commands (You will need to run the commands as sudo!):<br>
+  If you have pip installed with your Python 3 installation (needs to be Python 3.5 or higher) , you can install PyQt5 and QScintilla with the following commands (You will need to run the commands as sudo!):<br>
 ```sh 
 $ pip install PyQt5
 ```
 ```sh
-$ pip install qscintilla2
+$ pip install Qscintilla
 ```
 
-  Otherwise you can install PyQt4/PyQt5 and QScintilla2 (you'll also need the SIP library) from source from their official [website](https://www.riverbankcomputing.com/software/pyqt/download). Download the source code and follow the instructions in the readme/install files. You'll also need the [Qt C++ source code](https://wiki.qt.io/Get_the_Source#Qt_4.x).
+  Otherwise you can install PyQt4/PyQt5 and QScintilla (you'll also need the SIP library) from source from their official [website](https://www.riverbankcomputing.com/software/pyqt/download). Download the source code and follow the instructions in the readme/install files. You'll also need the [Qt C++ source code](https://wiki.qt.io/Get_the_Source#Qt_4.x).
 - __Mac OS__:<br>
   Try using Anaconda Python 3 and it's package manager to install all dependencies. Here is the more [information](https://github.com/matkuki/ExCo/issues/1).<br>
-  I don't know much about Mac's, but you can try using the default Mac package manager to find the PyQt4 and QScintilla2
+  I don't know much about Mac's, but you can try using the default Mac package manager to find the PyQt4 and QScintilla
   libraries or install the libraries from source, same as on GNU/Linux.<br><br>
   
 
