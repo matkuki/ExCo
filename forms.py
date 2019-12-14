@@ -1833,7 +1833,7 @@ class MainWindow(data.QMainWindow):
                 'Select tab right',
                 settings.Keys.select_tab_right, 
                 'Select one tab to the right in the currently selected window', 
-                'tango_icons/view-move-tab-right.png', 
+                'tango_icons/view-select-tab-right.png', 
                 select_tab_right
             )
             def select_tab_left():
@@ -1845,7 +1845,7 @@ class MainWindow(data.QMainWindow):
                 'Select tab left',
                 settings.Keys.select_tab_left, 
                 'Select one tab to the left in the currently selected window', 
-                'tango_icons/view-move-tab-left.png', 
+                'tango_icons/view-select-tab-left.png', 
                 select_tab_left
             )
             def move_tab_right():
