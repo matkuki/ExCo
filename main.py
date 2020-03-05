@@ -19,7 +19,7 @@ import sys
 import os
 import argparse
 import data
-import forms
+import gui
 import components
 
 
@@ -139,7 +139,7 @@ def main():
     #Save the Qt application to the global reference
     data.application = app
     #Create the main window, pass the filename that may have been passed as an argument
-    main_window = forms.MainWindow(
+    main_window = gui.MainWindow(
         new_document = options.new_document, 
         logging=data.logging_mode, 
         file_arguments=file_arguments

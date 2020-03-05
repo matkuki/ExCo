@@ -33,34 +33,31 @@ def create_icon(icon_name):
     """
     Function for initializing and returning an QIcon object
     """
-    return data.QIcon(
-        os.path.join(
-            data.resources_directory, 
-            icon_name
-        )
+    file_path = os.path.join(
+        data.resources_directory, 
+        icon_name
     )
+    if not os.path.isfile(file_path):
+        raise Exception("Cannot find icon file: \"{}\"".format(file_path))
+    return data.QIcon(file_path)
 
 def create_pixmap(pixmap_name):
     """
     Function for initializing and returning an QPixmap object
     """
-    return data.QPixmap(
-        os.path.join(
-            data.resources_directory, 
-            pixmap_name
-        )
+    file_path = os.path.join(
+        data.resources_directory, 
+        pixmap_name
     )
+    if not os.path.isfile(file_path):
+        raise Exception("Cannot find pixmap file: \"{}\"".format(file_path))
+    return data.QPixmap(file_path)
 
 def create_pixmap_with_size(pixmap_name, height, width):
     """
     Function for initializing and returning an QPixmap object with a size
     """
-    pixmap = data.QPixmap(
-        os.path.join(
-            data.resources_directory, 
-            pixmap_name
-        )
-    )
+    pixmap = create_pixmap(pixmap_name)
     pixmap = pixmap.scaledToWidth(32, data.Qt.SmoothTransformation)
     pixmap = pixmap.scaledToHeight(32, data.Qt.SmoothTransformation)
     return pixmap
@@ -157,8 +154,8 @@ def get_language_file_icon(language_name):
     else:
         return create_icon("tango_icons/file.png")
 
-def create_language_document_icon_from_path(path):
-    file_type = get_file_type(path)
+def create_language_document_icon_from_path(path, check_content=True):
+    file_type = get_file_type(path, check_content)
     return get_language_file_icon(file_type)
 
 def get_file_size_Mb(file_with_path):
@@ -2197,7 +2194,7 @@ def test_binary_file(file_with_path):
     #Return the result
     return binary_text
 
-def get_file_type(file_with_path):
+def get_file_type(file_with_path, check_content=True):
     """Get file extension and return file type as string"""
     #Initialize it as unknown and change it in the if statement 
     file_type = "unknown"   
@@ -2276,12 +2273,15 @@ def get_file_type(file_with_path):
     elif file_extension.lower() in data.ext_css:
         file_type = "css"
     else:
-        #The file extension was not recognized, 
-        #try the file contents for more information
-        file_type = test_file_content_for_type(file_with_path)
-        #If the file content did not give any useful information,
-        #set the content as text
-        if file_type == "unknown":
+        if check_content == True:
+            #The file extension was not recognized, 
+            #try the file contents for more information
+            file_type = test_file_content_for_type(file_with_path)
+            #If the file content did not give any useful information,
+            #set the content as text
+            if file_type == "unknown":
+                file_type = "text"
+        else:
             file_type = "text"
     #Return file type string
     return file_type

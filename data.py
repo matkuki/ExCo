@@ -170,7 +170,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "6.12"
+application_version = "6.14"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -186,7 +186,7 @@ on_rpi = False
 if os.name == "posix":
     on_rpi = (os.uname()[1] == "raspberrypi")
 # User configuration file
-config_file = "user_functions.cfg"
+config_file = "userfunctions.cfg"
 # Default user configuration file content
 default_config_file_content = '''
 # -*- coding: utf-8 -*-
@@ -206,10 +206,9 @@ default_config_file_content = '''
 import data
 import functions
 import settings
-import helper_forms
 
 # Imported for less typing
-from forms import *
+from gui import *
 
 
 # Initialization function that gets executed only ONCE at startup
@@ -263,7 +262,7 @@ application_icon = "exco-icon.png"
 # action is clicked in the menubar "Help" menu
 about_image = "exco-info.png"
 # Terminal console program used on GNU/Linux
-terminal = "lxterminal"
+terminal = "x-terminal-emulator"
 # Default tree display font size (file-tree, node-tree, ...)
 tree_display_font_size = 10
 tree_display_icon_size = 16

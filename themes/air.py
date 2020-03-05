@@ -905,7 +905,7 @@ class Font:
     class Python:
         ClassName = ('Courier', 0xff0000ff, 10, None)
         Comment = ('Courier', 0xff007f00, 10, None)
-        CommentBlock = ('Courier', 0xff7f7f7f, 10, None)
+        CommentBlock = ('Courier', 0xff52004a, 10, None)
         Decorator = ('Courier', 0xff805000, 10, None)
         Default = ('Courier', 0xff000000, 10, None)
         DoubleQuotedString = ('Courier', 0xff7f007f, 10, None)
