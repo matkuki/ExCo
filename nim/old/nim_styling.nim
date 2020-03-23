@@ -1,4 +1,8 @@
 
+#[
+    Copyright (c) 2020 Matic Kukovec. 
+]#
+
 import math
 import python3
 import tables

@@ -145,8 +145,11 @@ class CustomEditor(data.QsciScintilla):
         self.setAutoIndent(True)
         # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
-        # Set automatic adjustment of the horizontal scrollbar
-        self.setScrollWidthTracking(True)
+        # Set automatic adjustment of the horizontal scrollbar, if available
+        try:
+            self.setScrollWidthTracking(True)
+        except:
+            pass
         # Set tab space indentation width
         self.setTabWidth(settings.Editor.tab_width)
         # Set backspace to delete by tab widths

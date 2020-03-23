@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2018 Matic Kukovec. 
+Copyright (c) 2020 Matic Kukovec. 
 """
 
 import keyword
