@@ -186,7 +186,13 @@ class CustomPython(data.QsciLexerCustom):
             lexers.nim_lexers.python_delete_keywords(self.index)
 
         def styleText(self, start, end):
-            lexers.nim_lexers.python_style_text(self.index, start, end, self, self.editor())    
+            editor = self.editor()
+            if editor is None:
+                return
+#            lexers.nim_lexers.python_style_text(
+#                self.index, start, end, self, editor
+#            )
+            lexers.nim_lexers.python_style_test(self.index, start, end)
     else:
         def styleText(self, start, end):
             editor = self.editor()

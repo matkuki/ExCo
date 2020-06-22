@@ -3148,6 +3148,8 @@ class MainWindow(data.QMainWindow):
             main_groupbox = data.QGroupBox(self._parent)
             main_groupbox_layout = data.QVBoxLayout(main_groupbox)
             main_groupbox_layout.addWidget(main_splitter)
+            main_groupbox_layout.setContentsMargins(2, 2, 2, 2)
+            main_groupbox_layout.setSpacing(0)
             main_groupbox.setLayout(main_groupbox_layout)
             main_groupbox.setObjectName("Main_Groupbox")
             #Add the splitters combined in the groupbox to the main form
@@ -3352,6 +3354,8 @@ class MainWindow(data.QMainWindow):
             self._parent.repl_box = data.QGroupBox("Python Interactive Interpreter (REPL)")
             self._parent.repl_box.setObjectName("REPL_Box")
             repl_layout = data.QVBoxLayout()
+            repl_layout.setContentsMargins(4,4,4,4)
+            repl_layout.setSpacing(0)
             repl_layout.addWidget(self._parent.repl)
             repl_layout.addWidget(self._parent.repl_helper)
             #Set which REPL widget will be displayed
@@ -3449,17 +3453,23 @@ class MainWindow(data.QMainWindow):
                 self._parent.settings.gui_manipulator.hide()
         
         def init_style_sheet(self):            
-            style_sheet = (
-                "#Form {" +
-                "   background-color: {0};".format(data.theme.Form) +
-                "}" + 
-                "#Main_Groupbox {" +
-                    "border: 0px;" +
-                "}" +
-                "QSplitter::handle {" +
-                "   background: {0};".format(data.theme.Form) +
-                "}"
-            )
+            style_sheet = (f"""
+                #Form {{
+                    background-color: {data.theme.Form};
+                    border: 0px;
+                }}
+                #Main_Groupbox {{
+                    border: 0px;
+                }}
+                QSplitter {{
+                    margin: 0px;
+                    padding: 0px;
+                    width: 4px;
+                }}
+                QSplitter::handle {{
+                    background: {data.theme.Form};
+                }}
+            """)
             return style_sheet
         
         def reset_window_colors(self, in_sheet):
@@ -3490,39 +3500,40 @@ class MainWindow(data.QMainWindow):
             self._parent.setStyleSheet(style_sheet)
         
         def generate_window_colors(self, window_name, border, background):
-            style_sheet = (
-                "#" + window_name + "::pane {" + 
-                    "border: 2px solid {0};".format(border) +
-                    "background-color: {0};".format(background)  +
-                "}"
-            )
+            style_sheet = (f"""
+                #{window_name}::pane {{
+                    border: 2px solid {border};
+                    background-color: {background};
+                }}
+            """)
             return style_sheet
         
         def generate_repl_colors(self, border, background):
-            style_sheet = (
-                "#REPL_Box {" + 
-                    "font-size: 8pt; font-weight: bold;" +
-                    "color: {0};".format(border) +
-                    "background-color: {0};".format(data.theme.Indication.PassiveBackGround) +
-                    "border: 2px solid {0};".format(border) +
-                    "border-radius: 0px;" +
-                    "margin-top: 5px;" +
-                    "margin-bottom: 0px;" +
-                    "margin-left: 0px;" +
-                    "margin-right: 0px;" +
-                    "padding-top: 0px;" +
-                    "padding-bottom: 0px;" +
-                    "padding-left: 0px;" +
-                    "padding-right: 0px;" +
-                "}" + 
-                "#REPL_Box::title {" +
-                    "color: {0};".format(data.theme.Indication.ActiveBorder) +
-                    "subcontrol-position: top left;" +
-                    "padding: 0px;" + 
-                    "left: 8px;" +
-                    "top: -6px;" +
-                "}"
-            )
+            style_sheet = (f"""
+                #REPL_Box {{
+                    font-size: 8pt;
+                    font-weight: bold;
+                    color: {border};
+                    background-color: {data.theme.Indication.PassiveBackGround};
+                    border: 2px solid {border};
+                    border-radius: 0px;
+                    margin-top: 4px;
+                    margin-bottom: 0px;
+                    margin-left: 0px;
+                    margin-right: 0px;
+                    padding-top: 0px;
+                    padding-bottom: 0px;
+                    padding-left: 0px;
+                    padding-right: 0px;
+                }}
+                #REPL_Box::title {{
+                    color: {data.theme.Indication.ActiveBorder};
+                    subcontrol-position: top left;
+                    padding: 0px; 
+                    left: 8px;
+                    top: -6px;
+                }}
+            """)
             # REPL and REPL helper have to be set directly
             self._parent.repl.setStyleSheet(
                 "color: rgb({0}, {1}, {2});".format(
@@ -3672,10 +3683,13 @@ class MainWindow(data.QMainWindow):
             self.reset_entire_style_sheet()
         
         def refresh_main_splitter(self):
-            #Refresh the size relation between the basic widgets and the REPL,
-            #so that the REPL height is always the same
+            # Refresh the size relation between the basic widgets and the REPL,
+            # so that the REPL height is always the same
             self._parent.main_splitter.setSizes(
-                [self._parent.height() - self.main_relation, self.main_relation]
+                [
+                    self._parent.height() - self.main_relation,
+                    self.main_relation - (self.main_relation * 0.1)
+                ]
             )
             self.reset_entire_style_sheet()
         

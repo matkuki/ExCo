@@ -141,7 +141,7 @@ var
 proc python_set_keywords*(lexer_index: int, additional_keywords: seq[string]) {.exportpy.} =
     custom_keywords[lexer_index] = base_custom_keywords & additional_keywords
 
-proc python_delete_keywords*(self: PyObject, lexer_index: int) {.exportpy.} =
+proc python_delete_keywords*(lexer_index: int) {.exportpy.} =
     # Reset the sequence at the deleted lexer's index
     custom_keywords[lexer_index] = newSeq[string]()
 
@@ -149,13 +149,12 @@ proc python_style_text*(lexer_index: int,
                         start_pos: int,
                         end_pos: int,
                         lexer: PyObject,
-                        editor: PyObject): PyObject {.exportpy.} =
+                        editor: PyObject) {.exportpy.} =
     var
         send_scintilla_obj = editor.SendScintilla
         set_styling_obj = lexer.setStyling
         text = editor.text().to(string)[start_pos ..< end_pos]
         text_length = text.len()
-        current_token: string = ""
     
     # Procedure for getting previous style
     proc get_previous_style(): int =
@@ -301,6 +300,10 @@ proc python_style_text*(lexer_index: int,
             style_token(token_name, token_length)
     #------------------------------------------------------------------------------
 
+proc python_style_test*(lexer_index: int,
+                        start_pos: int,
+                        end_pos: int,) {.exportpy.} =
+    echo "HERE"
 
 echo "Nim lexers imported!"
 

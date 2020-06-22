@@ -160,6 +160,22 @@ class PlainEditor(data.QsciScintilla):
             line_number
         )
     
+    def convert_case(self, uppercase=False):
+        """Convert selected text in the scintilla document into the selected case letters"""
+        #Get the start and end point of the selected text
+        start_line, start_index,  end_line, end_index = self.getSelection()
+        #Get the currently selected text
+        selected_text   = self.selectedText()
+        #Convert it to the selected case
+        if uppercase == False:
+            selected_text   = selected_text.lower()
+        else:
+            selected_text   = selected_text.upper()
+        #Replace the selection with the new upercase text
+        self.replaceSelectedText(selected_text)
+        #Reselect the previously selected text
+        self.setSelection(start_line, start_index,  end_line, end_index)
+    
     def set_theme(self, theme):
         #Set the lexer
         self.setLexer(lexers.Text(self))

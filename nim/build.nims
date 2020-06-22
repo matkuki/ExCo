@@ -19,7 +19,7 @@ else:
 var
     cwd = currentSourcePath().parentDir()
     commands = [
-        fmt"nim c --threads:on --app:lib --out:{output_executable} nim_lexers",
+        fmt"nim c --threads:on --app:lib --out:{output_executable} --d:release -d:danger nim_lexers",
     ]
 exec commands.join(" & ")
 cpFile(joinPath(cwd, output_executable), joinPath(cwd, "..", output_executable))

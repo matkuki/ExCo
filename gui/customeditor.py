@@ -214,7 +214,6 @@ class CustomEditor(data.QsciScintilla):
         self.set_cursor_line_visibility(
             settings.Editor.cursor_line_visible
         )
-        
     
     def __setattr__(self, name, value):
         """
