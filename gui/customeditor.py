@@ -2136,14 +2136,33 @@ class CustomEditor(data.QsciScintilla):
         """Set the initial autocompletion functionality for the document"""
         self.disable_autocompletions()
     
+    autocompletions_connected = False
     def enable_autocompletions(self, new_autocompletions=[]):
         """Function for enabling the CustomEditor autocompletions"""
-        #Set how many characters must be typed for the autocompletion popup to appear
+        # Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
-        #Set the source from where the autocompletions will be fetched
+        # Set the source from where the autocompletions will be fetched
         self.setAutoCompletionSource(data.QsciScintilla.AcsDocument)
-        #Set autocompletion case sensitivity
+        # Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
+        # Correct autocompletion behaviour to select
+        # the documents word case style instead of the
+        # autocompletion's list's.
+        if not self.autocompletions_connected:
+            self.autocompletions_connected = True
+            self.SCN_AUTOCCOMPLETED.connect(self._correct_autocompletion)
+    
+    splitter = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
+    def _correct_autocompletion(self, *args):
+        word, from_index, to_index, length = args
+        word = word.decode("utf-8")
+        current_line = self.getCursorPosition()[0] + 1
+        line = self.line_list[current_line]
+        for token in self.splitter.findall(self.text()):
+            if token.lower() == word.lower():
+                self.line_list[current_line] = token.join(line.rsplit(word, 1))
+                self.setCursorPosition(current_line-1, len(self.line_list[current_line]))
+                break
     
     def disable_autocompletions(self):
         """Disable the CustomEditor autocompletions"""
