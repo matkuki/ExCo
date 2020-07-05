@@ -2256,12 +2256,12 @@ class TreeExplorer(TreeDisplayBase):
         # The paste function is always shown when applicable,
         # so this function needs to be defined at the top
         def paste_item():
-            if self.cut_items != None:
-                items = self.cut_items
+            if TreeExplorer.cut_items != None:
+                items = TreeExplorer.cut_items
                 for it in items:
                     print(it)
-            elif self.copy_items != None:
-                items = self.copy_items
+            elif TreeExplorer.copy_items != None:
+                items = TreeExplorer.copy_items
             else:
                 self.main_form.display.display_error(
                     "Copy AND Cut items list is empty!\n" +
@@ -2285,15 +2285,15 @@ class TreeExplorer(TreeDisplayBase):
                         reply = YesNoDialog.question(message)
                         if reply != data.QMessageBox.Yes:
                             return
-#                    if self.cut_items != None:
+#                    if TreeExplorer.cut_items != None:
 #                        shutil.move(path, new_path)
-#                    elif self.copy_items != None:
+#                    elif TreeExplorer.copy_items != None:
 #                        shutil.copytree(path, new_path)
                     if os.path.isdir(new_path):
                         shutil.rmtree(new_path)
                         time.sleep(0.1)
                     shutil.copytree(path, new_path)
-                    if self.cut_items != None:
+                    if TreeExplorer.cut_items != None:
                         shutil.rmtree(path)
                 else:
                     if os.path.exists(new_path):
@@ -2302,16 +2302,16 @@ class TreeExplorer(TreeDisplayBase):
                         reply = YesNoDialog.question(message)
                         if reply != data.QMessageBox.Yes:
                             return
-#                    if self.cut_items != None:
+#                    if TreeExplorer.cut_items != None:
 #                        shutil.move(path, new_path)
-#                    elif self.copy_items != None:
+#                    elif TreeExplorer.copy_items != None:
 #                        shutil.copy(path, new_path)
                     shutil.copy(path, new_path)
-                    if self.cut_items != None:
+                    if TreeExplorer.cut_items != None:
                         os.remove(path)
-            if self.cut_items != None:
-                self.cut_items = None
-                self.copy_items = None
+            if TreeExplorer.cut_items != None:
+                TreeExplorer.cut_items = None
+                TreeExplorer.copy_items = None
             self.display_directory(self.current_viewed_directory)
         
         # First check if the click was in an empty space
@@ -2404,8 +2404,8 @@ class TreeExplorer(TreeDisplayBase):
                     if it.attributes.itype in [TreeExplorer.ItemType.FILE, 
                                                TreeExplorer.ItemType.DIRECTORY]:
                         items.append(it.attributes)
-                self.cut_items = items
-                self.copy_items = None
+                TreeExplorer.cut_items = items
+                TreeExplorer.copy_items = None
                 self.main_form.display.repl_display_message(
                     "Cut items:"
                 )
@@ -2433,8 +2433,8 @@ class TreeExplorer(TreeDisplayBase):
                     if it.attributes.itype in [TreeExplorer.ItemType.FILE, 
                                                TreeExplorer.ItemType.DIRECTORY]:
                         items.append(it.attributes)
-                self.cut_items = None
-                self.copy_items = items
+                TreeExplorer.cut_items = None
+                TreeExplorer.copy_items = items
                 self.main_form.display.repl_display_message(
                     "Copied items:"
                 )
@@ -2464,7 +2464,7 @@ class TreeExplorer(TreeDisplayBase):
             if item.attributes.itype in [TreeExplorer.ItemType.FILE,
                                          TreeExplorer.ItemType.DIRECTORY,
                                          TreeExplorer.ItemType.BASE_DIRECTORY]:
-                if self.cut_items != None or self.copy_items != None:
+                if TreeExplorer.cut_items != None or TreeExplorer.copy_items != None:
                     self.tree_menu.addAction(paste_item_action)
             # Separator
             self.tree_menu.addSeparator()
@@ -2538,7 +2538,7 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action.triggered.connect(paste_item)
             icon = functions.create_icon('tango_icons/edit-paste.png')
             paste_item_action.setIcon(icon)
-            if self.cut_items != None or self.copy_items != None:
+            if TreeExplorer.cut_items != None or TreeExplorer.copy_items != None:
                 self.tree_menu.addAction(paste_item_action)
         # Add the actions that are on every menu
         # Separator
