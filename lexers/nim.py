@@ -65,7 +65,7 @@ class Nim(data.QsciLexerCustom):
         "class", "namespace", "property",
     ]
     #Keywords that define a proc-like definition
-    def_keyword_list = ["proc", "method", "template", "macro", "converter", "iterator"]
+    def_keyword_list = ["proc", "method", "func", "template", "macro", "converter", "iterator"]
     #Keywords that can define blocks
     top_keyword_list = [
         "block", "const", "export", "import", "include", "let", 

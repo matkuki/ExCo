@@ -1672,8 +1672,8 @@ class CustomEditor(data.QsciScintilla):
             self.main_form.display.repl_display_message(
                 "{:d} matches highlighted".format(len(matches)) 
             )
-            #Set the cursor to the first highlight
-            self.find_text(highlight_text, case_sensitive, True, regular_expression)
+            # Set the cursor to the first highlight (I don't like this feature)
+#            self.find_text(highlight_text, case_sensitive, True, regular_expression)
         else:
             self.main_form.display.repl_display_message(
                 "No matches found!",
