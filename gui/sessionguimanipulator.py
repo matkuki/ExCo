@@ -129,7 +129,6 @@ class SessionGuiManipulator(data.QTreeView):
         self.doubleClicked.connect(self._item_double_clicked)
     
     def clean_model(self):
-        return
         if self.model() != None:
             self.model().setParent(None)
             self.setModel(None)
@@ -530,7 +529,7 @@ class SessionGuiManipulator(data.QTreeView):
         self.tree_model = data.QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["SESSIONS"])
         self.header().hide()
-        self.clean_model()
+#        self.clean_model()
         self.setModel(self.tree_model)
         self.setUniformRowHeights(True)
         #Connect the tree model signals

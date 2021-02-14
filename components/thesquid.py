@@ -16,6 +16,8 @@ import re
 import math
 import typing
 
+from .customstyle import *
+
 
 class TheSquid:
     """
@@ -94,8 +96,8 @@ class TheSquid:
                         )
                 if hasattr(window.widget(i), "icon_manipulator"):
                     window.widget(i).icon_manipulator.restyle_corner_button_icons()
-                if isinstance(window.widget(i), gui.TreeDisplay):
-                    window.widget(i).update_icon_size()
+                if isinstance(window.widget(i), gui.TreeDisplayBase):
+                    window.widget(i).update_styles()
     
     @staticmethod
     def customize_menu_style(menu):

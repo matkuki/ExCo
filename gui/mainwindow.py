@@ -28,6 +28,7 @@ import settings
 import lexers
 import traceback
 import gc
+import pprint
 
 from .contextmenu import *
 from .custombuttons import *
@@ -236,8 +237,8 @@ class MainWindow(data.QMainWindow):
             quit        = self.exit, 
             exit        = self.exit, 
             new         = self.create_new, 
-            open        = self.open_files,
-            open_d      = self.open_file_with_dialog, 
+            _open       = self.open_files,
+            _open_d     = self.open_file_with_dialog, 
             save        = functions.write_to_file, 
             log         = data.log_window, 
             version     = data.application_version,
@@ -2225,29 +2226,36 @@ class MainWindow(data.QMainWindow):
                 "if callable(first_scan):\n    first_scan();", 
                 display_action=False
             )
-        # Update the REPL autocompletions
-        import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_list(user_code)
-        # First get the function names
-        user_function_names = [func.name for func in function_nodes]
-        # Then get the autocompletions by testing if the function has
-        # the "autocompletion" attribute. Because in Python everything is an object,
-        # functions can also have attributes! Very nice!
-        user_function_autocompletions = []
-        for func_name in user_function_names:
-            """User functions are stored in the REPL's intepreter 'locals' dictionary"""
-            function = self.repl.interpreter.__dict__['locals'][func_name]
-            # Check for the "autocompletions" attribute
-            if hasattr(function, "autocompletion"):
-                user_function_autocompletions.append(function.autocompletion)
-            else:
-                user_function_autocompletions.append(func_name)
-        self.repl.interpreter_add_references(user_function_autocompletions)
-        
-        # Update the styles of all objects
-        components.TheSquid.update_styles()
-        
-        # Display the successful import
-        self.display.write_to_statusbar("User functions imported successfully!")
+        try:
+            # Update the REPL autocompletions
+            import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_list(user_code)
+            # First get the function names
+            user_function_names = [func.name for func in function_nodes]
+            # Then get the autocompletions by testing if the function has
+            # the "autocompletion" attribute. Because in Python everything is an object,
+            # functions can also have attributes! Very nice!
+            user_function_autocompletions = []
+            for func_name in user_function_names:
+                """User functions are stored in the REPL's intepreter 'locals' dictionary"""
+                function = self.repl.interpreter.__dict__['locals'][func_name]
+                # Check for the "autocompletions" attribute
+                if hasattr(function, "autocompletion"):
+                    user_function_autocompletions.append(function.autocompletion)
+                else:
+                    user_function_autocompletions.append(func_name)
+            self.repl.interpreter_add_references(user_function_autocompletions)
+            
+            # Update the styles of all objects
+            components.TheSquid.update_styles()
+            
+            # Display the successful import
+            self.display.write_to_statusbar("User functions imported successfully!")
+        except:
+            message = "!! Error importing user functions !!"
+            self.display.repl_display_error(
+                "{}\n{}".format(traceback.format_exc(), message)
+            )
+            self.display.write_to_statusbar(message)
     
     def _reset_interpreter(self):
         new_references, ac_list_prim, ac_list_sec = self.get_references_autocompletions()
@@ -2363,14 +2371,14 @@ class MainWindow(data.QMainWindow):
                     self.display.write_to_statusbar(message)
                     basic_widget.widget(basic_widget.currentIndex()).setParent(None)
                     basic_widget.removeTab(basic_widget.currentIndex())
-                    return
+                    return None
                 except:
                     message = "Unexpected error occured while opening file!"
                     self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
                     self.display.write_to_statusbar(message)
                     basic_widget.widget(basic_widget.currentIndex()).setParent(None)
                     basic_widget.removeTab(basic_widget.currentIndex())
-                    return
+                    return None
                 #Reset the changed status of the current tab, 
                 #because adding the file content line by line was registered as a text change
                 basic_widget.reset_text_changed()
@@ -2386,6 +2394,7 @@ class MainWindow(data.QMainWindow):
                 basic_widget.currentWidget().setFocus()
                 #Update the Save/SaveAs buttons in the menubar
                 self.set_save_file_state(True)
+                return new_tab
             else:
                 message = "File cannot be read!\n"
                 message += "It's probably not a text file!"
@@ -2393,21 +2402,27 @@ class MainWindow(data.QMainWindow):
                     message, message_type=data.MessageType.ERROR
                 )
                 self.display.write_to_statusbar("File cannot be read!", 3000)
+            return None
         if isinstance(file, str) == True:
-            if file != None and file != "":
-                open_file_function(file, basic_widget)
+            if file != "":
+                new_tab = open_file_function(file, basic_widget)
                 self.repaint()
                 data.QCoreApplication.processEvents()
+                return new_tab
         elif isinstance(file, list) == True:
+            tabs = []
             for f in file:
-                open_file_function(f, basic_widget)
+                new_tab = open_file_function(f, basic_widget)
+                tabs.append(new_tab)
                 self.repaint()
                 data.QCoreApplication.processEvents()
+            return tabs
         else:
             self.display.repl_display_message(
                 "Unknown parameter type to 'open file' function!", 
                 message_type=data.MessageType.ERROR
             )
+            return None
             
     
     def check_open_file(self, file_with_path, basic_widget):
@@ -2752,10 +2767,10 @@ class MainWindow(data.QMainWindow):
                     return
             # Create lists of files in each window
             try:
-                main_files = self.get_window_documents("main")
-                upper_files = self.get_window_documents("upper")
-                lower_files = self.get_window_documents("lower")
-                if (main_files != [] or upper_files != []):
+                main = self.get_window_data("main")
+                upper = self.get_window_data("upper")
+                lower = self.get_window_data("lower")
+                if (main["files"] != [] or upper["files"] != []):
                     # Check if the session is already stored
                     session_found = False
                     for ssn in self._parent.settings.manipulator.stored_sessions:
@@ -2766,9 +2781,9 @@ class MainWindow(data.QMainWindow):
                     self._parent.settings.manipulator.add_session(
                         session_name,
                         session_group,
-                        main_files,
-                        upper_files,
-                        lower_files
+                        main,
+                        upper,
+                        lower
                     )
                     # Session added successfully
                     if session_group == None:
@@ -2825,25 +2840,43 @@ class MainWindow(data.QMainWindow):
             if session != None:
                 #Clear all documents from the main and upper window
                 self._parent.close_all_tabs()
-                #Add files to upper window
-                for file in session.upper_files:
-                    try:
-                        self._parent.open_file(file, self._parent.upper_window)
-                    except:
-                        self._parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
-                #Add files to lower window
-                for file in session.lower_files:
-                    try:
-                        self._parent.open_file(file, self._parent.lower_window)
-                    except:
-                        self._parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
-                #Add files to main window
-                for file in session.main_files:
-                    try:
-                        self._parent.open_file(file, self._parent.main_window)
-                    except Exception as ex:
-                        print(ex)
-                        self._parent.display.repl_display_message("Could not find session file:\n" + file, message_type=data.MessageType.ERROR)
+                # Add files to windows
+                restore_data = (
+                    ("Upper window files", self._parent.upper_window),
+                    ("Lower window files", self._parent.lower_window),
+                    ("Main window files", self._parent.main_window),
+                )
+                for name,window in restore_data:
+                    for item in session.storage[name]["files"]:
+                        try:
+                            if isinstance(item, str):
+                                file = item
+                                self._parent.open_file(file, window)
+                                
+                            elif isinstance(item, dict):
+                                file = item["path"]
+                                line = item["line"]
+                                index = item["index"]
+                                first_visible_line = item["first-visible-line"]
+                                tab = self._parent.open_file(file, window)
+                                tab.setCursorPosition(line, index)
+                                tab.setFirstVisibleLine(first_visible_line)
+                            else:
+                                raise Exception(
+                                    "Unknown type of session item: ".format(
+                                        item.__class__
+                                    )
+                                )
+                        except:
+                            traceback.print_exc()
+                            self._parent.display.repl_display_message(
+                                "Could not find upper session item:\n{}".format(
+                                    pprint.pformat(item)
+                                ),
+                                message_type=data.MessageType.ERROR
+                            )
+                    if window.count() > 0:
+                        window.setCurrentIndex(session.storage[name]["current-index"])
             else:
                 #Session was not found
                 if session_group == None:
@@ -2993,6 +3026,27 @@ class MainWindow(data.QMainWindow):
                                 if  window.widget(i).savable == data.CanSave.YES and
                                     window.widget(i).save_name != ""]
             return documents
+        
+        def get_window_data(self, window_name):
+            """Return all the editor document paths in the selected window as a list"""
+            window = self._parent.get_window_by_name(window_name)
+            window_data = {
+                "current-index": window.currentIndex(),
+                "files": [],
+            }
+            for i in range(window.count()):
+                if window.widget(i).savable == data.CanSave.YES and \
+                   window.widget(i).save_name != "":
+                    w = window.widget(i)
+                    line, index = w.getCursorPosition()
+                    new_data = {
+                        "path": w.save_name,
+                        "line": line,
+                        "index": index,
+                        "first-visible-line": w.firstVisibleLine(),
+                    }
+                    window_data["files"].append(new_data)
+            return window_data
     
     
     class View:
@@ -3481,8 +3535,7 @@ class MainWindow(data.QMainWindow):
                     data.theme.Indication.PassiveBorder, 
                     data.theme.Indication.PassiveBackGround
                 )
-            style_sheet += self.generate_treedisplay_colors("TreeDisplay")
-            style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
+            style_sheet = self._style_tree_widgets(style_sheet)
             return style_sheet
         
         def reset_repl_colors(self, in_sheet):
@@ -3591,49 +3644,50 @@ class MainWindow(data.QMainWindow):
             
             return style_sheet
         
-        def indicate_repl(self):
-            """Indicate that the REPL is focused by coloring the border"""
-            style_sheet = self.init_style_sheet()
-            style_sheet += self.generate_repl_colors(
-                data.theme.Indication.ActiveBorder, 
-                data.theme.Indication.ActiveBackGround
+        def _style_tree_widgets(self, style_sheet):
+            tree_widgets = (
+                "QTreeView",
+#                "TreeDisplay",
+#                "TreeDisplayBase",
+#                "TreeExplorer",
+#                "SessionGuiManipulator",
             )
-            windows = ["Main", "Upper", "Lower"]
-            for window in windows:
-                style_sheet += self.generate_window_colors(
-                    window, 
-                    data.theme.Indication.PassiveBorder, 
-                    data.theme.Indication.PassiveBackGround
-                )
-            style_sheet += self.generate_treedisplay_colors("TreeDisplay")
-            style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
-            self._parent.setStyleSheet(style_sheet)
+            for t in tree_widgets:
+                style_sheet += self.generate_treedisplay_colors(t)
+            return style_sheet
         
-        def indicate_window(self, window_name):
-            if (window_name != "Main" and 
-                window_name != "Upper" and 
-                window_name != "Lower"):
-                return
+        def indicate_window(self, window_name=None, repl=False):
             style_sheet = self.init_style_sheet()
-            style_sheet += self.generate_window_colors(
-                window_name, 
-                data.theme.Indication.ActiveBorder, 
-                data.theme.Indication.ActiveBackGround
-            )
+            # REPL
+            if repl:
+                style_sheet += self.generate_repl_colors(
+                    data.theme.Indication.ActiveBorder, 
+                    data.theme.Indication.ActiveBackGround
+                )
+            else:
+                style_sheet += self.generate_repl_colors(
+                    data.theme.Indication.PassiveBorder, 
+                    data.theme.Indication.PassiveBackGround
+                )
+            # Windows
             windows = ["Main", "Upper", "Lower"]
-            windows.remove(window_name)
+            if window_name:
+                style_sheet += self.generate_window_colors(
+                    window_name, 
+                    data.theme.Indication.ActiveBorder, 
+                    data.theme.Indication.ActiveBackGround
+                )
+                windows.remove(window_name)
             for window in windows:
                 style_sheet += self.generate_window_colors(
                     window, 
                     data.theme.Indication.PassiveBorder, 
                     data.theme.Indication.PassiveBackGround
                 )
-            style_sheet += self.generate_repl_colors(
-                data.theme.Indication.PassiveBorder, 
-                data.theme.Indication.PassiveBackGround
-            )
-            style_sheet += self.generate_treedisplay_colors("TreeDisplay")
-            style_sheet += self.generate_treedisplay_colors("SessionGuiManipulator")
+            # Tree widgets
+            style_sheet = self._style_tree_widgets(style_sheet)
+            
+            # Apply style sheet
             self._parent.setStyleSheet(style_sheet)
         
         def indication_check(self):
@@ -3677,7 +3731,7 @@ class MainWindow(data.QMainWindow):
             if (self._parent.repl.hasFocus() == True or
                 self._parent.repl_helper.hasFocus() == True):
                 self._parent.repl.indicated = True
-                self.indicate_repl()
+                self.indicate_window(repl=True)
                 return
             #If no widget has focus, reset the QMainWindows stylesheet
             self.reset_entire_style_sheet()
@@ -4422,6 +4476,18 @@ class MainWindow(data.QMainWindow):
                 statusbar_text = "LINE: " + str(cursor_line+1)
                 statusbar_text += " COLUMN: " + str(cursor_column+1)
                 self._parent.statusbar_label_left.setText(statusbar_text)
+        
+        def repl_display_success(self, *message):
+            self.repl_display_message(
+                *message, 
+                message_type=data.MessageType.SUCCESS
+            )
+        
+        def repl_display_error(self, *message):
+            self.repl_display_message(
+                *message, 
+                message_type=data.MessageType.ERROR
+            )
         
         def repl_display_message(self, 
                                  *message, 

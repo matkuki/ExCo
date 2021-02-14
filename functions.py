@@ -29,37 +29,52 @@ import subprocess
 # REPL message displaying function (that needs to be assigned at runtime!)
 repl_print = None
 
+icon_cache = {}
 def create_icon(icon_name):
     """
     Function for initializing and returning an QIcon object
     """
-    file_path = os.path.join(
-        data.resources_directory, 
+    global icon_cache
+    full_icon_path = unixify_path_join(
+        data.resources_directory,
         icon_name
     )
-    if not os.path.isfile(file_path):
-        raise Exception("Cannot find icon file: \"{}\"".format(file_path))
-    return data.QIcon(file_path)
+    if full_icon_path in icon_cache.keys():
+        cached_icon = icon_cache[full_icon_path]
+        return data.QIcon(cached_icon)
+    if not os.path.isfile(full_icon_path):
+        raise Exception("Icon file doesn't exist: {}".format(full_icon_path))
+    new_icon = data.QIcon(full_icon_path)
+    icon_cache[full_icon_path] = new_icon
+    return new_icon
 
-def create_pixmap(pixmap_name):
+pixmap_cache = {}
+def create_pixmap(pixmap_name, directory=None):
     """
     Function for initializing and returning an QPixmap object
     """
-    file_path = os.path.join(
-        data.resources_directory, 
-        pixmap_name
-    )
-    if not os.path.isfile(file_path):
-        raise Exception("Cannot find pixmap file: \"{}\"".format(file_path))
-    return data.QPixmap(file_path)
+    global pixmap_cache
+    if directory == None:
+        directory = data.resources_directory
+    pixmap_path = unixify_path_join(directory, pixmap_name)
+    if pixmap_path in pixmap_cache.keys():
+        cached_pixmap = pixmap_cache[pixmap_path]
+        return data.QPixmap(cached_pixmap)
+    if not os.path.isfile(pixmap_path):
+        raise Exception("Pixmap file doesn't exist: {}".format(pixmap_path))
+    new_pixmap = data.QPixmap(pixmap_path)
+    pixmap_cache[pixmap_path] = new_pixmap
+    return new_pixmap
 
-def create_pixmap_with_size(pixmap_name, height, width):
+def create_pixmap_with_size(pixmap_name, width=None, height=None):
     """
     Function for initializing and returning an QPixmap object with a size
     """
     pixmap = create_pixmap(pixmap_name)
-    pixmap = pixmap.scaledToWidth(32, data.Qt.SmoothTransformation)
-    pixmap = pixmap.scaledToHeight(32, data.Qt.SmoothTransformation)
+    if width:
+        pixmap = pixmap.scaledToWidth(width, data.Qt.SmoothTransformation)
+    if height:
+        pixmap = pixmap.scaledToHeight(height, data.Qt.SmoothTransformation)
     return pixmap
 
 def get_language_file_icon(language_name):

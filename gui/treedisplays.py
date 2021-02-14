@@ -185,7 +185,8 @@ class TreeDisplay(data.QTreeView):
     def update_icon_size(self):
         self.setIconSize(
             data.QSize(
-                data.tree_display_icon_size, data.tree_display_icon_size
+                data.tree_display_icon_size,
+                data.tree_display_icon_size
             )
         )
     
@@ -1830,6 +1831,9 @@ class TreeDisplayBase(data.QTreeView):
             print(ex)
     
     def clean_up(self):
+        if sip.isdeleted(self):
+            return
+        
         model = self.model()
         if model:
             root = model.invisibleRootItem()
@@ -1884,13 +1888,13 @@ class TreeDisplayBase(data.QTreeView):
     """
     def _create_standard_item(self, text, bold=False, icon=None):
         # Font
-        brush = data.QBrush(data.QColor(data.theme.Font.Python.Keyword[1]))
+#        brush = data.QBrush(data.QColor(data.theme.Font.Python.Keyword[1]))
         font = data.QFont("Courier", data.tree_display_font_size)
         font.setBold(bold)
         # Item initialization
         item = data.QStandardItem(text)
         item.setEditable(False)
-        item.setForeground(brush)
+#        item.setForeground(brush)
         item.setFont(font)
         # Set icon if needed
         if icon != None:
@@ -1965,6 +1969,9 @@ class TreeDisplayBase(data.QTreeView):
     """
     Public functions
     """
+    def update_styles(self):
+        self.update_icon_size()
+    
     def update_icon_size(self):
         self.setIconSize(
             data.QSize(

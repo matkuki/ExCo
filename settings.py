@@ -16,6 +16,8 @@ For complete license information of the dependencies, check the 'additional_lice
 import os
 import os.path
 import runpy
+import json
+import pprint
 import data
 import themes
 import functions
@@ -225,21 +227,23 @@ class Keys:
 Structure for storing session information
 -------------------------------------------
 """
+WINDOWS = (
+    "Main window files",
+    "Upper window files",
+    "Lower window files",
+)
+
 class Session:
     """Structure for storing single session information"""
     name        = ""
     group       = None
-    main_files  = []
-    upper_files = []
-    lower_files = []
+    storage     = {}
     def __init__(self, name):
         """Session initialization"""
-        #Initialization of class variables turns them into instance variables
-        self.name           = name
-        self.group          = None
-        self.main_files     = []
-        self.upper_files    = []
-        self.lower_files    = []
+        # Initialization of class variables turns them into instance variables
+        self.name = name
+        self.group = None
+        self.storage = {}
     
     @staticmethod
     def parse(session_dict):
@@ -269,9 +273,9 @@ class Session:
         """
         session = Session(session)
         session.group = in_sessions[session]['Group']
-        session.main_files = in_sessions[session]['Main window files']
-        session.upper_files = in_sessions[session]['Upper window files']
-        session.lower_files = in_sessions[session]['Lower window files']
+        for w in WINDOWS:
+            session.storage[w] = in_sessions[session][w]
+        return session
 
 
 """
@@ -289,7 +293,7 @@ class SettingsFileManipulator:
     application_directory           = ""
     resources_directory             = "resources/"
     level_spacing                   = "    "
-    max_number_of_recent_files      = 10
+    max_number_of_recent_files      = 80
     recent_files                    = []
     stored_sessions                 = []
     context_menu_functions          = {}
@@ -348,9 +352,15 @@ class SettingsFileManipulator:
         for session in in_sessions:
             current_session = Session(session)
             current_session.group = in_sessions[session]['Group']
-            current_session.main_files = in_sessions[session]['Main window files']
-            current_session.upper_files = in_sessions[session]['Upper window files']
-            current_session.lower_files = in_sessions[session]['Lower window files']
+            for w in WINDOWS:
+                items = in_sessions[session][w]
+                if isinstance(items, list):
+                    current_session.storage[w] = {
+                        "current-index": 0,
+                        "files": items,
+                    }
+                else:
+                    current_session.storage[w] = items
             parsed_sessions.append(current_session)
         return parsed_sessions
     
@@ -396,18 +406,22 @@ class SettingsFileManipulator:
             else:
                 print("'{}'".format(repr(session.name)))
                 raise Exception("[SETTINGS] Unknown session group type!")
-            settings_lines.append("        'Main window files': [")
-            for file in session.main_files:
-                settings_lines.append("            '{}',".format(file))
-            settings_lines.append("        ],")
-            settings_lines.append("        'Upper window files': [")
-            for file in session.upper_files:
-                settings_lines.append("            '{}',".format(file))
-            settings_lines.append("        ],")
-            settings_lines.append("        'Lower window files': [")
-            for file in session.lower_files:
-                settings_lines.append("            '{}',".format(file))
-            settings_lines.append("        ],")
+            windows = {
+                "Main": session.storage[WINDOWS[0]],
+                "Upper": session.storage[WINDOWS[1]],
+                "Lower": session.storage[WINDOWS[2]],
+            }
+            for name,fields in windows.items():
+                settings_lines.append("        '{} window files': {{".format(name))
+                settings_lines.append("            'current-index': {},".format(fields["current-index"]))
+                settings_lines.append("            'files': [".format(fields["current-index"]))
+                for item in fields["files"]:
+                    if isinstance(item, dict):
+                        settings_lines.append("                {},".format(item))
+                    else:
+                        settings_lines.append("                '{}',".format(item))
+                settings_lines.append("            ],")
+                settings_lines.append("        },")
             settings_lines.append("    },")
         settings_lines.append("}")
         #Save the file to disk
@@ -491,18 +505,18 @@ class SettingsFileManipulator:
     def add_session(self, 
                     session_name, 
                     session_group, 
-                    main_files, 
-                    upper_files, 
-                    lower_files):
+                    main, 
+                    upper, 
+                    lower):
         """Add a new session to the stored session list"""
         #Create the new session object
         session = Session(session_name)
         #Store the group name
         session.group = session_group
         #Add the files to the session
-        session.main_files.extend(main_files)
-        session.upper_files.extend(upper_files)
-        session.lower_files.extend(lower_files)
+        session.storage["Main window files"] = main
+        session.storage["Upper window files"] = upper
+        session.storage["Lower window files"] = lower
         #Check if a session with the same name is already in the stored sessions list
         session_found = False
         for i, s in enumerate(self.stored_sessions):

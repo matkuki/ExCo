@@ -15,6 +15,7 @@ import gui
 import re
 import math
 import typing
+import sip
 
 
 class IconManipulator:
@@ -72,8 +73,9 @@ class IconManipulator:
     def remove_corner_groupbox(self):
         if self.corner_groupbox == None:
             return
-        self.corner_groupbox.setParent(None)
-        self.corner_groupbox.deleteLater()
+        if not sip.isdeleted(self.corner_groupbox):
+            self.corner_groupbox.setParent(None)
+            self.corner_groupbox.deleteLater()
     
     def create_corner_button(self, icon, tooltip, function):
         button = data.QToolButton()
