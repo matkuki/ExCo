@@ -27,7 +27,7 @@ path = os.path.dirname(os.path.abspath(__file__))
 for m in os.listdir(path):
     if m.startswith("__"):
         continue
-    module_name = "components.{}".format(m.replace(".py", ''))
+    module_name = "components.{}".format(m.replace(".pyc", '').replace(".pyd", '').replace(".py", ''))
     module = importlib.import_module(module_name)
     globals().update(
         {n: getattr(module, n) for n in module.__all__} if hasattr(module, '__all__') 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2019 Matic Kukovec. 
+Copyright (c) 2013-2021 Matic Kukovec. 
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -16,7 +16,7 @@ path = os.path.dirname(os.path.abspath(__file__))
 for m in os.listdir(path):
     if m.startswith("__"):
         continue
-    module_name = ".{}".format(m.replace(".py", ''))
+    module_name = ".{}".format(m.replace(".pyc", '').replace(".pyd", '').replace(".py", ''))
     module = importlib.import_module(module_name, "gui")
     globals().update(
         {n: getattr(module, n) for n in module.__all__} if hasattr(module, '__all__') 
