@@ -2652,10 +2652,7 @@ class MainWindow(data.QMainWindow):
             # Get the reference to the MainWindow parent object instance
             self._parent = parent
             # Initialize the Ex.Co. settings object with the current working directory
-            self.manipulator = settings.SettingsFileManipulator(
-                data.application_directory, 
-                data.resources_directory
-            )
+            self.manipulator = settings.SettingsFileManipulator()
         
         def update_recent_list(self, new_file=None):
             """Update the settings manipulator with the new file"""

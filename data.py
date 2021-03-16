@@ -14,7 +14,11 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import sys
+import inspect
+import pathlib
 import platform
+
+file_directory = os.path.dirname(inspect.getfile(inspect.currentframe()))
 
 
 """
@@ -178,7 +182,16 @@ log_window = None
 # Global reference to the Qt application
 application = None
 # Global string with the application directory
-application_directory = ""
+application_directory = file_directory
+# Home directory
+home_directory = os.path.realpath(str(pathlib.Path.home())) \
+    .replace('\\', '/')
+# Global string with the resources directory
+resources_directory = os.path.join(application_directory,  "resources") \
+    .replace('\\', '/')
+# Global settings directory
+settings_directory = os.path.join(home_directory, ".exco") \
+    .replace('\\', '/')
 # Global string variable for the current platform name ("Windows", "Linux", ...),
 # and a flag if running on the Raspberry PI
 platform = platform.system()
@@ -186,7 +199,8 @@ on_rpi = False
 if os.name == "posix":
     on_rpi = (os.uname()[1] == "raspberrypi")
 # User configuration file
-config_file = "userfunctions.cfg"
+config_file = os.path.join(settings_directory,  "userfunctions.cfg") \
+    .replace('\\', '/')
 # Default user configuration file content
 default_config_file_content = '''
 # -*- coding: utf-8 -*-
@@ -254,13 +268,13 @@ delete_files_in_dir.autocompletion = "delete_files_in_dir(extension=\"\", direct
 """
 
 '''
-# Global string with the resources directory
-resources_directory = "resources"
 # Application icon image that will be displayed on all Qt widgets
-application_icon = "exco-icon.png"
+application_icon = os.path.join(resources_directory,  "exco-icon.png") \
+    .replace('\\', '/')
 # Ex.Co. information image displayed when "About Ex.Co" 
 # action is clicked in the menubar "Help" menu
-about_image = "exco-info.png"
+about_image = os.path.join(resources_directory,  "exco-info.png") \
+    .replace('\\', '/')
 # Terminal console program used on GNU/Linux
 terminal = "x-terminal-emulator"
 # Default tree display font size (file-tree, node-tree, ...)

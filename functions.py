@@ -29,6 +29,10 @@ import subprocess
 # REPL message displaying function (that needs to be assigned at runtime!)
 repl_print = None
 
+def create_directory(directory):
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+
 icon_cache = {}
 def create_icon(icon_name):
     """
@@ -2716,8 +2720,8 @@ def get_line_indentation(line):
 def unixify_path(path):
     return os.path.realpath(path).replace("\\", "/")
 
-def unixify_path_join(first_path, second_path):
-    return unixify_path(os.path.join(first_path, second_path))
+def unixify_path_join(*paths):
+    return unixify_path(os.path.join(*paths))
 
 def unixify_path_remove(whole_path, path_to_remove):
     return unixify_path(os.path.relpath(whole_path, path_to_remove))

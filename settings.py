@@ -289,9 +289,9 @@ class SettingsFileManipulator:
     """
     #Class variables
     settings_filename               = "exco.ini"
-    settings_filename_with_path     = ""
-    application_directory           = ""
-    resources_directory             = "resources/"
+    settings_filename_with_path     = None
+    application_directory           = None
+    resources_directory             = None
     level_spacing                   = "    "
     max_number_of_recent_files      = 80
     recent_files                    = []
@@ -317,13 +317,14 @@ class SettingsFileManipulator:
         "sessions = {}", 
     ]
     
-    def __init__(self, app_dir, res_dir):
+    def __init__(self):
         #Assign the application directory
-        self.application_directory  = app_dir
-        self.resources_directory    = res_dir
-        #Join the application directory with the settings filename
-        self.settings_filename_with_path = os.path.join(
-            self.application_directory, 
+        self.application_directory = data.application_directory
+        self.resources_directory = data.resources_directory
+        # Create the settings file path
+        functions.create_directory(data.settings_directory)
+        self.settings_filename_with_path = functions.unixify_path_join(
+            data.settings_directory,
             self.settings_filename
         )
         #Check if the settings file exists

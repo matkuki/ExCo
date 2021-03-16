@@ -112,28 +112,6 @@ def main():
             file_arguments = [options.single_file]
     if file_arguments == ['']:
         file_arguments = None
-    #Get the application directory
-    if getattr(sys, 'frozen', False):
-        # frozen
-        data.application_directory = os.path.dirname(sys.executable).replace("\\", "/")
-    else:
-        # unfrozen
-        data.application_directory = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
-    #Check if Ex.Co. is run as a cx_freeze executable (the path will contain library.zip)
-    if data.application_directory.endswith(".zip"):
-        data.application_directory = os.path.dirname(data.application_directory)
-    #Set the resources directory
-    data.resources_directory = os.path.join(data.application_directory,  "resources")
-    #Combine the application path with the Ex.Co. icon file name (the icon file name is set in the global module)
-    data.application_icon = os.path.join(
-        data.resources_directory,
-        data.application_icon
-    )
-    #Combine the application path with the Ex.Co. information file name (the information file name is set in the global module)
-    data.about_image = os.path.join(
-        data.resources_directory,
-        data.about_image
-    )
     #Create QT application, needed to use QT forms
     app = data.QApplication(sys.argv)
     #Save the Qt application to the global reference
