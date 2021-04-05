@@ -3534,16 +3534,12 @@ class MainWindow(data.QMainWindow):
                     background: {color_handle_hover};
                 }}
                 
-                QScrollBar::sub-line:horizontal, QScrollBar::add-line:horizontal {{
-                    background: none;
-                }}
-                
-                QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {{
-                    background: none;
-                }}
-                
+                QScrollBar::sub-line:horizontal, QScrollBar::add-line:horizontal,
+                QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal,
                 QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
                     background: none;
+                    width: 0px;
+                    height: 0px;
                 }}
                 
                 /*
@@ -3566,18 +3562,8 @@ class MainWindow(data.QMainWindow):
                     background: {color_handle_hover};
                 }}
                 
-                QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {{
-                    background: none;
-                    width: 0px;
-                    height: 0px;
-                }}
-                
-                QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {{
-                    background: none;
-                    width: 0px;
-                    height: 0px;
-                }}
-                
+                QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical,
+                QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical,
                 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
                     background: none;
                     width: 0px;
