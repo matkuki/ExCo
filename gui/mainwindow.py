@@ -3503,7 +3503,91 @@ class MainWindow(data.QMainWindow):
             if self._parent.settings.gui_manipulator != None:
                 self._parent.settings.gui_manipulator.hide()
         
-        def init_style_sheet(self):            
+        def __generate_scrollbar_style(self):
+            down_arrow_image = functions.get_resource_file("feather/air-grey/chevron-down.svg")
+            down_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-down.svg")
+            up_arrow_image = functions.get_resource_file("feather/air-grey/chevron-up.svg")
+            up_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-up.svg")
+            width = 10
+            height = 10
+            color_background = "#f0f0f0"
+            color_handle = "#cdcdcd"
+            color_handle_hover = "#a6a6a6"
+            style_sheet = (f"""
+                /*
+                    Horizontal
+                */
+                QScrollBar:horizontal {{
+                    border: none;
+                    background: {color_background};
+                    height: {height}px;
+                    margin: 0px 0px 0px 0px;
+                }}
+                QScrollBar::handle:horizontal {{
+                    background: {color_handle};
+                    min-width: 20px;
+                }}
+                QScrollBar::handle:hover {{
+                    background: {color_handle_hover};
+                }}
+                QScrollBar::handle:horizontal:pressed {{
+                    background: {color_handle_hover};
+                }}
+                
+                QScrollBar::sub-line:horizontal, QScrollBar::add-line:horizontal {{
+                    background: none;
+                }}
+                
+                QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {{
+                    background: none;
+                }}
+                
+                QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+                    background: none;
+                }}
+                
+                /*
+                    Vertical
+                */
+                QScrollBar:vertical {{
+                    border: none;
+                    background: {color_background};
+                    width: {width}px;
+                    margin: 0px 0px 0px 0px;
+                }}
+                QScrollBar::handle:vertical {{
+                    background: {color_handle};
+                    min-height: 20px;
+                }}
+                QScrollBar::handle:hover {{
+                    background: {color_handle_hover};
+                }}
+                QScrollBar::handle:vertical:pressed {{
+                    background: {color_handle_hover};
+                }}
+                
+                QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {{
+                    background: none;
+                    width: 0px;
+                    height: 0px;
+                }}
+                
+                QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {{
+                    background: none;
+                    width: 0px;
+                    height: 0px;
+                }}
+                
+                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                    background: none;
+                    width: 0px;
+                    height: 0px;
+                }}
+            """)
+            return style_sheet
+            
+        
+        def init_style_sheet(self):
             style_sheet = (f"""
                 #Form {{
                     background-color: {data.theme.Form};
@@ -3520,6 +3604,7 @@ class MainWindow(data.QMainWindow):
                 QSplitter::handle {{
                     background: {data.theme.Form};
                 }}
+                {self.__generate_scrollbar_style()}
             """)
             return style_sheet
         
@@ -3807,6 +3892,7 @@ class MainWindow(data.QMainWindow):
     
         def create_recent_file_list_menu(self):
             self._parent.recent_files_menu = data.QMenu("Recent Files")
+            self._parent.recent_files_menu.setStyleSheet("QMenu { menu-scrollable: 1; }")
             temp_icon = functions.create_icon('tango_icons/file-recent-files.png')
             self._parent.recent_files_menu.setIcon(temp_icon)
             return self._parent.recent_files_menu

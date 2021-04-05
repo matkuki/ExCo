@@ -18,7 +18,12 @@ import inspect
 import pathlib
 import platform
 
-file_directory = os.path.dirname(inspect.getfile(inspect.currentframe()))
+if getattr(sys, "frozen", False):
+    # The application is frozen
+    file_directory = os.path.dirname(sys.executable)
+else:
+    # The application is not frozen
+    file_directory = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 
 """
@@ -174,7 +179,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "6.15"
+application_version = "6.16"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere

@@ -52,6 +52,12 @@ def create_icon(icon_name):
     icon_cache[full_icon_path] = new_icon
     return new_icon
 
+def get_resource_file(relative_path):
+    path = unixify_path_join(data.resources_directory, relative_path)
+    if not os.path.isfile(path):
+        raise Exception(f"[Resources] File does not exist: {path}")
+    return path
+
 pixmap_cache = {}
 def create_pixmap(pixmap_name, directory=None):
     """

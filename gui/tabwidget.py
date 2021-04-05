@@ -53,12 +53,45 @@ class BasicWidget(data.QTabWidget):
         
         def __init__(self, parent):
             """Initialize the tab bar object"""
-            #Initialize superclass
+            # Initialize superclass
             super().__init__(parent)
-            #Store the parent reference
+            # Store the parent reference
             self._parent = parent
-            #Store the main form reference
+            # Store the main form reference
             self.main_form = self._parent._parent
+            # Set style
+            self.__set_style()
+        
+        def __set_style(self):
+            close_image = functions.get_resource_file("feather/air-grey/x.svg")
+            close_hover_image = functions.get_resource_file("feather/air-blue/x.svg")
+            right_arrow_image = functions.get_resource_file("feather/air-grey/chevron-right.svg")
+            right_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-right.svg")
+            left_arrow_image = functions.get_resource_file("feather/air-grey/chevron-left.svg")
+            left_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-left.svg")
+            style = f"""
+                QTabBar::close-button {{
+                    image: url({close_image})
+                }}
+                QTabBar::close-button:hover {{
+                    image: url({close_hover_image})
+                }}
+                
+                QTabBar QToolButton::right-arrow {{
+                    image: url({right_arrow_image});
+                }}
+                QTabBar QToolButton::right-arrow:hover {{
+                    image: url({right_arrow_hover_image});
+                }}
+                
+                QTabBar QToolButton::left-arrow {{
+                    image: url({left_arrow_image});
+                }}
+                QTabBar QToolButton::left-arrow:hover {{
+                    image: url({left_arrow_hover_image});
+                }}
+            """
+            self.setStyleSheet(style)
         
         def mousePressEvent(self, event):
             #Execute the superclass event method
