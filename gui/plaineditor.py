@@ -203,5 +203,10 @@ class PlainEditor(data.QsciScintilla):
             data.QsciScintillaBase.SCI_SETCARETFORE, 
             theme.Cursor
         )
+        self.setStyleSheet(f"""
+            QsciScintilla {{
+                background-color: {data.theme.Indication.PassiveBackGround};
+            }}
+        """)
 
 

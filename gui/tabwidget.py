@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2019 Matic Kukovec.
+Copyright (c) 2013-2021 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -33,6 +33,7 @@ from .customeditor import *
 from .dialogs import *
 from .plaineditor import *
 from .treedisplays import *
+from .menu import *
 
 
 """
@@ -60,9 +61,9 @@ class BasicWidget(data.QTabWidget):
             # Store the main form reference
             self.main_form = self._parent._parent
             # Set style
-            self.__set_style()
+            self.set_style()
         
-        def __set_style(self):
+        def set_style(self):
             close_image = functions.get_resource_file("feather/air-grey/x.svg")
             close_hover_image = functions.get_resource_file("feather/air-blue/x.svg")
             right_arrow_image = functions.get_resource_file("feather/air-grey/chevron-right.svg")
@@ -77,6 +78,11 @@ class BasicWidget(data.QTabWidget):
                     image: url({close_hover_image})
                 }}
                 
+                QTabBar QToolButton {{
+                    margin-bottom: 1px;
+                    margin-left: 1px;
+                }}
+                
                 QTabBar QToolButton::right-arrow {{
                     image: url({right_arrow_image});
                 }}
@@ -89,6 +95,26 @@ class BasicWidget(data.QTabWidget):
                 }}
                 QTabBar QToolButton::left-arrow:hover {{
                     image: url({left_arrow_hover_image});
+                }}
+                
+                QTabBar::tab {{
+                    background: {data.theme.Indication.PassiveBackGround};
+                    border: 1px solid {data.theme.Indication.PassiveBorder};
+                    border-bottom-color: {data.theme.Indication.PassiveBackGround};
+                    padding-top: 2px;
+                    padding-bottom: 2px;
+                    padding-left: 4px;
+                    padding-right: 4px;
+                    color: {data.theme.Font.DefaultHtml};
+                }}
+                QTabBar::tab:hover {{
+                    background: {data.theme.Indication.Hover};
+                    border-bottom-color: {data.theme.Indication.Hover};
+                }}
+                QTabBar::tab:selected {{
+                    background: {data.theme.Indication.ActiveBackGround};
+                    border: 1px solid {data.theme.Indication.ActiveBorder};
+                    border-bottom-color: {data.theme.Indication.PassiveBackGround};
                 }}
             """
             self.setStyleSheet(style)
@@ -136,7 +162,7 @@ class BasicWidget(data.QTabWidget):
                 # Accept the event
                 event.accept()
     
-    class TabMenu(data.QMenu):
+    class TabMenu(Menu):
         """Custom menu that appears when right clicking a tab"""
         def __init__(self, parent, main_form, basic_widget, editor_widget, cursor_position):
             #Nested function for creating a move or copy action
@@ -456,6 +482,7 @@ class BasicWidget(data.QTabWidget):
             components.TheSquid.customize_menu_style(self.tabBar())
             self.tabBar().setFont(self.default_tab_font)
             self.setIconSize(self.default_icon_size)
+        self.tabBar().set_style()
 
     def _drag_filter(self, event):
         self.drag_dropped_file  = None

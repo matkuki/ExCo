@@ -41,10 +41,13 @@ from .plaineditor import *
 from .customeditor import *
 from .repllineedit import *
 from .replhelper import *
+from .replbox import *
 from .sessionguimanipulator import *
 from .settingsguimanipulator import *
 from .textdiffer import *
 from .treedisplays import *
+from .menu import *
+from .themeindicator import *
 
 
 """
@@ -504,9 +507,13 @@ class MainWindow(data.QMainWindow):
                     encoding=encoding, 
                     line_ending=line_ending
                 )
-                #Set the icon if it was set by the lexer
+                if encoding == "cp1250":
+                    self.display.repl_display_success("Saved file {} in ANSI encoding.".format(focused_tab.save_name))
+                elif encoding == "ascii":
+                    self.display.repl_display_success("Saved file {} in ASCII encoding.".format(focused_tab.save_name))
+                # Set the icon if it was set by the lexer
                 focused_tab.icon_manipulator.update_icon(focused_tab)
-                #Reimport the user configuration file and update the menubar
+                # Reimport the user configuration file and update the menubar
                 if functions.is_config_file(focused_tab.save_name) == True:
                     self.update_menubar()
                     self.import_user_functions()
@@ -639,7 +646,9 @@ class MainWindow(data.QMainWindow):
             self.repl.setCursorPosition(cursor_position)
         # File menu
         def construct_file_menu():
-            file_menu = self.menubar.addMenu("&File")
+#            file_menu = self.menubar.addMenu("&File")
+            file_menu = Menu("&File")
+            self.menubar.addMenu(file_menu)
             file_menu.installEventFilter(click_filter)
             # New file
             def special_create_new_file():
@@ -667,7 +676,7 @@ class MainWindow(data.QMainWindow):
             # Additional menu for saving in different encodings
             def add_save_in_different_encoding_submenu():
                 # Add the save in encoding menu
-                self.save_in_encoding = data.QMenu("Save in encoding...")
+                self.save_in_encoding = Menu("Save in encoding...")
                 self.save_in_encoding.setEnabled(False)
                 temp_icon = functions.create_icon('tango_icons/document-save-as.png')
                 self.save_in_encoding.setIcon(temp_icon)
@@ -760,7 +769,8 @@ class MainWindow(data.QMainWindow):
         #Edit Menus
         #Adding the basic options to the menu
         def construct_edit_basic_menu():
-            edit_menu   = self.menubar.addMenu("&Editing")
+            edit_menu = Menu("&Editing")
+            self.menubar.addMenu(edit_menu)
             edit_menu.installEventFilter(click_filter)
             def copy():
                 try:
@@ -1116,7 +1126,8 @@ class MainWindow(data.QMainWindow):
             edit_menu.addAction(select_to_end_action)
             edit_menu.addAction(rect_block_action)
         def construct_edit_advanced_menu():
-            edit_menu = self.menubar.addMenu("&Advanced")
+            edit_menu = Menu("&Advanced")
+            self.menubar.addMenu(edit_menu)
             edit_menu.installEventFilter(click_filter)
             #Nested special function for finding text in the currentlly focused custom editor
             def special_find():
@@ -1563,7 +1574,8 @@ class MainWindow(data.QMainWindow):
             edit_menu.addAction(replace_all_in_documents_action)
         #System menu
         def construct_system_menu():
-            system_menu = self.menubar.addMenu("S&ystem")
+            system_menu = Menu("S&ystem")
+            self.menubar.addMenu(system_menu)
             system_menu.installEventFilter(click_filter)
             def special_find_in():
                 #The second argument is raw, so that single backslashes work for windows paths
@@ -1740,7 +1752,8 @@ class MainWindow(data.QMainWindow):
             parent.addMenu(lexers_menu)
         #View menu
         def construct_view_menu():
-            view_menu = self.menubar.addMenu("&View")
+            view_menu = Menu("&View")
+            self.menubar.addMenu(view_menu)
             view_menu.installEventFilter(click_filter)
             #Show/hide the function wheel
             function_wheel_toggle_action = create_action(
@@ -1912,7 +1925,8 @@ class MainWindow(data.QMainWindow):
                     self.get_tab_by_focus().bookmarks.toggle()
                 except:
                     pass
-            bookmark_menu = view_menu.addMenu("&Bookmarks")
+            bookmark_menu = Menu("&Bookmarks")
+            view_menu.addMenu(bookmark_menu)
             bookmark_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/bookmarks.png')
             bookmark_menu.setIcon(temp_icon)
@@ -1935,11 +1949,13 @@ class MainWindow(data.QMainWindow):
             )
             bookmark_menu.addAction(bookmark_clear_action)
             bookmark_menu.addSeparator()
-            bookmark_goto_menu = bookmark_menu.addMenu("Go To")
+            bookmark_goto_menu = Menu("Go To")
+            bookmark_menu.addMenu(bookmark_goto_menu)
             bookmark_goto_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/bookmarks-goto.png')
             bookmark_goto_menu.setIcon(temp_icon)
-            bookmark_store_menu = bookmark_menu.addMenu("Store")
+            bookmark_store_menu = Menu("Store")
+            bookmark_menu.addMenu(bookmark_store_menu)
             bookmark_store_menu.installEventFilter(click_filter)
             temp_icon = functions.create_icon('tango_icons/bookmarks-store.png')
             bookmark_store_menu.setIcon(temp_icon)
@@ -2029,7 +2045,8 @@ class MainWindow(data.QMainWindow):
             view_menu.addAction(toggle_cursor_line_action)
         #REPL menu
         def construct_repl_menu():
-            repl_menu = self.menubar.addMenu("&REPL")
+            repl_menu = Menu("&REPL")
+            self.menubar.addMenu(repl_menu)
             repl_menu.installEventFilter(click_filter)
             repeat_eval_action = create_action(
                 'REPL Repeat Command',
@@ -2063,7 +2080,8 @@ class MainWindow(data.QMainWindow):
             repl_menu.addAction(repl_focus_multi_action)
         #Sessions menu
         def construct_sessions_menu():
-            sessions_menu = self.menubar.addMenu("Sessions")
+            sessions_menu = Menu("Sessions")
+            self.menubar.addMenu(sessions_menu)
             sessions_menu.installEventFilter(click_filter)
             def add_session():
                 repl_text_input(text='session_add("", session_group=None)', cursor_position=13)
@@ -2091,7 +2109,7 @@ class MainWindow(data.QMainWindow):
                 self.display.show_session_editor
             )
             #Sessions menu
-            self.sessions_menu = data.QMenu("Sessions")
+            self.sessions_menu = Menu("Sessions")
             self.sessions_menu.setIcon(functions.create_icon('tango_icons/sessions.png'))
             sessions_menu.addAction(add_session_action)
             sessions_menu.addAction(remove_session_action)
@@ -2100,7 +2118,8 @@ class MainWindow(data.QMainWindow):
             sessions_menu.addMenu(self.sessions_menu)
         # Settings menu
         def construct_settings_menu():
-            settings_menu = self.menubar.addMenu("Settings")
+            settings_menu = Menu("Settings")
+            self.menubar.addMenu(settings_menu)
             settings_menu.installEventFilter(click_filter)
             def show_settings():
                 self.view.show_settings_gui_manipulator()
@@ -2115,7 +2134,8 @@ class MainWindow(data.QMainWindow):
             settings_menu.addAction(show_gui_action)
         #Help menu
         def construct_help_menu():
-            help_menu = self.menubar.addMenu("&Help")
+            help_menu = Menu("&Help")
+            self.menubar.addMenu(help_menu)
             help_menu.installEventFilter(click_filter)
             self.fm = help_menu
             about_action = create_action(
@@ -2159,17 +2179,11 @@ class MainWindow(data.QMainWindow):
     
     def _init_repl(self):
         """Initialize everything that concerns the REPL"""
-        #Initialize the Python REPL widget
-        self.repl = ReplLineEdit(self, interpreter_references=self.get_form_references())
-        self.repl.setObjectName("REPL_line")
-        self.repl_helper = ReplHelper(self, self.repl)
-        self.repl_helper.setObjectName("REPL_multiline")
-        #Initialize the groupbox that the REPL will be in, and place the REPL widget into it
-        self.repl_box = data.QGroupBox("Python Interactive Interpreter (REPL)")
-        repl_layout = data.QVBoxLayout()
-        repl_layout.addWidget(self.repl)
-        repl_layout.addWidget(self.repl_helper)
-        self.repl_box.setLayout(repl_layout)
+        # Initialize the groupbox that the REPL will be in, and place the REPL widget into it
+        self.repl_box = ReplBox(self, self.get_form_references())
+        # Initialize the Python REPL widget
+        self.repl = self.repl_box.repl
+        self.repl_helper = self.repl_box.repl_helper
     
     def _init_interpreter(self):
         """
@@ -2993,7 +3007,8 @@ class MainWindow(data.QMainWindow):
                 for folder in group:
                     new_group = current_node.subgroup_get(folder)
                     if new_group == None:
-                        new_group = current_node.reference.addMenu(folder)
+                        new_group = Menu(folder)
+                        current_node.reference.addMenu(new_group)
                         new_group.setIcon(functions.create_icon('tango_icons/folder.png'))
                     current_node = current_node.subgroup_create(folder, new_group)
             # Loop through all of the stored sessions and add them
@@ -3401,26 +3416,8 @@ class MainWindow(data.QMainWindow):
             elif (type == data.ReplType.MULTI_LINE and 
                 self.repl_state == data.ReplType.MULTI_LINE):
                 return
-            #Initialize the groupbox that the REPL will be in, and place the REPL widget into it
-            self._parent.repl_box = data.QGroupBox("Python Interactive Interpreter (REPL)")
-            self._parent.repl_box.setObjectName("REPL_Box")
-            repl_layout = data.QVBoxLayout()
-            repl_layout.setContentsMargins(4,4,4,4)
-            repl_layout.setSpacing(0)
-            repl_layout.addWidget(self._parent.repl)
-            repl_layout.addWidget(self._parent.repl_helper)
-            #Set which REPL widget will be displayed
-            if type == data.ReplType.SINGLE_LINE:
-                self._parent.repl.setVisible(True)
-                self._parent.repl_helper.setVisible(False)
-                self.repl_state = data.ReplType.SINGLE_LINE
-                self.main_relation = 55
-            else:
-                self._parent.repl.setVisible(False)
-                self._parent.repl_helper.setVisible(True)
-                self.repl_state = data.ReplType.MULTI_LINE
-                self.main_relation = 100
-            self._parent.repl_box.setLayout(repl_layout)
+            # Reinitialize the groupbox that holds the REPL
+            self._parent.repl_box.set_repl(type)
             #Refresh the layout
             self._parent.view.set_basic_widgets(
                 main_widget=self._parent.main_window,
@@ -3510,9 +3507,9 @@ class MainWindow(data.QMainWindow):
             up_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-up.svg")
             width = 10
             height = 10
-            color_background = "#f0f0f0"
-            color_handle = "#cdcdcd"
-            color_handle_hover = "#a6a6a6"
+            color_background = data.theme.ScrollBar.background
+            color_handle = data.theme.ScrollBar.handle
+            color_handle_hover = data.theme.ScrollBar.handle_hover
             style_sheet = (f"""
                 /*
                     Horizontal
@@ -3590,6 +3587,16 @@ class MainWindow(data.QMainWindow):
                 QSplitter::handle {{
                     background: {data.theme.Form};
                 }}
+                QMenuBar {{
+                    background-color: {data.theme.Indication.PassiveBackGround};
+                    color: {data.theme.Font.DefaultHtml};
+                }}
+                QMenuBar::item {{
+                    background-color: transparent;
+                }}
+                QMenuBar::item:selected {{
+                    background-color: {data.theme.Indication.Hover};
+                }}
                 {self.__generate_scrollbar_style()}
             """)
             return style_sheet
@@ -3606,19 +3613,12 @@ class MainWindow(data.QMainWindow):
             style_sheet = self._style_tree_widgets(style_sheet)
             return style_sheet
         
-        def reset_repl_colors(self, in_sheet):
-            style_sheet = in_sheet
-            style_sheet += self.generate_repl_colors(
-                data.theme.Indication.PassiveBorder, 
-                data.theme.Indication.PassiveBackGround
-            )
-            return style_sheet
-        
         def reset_entire_style_sheet(self):
             style_sheet = self.init_style_sheet()
             style_sheet = self.reset_window_colors(style_sheet)
-            style_sheet = self.reset_repl_colors(style_sheet)
             self._parent.setStyleSheet(style_sheet)
+            Menu.update_styles()
+            self._parent.repl_box.indication_reset()
         
         def generate_window_colors(self, window_name, border, background):
             style_sheet = (f"""
@@ -3626,44 +3626,19 @@ class MainWindow(data.QMainWindow):
                     border: 2px solid {border};
                     background-color: {background};
                 }}
-            """)
-            return style_sheet
-        
-        def generate_repl_colors(self, border, background):
-            style_sheet = (f"""
-                #REPL_Box {{
-                    font-size: 8pt;
-                    font-weight: bold;
-                    color: {border};
-                    background-color: {data.theme.Indication.PassiveBackGround};
-                    border: 2px solid {border};
-                    border-radius: 0px;
-                    margin-top: 4px;
+                #{window_name} QToolButton {{
+                    background: {data.theme.Indication.PassiveBackGround};
+                    border: 1px solid {data.theme.Indication.PassiveBorder};
+                    margin-top: 0px;
                     margin-bottom: 0px;
                     margin-left: 0px;
-                    margin-right: 0px;
-                    padding-top: 0px;
-                    padding-bottom: 0px;
-                    padding-left: 0px;
-                    padding-right: 0px;
+                    margin-right: 1px;
                 }}
-                #REPL_Box::title {{
-                    color: {data.theme.Indication.ActiveBorder};
-                    subcontrol-position: top left;
-                    padding: 0px; 
-                    left: 8px;
-                    top: -6px;
+                #{window_name} QToolButton:hover {{
+                    background: {data.theme.Indication.ActiveBackGround};
+                    border: 1px solid {data.theme.Indication.ActiveBorder};
                 }}
             """)
-            # REPL and REPL helper have to be set directly
-            self._parent.repl.setStyleSheet(
-                "color: rgb({0}, {1}, {2});".format(
-                    data.theme.Font.Default.red(), 
-                    data.theme.Font.Default.green(), 
-                    data.theme.Font.Default.blue()
-                ) +
-                "background-color: {0};".format(background)
-            )
             return style_sheet
         
         def generate_treedisplay_colors(self, type):
@@ -3682,20 +3657,20 @@ class MainWindow(data.QMainWindow):
             if data.theme != themes.Air:
                 shrink_icon = expand_icon = os.path.join(
                     data.resources_directory, 
-                    "tango_icons/shrink-negative.png"
+                    "feather/air-light-grey/chevron-down.svg"
                 ).replace("\\", "/")
                 expand_icon = os.path.join(
                     data.resources_directory, 
-                    "tango_icons/expand-negative.png"
+                    "feather/air-light-grey/chevron-right.svg"
                 ).replace("\\", "/")
             else:
                 shrink_icon = expand_icon = os.path.join(
                     data.resources_directory, 
-                    "tango_icons/shrink-positive.png"
+                    "feather/air-grey/chevron-down.svg"
                 ).replace("\\", "/")
                 expand_icon = os.path.join(
                     data.resources_directory, 
-                    "tango_icons/expand-positive.png"
+                    "feather/air-grey/chevron-right.svg"
                 ).replace("\\", "/")
             style_sheet += (
                 type + "::branch:closed:has-children:!has-siblings," +
@@ -3728,15 +3703,9 @@ class MainWindow(data.QMainWindow):
             style_sheet = self.init_style_sheet()
             # REPL
             if repl:
-                style_sheet += self.generate_repl_colors(
-                    data.theme.Indication.ActiveBorder, 
-                    data.theme.Indication.ActiveBackGround
-                )
+                self._parent.repl_box.indication_set()
             else:
-                style_sheet += self.generate_repl_colors(
-                    data.theme.Indication.PassiveBorder, 
-                    data.theme.Indication.PassiveBackGround
-                )
+                self._parent.repl_box.indication_reset()
             # Windows
             windows = ["Main", "Upper", "Lower"]
             if window_name:
@@ -3757,6 +3726,7 @@ class MainWindow(data.QMainWindow):
             
             # Apply style sheet
             self._parent.setStyleSheet(style_sheet)
+            Menu.update_styles()
         
         def indication_check(self):
             """
@@ -3822,6 +3792,7 @@ class MainWindow(data.QMainWindow):
                 self._parent.lower_window
             ]
             for window in windows:
+                window.customize_tab_bar()
                 for i in range(window.count()):
                     if hasattr(window.widget(i), "refresh_lexer") == True:
                         window.widget(i).refresh_lexer()
@@ -3877,7 +3848,7 @@ class MainWindow(data.QMainWindow):
             """
     
         def create_recent_file_list_menu(self):
-            self._parent.recent_files_menu = data.QMenu("Recent Files")
+            self._parent.recent_files_menu = Menu("Recent Files")
             self._parent.recent_files_menu.setStyleSheet("QMenu { menu-scrollable: 1; }")
             temp_icon = functions.create_icon('tango_icons/file-recent-files.png')
             self._parent.recent_files_menu.setIcon(temp_icon)
@@ -4425,46 +4396,10 @@ class MainWindow(data.QMainWindow):
         
         def init_theme_indicator(self):
             """ Initialization of the theme indicator in the statusbar """
-            class ThemeIndicator(data.QLabel):
-                def __init__(self, parent):
-                    # Initialize superclass
-                    super().__init__()
-                    # Store the reference to the parent
-                    self._parent = parent
-                
-                def mouseReleaseEvent(self, event):
-                    # Execute the superclass event method
-                    super().mouseReleaseEvent(event)
-                    cursor = data.QCursor.pos()
-                    self._parent.theme_menu.popup(cursor)
-            
-            tooltip = data.theme.tooltip
-            image = data.theme.image_file
-            raw_picture = data.QPixmap(
-                os.path.join(
-                    data.resources_directory, image
-                )
-            )
-            picture = raw_picture.scaled(16, 16, data.Qt.KeepAspectRatio)
             self.theme_indicatore = ThemeIndicator(self)
-            self.theme_indicatore.setPixmap(picture)
-            self.theme_indicatore.setToolTip(tooltip)
-            self.theme_indicatore.setStyleSheet(
-                    "ThemeIndicator {" + 
-                    "    color: black;" + 
-                    "    padding-top: 0px;" +
-                    "    padding-bottom: 0px;" +
-                    "    padding-left: 0px;" +
-                    "    padding-right: 4px;" +
-                    "}" +
-                    "QToolTip {" + 
-                    "    color: black;" + 
-                    "    padding-top: 0px;" +
-                    "    padding-bottom: 0px;" +
-                    "    padding-left: 0px;" +
-                    "    padding-right: 0px;" + 
-                    "}"
-            )
+            self.theme_indicatore.set_image(data.theme.image_file)
+            self.theme_indicatore.setToolTip(data.theme.tooltip)
+            self.theme_indicatore.restyle()
             self._parent.statusbar.addPermanentWidget(self.theme_indicatore)
         
         def update_theme_taskbar_icon(self):
@@ -4472,32 +4407,9 @@ class MainWindow(data.QMainWindow):
             if self.theme_indicatore == None:
                 return
             # Set the theme icon and tooltip
-            tooltip = data.theme.tooltip
-            image = data.theme.image_file
-            raw_picture = data.QPixmap(
-                os.path.join(
-                    data.resources_directory, image
-                )
-            )
-            picture = raw_picture.scaled(16, 16, data.Qt.KeepAspectRatio)
-            self.theme_indicatore.setPixmap(picture)
-            self.theme_indicatore.setToolTip(tooltip)
-            self.theme_indicatore.setStyleSheet(
-                "ThemeIndicator {" + 
-                "    color: black;" + 
-                "    padding-top: 0px;" +
-                "    padding-bottom: 0px;" +
-                "    padding-left: 0px;" +
-                "    padding-right: 4px;" +
-                "}" +
-                "QToolTip {" + 
-                "    color: black;" + 
-                "    padding-top: 0px;" +
-                "    padding-bottom: 0px;" +
-                "    padding-left: 0px;" +
-                "    padding-right: 0px;" + 
-                "}"
-            )
+            self.theme_indicatore.set_image(data.theme.image_file)
+            self.theme_indicatore.setToolTip(data.theme.tooltip)
+            self.theme_indicatore.restyle()
         
         def init_theme_menu(self):
             """ Initialization of the theme menu used by the theme indicator """
@@ -4519,7 +4431,7 @@ class MainWindow(data.QMainWindow):
                     action.setParent(None)
                     action.deleteLater()
                     action = None
-            self.theme_menu = data.QMenu()
+            self.theme_menu = Menu()
             # Add the theme actions
             for theme in themes.theme_list:
                 action_theme = data.QAction(theme.name, self.theme_menu)
@@ -5247,7 +5159,7 @@ class MainWindow(data.QMainWindow):
                 parent = custom_parent
             else:
                 parent = self._parent
-            lexers_menu = data.QMenu(menu_name, parent)
+            lexers_menu = Menu(menu_name, parent)
             def create_lexer(lexer, description):
                 func = functools.partial(set_lexer, lexer, description)
                 func.__name__ = "set_lexer_{}".format(lexer.__name__)

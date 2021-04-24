@@ -29,6 +29,7 @@ import components
 import themes
 
 from .dialogs import *
+from .menu import *
 
 """
 ----------------------------------------------------------------------------
@@ -227,7 +228,7 @@ class TreeDisplay(data.QTreeView):
                     self.tree_menu.setParent(None)
                     self.tree_menu = None
 
-                self.tree_menu = data.QMenu()
+                self.tree_menu = Menu()
                 action_update_cwd = data.QAction("Update CWD", self.tree_menu)
                 action_update_cwd.triggered.connect(update_cwd)
                 icon = functions.create_icon('tango_icons/update-cwd.png')
@@ -287,7 +288,7 @@ class TreeDisplay(data.QTreeView):
                     self.tree_menu.setParent(None)
                     self.tree_menu = None
                 
-                self.tree_menu = data.QMenu()
+                self.tree_menu = Menu()
                 # Open in Ex.Co.
                 action_open_file = data.QAction("Open", self.tree_menu)
                 action_open_file.triggered.connect(open_file)
@@ -358,7 +359,7 @@ class TreeDisplay(data.QTreeView):
                 self.tree_menu.setParent(None)
                 self.tree_menu = None
             
-            self.tree_menu = data.QMenu()
+            self.tree_menu = Menu()
             
             if (hasattr(item, "line_number") == True or "line:" in item_text):
                 action_goto_line = data.QAction("Goto node item", self.tree_menu)
@@ -1902,7 +1903,7 @@ class TreeDisplayBase(data.QTreeView):
         return item
     
     def _create_menu(self):
-        self.tree_menu = data.QMenu()
+        self.tree_menu = Menu()
         self.default_menu_font = self.tree_menu.font()
         self.customize_context_menu()
         return self.tree_menu
@@ -2256,7 +2257,7 @@ class TreeExplorer(TreeDisplayBase):
             self.tree_menu.setParent(None)
             self.tree_menu.deleteLater()
         # Initialize the menu
-        self.tree_menu = data.QMenu()
+        self.tree_menu = Menu()
         self.default_menu_font = self.tree_menu.font()
         self.customize_context_menu()
         
@@ -2343,6 +2344,18 @@ class TreeExplorer(TreeDisplayBase):
             if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
                                          TreeExplorer.ItemType.DIRECTORY]:
                 self.tree_menu.addAction(open_action)
+            # Open with system
+            if item.attributes.itype == TreeExplorer.ItemType.FILE:
+                def open_system():
+                    if data.platform == 'Windows':
+                        os.startfile(item.attributes.path)
+                    else:
+                        subprocess.call(["xdg-open", item.attributes.path])
+                action_open_system = data.QAction("Open with system", self.tree_menu)
+                action_open_system.triggered.connect(open_system)
+                icon = functions.create_icon('tango_icons/open-with-default-app.png')
+                action_open_system.setIcon(icon)
+                self.tree_menu.addAction(action_open_system)
             # Copy item name to clipboard
             def copy_item_name_to_clipboard():
                 text = os.path.basename(item.attributes.path)

@@ -73,7 +73,9 @@ class TheSquid:
         set_style(TheSquid.main_form.sessions_menu)
         
         windows = [
-            TheSquid.main_window, TheSquid.upper_window, TheSquid.lower_window
+            TheSquid.main_window,
+            TheSquid.upper_window,
+            TheSquid.lower_window
         ]
         
         for window in windows:

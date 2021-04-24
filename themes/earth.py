@@ -40,12 +40,19 @@ class LineMargin:
     BackGround = data.QColor(0xff2e3436)
 
 
+class ScrollBar:
+    background = "#585a55"
+    handle = "#42433f"
+    handle_hover = "#2b2c29"
+
+
 class Indication:
     Font = "#e6e6e6"
     ActiveBackGround = "#1a0f0b"
     ActiveBorder = "#e6e6e6"
     PassiveBackGround = "#585a55"
     PassiveBorder = "#b3935c"
+    Hover = "#93988d"
     # Editor indicator colors
     Highlight = data.QColor(0, 255, 0, 80)
     Selection = data.QColor(200, 200, 200, 100)
@@ -61,6 +68,7 @@ class TextDifferColors:
     
 class Font:
     Default = data.QColor(0xfff7f1c1)
+    DefaultHtml = "#f7f1c1"
     
     class Repl:
         """

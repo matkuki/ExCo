@@ -14,6 +14,7 @@ import functions
 import re
 import math
 import typing
+import gui.menu
 
 
 class ActionFilter(data.QObject):
@@ -38,7 +39,7 @@ class ActionFilter(data.QObject):
                 def click_and_drag():
                     def hide_parents(obj):
                         obj.hide()
-                        if obj.parent() != None and (isinstance(obj.parent(), data.QMenu)):
+                        if obj.parent() != None and (isinstance(obj.parent(), gui.menu.Menu)):
                             hide_parents(obj.parent())
                     hide_parents(receiver)
                     ActionFilter.click_timer = None

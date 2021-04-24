@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2019 Matic Kukovec.
+Copyright (c) 2013-2021 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -59,11 +59,12 @@ class ReplHelper(data.QsciScintilla):
     """
     Built-in and private functions
     """
-    def __init__(self, parent, repl_master):
+    def __init__(self, parent, main_form, repl_master):
         #Initialize superclass, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
         #Save the reference to the parent(main window)
         self._parent = parent
+        self.main_form = main_form
         #Save the reference to the REPL object
         self.repl_master = repl_master
         #Hide the horizontal and show the vertical scrollbar

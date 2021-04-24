@@ -623,6 +623,11 @@ class CustomEditor(data.QsciScintilla):
         self.setCaretLineBackgroundColor(
             theme.Cursor_Line_Background
         )
+        self.setStyleSheet(f"""
+            QsciScintilla {{
+                background-color: {data.theme.Indication.PassiveBackGround};
+            }}
+        """)
     
     def get_line_number(self):
         """return the line on which the cursor is"""

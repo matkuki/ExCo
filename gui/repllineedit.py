@@ -58,19 +58,45 @@ class ReplLineEdit(data.QLineEdit):
     """
     Built-in and private functions
     """
-    def __init__(self, parent, interpreter_references=None):
+    def __init__(self, parent, main_form, interpreter_references=None):
         """Initialization"""
-        #Initialize superclass class, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
+        # Initialize superclass class, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__()
-        #Initialize the parent references and update the autocompletion lists
+        # Initialize the parent references and update the autocompletion lists
         self._parent = parent
-        #Initialize the interpreter
+        self.main_form = main_form
+        # Initialize the interpreter
         self.interpreter = interpreter.CustomInterpreter(
             interpreter_references, 
-            parent.display.repl_display_message
+            main_form.display.repl_display_message
         )
-        #Initialize interpreter reference list that will be used for autocompletions
+        # Initialize interpreter reference list that will be used for autocompletions
         self._list_repl_references  = [str_ref for str_ref in interpreter_references]
+        # Initialize style
+        self.update_style()
+    
+    def update_style(self):
+        # REPL and REPL helper have to be set directly
+        self.setStyleSheet(f"""
+            QLineEdit[indicated=false] {{
+                color: {data.theme.Font.DefaultHtml};
+                background-color: {data.theme.Indication.PassiveBackGround};
+            }}
+            QLineEdit[indicated=true] {{
+                color: {data.theme.Font.DefaultHtml};
+                background-color: {data.theme.Indication.ActiveBackGround};
+            }}
+        """)
+    
+    def indication_set(self):
+        self.setProperty("indicated", True)
+        self.style().unpolish(self)
+        self.style().polish(self)
+    
+    def indication_reset(self):
+        self.setProperty("indicated", False)
+        self.style().unpolish(self)
+        self.style().polish(self)
 
     def _get_path_list(self, path_string):
         """Return a list of all directories and files if the path string is valid"""
@@ -136,7 +162,7 @@ class ReplLineEdit(data.QLineEdit):
         #Display evaluated command if specified
         current_rm_index = None
         if display_action == True:
-            repl_messages = self._parent.display.find_repl_messages_tab()
+            repl_messages = self.main_form.display.find_repl_messages_tab()
             if repl_messages != None:
                 if repl_messages._parent.count() > 1:
                     current_rm_index = repl_messages._parent.currentIndex()
@@ -144,9 +170,9 @@ class ReplLineEdit(data.QLineEdit):
             split_command = current_command.split("\n")
             for i, command in enumerate(split_command):
                 if i != 0:
-                    self._parent.display.repl_display_message("... " + command)
+                    self.main_form.display.repl_display_message("... " + command)
                 else:
-                    self._parent.display.repl_display_message(">>> " + command)
+                    self.main_form.display.repl_display_message(">>> " + command)
             if current_rm_index != None:
                 #Revert the focus of the BasicWidget that hold the REPL messages tab to
                 #whichever widget was focused before
@@ -168,7 +194,7 @@ class ReplLineEdit(data.QLineEdit):
         if eval_return != None:
             data.print_log(eval_return)
             if display_action == True:
-                self._parent.display.repl_display_message(
+                self.main_form.display.repl_display_message(
                     eval_return,
                     message_type=data.MessageType.ERROR
                 )
@@ -369,17 +395,17 @@ class ReplLineEdit(data.QLineEdit):
 
     def focusInEvent(self, event):
         """Event that fires when the REPL gets focus"""
-        self._parent._key_events_lock()
+        self.main_form._key_events_lock()
         #Set the focus to the REPL
         self.setFocus()
         #Clear the cursor position from the statusbar
-        self._parent.display.update_cursor_position()
+        self.main_form.display.update_cursor_position()
         data.print_log("Entered REPL")
         #Reset the main forms last focused widget
-        self._parent.last_focused_widget = None
+        self.main_form.last_focused_widget = None
         data.print_log("Reset last focused widget attribute")
         #Hide the function wheel if it is shown
-        self._parent.view.hide_all_overlay_widgets()
+        self.main_form.view.hide_all_overlay_widgets()
         #Ignore the event
         event.ignore()
         #Return the focus event
@@ -390,11 +416,11 @@ class ReplLineEdit(data.QLineEdit):
         #Execute the supeclass focus function
         super().setFocus()
         #Check indication
-        self._parent.view.indication_check()
+        self.main_form.view.indication_check()
 
     def focusOutEvent(self, event):
         """Event that fires when the REPL loses focus"""
-        self._parent._key_events_unlock()
+        self.main_form._key_events_unlock()
         data.print_log("Left REPL")
         #Ignore the event
         event.ignore()
@@ -434,8 +460,8 @@ class ReplLineEdit(data.QLineEdit):
         new_font.setPointSize(new_font.pointSize() + 1)
         self.setFont(new_font)
         new_font_metric = data.QFontMetrics(new_font)
-        self._parent.view.main_relation = new_font_metric.height() + 48
-        self._parent.view.refresh_main_splitter()
+        self.main_form.view.main_relation = new_font_metric.height() + 48
+        self.main_form.view.refresh_main_splitter()
     
     def decrease_text_size(self):
         """Decrease size of the REPL text"""
@@ -445,8 +471,8 @@ class ReplLineEdit(data.QLineEdit):
         new_font.setPointSize(new_font.pointSize() - 1)
         self.setFont(new_font)
         new_font_metric = data.QFontMetrics(new_font)
-        self._parent.view.main_relation = new_font_metric.height() + 48
-        self._parent.view.refresh_main_splitter()
+        self.main_form.view.main_relation = new_font_metric.height() + 48
+        self.main_form.view.refresh_main_splitter()
     
 
     """
@@ -523,7 +549,7 @@ class ReplLineEdit(data.QLineEdit):
             #Evaluate REPL text
             self._repl_eval()
         else:
-            self._parent.display.write_to_statusbar("No commands in REPL input buffer!", 1000)
+            self.main_form.display.write_to_statusbar("No commands in REPL input buffer!", 1000)
 
     def external_eval_request(self, eval_string, calling_widget):
         """An external evaluation request from the ReplHelper or another widget"""
