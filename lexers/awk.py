@@ -31,7 +31,7 @@ class AWK(data.QsciLexerCustom):
     # Class variables
     default_color = data.QColor(data.theme.Font.AWK.Default[1])
     default_paper = data.QColor(data.theme.Paper.AWK.Default)
-    default_font = data.QFont('Courier', 10)
+    default_font = data.QFont(data.current_font_name, data.current_font_size)
     keyword_list = [
         "BEGIN", "delete", "for", "in", "printf", "END", 
         "do", "function", "next", "return", "break", 

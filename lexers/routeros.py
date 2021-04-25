@@ -29,7 +29,7 @@ class RouterOS(data.QsciLexerCustom):
     #Class variables
     default_color       = data.QColor(data.theme.Font.RouterOS.Default[1])
     default_paper       = data.QColor(data.theme.Paper.RouterOS.Default)
-    default_font        = data.QFont('Courier', 10)
+    default_font        = data.QFont(data.current_font_name, data.current_font_size)
     #All keywords, operators, ...
     operator_list = [
         '!', '$', '(', ')', ',', ':', '[', ']', '{', '|', '}', "="

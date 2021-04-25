@@ -70,9 +70,6 @@ except:
     compatibility_mode = True
 
 
-# Themes need PyQt version defined beforehand, as they also import the data module
-import themes
-
 """
 File extension lists
 """
@@ -285,7 +282,12 @@ terminal = "x-terminal-emulator"
 # Default tree display font size (file-tree, node-tree, ...)
 tree_display_font_size = 10
 tree_display_icon_size = 16
+# Default font
+current_font_name = "Source Code Pro"
+current_font_size = 9
 # Current theme
+# Themes need PyQt version defined beforehand, as they also import the data module
+import themes
 theme = themes.Air
 # Custom MenuBar scale factor
 custom_menu_scale = None

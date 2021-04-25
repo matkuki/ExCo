@@ -704,7 +704,7 @@ class SettingsGuiManipulator(data.QGroupBox):
     def _init_info_label(self):
         self.display_label = data.QLabel(self)
         self.display_label.setGeometry(20, 50, 200, 100)
-        font = data.QFont('Courier', 14)
+        font = data.QFont(data.current_font_name, 14)
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setStyleSheet(

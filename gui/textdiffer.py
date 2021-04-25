@@ -50,7 +50,7 @@ class TextDiffer(data.QWidget):
     text_1_name             = None
     text_2_name             = None
     #Class constants
-    DEFAULT_FONT            = data.QFont('Courier', 10)
+    DEFAULT_FONT            = data.QFont(data.current_font_name, data.current_font_size)
     MARGIN_STYLE            = data.QsciScintilla.STYLE_LINENUMBER
     INDICATOR_UNIQUE_1          = 1
     Indicator_Unique_1_Color    = data.QColor(0x72, 0x9f, 0xcf, 80)

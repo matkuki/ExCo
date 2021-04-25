@@ -68,7 +68,7 @@ class FunctionWheel(data.QGroupBox):
                      input_function, 
                      input_function_text, 
                      input_font=data.QFont(
-                                    'Courier', 14, weight=data.QFont.Bold
+                                    data.current_font_name, 14, weight=data.QFont.Bold
                                 ), 
                      input_focus_last_widget=data.HexButtonFocus.NONE, 
                      input_no_tab_focus_disable=False, 
@@ -231,7 +231,7 @@ class FunctionWheel(data.QGroupBox):
         #when the mouse cursor is over a function button
         self.display_label = data.QLabel(self)
         self.display_label.setGeometry(36, 448, 120, 50)
-        font = data.QFont('Courier', 14)
+        font = data.QFont(data.current_font_name, 14)
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
@@ -460,7 +460,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["special_regex_replace_in_selection"], 
                 "Regex Replace\nin selection", 
                 input_font=data.QFont(
-                                    'Courier', 11, weight=data.QFont.Bold
+                                    data.current_font_name, 11, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -495,7 +495,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["toggle_autocompletions"], 
                 "Toggle\nAutocompletions", 
                 input_font=data.QFont(
-                                    'Courier', 10, weight=data.QFont.Bold
+                                    data.current_font_name, 10, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -506,7 +506,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["special_to_uppercase"], 
                 "Selection to\nUPPERCASE", 
                 input_font=data.QFont(
-                                    'Courier', 12, weight=data.QFont.Bold
+                                    data.current_font_name, 12, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -517,7 +517,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["special_to_lowercase"], 
                 "Selection to\nlowercase", 
                 input_font=data.QFont(
-                                    'Courier', 12, weight=data.QFont.Bold
+                                    data.current_font_name, 12, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -528,7 +528,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["create_node_tree"], 
                 "Create/Reload\n Node Tree", 
                 input_font=data.QFont(
-                                    'Courier', 11, weight=data.QFont.Bold
+                                    data.current_font_name, 11, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB,  
                 input_tool_tip=("Create a node tree from the currently\n" +
@@ -551,7 +551,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["special_find_in_open_documents"], 
                 "Find in open\ndocuments", 
                 input_font=data.QFont(
-                                    'Courier', 12, weight=data.QFont.Bold
+                                    data.current_font_name, 12, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -562,7 +562,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["special_find_replace_in_open_documents"], 
                 "Find and Replace\nin open documents", 
                 input_font=data.QFont(
-                                    'Courier', 9, weight=data.QFont.Bold
+                                    data.current_font_name, 9, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -573,7 +573,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["special_replace_all_in_open_documents"], 
                 "Replace all in\nopen documents", 
                 input_font=data.QFont(
-                                    'Courier', 10, weight=data.QFont.Bold
+                                    data.current_font_name, 10, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -584,7 +584,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["bookmark_toggle"], 
                 "Toggle\nBookmark", 
                 input_font=data.QFont(
-                                    'Courier', 14, weight=data.QFont.Bold
+                                    data.current_font_name, 14, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -595,7 +595,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["toggle_wordwrap"], 
                 "Toggle\nWord Wrap", 
                 input_font=data.QFont(
-                                    'Courier', 14, weight=data.QFont.Bold
+                                    data.current_font_name, 14, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -606,7 +606,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["toggle_line_endings"], 
                 "Toggle\nLine Ending\nVisibility", 
                 input_font=data.QFont(
-                                    'Courier', 12, weight=data.QFont.Bold
+                                    data.current_font_name, 12, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -617,7 +617,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["toggle_cursor_line_highlighting"], 
                 "Toggle\nCursor Line\nHighlighting", 
                 input_font=data.QFont(
-                    'Courier', 12, weight=data.QFont.Bold
+                    data.current_font_name, 12, weight=data.QFont.Bold
                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
             ),
@@ -807,7 +807,7 @@ class FunctionWheel(data.QGroupBox):
                 "Spin Windows\nClockwise", 
                 input_focus_last_widget=False, 
                 input_font=data.QFont(
-                                'Courier', 12, weight=data.QFont.Bold
+                                data.current_font_name, 12, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -819,7 +819,7 @@ class FunctionWheel(data.QGroupBox):
                 "Spin Windows\nCounter\nClockwise",  
                 input_focus_last_widget=False, 
                 input_font=data.QFont(
-                                'Courier', 10, weight=data.QFont.Bold
+                                data.current_font_name, 10, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -831,7 +831,7 @@ class FunctionWheel(data.QGroupBox):
                 "Toggle\nWindow Mode",  
                 input_focus_last_widget=False, 
                 input_font=data.QFont(
-                                'Courier', 13, weight=data.QFont.Bold
+                                data.current_font_name, 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -843,7 +843,7 @@ class FunctionWheel(data.QGroupBox):
                 "Toggle\nWindow Side",  
                 input_focus_last_widget=False, 
                 input_font=data.QFont(
-                                'Courier', 13, weight=data.QFont.Bold
+                                data.current_font_name, 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -874,7 +874,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["close_tab"], 
                 "Close Current\nTab", 
                 input_font=data.QFont(
-                                    'Courier', 11, weight=data.QFont.Bold
+                                    data.current_font_name, 11, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.TAB, 
                 input_no_tab_focus_disable=True,
@@ -940,7 +940,7 @@ class FunctionWheel(data.QGroupBox):
                 "Show Session\nEditor", 
                 input_no_document_focus_disable=False,
                 input_font=data.QFont(
-                                    'Courier', 12, weight=data.QFont.Bold
+                                    data.current_font_name, 12, weight=data.QFont.Bold
                                 ), 
             ),
             self.ButtonInfo(
@@ -950,7 +950,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["create_cwd_tree"], 
                 "Show CWD\nFile/Directory\nTree", 
                 input_font=data.QFont(
-                                    'Courier', 10, weight=data.QFont.Bold
+                                    data.current_font_name, 10, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.NONE, 
                 input_tool_tip=("Create a file/directory tree for the " + 
@@ -964,7 +964,7 @@ class FunctionWheel(data.QGroupBox):
                 form.menubar_functions["bookmarks_clear"], 
                 "Clear All\nBookmarks", 
                 input_font=data.QFont(
-                                    'Courier', 14, weight=data.QFont.Bold
+                                    data.current_font_name, 14, weight=data.QFont.Bold
                                 ), 
                 input_focus_last_widget=data.HexButtonFocus.NONE, 
                 input_no_document_focus_disable=False,
@@ -985,7 +985,7 @@ class FunctionWheel(data.QGroupBox):
                 "REPL Focus\n(Single Line)",  
                 input_focus_last_widget=False, 
                 input_font=data.QFont(
-                                'Courier', 13, weight=data.QFont.Bold
+                                data.current_font_name, 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -997,7 +997,7 @@ class FunctionWheel(data.QGroupBox):
                 "REPL Focus\n(Multi Line)",  
                 input_focus_last_widget=False, 
                 input_font=data.QFont(
-                                'Courier', 13, weight=data.QFont.Bold
+                                data.current_font_name, 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),
@@ -1009,7 +1009,7 @@ class FunctionWheel(data.QGroupBox):
                 "Repeat Last\nREPL Command",  
                 input_focus_last_widget=False, 
                 input_font=data.QFont(
-                                'Courier', 13, weight=data.QFont.Bold
+                                data.current_font_name, 13, weight=data.QFont.Bold
                             ), 
                 input_no_document_focus_disable=False, 
             ),

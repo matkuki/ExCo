@@ -30,7 +30,7 @@ class Ada(data.QsciLexerCustom):
     #Class variables
     default_color       = data.QColor(data.theme.Font.Ada.Default[1])
     default_paper       = data.QColor(data.theme.Paper.Ada.Default)
-    default_font        = data.QFont('Courier', 10)
+    default_font        = data.QFont(data.current_font_name, data.current_font_size)
     keyword_list        =   [ 
         "abort", "else", "new", "return",
         "abs", "elsif", "not", "reverse",

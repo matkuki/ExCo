@@ -437,7 +437,7 @@ class BasicWidget(data.QTabWidget):
     # Custom tab bar
     custom_tab_bar          = None
     # Default font for textboxes
-    default_editor_font     = data.QFont('Courier', 10)
+    default_editor_font     = data.QFont(data.current_font_name, data.current_font_size)
     # Default font and icon size for the tab bar
     default_tab_font        = None
     default_icon_size       = None

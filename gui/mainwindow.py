@@ -4493,7 +4493,8 @@ class MainWindow(data.QMainWindow):
                 parent.repl_messages_tab.SendScintilla(
                     data.QsciScintillaBase.SCI_STYLESETFONT,
                     lexer_number,
-                    b'Ariel'
+#                    data.theme.Font.Python.Default[0].encode("utf-8")
+                    b"Arial"
                 )
                 parent.repl_messages_tab.SendScintilla(
                     data.QsciScintillaBase.SCI_STYLESETSIZE,

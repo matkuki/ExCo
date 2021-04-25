@@ -387,7 +387,7 @@ class DoubleButton(CustomButton):
             self._set_extra_button_opacity(self.OPACITY_HIGH)
             #Display the stored extra buttons function text
             extra_button_font = data.QFont(
-                'Courier', 
+                data.current_font_name, 
                 self.stored_font.pointSize()-2, 
                 weight=data.QFont.Bold
             )

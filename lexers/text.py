@@ -16,8 +16,7 @@ import lexers
 
 class Text(data.QsciLexerCustom):
     """Lexer for styling normal text documents"""
-    #Class variables
-    default_font = data.QFont('Courier', 10)
+    # Class variables
     styles = {
         "Default" : 0
     }
@@ -27,7 +26,11 @@ class Text(data.QsciLexerCustom):
         #Initialize superclass
         super().__init__()
         #Set the font colors
-        self.setFont(self.default_font, 0)
+        default_font = data.QFont(
+            data.current_font_name,
+            data.current_font_size,
+        )
+        self.setFont(default_font, 0)
         #Reset autoindentation style
         self.setAutoIndentStyle(0)
         #Set the theme

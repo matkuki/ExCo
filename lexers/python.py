@@ -117,7 +117,7 @@ class CustomPython(data.QsciLexerCustom):
     }
     default_color       = data.QColor(data.theme.Font.Python.Default[1])
     default_paper       = data.QColor(data.theme.Paper.Python.Default)
-    default_font        = data.QFont('Courier', 10)
+    default_font        = data.QFont(data.current_font_name, data.current_font_size)
     # Styling lists and characters
     keyword_list        = list(set(keyword.kwlist + dir(builtins)))
     additional_list     = []

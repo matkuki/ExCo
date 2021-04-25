@@ -451,7 +451,7 @@ class TreeDisplay(data.QTreeView):
     def set_font_size(self, size_in_points):
         """Set the font size for the tree display items"""
         #Initialize the font with the new size
-        new_font = data.QFont('Courier', size_in_points)
+        new_font = data.QFont(data.current_font_name, size_in_points)
         #Set the new font
         self.setFont(new_font)
     
@@ -499,7 +499,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -517,13 +517,13 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
         label_font = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         #Check if there was a parsing error
         if parse_error != False:
             error_brush = data.QBrush(data.QColor(180, 0, 0))
             error_font  = data.QFont(
-                "Courier", data.tree_display_font_size, data.QFont.Bold
+                data.current_font_name, data.tree_display_font_size, data.QFont.Bold
             )
             item_error = data.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
@@ -532,7 +532,7 @@ class TreeDisplay(data.QTreeView):
             item_error.setIcon(self.node_icon_nothing)
             tree_model.appendRow(item_error)
             #Show the error message
-            error_font = data.QFont("Courier", data.tree_display_font_size)
+            error_font = data.QFont(data.current_font_name, data.tree_display_font_size)
             item_error_msg = data.QStandardItem(str(parse_error))
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
@@ -736,7 +736,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -754,13 +754,13 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
         label_font  = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         #Check if there was a parsing error
         if parse_error != False:
             error_brush = data.QBrush(data.QColor(180, 0, 0))
             error_font  = data.QFont(
-                "Courier", data.tree_display_font_size, data.QFont.Bold
+                data.current_font_name, data.tree_display_font_size, data.QFont.Bold
             )
             item_error = data.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
@@ -769,7 +769,7 @@ class TreeDisplay(data.QTreeView):
             item_error.setIcon(self.node_icon_nothing)
             tree_model.appendRow(item_error)
             #Show the error message
-            error_font = data.QFont("Courier", data.tree_display_font_size)
+            error_font = data.QFont(data.current_font_name, data.tree_display_font_size)
             item_error_msg = data.QStandardItem(str(parse_error))
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
@@ -878,7 +878,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
         label_font  = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         # Filter the nodes
         def display_node(tree_node, c_node):
@@ -985,7 +985,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font    = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -1027,7 +1027,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -1045,7 +1045,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.SingleQuotedString[1])
         )
         label_font  = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         #Nested function for creating a tree node
         def create_tree_node(node_text, 
@@ -1320,7 +1320,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.Keyword[1])
         )
         description_font    = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         #Directory item
         item_directory  = data.QStandardItem(
@@ -1360,7 +1360,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme.Font.Python.Default[1])
         )
         description_font = data.QFont(
-            "Courier", data.tree_display_font_size, data.QFont.Bold
+            data.current_font_name, data.tree_display_font_size, data.QFont.Bold
         )
         #Directory item
         item_directory  = data.QStandardItem(
@@ -1423,12 +1423,12 @@ class TreeDisplay(data.QTreeView):
                     data.QColor(data.theme.Font.Python.SingleQuotedString[1])
                 )
                 label_font = data.QFont(
-                    "Courier", data.tree_display_font_size, data.QFont.Bold
+                    data.current_font_name, data.tree_display_font_size, data.QFont.Bold
                 )
                 item_brush = data.QBrush(
                     data.QColor(data.theme.Font.Python.Default[1])
                 )
-                item_font = data.QFont("Courier", data.tree_display_font_size)
+                item_font = data.QFont(data.current_font_name, data.tree_display_font_size)
                 #Create the base directory item that will hold all of the found files
                 item_base_directory = data.QStandardItem(directory)
                 item_base_directory.setEditable(False)
@@ -1569,12 +1569,12 @@ class TreeDisplay(data.QTreeView):
                 data.QColor(data.theme.Font.Python.SingleQuotedString[1])
             )
             label_font  = data.QFont(
-                "Courier", data.tree_display_font_size, data.QFont.Bold
+                data.current_font_name, data.tree_display_font_size, data.QFont.Bold
             )
             item_brush = data.QBrush(
                 data.QColor(data.theme.Font.Python.Default[1])
             )
-            item_font = data.QFont("Courier", data.tree_display_font_size)
+            item_font = data.QFont(data.current_font_name, data.tree_display_font_size)
             #Create the base directory item that will hold all of the found files
             item_base_directory = data.QStandardItem(directory)
             item_base_directory.setEditable(False)
@@ -1890,7 +1890,7 @@ class TreeDisplayBase(data.QTreeView):
     def _create_standard_item(self, text, bold=False, icon=None):
         # Font
 #        brush = data.QBrush(data.QColor(data.theme.Font.Python.Keyword[1]))
-        font = data.QFont("Courier", data.tree_display_font_size)
+        font = data.QFont(data.current_font_name, data.tree_display_font_size)
         font.setBold(bold)
         # Item initialization
         item = data.QStandardItem(text)
@@ -1918,7 +1918,7 @@ class TreeDisplayBase(data.QTreeView):
         Set the font size for the tree display items
         """
         # Initialize the font with the new size
-        new_font = data.QFont("Courier", size_in_points)
+        new_font = data.QFont(data.current_font_name, size_in_points)
         # Set the new font
         self.setFont(new_font)
         # Set the header font
@@ -1988,7 +1988,7 @@ class TreeDisplayBase(data.QTreeView):
         if data.custom_menu_scale != None and data.custom_menu_font != None:
             components.TheSquid.customize_menu_style(menu)
             self._set_font_size(data.tree_display_font_size)
-            font = data.QFont("Courier", data.tree_display_font_size)
+            font = data.QFont(data.current_font_name, data.tree_display_font_size)
             if menu != None:
                 menu.setFont(font)
             # Recursively change the fonts of all items

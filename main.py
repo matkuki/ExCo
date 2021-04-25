@@ -19,8 +19,8 @@ import sys
 import os
 import argparse
 import data
-import gui
 import components
+import gui
 
 
 def parse_arguments():
@@ -96,7 +96,7 @@ def parse_arguments():
 
 def main():
     """Main function of Ex.Co."""
-    #Check arguments
+    # Check arguments
     options = parse_arguments()
     if options.debug_mode == True:
         data.debug_mode = True
@@ -112,11 +112,16 @@ def main():
             file_arguments = [options.single_file]
     if file_arguments == ['']:
         file_arguments = None
-    #Create QT application, needed to use QT forms
+    # Create QT application, needed to use QT forms
     app = data.QApplication(sys.argv)
-    #Save the Qt application to the global reference
+    # Save the Qt application to the global reference
     data.application = app
-    #Create the main window, pass the filename that may have been passed as an argument
+    # Set default application font
+    components.fonts.set_application_font(
+        data.current_font_name,
+        data.current_font_size,
+    )
+    # Create the main window, pass the filename that may have been passed as an argument
     main_window = gui.MainWindow(
         new_document = options.new_document, 
         logging=data.logging_mode, 
@@ -127,7 +132,7 @@ def main():
     main_window.show()
     sys.exit(app.exec_())
     
-#Check if this is the main executing script
+# Check if this is the main executing script
 if __name__ == '__main__':
     main()
 elif '__main__' in __name__:
