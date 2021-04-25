@@ -584,6 +584,7 @@ class MainWindow(data.QMainWindow):
         This is a very long function that should be trimmed sometime!
         """
         self.menubar = data.QMenuBar()
+        self.menubar.setFont(data.get_current_font())
         # Click filter for the menubar menus
         click_filter = components.ActionFilter(self)
         # Nested function for creating an action

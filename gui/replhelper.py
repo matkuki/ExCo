@@ -45,6 +45,7 @@ class ReplHelper(data.QsciScintilla):
     """
     #Class variables
     _parent         = None
+    main_form         = None
     repl_master     = None
     #The scintilla api object(data.QsciAPIs) must be an instace variable, or the underlying c++
     #mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
@@ -118,7 +119,6 @@ class ReplHelper(data.QsciScintilla):
         self.text_to_list = functools.partial(CustomEditor.text_to_list, self)
         self.list_to_text = functools.partial(CustomEditor.list_to_text, self)
         # Add the function and connect the signal to update the line/column positions
-        self._signal_editor_cursor_change = functools.partial(BasicWidget._signal_editor_cursor_change, self)
         self.cursorPositionChanged.connect(self._signal_editor_cursor_change)
         #Set the lexer to python
         self.set_lexer()
@@ -127,7 +127,11 @@ class ReplHelper(data.QsciScintilla):
         #Setup the LineList object that will hold the custom editor text as a list of lines
         self.line_list = components.LineList(self, self.text())
         self.textChanged.connect(self.text_changed)
-
+    
+    def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
+        """Signal that fires when cursor position changes"""
+        self.main_form.display.update_cursor_position(cursor_line, cursor_column)
+    
     def _filter_keypress(self, key_event):
         """Filter keypress for appropriate action"""
         pressed_key = key_event.key()
@@ -147,7 +151,7 @@ class ReplHelper(data.QsciScintilla):
         #Only check indication if the current widget is not indicated
         if self.indicated == False:
             #Check indication
-            self._parent.view.indication_check()
+            self.main_form.view.indication_check()
         return False
 
     """
@@ -171,12 +175,12 @@ class ReplHelper(data.QsciScintilla):
         # Execute the superclass mouse click event
         super().mousePressEvent(event)
         # Reset the main forms last focused widget
-        self._parent.last_focused_widget = None
+        self.main_form.last_focused_widget = None
         data.print_log("Reset last focused widget attribute")
         # Set focus to the clicked helper
         self.setFocus()
         # Hide the function wheel if it is shown
-        self._parent.view.hide_all_overlay_widgets()
+        self.main_form.view.hide_all_overlay_widgets()
         # Need to set focus to self or the repl helper doesn't get focused,
         # don't know why?
         self.setFocus()
@@ -188,7 +192,7 @@ class ReplHelper(data.QsciScintilla):
         # Execute the supeclass focus function
         super().setFocus()
         # Check indication
-        self._parent.view.indication_check()
+        self.main_form.view.indication_check()
     
     def wheelEvent(self, wheel_event):
         """Overridden mouse wheel rotate event"""
