@@ -235,7 +235,6 @@ data.tab_width = 4
 data.terminal = "xterm"
 data.edge_marker_column = 80
 data.zoom_factor = 0
-data.tree_display_font_size = 10
 data.tree_display_icon_size = 16
 form.repl_helper.zoomTo(data.zoom_factor)
 
@@ -279,12 +278,13 @@ about_image = os.path.join(resources_directory,  "exco-info.png") \
     .replace('\\', '/')
 # Terminal console program used on GNU/Linux
 terminal = "x-terminal-emulator"
-# Default tree display font size (file-tree, node-tree, ...)
-tree_display_font_size = 10
+# Default tree display icon size
 tree_display_icon_size = 16
 # Default font
 current_font_name = "Source Code Pro"
 current_font_size = 9
+def get_current_font():
+    return QFont(current_font_name, current_font_size)
 # Current theme
 # Themes need PyQt version defined beforehand, as they also import the data module
 import themes

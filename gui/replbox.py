@@ -56,6 +56,8 @@ class ReplBox(data.QGroupBox):
         # Set the defaults
         self.set_repl(data.ReplType.SINGLE_LINE)
         self.indication_reset()
+        # Set default font
+        self.setFont(data.get_current_font())
     
     def set_repl(self, type):
         #Set which REPL widget will be displayed

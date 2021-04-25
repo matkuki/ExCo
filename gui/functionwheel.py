@@ -202,6 +202,8 @@ class FunctionWheel(data.QGroupBox):
         self._parent = parent
         #Store the reference to the main form
         self.main_form = main_form
+        # Set default font
+        self.setFont(data.get_current_font())
         # Reset the class variable
         FunctionWheel.function_wheel_background_image = None
         #Store the background image for sizing details

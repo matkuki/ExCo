@@ -139,6 +139,8 @@ class MainWindow(data.QMainWindow):
         # Set the name of the main window
         self.name = "Main Window"
         self.setObjectName("Form")
+        # Set default font
+        self.setFont(data.get_current_font())
         # Initialize the main window 
         self.setWindowTitle("Ex.Co. " + data.application_version)
         # Initialize the log dialog window
@@ -3726,9 +3728,18 @@ class MainWindow(data.QMainWindow):
             
             # Apply style sheet
             self._parent.setStyleSheet(style_sheet)
-            Menu.update_styles()
-        
+
         def indication_check(self):
+            if hasattr(self, "indication_timer"):
+                self.indication_timer.stop()
+            else:
+                self.indication_timer = data.QTimer(self._parent)
+                self.indication_timer.setInterval(50)
+                self.indication_timer.setSingleShot(True)
+                self.indication_timer.timeout.connect(self.__indication_check)
+            self.indication_timer.start(50)
+        
+        def __indication_check(self):
             """
             Check if any of the main windows or the REPL is focused
             and indicate the focused widget if needed
@@ -3738,6 +3749,7 @@ class MainWindow(data.QMainWindow):
                 self._parent.lower_window == None or 
                 self._parent.repl == None):
                 return
+            Menu.update_styles()
             #Check the focus for all of the windows
             windows = [self._parent.main_window, 
                        self._parent.upper_window, 

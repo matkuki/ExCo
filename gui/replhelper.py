@@ -62,6 +62,8 @@ class ReplHelper(data.QsciScintilla):
     def __init__(self, parent, main_form, repl_master):
         #Initialize superclass, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
+        # Set default font
+        self.setFont(data.get_current_font())
         #Save the reference to the parent(main window)
         self._parent = parent
         self.main_form = main_form

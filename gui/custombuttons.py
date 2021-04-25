@@ -90,6 +90,8 @@ class CustomButton(data.QLabel):
         self._parent = parent
         #Store the reference to the main form
         self.main_form = main_form
+        # Set default font
+        self.setFont(data.get_current_font())
         #Store the reference to the group box that holds the parent
         #(the parent of the parent)
         self.group_box_parent = parent.parent

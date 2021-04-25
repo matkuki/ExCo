@@ -65,6 +65,8 @@ class ReplLineEdit(data.QLineEdit):
         # Initialize the parent references and update the autocompletion lists
         self._parent = parent
         self.main_form = main_form
+        # Set default font
+        self.setFont(data.get_current_font())
         # Initialize the interpreter
         self.interpreter = interpreter.CustomInterpreter(
             interpreter_references, 

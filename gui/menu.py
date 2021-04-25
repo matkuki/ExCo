@@ -52,6 +52,8 @@ class Menu(data.QMenu):
         self._id = uuid.uuid4()
         self.update_style()
         Menu.menu_cache[self._id] = self
+        # Set default font
+        self.setFont(data.get_current_font())
     
     def update_style(self):
         self.setStyleSheet(f"""

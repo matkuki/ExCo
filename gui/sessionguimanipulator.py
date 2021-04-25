@@ -109,6 +109,8 @@ class SessionGuiManipulator(data.QTreeView):
         self._parent = parent
         #Store the reference to the MainWindow form from the "forms" module
         self.main_form = main_form
+        # Set default font
+        self.setFont(data.get_current_font())
         #Store the reference to the active SettingsManipulator
         self.settings_manipulator = settings_manipulator
         #Set the icon

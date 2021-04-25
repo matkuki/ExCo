@@ -136,6 +136,8 @@ class YesNoDialog(data.QDialog):
         self.setWindowIcon(data.QIcon(data.application_icon))
         self.setWindowTitle(dialog_type.title())
         self.init_layout(text, dialog_type)
+        # Set default font
+        self.setFont(data.get_current_font())
 
     def init_layout(self, text, dialog_type):
         # Setup the image

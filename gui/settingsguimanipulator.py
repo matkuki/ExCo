@@ -75,6 +75,8 @@ class SettingsGuiManipulator(data.QGroupBox):
             self.end_position = end_position
             self.disable()
             self.properties = {}
+            # Set default font
+            self.setFont(data.get_current_font())
             # Button image
             self.button_image = data.QPixmap(
                 os.path.join(
@@ -657,6 +659,8 @@ class SettingsGuiManipulator(data.QGroupBox):
         super().__init__(parent)
         # Store the reference to the main form
         self.main_form = main_form
+        # Set default font
+        self.setFont(data.get_current_font())
         # Set the shown property to False
         self.shown = False
         # Initialize button list

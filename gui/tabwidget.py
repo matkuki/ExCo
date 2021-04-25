@@ -453,6 +453,8 @@ class BasicWidget(data.QTabWidget):
         # Set various events and attributes
         # Save parent as a reference
         self._parent = parent
+        # Set default font
+        self.setFont(data.get_current_font())
         # Initialize the custom tab bar
         self.custom_tab_bar = self.CustomTabBar(self)
         self.setTabBar(self.custom_tab_bar)
@@ -480,7 +482,7 @@ class BasicWidget(data.QTabWidget):
             self.setIconSize(new_icon_size)
         else:
             components.TheSquid.customize_menu_style(self.tabBar())
-            self.tabBar().setFont(self.default_tab_font)
+            self.tabBar().setFont(data.get_current_font())
             self.setIconSize(self.default_icon_size)
         self.tabBar().set_style()
 

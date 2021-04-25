@@ -241,6 +241,8 @@ class ContextMenu(data.QGroupBox):
         self.setParent(parent)
         # Store the reference to the main form
         self.main_form = main_form
+        # Set default font
+        self.setFont(data.get_current_font())
         # Store the painting offset
         self.offset = offset
         # Set the background color

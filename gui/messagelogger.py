@@ -54,6 +54,8 @@ class MessageLogger(data.QWidget):
         self.setWindowTitle("LOGGING WINDOW")
         self.resize(500, 300)
         self.setWindowFlags(data.Qt.WindowStaysOnTopHint)
+        # Set default font
+        self.setFont(data.get_current_font())
         
         #Initialize the display box
         self.displaybox = MessageLogger.MessageTextBox(self)

@@ -24,6 +24,8 @@ class ThemeIndicator(data.QLabel):
         super().__init__()
         # Store the reference to the parent
         self._parent = parent
+        # Set default font
+        self.setFont(data.get_current_font())
     
     def mouseReleaseEvent(self, event):
         # Execute the superclass event method
