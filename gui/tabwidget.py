@@ -62,6 +62,8 @@ class BasicWidget(data.QTabWidget):
             self.main_form = self._parent._parent
             # Set style
             self.set_style()
+            # Set default font
+            self.setFont(data.get_current_font())
         
         def set_style(self):
             close_image = functions.get_resource_file("feather/air-grey/x.svg")
@@ -477,7 +479,8 @@ class BasicWidget(data.QTabWidget):
             components.TheSquid.customize_menu_style(self.tabBar())
             self.tabBar().setFont(data.QFont(*data.custom_menu_font))
             new_icon_size = data.QSize(
-                data.custom_menu_scale, data.custom_menu_scale
+                data.custom_menu_scale,
+                data.custom_menu_scale
             )
             self.setIconSize(new_icon_size)
         else:

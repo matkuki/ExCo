@@ -219,7 +219,8 @@ class MainWindow(data.QMainWindow):
             )
     
     def _init_statusbar(self):
-        self.statusbar  = data.QStatusBar(self)
+        self.statusbar = data.QStatusBar(self)
+        self.statusbar.setFont(data.get_current_font())
         self.display.write_to_statusbar("Status Bar")
         #Add label for showing the cursor position in a basic widget
         self.statusbar_label_left = data.QLabel(self)
