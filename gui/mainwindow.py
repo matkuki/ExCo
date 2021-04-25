@@ -3420,6 +3420,7 @@ class MainWindow(data.QMainWindow):
             elif (type == data.ReplType.MULTI_LINE and 
                 self.repl_state == data.ReplType.MULTI_LINE):
                 return
+            self.repl_state = type
             # Reinitialize the groupbox that holds the REPL
             self._parent.repl_box.set_repl(type)
             #Refresh the layout
