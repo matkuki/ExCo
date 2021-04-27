@@ -66,7 +66,12 @@ class ReplLineEdit(data.QLineEdit):
         self._parent = parent
         self.main_form = main_form
         # Set default font
-        self.setFont(data.get_current_font())
+        font = data.QFont(
+            data.current_font_name,
+            data.current_font_size+2,
+            data.QFont.Bold
+        )
+        self.setFont(font)
         # Initialize the interpreter
         self.interpreter = interpreter.CustomInterpreter(
             interpreter_references, 
@@ -538,9 +543,9 @@ class ReplLineEdit(data.QLineEdit):
     def get_repl_references(self):
         """Create and return a dictionary that holds all the REPL references that will be used in the interpreter module"""
         return  dict(
-                    repl        = self,
-                    interpreter = self.interpreter, 
-                )   
+            repl=self,
+            interpreter=self.interpreter, 
+        )   
     
     def repeat_last_repl_eval(self):
         """Repeat the last command that was evaluated by the REPL if any"""

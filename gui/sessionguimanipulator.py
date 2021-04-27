@@ -536,7 +536,8 @@ class SessionGuiManipulator(data.QTreeView):
         self.setUniformRowHeights(True)
         #Connect the tree model signals
         self.tree_model.itemChanged.connect(self._item_changed)
-        font = data.QFont(data.current_font_name, data.current_font_size, data.QFont.Bold)
+#        font = data.QFont(data.current_font_name, data.current_font_size, data.QFont.Bold)
+        font = data.QFont(data.current_font_name, data.current_font_size)
         #First add all of the groups, if any
         groups = self.settings_manipulator.get_sorted_groups()
         self.groups = []

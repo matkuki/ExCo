@@ -26,11 +26,7 @@ class Text(data.QsciLexerCustom):
         #Initialize superclass
         super().__init__()
         #Set the font colors
-        default_font = data.QFont(
-            data.current_font_name,
-            data.current_font_size,
-        )
-        self.setFont(default_font, 0)
+        self.setFont(data.get_current_font(), 0)
         #Reset autoindentation style
         self.setAutoIndentStyle(0)
         #Set the theme
@@ -58,3 +54,5 @@ class Text(data.QsciLexerCustom):
     def styleText(self, start, end):
         self.startStyling(start)
         self.setStyling(end - start, 0)
+
+

@@ -82,6 +82,8 @@ class PlainEditor(data.QsciScintilla):
         # Store the main form and parent widget references
         self._parent = parent
         self.main_form = main_form
+        # Set font family and size
+        self.setFont(settings.Editor.font)
         # Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         # Tabs are spaces by default

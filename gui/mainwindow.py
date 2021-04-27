@@ -3009,16 +3009,18 @@ class MainWindow(data.QMainWindow):
             for group in groups:
                 current_node = main_group
                 for folder in group:
+                    folder_name = folder.replace('&', "&&")
                     new_group = current_node.subgroup_get(folder)
                     if new_group == None:
-                        new_group = Menu(folder)
+                        new_group = Menu(folder_name)
                         current_node.reference.addMenu(new_group)
                         new_group.setIcon(functions.create_icon('tango_icons/folder.png'))
                     current_node = current_node.subgroup_create(folder, new_group)
             # Loop through all of the stored sessions and add them
             for session in self._parent.settings.manipulator.stored_sessions:
                 # Add the session
-                new_session_action = data.QAction(session.name, self._parent)
+                session_name = session.name.replace('&', "&&")
+                new_session_action = data.QAction(session_name, self._parent)
                 new_session_action.setStatusTip("Restore Session: {}".format(session.name))
                 new_session_method = functools.partial(
                     self.restore,
@@ -3132,8 +3134,6 @@ class MainWindow(data.QMainWindow):
                         [self._parent.horizontal_splitter.width()*self.horizontal_width_2, 
                          self._parent.horizontal_splitter.width()*self.horizontal_width_1]
                     )
-            #Set the REPL font
-            self._parent.repl.setFont(data.QFont("Arial", 12, data.QFont.Bold))
             #Refresh the size relation between the basic widgets and the REPL,
             #so that the REPL height is always the same
             self.refresh_main_splitter()
@@ -4508,13 +4508,12 @@ class MainWindow(data.QMainWindow):
                 parent.repl_messages_tab.SendScintilla(
                     data.QsciScintillaBase.SCI_STYLESETFONT,
                     lexer_number,
-#                    data.theme.Font.Python.Default[0].encode("utf-8")
-                    b"Arial"
+                    data.theme.Font.Python.Default[0].encode("utf-8")
                 )
                 parent.repl_messages_tab.SendScintilla(
                     data.QsciScintillaBase.SCI_STYLESETSIZE,
                     lexer_number,
-                    10
+                    data.theme.Font.Python.Default[2]
                 )
                 parent.repl_messages_tab.SendScintilla(
                     data.QsciScintillaBase.SCI_STYLESETBOLD,

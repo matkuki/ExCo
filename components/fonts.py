@@ -17,7 +17,7 @@ def get_fonts_from_resources():
     directory = functions.unixify_path_join(data.resources_directory, "fonts/")
     font_file_list = []
     for item in os.listdir(directory):
-        if item.lower().endswith(".ttf"):
+        if item.lower().endswith(".ttf") or item.lower().endswith(".otf"):
             font_file_list.append(
                 functions.unixify_path_join(directory, item)
             )

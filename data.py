@@ -281,8 +281,10 @@ terminal = "x-terminal-emulator"
 # Default tree display icon size
 tree_display_icon_size = 16
 # Default font
-current_font_name = "Source Code Pro"
-current_font_size = 9
+current_font_name = "Selawik"
+current_font_size = 10
+current_editor_font_name = "Source Code Pro"
+current_editor_font_size = 10
 def get_current_font():
     return QFont(current_font_name, current_font_size)
 # Current theme

@@ -834,7 +834,6 @@ class BasicWidget(data.QTabWidget):
         """Create a plain vanilla scintilla document"""
         #Initialize the custom editor
         new_scintilla_tab = PlainEditor(self, self._parent)
-        new_scintilla_tab.setFont(self.default_editor_font)
         #Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
         new_scintilla_tab.name = name
         #Initialize the scrollbars

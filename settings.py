@@ -37,9 +37,9 @@ class Editor:
     # Default EOL style in editors (EolWindows-CRLF, EolUnix-LF, EolMac-CR)
     end_of_line_mode = data.QsciScintilla.EolUnix
     # Font colors and styles
-    font = data.QFont(data.current_font_name, data.current_font_size)
+    font = data.QFont(data.current_editor_font_name, data.current_editor_font_size)
     brace_color = data.QColor(255, 153, 0)
-    comment_font = data.current_font_name.encode("utf-8")
+    comment_font = data.current_editor_font_name.encode("utf-8")
     # Edge marker
     edge_marker_color = data.QColor(180, 180, 180, alpha=255)
     edge_marker_column = 90
