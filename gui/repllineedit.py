@@ -198,7 +198,7 @@ class ReplLineEdit(data.QLineEdit):
             #Set focus back to the REPL
             self.setFocus()
         #Check evaluation return message and display it in the "REPL Messages" tab
-        if eval_return != None:
+        if eval_return is not None:
             data.print_log(eval_return)
             if display_action == True:
                 self.main_form.display.repl_display_message(

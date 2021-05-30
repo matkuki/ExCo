@@ -1153,6 +1153,23 @@ def get_python_node_tree(python_code):
                         )
                         globals_list.append(name)
             return new_nodes
+        elif isinstance(ast_node, ast.AnnAssign) and (level == 0 or parent_node == None):
+            # Type annotated globals
+            new_nodes = []
+            target = ast_node.target
+            if hasattr(target, "id") == True:
+                name = target.id
+                if not(name in globals_list):
+                    new_nodes.append(
+                        PythonNode(
+                            name, 
+                            "global_variable", 
+                            ast_node.lineno, 
+                            level
+                        )
+                    )
+                    globals_list.append(name)
+            return new_nodes
         elif isinstance(ast_node, ast.Global):
             # Globals can be nested somewhere deep in the AST, so they
             # are appended directly into the non-local python_node_tree list

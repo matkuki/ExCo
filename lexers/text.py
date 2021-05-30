@@ -51,6 +51,15 @@ class Text(data.QsciLexerCustom):
             description = ""
         return description
     
+    def defaultStyle(self):
+        return self.styles["Default"]
+    
+    def braceStyle(self):
+        return self.styles["Default"]
+    
+    def defaultFont(self, style):
+        return data.QFont(data.current_font_name, data.current_font_size)
+    
     def styleText(self, start, end):
         self.startStyling(start)
         self.setStyling(end - start, 0)

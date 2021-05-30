@@ -1935,7 +1935,7 @@ class CustomEditor(data.QsciScintilla):
         lexer.setParent(self)
         self.setLexer(lexer)
         # Reset the brace matching color
-        self.setMatchedBraceBackgroundColor(settings.Editor.brace_color)
+        self.reset_brace_matching()
         # Change the font style of comments so that they are the same as the default scintilla text
         # This is done using the low-level API function "SendScintilla" that is documented here: http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciScintillaBase.html
         # With it you can invoke C functions documented here: http://www.scintilla.org/ScintillaDoc.html
@@ -1958,7 +1958,13 @@ class CustomEditor(data.QsciScintilla):
         # Update corner icons
         self.icon_manipulator.update_corner_button_icon(self.current_icon)
         self.icon_manipulator.update_icon(self)
-
+        
+    def reset_brace_matching(self):
+        # Reset the brace matching color
+        self.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
+#        self.setMatchedBraceBackgroundColor(settings.Editor.brace_color)
+#        self.setMatchedBraceForegroundColor(data.theme.Font.Default)
+    
     def clear_editor(self):
         """Clear the text from the scintilla document"""
         self.SendScintilla(data.QsciScintillaBase.SCI_CLEARALL)

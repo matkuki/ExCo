@@ -71,6 +71,42 @@ class Menu(data.QMenu):
         """)
 
 
+class MenuBar(data.QMenuBar):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set the default font
+        self.setFont(data.get_current_font())
+        # Restyle
+        self.update_style()
+    
+    def update_style(self):
+#        self.setStyleSheet(f"""
+#            QMenuBar {{
+#                spacing: 1px;
+#            }}
+#            QMenuBar::item {{
+#                margin: 0px;
+#                padding: 0px;
+#                spacing: 0px;
+#            }}
+#        """)
+        self.setStyleSheet(f"""
+            QMenuBar {{
+                background-color: {data.theme.Indication.PassiveBackGround};
+                color: {data.theme.Font.DefaultHtml};
+            }}
+            QMenuBar::item {{
+                background-color: transparent;
+            }}
+            QMenuBar::item:selected {{
+                background-color: {data.theme.Indication.Hover};
+            }}
+        """)
+
+
+
+
+
 
 
 

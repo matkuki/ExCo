@@ -584,8 +584,7 @@ class MainWindow(data.QMainWindow):
         first parameter is always "checked: bool").
         This is a very long function that should be trimmed sometime!
         """
-        self.menubar = data.QMenuBar()
-        self.menubar.setFont(data.get_current_font())
+        self.menubar = MenuBar()
         # Click filter for the menubar menus
         click_filter = components.ActionFilter(self)
         # Nested function for creating an action
@@ -3591,16 +3590,6 @@ class MainWindow(data.QMainWindow):
                 }}
                 QSplitter::handle {{
                     background: {data.theme.Form};
-                }}
-                QMenuBar {{
-                    background-color: {data.theme.Indication.PassiveBackGround};
-                    color: {data.theme.Font.DefaultHtml};
-                }}
-                QMenuBar::item {{
-                    background-color: transparent;
-                }}
-                QMenuBar::item:selected {{
-                    background-color: {data.theme.Indication.Hover};
                 }}
                 {self.__generate_scrollbar_style()}
             """)

@@ -70,6 +70,15 @@ class Oberon(data.QsciLexerCustom):
             description = ""
         return description
     
+    def defaultStyle(self):
+        return self.styles["Default"]
+    
+    def braceStyle(self):
+        return self.styles["Default"]
+    
+    def defaultFont(self, style):
+        return data.QFont(data.current_font_name, data.current_font_size)
+    
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
