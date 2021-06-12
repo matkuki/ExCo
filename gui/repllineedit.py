@@ -181,7 +181,7 @@ class ReplLineEdit(data.QLineEdit):
                 else:
                     self.main_form.display.repl_display_message(">>> " + command)
             if current_rm_index != None:
-                #Revert the focus of the BasicWidget that hold the REPL messages tab to
+                #Revert the focus of the TabWidget that hold the REPL messages tab to
                 #whichever widget was focused before
                 repl_messages._parent.setCurrentIndex(current_rm_index)
         #Evaluate the REPL text and store the result

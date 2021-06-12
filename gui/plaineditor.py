@@ -30,13 +30,14 @@ import traceback
 import gc
 
 from .contextmenu import *
+from .baseeditor import *
 
 """
 -----------------------------
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
 -----------------------------
 """ 
-class PlainEditor(data.QsciScintilla):
+class PlainEditor(BaseEditor):
     # Class variables
     name            = None
     _parent         = None
@@ -179,36 +180,8 @@ class PlainEditor(data.QsciScintilla):
         self.setSelection(start_line, start_index,  end_line, end_index)
     
     def set_theme(self, theme):
+        super().set_theme(theme)
         #Set the lexer
         self.setLexer(lexers.Text(self))
-        #Now the theme
-        if theme == themes.Air:
-            self.resetFoldMarginColors()
-        else:
-            self.setFoldMarginColors(
-                theme.FoldMargin.ForeGround, 
-                theme.FoldMargin.BackGround
-            )
-        self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
-        self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
-        self.SendScintilla(
-            data.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.QsciScintillaBase.STYLE_DEFAULT, 
-            theme.Paper.Default
-        )
-        self.SendScintilla(
-            data.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.QsciScintillaBase.STYLE_LINENUMBER, 
-            theme.LineMargin.BackGround
-        )
-        self.SendScintilla(
-            data.QsciScintillaBase.SCI_SETCARETFORE, 
-            theme.Cursor
-        )
-        self.setStyleSheet(f"""
-            QsciScintilla {{
-                background-color: {data.theme.Indication.PassiveBackGround};
-            }}
-        """)
 
 

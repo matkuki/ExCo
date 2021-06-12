@@ -41,7 +41,7 @@ from .menu import *
 Subclassed QTabWidget that can hold all custom editor and other widgets
 -----------------------------
 """
-class BasicWidget(data.QTabWidget):          
+class TabWidget(data.QTabWidget):          
     """Basic widget used for holding QScintilla/QTextEdit objects"""
     class CustomTabBar(data.QTabBar):
         """Custom tab bar used to capture tab clicks, ..."""
@@ -166,7 +166,7 @@ class BasicWidget(data.QTabWidget):
     
     class TabMenu(Menu):
         """Custom menu that appears when right clicking a tab"""
-        def __init__(self, parent, main_form, basic_widget, editor_widget, cursor_position):
+        def __init__(self, parent, main_form, tab_widget, editor_widget, cursor_position):
             #Nested function for creating a move or copy action
             def create_move_copy_action(action_name, 
                                         window_name, 
@@ -178,7 +178,7 @@ class BasicWidget(data.QTabWidget):
                     func = window.move_editor_in
                     action_func = functools.partial(
                         func, 
-                        basic_widget, 
+                        tab_widget, 
                         parent.tabAt(cursor_position), 
                     )
                     icon = functions.create_icon('tango_icons/window-tab-move.png')
@@ -186,7 +186,7 @@ class BasicWidget(data.QTabWidget):
                     func = window.copy_editor_in
                     action_func = functools.partial(
                         func, 
-                        basic_widget, 
+                        tab_widget, 
                         parent.tabAt(cursor_position), 
                         focus_name
                     )
@@ -245,8 +245,8 @@ class BasicWidget(data.QTabWidget):
                 diff_action.triggered.connect(function)
                 return diff_action
             #Nested function for checking is the basic widgets current tab is an editor
-            def check_for_editor(basic_widget):
-                current_tab = basic_widget.currentWidget()
+            def check_for_editor(tab_widget):
+                current_tab = tab_widget.currentWidget()
                 if (isinstance(current_tab, CustomEditor) == True or
                     isinstance(current_tab, PlainEditor) == True):
                     return True
@@ -268,8 +268,8 @@ class BasicWidget(data.QTabWidget):
             #Initialize the superclass
             super().__init__(parent)
             #Change the basic widget name to lowercase
-            basic_widget_name = basic_widget.name.lower()
-            #Add actions according to the parent BasicWidget
+            tab_widget_name = tab_widget.name.lower()
+            #Add actions according to the parent TabWidget
             #Move actions
             move_to_main  = create_move_copy_action("Move to main window", "main")
             move_to_upper = create_move_copy_action("Move to upper window", "upper")
@@ -350,7 +350,7 @@ class BasicWidget(data.QTabWidget):
                     editor_widget != main_form.lower_window.currentWidget()):
                     self.addAction(diff_lower_action)
             #Check which basic widget is the parent to the clicked tab
-            if "main" in basic_widget_name:
+            if "main" in tab_widget_name:
                 #Add the actions to the menu
                 self.addAction(move_to_upper)
                 self.addAction(move_to_lower)
@@ -369,7 +369,7 @@ class BasicWidget(data.QTabWidget):
                     #Diff functions for plain and custom editors
                     self.addSeparator()
                     add_diff_actions()
-            elif "upper" in basic_widget_name:
+            elif "upper" in tab_widget_name:
                 #Add the actions to the menu
                 self.addAction(move_to_main)
                 self.addAction(move_to_lower)
@@ -388,7 +388,7 @@ class BasicWidget(data.QTabWidget):
                     #Diff functions for plain and custom editors
                     self.addSeparator()
                     add_diff_actions()
-            elif "lower" in basic_widget_name:
+            elif "lower" in tab_widget_name:
                 #Add the actions to the menu
                 self.addAction(move_to_main)
                 self.addAction(move_to_upper)
@@ -418,7 +418,7 @@ class BasicWidget(data.QTabWidget):
             close_other_action.triggered.connect(
                 functools.partial(
                     main_form.close_window_tabs,
-                    basic_widget,
+                    tab_widget,
                     editor_widget
                 )
             )
@@ -560,7 +560,7 @@ class BasicWidget(data.QTabWidget):
         self.drag_text          = None
 
     def enterEvent(self, enter_event):
-        """Event that fires when the focus shifts to the BasicWidget"""
+        """Event that fires when the focus shifts to the TabWidget"""
         cw = self.currentWidget() 
         if cw != None:
             #Check if the current widget is a custom editor or a QTextEdit widget
@@ -570,7 +570,7 @@ class BasicWidget(data.QTabWidget):
             else:
                 #Display only the QTextEdit name
                 self._parent.display.write_to_statusbar(cw.name)
-        data.print_log("Entered BasicWidget: " + str(self.name))
+        data.print_log("Entered TabWidget: " + str(self.name))
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -1002,10 +1002,10 @@ class BasicWidget(data.QTabWidget):
         if (hasattr(tab, "current_icon") == True) and (tab.current_icon != None):
             self.setTabIcon(self.indexOf(tab), tab.current_icon)
 
-    def copy_editor_in(self, source_basic_widget, source_index, focus_name=None):
+    def copy_editor_in(self, source_tab_widget, source_index, focus_name=None):
         """Copy another CustomEditor widget into self"""
         #Create a new reference to the source custom editor
-        source_widget = source_basic_widget.widget(source_index)
+        source_widget = source_tab_widget.widget(source_index)
         #Check if the source tab is valid
         if source_widget == None:
             return
@@ -1027,8 +1027,8 @@ class BasicWidget(data.QTabWidget):
         #Add the copied custom editor to the target basic widget
         new_index = self.addTab(
             new_widget, 
-            source_basic_widget.tabIcon(source_index), 
-            source_basic_widget.tabText(source_index)
+            source_tab_widget.tabIcon(source_index), 
+            source_tab_widget.tabText(source_index)
         )
         #Set focus to the copied widget
         self.setCurrentIndex(new_index)
@@ -1044,11 +1044,11 @@ class BasicWidget(data.QTabWidget):
         #Update the margin in the copied widget
         self.editor_update_margin()
 
-    def move_editor_in(self, source_basic_widget, source_index):
+    def move_editor_in(self, source_tab_widget, source_index):
         """Move another CustomEditor widget into self without copying it"""
-        moved_widget        = source_basic_widget.widget(source_index)
-        moved_widget_icon   = source_basic_widget.tabIcon(source_index)
-        moved_widget_text   = source_basic_widget.tabText(source_index)
+        moved_widget        = source_tab_widget.widget(source_index)
+        moved_widget_icon   = source_tab_widget.tabIcon(source_index)
+        moved_widget_text   = source_tab_widget.tabText(source_index)
         # Check if the source tab is valid
         if moved_widget == None:
             return
@@ -1066,9 +1066,9 @@ class BasicWidget(data.QTabWidget):
         self.setCurrentIndex(new_index)
         # Change the custom editor parent
         self.widget(new_index)._parent = self
-        self.widget(new_index).icon_manipulator.update_basic_widget(self)
+        self.widget(new_index).icon_manipulator.update_tab_widget(self)
         # Set Focus to the copied widget parent
-        self._parent.view.set_window_focus(source_basic_widget.name)
+        self._parent.view.set_window_focus(source_tab_widget.name)
         # Update corner widget
         """
         This has to be done multiple times! 
@@ -1076,7 +1076,7 @@ class BasicWidget(data.QTabWidget):
         """
         for i in range(2):
             self._signal_editor_tabindex_change(None)
-            source_basic_widget._signal_editor_tabindex_change(None)
+            source_tab_widget._signal_editor_tabindex_change(None)
 
 
 

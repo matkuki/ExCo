@@ -80,16 +80,6 @@ class MenuBar(data.QMenuBar):
         self.update_style()
     
     def update_style(self):
-#        self.setStyleSheet(f"""
-#            QMenuBar {{
-#                spacing: 1px;
-#            }}
-#            QMenuBar::item {{
-#                margin: 0px;
-#                padding: 0px;
-#                spacing: 0px;
-#            }}
-#        """)
         self.setStyleSheet(f"""
             QMenuBar {{
                 background-color: {data.theme.Indication.PassiveBackGround};

@@ -146,7 +146,7 @@ class MainWindow(data.QMainWindow):
         # Initialize the log dialog window
         data.log_window = MessageLogger(self)
         # Initialize basic window widgets(main, side_up, side_down)
-        self._init_basic_widgets()
+        self._init_tab_widgets()
         # Initialize statusbar
         self._init_statusbar()
         # Initialize the REPL
@@ -165,7 +165,7 @@ class MainWindow(data.QMainWindow):
             )
         functions.repl_print = repl_print
         # Set the three basic widgets inside the splitters
-        self.view.set_basic_widgets(
+        self.view.set_tab_widgets(
             main_widget     = self.main_window,
             upper_widget    = self.upper_window,
             lower_widget    = self.lower_window
@@ -191,11 +191,11 @@ class MainWindow(data.QMainWindow):
             self.setWindowIcon(data.QIcon(data.application_icon))
         # Set the repl type to a single line
         self.view.set_repl_type(data.ReplType.SINGLE_LINE)
-        self.view.indication_check()
+        self.view.reset_entire_style_sheet()
         # Open the file passed as an argument to the QMainWindow initialization
         if file_arguments != None:
             for file in file_arguments:
-                self.open_file(file=file, basic_widget=self.main_window)
+                self.open_file(file=file, tab_widget=self.main_window)
         else:
             # Create a new document in the main window if the flag was set and
             # the file_arguments is None
@@ -228,6 +228,22 @@ class MainWindow(data.QMainWindow):
         self.statusbar.addPermanentWidget(self.statusbar_label_left)
         #Add the statusbar to the MainWindow
         self.setStatusBar(self.statusbar)
+    
+    def get_all_windows(self):
+        return self.findChildren(TabWidget)
+    
+    def get_all_tree_widgets(self):
+        return self.findChildren(data.QTreeView)
+    
+    def get_all_editors(self):
+        windows = self.get_all_windows()
+        editors = []
+        for w in windows:
+            for i in range(w.count()):
+                widget = w.widget(i)
+                if isinstance(widget, CustomEditor):
+                    editors.append(widget)
+        return editors
     
     def get_form_references(self):
         """
@@ -263,7 +279,7 @@ class MainWindow(data.QMainWindow):
             session_restore = self.sessions.restore, 
             session_remove  = self.sessions.remove, 
             # View functions
-            spin                    = self.view.spin_basic_widgets, 
+            spin                    = self.view.spin_tab_widgets, 
             toggle_main_window_side = self.view.toggle_main_window_side, 
             # System function
             find_files       = self.system.find_files, 
@@ -293,6 +309,10 @@ class MainWindow(data.QMainWindow):
             echo            = self.display.repl_display_message,
             clear_repl_tab  = self.display.repl_clear_tab, 
             show_node_tree  = self.display.show_nodes,
+            # Other
+            get_all_windows  = self.get_all_windows,
+            get_all_tree_widgets  = self.get_all_tree_widgets,
+            get_all_editors  = self.get_all_editors,
         )
     
     def get_references_autocompletions(self):
@@ -494,11 +514,11 @@ class MainWindow(data.QMainWindow):
     
     def file_create_new(self):
         """The function name says it all"""
-        self.create_new(tab_name=None, basic_widget=self.last_focused_widget)
+        self.create_new(tab_name=None, tab_widget=self.last_focused_widget)
     
     def file_open(self):
         """The function name says it all"""
-        self.open_file_with_dialog(basic_widget=self.last_focused_widget)
+        self.open_file_with_dialog(tab_widget=self.last_focused_widget)
     
     def file_save(self, encoding="utf-8", line_ending=None):
         """The function name says it all"""
@@ -2170,15 +2190,15 @@ class MainWindow(data.QMainWindow):
         #Add the menubar to the MainWindow
         self.setMenuBar(self.menubar)
     
-    def _init_basic_widgets(self):
+    def _init_tab_widgets(self):
         """Initialize the three widgets that are used for displaying data"""
         #Initialize and add child controls to main_window(QTabControl)
-        self.main_window = BasicWidget(self)
+        self.main_window = TabWidget(self)
         self.main_window.setTabShape(data.QTabWidget.Rounded)
         #Initialize and add child controls to lower_window(QTabControl)
-        self.upper_window = BasicWidget(self)
+        self.upper_window = TabWidget(self)
         #Initialise and add child controls to lower_window(QTabControl)
-        self.lower_window = BasicWidget(self)
+        self.lower_window = TabWidget(self)
     
     def _init_repl(self):
         """Initialize everything that concerns the REPL"""
@@ -2283,23 +2303,23 @@ class MainWindow(data.QMainWindow):
         # Display interpreter reset success
         self.display.write_to_statusbar("REPL interpreter references successfully updated", 2000)
 
-    def create_new(self, tab_name=None, basic_widget=None):
+    def create_new(self, tab_name=None, tab_widget=None):
         """Creates an empty scintilla document using a generator counter"""
         #Set the new tab name
         if tab_name == None:
             tab_name = "new_" + str(next(self.new_file_count))
         #Create the new scintilla document in the selected basic widget 
         return_widget = None
-        if basic_widget == None:
+        if tab_widget == None:
             return_widget = self.main_window.editor_add_document(tab_name, type="new")
         else:
-            return_widget = basic_widget.editor_add_document(tab_name, type="new")
+            return_widget = tab_widget.editor_add_document(tab_name, type="new")
         #Set focus to the new widget
         return_widget.setFocus()
         #Return the widget reference
         return return_widget
 
-    def open_file_with_dialog(self, basic_widget=None):
+    def open_file_with_dialog(self, tab_widget=None):
         """Open a file for editing using a file dialog"""
         #Create and show a file dialog window, restore last browsed directory and set the file filter
         file_dialog = data.QFileDialog
@@ -2313,27 +2333,27 @@ class MainWindow(data.QMainWindow):
             # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
             # so pass only the files to the function
             files = files[0]
-        # Check and then add the selected file to the main BasicWidget if the window parameter is unspecified
-        self.open_files(files, basic_widget)
+        # Check and then add the selected file to the main TabWidget if the window parameter is unspecified
+        self.open_files(files, tab_widget)
     
-    def open_files(self, files=None, basic_widget=None):
-        """Cheach and read valid files to the selected BasicWidget"""
+    def open_files(self, files=None, tab_widget=None):
+        """Cheach and read valid files to the selected TabWidget"""
         #Check if the files are valid
         if files == None or files == "":
             return
         if isinstance(files,  str):
             #Single file
-            self.open_file(files, basic_widget)
+            self.open_file(files, tab_widget)
         else:
             #List of files
             for file in files:
-                self.open_file(file, basic_widget)
+                self.open_file(file, tab_widget)
 
-    def open_file(self, file=None, basic_widget=None):
+    def open_file(self, file=None, tab_widget=None):
         """
-        Read file contents into a BasicWidget
+        Read file contents into a TabWidget
         """
-        def open_file_function(in_file, basic_widget):
+        def open_file_function(in_file, tab_widget):
             #Check if file exists
             if os.path.isfile(in_file) == False:
                 self.display.repl_display_message(
@@ -2355,15 +2375,15 @@ class MainWindow(data.QMainWindow):
                 if reply == data.QMessageBox.No:
                     return
             #Check selected window
-            if basic_widget == None:
-                basic_widget = self.main_window
+            if tab_widget == None:
+                tab_widget = self.main_window
             #Check if file is already open
-            index = self.check_open_file(in_file, basic_widget)
+            index = self.check_open_file(in_file, tab_widget)
             if index != None:
-                basic_widget.setCurrentIndex(index)
+                tab_widget.setCurrentIndex(index)
                 return
             #Add new scintilla document tab to the basic widget
-            new_tab = basic_widget.editor_add_document(in_file, "file", bypass_check=False)
+            new_tab = tab_widget.editor_add_document(in_file, "file", bypass_check=False)
             #Set the icon if it was set by the lexer
             new_tab.icon_manipulator.update_icon(new_tab)
                 
@@ -2386,19 +2406,19 @@ class MainWindow(data.QMainWindow):
                     message = "Insufficient memory to open the file!"
                     self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
                     self.display.write_to_statusbar(message)
-                    basic_widget.widget(basic_widget.currentIndex()).setParent(None)
-                    basic_widget.removeTab(basic_widget.currentIndex())
+                    tab_widget.widget(tab_widget.currentIndex()).setParent(None)
+                    tab_widget.removeTab(tab_widget.currentIndex())
                     return None
                 except:
                     message = "Unexpected error occured while opening file!"
                     self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
                     self.display.write_to_statusbar(message)
-                    basic_widget.widget(basic_widget.currentIndex()).setParent(None)
-                    basic_widget.removeTab(basic_widget.currentIndex())
+                    tab_widget.widget(tab_widget.currentIndex()).setParent(None)
+                    tab_widget.removeTab(tab_widget.currentIndex())
                     return None
                 #Reset the changed status of the current tab, 
                 #because adding the file content line by line was registered as a text change
-                basic_widget.reset_text_changed()
+                tab_widget.reset_text_changed()
                 #Update the settings manipulator with the new file
                 self.settings.update_recent_list(in_file)
                 #Update the current working directory
@@ -2408,7 +2428,7 @@ class MainWindow(data.QMainWindow):
                 self.set_cwd(path)
                 data.print_log("Opened file: " + str(in_file))
                 #Set focus to the newly opened document
-                basic_widget.currentWidget().setFocus()
+                tab_widget.currentWidget().setFocus()
                 #Update the Save/SaveAs buttons in the menubar
                 self.set_save_file_state(True)
                 return new_tab
@@ -2422,14 +2442,14 @@ class MainWindow(data.QMainWindow):
             return None
         if isinstance(file, str) == True:
             if file != "":
-                new_tab = open_file_function(file, basic_widget)
+                new_tab = open_file_function(file, tab_widget)
                 self.repaint()
                 data.QCoreApplication.processEvents()
                 return new_tab
         elif isinstance(file, list) == True:
             tabs = []
             for f in file:
-                new_tab = open_file_function(f, basic_widget)
+                new_tab = open_file_function(f, tab_widget)
                 tabs.append(new_tab)
                 self.repaint()
                 data.QCoreApplication.processEvents()
@@ -2442,16 +2462,16 @@ class MainWindow(data.QMainWindow):
             return None
             
     
-    def check_open_file(self, file_with_path, basic_widget):
+    def check_open_file(self, file_with_path, tab_widget):
         """Check if a file is already open in one of the windows"""
         found_index = None
         #Change the Windows style path to the Unix style
         file_with_path = file_with_path.replace("\\", "/")
         #Loop through all of the documents in the basic widget
-        for i in range(basic_widget.count()):
+        for i in range(tab_widget.count()):
             #Check the file name and file name with path
-            if (basic_widget.widget(i).name == os.path.basename(file_with_path) and 
-                basic_widget.widget(i).save_name == file_with_path):
+            if (tab_widget.widget(i).name == os.path.basename(file_with_path) and 
+                tab_widget.widget(i).save_name == file_with_path):
                 #If the file is already open, get its index in the tab widget
                 found_index = i
                 break
@@ -2483,13 +2503,13 @@ class MainWindow(data.QMainWindow):
         # Force a garbage collection cycle
         gc.collect()
     
-    def close_window_tabs(self, basic_widget, widget):
+    def close_window_tabs(self, tab_widget, widget):
         """
         Clear all other documents except the selected one
         in a specified basic widget
         """
         #Check if there are any modified documents
-        if self.check_document_states(basic_widget) == True:
+        if self.check_document_states(tab_widget) == True:
             #Close the log window if it is displayed
             self.view.set_log_window(False)
             message = "You have modified documents!\nClose all tabs?"
@@ -2498,13 +2518,13 @@ class MainWindow(data.QMainWindow):
                 return
         #Close all tabs and remove all bookmarks from them
         clear_index = 0
-        for i in range(basic_widget.count()):
-            if basic_widget.widget(clear_index) == widget:
+        for i in range(tab_widget.count()):
+            if tab_widget.widget(clear_index) == widget:
                 clear_index += 1
                 continue
-            if isinstance(basic_widget.widget(clear_index), CustomEditor):
-                self.bookmarks.remove_editor_all(basic_widget.widget(clear_index))
-            basic_widget.close_tab(clear_index, force=True)
+            if isinstance(tab_widget.widget(clear_index), CustomEditor):
+                self.bookmarks.remove_editor_all(tab_widget.widget(clear_index))
+            tab_widget.close_tab(clear_index, force=True)
         # Force a garbage collection cycle
         gc.collect()
     
@@ -2561,7 +2581,7 @@ class MainWindow(data.QMainWindow):
         return None
     
     def get_current_tab_by_parent_name(self, window_name):
-        """Find the current tab by the parent BasicWidget name property"""
+        """Find the current tab by the parent TabWidget name property"""
         widget = None
         if window_name == None:
             widget  = self.main_window.currentWidget()
@@ -2623,7 +2643,7 @@ class MainWindow(data.QMainWindow):
         #No tab in the basic widgets has focus
         return None
     
-    def check_document_states(self, basic_widget=None):
+    def check_document_states(self, tab_widget=None):
         """Check if there are any modified documents in the editor windows"""
         # Nested function for checking modified documents in a single basic widget
         # (just to play with nested functions)
@@ -2634,7 +2654,7 @@ class MainWindow(data.QMainWindow):
                         if window.widget(i).save_status == data.FileStatus.MODIFIED:
                             return True
             return False
-        if basic_widget is None:
+        if tab_widget is None:
             # Check all widget in all three windows for changes
             if (check_documents_in_window(self.main_window) == True or
                 check_documents_in_window(self.upper_window) == True or
@@ -2645,7 +2665,7 @@ class MainWindow(data.QMainWindow):
                 # No changes found
                 return False
         else:
-            return check_documents_in_window(basic_widget)
+            return check_documents_in_window(tab_widget)
 
     def exit(self, event=None):
         """Exit application"""
@@ -2676,7 +2696,7 @@ class MainWindow(data.QMainWindow):
             # Nested function for opening the recent file
             def new_file_function(file):
                 try:
-                    self._parent.open_file(file=file, basic_widget=None)
+                    self._parent.open_file(file=file, tab_widget=None)
                     self._parent.main_window.currentWidget().setFocus()
                 except:
                     pass
@@ -3164,7 +3184,7 @@ class MainWindow(data.QMainWindow):
                     self.horizontal_width_2     = (self._parent.horizontal_splitter.sizes()[0] / 
                                                    self._parent.horizontal_splitter.width())
         
-        def set_basic_widgets(self, 
+        def set_tab_widgets(self, 
                               main_widget, 
                               upper_widget, 
                               lower_widget, 
@@ -3288,13 +3308,13 @@ class MainWindow(data.QMainWindow):
             #Set the new main window side
             self.main_window_side = main_window_side
             #Refresh the layout
-            self.set_basic_widgets(
+            self.set_tab_widgets(
                 main_widget=self._parent.main_window,
                 upper_widget=self._parent.upper_window,
                 lower_widget=self._parent.lower_window
             )
         
-        def spin_basic_widgets(self, direction=data.SpinDirection.CLOCKWISE):
+        def spin_tab_widgets(self, direction=data.SpinDirection.CLOCKWISE):
             """
             Spin the three basic widgets clockwise or counter-clockwise using the splitters.
             
@@ -3323,13 +3343,13 @@ class MainWindow(data.QMainWindow):
                 temp_widget_lower   = self._parent.vertical_splitter.widget(1)
             #Spin according to direction
             if direction == data.SpinDirection.CLOCKWISE:
-                self.set_basic_widgets(
+                self.set_tab_widgets(
                     main_widget=temp_widget_lower,
                     upper_widget=temp_widget_main,
                     lower_widget=temp_widget_upper
                 )
             else:
-                self.set_basic_widgets(
+                self.set_tab_widgets(
                     main_widget=temp_widget_upper,
                     upper_widget=temp_widget_lower,
                     lower_widget=temp_widget_main
@@ -3348,11 +3368,11 @@ class MainWindow(data.QMainWindow):
         
         def spin_widgets_clockwise(self):
             """Convenience function for use with the menubar and REPL"""
-            self.spin_basic_widgets(data.SpinDirection.CLOCKWISE)
+            self.spin_tab_widgets(data.SpinDirection.CLOCKWISE)
 
         def spin_widgets_counterclockwise(self):
             """Convenience function for use with the menubar and REPL"""
-            self.spin_basic_widgets(data.SpinDirection.COUNTER_CLOCKWISE)
+            self.spin_tab_widgets(data.SpinDirection.COUNTER_CLOCKWISE)
         
         def toggle_window_mode(self):
             """Toggle one/three window mode"""
@@ -3423,7 +3443,7 @@ class MainWindow(data.QMainWindow):
             # Reinitialize the groupbox that holds the REPL
             self._parent.repl_box.set_repl(type)
             #Refresh the layout
-            self._parent.view.set_basic_widgets(
+            self._parent.view.set_tab_widgets(
                 main_widget=self._parent.main_window,
                 upper_widget=self._parent.upper_window,
                 lower_widget=self._parent.lower_window
@@ -3596,14 +3616,8 @@ class MainWindow(data.QMainWindow):
             return style_sheet
         
         def reset_window_colors(self, in_sheet):
-            windows = ["Main", "Upper", "Lower"]
             style_sheet = in_sheet
-            for window in windows:
-                style_sheet += self.generate_window_colors(
-                    window, 
-                    data.theme.Indication.PassiveBorder, 
-                    data.theme.Indication.PassiveBackGround
-                )
+            style_sheet += self.generate_window_colors()
             style_sheet = self._style_tree_widgets(style_sheet)
             return style_sheet
         
@@ -3611,16 +3625,29 @@ class MainWindow(data.QMainWindow):
             style_sheet = self.init_style_sheet()
             style_sheet = self.reset_window_colors(style_sheet)
             self._parent.setStyleSheet(style_sheet)
+            self._parent.menubar.update_style()
             Menu.update_styles()
-            self._parent.repl_box.indication_reset()
+#            self._parent.repl_box.indication_reset()
+            self.indication_check()
         
-        def generate_window_colors(self, window_name, border, background):
-            style_sheet = (f"""
-                #{window_name}::pane {{
-                    border: 2px solid {border};
-                    background-color: {background};
+        def generate_window_colors(self):
+            style_sheet = f"""
+                TabWidget::pane {{
+                    border: 1px solid {data.theme.Indication.PassiveBorder};
+                    background-color: {data.theme.Indication.ActiveBackGround};
+                    margin: 0px;
+                    spacing: 0px;
+                    padding: 0px;
                 }}
-                #{window_name} QToolButton {{
+                TabWidget[indicated=false]::pane {{
+                    border: 1px solid {data.theme.Indication.PassiveBorder};
+                    background-color: {data.theme.Indication.PassiveBackGround};
+                }}
+                TabWidget[indicated=true]::pane {{
+                    border: 2px solid {data.theme.Indication.ActiveBorder};
+                    background-color: {data.theme.Indication.ActiveBackGround};
+                }}
+                TabWidget QToolButton {{
                     background: {data.theme.Indication.PassiveBackGround};
                     border: 1px solid {data.theme.Indication.PassiveBorder};
                     margin-top: 0px;
@@ -3628,11 +3655,11 @@ class MainWindow(data.QMainWindow):
                     margin-left: 0px;
                     margin-right: 1px;
                 }}
-                #{window_name} QToolButton:hover {{
+                TabWidget QToolButton:hover {{
                     background: {data.theme.Indication.ActiveBackGround};
                     border: 1px solid {data.theme.Indication.ActiveBorder};
                 }}
-            """)
+            """
             return style_sheet
         
         def generate_treedisplay_colors(self, type):
@@ -3684,16 +3711,12 @@ class MainWindow(data.QMainWindow):
         def _style_tree_widgets(self, style_sheet):
             tree_widgets = (
                 "QTreeView",
-#                "TreeDisplay",
-#                "TreeDisplayBase",
-#                "TreeExplorer",
-#                "SessionGuiManipulator",
             )
             for t in tree_widgets:
                 style_sheet += self.generate_treedisplay_colors(t)
             return style_sheet
         
-        def indicate_window(self, window_name=None, repl=False):
+        def indicate_window(self, repl=False):
             style_sheet = self.init_style_sheet()
             # REPL
             if repl:
@@ -3701,25 +3724,11 @@ class MainWindow(data.QMainWindow):
             else:
                 self._parent.repl_box.indication_reset()
             # Windows
-            windows = ["Main", "Upper", "Lower"]
-            if window_name:
-                style_sheet += self.generate_window_colors(
-                    window_name, 
-                    data.theme.Indication.ActiveBorder, 
-                    data.theme.Indication.ActiveBackGround
-                )
-                windows.remove(window_name)
-            for window in windows:
-                style_sheet += self.generate_window_colors(
-                    window, 
-                    data.theme.Indication.PassiveBorder, 
-                    data.theme.Indication.PassiveBackGround
-                )
-            # Tree widgets
-            style_sheet = self._style_tree_widgets(style_sheet)
-            
-            # Apply style sheet
-            self._parent.setStyleSheet(style_sheet)
+            windows = self._parent.get_all_windows()
+            for w in windows:
+                w.style().unpolish(w)
+                w.style().polish(w)
+                w.repaint()
 
         def indication_check(self):
             if hasattr(self, "indication_timer"):
@@ -3736,24 +3745,23 @@ class MainWindow(data.QMainWindow):
             Check if any of the main windows or the REPL is focused
             and indicate the focused widget if needed
             """
-            if (self._parent.main_window == None or 
-                self._parent.upper_window == None or 
-                self._parent.lower_window == None or 
-                self._parent.repl == None):
+            windows = self._parent.get_all_windows()
+            if len(windows) == 0 or self._parent.repl == None:
                 return
             Menu.update_styles()
             #Check the focus for all of the windows
-            windows = [self._parent.main_window, 
-                       self._parent.upper_window, 
-                       self._parent.lower_window]
+            window_indicated_flag = False
+            for window in windows:
+                window.setProperty("indicated", False)
             for window in windows:
                 if window.count() == 0:
                     if window.hasFocus() == True:
                         window.indicated = True
-                        self.indicate_window(window.name)
-                        return
+                        window.setProperty("indicated", True)
+                        window_indicated_flag = True
                     else:
                         window.indicated = False
+                        window.setProperty("indicated", False)
                 else:
                     window.indicated = False
                     for i in range(window.count()):
@@ -3762,13 +3770,16 @@ class MainWindow(data.QMainWindow):
                                 window.widget(i).editor_1.hasFocus() == True or
                                 window.widget(i).editor_2.hasFocus() == True):
                                 window.indicated = True
-                                self.indicate_window(window.name)
-                                return
+                                window.setProperty("indicated", True)
+                                window_indicated_flag = True
                         else:
                             if window.widget(i).hasFocus() == True:
                                 window.indicated = True
-                                self.indicate_window(window.name)
-                                return
+                                window.setProperty("indicated", True)
+                                window_indicated_flag = True
+            if window_indicated_flag:
+                self.indicate_window()
+                return
             #Check the REPL focus
             if (self._parent.repl.hasFocus() == True or
                 self._parent.repl_helper.hasFocus() == True):
@@ -3803,7 +3814,7 @@ class MainWindow(data.QMainWindow):
                     elif hasattr(window.widget(i), "set_theme") == True:
                         window.widget(i).set_theme(data.theme)
             self._parent.repl_helper.refresh_lexer()
-            self.indication_check()
+            self.reset_entire_style_sheet()
             self._parent.statusbar.setStyleSheet(
                 "color: {0};".format(data.theme.Indication.Font)
             )
@@ -4079,12 +4090,12 @@ class MainWindow(data.QMainWindow):
             in the selected window
             """
             # Get the current widget
-            basic_widget = self._parent.get_window_by_name(window_name)
+            tab_widget = self._parent.get_window_by_name(window_name)
             if window_name == None:
                 window_name = "Main"
             # Check if there are any documents in the basic widget
-            if basic_widget.count() == 0:
-                message = "No documents in " + basic_widget.name.lower()
+            if tab_widget.count() == 0:
+                message = "No documents in " + tab_widget.name.lower()
                 message += " editing window"
                 self._parent.display.repl_display_message(
                     message, 
@@ -4093,27 +4104,27 @@ class MainWindow(data.QMainWindow):
                 return
             # Save the current index to reset focus to it if no
             # instances of search string are found
-            saved_index = basic_widget.currentIndex()
+            saved_index = tab_widget.currentIndex()
             # Create a deque of the tab index order and start with the current
             # index, deque is used, because it can be rotated by default
-            in_deque = collections.deque(range(basic_widget.count()))
+            in_deque = collections.deque(range(tab_widget.count()))
             # Rotate the deque until the first element is the current index
-            while in_deque[0] != basic_widget.currentIndex():
+            while in_deque[0] != tab_widget.currentIndex():
                 in_deque.rotate(1)
             # Set a flag for the first document
             first_document = True
             for i in in_deque:
                 # Skip the current widget if it's not an editor
-                if isinstance(basic_widget.widget(i), CustomEditor) == False:
+                if isinstance(tab_widget.widget(i), CustomEditor) == False:
                     continue
                 # Place the cursor to the top of the document
                 # if it is not the current document
                 if first_document == True:
                     first_document = False
                 else:
-                    basic_widget.widget(i).setCursorPosition(0, 0)
+                    tab_widget.widget(i).setCursorPosition(0, 0)
                 # Find the text
-                result = basic_widget.widget(i).find_text(
+                result = tab_widget.widget(i).find_text(
                     search_text,
                     case_sensitive, 
                     True, # search_forward
@@ -4126,9 +4137,9 @@ class MainWindow(data.QMainWindow):
                 if result == data.SearchResult.FOUND:
                     return True
             # Nothing found
-            basic_widget.setCurrentIndex(saved_index)
+            tab_widget.setCurrentIndex(saved_index)
             message = "No instances of '" + search_text + "' found in "
-            message += basic_widget.name.lower() + " editing window"
+            message += tab_widget.name.lower() + " editing window"
             self._parent.display.repl_display_message(
                 message, 
                 message_type=data.MessageType.WARNING
@@ -4147,12 +4158,12 @@ class MainWindow(data.QMainWindow):
             instance at a time, starting from the currently selected widget.
             """
             #Get the current widget
-            basic_widget = self._parent.get_window_by_name(window_name)
+            tab_widget = self._parent.get_window_by_name(window_name)
             if window_name == None:
                 window_name = "Main"
             #Check if there are any documents in the basic widget
-            if basic_widget.count() == 0:
-                message = "No documents in the " + basic_widget.name.lower()
+            if tab_widget.count() == 0:
+                message = "No documents in the " + tab_widget.name.lower()
                 message += " editing window"
                 self._parent.display.repl_display_message(
                     message, 
@@ -4160,16 +4171,16 @@ class MainWindow(data.QMainWindow):
                 )
                 return
             #Save the current index to reset focus to it if no instances of search string are found
-            saved_index = basic_widget.currentIndex()
+            saved_index = tab_widget.currentIndex()
             #Create a deque of the tab index order and start with the current index,
             #deque is used, because it can be rotated by default
-            in_deque= collections.deque(range(basic_widget.count()))
+            in_deque= collections.deque(range(tab_widget.count()))
             #Rotate the deque until the first element is the current index
-            while in_deque[0] != basic_widget.currentIndex():
+            while in_deque[0] != tab_widget.currentIndex():
                 in_deque.rotate(1)
             #Find the next instance
             for i in in_deque:
-                result = basic_widget.widget(i).find_and_replace(
+                result = tab_widget.widget(i).find_and_replace(
                     search_text, 
                     replace_text, 
                     case_sensitive, 
@@ -4177,14 +4188,14 @@ class MainWindow(data.QMainWindow):
                 )
                 #If a replace was done, return success
                 if result == True:
-                    message = "Found and replaced in " + basic_widget.name.lower()
+                    message = "Found and replaced in " + tab_widget.name.lower()
                     message += " editing window"
                     self._parent.display.write_to_statusbar(message)
                     return True
             #Nothing found
-            basic_widget.setCurrentIndex(saved_index)
+            tab_widget.setCurrentIndex(saved_index)
             message = "No instances of '" + search_text + "' found in the "
-            message += basic_widget.name.lower() + " editing window"
+            message += tab_widget.name.lower() + " editing window"
             self._parent.display.repl_display_message(
                 message, 
                 message_type=data.MessageType.WARNING
@@ -4202,12 +4213,12 @@ class MainWindow(data.QMainWindow):
             all of the open documents in the selected window
             """
             #Get the current widget
-            basic_widget = self._parent.get_window_by_name(window_name)
+            tab_widget = self._parent.get_window_by_name(window_name)
             if window_name == None:
                 window_name = "Main"
             #Loop over each widget and replace all instances of the search text
-            for i in range(basic_widget.count()):
-                basic_widget.widget(i).replace_all(
+            for i in range(tab_widget.count()):
+                tab_widget.widget(i).replace_all(
                     search_text, 
                     replace_text, 
                     case_sensitive, 

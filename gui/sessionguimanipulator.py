@@ -102,10 +102,10 @@ class SessionGuiManipulator(data.QTreeView):
         super().__init__(parent)
         # Initialize components
         self.icon_manipulator = components.IconManipulator(
-            parent=self, basic_widget=parent
+            parent=self, tab_widget=parent
         )
         self.add_corner_buttons()
-        #Store the reference to the parent BasicWidget from the "forms" module
+        #Store the reference to the parent TabWidget from the "forms" module
         self._parent = parent
         #Store the reference to the MainWindow form from the "forms" module
         self.main_form = main_form

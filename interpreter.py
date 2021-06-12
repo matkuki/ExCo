@@ -65,8 +65,8 @@ class CustomInterpreter(code.InteractiveInterpreter):
         quit                        = (r"^quit$" , r"quit()"),
         exit                        = (r"^exit$", r"exit()"),
         bye                         = (r"^bye\(\)$|^bye$", r"exit()"),
-        spin_r                      = (r"^spin_r\(\)$|^spin_r$", r"form.view.spin_basic_widgets()"), 
-        spin_l                      = (r"^spin_l\(\)$|^spin_l$", r"form.view.spin_basic_widgets(1)"),       
+        spin_r                      = (r"^spin_r\(\)$|^spin_r$", r"form.view.spin_tab_widgets()"), 
+        spin_l                      = (r"^spin_l\(\)$|^spin_l$", r"form.view.spin_tab_widgets(1)"),       
         clear_repl_tab              = (r"^clear_repl_tab$", r"clear_repl_tab()"), 
         new                         = (r"^new$", r"new()"),
         set_all_text                = (

@@ -23,12 +23,12 @@ class IconManipulator:
     Icon manipulator for a widget inside a basic widget
     """
     _parent = None
-    _basic_widget = None
+    _tab_widget = None
     corner_groupbox = None
     
-    def __init__(self, parent=None, basic_widget=None):
+    def __init__(self, parent=None, tab_widget=None):
         self._parent = parent
-        self._basic_widget = basic_widget
+        self._tab_widget = tab_widget
     
     def __del__(self):
         self.remove_corner_groupbox()
@@ -41,31 +41,31 @@ class IconManipulator:
         obj.current_icon = icon
         self.update_icon(obj)
     
-    def update_basic_widget(self, new_basic_widget):
-        self._basic_widget = new_basic_widget
+    def update_tab_widget(self, new_tab_widget):
+        self._tab_widget = new_tab_widget
     
     def update_icon(self, obj):
         """
         Update the current icon and update it by sending the signal to the 
         parent basic widget
         """
-        basic_widget = self._basic_widget
+        tab_widget = self._tab_widget
         if isinstance(obj, gui.CustomEditor):
-            if isinstance(basic_widget, gui.BasicWidget):
-                basic_widget.update_tab_icon(obj)
+            if isinstance(tab_widget, gui.TabWidget):
+                tab_widget.update_tab_icon(obj)
                 self.update_corner_widget(obj)
-            elif isinstance(basic_widget, gui.TextDiffer):
-                basic_widget._parent.update_tab_icon(obj)
+            elif isinstance(tab_widget, gui.TextDiffer):
+                tab_widget._parent.update_tab_icon(obj)
         elif isinstance(obj, gui.PlainEditor):
-            if isinstance(basic_widget, gui.BasicWidget):
-                basic_widget.update_tab_icon(obj)
+            if isinstance(tab_widget, gui.TabWidget):
+                tab_widget.update_tab_icon(obj)
         elif hasattr(obj, "_parent") and obj.current_icon != None:
             obj._parent.update_tab_icon(obj)
     
     def update_corner_widget(self, obj):
         if self.corner_groupbox != None:
-            basic_widget = self._basic_widget
-            self.show_corner_groupbox(basic_widget)
+            tab_widget = self._tab_widget
+            self.show_corner_groupbox(tab_widget)
             return True
         else:
             return False
@@ -91,7 +91,7 @@ class IconManipulator:
     def add_corner_button(self, icon, tooltip, function):
         # Create the group box for buttons if needed
         if self.corner_groupbox == None:
-            self.corner_groupbox = data.QGroupBox(self._basic_widget)
+            self.corner_groupbox = data.QGroupBox(self._tab_widget)
             corner_layout = data.QHBoxLayout()
             corner_layout.setSpacing(0)
             corner_layout.setContentsMargins(0, 0, 0, 0)
@@ -135,10 +135,10 @@ class IconManipulator:
                 functions.create_icon(icon)
             )
     
-    def show_corner_groupbox(self, basic_widget):
+    def show_corner_groupbox(self, tab_widget):
         if self.corner_groupbox == None:
             return
-        basic_widget.setCornerWidget(self.corner_groupbox)
+        tab_widget.setCornerWidget(self.corner_groupbox)
         self.corner_groupbox.show()
         self.corner_groupbox.setStyleSheet(
             "QGroupBox {border: 0px;}"

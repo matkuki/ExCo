@@ -31,6 +31,7 @@ import gc
 
 from .contextmenu import *
 from .dialogs import *
+from .baseeditor import *
 
 
 """
@@ -38,7 +39,7 @@ from .dialogs import *
 Subclassed QScintilla widget used for editing
 ---------------------------------------------
 """ 
-class CustomEditor(data.QsciScintilla):
+class CustomEditor(BaseEditor):
     """
     QScintilla widget with added custom functions
     
@@ -193,7 +194,7 @@ class CustomEditor(data.QsciScintilla):
         self.selectionChanged.connect(self._selection_changed)
         # Initialize components
         self.icon_manipulator = components.IconManipulator(
-            parent=self, basic_widget=parent
+            parent=self, tab_widget=parent
         )
         # Set the lexer to the default Plain Text
         self.choose_lexer("text")
@@ -213,6 +214,13 @@ class CustomEditor(data.QsciScintilla):
         # Set cursor line visibility and color
         self.set_cursor_line_visibility(
             settings.Editor.cursor_line_visible
+        )
+        self.setStyleSheet(
+            """
+            QObject {
+                border: 2px solid #00ffffff;
+            }
+            """
         )
     
     def __setattr__(self, name, value):
@@ -595,39 +603,6 @@ class CustomEditor(data.QsciScintilla):
         self.setSelection(0,0,self.lines(),0)
         #Replace it with the new text
         self.replaceSelectedText(text)
-    
-    def set_theme(self, theme):
-        if theme == themes.Air:
-            self.resetFoldMarginColors()
-        else:
-            self.setFoldMarginColors(
-                theme.FoldMargin.ForeGround, 
-                theme.FoldMargin.BackGround
-            )
-        self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
-        self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
-        self.SendScintilla(
-            data.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.QsciScintillaBase.STYLE_DEFAULT, 
-            theme.Paper.Default
-        )
-        self.SendScintilla(
-            data.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.QsciScintillaBase.STYLE_LINENUMBER, 
-            theme.LineMargin.BackGround
-        )
-        self.SendScintilla(
-            data.QsciScintillaBase.SCI_SETCARETFORE, 
-            theme.Cursor
-        )
-        self.setCaretLineBackgroundColor(
-            theme.Cursor_Line_Background
-        )
-        self.setStyleSheet(f"""
-            QsciScintilla {{
-                background-color: {data.theme.Indication.PassiveBackGround};
-            }}
-        """)
     
     def get_line_number(self):
         """return the line on which the cursor is"""
