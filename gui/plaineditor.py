@@ -180,8 +180,9 @@ class PlainEditor(BaseEditor):
         self.setSelection(start_line, start_index,  end_line, end_index)
     
     def set_theme(self, theme):
-        super().set_theme(theme)
-        #Set the lexer
+        # Set the lexer
         self.setLexer(lexers.Text(self))
+        # Run the super-class method
+        super().set_theme(theme)
 
 
