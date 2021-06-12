@@ -3542,7 +3542,7 @@ class MainWindow(data.QMainWindow):
                 QSplitter::handle {{
                     background: {data.theme.Form};
                 }}
-                {stylesheet_scrollbar()}
+                {StyleSheetScrollbar.full()}
             """)
             return style_sheet
         
