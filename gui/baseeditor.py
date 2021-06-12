@@ -30,6 +30,7 @@ import traceback
 import gc
 
 from .contextmenu import *
+from .stylesheets import *
 
 """
 -----------------------------
@@ -70,5 +71,6 @@ class BaseEditor(data.QsciScintilla):
             QObject {
                 border: 2px solid #00ffffff;
             }
+            {stylesheet_scrollbar()}
             """
         )
