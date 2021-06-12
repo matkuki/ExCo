@@ -3565,7 +3565,7 @@ class MainWindow(data.QMainWindow):
             style_sheet = f"""
                 TabWidget::pane {{
                     border: 1px solid {data.theme.Indication.PassiveBorder};
-                    background-color: {data.theme.Indication.ActiveBackGround};
+                    background-color: {data.theme.Indication.PassiveBackGround};
                     margin: 0px;
                     spacing: 0px;
                     padding: 0px;
@@ -3595,15 +3595,11 @@ class MainWindow(data.QMainWindow):
         
         def generate_treedisplay_colors(self, type):
             style_sheet =  type + " {"
-            style_sheet += "color: rgb({0},{1},{2});".format(
-                data.theme.Font.Default.red(), 
-                data.theme.Font.Default.green(), 
-                data.theme.Font.Default.blue() 
+            style_sheet += "color: {};".format(
+                data.theme.Font.Default.name(), 
             )
-            style_sheet += "background-color: rgb({0},{1},{2});".format(
-                data.theme.Paper.Default.red(), 
-                data.theme.Paper.Default.green(), 
-                data.theme.Paper.Default.blue() 
+            style_sheet += "background-color: {};".format(
+                data.theme.Paper.Default.name(),
             )
             style_sheet += "}"
             if data.theme != themes.Air:

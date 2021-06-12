@@ -66,13 +66,15 @@ class BaseEditor(data.QsciScintilla):
         self.setCaretLineBackgroundColor(
             theme.Cursor_Line_Background
         )
-        self.horizontalScrollBar().setStyleSheet(StyleSheetScrollbar.horizontal())
-        self.verticalScrollBar().setStyleSheet(StyleSheetScrollbar.vertical())
-        self.setStyleSheet(
-            """
-            QObject {
-                border: 2px solid #00ffffff;
-            }
+#        self.horizontalScrollBar().setStyleSheet(StyleSheetScrollbar.horizontal())
+#        self.verticalScrollBar().setStyleSheet(StyleSheetScrollbar.vertical())
+        self.setStyleSheet(f"""
+            BaseEditor {{
+                border: 0px;
+                background-color: {data.theme.Indication.PassiveBackGround};
+                padding: 0px;
+                spacing: 0px;
+                margin: 1px;
+            }}
             {StyleSheetScrollbar.full()}
-            """
-        )
+        """)

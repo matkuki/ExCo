@@ -215,13 +215,6 @@ class CustomEditor(BaseEditor):
         self.set_cursor_line_visibility(
             settings.Editor.cursor_line_visible
         )
-        self.setStyleSheet(
-            """
-            QObject {
-                border: 2px solid #00ffffff;
-            }
-            """
-        )
     
     def __setattr__(self, name, value):
         """
