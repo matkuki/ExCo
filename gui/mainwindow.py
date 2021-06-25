@@ -2242,9 +2242,8 @@ class MainWindow(data.QMainWindow):
             reply = YesNoDialog.question(message)
             if reply == data.QMessageBox.Yes:
                 functions.create_default_config_file()
-                self.display.repl_display_message(
-                    "Default user definitions file generated!", 
-                    message_type=data.MessageType.SUCCESS
+                self.display.repl_display_success(
+                    "Default user definitions file generated!"
                 )
             return
         user_file = open(user_file_path, "r", encoding="utf-8")
@@ -2252,9 +2251,8 @@ class MainWindow(data.QMainWindow):
         user_file.close()
         result = self.repl._repl_eval(user_code, display_action=False)
         if result != None:
-            self.display.repl_display_message(
-                "ERROR IN USER CONFIGURATION FILE:\n" + result, 
-                message_type=data.MessageType.ERROR
+            self.display.repl_display_error(
+                "ERROR IN USER CONFIGURATION FILE:\n" + result
             )
             return
         # Execute the data module's first_scan function once
@@ -3564,14 +3562,14 @@ class MainWindow(data.QMainWindow):
         def generate_window_colors(self):
             style_sheet = f"""
                 TabWidget::pane {{
-                    border: 1px solid {data.theme.Indication.PassiveBorder};
+                    border: 2px solid {data.theme.Indication.PassiveBorder};
                     background-color: {data.theme.Indication.PassiveBackGround};
                     margin: 0px;
                     spacing: 0px;
                     padding: 0px;
                 }}
                 TabWidget[indicated=false]::pane {{
-                    border: 1px solid {data.theme.Indication.PassiveBorder};
+                    border: 2px solid {data.theme.Indication.PassiveBorder};
                     background-color: {data.theme.Indication.PassiveBackGround};
                 }}
                 TabWidget[indicated=true]::pane {{
@@ -3728,11 +3726,7 @@ class MainWindow(data.QMainWindow):
             self.reset_entire_style_sheet()
         
         def refresh_theme(self):
-            windows = [
-                self._parent.main_window, 
-                self._parent.upper_window, 
-                self._parent.lower_window
-            ]
+            windows = self._parent.get_all_windows()
             for window in windows:
                 window.customize_tab_bar()
                 for i in range(window.count()):

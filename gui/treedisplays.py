@@ -2236,67 +2236,6 @@ class TreeExplorer(TreeDisplayBase):
         self.default_menu_font = self.tree_menu.font()
         self.customize_context_menu()
         
-        # The paste function is always shown when applicable,
-        # so this function needs to be defined at the top
-        def paste_item():
-            if TreeExplorer.cut_items != None:
-                items = TreeExplorer.cut_items
-                for it in items:
-                    print(it)
-            elif TreeExplorer.copy_items != None:
-                items = TreeExplorer.copy_items
-            else:
-                self.main_form.display.display_error(
-                    "Copy AND Cut items list is empty!\n" +
-                    "Cannot perform this action!"
-                )
-                return
-            for it in items:
-                path = it.path
-                print(path)
-                itype = it.itype
-                # Setup the directory
-                base_name = os.path.basename(path)
-                new_path = os.path.join(
-                    self.current_viewed_directory,
-                    base_name
-                )
-                if itype == TreeExplorer.ItemType.DIRECTORY:
-                    if os.path.exists(new_path):
-                        message = "The PASTE directory already exists! "
-                        message += "Do you wish to overwrite it?"
-                        reply = YesNoDialog.question(message)
-                        if reply != data.QMessageBox.Yes:
-                            return
-#                    if TreeExplorer.cut_items != None:
-#                        shutil.move(path, new_path)
-#                    elif TreeExplorer.copy_items != None:
-#                        shutil.copytree(path, new_path)
-                    if os.path.isdir(new_path):
-                        shutil.rmtree(new_path)
-                        time.sleep(0.1)
-                    shutil.copytree(path, new_path)
-                    if TreeExplorer.cut_items != None:
-                        shutil.rmtree(path)
-                else:
-                    if os.path.exists(new_path):
-                        message = "The PASTE file already exists! "
-                        message += "Do you wish to overwrite it?"
-                        reply = YesNoDialog.question(message)
-                        if reply != data.QMessageBox.Yes:
-                            return
-#                    if TreeExplorer.cut_items != None:
-#                        shutil.move(path, new_path)
-#                    elif TreeExplorer.copy_items != None:
-#                        shutil.copy(path, new_path)
-                    shutil.copy(path, new_path)
-                    if TreeExplorer.cut_items != None:
-                        os.remove(path)
-            if TreeExplorer.cut_items != None:
-                TreeExplorer.cut_items = None
-                TreeExplorer.copy_items = None
-            self.display_directory(self.current_viewed_directory)
-        
         # First check if the click was in an empty space
         # and create item actions accordingly
         if item != None:
@@ -2392,58 +2331,20 @@ class TreeExplorer(TreeDisplayBase):
             # Separator
             self.tree_menu.addSeparator()
             # Cut item
-            def cut_items():
-                items = []
-                for i in self.selectedIndexes():
-                    it = self.model().itemFromIndex(i)
-                    if it.attributes.itype in [TreeExplorer.ItemType.FILE, 
-                                               TreeExplorer.ItemType.DIRECTORY]:
-                        items.append(it.attributes)
-                TreeExplorer.cut_items = items
-                TreeExplorer.copy_items = None
-                self.main_form.display.repl_display_message(
-                    "Cut items:"
-                )
-                for i in items:
-                    self.main_form.display.repl_display_message(
-                        "  {}: \"{}\"".format(
-                            i.itype.name.lower(),
-                            i.path
-                        )
-                    ) 
             cut_items_action = data.QAction(
                 "Cut", self.tree_menu
             )
-            cut_items_action.triggered.connect(cut_items)
+            cut_items_action.triggered.connect(self.__cut_items)
             icon = functions.create_icon('tango_icons/edit-cut.png')
             cut_items_action.setIcon(icon)
             if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
                                          TreeExplorer.ItemType.DIRECTORY]:
                 self.tree_menu.addAction(cut_items_action)
             # Copy item
-            def copy_item():
-                items = []
-                for i in self.selectedIndexes():
-                    it = self.model().itemFromIndex(i)
-                    if it.attributes.itype in [TreeExplorer.ItemType.FILE, 
-                                               TreeExplorer.ItemType.DIRECTORY]:
-                        items.append(it.attributes)
-                TreeExplorer.cut_items = None
-                TreeExplorer.copy_items = items
-                self.main_form.display.repl_display_message(
-                    "Copied items:"
-                )
-                for i in items:
-                    self.main_form.display.repl_display_message(
-                        "  {}: \"{}\"".format(
-                            i.itype.name.lower(),
-                            i.path
-                        )
-                    ) 
             copy_item_action = data.QAction(
                 "Copy", self.tree_menu
             )
-            copy_item_action.triggered.connect(copy_item)
+            copy_item_action.triggered.connect(self.__copy_item)
             icon = functions.create_icon('tango_icons/edit-copy.png')
             copy_item_action.setIcon(icon)
             if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
@@ -2453,7 +2354,7 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action = data.QAction(
                 "Paste", self.tree_menu
             )
-            paste_item_action.triggered.connect(paste_item)
+            paste_item_action.triggered.connect(self.__paste_item)
             icon = functions.create_icon('tango_icons/edit-paste.png')
             paste_item_action.setIcon(icon)
             if item.attributes.itype in [TreeExplorer.ItemType.FILE,
@@ -2493,33 +2394,10 @@ class TreeExplorer(TreeDisplayBase):
                                          TreeExplorer.ItemType.DIRECTORY]:
                 self.tree_menu.addAction(rename_item_action)
             # Delete item
-            def delete_item():
-                items = []
-                for i in self.selectedIndexes():
-                    item = self.model().itemFromIndex(i)
-                    items.append(item.attributes)
-                message = "Are you sure you want to delete the {} selected items?".format(len(items))
-                reply = YesNoDialog.question(message)
-                if reply != data.QMessageBox.Yes:
-                    return
-                for it in items:
-                    path = it.path
-                    if os.path.exists(path):
-                        if os.path.isdir(path):
-                            shutil.rmtree(path)
-                        else:
-                            os.remove(path)
-                        self.display_directory(self.current_viewed_directory)
-                    else:
-                        self.main_form.display.repl_display_message(
-                            "Item '{}'\n does not seem to exist!!".format(
-                                item.attributes.path),
-                            message_type=data.MessageType.WARNING
-                        )
             delete_item_action = data.QAction(
                 "Delete", self.tree_menu
             )
-            delete_item_action.triggered.connect(delete_item)
+            delete_item_action.triggered.connect(self.__delete_items)
             icon = functions.create_icon('tango_icons/session-remove.png')
             delete_item_action.setIcon(icon)
             if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
@@ -2530,7 +2408,7 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action = data.QAction(
                 "Paste", self.tree_menu
             )
-            paste_item_action.triggered.connect(paste_item)
+            paste_item_action.triggered.connect(self.__paste_item)
             icon = functions.create_icon('tango_icons/edit-paste.png')
             paste_item_action.setIcon(icon)
             if TreeExplorer.cut_items != None or TreeExplorer.copy_items != None:
@@ -2610,9 +2488,145 @@ class TreeExplorer(TreeDisplayBase):
         # Show the menu
         self.tree_menu.popup(cursor)
     
+    def __paste_item(self):
+        if TreeExplorer.cut_items != None:
+            items = TreeExplorer.cut_items
+            for it in items:
+                print(it)
+        elif TreeExplorer.copy_items != None:
+            items = TreeExplorer.copy_items
+        else:
+            self.main_form.display.display_error(
+                "Copy AND Cut items list is empty!\n" +
+                "Cannot perform this action!"
+            )
+            return
+        for it in items:
+            path = it.path
+            print(path)
+            itype = it.itype
+            # Setup the directory
+            base_name = os.path.basename(path)
+            new_path = os.path.join(
+                self.current_viewed_directory,
+                base_name
+            )
+            if itype == TreeExplorer.ItemType.DIRECTORY:
+                if os.path.exists(new_path):
+                    message = "The PASTE directory already exists! "
+                    message += "Do you wish to overwrite it?"
+                    reply = YesNoDialog.question(message)
+                    if reply != data.QMessageBox.Yes:
+                        return
+#                if TreeExplorer.cut_items != None:
+#                    shutil.move(path, new_path)
+#                elif TreeExplorer.copy_items != None:
+#                    shutil.copytree(path, new_path)
+                if os.path.isdir(new_path):
+                    shutil.rmtree(new_path)
+                    time.sleep(0.1)
+                shutil.copytree(path, new_path)
+                if TreeExplorer.cut_items != None:
+                    shutil.rmtree(path)
+            else:
+                if os.path.exists(new_path):
+                    message = "The PASTE file already exists! "
+                    message += "Do you wish to overwrite it?"
+                    reply = YesNoDialog.question(message)
+                    if reply != data.QMessageBox.Yes:
+                        return
+#                if TreeExplorer.cut_items != None:
+#                    shutil.move(path, new_path)
+#                elif TreeExplorer.copy_items != None:
+#                    shutil.copy(path, new_path)
+                shutil.copy(path, new_path)
+                if TreeExplorer.cut_items != None:
+                    os.remove(path)
+        if TreeExplorer.cut_items != None:
+            TreeExplorer.cut_items = None
+            TreeExplorer.copy_items = None
+        self.display_directory(self.current_viewed_directory)
+    
+    def __copy_item(self):
+        items = []
+        for i in self.selectedIndexes():
+            it = self.model().itemFromIndex(i)
+            if it.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                        TreeExplorer.ItemType.DIRECTORY]:
+                items.append(it.attributes)
+        TreeExplorer.cut_items = None
+        TreeExplorer.copy_items = items
+        self.main_form.display.repl_display_message(
+            "Copied items:"
+        )
+        for i in items:
+            self.main_form.display.repl_display_message(
+                "  {}: \"{}\"".format(
+                    i.itype.name.lower(),
+                    i.path
+                )
+            )
+    
+    def __cut_items(self):
+        items = []
+        for i in self.selectedIndexes():
+            it = self.model().itemFromIndex(i)
+            if it.attributes.itype in [TreeExplorer.ItemType.FILE, 
+                                        TreeExplorer.ItemType.DIRECTORY]:
+                items.append(it.attributes)
+        TreeExplorer.cut_items = items
+        TreeExplorer.copy_items = None
+        self.main_form.display.repl_display_message(
+            "Cut items:"
+        )
+        for i in items:
+            self.main_form.display.repl_display_message(
+                "  {}: \"{}\"".format(
+                    i.itype.name.lower(),
+                    i.path
+                )
+            ) 
+    
+    def __delete_items(self):
+        items = []
+        for i in self.selectedIndexes():
+            item = self.model().itemFromIndex(i)
+            items.append(item.attributes)
+        message = "Are you sure you want to delete the {} selected items?".format(len(items))
+        reply = YesNoDialog.question(message)
+        if reply != data.QMessageBox.Yes:
+            return
+        for it in items:
+            path = it.path
+            if os.path.exists(path):
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+                self.display_directory(self.current_viewed_directory)
+            else:
+                self.main_form.display.repl_display_message(
+                    "Item '{}'\n does not seem to exist!!".format(
+                        item.attributes.path),
+                    message_type=data.MessageType.WARNING
+                )
+
+    def __open_items(self, model_index=None):
+        try:
+            if model_index is not None:
+                indexes = (model_index, )
+            else:
+                indexes = self.selectedIndexes()
+            for i in indexes:
+                item = self.model().itemFromIndex(i)
+                self._open_item(item)
+        except:
+            self.main_form.display.repl_display_error(
+                traceback.format_exc()
+            )
+    
     def _item_double_click(self, model_index):
-        item = self.model().itemFromIndex(model_index)
-        self._open_item(item)
+        self.__open_items(model_index)
     
     def _open_item(self, item):
         if hasattr(item, "attributes") == False:
@@ -2719,6 +2733,18 @@ class TreeExplorer(TreeDisplayBase):
             self._item_right_click(index)
         # ... then call the super-class event
         super().mousePressEvent(event)
+    
+    def keyReleaseEvent(self, event):
+        super().keyReleaseEvent(event)
+        if event.key() == data.Qt.Key_Enter or event.key() == data.Qt.Key_Return:
+            self.__open_items()
+        elif event.key() == data.Qt.Key_Delete:
+            self.__delete_items()
+        elif event.key() == data.Qt.Key_C:
+            modifiers = data.QApplication.keyboardModifiers()
+            if modifiers == data.Qt.ControlModifier:
+                pass
+                
     
     """
     Public functions

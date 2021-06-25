@@ -731,11 +731,22 @@ class TabWidget(data.QTabWidget):
             #Set document as modified
             self.currentWidget().save_status = data.FileStatus.MODIFIED
             #Check if special character is already in the name of the tab
-            if not "*" in self.tabText(self.currentIndex()):
-                #Add the special character to the tab name
-                self.setTabText(self.currentIndex(), "*" + self.tabText(self.currentIndex()) + "*")
+            self.set_text_changed(self.currentIndex())
         #Update margin width
         self.editor_update_margin()
+    
+    def set_text_changed(self, index):
+        if not "*" in self.tabText(index):
+            self.setTabText(index, "*" + self.tabText(index) + "*")
+    
+    def reset_text_changed(self, index=None):
+        """Reset the changed status of the current widget (remove the * symbols from the tab name)"""
+        # Update the save status of the current widget
+        if index is None:
+            index = self.currentIndex()
+        if self.widget(index).savable == data.CanSave.YES:
+            self.widget(index).save_status = data.FileStatus.OK
+            self.setTabText(index, self.tabText(index).strip("*"))
     
     def _set_wait_animation(self, index, show):
         tabBar = self.tabBar()
@@ -759,18 +770,6 @@ class TabWidget(data.QTabWidget):
             tabBar.setTabButton(index, data.QTabBar.LeftSide, lbl)
         else:
             tabBar.setTabButton(index, data.QTabBar.LeftSide, None)
-
-    def reset_text_changed(self, index=None):
-        """Reset the changed status of the current widget (remove the * symbols from the tab name)"""
-        #Update the save status of the current widget
-        if index == None:
-            if self.currentWidget().savable == data.CanSave.YES:
-                self.currentWidget().save_status = data.FileStatus.OK
-                self.setTabText(self.currentIndex(), self.tabText(self.currentIndex()).strip("*"))
-        else:
-            if self.widget(index).savable == data.CanSave.YES:
-                self.widget(index).save_status = data.FileStatus.OK
-                self.setTabText(index, self.tabText(index).strip("*"))
 
     def close_tab(self, tab=None, force=False):
         """Close a tab in the basic widget"""
