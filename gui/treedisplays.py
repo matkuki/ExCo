@@ -2638,11 +2638,24 @@ class TreeExplorer(TreeDisplayBase):
             return
         if item.attributes.itype in [TreeExplorer.ItemType.DIRECTORY, 
                                      TreeExplorer.ItemType.ONE_UP_DIRECTORY]:
+            # Store previous directory
+            previous_directory = self.current_viewed_directory
+            # Clean and display the new directory
             self._clean_model()
             self.display_directory(
                 item.attributes.path, 
                 disk=item.attributes.disk
             )
+            if item.attributes.itype == TreeExplorer.ItemType.ONE_UP_DIRECTORY:
+                try:
+                    # Select the ascending sub-directory
+                    base_name = os.path.split(previous_directory)[1]
+                    root = self.model().invisibleRootItem()
+                    for item in self.iterate_items(root):
+                        if item.text() == base_name:
+                            self.setCurrentIndex(item.index())
+                except:
+                    traceback.print_exc()
         if item.attributes.itype == TreeExplorer.ItemType.FILE:    
             self.open_file_signal.emit(item.attributes.path)
         if item.attributes.itype == TreeExplorer.ItemType.DISK:    
