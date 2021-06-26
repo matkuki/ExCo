@@ -27,6 +27,7 @@ import functions
 import data
 import components
 import themes
+from pprint import pprint
 
 from .dialogs import *
 from .menu import *
@@ -2651,9 +2652,9 @@ class TreeExplorer(TreeDisplayBase):
                     # Select the ascending sub-directory
                     base_name = os.path.split(previous_directory)[1]
                     root = self.model().invisibleRootItem()
-                    for item in self.iterate_items(root):
-                        if item.text() == base_name:
-                            self.setCurrentIndex(item.index())
+                    for it in self.iterate_items(root):
+                        if it.text() == base_name:
+                            self.setCurrentIndex(it.index())
                 except:
                     traceback.print_exc()
         if item.attributes.itype == TreeExplorer.ItemType.FILE:    
