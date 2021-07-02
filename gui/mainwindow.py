@@ -2892,8 +2892,9 @@ class MainWindow(data.QMainWindow):
                                 index = item["index"]
                                 first_visible_line = item["first-visible-line"]
                                 tab = self._parent.open_file(file, window)
-                                tab.setCursorPosition(line, index)
-                                tab.setFirstVisibleLine(first_visible_line)
+                                if tab is not None:
+                                    tab.setCursorPosition(line, index)
+                                    tab.setFirstVisibleLine(first_visible_line)
                             else:
                                 raise Exception(
                                     "Unknown type of session item: ".format(

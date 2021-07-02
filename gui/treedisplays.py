@@ -27,7 +27,7 @@ import functions
 import data
 import components
 import themes
-from pprint import pprint
+import pprint
 
 from .dialogs import *
 from .menu import *
@@ -2431,7 +2431,7 @@ class TreeExplorer(TreeDisplayBase):
         def new_file():
             # Get the path
             path = self.current_viewed_directory
-            # Create a new directory item for editing
+            # Create a new file item for editing
             create_file_item = self._create_standard_item(
                     "", bold=False, icon=self.file_icon
             )
@@ -2444,11 +2444,19 @@ class TreeExplorer(TreeDisplayBase):
             self.added_item = create_file_item
             index = create_file_item.index()
             self.scrollTo(index)
-            # Start editing the new empty directory name
+            # Start editing the new empty file name
             self.edit(index)
             # Add the session signal when editing is canceled
             delegate = self.itemDelegate(index)
             delegate.closeEditor.connect(self._item_editing_closed)
+            def _select_item(*args):
+                searched_item = args[0].text()
+                root = self.model().invisibleRootItem()
+                for it in self.iterate_items(root):
+                    if it.text() == searched_item and it.attributes.itype == TreeExplorer.ItemType.FILE:
+                        self.setCurrentIndex(it.index())
+                        break
+            delegate.commitData.connect(_select_item)
         new_file_action = data.QAction(
             "New file", self.tree_menu
         )
@@ -2478,6 +2486,15 @@ class TreeExplorer(TreeDisplayBase):
             # Add the session signal when editing is canceled
             delegate = self.itemDelegate(index)
             delegate.closeEditor.connect(self._item_editing_closed)
+            # Select the newly created directory
+            def _select_item(*args):
+                searched_item = args[0].text()
+                root = self.model().invisibleRootItem()
+                for it in self.iterate_items(root):
+                    if it.text() == searched_item and it.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+                        self.setCurrentIndex(it.index())
+                        break
+            delegate.commitData.connect(_select_item)
             
         new_directory_action = data.QAction(
             "New Directory", self.tree_menu
@@ -2519,10 +2536,6 @@ class TreeExplorer(TreeDisplayBase):
                     reply = YesNoDialog.question(message)
                     if reply != data.QMessageBox.Yes:
                         return
-#                if TreeExplorer.cut_items != None:
-#                    shutil.move(path, new_path)
-#                elif TreeExplorer.copy_items != None:
-#                    shutil.copytree(path, new_path)
                 if os.path.isdir(new_path):
                     shutil.rmtree(new_path)
                     time.sleep(0.1)
@@ -2536,10 +2549,6 @@ class TreeExplorer(TreeDisplayBase):
                     reply = YesNoDialog.question(message)
                     if reply != data.QMessageBox.Yes:
                         return
-#                if TreeExplorer.cut_items != None:
-#                    shutil.move(path, new_path)
-#                elif TreeExplorer.copy_items != None:
-#                    shutil.copy(path, new_path)
                 shutil.copy(path, new_path)
                 if TreeExplorer.cut_items != None:
                     os.remove(path)
