@@ -84,16 +84,21 @@ class ReplLineEdit(data.QLineEdit):
     
     def update_style(self):
         # REPL and REPL helper have to be set directly
-        self.setStyleSheet(f"""
+        self.setStyleSheet("""
             QLineEdit[indicated=false] {{
-                color: {data.theme.Font.DefaultHtml};
-                background-color: {data.theme.Indication.PassiveBackGround};
+                color: {};
+                background-color: {};
             }}
             QLineEdit[indicated=true] {{
-                color: {data.theme.Font.DefaultHtml};
-                background-color: {data.theme.Indication.ActiveBackGround};
+                color: {};
+                background-color: {};
             }}
-        """)
+        """.format(
+                 data.theme.Font.DefaultHtml,
+                 data.theme.Indication.PassiveBackGround,
+                 data.theme.Font.DefaultHtml,
+                 data.theme.Indication.ActiveBackGround,
+        ))
     
     def indication_set(self):
         self.setProperty("indicated", True)

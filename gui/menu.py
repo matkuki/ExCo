@@ -56,19 +56,24 @@ class Menu(data.QMenu):
         self.setFont(data.get_current_font())
     
     def update_style(self):
-        self.setStyleSheet(f"""
+        self.setStyleSheet("""
             QMenu {{
-                background-color: {data.theme.Indication.PassiveBackGround};
-                border: 1px solid {data.theme.Indication.PassiveBorder};
-                color: {data.theme.Font.DefaultHtml}
+                background-color: {};
+                border: 1px solid {};
+                color: {}
             }}
             QMenu::item {{
                 background-color: transparent;
             }}
             QMenu::item:selected  {{
-                background-color: {data.theme.Indication.Hover};
+                background-color: {};
             }}
-        """)
+        """.format(
+                data.theme.Indication.PassiveBackGround,
+                data.theme.Indication.PassiveBorder,
+                data.theme.Font.DefaultHtml,
+                data.theme.Indication.Hover,
+        ))
 
 
 class MenuBar(data.QMenuBar):
@@ -80,18 +85,22 @@ class MenuBar(data.QMenuBar):
         self.update_style()
     
     def update_style(self):
-        self.setStyleSheet(f"""
+        self.setStyleSheet("""
             QMenuBar {{
-                background-color: {data.theme.Indication.PassiveBackGround};
-                color: {data.theme.Font.DefaultHtml};
+                background-color: {};
+                color: {};
             }}
             QMenuBar::item {{
                 background-color: transparent;
             }}
             QMenuBar::item:selected {{
-                background-color: {data.theme.Indication.Hover};
+                background-color: {};
             }}
-        """)
+        """.format(
+                data.theme.Indication.PassiveBackGround,
+                data.theme.Font.DefaultHtml,
+                data.theme.Indication.Hover,
+        ))
 
 
 

@@ -3525,9 +3525,9 @@ class MainWindow(data.QMainWindow):
                 self._parent.settings.gui_manipulator.hide()
         
         def init_style_sheet(self):
-            style_sheet = (f"""
+            style_sheet = ("""
                 #Form {{
-                    background-color: {data.theme.Form};
+                    background-color: {};
                     border: 0px;
                 }}
                 #Main_Groupbox {{
@@ -3539,10 +3539,14 @@ class MainWindow(data.QMainWindow):
                     width: 4px;
                 }}
                 QSplitter::handle {{
-                    background: {data.theme.Form};
+                    background: {};
                 }}
-                {StyleSheetScrollbar.full()}
-            """)
+                {}
+            """.format(
+                data.theme.Form,
+                data.theme.Form,
+                StyleSheetScrollbar.full()
+            ))
             return style_sheet
         
         def reset_window_colors(self, in_sheet):
@@ -3561,35 +3565,46 @@ class MainWindow(data.QMainWindow):
             self.indication_check()
         
         def generate_window_colors(self):
-            style_sheet = f"""
+            style_sheet = """
                 TabWidget::pane {{
-                    border: 2px solid {data.theme.Indication.PassiveBorder};
-                    background-color: {data.theme.Indication.PassiveBackGround};
+                    border: 2px solid {};
+                    background-color: {};
                     margin: 0px;
                     spacing: 0px;
                     padding: 0px;
                 }}
                 TabWidget[indicated=false]::pane {{
-                    border: 2px solid {data.theme.Indication.PassiveBorder};
-                    background-color: {data.theme.Indication.PassiveBackGround};
+                    border: 2px solid {};
+                    background-color: {};
                 }}
                 TabWidget[indicated=true]::pane {{
-                    border: 2px solid {data.theme.Indication.ActiveBorder};
-                    background-color: {data.theme.Indication.ActiveBackGround};
+                    border: 2px solid {};
+                    background-color: {};
                 }}
                 TabWidget QToolButton {{
-                    background: {data.theme.Indication.PassiveBackGround};
-                    border: 1px solid {data.theme.Indication.PassiveBorder};
+                    background: {};
+                    border: 1px solid {};
                     margin-top: 0px;
                     margin-bottom: 0px;
                     margin-left: 0px;
                     margin-right: 1px;
                 }}
                 TabWidget QToolButton:hover {{
-                    background: {data.theme.Indication.ActiveBackGround};
-                    border: 1px solid {data.theme.Indication.ActiveBorder};
+                    background: {};
+                    border: 1px solid {};
                 }}
-            """
+            """.format(
+                data.theme.Indication.PassiveBorder,
+                data.theme.Indication.PassiveBackGround,
+                data.theme.Indication.PassiveBorder,
+                data.theme.Indication.PassiveBackGround,
+                data.theme.Indication.ActiveBorder,
+                data.theme.Indication.ActiveBackGround,
+                data.theme.Indication.PassiveBackGround,
+                data.theme.Indication.PassiveBorder,
+                data.theme.Indication.ActiveBackGround,
+                data.theme.Indication.ActiveBorder,
+            )
             return style_sheet
         
         def generate_treedisplay_colors(self, type):

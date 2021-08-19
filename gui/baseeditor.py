@@ -66,13 +66,16 @@ class BaseEditor(data.QsciScintilla):
         self.setCaretLineBackgroundColor(
             theme.Cursor_Line_Background
         )
-        self.setStyleSheet(f"""
+        self.setStyleSheet("""
             BaseEditor {{
                 border: 0px;
-                background-color: {data.theme.Indication.PassiveBackGround};
+                background-color: {};
                 padding: 0px;
                 spacing: 0px;
                 margin: 0px;
             }}
-            {StyleSheetScrollbar.full()}
-        """)
+            {}
+        """.format(
+            data.theme.Indication.PassiveBackGround,
+            StyleSheetScrollbar.full(),
+        ))

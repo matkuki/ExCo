@@ -72,12 +72,12 @@ class TabWidget(data.QTabWidget):
             right_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-right.svg")
             left_arrow_image = functions.get_resource_file("feather/air-grey/chevron-left.svg")
             left_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-left.svg")
-            style = f"""
+            style = """
                 QTabBar::close-button {{
-                    image: url({close_image})
+                    image: url({})
                 }}
                 QTabBar::close-button:hover {{
-                    image: url({close_hover_image})
+                    image: url({})
                 }}
                 
                 QTabBar QToolButton {{
@@ -86,39 +86,55 @@ class TabWidget(data.QTabWidget):
                 }}
                 
                 QTabBar QToolButton::right-arrow {{
-                    image: url({right_arrow_image});
+                    image: url({});
                 }}
                 QTabBar QToolButton::right-arrow:hover {{
-                    image: url({right_arrow_hover_image});
+                    image: url({});
                 }}
                 
                 QTabBar QToolButton::left-arrow {{
-                    image: url({left_arrow_image});
+                    image: url({});
                 }}
                 QTabBar QToolButton::left-arrow:hover {{
-                    image: url({left_arrow_hover_image});
+                    image: url({});
                 }}
                 
                 QTabBar::tab {{
-                    background: {data.theme.Indication.PassiveBackGround};
-                    border: 1px solid {data.theme.Indication.PassiveBorder};
-                    border-bottom-color: {data.theme.Indication.PassiveBackGround};
+                    background: {};
+                    border: 1px solid {};
+                    border-bottom-color: {};
                     padding-top: 2px;
                     padding-bottom: 2px;
                     padding-left: 4px;
                     padding-right: 4px;
-                    color: {data.theme.Font.DefaultHtml};
+                    color: {};
                 }}
                 QTabBar::tab:hover {{
-                    background: {data.theme.Indication.Hover};
-                    border-bottom-color: {data.theme.Indication.Hover};
+                    background: {};
+                    border-bottom-color: {};
                 }}
                 QTabBar::tab:selected {{
-                    background: {data.theme.Indication.ActiveBackGround};
-                    border: 1px solid {data.theme.Indication.ActiveBorder};
-                    border-bottom-color: {data.theme.Indication.PassiveBackGround};
+                    background: {};
+                    border: 1px solid {};
+                    border-bottom-color: {};
                 }}
-            """
+            """.format(
+                close_image,
+                close_hover_image,
+                right_arrow_image,
+                right_arrow_hover_image,
+                left_arrow_image,
+                left_arrow_hover_image,
+                data.theme.Indication.PassiveBackGround,
+                data.theme.Indication.PassiveBorder,
+                data.theme.Indication.PassiveBackGround,
+                data.theme.Font.DefaultHtml,
+                data.theme.Indication.Hover,
+                data.theme.Indication.Hover,
+                data.theme.Indication.ActiveBackGround,
+                data.theme.Indication.ActiveBorder,
+                data.theme.Indication.PassiveBackGround,
+            )
             self.setStyleSheet(style)
         
         def mousePressEvent(self, event):

@@ -55,7 +55,7 @@ def create_icon(icon_name):
 def get_resource_file(relative_path):
     path = unixify_path_join(data.resources_directory, relative_path)
     if not os.path.isfile(path):
-        raise Exception(f"[Resources] File does not exist: {path}")
+        raise Exception("[Resources] File does not exist: {}".format(path))
     return path
 
 pixmap_cache = {}

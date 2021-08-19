@@ -87,13 +87,13 @@ class ReplBox(data.QGroupBox):
         else:
             background = data.theme.Indication.PassiveBackGround
             border = data.theme.Indication.PassiveBorder
-        self.setStyleSheet(f"""
+        self.setStyleSheet("""
             #REPL_Box {{
                 font-size: 8pt;
                 font-weight: bold;
-                color: {border};
-                background-color: {data.theme.Indication.PassiveBackGround};
-                border: 2px solid {border};
+                color: {};
+                background-color: {};
+                border: 2px solid {};
                 border-radius: 0px;
                 margin-top: 6px;
                 margin-bottom: 0px;
@@ -105,12 +105,17 @@ class ReplBox(data.QGroupBox):
                 padding-right: 0px;
             }}
             #REPL_Box::title {{
-                color: {data.theme.Indication.ActiveBorder};
+                color: {};
                 subcontrol-position: top left;
                 padding: 0px; 
                 left: 8px;
                 top: -6px;
             }}
-        """)
+        """.format(
+                 border,
+                 data.theme.Indication.PassiveBackGround,
+                 border,
+                 data.theme.Indication.ActiveBorder,
+        ))
         
         

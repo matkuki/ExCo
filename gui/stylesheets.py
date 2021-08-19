@@ -23,22 +23,22 @@ class StyleSheetScrollbar:
         color_background = data.theme.ScrollBar.background
         color_handle = data.theme.ScrollBar.handle
         color_handle_hover = data.theme.ScrollBar.handle_hover
-        style_sheet = f"""
+        style_sheet = """
             QScrollBar:horizontal {{
                 border: none;
-                background: {color_background};
-                height: {height}px;
+                background: {};
+                height: {}px;
                 margin: 0px 0px 0px 0px;
             }}
             QScrollBar::handle:horizontal {{
-                background: {color_handle};
+                background: {};
                 min-width: 20px;
             }}
             QScrollBar::handle:hover {{
-                background: {color_handle_hover};
+                background: {};
             }}
             QScrollBar::handle:horizontal:pressed {{
-                background: {color_handle_hover};
+                background: {};
             }}
             
             QScrollBar::sub-line:horizontal, QScrollBar::add-line:horizontal,
@@ -48,7 +48,13 @@ class StyleSheetScrollbar:
                 width: 0px;
                 height: 0px;
             }}
-        """
+        """.format(
+            color_background,
+            height,
+            color_handle,
+            color_handle_hover,
+            color_handle_hover,
+        )
         return style_sheet
     
     @staticmethod
@@ -58,22 +64,22 @@ class StyleSheetScrollbar:
         color_background = data.theme.ScrollBar.background
         color_handle = data.theme.ScrollBar.handle
         color_handle_hover = data.theme.ScrollBar.handle_hover
-        style_sheet = f"""
+        style_sheet = """
             QScrollBar:vertical {{
                 border: none;
-                background: {color_background};
-                width: {width}px;
+                background: {};
+                width: {}px;
                 margin: 0px 0px 0px 0px;
             }}
             QScrollBar::handle:vertical {{
-                background: {color_handle};
+                background: {};
                 min-height: 20px;
             }}
             QScrollBar::handle:hover {{
-                background: {color_handle_hover};
+                background: {};
             }}
             QScrollBar::handle:vertical:pressed {{
-                background: {color_handle_hover};
+                background: {};
             }}
             
             QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical,
@@ -83,7 +89,14 @@ class StyleSheetScrollbar:
                 width: 0px;
                 height: 0px;
             }}
-        """
+        """.format(
+            color_background,
+            width,
+            color_handle,
+            color_handle_hover,
+            color_handle_hover,
+            
+        )
         return style_sheet
     
     @staticmethod
