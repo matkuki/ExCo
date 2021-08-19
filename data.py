@@ -186,8 +186,11 @@ application = None
 # Global string with the application directory
 application_directory = file_directory
 # Home directory
-home_directory = os.path.realpath(str(pathlib.Path.home())) \
-    .replace('\\', '/')
+try:
+    home_directory = os.path.realpath(str(pathlib.Path.home())) \
+        .replace('\\', '/')
+except:
+    home_directory = os.path.expanduser('~')
 # Global string with the resources directory
 resources_directory = os.path.join(application_directory,  "resources") \
     .replace('\\', '/')
