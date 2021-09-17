@@ -195,7 +195,8 @@ def find_files_with_text(search_text,
                          search_dir, 
                          case_sensitive=False, 
                          search_subdirs=True, 
-                         break_on_find=False):
+                         break_on_find=False,
+                         file_filter=None):
     """
     Search for the specified text in files in the specified directory and return a file list.
     """
@@ -213,6 +214,10 @@ def find_files_with_text(search_text,
     #"walk" through the directory tree and save the readable files to a list
     for root, subFolders, files in walk_tree:
         for file in files:
+            if file_filter is not None:
+                filename, file_extension = os.path.splitext(file)
+                if file_extension.lower() not in file_filter:
+                    continue
             #Merge the path and filename
             full_with_path = os.path.join(root, file)
             if test_text_file(full_with_path) != None:
@@ -232,7 +237,7 @@ def find_files_with_text(search_text,
             else:
                 compare_file_text = file_text
                 compare_search_text = search_text
-            print(compare_search_text)
+#            print(compare_search_text)
             #Check if file contains the search string
             if compare_search_text in compare_file_text:
                 return_file_list.append(file)
@@ -248,7 +253,8 @@ def find_files_with_text_enum(search_text,
                               search_dir, 
                               case_sensitive=False, 
                               search_subdirs=True, 
-                              break_on_find=False):
+                              break_on_find=False,
+                              file_filter=None):
     """
     Search for the specified text in files in the specified directory and return a file list and
     lines where the text was found at.
@@ -270,9 +276,13 @@ def find_files_with_text_enum(search_text,
     #"walk" through the directory tree and save the readable files to a list
     for root, subFolders, files in walk_tree:
         for file in files:
+            if file_filter is not None:
+                filename, file_extension = os.path.splitext(file)
+                if file_extension.lower() not in file_filter:
+                    continue
             #Merge the path and filename
             full_with_path = os.path.join(root, file)
-            if test_text_file(full_with_path) != None:
+            if test_text_file(full_with_path) is not None:
                 #On windows, the function "os.path.join(root, file)" line gives a combination of "/" and "\\", 
                 #which looks weird but works. The replace was added to have things consistent in the return file list.
                 full_with_path = full_with_path.replace("\\",  "/")
@@ -311,7 +321,8 @@ def replace_text_in_files(search_text,
                           replace_text, 
                           search_dir, 
                           case_sensitive=False, 
-                          search_subdirs=True):
+                          search_subdirs=True,
+                          file_filter=None):
     """
     Search for the specified text in files in the specified directory and replace all instances
     of the search_text with replace_text and save the changes back to the file.
@@ -320,8 +331,10 @@ def replace_text_in_files(search_text,
     found_files = find_files_with_text(
         search_text, 
         search_dir, 
-        case_sensitive, 
-        search_subdirs 
+        case_sensitive=case_sensitive, 
+        search_subdirs=search_subdirs,
+        break_on_find=False,
+        file_filter=file_filter
     )
     if found_files == None:
         return []
@@ -345,7 +358,8 @@ def replace_text_in_files_enum(search_text,
                                replace_text, 
                                search_dir, 
                                case_sensitive=False, 
-                               search_subdirs=True):
+                               search_subdirs=True,
+                               file_filter=None):
     """
     The second version of replace_text_in_files, that goes line-by-line 
     and replaces found instances and stores the line numbers,
@@ -361,8 +375,10 @@ def replace_text_in_files_enum(search_text,
     found_files = find_files_with_text(
         search_text, 
         search_dir, 
-        case_sensitive, 
-        search_subdirs 
+        case_sensitive=case_sensitive, 
+        search_subdirs=search_subdirs,
+        break_on_find=False,
+        file_filter=file_filter
     )
     if found_files == None:
         return {}

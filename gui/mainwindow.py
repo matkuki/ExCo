@@ -1603,13 +1603,13 @@ class MainWindow(data.QMainWindow):
             system_menu.installEventFilter(click_filter)
             def special_find_in():
                 #The second argument is raw, so that single backslashes work for windows paths
-                self.repl.setText('find_in_files("",r"directory",case_sensitive=False,search_subdirs=True,break_on_find=False)')
+                self.repl.setText('find_in_files("",r"directory",case_sensitive=False,search_subdirs=True,break_on_find=False,file_filter=None)')
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
             def special_find_in_with_dialog():
                 #The second argument is raw, so that single backslashes work for windows paths
-                self.repl.setText('find_in_files("",case_sensitive=False,search_subdirs=True,break_on_find=False)')
+                self.repl.setText('find_in_files("",case_sensitive=False,search_subdirs=True,break_on_find=False,file_filter=None)')
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
@@ -1648,7 +1648,7 @@ class MainWindow(data.QMainWindow):
             def special_replace_in_files():
                 #The second argument is raw, so that single backslashes work for windows paths
                 temp_string = 'replace_in_files("search_text","replace_text",'
-                temp_string += 'r"directory",case_sensitive=False,search_subdirs=True)'
+                temp_string += 'r"directory",case_sensitive=False,search_subdirs=True,file_filter=None)'
                 self.repl.setText(temp_string)
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
@@ -1656,7 +1656,7 @@ class MainWindow(data.QMainWindow):
             def special_replace_in_files_with_dialog():
                 #The second argument is raw, so that single backslashes work for windows paths
                 temp_string = 'replace_in_files("search_text","replace_text",'
-                temp_string += 'case_sensitive=False,search_subdirs=True)'
+                temp_string += 'case_sensitive=False,search_subdirs=True,file_filter=None)'
                 self.repl.setText(temp_string)
                 self.view.set_repl_type(data.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
@@ -3873,7 +3873,8 @@ class MainWindow(data.QMainWindow):
                           search_dir=None, 
                           case_sensitive=False, 
                           search_subdirs=True, 
-                          break_on_find=False):
+                          break_on_find=False,
+                          file_filter=None):
             """Return a list of files that contain the searched text as a list and display it"""
             #Check if the search directory is none, then use a dialog window
             #to select the real search directory
@@ -3889,7 +3890,8 @@ class MainWindow(data.QMainWindow):
                     search_dir, 
                     case_sensitive, 
                     search_subdirs, 
-                    break_on_find
+                    break_on_find,
+                    file_filter
                 )
                 # Check of the function return is valid
                 if result == -1:
@@ -3931,7 +3933,8 @@ class MainWindow(data.QMainWindow):
                              replace_text, 
                              search_dir=None, 
                              case_sensitive=False, 
-                             search_subdirs=True):
+                             search_subdirs=True,
+                             file_filter=None):
             """
             Same as the function in the 'functions' module.
             Replaces all instances of search_string with the replace_string in the files,
@@ -3959,7 +3962,8 @@ class MainWindow(data.QMainWindow):
                 replace_text, 
                 search_dir, 
                 case_sensitive, 
-                search_subdirs
+                search_subdirs,
+                file_filter
             )
             if result == -1:
                 self._parent.display.repl_display_message(
