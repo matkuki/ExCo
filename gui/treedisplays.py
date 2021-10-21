@@ -2608,17 +2608,23 @@ class TreeExplorer(TreeDisplayBase):
             return
         for it in items:
             path = it.path
-            if os.path.exists(path):
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
+            try:
+                if os.path.exists(path):
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    else:
+                        os.remove(path)
+                    self.display_directory(self.current_viewed_directory)
                 else:
-                    os.remove(path)
-                self.display_directory(self.current_viewed_directory)
-            else:
+                    self.main_form.display.repl_display_message(
+                        "Item '{}'\n does not seem to exist!!".format(
+                            item.attributes.path),
+                        message_type=data.MessageType.WARNING
+                    )
+            except:
                 self.main_form.display.repl_display_message(
-                    "Item '{}'\n does not seem to exist!!".format(
-                        item.attributes.path),
-                    message_type=data.MessageType.WARNING
+                    traceback.format_exc(),
+                    message_type=data.MessageType.ERROR
                 )
 
     def __open_items(self, model_index=None):

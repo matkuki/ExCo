@@ -18,6 +18,15 @@ name = "Air"
 tooltip = "Air"
 image_file = "tango_icons/theme-air.png"
 
+close_image = "feather/air-grey/x.svg"
+close_hover_image = "feather/air-blue/x.svg"
+right_arrow_image = "feather/air-grey/chevron-right.svg"
+right_arrow_hover_image = "feather/air-blue/chevron-right.svg"
+right_arrow_menu_image = "feather/black/chevron-right.svg"
+right_arrow_menu_disabled_image = "feather/air-grey/chevron-right.svg"
+left_arrow_image = "feather/air-grey/chevron-left.svg"
+left_arrow_hover_image = "feather/air-blue/chevron-left.svg"
+
 Form = "#f0f0f0"
 Context_Menu_Background = data.QColor(0xf0, 0xf0, 0xf0)
 Cursor = data.QColor(0x00, 0x00, 0x00)

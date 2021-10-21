@@ -18,6 +18,15 @@ name = "Earth"
 tooltip = "Earth"
 image_file = "tango_icons/theme-earth.png"
 
+close_image = "feather/air-grey/x.svg"
+close_hover_image = "feather/air-blue/x.svg"
+right_arrow_image = "feather/air-grey/chevron-right.svg"
+right_arrow_hover_image = "feather/air-blue/chevron-right.svg"
+right_arrow_menu_image = "feather/black/chevron-right.svg"
+right_arrow_menu_disabled_image = "feather/air-grey/chevron-right.svg"
+left_arrow_image = "feather/air-grey/chevron-left.svg"
+left_arrow_hover_image = "feather/air-blue/chevron-left.svg"
+
 Form = "#585a55"
 Context_Menu_Background = data.QColor(0x58, 0x5a, 0x55)
 Cursor = data.QColor(0xff, 0xff, 0xff)

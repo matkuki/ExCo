@@ -215,6 +215,8 @@ class CustomEditor(BaseEditor):
         self.set_cursor_line_visibility(
             settings.Editor.cursor_line_visible
         )
+        # Make last line scrollable to the top
+        self.SendScintilla(self.SCI_SETENDATLASTLINE, False)
     
     def __setattr__(self, name, value):
         """

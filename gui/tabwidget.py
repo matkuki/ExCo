@@ -66,12 +66,12 @@ class TabWidget(data.QTabWidget):
             self.setFont(data.get_current_font())
         
         def set_style(self):
-            close_image = functions.get_resource_file("feather/air-grey/x.svg")
-            close_hover_image = functions.get_resource_file("feather/air-blue/x.svg")
-            right_arrow_image = functions.get_resource_file("feather/air-grey/chevron-right.svg")
-            right_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-right.svg")
-            left_arrow_image = functions.get_resource_file("feather/air-grey/chevron-left.svg")
-            left_arrow_hover_image = functions.get_resource_file("feather/air-blue/chevron-left.svg")
+            close_image = functions.get_resource_file(data.theme.close_image)
+            close_hover_image = functions.get_resource_file(data.theme.close_hover_image)
+            right_arrow_image = functions.get_resource_file(data.theme.right_arrow_image)
+            right_arrow_hover_image = functions.get_resource_file(data.theme.right_arrow_hover_image)
+            left_arrow_image = functions.get_resource_file(data.theme.left_arrow_image)
+            left_arrow_hover_image = functions.get_resource_file(data.theme.left_arrow_hover_image)
             style = """
                 QTabBar::close-button {{
                     image: url({})

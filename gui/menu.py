@@ -68,11 +68,19 @@ class Menu(data.QMenu):
             QMenu::item:selected  {{
                 background-color: {};
             }}
+            QMenu::right-arrow  {{
+                image: url({});
+            }}
+            QMenu::right-arrow:disabled  {{
+                image: url({});
+            }}
         """.format(
                 data.theme.Indication.PassiveBackGround,
                 data.theme.Indication.PassiveBorder,
                 data.theme.Font.DefaultHtml,
                 data.theme.Indication.Hover,
+                functions.get_resource_file(data.theme.right_arrow_menu_image),
+                functions.get_resource_file(data.theme.right_arrow_menu_disabled_image),
         ))
 
 
