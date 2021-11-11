@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ExCo
+Comment=Extensible Editor
+Icon=/home/pi/ExCo/resources/exco-icon.png
+Exec=/usr/bin/python3 /home/pi/ExCo/main.py
+Type=Application
+Encoding=UTF-8
+Terminal=false
+Categories=Programming;

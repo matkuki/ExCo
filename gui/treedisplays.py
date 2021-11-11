@@ -1802,6 +1802,9 @@ if data.platform == "Windows":
     import win32api, win32con
 
 class TreeDisplayBase(data.QTreeView):
+    # Signals
+    key_release_signal = data.pyqtSignal(str, dict)
+    
     # Class variables
     _parent = None
     main_form = None
@@ -1875,6 +1878,30 @@ class TreeDisplayBase(data.QTreeView):
         self.setAnimated(True)
         # Disable node expansion on double click
         self.setExpandsOnDoubleClick(False)
+        # Install event filter
+        self.installEventFilter(self)
+    
+    def eventFilter(self, object, event):
+        # Check for keyboard releases
+        if event.type() == data.QEvent.KeyRelease:
+            key = data.keys[event.key()]
+            modifiers = event.modifiers()
+            modifier_shift = (modifiers & data.Qt.ShiftModifier) == data.Qt.ShiftModifier
+            modifier_control = (modifiers & data.Qt.ControlModifier) == data.Qt.ControlModifier
+            modifier_alt = (modifiers & data.Qt.AltModifier) == data.Qt.AltModifier
+            modifier_meta = (modifiers & data.Qt.MetaModifier) == data.Qt.MetaModifier
+            modifier_keypad = (modifiers & data.Qt.KeypadModifier) == data.Qt.KeypadModifier
+            modifier_dict = {
+                "shift": modifier_shift,
+                "control": modifier_control,
+                "alt": modifier_alt,
+                "meta": modifier_meta,
+                "keypad": modifier_keypad,
+            }
+            # Emit a signal for a keyrelease
+            self.key_release_signal.emit(key, modifier_dict)
+        
+        return super().eventFilter(object, event)
     
     """
     Private/Internal functions
@@ -2046,8 +2073,28 @@ class TreeExplorer(TreeDisplayBase):
         self.disk_icon = functions.create_icon("tango_icons/harddisk.png")
         self.computer = functions.create_icon("tango_icons/computer.png")
         self.goto_icon = functions.create_icon('tango_icons/edit-goto.png')
-        # Connect the click and doubleclick signal
+        # Connect signals
         self.doubleClicked.connect(self._item_double_click)
+        self.key_release_signal.connect(self.__keyrelease_slot)
+    
+    @data.pyqtSlot(str, dict)
+    def __keyrelease_slot(self, key, modifiers):
+#        print(key, modifiers)
+        # Copy
+        if key == "Key_C" and modifiers["control"] == True:
+            self.__copy_items()
+        
+        # Cut
+        if key == "Key_X" and modifiers["control"] == True:
+            self.__cut_items()
+        
+        # Paste
+        if key == "Key_V" and modifiers["control"] == True:
+            self.__paste_items()
+        
+        # delete
+        if key == "Key_Delete":
+            self.__delete_items()
     
     def _init_tree_model(self):
         self.horizontalScrollbarAction(1)
@@ -2345,7 +2392,7 @@ class TreeExplorer(TreeDisplayBase):
             copy_item_action = data.QAction(
                 "Copy", self.tree_menu
             )
-            copy_item_action.triggered.connect(self.__copy_item)
+            copy_item_action.triggered.connect(self.__copy_items)
             icon = functions.create_icon('tango_icons/edit-copy.png')
             copy_item_action.setIcon(icon)
             if item.attributes.itype in [TreeExplorer.ItemType.FILE, 
@@ -2355,7 +2402,7 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action = data.QAction(
                 "Paste", self.tree_menu
             )
-            paste_item_action.triggered.connect(self.__paste_item)
+            paste_item_action.triggered.connect(self.__paste_items)
             icon = functions.create_icon('tango_icons/edit-paste.png')
             paste_item_action.setIcon(icon)
             if item.attributes.itype in [TreeExplorer.ItemType.FILE,
@@ -2409,7 +2456,7 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action = data.QAction(
                 "Paste", self.tree_menu
             )
-            paste_item_action.triggered.connect(self.__paste_item)
+            paste_item_action.triggered.connect(self.__paste_items)
             icon = functions.create_icon('tango_icons/edit-paste.png')
             paste_item_action.setIcon(icon)
             if TreeExplorer.cut_items != None or TreeExplorer.copy_items != None:
@@ -2506,7 +2553,7 @@ class TreeExplorer(TreeDisplayBase):
         # Show the menu
         self.tree_menu.popup(cursor)
     
-    def __paste_item(self):
+    def __paste_items(self):
         if TreeExplorer.cut_items != None:
             items = TreeExplorer.cut_items
             for it in items:
@@ -2521,7 +2568,6 @@ class TreeExplorer(TreeDisplayBase):
             return
         for it in items:
             path = it.path
-            print(path)
             itype = it.itype
             # Setup the directory
             base_name = os.path.basename(path)
@@ -2557,13 +2603,18 @@ class TreeExplorer(TreeDisplayBase):
             TreeExplorer.copy_items = None
         self.display_directory(self.current_viewed_directory)
     
-    def __copy_item(self):
+    def __copy_items(self):
         items = []
         for i in self.selectedIndexes():
             it = self.model().itemFromIndex(i)
             if it.attributes.itype in [TreeExplorer.ItemType.FILE, 
                                         TreeExplorer.ItemType.DIRECTORY]:
                 items.append(it.attributes)
+        if len(items) == 0:
+            self.main_form.display.repl_display_message(
+                "Nothing selected to copy!"
+            )
+            return
         TreeExplorer.cut_items = None
         TreeExplorer.copy_items = items
         self.main_form.display.repl_display_message(
@@ -2762,17 +2813,6 @@ class TreeExplorer(TreeDisplayBase):
             self._item_right_click(index)
         # ... then call the super-class event
         super().mousePressEvent(event)
-    
-    def keyReleaseEvent(self, event):
-        super().keyReleaseEvent(event)
-        if event.key() == data.Qt.Key_Enter or event.key() == data.Qt.Key_Return:
-            self.__open_items()
-        elif event.key() == data.Qt.Key_Delete:
-            self.__delete_items()
-        elif event.key() == data.Qt.Key_C:
-            modifiers = data.QApplication.keyboardModifiers()
-            if modifiers == data.Qt.ControlModifier:
-                pass
                 
     
     """

@@ -313,6 +313,12 @@ if compatibility_mode == True:
     LIBRARY_VERSIONS += "(Compatibility mode)"
 
 
+# Store all Qt keys as a dictionary
+keys = {}
+for k in dir(Qt):
+    if k.startswith("Key_"):
+        value = getattr(Qt, k)
+        keys[value] = k
 
 
 """
