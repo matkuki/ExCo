@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2018 Matic Kukovec.
+Copyright (c) 2013-2021 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -28,6 +28,12 @@ import subprocess
 
 # REPL message displaying function (that needs to be assigned at runtime!)
 repl_print = None
+
+def count_iterator(start):
+    counter = start
+    while True:
+        yield str(counter)
+        counter += 1
 
 def create_directory(directory):
     if not os.path.isdir(directory):

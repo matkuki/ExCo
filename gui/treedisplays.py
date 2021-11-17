@@ -1812,10 +1812,7 @@ class TreeDisplayBase(data.QTreeView):
     savable = data.CanSave.NO
     tree_menu = None
     icon_manipulator = None
-    # Background image stuff
-    BACKGROUND_IMAGE_SIZE = (217, 217)
-    BACKGROUND_IMAGE_OFFSET = (-55, -8)
-    BACKGROUND_IMAGE_HEX_EDGE_LENGTH = 18
+    key_release_lock = None
     
     
     def __del__(self):
@@ -1872,6 +1869,7 @@ class TreeDisplayBase(data.QTreeView):
         self.main_form = main_form
         self.name = name
         self.icon_manipulator = components.IconManipulator()
+        self.key_release_lock = False
         # Set the icon size for every node
         self.update_icon_size()
         # Set the nodes to be animated on expand/contract
@@ -1882,24 +1880,25 @@ class TreeDisplayBase(data.QTreeView):
         self.installEventFilter(self)
     
     def eventFilter(self, object, event):
-        # Check for keyboard releases
-        if event.type() == data.QEvent.KeyRelease:
-            key = data.keys[event.key()]
-            modifiers = event.modifiers()
-            modifier_shift = (modifiers & data.Qt.ShiftModifier) == data.Qt.ShiftModifier
-            modifier_control = (modifiers & data.Qt.ControlModifier) == data.Qt.ControlModifier
-            modifier_alt = (modifiers & data.Qt.AltModifier) == data.Qt.AltModifier
-            modifier_meta = (modifiers & data.Qt.MetaModifier) == data.Qt.MetaModifier
-            modifier_keypad = (modifiers & data.Qt.KeypadModifier) == data.Qt.KeypadModifier
-            modifier_dict = {
-                "shift": modifier_shift,
-                "control": modifier_control,
-                "alt": modifier_alt,
-                "meta": modifier_meta,
-                "keypad": modifier_keypad,
-            }
-            # Emit a signal for a keyrelease
-            self.key_release_signal.emit(key, modifier_dict)
+        if not self.key_release_lock:
+            # Check for keyboard releases
+            if event.type() == data.QEvent.KeyRelease:
+                key = data.keys[event.key()]
+                modifiers = event.modifiers()
+                modifier_shift = (modifiers & data.Qt.ShiftModifier) == data.Qt.ShiftModifier
+                modifier_control = (modifiers & data.Qt.ControlModifier) == data.Qt.ControlModifier
+                modifier_alt = (modifiers & data.Qt.AltModifier) == data.Qt.AltModifier
+                modifier_meta = (modifiers & data.Qt.MetaModifier) == data.Qt.MetaModifier
+                modifier_keypad = (modifiers & data.Qt.KeypadModifier) == data.Qt.KeypadModifier
+                modifier_dict = {
+                    "shift": modifier_shift,
+                    "control": modifier_control,
+                    "alt": modifier_alt,
+                    "meta": modifier_meta,
+                    "keypad": modifier_keypad,
+                }
+                # Emit a signal for a keyrelease
+                self.key_release_signal.emit(key, modifier_dict)
         
         return super().eventFilter(object, event)
     
@@ -1942,6 +1941,12 @@ class TreeDisplayBase(data.QTreeView):
         """
         for i in range(self.model().rowCount()):
             self.resizeColumnToContents(i)
+    
+    def _lock_key_release(self):
+        self.key_release_lock = True
+    
+    def _unlock_key_release(self):
+        self.key_release_lock = False
     
     """
     Overridden functions
@@ -2138,25 +2143,16 @@ class TreeExplorer(TreeDisplayBase):
         except:
             return False
     
-    def _edit_item(self):
-        """
-        Edit the selected item
-        """
-        if self.edit_flag == True:
-            return
-        #Check if an item is selected
-        if self.selectedIndexes() == []:
-            return
-        selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
-        selected_item.setEditable(True)
-        self.edit(selected_item.index())
-        #Add the session signal when editing is canceled
-#        delegate = self.itemDelegate(selected_item.index())
-#        delegate.closeEditor.connect(self._item_editing_closed)
-        #Set the editing flag
-        self.edit_flag = True
+    def start_editing_item(self, index):
+        self._lock_key_release()
+        self.edit(index)
     
-    def _item_editing_closed(self, widget):
+    def closeEditor(self, *args):
+        widget = args[0]
+        self.__item_editing_closed(widget)
+        return super().closeEditor(*args)
+    
+    def __item_editing_closed(self, widget):
         """
         Signal that fires when editing was canceled/ended
         """
@@ -2170,6 +2166,7 @@ class TreeExplorer(TreeDisplayBase):
             if not sip.isdeleted(self.renamed_item):
                 self.renamed_item.setEditable(False)
                 self.renamed_item = None
+        self._unlock_key_release()
     
     def _item_changed(self, item):
         """
@@ -2427,10 +2424,7 @@ class TreeExplorer(TreeDisplayBase):
                 index = item.index()
                 self.scrollTo(index)
                 # Start editing the new empty directory name
-                self.edit(index)
-                # Add the session signal when editing is canceled
-                delegate = self.itemDelegate(index)
-                delegate.closeEditor.connect(self._item_editing_closed)
+                self.start_editing_item(index)
                 self.renamed_item = item
             rename_item_action = data.QAction(
                 "Rename", self.tree_menu
@@ -2492,10 +2486,7 @@ class TreeExplorer(TreeDisplayBase):
             index = create_file_item.index()
             self.scrollTo(index)
             # Start editing the new empty file name
-            self.edit(index)
-            # Add the session signal when editing is canceled
-            delegate = self.itemDelegate(index)
-            delegate.closeEditor.connect(self._item_editing_closed)
+            self.start_editing_item(index)
             def _select_item(*args):
                 searched_item = args[0].text()
                 root = self.model().invisibleRootItem()
@@ -2529,10 +2520,7 @@ class TreeExplorer(TreeDisplayBase):
             index = create_directory_item.index()
             self.scrollTo(index)
             # Start editing the new empty directory name
-            self.edit(index)
-            # Add the session signal when editing is canceled
-            delegate = self.itemDelegate(index)
-            delegate.closeEditor.connect(self._item_editing_closed)
+            self.start_editing_item(index)
             # Select the newly created directory
             def _select_item(*args):
                 searched_item = args[0].text()
