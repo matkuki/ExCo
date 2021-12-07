@@ -18,14 +18,12 @@ try:
     import cython_lexers
     cython_lexers_found = True
 except Exception as ex:
-    print(ex)
     cython_lexers_found = False
 # Try importing the Nim module
 try:
     import nim_lexers
     nim_lexers_found = True
 except Exception as ex:
-    print(ex)
     nim_lexers_found = False
 
 from lexers.ada import *

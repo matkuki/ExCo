@@ -2800,3 +2800,9 @@ def change_opacity(pixmap_or_file, opacity):
     painter.end()
     pixmap = data.QPixmap.fromImage(image)
     return pixmap
+
+def get_index(start):
+    counter = start
+    while True:
+        yield counter
+        counter += 1

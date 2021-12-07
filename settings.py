@@ -21,6 +21,7 @@ import pprint
 import data
 import themes
 import functions
+import traceback
 
 
 """
@@ -380,7 +381,7 @@ class SettingsFileManipulator:
         settings_lines.append("# Recent files")
         settings_lines.append("recent_files = [")
         for file in recent_files:
-            settings_lines.append("    '{}',".format(file))
+            settings_lines.append("    {},".format(repr(file)))
         settings_lines.append("]")
         settings_lines.append("")
         # Custom context menu functions
@@ -491,6 +492,7 @@ class SettingsFileManipulator:
             # Return success
             return True
         except:
+            traceback.print_exc()
             # Set the default settings values
             self.main_window_side = data.MainWindowSide.LEFT
             self.theme = themes.Air

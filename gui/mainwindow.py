@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2019 Matic Kukovec.
+Copyright (c) 2013-2021 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -5232,14 +5232,14 @@ class MainWindow(data.QMainWindow):
                 create_lexer(lexers.Matlab, 'Matlab'),
                 lexers_menu
             )
-            NIM_action = create_action(
-                'Nim',
-                None, 
-                'Change document lexer to: Nim', 
-                'language_icons/logo_nim.png', 
-                create_lexer(lexers.Nim, 'Nim'),
-                lexers_menu
-            )
+#            NIM_action = create_action(
+#                'Nim',
+#                None, 
+#                'Change document lexer to: Nim', 
+#                'language_icons/logo_nim.png', 
+#                create_lexer(lexers.Nim, 'Nim'),
+#                lexers_menu
+#            )
             OBERON_action = create_action(
                 'Oberon / Modula',
                 None, 
@@ -5445,7 +5445,7 @@ class MainWindow(data.QMainWindow):
             lexers_menu.addAction(LUA_action)
             lexers_menu.addAction(MAKEFILE_action)
             lexers_menu.addAction(MATLAB_action)
-            lexers_menu.addAction(NIM_action)
+#            lexers_menu.addAction(NIM_action)
             lexers_menu.addAction(OBERON_action)
             lexers_menu.addAction(Octave_action)
             lexers_menu.addAction(PASCAL_action)

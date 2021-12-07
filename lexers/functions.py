@@ -23,9 +23,13 @@ import lexers
 
 def set_font(lexer, style_name, style_options):
     font, color, size, bold = style_options
+    try:
+        style_index = lexer.styles[style_name]["index"]
+    except:
+        style_index = lexer.styles[style_name]
     lexer.setColor(
-        data.QColor(color), 
-        lexer.styles[style_name]
+        data.QColor(color),
+        style_index
     )
     weight = data.QFont.Normal
     if bold == 1 or bold == True:
@@ -34,8 +38,26 @@ def set_font(lexer, style_name, style_options):
         weight = data.QFont.Black
     lexer.setFont(
         data.QFont(font, size, weight=weight), 
-        lexer.styles[style_name]
+        style_index
     )
+
+def set_font_new(lexer, style_name, style_options):
+    font, color, size, bold = style_options
+    style_index = lexer.styles[style_name]["index"]
+    lexer.setColor(
+        data.QColor(color),
+        style_index
+    )
+    weight = data.QFont.Normal
+    if bold == 1 or bold == True:
+        weight = data.QFont.Bold
+    elif bold == 2:
+        weight = data.QFont.Black
+    lexer.setFont(
+        data.QFont(font, size, weight=weight), 
+        style_index
+    )
+
 
 def get_lexer_from_file_type(file_type):
     current_file_type = file_type
@@ -60,7 +82,7 @@ def get_lexer_from_file_type(file_type):
     elif file_type == "d":
         lexer = lexers.D()
     elif file_type == "nim":
-        lexer = lexers.Nim()
+        lexer = lexers.NimOld()
     elif file_type == "makefile":
         lexer = lexers.Makefile()
     elif file_type == "xml":
@@ -138,7 +160,7 @@ def get_comment_style_for_lexer(lexer):
         comment_string = "--"
     elif isinstance(lexer, lexers.D):
         comment_string = "//"
-    elif isinstance(lexer, lexers.Nim):
+    elif hasattr(lexer, "get_name") and lexer.get_name() == "Nim":
         comment_string = "#"
     elif isinstance(lexer, lexers.Makefile):
         comment_string = "#"

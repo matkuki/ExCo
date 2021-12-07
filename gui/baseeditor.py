@@ -49,11 +49,18 @@ class BaseEditor(data.QsciScintilla):
             )
         self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
         self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
-        self.SendScintilla(
-            data.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.QsciScintillaBase.STYLE_DEFAULT, 
-            theme.Paper.Default
-        )
+        if self.lexer() is not None and hasattr(self.lexer(), "get_default_background_color"):
+            self.SendScintilla(
+                data.QsciScintillaBase.SCI_STYLESETBACK, 
+                data.QsciScintillaBase.STYLE_DEFAULT, 
+                self.lexer().get_default_background_color()
+            )
+        else:
+            self.SendScintilla(
+                data.QsciScintillaBase.SCI_STYLESETBACK, 
+                data.QsciScintillaBase.STYLE_DEFAULT, 
+                theme.Paper.Default
+            )
         self.SendScintilla(
             data.QsciScintillaBase.SCI_STYLESETBACK, 
             data.QsciScintillaBase.STYLE_LINENUMBER, 

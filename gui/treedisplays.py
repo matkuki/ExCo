@@ -2494,6 +2494,7 @@ class TreeExplorer(TreeDisplayBase):
                     if it.text() == searched_item and it.attributes.itype == TreeExplorer.ItemType.FILE:
                         self.setCurrentIndex(it.index())
                         break
+            delegate = self.itemDelegate(index)
             delegate.commitData.connect(_select_item)
         new_file_action = data.QAction(
             "New file", self.tree_menu
@@ -2529,6 +2530,7 @@ class TreeExplorer(TreeDisplayBase):
                     if it.text() == searched_item and it.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
                         self.setCurrentIndex(it.index())
                         break
+            delegate = self.itemDelegate(index)
             delegate.commitData.connect(_select_item)
             
         new_directory_action = data.QAction(

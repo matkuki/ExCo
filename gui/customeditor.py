@@ -460,10 +460,11 @@ class CustomEditor(BaseEditor):
         self.context_menu = ContextMenu(
             self, self.main_form, offset
         )
+        lexer = self.lexer()
         if (self.current_file_type == "C" or
-            isinstance(self.lexer(), lexers.Python) or
-            isinstance(self.lexer(), lexers.CustomPython) or
-            isinstance(self.lexer(), lexers.Nim)):
+            isinstance(lexer, lexers.Python) or
+            isinstance(lexer, lexers.CustomPython) or
+            (hasattr(lexer, "get_name") and lexer.get_name() == "Nim")):
                 self.context_menu.create_special_buttons()
                 self.context_menu.show()
         else:
@@ -517,6 +518,12 @@ class CustomEditor(BaseEditor):
         #Disable REPL focus after the REPL evaluation
         if skip_repl_focus == True:
             self._skip_next_repl_focus()
+    
+    def goto_index(self, index):
+        self.SendScintilla(self.SCI_GOTOPOS, index)
+        line, line_index = self.lineIndexFromPosition(index)
+        self.set_first_visible_line(line - 10)
+        self.setFocus()
     
     def set_first_visible_line(self, line_number):
         """Move the top of the viewing area to the selected line"""
@@ -1916,7 +1923,7 @@ class CustomEditor(BaseEditor):
         # and set the keyword styles to bold
         if (isinstance(lexer, lexers.Ada) or
             isinstance(lexer, lexers.Oberon) or
-            isinstance(lexer, lexers.Nim)):
+            (hasattr(lexer, "get_name") and lexer.get_name() == "Nim")):
             # Set the margin font for the lexers in the lexers.py module
             self.setMarginsFont(lexer.default_font)
         # Get the icon according to the file type

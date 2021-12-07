@@ -38,6 +38,117 @@ Settings_Hex_Background = data.QColor(0xff, 0xff, 0xff)
 YesNoDialog_Edge = data.QColor(159,189,214)
 YesNoDialog_Background = data.QColor(0xff, 0xff, 0xff)
 
+styles = {
+    "case/switch": {
+        "color": "#8000ff",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "comment": {
+        "color": "#007f00",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "comment-doc": {
+        "color": "#7f0a0a",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "comment-multiline": {
+        "color": "#6e3296",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "default": {
+        "color": "#000000",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "keyword": {
+        "color": "#00007f",
+        "paper": "#ffffff",
+        "bold": True,
+        "italic": False,
+    },
+    "keyword-definition": {
+        "color": "#007f7f",
+        "paper": "#ffffff",
+        "bold": True,
+        "italic": False,
+    },
+    "keyword-top": {
+        "color": "#407fc0",
+        "paper": "#ffffff",
+        "bold": True,
+        "italic": False,
+    },
+    "literal-character": {
+        "color": "#00c8ff",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "name-class": {
+        "color": "#0000ff",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "number": {
+        "color": "#007f7f",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "operator": {
+        "color": "#7f7f7f",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "operator-keyword": {
+        "color": "#963cc8",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "pragma": {
+        "color": "#c07f40",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "string": {
+        "color": "#7f007f",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "string-triple-quoted": {
+        "color": "#7f0000",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+    "type": {
+        "color": "#6e6e00",
+        "paper": "#ffffff",
+        "bold": True,
+        "italic": False,
+    },
+    "unsafe": {
+        "color": "#c00000",
+        "paper": "#ffffff",
+        "bold": False,
+        "italic": False,
+    },
+}
+
 
 class FoldMargin:
     ForeGround = data.QColor(0x000000)
@@ -1228,6 +1339,7 @@ class Font:
 
 class Paper:
     Default = data.QColor(0xffffffff)
+    DefaultHtml = "#ffffffff"
     
     class Ada:
         Default = 0xffffffff

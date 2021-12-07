@@ -10,73 +10,159 @@ import builtins
 import re
 import functions
 import data
-import time
+from pprint import pprint
 
 from . import *
+from .functions import set_font
 
-
-class LexerInterface:
+class Nim(data.QsciLexerCustom):
     """
-    Base virtual lexer for any custom language
+    Custom lexer for the Nim programming language
     """
-    def get_name(self):
-        raise Exception(f"[{self.__class__.__name__}] This method needs to be overriden!")
+    styles = {
+        "Default" : 0,
+        "Comment" : 1,
+        "BasicKeyword" : 2,
+        "TopKeyword" : 3,
+        "String" :  4,
+        "LongString" : 5,
+        "Number" :  6,
+        "Pragma" : 7,
+        "Operator" : 8,
+        "Unsafe" : 9,
+        "Type" : 10,
+        "DocumentationComment" : 11,
+        "Definition" : 12,
+        "Class" : 13,
+        "KeywordOperator" : 14,
+        "CharLiteral" :  15,
+        "CaseOf" :  16,
+        "UserKeyword" :  17,
+        "MultilineComment" :  18,
+        "MultilineDocumentation" : 19
+    }
     
-    def get_description(self):
-        raise Exception(f"[{self.__class__.__name__}] This method needs to be overriden!")
-    
-    def get_styles(self):
-        raise Exception(f"[{self.__class__.__name__}] This method needs to be overriden!")
-    
-    def get_keywords(self):
-        raise Exception(f"[{self.__class__.__name__}] This method needs to be overriden!")
-    
-    def get_autoindent_characters(self):
-        raise Exception(f"[{self.__class__.__name__}] This method needs to be overriden!")
-    
+    #Class variables
+    default_color       = data.QColor(data.theme.Font.Nim.Default[1])
+    default_paper       = data.QColor(data.theme.Paper.Nim.Default)
+    default_font        = data.QFont(data.current_font_name, data.current_font_size)
+    #Basic keywords and built-in procedures and templates
+    basic_keyword_list  = [
+        "as", "atomic", "bind", "sizeof", 
+        "break", "case", "continue", "converter",
+        "discard", "distinct", "do", "echo", "elif", "else", "end",
+        "except", "finally", "for", "from", "defined", 
+        "if", "interface", "iterator", "macro", "method", "mixin", 
+        "of", "out", "proc", "func", "raise", "ref", "result", 
+        "return", "template", "try", "inc", "dec", "new", "quit", 
+        "while", "with", "without", "yield", "true", "false", 
+        "assert", "min", "max", "newseq", "len", "pred", "succ", 
+        "contains", "cmp", "add", "del","deepcopy", "shallowcopy", 
+        "abs", "clamp", "isnil", "open", "reopen", "close","readall", 
+        "readfile", "writefile", "endoffile", "readline", "writeline", 
+    ]
+    #Custom keyword created with templates/macros
+    user_keyword_list = [
+        "class", "namespace", "property",
+    ]
+    #Keywords that define a proc-like definition
+    def_keyword_list = ["proc", "method", "func", "template", "macro", "converter", "iterator"]
+    #Keywords that can define blocks
+    top_keyword_list = [
+        "block", "const", "export", "import", "include", "let", 
+        "static", "type", "using", "var", "when", 
+    ]
+    #Keywords that might be unsafe/dangerous
+    unsafe_keyword_list = [
+        "asm", "addr", "cast", "ptr", "pointer", "alloc", "alloc0",
+        "allocshared0", "dealloc", "realloc", "nil", "gc_ref", 
+        "gc_unref", "copymem", "zeromem", "equalmem", "movemem", 
+        "gc_disable", "gc_enable", 
+    ]
+    #Built-in types
+    type_keyword_list = [
+        "int", "int8", "int16", "int32", "int64",
+        "uint", "uint8", "uint16", "uint32", "uint64",
+        "float", "float32", "float64", "bool", "char",
+        "string", "cstring", "pointer", "ordinal", "ptr",
+        "ref", "expr", "stmt", "typedesc", "void",
+        "auto", "any", "untyped", "typed", "somesignedint",
+        "someunsignedint", "someinteger", "someordinal", "somereal", "somenumber",
+        "range", "array", "openarray", "varargs", "seq",
+        "set", "slice", "shared", "guarded", "byte",
+        "natural", "positive", "rootobj", "rootref", "rooteffect",
+        "timeeffect", "ioeffect", "readioeffect", "writeioeffect", "execioeffect",
+        "exception", "systemerror", "ioerror", "oserror", "libraryerror",
+        "resourceexhaustederror", "arithmeticerror", "divbyzeroerror", "overflowerror", 
+        "accessviolationerror", "assertionerror", "valueerror", "keyerror", 
+        "outofmemerror", "indexerror", "fielderror", "rangeerror", "stackoverflowerror", 
+        "reraiseerror", "objectassignmenterror", "objectconversionerror", "floatingpointerror", 
+        "floatinvalidoperror", "floatdivbyzeroerror", "floatoverflowerror",
+        "floatunderflowerror", "floatinexacterror", "deadthreaderror", "tresult", "endianness",
+        "taintedstring", "libhandle", "procaddr", "byteaddress", "biggestint",
+        "biggestfloat", "clong", "culong", "cchar", "cschar",
+        "cshort", "cint", "csize", "clonglong", "cfloat",
+        "cdouble", "clongdouble", "cuchar", "cushort", "cuint",
+        "culonglong", "cstringarray", "pfloat32", "pfloat64", "pint64",
+        "pint32", "gc_strategy", "pframe", "tframe", "file",
+        "filemode", "filehandle", "thinstance", "aligntype", "refcount",
+        "object", "tuple", "enum",
+    ]
+    #Sign operators
+    operator_list = [
+        "=", "+", "-", "*", "/", "<", ">", "@", "$", ".",
+        "~", "&", "%", "|", "!", "?", "^", ".", ":", "\"",
+    ]
+    #Keyword operators
+    keyword_operator_list = [
+        "and", "or", "not", "xor", "shl", "shr", "div", "mod", 
+        "in", "notin", "is", "isnot",
+    ]
+    splitter = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
+    #Characters that autoindent one level on pressing Return/Enter
+    autoindent_characters = [":", "="]
 
-
-class BaseQScintillaLexer(data.QsciLexerCustom):
-    """
-    Base lexer used by QScintilla
-    """
-    baselexer = None
-    
-
-    def __init__(self, baselexer, parent=None):
+    def __init__(self, parent=None):
         """Overridden initialization"""
-        # Initialize superclass
-        super().__init__(parent)
-        # Store the base lexer
-        self.baselexer = baselexer
-        # Set the default style values
-        self.setDefaultColor(self.baselexer.styles["Default"]["font-color"])
-        self.setDefaultPaper(self.baselexer.styles["Default"]["paper-color"])
-        self.setDefaultFont(self.baselexer.styles["Default"]["font"])
-        # Reset autoindentation style
+        #Initialize superclass
+        super().__init__()
+        #Set the default style values
+        self.setDefaultColor(self.default_color)
+        self.setDefaultPaper(self.default_paper)
+        self.setDefaultFont(self.default_font)
+        #Reset autoindentation style
         self.setAutoIndentStyle(0)
-        # Set the theme
-        self.set_theme(
-            self.baselexer.styles["Default"]["paper-color"],
-            self.baselexer.styles["Default"]["font-color"],
-        )
+        #Set the theme
+        self.set_theme(data.theme)
     
     def language(self):
-        return self.baselexer.name
+        return "Nim"
     
     def description(self, style):
         if style < len(self.styles):
-            description = self.baselexer.description
+            description = "Custom lexer for the Nim programming languages"
         else:
             description = ""
         return description
     
-    def set_theme(self, paper, font):
+    def defaultStyle(self):
+        return self.styles["Default"]
+    
+    def braceStyle(self):
+        return self.styles["Default"]
+    
+    def defaultFont(self, style):
+        return data.QFont(data.current_font_name, data.current_font_size)
+    
+    def set_theme(self, theme):
         for style in self.styles.keys():
             # Papers
-            self.setPaper(data.QColor(paper), self.styles[style])
+            self.setPaper(
+                data.QColor(theme.Paper.Nim.Default), 
+                self.styles[style]
+            )
             # Fonts
-            set_font(self, style, getattr(font, style))
+            set_font(self, style, getattr(theme.Font.Nim, style))
         
     
     def styleText(self, start, end):

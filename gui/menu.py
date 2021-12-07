@@ -50,13 +50,18 @@ class Menu(data.QMenu):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._id = uuid.uuid4()
-        self.update_style()
         Menu.menu_cache[self._id] = self
         # Set default font
         self.setFont(data.get_current_font())
+        # Update style
+        self.update_style()
+    
+    def setStyle(self, *args, **kwargs):
+        super().setStyle(*args, **kwargs)
+        self.update_style()
     
     def update_style(self):
-        self.setStyleSheet("""
+        style_sheet = """
             QMenu {{
                 background-color: {};
                 border: 1px solid {};
@@ -64,24 +69,35 @@ class Menu(data.QMenu):
             }}
             QMenu::item {{
                 background-color: transparent;
+                border: none;
+                padding-top: 2px;
+                padding-bottom: 2px;
+                padding-right: 20px;
+                spacing: 12px;
+                margin: 1px;
             }}
             QMenu::item:selected  {{
                 background-color: {};
             }}
             QMenu::right-arrow  {{
                 image: url({});
+                width: 14px;
+                height: 14px;
             }}
             QMenu::right-arrow:disabled  {{
                 image: url({});
+                width: 14px;
+                height: 14px;
             }}
         """.format(
-                data.theme.Indication.PassiveBackGround,
-                data.theme.Indication.PassiveBorder,
-                data.theme.Font.DefaultHtml,
-                data.theme.Indication.Hover,
-                functions.get_resource_file(data.theme.right_arrow_menu_image),
-                functions.get_resource_file(data.theme.right_arrow_menu_disabled_image),
-        ))
+            data.theme.Indication.PassiveBackGround,
+            data.theme.Indication.PassiveBorder,
+            data.theme.Font.DefaultHtml,
+            data.theme.Indication.Hover,
+            functions.get_resource_file(data.theme.right_arrow_menu_image),
+            functions.get_resource_file(data.theme.right_arrow_menu_disabled_image),
+        )
+        self.setStyleSheet(style_sheet)
 
 
 class MenuBar(data.QMenuBar):
