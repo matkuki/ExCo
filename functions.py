@@ -1592,7 +1592,7 @@ def get_node_tree_with_ctags(c_code, parser):
             lines = f.readlines()
             f.close()
         # Delete the tag file
-#        os.remove(tag_filename)
+        os.remove(tag_filename)
     except Exception as ex:
         repl_print(ex)
         raise Exception("Tag file parse error!")
