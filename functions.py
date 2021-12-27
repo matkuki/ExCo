@@ -1421,7 +1421,7 @@ def get_c_function_list(c_code):
     #Return the function list
     return function_list
 
-def get_c_node_tree_with_ctags(c_code):
+def get_node_tree_with_ctags(c_code, parser):
     # Node object
     class CNode:
         def __init__(self, 
@@ -1434,7 +1434,11 @@ def get_c_node_tree_with_ctags(c_code):
             self.type = in_type
             self.line_number = in_line_number
             self.level = in_level
-            self.parent = in_parent
+            self.parent_type = None
+            self.parent = None
+            if in_parent is not None:
+                self.parent_type = in_parent[0].strip()
+                self.parent = in_parent[1].strip()
             self.children = []
     
 #    # Ctags symbol dictionary
@@ -1516,6 +1520,41 @@ def get_c_node_tree_with_ctags(c_code):
         f.close()
     # Parse the file with ctags
     try:
+        if parser == "C++":
+            flags = (
+                "-R",
+                "--fields=-f-k-t+K+n",
+                "--kinds-C++=+px",
+                "--excmd=number",
+                "--language-force=C++"
+            )
+        elif parser == "C":
+            flags = (
+                "-R",
+                "--fields=-f-k-t+K+n",
+                "--kinds-C=+px",
+                "--excmd=number",
+                "--language-force=C",
+            )
+        elif parser == "D":
+            flags = (
+                "-R",
+                "--fields=-f-k-t+K+n",
+                "--kinds-D=+px",
+                "--excmd=number",
+                "--language-force=D",
+            )
+        elif parser == "PASCAL":
+            flags = (
+                "-R",
+                "--fields=-f-k-t+K+n",
+                "--excmd=number",
+                "--language-force=Pascal",
+            )
+        else:
+            raise Exception(
+                "[Ctags-parsing] Unsupported file type: {}".format(parser)
+            )
         if data.platform == "Windows":
             # SW_HIDE option hides the poping up of the console window on Windows 
             si = subprocess.STARTUPINFO()
@@ -1524,11 +1563,8 @@ def get_c_node_tree_with_ctags(c_code):
             output = subprocess.Popen(
                 [
                     ctags_program, 
-                    "-R", 
-                    "--fields=-f-k-t+K+n", 
-                    "--kinds-C=+p+x", 
-                    "--excmd=number", 
-                    filename
+                    *flags,
+                    filename,
                 ], 
                 stdout=subprocess.PIPE,
                 startupinfo=si,
@@ -1538,10 +1574,7 @@ def get_c_node_tree_with_ctags(c_code):
             output = subprocess.Popen(
                 [
                     ctags_program, 
-                    "-R", 
-                    "--fields=-f-k-t+K+n", 
-                    "--kinds-C=+p+x", 
-                    "--excmd=number", 
+                    *flags,
                     filename
                 ], 
                 stdout=subprocess.PIPE,
@@ -1559,7 +1592,7 @@ def get_c_node_tree_with_ctags(c_code):
             lines = f.readlines()
             f.close()
         # Delete the tag file
-        os.remove(tag_filename)
+#        os.remove(tag_filename)
     except Exception as ex:
         repl_print(ex)
         raise Exception("Tag file parse error!")
@@ -1583,194 +1616,14 @@ def get_c_node_tree_with_ctags(c_code):
             name, file, ex_data, typ, line_number = split_line
             line_number = int(line_number.split(':')[1])
             add_node(
-                CNode(name, typ, line_number, 0)
+                CNode(name, typ, line_number, 0, in_parent=None)
             )
         elif len(split_line) == 6:
             name, file, ex_data, typ, line_number, parent = split_line
             line_number = int(line_number.split(':')[1])
-            parent = parent.split(':')[1].strip()
+            parent_type, parent_name = parent.split(':')
             add_node(
-                CNode(name, typ, line_number, 0, parent)
-            )
-    # Delete the temporary parsing file
-    os.remove(filename)
-    # Sort the nodes alphabetically
-    def compare_function(item):
-        return item.name.lower()
-    main_node_list = sorted(main_node_list, key=compare_function)
-    main_node_list.append(main_node)
-    return main_node_list
-        
-def get_pascal_node_tree_with_ctags(c_code):
-    # Node object
-    class CTagsNode:
-        def __init__(self, 
-                     in_name, 
-                     in_type, 
-                     in_line_number, 
-                     in_level, 
-                     in_parent=None):
-            self.name = in_name.strip()
-            self.type = in_type
-            self.line_number = in_line_number
-            self.level = in_level
-            self.parent = in_parent
-            self.children = []
-    
-#    # Ctags symbol dictionary
-#    ctags_description_string = """
-#        #LETTER NAME       ENABLED REFONLY NROLES MASTER DESCRIPTION
-#        L       label      no      no      0      C      goto labels
-#        d       macro      yes     no      1      C      macro definitions
-#        e       enumerator yes     no      0      C      enumerators (values inside an enumeration)
-#        f       function   yes     no      0      C      function definitions
-#        g       enum       yes     no      0      C      enumeration names
-#        h       header     yes     yes     2      C      included header files
-#        l       local      no      no      0      C      local variables
-#        m       member     yes     no      0      C      struct, and union members
-#        p       prototype  no      no      0      C      function prototypes
-#        s       struct     yes     no      0      C      structure names
-#        t       typedef    yes     no      0      C      typedefs
-#        u       union      yes     no      0      C      union names
-#        v       variable   yes     no      0      C      variable definitions
-#        x       externvar  no      no      0      C      external and forward variable declarations
-#        z       parameter  no      no      0      C      function parameters inside function definitions
-#    """
-#    c_symbols = dict(
-#        [(x.split()[0], x.split()[1]) 
-#            for x in ctags_description_string.splitlines()
-#                if x.strip() != ""][1:]
-#    )
-    
-    global ctags_program
-    # Test for ctags on the system
-    ctags_test = ('ctags_present' in locals()) or ('ctags_present' in globals())
-    if ctags_test == False:
-        global ctags_present
-        ctags_present = False
-        ctags_program = "ctags"
-        try:
-            if data.platform == "Windows":
-                # SW_HIDE option hides the poping up of the console window on Windows 
-                si = subprocess.STARTUPINFO()
-                si.dwFlags = subprocess.STARTF_USESHOWWINDOW
-                si.wShowWindow = subprocess.SW_HIDE
-                output = subprocess.Popen(
-                    [ctags_program, "--version"], 
-                    stdout=subprocess.PIPE,
-                    startupinfo=si,
-                    shell=False
-                ).communicate()[0]
-            else:
-                output = subprocess.Popen(
-                    [ctags_program, "--version"], 
-                    stdout=subprocess.PIPE,
-                    shell=False
-                ).communicate()[0]
-            output_utf = output.decode("utf-8")
-            if output_utf.startswith("Exuberant Ctags") or output_utf.startswith("Universal Ctags"):
-                ctags_present = True
-        except Exception as ex:
-            if data.platform == "Windows":
-                repl_print(
-                    "Windows operating system detected.\n " + 
-                    "Using Universal Ctags program from the resources directory."
-                )
-                ctags_program = os.path.join(
-                    data.resources_directory, 
-                    "programs/ctags.exe"
-                ).replace("\\", "/")
-                ctags_present = True
-            else:
-                repl_print(ex)
-                ctags_present = False
-                raise Exception(
-                    "Exuberant or Universal Ctags (ctags) could not be found on the system!\n" +
-                    "If you are using a Debian based operating system,\n" + 
-                    "try executing 'sudo apt-get install exuberant-ctags' to install Exuberant-Ctags."
-                )
-    # Create the file for parsing
-    filename = "temporary_ctags_file.c"
-    with open(filename, "w+") as f:
-        f.write(c_code)
-        f.close()
-    # Parse the file with ctags
-    try:
-        if data.platform == "Windows":
-            # SW_HIDE option hides the poping up of the console window on Windows 
-            si = subprocess.STARTUPINFO()
-            si.dwFlags = subprocess.STARTF_USESHOWWINDOW
-            si.wShowWindow = subprocess.SW_HIDE
-            output = subprocess.Popen(
-                [
-                    ctags_program, 
-                    "-R",
-                    "--fields=-f-k-t+K+n",
-                    "--kinds-C=+p+x",
-                    "--excmd=number",
-                    filename
-                ], 
-                stdout=subprocess.PIPE,
-                startupinfo=si,
-                shell=False
-            ).communicate()[0]
-        else:
-            output = subprocess.Popen(
-                [
-                    ctags_program, 
-                    "-R", 
-                    "--fields=-f-k-t+K+n", 
-                    "--kinds-C=+p+x", 
-                    "--excmd=number", 
-                    filename
-                ], 
-                stdout=subprocess.PIPE,
-                shell=False
-            ).communicate()[0]
-        output_utf = output.decode("utf-8")
-    except Exception as ex:
-        repl_print(ex)
-        raise Exception("Parse error!")
-    # Read the tag file
-    lines = []
-    try:
-        tag_filename = "tags"
-        with open(tag_filename, 'r') as f:
-            lines = f.readlines()
-            f.close()
-        # Delete the tag file
-        os.remove(tag_filename)
-    except Exception as ex:
-        repl_print(ex)
-        raise Exception("Tag file parse error!")
-    # Initialize state variables
-    main_node = CNode("module", "", 0, -1)
-    main_node_list = []
-    main_current_line = 1
-    # Function for adding a node
-    def add_node(in_node):
-        if main_node != None:
-            main_node.children.append(in_node)
-        else:
-            main_node_list.append(in_node)
-    main_node = CNode("module", "", 0, -1)
-    # Parse the output
-    for line in lines:
-        if line.startswith("!_TAG"):
-            continue
-        split_line = line.split('\t')
-        if len(split_line) == 5:
-            name, file, ex_data, typ, line_number = split_line
-            line_number = int(line_number.split(':')[1])
-            add_node(
-                CNode(name, typ, line_number, 0)
-            )
-        elif len(split_line) == 6:
-            name, file, ex_data, typ, line_number, parent = split_line
-            line_number = int(line_number.split(':')[1])
-            parent = parent.split(':')[1].strip()
-            add_node(
-                CNode(name, typ, line_number, 0, parent)
+                CNode(name, typ, line_number, 0, in_parent=(parent_type, parent_name))
             )
     # Delete the temporary parsing file
     os.remove(filename)

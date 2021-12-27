@@ -54,21 +54,21 @@ class TreeDisplay(data.QTreeView):
             self.files = {}
         
         def add_directory(self, dir_name, dir_item):
-            #Create a new instance of Directory class using the __class__ dunder method
+            # Create a new instance of Directory class using the __class__ dunder method
             new_directory = self.__class__(dir_item)
-            #Add the new directory to the dictionary
+            # Add the new directory to the dictionary
             self.directories[dir_name] = new_directory
-            #Add the new directory item to the parent(self)
+            # Add the new directory item to the parent(self)
             self.item.appendRow(dir_item)
-            #Return the directory object reference
+            # Return the directory object reference
             return new_directory
         
         def add_file(self, file_name, file_item):
             self.files[file_name] = file_item
-            #Add the new file item to the parent(self)
+            # Add the new file item to the parent(self)
             self.item.appendRow(file_item)
     
-    #Class variables
+    # Class variables
     parent                  = None
     main_form               = None
     name                    = ""
@@ -79,30 +79,16 @@ class TreeDisplay(data.QTreeView):
     tree_menu               = None
     bound_tab               = None
     worker_thread           = None
-    #Attributes specific to the display data
+    # Attributes specific to the display data
     bound_node_tab          = None
-    #Node icons
-    node_icon_import        = None
-    node_icon_type          = None
-    node_icon_const         = None
-    node_icon_function      = None
-    node_icon_procedure     = None
-    node_icon_converter     = None
-    node_icon_iterator      = None
-    node_icon_class         = None
-    node_icon_method        = None
-    node_icon_property      = None
-    node_icon_macro         = None
-    node_icon_template      = None
-    node_icon_variable      = None
-    node_icon_namespace     = None
-    node_icon_nothing       = None
-    node_pragma             = None
+    # Node icons
+    node_icons = None
     folder_icon             = None
     goto_icon               = None
     python_icon             = None
     nim_icon                = None
     c_icon                  = None
+    cpp_icon                = None
     
     
     def clean_up(self):
@@ -158,29 +144,45 @@ class TreeDisplay(data.QTreeView):
         self.expanded.connect(self._check_contents)
         # Initialize the icons
         # Node icons
-        self.node_icon_import   = functions.create_icon("various/node_module.png")
-        self.node_icon_type     = functions.create_icon("various/node_type.png")
-        self.node_icon_variable = functions.create_icon("various/node_variable.png")
-        self.node_icon_const    = functions.create_icon("various/node_const.png")
-        self.node_icon_function = functions.create_icon("various/node_function.png")
-        self.node_icon_procedure= functions.create_icon("various/node_procedure.png")
-        self.node_icon_converter= functions.create_icon("various/node_converter.png")
-        self.node_icon_iterator = functions.create_icon("various/node_iterator.png")
-        self.node_icon_class    = functions.create_icon("various/node_class.png")
-        self.node_icon_method   = functions.create_icon("various/node_method.png")
-        self.node_icon_macro    = functions.create_icon("various/node_macro.png")
-        self.node_icon_template = functions.create_icon("various/node_template.png")
-        self.node_icon_namespace= functions.create_icon("various/node_namespace.png")
-        self.node_icon_pragma   = functions.create_icon("various/node_pragma.png")
-        self.node_icon_unknown  = functions.create_icon("various/node_unknown.png")
-        self.node_icon_nothing  = functions.create_icon("tango_icons/dialog-warning.png")
-        self.python_icon        = functions.create_icon("language_icons/logo_python.png")
-        self.nim_icon           = functions.create_icon("language_icons/logo_nim.png")
-        self.c_icon             = functions.create_icon("language_icons/logo_c.png")
+        self.node_icons = {
+            "module": functions.create_icon("various/node_module.png"),
+            "import": functions.create_icon("various/node_module.png"),
+            "function": functions.create_icon("various/node_procedure.png"),
+            "procedure": functions.create_icon("various/node_procedure.png"),
+            "method": functions.create_icon("various/node_method.png"),
+            "var": functions.create_icon("various/node_variable.png"),
+            "variable": functions.create_icon("various/node_variable.png"),
+            "alias": functions.create_icon("various/node_alias.png"),
+            "externvar": functions.create_icon("various/node_variable.png"),
+            "prototype": functions.create_icon("various/node_function.png"),
+            "typedef": functions.create_icon("various/node_type.png"),
+            "struct": functions.create_icon("various/node_type.png"),
+            "enum": functions.create_icon("various/node_type.png"),
+            "union": functions.create_icon("various/node_type.png"),
+            "enumerator": functions.create_icon("various/node_const.png"),
+            "include": functions.create_icon("various/node_module.png"),
+            "define": functions.create_icon("various/node_macro.png"),
+            "pragma": functions.create_icon("various/node_pragma.png"),
+            "undef": functions.create_icon("various/node_macro.png"),
+            "error": functions.create_icon("various/node_macro.png"),
+            "macro": functions.create_icon("various/node_macro.png"),
+            "member": functions.create_icon("various/node_method.png"),
+            "converter": functions.create_icon("various/node_converter.png"),
+            "namespace": functions.create_icon("various/node_namespace.png"),
+            "template": functions.create_icon("various/node_template.png"),
+            "class": functions.create_icon("various/node_class.png"),
+            "iterator": functions.create_icon("various/node_iterator.png"),
+            "nothing": functions.create_icon("tango_icons/dialog-warning.png"),
+            "unknown": functions.create_icon("various/node_unknown.png"),
+        }
+        self.python_icon = functions.create_icon("language_icons/logo_python.png")
+        self.nim_icon = functions.create_icon("language_icons/logo_nim.png")
+        self.c_icon = functions.create_icon("language_icons/logo_c.png")
+        self.cpp_icon = functions.create_icon("language_icons/logo_cpp.png")
         # File searching icons
-        self.file_icon      = functions.create_icon("tango_icons/file.png")
-        self.folder_icon    = functions.create_icon("tango_icons/folder.png")
-        self.goto_icon      = functions.create_icon('tango_icons/edit-goto.png')
+        self.file_icon = functions.create_icon("tango_icons/file.png")
+        self.folder_icon = functions.create_icon("tango_icons/folder.png")
+        self.goto_icon = functions.create_icon('tango_icons/edit-goto.png')
         
         # Set the icon size for every node
         self.update_icon_size()
@@ -524,7 +526,7 @@ class TreeDisplay(data.QTreeView):
             item_error.setEditable(False)
             item_error.setForeground(error_brush)
             item_error.setFont(error_font)
-            item_error.setIcon(self.node_icon_nothing)
+            item_error.setIcon(self.node_icons["nothing"])
             tree_model.appendRow(item_error)
             #Show the error message
             error_font = data.get_current_font()
@@ -546,12 +548,12 @@ class TreeDisplay(data.QTreeView):
             node_text += str(node[1]) + ")"
             item_import_node = data.QStandardItem(node_text)
             item_import_node.setEditable(False)
-            item_import_node.setIcon(self.node_icon_import)
+            item_import_node.setIcon(self.node_icons["import"])
             item_imports.appendRow(item_import_node)
         if import_nodes == []:
             item_no_imports = data.QStandardItem("No imports found")
             item_no_imports.setEditable(False)
-            item_no_imports.setIcon(self.node_icon_nothing)
+            item_no_imports.setIcon(self.node_icons["nothing"])
             item_imports.appendRow(item_no_imports)
         #Append the import node to the model
         tree_model.appendRow(item_imports)
@@ -579,7 +581,7 @@ class TreeDisplay(data.QTreeView):
             node_text += str(node[0].lineno) + ")"
             parent_tree_node = data.QStandardItem(node_text)
             parent_tree_node.setEditable(False)
-            parent_tree_node.setIcon(self.node_icon_class)
+            parent_tree_node.setIcon(self.node_icons["class"])
             #Create a list that will hold the child nodes
             child_nodes = []
             #Create base nodes
@@ -602,13 +604,13 @@ class TreeDisplay(data.QTreeView):
                 if child_level != 0:
                     #Set the child icon
                     if isinstance(child_object, ast.ClassDef) == True:
-                        child_tree_node.setIcon(self.node_icon_class)
+                        child_tree_node.setIcon(self.node_icons["class"])
                     else:
                         #Set method/function icon according to the previous base node type
                         if base_node_type[child_level-1] == 0:
-                            child_tree_node.setIcon(self.node_icon_method)
+                            child_tree_node.setIcon(self.node_icons["method"])
                         elif base_node_type[child_level-1] == 1:
-                            child_tree_node.setIcon(self.node_icon_procedure)
+                            child_tree_node.setIcon(self.node_icons["procedure"])
                     #Determine the parent node level
                     level_retraction    = 1
                     parent_level        = child_level - level_retraction
@@ -624,9 +626,9 @@ class TreeDisplay(data.QTreeView):
                 else:
                     #Set the icon for the 
                     if isinstance(child_object, ast.ClassDef) == True:
-                        child_tree_node.setIcon(self.node_icon_class)
+                        child_tree_node.setIcon(self.node_icons["class"])
                     elif isinstance(child_object, ast.FunctionDef) == True:
-                        child_tree_node.setIcon(self.node_icon_method)
+                        child_tree_node.setIcon(self.node_icons["method"])
                     child_nodes.append(child_tree_node)
             #Append the child nodes to the parent and sort them
             for cn in child_nodes:
@@ -641,7 +643,7 @@ class TreeDisplay(data.QTreeView):
         if class_nodes == []:
             item_no_classes = data.QStandardItem("No classes found")
             item_no_classes.setEditable(False)
-            item_no_classes.setIcon(self.node_icon_nothing)
+            item_no_classes.setIcon(self.node_icons["nothing"])
             item_classes.appendRow(item_no_classes)
         """Function nodes filtering"""
         item_functions = data.QStandardItem(function_text)
@@ -656,14 +658,14 @@ class TreeDisplay(data.QTreeView):
             #Construct the node and add it to the tree
             function_node = data.QStandardItem(func_text)
             function_node.setEditable(False)
-            function_node.setIcon(self.node_icon_procedure)
+            function_node.setIcon(self.node_icons["procedure"])
             item_functions.appendRow(function_node)
         item_functions.sortChildren(0)
         #Check if there were any nodes found
         if function_nodes == []:
             item_no_functions = data.QStandardItem("No functions found")
             item_no_functions.setEditable(False)
-            item_no_functions.setIcon(self.node_icon_nothing)
+            item_no_functions.setIcon(self.node_icons["nothing"])
             item_functions.appendRow(item_no_functions)
         #Append the function nodes to the model
         tree_model.appendRow(item_functions)
@@ -680,14 +682,14 @@ class TreeDisplay(data.QTreeView):
         tree_node = data.QStandardItem(node_text)
         tree_node.setEditable(False)
         if node.type == "class":
-            tree_node.setIcon(self.node_icon_class)
+            tree_node.setIcon(self.node_icons["class"])
         elif node.type == "function":
             if parent_is_class == False:
-                tree_node.setIcon(self.node_icon_procedure)
+                tree_node.setIcon(self.node_icons["procedure"])
             else:
-                tree_node.setIcon(self.node_icon_method)
+                tree_node.setIcon(self.node_icons["method"])
         elif node.type == "global_variable":
-            tree_node.setIcon(self.node_icon_variable)
+            tree_node.setIcon(self.node_icons["variable"])
         # Append the children
         node_is_class = False
         if node.type == "class":
@@ -760,7 +762,7 @@ class TreeDisplay(data.QTreeView):
             item_error.setEditable(False)
             item_error.setForeground(error_brush)
             item_error.setFont(error_font)
-            item_error.setIcon(self.node_icon_nothing)
+            item_error.setIcon(self.node_icons["nothing"])
             tree_model.appendRow(item_error)
             #Show the error message
             error_font = data.get_current_font()
@@ -790,12 +792,12 @@ class TreeDisplay(data.QTreeView):
             node_text += str(node.line_number) + ")"
             item_import_node = data.QStandardItem(node_text)
             item_import_node.setEditable(False)
-            item_import_node.setIcon(self.node_icon_import)
+            item_import_node.setIcon(self.node_icons["import"])
             item_imports.appendRow(item_import_node)
         if import_nodes == []:
             item_no_imports = data.QStandardItem("No imports found")
             item_no_imports.setEditable(False)
-            item_no_imports.setIcon(self.node_icon_nothing)
+            item_no_imports.setIcon(self.node_icons["nothing"])
             item_imports.appendRow(item_no_imports)
         #Append the import node to the model
         tree_model.appendRow(item_imports)
@@ -810,7 +812,7 @@ class TreeDisplay(data.QTreeView):
         if globals_nodes == []:
             item_no_globals = data.QStandardItem("No global variables found")
             item_no_globals.setEditable(False)
-            item_no_globals.setIcon(self.node_icon_nothing)
+            item_no_globals.setIcon(self.node_icons["nothing"])
             item_globals.appendRow(item_no_globals)
         else:
             # Create the function nodes and add them to the tree
@@ -829,7 +831,7 @@ class TreeDisplay(data.QTreeView):
         if class_nodes == []:
             item_no_classes = data.QStandardItem("No classes found")
             item_no_classes.setEditable(False)
-            item_no_classes.setIcon(self.node_icon_nothing)
+            item_no_classes.setIcon(self.node_icons["nothing"])
             item_classes.appendRow(item_no_classes)
         else:
             # Create the class nodes and add them to the tree
@@ -846,7 +848,7 @@ class TreeDisplay(data.QTreeView):
         if function_nodes == []:
             item_no_functions = data.QStandardItem("No functions found")
             item_no_functions.setEditable(False)
-            item_no_functions.setIcon(self.node_icon_nothing)
+            item_no_functions.setIcon(self.node_icons["nothing"])
             item_functions.appendRow(item_no_functions)
         else:
             # Create the function nodes and add them to the tree
@@ -861,8 +863,13 @@ class TreeDisplay(data.QTreeView):
         #Resize the header so the horizontal scrollbar will have the correct width
         self.resize_horizontal_scrollbar()
     
-    def display_c_nodes(self, custom_editor, module):
-        """Display the input C data in a tree structure"""
+    def display_nodes(self,
+                      custom_editor,
+                      module,
+                      parser_icon):
+        """
+        Display the input C data in a tree structure
+        """
         # Store the custom editor tab that for quicker navigation
         self.bound_tab = custom_editor
         # Set the tree display type to NODE
@@ -883,7 +890,8 @@ class TreeDisplay(data.QTreeView):
                 else:
                     node_group[v.type] = [v]
             # Initialize a list of struct references for later addition of their members
-            struct_list = {}
+            item_cache = {}
+            node_cache = {}
             # Add The nodes to the tree using the parent tree node
             for k in sorted(node_group.keys()):
                 if k == "member":
@@ -891,35 +899,13 @@ class TreeDisplay(data.QTreeView):
                 group_name = k.upper()
                 item = data.QStandardItem("{}:".format(group_name))
                 current_list = node_group[k]
-                if k == "function":
-                    icon = self.node_icon_procedure
-                elif k == "var" or k == "variable":
-                    icon = self.node_icon_variable
-                elif k == "prototype":
-                    icon = self.node_icon_function
-                elif (k == "typedef" or 
-                      k == "struct" or 
-                      k == "enum" or 
-                      k == "union"):
-                    icon = self.node_icon_type
-                elif k == "enumerator":
-                    icon = self.node_icon_const
-                elif k == "include":
-                    icon = self.node_icon_import
-                elif k == "define":
-                    icon = self.node_icon_macro
-                elif k == "pragma":
-                    icon = self.node_icon_pragma
-                elif k == "undef":
-                    icon = self.node_icon_macro
-                elif k == "error":
-                    icon = self.node_icon_macro
-                elif k == "macro":
-                    icon = self.node_icon_macro
-                elif k == "member":
-                    icon = self.node_icon_method
+                if k in self.node_icons.keys():
+                    icon = self.node_icons[k]
                 else:
-                    icon = self.node_icon_unknown
+                    icon = self.node_icons["unknown"]
+                    self.main_form.display.repl_display_warning(
+                        "[TreeDisplay] Unknown node: {}".format(k)
+                    )
                     
                 item.setEditable(False)
                 item.setForeground(label_brush)
@@ -927,44 +913,67 @@ class TreeDisplay(data.QTreeView):
                 # Create nodes as tree items
                 current_list = sorted(current_list, key=lambda x: x.name)
                 for n in current_list:
-                    # Set the function node text
-                    node_text = n.name + " (line:"
-                    node_text += str(n.line_number) + ")"
-                    # Construct the node and add it to the tree
-                    node = data.QStandardItem(node_text)
-                    node.setEditable(False)
-                    node.setIcon(icon)
+                    node_string = "{}:{}".format(n.type, n.name)
+                    if node_string not in node_cache.keys() and n.parent is None:
+                        # Set the function node text
+                        node_text = n.name + " (line:"
+                        node_text += str(n.line_number) + ")"
+                        # Construct the node and add it to the tree
+                        node = data.QStandardItem(node_text)
+                        node.setEditable(False)
+                        node.setIcon(icon)
+                        
+                        if n.children != []:
+                            display_node(node, n)
+                        
+                        item.appendRow(node)
+                        
+                        node_cache[node_string] = node
                     
-                    if n.children != []:
-                        display_node(node, n)
-                    
-                    item.appendRow(node)
-                    
-                    if k == "struct":
-                        struct_list[n.name] = node
                 # Check if there were any nodes found
-                if current_list == []:
-                    item_no_nodes = data.QStandardItem("No items found")
-                    item_no_nodes.setEditable(False)
-                    item.appendRow(item_no_nodes)
+#                if current_list == []:
+#                    item_no_nodes = data.QStandardItem("No items found")
+#                    item_no_nodes.setEditable(False)
+#                    item.appendRow(item_no_nodes)
                 # Append the nodes to the parent node
                 tree_node.appendRow(item)
+                item_cache[k] = item
+            
             # Add the struct members directly to the structs
-            if "member" in node_group.keys():
-                for n in node_group["member"]:
+            for k,v in node_group.items():
+                for n in v:
+                    if n.parent is None:
+                        continue
                     # Set the function node text
                     node_text = n.name + " (line:"
                     node_text += str(n.line_number) + ")"
                     # Construct the node and add it to the tree
                     node = data.QStandardItem(node_text)
                     node.setEditable(False)
-                    node.setIcon(self.node_icon_method)
-                    struct_list[n.parent].appendRow(node)
+                    node.setIcon(self.node_icons[n.type])
+                    parent_string = "{}:{}".format(n.parent_type, n.parent)
+                    if parent_string not in node_cache.keys():
+                        parent_node_text = "{} (undefined)".format(n.parent)
+                        parent_node = data.QStandardItem(parent_node_text)
+                        parent_node.setEditable(False)
+                        parent_node.setIcon(self.node_icons[n.parent_type])
+                        node_cache[parent_string] = parent_node
+                        parent_type_string = n.parent_type
+                        if parent_type_string not in item_cache.keys():
+                            item = data.QStandardItem("{}:".format(parent_type_string.upper()))
+                            item.setEditable(False)
+                            item.setForeground(label_brush)
+                            item.setFont(label_font)
+                            tree_node.appendRow(item)
+                            item_cache[parent_type_string] = item
+                        item_cache[parent_type_string].appendRow(parent_node)
+                    node_cache[parent_string].appendRow(node)
         
         # Define the document name, type
         document_name       = os.path.basename(custom_editor.save_name)
         document_name_text  = "DOCUMENT: {:s}".format(document_name)
         document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
+        document_type_icon  = parser_icon
         # Initialize the tree display
         self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
         tree_model = data.QStandardItemModel()
@@ -988,7 +997,7 @@ class TreeDisplay(data.QTreeView):
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
-        item_document_type.setIcon(self.c_icon)
+        item_document_type.setIcon(document_type_icon)
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
         # Add the items recursively
@@ -1077,7 +1086,7 @@ class TreeDisplay(data.QTreeView):
                                             module.name, 
                                             None, 
                                             None, 
-                                            self.node_icon_import, 
+                                            self.node_icons["import"], 
                                             module.line + 1
                                         )
                     item_imports_node.appendRow(item_module_node)
@@ -1091,7 +1100,7 @@ class TreeDisplay(data.QTreeView):
                                             type.name, 
                                             None, 
                                             None, 
-                                            self.node_icon_type, 
+                                            self.node_icons["type"], 
                                             type.line + 1
                                         )
                     item_types_node.appendRow(item_type_node)
@@ -1105,7 +1114,7 @@ class TreeDisplay(data.QTreeView):
                                             const.name, 
                                             None, 
                                             None, 
-                                            self.node_icon_const, 
+                                            self.node_icons["const"], 
                                             const.line + 1
                                         )
                     item_consts_node.appendRow(item_const_node)
@@ -1119,7 +1128,7 @@ class TreeDisplay(data.QTreeView):
                                             let.name, 
                                             None, 
                                             None, 
-                                            self.node_icon_const, 
+                                            self.node_icons["const"], 
                                             let.line + 1
                                         )
                     item_lets_node.appendRow(item_let_node)
@@ -1133,7 +1142,7 @@ class TreeDisplay(data.QTreeView):
                                         var.name, 
                                         None, 
                                         None, 
-                                        self.node_icon_variable, 
+                                        self.node_icons["variable"], 
                                         var.line + 1
                                     )
                     item_vars_node.appendRow(item_var_node)
@@ -1147,7 +1156,7 @@ class TreeDisplay(data.QTreeView):
                                         proc.name, 
                                         None, 
                                         None, 
-                                        self.node_icon_procedure, 
+                                        self.node_icons["procedure"], 
                                         proc.line + 1
                                     )
                     item_procs_node.appendRow(item_proc_node)
@@ -1162,7 +1171,7 @@ class TreeDisplay(data.QTreeView):
                                         proc.name, 
                                         None, 
                                         None, 
-                                        self.node_icon_procedure, 
+                                        self.node_icons["procedure"], 
                                         proc.line + 1
                                     )
                     item_fds_node.appendRow(item_fd_node)
@@ -1177,7 +1186,7 @@ class TreeDisplay(data.QTreeView):
                                                 converter.name, 
                                                 None, 
                                                 None, 
-                                                self.node_icon_converter,  
+                                                self.node_icons["converter"],  
                                                 converter.line + 1
                                             )
                     item_converters_node.appendRow(item_converter_node)
@@ -1192,7 +1201,7 @@ class TreeDisplay(data.QTreeView):
                                                 iterator.name, 
                                                 None, 
                                                 None, 
-                                                self.node_icon_iterator,  
+                                                self.node_icons["iterator"],  
                                                 iterator.line + 1
                                             )
                     item_iterators_node.appendRow(item_iterator_node)
@@ -1207,7 +1216,7 @@ class TreeDisplay(data.QTreeView):
                                         method.name, 
                                         None, 
                                         None, 
-                                        self.node_icon_method, 
+                                        self.node_icons["method"], 
                                         method.line + 1
                                     )
                     item_methods_node.appendRow(item_method_node)
@@ -1222,7 +1231,7 @@ class TreeDisplay(data.QTreeView):
                                             property.name, 
                                             None, 
                                             None, 
-                                            self.node_icon_method, 
+                                            self.node_icons["method"], 
                                             property.line + 1
                                         )
                     item_properties_node.appendRow(item_property_node)
@@ -1237,7 +1246,7 @@ class TreeDisplay(data.QTreeView):
                                         macro.name, 
                                         None, 
                                         None, 
-                                        self.node_icon_macro, 
+                                        self.node_icons["macro"], 
                                         macro.line + 1
                                     )
                     item_macros_node.appendRow(item_macro_node)
@@ -1252,7 +1261,7 @@ class TreeDisplay(data.QTreeView):
                                         template.name, 
                                         None, 
                                         None, 
-                                        self.node_icon_template, 
+                                        self.node_icons["template"], 
                                         template.line + 1
                                     )
                     item_templates_node.appendRow(item_template_node)
@@ -1267,7 +1276,7 @@ class TreeDisplay(data.QTreeView):
                                         obj.name, 
                                         None, 
                                         None, 
-                                        self.node_icon_class, 
+                                        self.node_icons["class"], 
                                         obj.line + 1
                                     )
                     item_classes_node.appendRow(item_class_node)
@@ -1282,7 +1291,7 @@ class TreeDisplay(data.QTreeView):
                                         namespace.name, 
                                         None, 
                                         None, 
-                                        self.node_icon_namespace, 
+                                        self.node_icons["namespace"], 
                                         namespace.line + 1
                                     )
                     item_namespaces_node.appendRow(item_namespace_node)
@@ -1543,7 +1552,7 @@ class TreeDisplay(data.QTreeView):
         else:
             item_no_files_found = data.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
-            item_no_files_found.setIcon(self.node_icon_nothing)
+            item_no_files_found.setIcon(self.node_icons["nothing"])
             item_no_files_found.setForeground(label_brush)
             item_no_files_found.setFont(label_font)
             tree_model.appendRow(item_no_files_found)
@@ -1663,7 +1672,7 @@ class TreeDisplay(data.QTreeView):
         else:
             item_no_files_found = data.QStandardItem("No items found")
             item_no_files_found.setEditable(False)
-            item_no_files_found.setIcon(self.node_icon_nothing)
+            item_no_files_found.setIcon(self.node_icons["nothing"])
             item_no_files_found.setForeground(item_brush)
             item_no_files_found.setFont(item_font)
             tree_model.appendRow(item_no_files_found)

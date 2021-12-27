@@ -461,19 +461,21 @@ class CustomEditor(BaseEditor):
             self, self.main_form, offset
         )
         lexer = self.lexer()
-        if (self.current_file_type == "C" or
-            isinstance(lexer, lexers.Python) or
-            isinstance(lexer, lexers.CustomPython) or
-            (hasattr(lexer, "get_name") and lexer.get_name() == "Nim")):
-                self.context_menu.create_special_buttons()
-                self.context_menu.show()
-        else:
-            if self.getSelection() != (-1,-1,-1,-1):
-                self.context_menu.create_standard_buttons()
-                self.context_menu.show()
-            else:
-                self.context_menu.create_standard_buttons()
-                self.context_menu.show()
+#        if (self.current_file_type == "C" or
+#            isinstance(lexer, lexers.Python) or
+#            isinstance(lexer, lexers.CustomPython) or
+#            (hasattr(lexer, "get_name") and lexer.get_name() == "Nim")):
+#                self.context_menu.create_special_buttons()
+#                self.context_menu.show()
+#        else:
+#            if self.getSelection() != (-1,-1,-1,-1):
+#                self.context_menu.create_standard_buttons()
+#                self.context_menu.show()
+#            else:
+#                self.context_menu.create_standard_buttons()
+#                self.context_menu.show()
+        self.context_menu.create_special_buttons()
+        self.context_menu.show()
         event.accept()
 
     def wheelEvent(self, event):

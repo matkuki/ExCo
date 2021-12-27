@@ -4426,6 +4426,12 @@ class MainWindow(data.QMainWindow):
                 message_type=data.MessageType.ERROR
             )
         
+        def repl_display_warning(self, *message):
+            self.repl_display_message(
+                *message, 
+                message_type=data.MessageType.WARNING
+            )
+        
         def repl_display_message(self, 
                                  *message, 
                                  scroll_to_end=True, 
@@ -4619,11 +4625,11 @@ class MainWindow(data.QMainWindow):
                 )
                 parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
                 return
-            # Check if the document type is Python or C
-            valid_parsers = ["PYTHON", "C", "NIM"]
+            # Check if the document type is valid for node tree parsing
+            valid_parsers = ["PYTHON", "C", "C++", "D", "NIM", "PASCAL"]
             if not(parser in valid_parsers):
-                parsers = ", ".join([x[0] + x[1:].lower() for x in valid_parsers[:-1]])
-                message = "Document is not of type: {}!".format(parsers)
+                parsers = ", ".join((x.title() for x in valid_parsers))
+                message = "Document type is not in ({}),\nbut is of type '{}'!".format(parsers, parser)
                 parent.display.repl_display_message(
                         message, 
                         message_type=data.MessageType.ERROR
@@ -4675,22 +4681,6 @@ class MainWindow(data.QMainWindow):
                     ),
                     "PYTHON"
                 )
-            elif parser == "C":
-                # Get all the file information
-                try:
-                    result = functions.get_c_node_tree_with_ctags(custom_editor.text())
-                except Exception as ex:
-                    parent.display.repl_display_message(
-                        str(ex), 
-                        message_type=data.MessageType.ERROR
-                    )
-                    return
-                c_nodes = result
-                # Display the information in the tree tab
-                parent.node_tree_tab.display_c_nodes(
-                    custom_editor, 
-                    c_nodes 
-                )
             elif parser == "NIM":
                 # Get all the file information
                 nim_nodes = functions.get_nim_node_tree(custom_editor.text())
@@ -4698,6 +4688,29 @@ class MainWindow(data.QMainWindow):
                 parent.node_tree_tab.display_nim_nodes(
                     custom_editor, 
                     nim_nodes 
+                )
+            elif parser in ("C", "C++", "D", "PASCAL"):
+                # Get all the file information
+                try:
+                    icons = {
+                        "C": functions.create_icon("language_icons/logo_c.png"),
+                        "C++": functions.create_icon("language_icons/logo_cpp.png"),
+                        "D": functions.create_icon("language_icons/logo_d.png"),
+                        "PASCAL": functions.create_icon("language_icons/logo_pascal.png"),
+                    }
+                    result = functions.get_node_tree_with_ctags(
+                        custom_editor.text(),
+                        parser,
+                    )
+                except Exception as ex:
+                    parent.display.repl_display_error(str(ex))
+                    return
+                c_nodes = result
+                # Display the information in the tree tab
+                parent.node_tree_tab.display_nodes(
+                    custom_editor, 
+                    c_nodes,
+                    icons[parser],
                 )
         
         def show_nodes_in_document(self, custom_editor, parser):
