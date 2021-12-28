@@ -1520,13 +1520,12 @@ def get_node_tree_with_ctags(c_code, parser):
         f.close()
     # Parse the file with ctags
     try:
-        if parser == "C++":
+        if parser == "ASSEMBLY":
             flags = (
                 "-R",
                 "--fields=-f-k-t+K+n",
-                "--kinds-C++=+px",
                 "--excmd=number",
-                "--language-force=C++"
+                "--language-force=Asm"
             )
         elif parser == "C":
             flags = (
@@ -1535,6 +1534,14 @@ def get_node_tree_with_ctags(c_code, parser):
                 "--kinds-C=+px",
                 "--excmd=number",
                 "--language-force=C",
+            )
+        elif parser == "C++":
+            flags = (
+                "-R",
+                "--fields=-f-k-t+K+n",
+                "--kinds-C++=+px",
+                "--excmd=number",
+                "--language-force=C++"
             )
         elif parser == "D":
             flags = (

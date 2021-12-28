@@ -75,6 +75,7 @@ File extension lists
 """
 ext_python              = [".py", ".pyw", ".pyi", ".scons"]
 ext_cython              = [".pyx", ".pxd", ".pxi"]
+#ext_assembly            = [".s", ".S", ".Asm"]
 ext_c                   = [".c", ".h"]
 ext_cpp                 = [".c++", ".h++", ".cc", ".hh", ".cpp", ".hpp", ".cxx", ".hxx"]
 ext_pascal              = [".pas", ".pp", ".lpr", ".cyp"]
