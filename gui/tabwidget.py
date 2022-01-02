@@ -714,9 +714,17 @@ class TabWidget(data.QTabWidget):
         # Just in case, decrement the refcount of the tab (that's what del does)
         del tab
 
-    def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
-        """Signal that fires when cursor position changes"""
-        self._parent.display.update_cursor_position(cursor_line, cursor_column)
+    def _signal_editor_cursor_change(self,
+                                     cursor_line=None,
+                                     cursor_column=None):
+        """
+        Signal that fires when cursor position changes
+        """
+        sender = self.sender()
+        index = sender.positionFromLineIndex(cursor_line, cursor_column)
+        self._parent.display.update_cursor_position(
+            cursor_line, cursor_column, index
+        )
     
     def _set_save_status(self):
         """Enable/disable save/saveas buttons in the menubar"""
@@ -847,29 +855,29 @@ class TabWidget(data.QTabWidget):
     
     def plain_create_document(self, name):
         """Create a plain vanilla scintilla document"""
-        #Initialize the custom editor
+        # Initialize the custom editor
         new_scintilla_tab = PlainEditor(self, self._parent)
-        #Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
+        # Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
         new_scintilla_tab.name = name
-        #Initialize the scrollbars
+        # Initialize the scrollbars
         new_scintilla_tab.SendScintilla(data.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
         new_scintilla_tab.SendScintilla(data.QsciScintillaBase.SCI_SETHSCROLLBAR, True)
-        #Hide the margin
+        # Hide the margin
         new_scintilla_tab.setMarginWidth(1, 0)
-        #Disable drops
+        # Disable drops
         new_scintilla_tab.setAcceptDrops(False)
-        #Add needed signals
+        # Add needed signals
         new_scintilla_tab.cursorPositionChanged.connect(self._signal_editor_cursor_change)
-        #Customize the mouse click event for the plain document with a decorator
+        # Customize the mouse click event for the plain document with a decorator
         def custom_mouse_click(function_to_decorate):
             def decorated_function(*args, **kwargs):
                 function_to_decorate(*args, **kwargs)
                 #Set Save/SaveAs buttons in the menubar
                 self._set_save_status()
             return decorated_function
-        #Add the custom click decorator to the mouse click function
+        # Add the custom click decorator to the mouse click function
         new_scintilla_tab.mousePressEvent = custom_mouse_click(new_scintilla_tab.mousePressEvent)
-        #Return the scintilla reference
+        # Return the scintilla reference
         return new_scintilla_tab
     
     def plain_add_document(self, document_name):

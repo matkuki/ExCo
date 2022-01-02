@@ -3415,9 +3415,11 @@ class MainWindow(data.QMainWindow):
                 #Check is the widget is a scintilla custom editor
                 if isinstance(window.currentWidget(), CustomEditor):
                     #Update the cursor position
-                    line    = window.currentWidget().getCursorPosition()[0]
-                    column  = window.currentWidget().getCursorPosition()[1]
-                    self._parent.display.update_cursor_position(line, column)
+                    cw = window.currentWidget()
+                    line = cw.getCursorPosition()[0]
+                    column = cw.getCursorPosition()[1]
+                    index = cw.positionFromLineIndex(line, column)
+                    self._parent.display.update_cursor_position(line, column, index)
                 else:
                     #Clear the cursor position
                     self._parent.display.update_cursor_position()
@@ -4405,13 +4407,19 @@ class MainWindow(data.QMainWindow):
             )
             self._parent.statusbar.showMessage(message, msec)
         
-        def update_cursor_position(self, cursor_line=None, cursor_column=None):
-            """Update the position of the cursor in the current widget to the statusbar"""
+        def update_cursor_position(self, cursor_line=None, cursor_column=None, index=None):
+            """
+            Update the position of the cursor in the current widget
+            to the statusbar.
+            """
             if cursor_line == None and cursor_column == None:
                 self._parent.statusbar_label_left.setText("")
             else:
-                statusbar_text = "LINE: " + str(cursor_line+1)
-                statusbar_text += " COLUMN: " + str(cursor_column+1)
+                statusbar_text = "LINE: {} COLUMN: {} / INDEX: {}".format(
+                    cursor_line+1,
+                    cursor_column+1,
+                    index
+                )
                 self._parent.statusbar_label_left.setText(statusbar_text)
         
         def repl_display_success(self, *message):

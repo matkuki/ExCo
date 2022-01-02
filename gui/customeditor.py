@@ -217,6 +217,9 @@ class CustomEditor(BaseEditor):
         )
         # Make last line scrollable to the top
         self.SendScintilla(self.SCI_SETENDATLASTLINE, False)
+        # Enable multiple cursors and multi-cursor typing
+        self.SendScintilla(self.SCI_SETMULTIPLESELECTION, True)
+        self.SendScintilla(self.SCI_SETADDITIONALSELECTIONTYPING, True)
     
     def __setattr__(self, name, value):
         """
@@ -427,7 +430,10 @@ class CustomEditor(BaseEditor):
         # Set Save/SaveAs buttons in the menubar
         self._parent._set_save_status()
         # Update the cursor positions in the statusbar
-        self.main_form.display.update_cursor_position(self.getCursorPosition()[0], self.getCursorPosition()[1])
+        line = self.getCursorPosition()[0]
+        column = self.getCursorPosition()[1]
+        index = self.positionFromLineIndex(line, column)
+        self.main_form.display.update_cursor_position(line, column, index)
         # Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self._parent
         data.print_log("Stored \"{}\" as last focused widget".format(self._parent.name))
@@ -1907,6 +1913,7 @@ class CustomEditor(BaseEditor):
         lexer.setDefaultFont(settings.Editor.font)
         # Set the comment options
         result = lexers.get_comment_style_for_lexer(lexer)
+        print(result)
         lexer.open_close_comment_style = result[0]
         lexer.comment_string = result[1]
         lexer.end_comment_string = result[2]

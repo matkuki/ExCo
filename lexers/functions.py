@@ -82,7 +82,7 @@ def get_lexer_from_file_type(file_type):
     elif file_type == "d":
         lexer = lexers.D()
     elif file_type == "nim":
-        lexer = lexers.NimOld()
+        lexer = lexers.Nim()
     elif file_type == "makefile":
         lexer = lexers.Makefile()
     elif file_type == "xml":
@@ -160,7 +160,7 @@ def get_comment_style_for_lexer(lexer):
         comment_string = "--"
     elif isinstance(lexer, lexers.D):
         comment_string = "//"
-    elif hasattr(lexer, "get_name") and lexer.get_name() == "Nim":
+    elif isinstance(lexer, lexers.Nim):
         comment_string = "#"
     elif isinstance(lexer, lexers.Makefile):
         comment_string = "#"
