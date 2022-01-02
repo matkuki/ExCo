@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 """
@@ -353,7 +352,9 @@ class MainWindow(data.QMainWindow):
         return (new_references, ac_list_prim, ac_list_sec)
 
     def get_cwd(self):
-        """Display the current working directory"""
+        """
+        Display the current working directory
+        """
         self.display.repl_display_message(os.getcwd())
     
     def open_cwd(self):
@@ -502,8 +503,12 @@ class MainWindow(data.QMainWindow):
         Function for using a QFileDialog window for retreiving
         a directory name as a string
         """
-        dir_dialog = data.QFileDialog
-        directory = dir_dialog.getExistingDirectory()
+        directory = data.QFileDialog.getExistingDirectory(
+            self, # QWidget parent = None
+            None, # QString caption = ''
+            os.getcwd(), # QString directory = ''
+            # Options options = QFileDialog.ShowDirsOnly
+        )
         return directory
     
     def run_process(self, command, show_console=True, output_to_repl=False):

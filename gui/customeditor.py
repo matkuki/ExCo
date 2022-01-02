@@ -1814,10 +1814,9 @@ class CustomEditor(BaseEditor):
     def save_document(self, saveas=False, encoding="utf-8", line_ending=None):
         """Save a document to a file"""
         if self.save_name == "" or saveas != False:
-            #Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QfileDialog
-            file_dialog = data.QFileDialog
-            #Get the filename from the QfileDialog window
-            temp_save_name = file_dialog.getSaveFileName(
+            # Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QFileDialog
+            # Get the filename from the QFileDialog window
+            temp_save_name = data.QFileDialog.getSaveFileName(
                 self, 
                 "Save File", 
                 os.getcwd() + self.save_name, 
@@ -1827,24 +1826,24 @@ class CustomEditor(BaseEditor):
                 # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
                 # so pass only the files to the function
                 temp_save_name = temp_save_name[0]
-            #Check if the user has selected a file
+            # Check if the user has selected a file
             if temp_save_name == "":
                 return
-            #Replace back-slashes to forward-slashes on Windows
+            # Replace back-slashes to forward-slashes on Windows
             if data.platform == "Windows":
                 temp_save_name = temp_save_name.replace("\\", "/")
-            #Save the chosen file name to the document "save_name" attribute
+            # Save the chosen file name to the document "save_name" attribute
             self.save_name = temp_save_name
-        #Set the tab name by filtering it out from the QFileDialog result
+        # Set the tab name by filtering it out from the QFileDialog result
         self.name = os.path.basename(self.save_name)
-        #Change the displayed name of the tab in the basic widget
+        # Change the displayed name of the tab in the basic widget
         self._parent.set_tab_name(self, self.name)
-        #Check if a line ending was specified
+        # Check if a line ending was specified
         if line_ending == None:
-            #Write contents of the tab into the specified file
+            # Write contents of the tab into the specified file
             save_result = functions.write_to_file(self.text(), self.save_name, encoding)
         else:
-            #The line ending has to be a string
+            # The line ending has to be a string
             if isinstance(line_ending, str) == False:
                 self.main_form.display.repl_display_message(
                     "Line ending has to be a string!", 
@@ -1852,22 +1851,22 @@ class CustomEditor(BaseEditor):
                 )
                 return
             else:
-                #Convert the text into a list and join it together with the specified line ending
+                # Convert the text into a list and join it together with the specified line ending
                 text_list = self.line_list
                 converted_text = line_ending.join(text_list)
                 save_result = functions.write_to_file(converted_text, self.save_name, encoding)
-        #Check result of the functions.write_to_file function
+        # Check result of the functions.write_to_file function
         if save_result == True:
-            #Saving has succeded
+            # Saving has succeded
             self._parent.reset_text_changed(self._parent.indexOf(self))
-            #Update the lexer for the document only if the lexer is not set
+            # Update the lexer for the document only if the lexer is not set
             if isinstance(self.lexer(), lexers.Text):
                 file_type = functions.get_file_type(self.save_name)
                 self.choose_lexer(file_type)
-            #Update the settings manipulator with the new file
+            # Update the settings manipulator with the new file
             self.main_form.settings.update_recent_list(self.save_name)
         else:
-            #Saving has failed
+            # Saving has failed
             error_message = "Error while trying to write file to disk:\n"
             error_message += str(save_result)
             self.main_form.display.repl_display_message(
