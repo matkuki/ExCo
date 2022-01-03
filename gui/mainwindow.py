@@ -4639,7 +4639,16 @@ class MainWindow(data.QMainWindow):
                 parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
                 return
             # Check if the document type is valid for node tree parsing
-            valid_parsers = ["PYTHON", "C", "C++", "D", "NIM", "PASCAL", "ASSEMBLY"]
+            valid_parsers = [
+                "PYTHON",
+                "C",
+                "C++",
+                "D",
+                "NIM",
+                "PASCAL",
+                "JAVASCRIPT",
+                "ASSEMBLY"
+            ]
             if not(parser in valid_parsers):
                 parsers = ", ".join((x.title() for x in valid_parsers))
                 message = "Document type is not in ({}),\nbut is of type '{}'!".format(parsers, parser)
@@ -4702,7 +4711,7 @@ class MainWindow(data.QMainWindow):
                     custom_editor, 
                     nim_nodes 
                 )
-            elif parser in ("C", "C++", "D", "PASCAL", "TEXT"):
+            elif parser in ("C", "C++", "D", "PASCAL", "JAVASCRIPT"):
                 # Get all the file information
                 try:
                     icons = {
@@ -4710,6 +4719,7 @@ class MainWindow(data.QMainWindow):
                         "C++": functions.create_icon("language_icons/logo_cpp.png"),
                         "D": functions.create_icon("language_icons/logo_d.png"),
                         "PASCAL": functions.create_icon("language_icons/logo_pascal.png"),
+                        "JAVASCRIPT": functions.create_icon("language_icons/logo_javascript.png"),
                         "ASSEMBLY": functions.create_icon("various/node_unknown.png"),
                     }
                     result = functions.get_node_tree_with_ctags(

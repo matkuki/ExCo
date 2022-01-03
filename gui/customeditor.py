@@ -1912,7 +1912,6 @@ class CustomEditor(BaseEditor):
         lexer.setDefaultFont(settings.Editor.font)
         # Set the comment options
         result = lexers.get_comment_style_for_lexer(lexer)
-        print(result)
         lexer.open_close_comment_style = result[0]
         lexer.comment_string = result[1]
         lexer.end_comment_string = result[2]

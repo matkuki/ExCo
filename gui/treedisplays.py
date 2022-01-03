@@ -150,6 +150,8 @@ class TreeDisplay(data.QTreeView):
             "function": functions.create_icon("various/node_procedure.png"),
             "procedure": functions.create_icon("various/node_procedure.png"),
             "method": functions.create_icon("various/node_method.png"),
+            "getter": functions.create_icon("various/node_method.png"),
+            "property": functions.create_icon("various/node_method.png"),
             "var": functions.create_icon("various/node_variable.png"),
             "variable": functions.create_icon("various/node_variable.png"),
             "alias": functions.create_icon("various/node_alias.png"),
@@ -876,7 +878,7 @@ class TreeDisplay(data.QTreeView):
                       module,
                       parser_icon):
         """
-        Display the input C data in a tree structure
+        Display the input general (Ctags) data in a tree structure
         """
         # Store the custom editor tab that for quicker navigation
         self.bound_tab = custom_editor
@@ -1010,6 +1012,14 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_document_type)
         # Add the items recursively
         display_node(tree_model, module[0])
+        # Clean the empty base items
+        empty_nodes = [
+            i for i in range(self.model().rowCount())
+                if not self.model().item(i, 0).hasChildren() and i > 1
+        ]
+        empty_nodes.reverse()
+        for en in empty_nodes:
+            self.model().removeRow(en)
         # Resize the header so the horizontal scrollbar will have the correct width
         self.resize_horizontal_scrollbar()
     

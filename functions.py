@@ -1558,6 +1558,13 @@ def get_node_tree_with_ctags(c_code, parser):
                 "--excmd=number",
                 "--language-force=Pascal",
             )
+        elif parser == "JAVASCRIPT":
+            flags = (
+                "-R",
+                "--fields=-f-k-t+K+n",
+                "--excmd=number",
+                "--language-force=Javascript",
+            )
         else:
             raise Exception(
                 "[Ctags-parsing] Unsupported file type: {}".format(parser)
