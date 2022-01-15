@@ -340,10 +340,13 @@ class DoubleButton(CustomButton):
         width   = int(self.geometry().width() * self.extra_button_size_factor)
         height  = int(self.geometry().height() * self.extra_button_size_factor)
         self.extra_button_position = data.QPoint(
-                                        self.geometry().width()*2/3-width, 
-                                        self.geometry().height()*1/4
-                                        )
-        rectangle   = data.QRect(self.extra_button_position, data.QSize(width, height))
+            int(self.geometry().width()*2/3-width),
+            int(self.geometry().height()*1/4)
+        )
+        rectangle = data.QRect(
+            self.extra_button_position,
+            data.QSize(width, height)
+        )
         self.extra_button.setGeometry(rectangle)
         self.extra_button_stored_pixmap = input_extra_pixmap
         self.extra_button.setPixmap(input_extra_pixmap)
@@ -432,10 +435,10 @@ class DoubleButton(CustomButton):
         #Update the extra button geometry
         width = int(self.geometry().width() * self.extra_button_size_factor)
         height = int(self.geometry().height() * self.extra_button_size_factor)
-        rectangle   = data.QRect(
-                        self.extra_button_position, 
-                        data.QSize(width, height)
-                        )
+        rectangle = data.QRect(
+            self.extra_button_position, 
+            data.QSize(width, height)
+        )
         self.extra_button.setGeometry(rectangle)
     
     def _set_extra_button_opacity(self, input_opacity):

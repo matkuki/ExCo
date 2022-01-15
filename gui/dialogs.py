@@ -226,10 +226,10 @@ class YesNoDialog(data.QDialog):
             self.type_label = data.QLabel(self)
             self.type_label.setPixmap(type_pixmap)
             type_label_rect = data.QRect(
-                (self.image.rect().width() - type_pixmap.rect().width())/2 * self.scale,
-                (self.image.rect().height() - type_pixmap.rect().height())/2 * self.scale,
-                type_pixmap.rect().width() * self.scale,
-                type_pixmap.rect().height() * self.scale,
+                int((self.image.rect().width() - type_pixmap.rect().width())/2 * self.scale),
+                int((self.image.rect().height() - type_pixmap.rect().height())/2 * self.scale),
+                int(type_pixmap.rect().width() * self.scale),
+                int(type_pixmap.rect().height() * self.scale),
             )
             self.type_label.setGeometry(type_label_rect)
         # Setup the text label
@@ -255,10 +255,10 @@ class YesNoDialog(data.QDialog):
         x_offset = 20 * (self.scale - 1.0)
         y_offset = 60 * (self.scale - 1.0)
         label_rect = data.QRect(
-            dialog_image.rect().x() + 20 + x_offset,
-            dialog_image.rect().y() + 60 + y_offset,
-            dialog_image.rect().width() - (40 * self.scale),
-            dialog_image.rect().height() - (120* self.scale),
+            int(dialog_image.rect().x() + 20 + x_offset),
+            int(dialog_image.rect().y() + 60 + y_offset),
+            int(dialog_image.rect().width() - (40 * self.scale)),
+            int(dialog_image.rect().height() - (120* self.scale)),
         )
         self.label.setGeometry(label_rect)
         # Shrink text if needed
@@ -380,8 +380,8 @@ class YesNoDialog(data.QDialog):
             qr = self.frameGeometry()
             geo = self.parent().frameGeometry()
             cp = data.QPoint(
-                (geo.width() / 2) - (qr.width() / 2),
-                (geo.height() / 2) - (qr.height() / 2)
+                int((geo.width() / 2) - (qr.width() / 2)),
+                int((geo.height() / 2) - (qr.height() / 2))
             )
             self.move(cp)
         else:
@@ -512,10 +512,10 @@ class OkDialog(YesNoDialog):
             self.type_label = data.QLabel(self)
             self.type_label.setPixmap(type_pixmap)
             type_label_rect = data.QRect(
-                (self.image.rect().width() - type_pixmap.rect().width())/2 * self.scale,
-                (self.image.rect().height() - type_pixmap.rect().height())/2 * self.scale,
-                type_pixmap.rect().width() * self.scale,
-                type_pixmap.rect().height() * self.scale,
+                int((self.image.rect().width() - type_pixmap.rect().width())/2 * self.scale),
+                int((self.image.rect().height() - type_pixmap.rect().height())/2 * self.scale),
+                int(type_pixmap.rect().width() * self.scale),
+                int(type_pixmap.rect().height() * self.scale),
             )
             self.type_label.setGeometry(type_label_rect)
         # Setup the text label
@@ -541,10 +541,10 @@ class OkDialog(YesNoDialog):
         x_offset = 20 * (self.scale - 1.0)
         y_offset = 60 * (self.scale - 1.0)
         label_rect = data.QRect(
-            dialog_image.rect().x() + 20 + x_offset,
-            dialog_image.rect().y() + 60 + y_offset,
-            dialog_image.rect().width() - (40 * self.scale),
-            dialog_image.rect().height() - (120* self.scale),
+            int(dialog_image.rect().x() + 20 + x_offset),
+            int(dialog_image.rect().y() + 60 + y_offset),
+            int(dialog_image.rect().width() - (40 * self.scale)),
+            int(dialog_image.rect().height() - (120* self.scale)),
         )
         self.label.setGeometry(label_rect)
         # Shrink text if needed

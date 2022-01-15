@@ -224,7 +224,7 @@ class SettingsGuiManipulator(data.QGroupBox):
         def set_position(self, x, y):
             self.setGeometry(
                 data.QRect(
-                    x, y, 
+                    int(x), int(y), 
                     self.geometry().width(), self.geometry().height()
                 )
             )
@@ -389,18 +389,18 @@ class SettingsGuiManipulator(data.QGroupBox):
         
             animation.setStartValue(
                 data.QRect(
-                    start_position_x,
-                    start_position_y,
-                    start_width,
-                    start_height,
+                    int(start_position_x),
+                    int(start_position_y),
+                    int(start_width),
+                    int(start_height),
                 )
             )
             animation.setEndValue(
                 data.QRect(
-                    end_position_x,
-                    end_position_y,
-                    end_width,
-                    end_height,
+                    int(end_position_x),
+                    int(end_position_y),
+                    int(end_width),
+                    int(end_height),
                 )
             )
             animation.setDirection(data.QAbstractAnimation.Forward)
@@ -959,7 +959,7 @@ class SettingsGuiManipulator(data.QGroupBox):
             new_width = int(geo.width() * width_scale_factor)
             new_height = int(geo.height() * height_scale_factor)
             new_size = data.QSize(new_width, new_height)
-            rectangle   = data.QRect(new_topLeft, new_size)
+            rectangle = data.QRect(new_topLeft, new_size)
             button.setGeometry(rectangle)
         #Center to main form
         self.center(self.size())
@@ -983,18 +983,18 @@ class SettingsGuiManipulator(data.QGroupBox):
             animation = data.QPropertyAnimation(b, b"geometry")
             animation.setStartValue(
                 data.QRect(
-                    b.starting_position[0],
-                    b.starting_position[1],
-                    b.geometry().width(), 
-                    b.geometry().height()
+                    int(b.starting_position[0]),
+                    int(b.starting_position[1]),
+                    int(b.geometry().width()), 
+                    int(b.geometry().height())
                 )
             )
             animation.setEndValue(
                 data.QRect(
-                    b.end_position[0],
-                    b.end_position[1],
-                    b.geometry().width(), 
-                    b.geometry().height()
+                    int(b.end_position[0]),
+                    int(b.end_position[1]),
+                    int(b.geometry().width()), 
+                    int(b.geometry().height())
                 )
             )
             animation.stateChanged.connect(functools.partial(end, button=b))

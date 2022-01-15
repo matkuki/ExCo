@@ -170,7 +170,7 @@ class HexBuilder:
         )
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
-        hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
+        hex_points = [(int(x-x_correction), int(y-y_correction)) for x, y in hex_points]
         hex_lines = []
         
         def line_test(in_line):
@@ -262,7 +262,7 @@ class HexBuilder:
         )
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
-        hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
+        hex_points = [(int(x-x_correction), int(y-y_correction)) for x, y in hex_points]
         hex_lines = []
         
         for i in range(len(hex_points)):
@@ -311,7 +311,7 @@ class HexBuilder:
         hex_points = list(HexBuilder.generate_hexagon_points(self.edge_length, position))
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
-        hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
+        hex_points = [(int(x-x_correction), int(y-y_correction)) for x, y in hex_points]
         hex_qpoints = [data.QPoint(*x) for x in hex_points]
         qpainter.drawPolygon(*hex_qpoints)
         
@@ -324,9 +324,8 @@ class HexBuilder:
             qpainter.setPen(pen)
             
             font_metric = data.QFontMetrics(font)
-            x = position[0] - font_metric.width(str(number)) / 2
-            y = position[1] + font_metric.height() / 4
-            
+            x = int(position[0] - font_metric.width(str(number)) / 2)
+            y = int(position[1] + font_metric.height() / 4)
             qpainter.drawText(data.QPoint(x, y), str(number))
     
     def draw_full_hexagon(self,
@@ -347,7 +346,7 @@ class HexBuilder:
         hex_points = list(HexBuilder.generate_hexagon_points(self.edge_length, position))
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
-        hex_points = [(x-x_correction, y-y_correction) for x, y in hex_points]
+        hex_points = [(int(x-x_correction), int(y-y_correction)) for x, y in hex_points]
         hex_qpoints = [data.QPoint(*x) for x in hex_points]
         qpainter.drawPolygon(*hex_qpoints)
     

@@ -79,7 +79,14 @@ class ExCoInfo(data.QDialog):
         parent_height   = parent.geometry().height()
         my_left = parent_left + (parent_width/2) - (my_width/2)
         my_top = parent_top + (parent_height/2) - (my_height/2)
-        self.setGeometry(data.QRect(my_left, my_top, my_width, my_height))
+        self.setGeometry(
+            data.QRect(
+                int(my_left),
+                int(my_top),
+                int(my_width),
+                int(my_height)
+            )
+        )
         self.setFixedSize(my_width, my_height)
 #        self.setStyleSheet("background-color:transparent;")
 #        self.setWindowFlags(data.Qt.WindowStaysOnTopHint | data.Qt.Dialog | data.Qt.FramelessWindowHint)

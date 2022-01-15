@@ -1189,7 +1189,7 @@ class FunctionWheel(data.QGroupBox):
             new_width = int(geo.width() * width_scale_factor)
             new_height = int(geo.height() * height_scale_factor)
             new_size = data.QSize(new_width, new_height)
-            rectangle   = data.QRect(new_topLeft, new_size)
+            rectangle = data.QRect(new_topLeft, new_size)
             button.setGeometry(rectangle)
         #Center to main form
         self.center(self.size())
