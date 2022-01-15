@@ -178,8 +178,8 @@ class YesNoDialog(data.QDialog):
         self.image.setGeometry(
             0,
             0,
-            dialog_image.rect().width() * self.scale,
-            dialog_image.rect().height() * self.scale,
+            int(dialog_image.rect().width() * self.scale),
+            int(dialog_image.rect().height() * self.scale),
         )
         self.image.setScaledContents(True)
         # Set the dialog mask to match the image mask
@@ -294,10 +294,10 @@ class YesNoDialog(data.QDialog):
         x_offset = 93 * (self.scale - 1.0)
         y_offset = 3 * (self.scale - 1.0)
         self.button_yes.setGeometry(
-            93+x_offset,
-            3+y_offset,
-            59 * self.scale,
-            50 * self.scale
+            int(93+x_offset),
+            int(3+y_offset),
+            int(59 * self.scale),
+            int(50 * self.scale)
         )
         self.button_yes.on_signal.connect(self.update_state_on)
         self.button_yes.off_signal.connect(self.update_state_reset)
@@ -314,10 +314,10 @@ class YesNoDialog(data.QDialog):
         x_offset = 93 * (self.scale - 1.0)
         y_offset = 158 * (self.scale - 1.0)
         self.button_no.setGeometry(
-            93+x_offset,
-            158+y_offset,
-            59 * self.scale,
-            50 * self.scale
+            int(93+x_offset),
+            int(158+y_offset),
+            int(59 * self.scale),
+            int(50 * self.scale)
         )
         self.button_no.on_signal.connect(self.update_state_off)
         self.button_no.off_signal.connect(self.update_state_reset)
@@ -464,8 +464,8 @@ class OkDialog(YesNoDialog):
         self.image.setGeometry(
             0,
             0,
-            dialog_image.rect().width() * self.scale,
-            dialog_image.rect().height() * self.scale,
+            int(dialog_image.rect().width() * self.scale),
+            int(dialog_image.rect().height() * self.scale),
         )
         self.image.setScaledContents(True)
         # Set the dialog mask to match the image mask
@@ -580,10 +580,10 @@ class OkDialog(YesNoDialog):
         x_offset = 93 * (self.scale - 1.0)
         y_offset = 158 * (self.scale - 1.0)
         self.button_no.setGeometry(
-            93+x_offset,
-            158+y_offset,
-            59 * self.scale,
-            50 * self.scale
+            int(93+x_offset),
+            int(158+y_offset),
+            int(59 * self.scale),
+            int(50 * self.scale)
         )
         self.button_no.on_signal.connect(self.update_state_off)
         self.button_no.off_signal.connect(self.update_state_reset)

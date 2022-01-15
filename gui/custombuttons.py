@@ -234,8 +234,8 @@ class CustomButton(data.QLabel):
     
     def set_offset(self, offset):
         self.setGeometry(
-            offset[0], 
-            offset[1], 
+            int(offset[0]),
+            int(offset[1]),
             math.ceil(self.scale[0] * self.HEX_IMAGE_SIZE[0]), 
             math.ceil(self.scale[0] * self.HEX_IMAGE_SIZE[1])
         )

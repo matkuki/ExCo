@@ -1061,10 +1061,10 @@ class FunctionWheel(data.QGroupBox):
                 )
             #Set the button size and location
             init_button.setGeometry(
-                button.geometry[0], 
-                button.geometry[1], 
-                button.geometry[2], 
-                button.geometry[3]
+                int(button.geometry[0]), 
+                int(button.geometry[1]), 
+                int(button.geometry[2]), 
+                int(button.geometry[3])
             )
     
     def _check_hex_button_states(self):

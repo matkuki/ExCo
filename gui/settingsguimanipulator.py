@@ -198,8 +198,8 @@ class SettingsGuiManipulator(data.QGroupBox):
             self.setGeometry(
                 0, 
                 0, 
-                image.width() * self.scale_factor, 
-                image.height() * self.scale_factor
+                int(image.width() * self.scale_factor), 
+                int(image.height() * self.scale_factor)
             )
             self.setMask(self.hex_image.mask())
             self.setScaledContents(True)
