@@ -80,11 +80,11 @@ class ExCoInfo(data.QDialog):
         my_left = parent_left + (parent_width/2) - (my_width/2)
         my_top = parent_top + (parent_height/2) - (my_height/2)
         self.setGeometry(
-            data.QRect(
-                int(my_left),
-                int(my_top),
-                int(my_width),
-                int(my_height)
+            functions.create_rect(
+                my_left,
+                my_top,
+                my_width,
+                my_height
             )
         )
         self.setFixedSize(my_width, my_height)

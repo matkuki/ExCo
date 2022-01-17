@@ -253,7 +253,7 @@ class ContextMenu(data.QGroupBox):
         screen_resolution = data.application.desktop().screenGeometry()
         width, height = screen_resolution.width(), screen_resolution.height()
         self.setGeometry(
-            data.QRect(0, 0, width, height)
+            functions.create_rect(0, 0, width, height)
         )
     
     @staticmethod

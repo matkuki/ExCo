@@ -317,7 +317,7 @@ class DoubleButton(CustomButton):
     main_form                   = None
     extra_button                = None
     extra_button_size_factor    = 1/3
-    extra_button_position       = data.QPoint(0, 0)
+    extra_button_position       = functions.create_point(0, 0)
     extra_button_stored_opacity = None
     extra_button_stored_pixmap  = None
     extra_button_function       = None
@@ -339,11 +339,11 @@ class DoubleButton(CustomButton):
         self.extra_button = data.QLabel(self)
         width   = int(self.geometry().width() * self.extra_button_size_factor)
         height  = int(self.geometry().height() * self.extra_button_size_factor)
-        self.extra_button_position = data.QPoint(
+        self.extra_button_position = functions.create_point(
             int(self.geometry().width()*2/3-width),
             int(self.geometry().height()*1/4)
         )
-        rectangle = data.QRect(
+        rectangle = functions.create_rect(
             self.extra_button_position,
             data.QSize(width, height)
         )
@@ -435,7 +435,7 @@ class DoubleButton(CustomButton):
         #Update the extra button geometry
         width = int(self.geometry().width() * self.extra_button_size_factor)
         height = int(self.geometry().height() * self.extra_button_size_factor)
-        rectangle = data.QRect(
+        rectangle = functions.create_rect(
             self.extra_button_position, 
             data.QSize(width, height)
         )

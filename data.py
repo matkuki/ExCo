@@ -290,7 +290,7 @@ current_font_size = 10
 current_editor_font_name = "Source Code Pro"
 current_editor_font_size = 10
 def get_current_font():
-    return QFont(current_font_name, current_font_size)
+    return QFont(current_font_name, int(current_font_size))
 # Current theme
 # Themes need PyQt version defined beforehand, as they also import the data module
 import themes
