@@ -1174,7 +1174,7 @@ class FunctionWheel(data.QGroupBox):
         geo = self.geometry()
         new_width = int(geo.width() * width_scale_factor)
         new_height = int(geo.height() * height_scale_factor)
-        rectangle = data.QRect(
+        rectangle = functions.create_rect(
             geo.topLeft(), 
             data.QSize(new_width, new_height)
         )
@@ -1182,14 +1182,14 @@ class FunctionWheel(data.QGroupBox):
         #Scale all of the function wheel child widgets
         for button in self.children():
             geo = button.geometry()
-            new_topLeft = data.QPoint(
+            new_topLeft = functions.create_point(
                 int(geo.topLeft().x() * width_scale_factor),
                 int(geo.topLeft().y() * height_scale_factor)
             )
             new_width = int(geo.width() * width_scale_factor)
             new_height = int(geo.height() * height_scale_factor)
             new_size = data.QSize(new_width, new_height)
-            rectangle = data.QRect(new_topLeft, new_size)
+            rectangle = functions.create_rect(new_topLeft, new_size)
             button.setGeometry(rectangle)
         #Center to main form
         self.center(self.size())
@@ -1201,9 +1201,9 @@ class FunctionWheel(data.QGroupBox):
         """
         x_offset = int((self.main_form.size().width() - size.width()) / 2)
         y_offset = int((self.main_form.size().height()*93/100 - size.height()) / 2)
-        rectangle_top_left = data.QPoint(x_offset, y_offset)
+        rectangle_top_left = functions.create_point(x_offset, y_offset)
         rectangle_size = size
-        rectangle = data.QRect(rectangle_top_left, rectangle_size)
+        rectangle = functions.create_rect(rectangle_top_left, rectangle_size)
         self.setGeometry(rectangle)
     
     def highlight_last_clicked_button(self):

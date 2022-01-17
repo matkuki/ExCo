@@ -214,8 +214,8 @@ class HexBuilder:
             if line_test((hex_points[i], hex_points[n])) == True:
                 hex_lines.append(
                     data.QLine(
-                        data.QPoint(*hex_points[i]), 
-                        data.QPoint(*hex_points[n])
+                        functions.create_point(*hex_points[i]), 
+                        functions.create_point(*hex_points[n])
                     )
                 )
         if hex_lines:
@@ -273,8 +273,8 @@ class HexBuilder:
                 n = 0
             hex_lines.append(
                 data.QLine(
-                    data.QPoint(*hex_points[i]), 
-                    data.QPoint(*hex_points[n])
+                    functions.create_point(*hex_points[i]), 
+                    functions.create_point(*hex_points[n])
                 )
             )
         if hex_lines:
@@ -312,7 +312,7 @@ class HexBuilder:
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
         hex_points = [(int(x-x_correction), int(y-y_correction)) for x, y in hex_points]
-        hex_qpoints = [data.QPoint(*x) for x in hex_points]
+        hex_qpoints = [functions.create_point(*x) for x in hex_points]
         qpainter.drawPolygon(*hex_qpoints)
         
         if (self.SHOW_FIELD_NUMBERS == True) and (number != None):
@@ -326,7 +326,7 @@ class HexBuilder:
             font_metric = data.QFontMetrics(font)
             x = int(position[0] - font_metric.width(str(number)) / 2)
             y = int(position[1] + font_metric.height() / 4)
-            qpainter.drawText(data.QPoint(x, y), str(number))
+            qpainter.drawText(functions.create_point(x, y), str(number))
     
     def draw_full_hexagon(self,
                           position,
@@ -347,7 +347,7 @@ class HexBuilder:
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
         hex_points = [(int(x-x_correction), int(y-y_correction)) for x, y in hex_points]
-        hex_qpoints = [data.QPoint(*x) for x in hex_points]
+        hex_qpoints = [functions.create_point(*x) for x in hex_points]
         qpainter.drawPolygon(*hex_qpoints)
     
     def draw_full_hexagon_with_shadow(self,

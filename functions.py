@@ -2661,7 +2661,7 @@ def change_opacity(pixmap_or_file, opacity):
     )
     painter.setOpacity(opacity)
     painter.drawImage(
-        data.QRect(0, 0, image.width(), image.height()),
+        create_rect(0, 0, image.width(), image.height()),
         base_image
     )
     painter.end()
@@ -2673,3 +2673,29 @@ def get_index(start):
     while True:
         yield counter
         counter += 1
+
+"""
+Constructor helper functions
+"""
+def create_rect(*args):
+    if len(args) == 4:
+        x, y, width, height = args
+        return data.QRect(int(x), int(y), int(width), int(height))
+    elif len(args) == 2:
+        point, size = args
+        return data.QRect(point, size)
+    else:
+        raise Exception(
+            "[functions.create_rect] Unknown arguments: {}".format(args)
+        )
+
+def create_point(*args):
+    if len(args) == 2:
+        x, y = args
+        return data.QPoint(int(x), int(y))
+    elif len(args) == 0:
+        return data.QPoint()
+    else:
+        raise Exception(
+            "[functions.create_point] Unknown arguments: {}".format(args)
+        )
