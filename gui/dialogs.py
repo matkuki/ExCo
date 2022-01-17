@@ -80,7 +80,7 @@ class YesNoDialog(data.QDialog):
                 painter.setPen(data.QColor(255, 255, 255))
             painter.setFont(
                 data.QFont(
-                    'Segoe UI', 16*self.scale, data.QFont.Bold
+                    'Segoe UI', int(16 * self.scale), data.QFont.Bold
                 )
             )
             painter.setOpacity(1.0)
@@ -237,7 +237,7 @@ class YesNoDialog(data.QDialog):
         self.label = data.QLabel(self)
         self.label.setFont(
             data.QFont(
-                'Segoe UI', 12 * self.scale, data.QFont.Bold
+                'Segoe UI', int(12 * self.scale), data.QFont.Bold
             )
         )
         self.label.setWordWrap(True)
@@ -275,7 +275,7 @@ class YesNoDialog(data.QDialog):
                 bounding_rectangle.height() > label_height):
                 self.label.setFont(
                     data.QFont(
-                        'Segoe UI', (12-i) * self.scale, data.QFont.Bold
+                        'Segoe UI', int((12-i) * self.scale), data.QFont.Bold
                     )
                 )
             else:
@@ -523,7 +523,7 @@ class OkDialog(YesNoDialog):
         self.label = data.QLabel(self)
         self.label.setFont(
             data.QFont(
-                'Segoe UI', 12 * self.scale, data.QFont.Bold
+                'Segoe UI', int(12 * self.scale), data.QFont.Bold
             )
         )
         self.label.setWordWrap(True)
@@ -561,7 +561,7 @@ class OkDialog(YesNoDialog):
                 bounding_rectangle.height() > label_height):
                 self.label.setFont(
                     data.QFont(
-                        'Segoe UI', (12-i) * self.scale, data.QFont.Bold
+                        'Segoe UI', int((12-i) * self.scale), data.QFont.Bold
                     )
                 )
             else:
