@@ -3142,21 +3142,21 @@ class MainWindow(data.QMainWindow):
                 #Set vertical and horizontal splitter heights
                 if main_window_side == data.MainWindowSide.LEFT:
                     self._parent.vertical_splitter.setSizes(
-                        [self._parent.vertical_splitter.width()*self.vertical_width_1, 
-                         self._parent.vertical_splitter.width()*self.vertical_width_2]
+                        [int(self._parent.vertical_splitter.width()*self.vertical_width_1), 
+                         int(self._parent.vertical_splitter.width()*self.vertical_width_2)]
                     )
                     self._parent.horizontal_splitter.setSizes(
-                        [self._parent.horizontal_splitter.width()*self.horizontal_width_1, 
-                         self._parent.horizontal_splitter.width()*self.horizontal_width_2]
+                        [int(self._parent.horizontal_splitter.width()*self.horizontal_width_1), 
+                         int(self._parent.horizontal_splitter.width()*self.horizontal_width_2)]
                     )
                 elif main_window_side   == data.MainWindowSide.RIGHT:
                     self._parent.vertical_splitter.setSizes(
-                        [self._parent.vertical_splitter.width()*self.vertical_width_1, 
-                         self._parent.vertical_splitter.width()*self.vertical_width_2]
+                        [int(self._parent.vertical_splitter.width()*self.vertical_width_1), 
+                         int(self._parent.vertical_splitter.width()*self.vertical_width_2)]
                     )
                     self._parent.horizontal_splitter.setSizes(
-                        [self._parent.horizontal_splitter.width()*self.horizontal_width_2, 
-                         self._parent.horizontal_splitter.width()*self.horizontal_width_1]
+                        [int(self._parent.horizontal_splitter.width()*self.horizontal_width_2), 
+                         int(self._parent.horizontal_splitter.width()*self.horizontal_width_1)]
                     )
             #Refresh the size relation between the basic widgets and the REPL,
             #so that the REPL height is always the same
@@ -3742,8 +3742,8 @@ class MainWindow(data.QMainWindow):
             # so that the REPL height is always the same
             self._parent.main_splitter.setSizes(
                 [
-                    self._parent.height() - self.main_relation,
-                    self.main_relation - (self.main_relation * 0.1)
+                    int(self._parent.height() - self.main_relation),
+                    int(self.main_relation - (self.main_relation * 0.1))
                 ]
             )
             self.reset_entire_style_sheet()
