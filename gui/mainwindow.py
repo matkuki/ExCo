@@ -174,7 +174,7 @@ class MainWindow(data.QMainWindow):
         initial_size    = self.view.function_wheel_overlay.background_image.size()
         initial_width   = initial_size.width() * 14/10
         initial_height  = initial_size.height() * 11/10
-        self.resize(initial_width, initial_height)
+        self.resize(int(initial_width), int(initial_height))
         # Show log window if logging mode is enabled
         if logging == True:
             # Show log dialog window
@@ -3485,8 +3485,8 @@ class MainWindow(data.QMainWindow):
             if (self._parent.width() < self.FUNCTION_WHEEL_BOUNDS[0] or 
                 self._parent.height() < self.FUNCTION_WHEEL_BOUNDS[1]):
                 new_size =  data.QSize(
-                    self.FUNCTION_WHEEL_BOUNDS[0] + self.FUNCTION_WHEEL_BOUNDS[0]/5,
-                    self.FUNCTION_WHEEL_BOUNDS[1] + self.FUNCTION_WHEEL_BOUNDS[1]/5
+                    int(self.FUNCTION_WHEEL_BOUNDS[0] + self.FUNCTION_WHEEL_BOUNDS[0]/5),
+                    int(self.FUNCTION_WHEEL_BOUNDS[1] + self.FUNCTION_WHEEL_BOUNDS[1]/5)
                 )
                 self._parent.resize(new_size)
             # Check if the function wheel overlay is initialized
@@ -3514,8 +3514,8 @@ class MainWindow(data.QMainWindow):
                 if (self._parent.width() < compare_size[0] or 
                     self._parent.height() < compare_size[1]):
                         new_size =  data.QSize(
-                            compare_size[0] + compare_size[0]/5,
-                            compare_size[1] + compare_size[1]/5
+                            int(compare_size[0] + compare_size[0]/5),
+                            int(compare_size[1] + compare_size[1]/5)
                         )
                         self._parent.resize(new_size)
                 self._parent.settings.gui_manipulator = SettingsGuiManipulator(

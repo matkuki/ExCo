@@ -114,7 +114,7 @@ class CustomStyle(data.QCommonStyle):
         if ct == data.QStyle.CT_MenuItem:
             scaled_width = self.scale_constant*1.5
             resized_width = self.custom_font_metrics.width(opt.text) + scaled_width
-            result = data.QSize(resized_width, self.scale_constant)
+            result = data.QSize(int(resized_width), int(self.scale_constant))
             return result
         elif ct == data.QStyle.CT_MenuBarItem:
             base_width = self.custom_font_metrics.width(opt.text)
