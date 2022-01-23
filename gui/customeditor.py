@@ -899,7 +899,8 @@ class CustomEditor(BaseEditor):
             self.setTabWidth(tab_width)
         # Indent according to selection
         selection = self.getSelection()
-        if selection == (-1, -1, -1, -1):
+        print(selection)
+        if selection == (-1, -1, -1, -1) or (selection[0] == selection[2] and selection[1] == selection[3]):
             line_number, position = self.getCursorPosition()
             # Adjust index to the line list indexing
             line_number += 1
@@ -947,18 +948,6 @@ class CustomEditor(BaseEditor):
             lines = self.line_list[line_from:line_to]
             # Set the indentation width
             indentation_string = tab_width * " "
-            ## # Select the indentation function
-            ## if sys.version_info.minor <= 2:
-            ##     def nested_indent(line, indent_string):
-            ##         if line.strip() != " ":
-            ##             line = indent_string + line
-            ##         return line
-            ##     indent_func = nested_indent
-            ## else:
-            ##     indent_func = textwrap.indent
-            ## #Indent the line list in place
-            ## for i, line in enumerate(lines):
-            ##     lines[i] = indent_func(line, indentation_string)
             # Smart indentation that tabs to tab-width columns
             def indent_func(line):
                 if line.strip() != " ":

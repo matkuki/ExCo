@@ -100,7 +100,10 @@ class LineList(list):
                 key_min = 1
             #Check boundary order
             if key_max < key_min:
-                raise Exception("First index has to be higher than the second!")
+                raise Exception(
+                    "First index has to be higher than the second!" +
+                    " {}(max) > {}(min)".format(key_max, key_min)
+                )
             #Check the boundaries
             if len(value) != (key_max-key_min+1):
                 raise Exception("Ranges of assignment don't match!")
