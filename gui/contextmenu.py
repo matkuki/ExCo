@@ -289,7 +289,7 @@ class ContextMenu(data.QGroupBox):
             button_positions.extend(self.horizontal_button_positions)
         hex_x_size = self.ContextButton.HEX_IMAGE_SIZE[0] * self.x_scale
         hex_y_size = self.ContextButton.HEX_IMAGE_SIZE[1] * self.y_scale
-        window_size = self.parent().size() - data.QSize(hex_x_size, hex_y_size)
+        window_size = self.parent().size() - functions.create_size(hex_x_size, hex_y_size)
         min_x = 0
         min_y = 0
         max_x = 0

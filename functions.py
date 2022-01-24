@@ -2699,3 +2699,12 @@ def create_point(*args):
         raise Exception(
             "[functions.create_point] Unknown arguments: {}".format(args)
         )
+
+def create_size(*args):
+    if len(args) == 2:
+        width, height = args
+        return data.QSize(int(width), int(height))
+    else:
+        raise Exception(
+            "[functions.create_point] Unknown arguments: {}".format(args)
+        )
