@@ -147,7 +147,7 @@ class CustomButton(data.QLabel):
         button_image = self.stored_pixmap
         # Resize the button image to scale
         button_image = button_image.scaled(
-            data.QSize(
+            functions.create_size(
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
@@ -155,7 +155,7 @@ class CustomButton(data.QLabel):
         )
         # Scale the hex image
         hex_image = self.stored_hex
-        scaled_size = data.QSize(
+        scaled_size = functions.create_size(
             math.ceil(hex_image.size().width() * self.scale[0]),
             math.ceil(hex_image.size().height() * self.scale[1]),
         )
@@ -188,7 +188,7 @@ class CustomButton(data.QLabel):
         button_image = self.stored_pixmap
         # Resize the button image to scale
         button_image = button_image.scaled(
-            data.QSize(
+            functions.create_size(
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
@@ -196,7 +196,7 @@ class CustomButton(data.QLabel):
         )        
         # Scale the hex image
         hex_image = self.stored_hex
-        scaled_size = data.QSize(
+        scaled_size = functions.create_size(
             math.ceil(hex_image.size().width() * self.scale[0]),
             math.ceil(hex_image.size().height() * self.scale[1]),
         )
@@ -214,7 +214,7 @@ class CustomButton(data.QLabel):
         button_painter.setOpacity(input_opacity)
         # Resize the hex image to scale
         hex_image = hex_image.scaled(
-            data.QSize(
+            functions.create_size(
                 math.ceil(hex_image.size().width() * self.scale[0]),
                 math.ceil(hex_image.size().height() * self.scale[1]),
             ),
@@ -345,7 +345,7 @@ class DoubleButton(CustomButton):
         )
         rectangle = functions.create_rect(
             self.extra_button_position,
-            data.QSize(width, height)
+            functions.create_size(width, height)
         )
         self.extra_button.setGeometry(rectangle)
         self.extra_button_stored_pixmap = input_extra_pixmap
@@ -437,7 +437,7 @@ class DoubleButton(CustomButton):
         height = int(self.geometry().height() * self.extra_button_size_factor)
         rectangle = functions.create_rect(
             self.extra_button_position, 
-            data.QSize(width, height)
+            functions.create_size(width, height)
         )
         self.extra_button.setGeometry(rectangle)
     

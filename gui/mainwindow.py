@@ -3484,7 +3484,7 @@ class MainWindow(data.QMainWindow):
             # Check the windows size before displaying the overlay
             if (self._parent.width() < self.FUNCTION_WHEEL_BOUNDS[0] or 
                 self._parent.height() < self.FUNCTION_WHEEL_BOUNDS[1]):
-                new_size =  data.QSize(
+                new_size =  functions.create_size(
                     int(self.FUNCTION_WHEEL_BOUNDS[0] + self.FUNCTION_WHEEL_BOUNDS[0]/5),
                     int(self.FUNCTION_WHEEL_BOUNDS[1] + self.FUNCTION_WHEEL_BOUNDS[1]/5)
                 )
@@ -3513,7 +3513,7 @@ class MainWindow(data.QMainWindow):
                 compare_size = SettingsGuiManipulator.DEFAULT_SIZE
                 if (self._parent.width() < compare_size[0] or 
                     self._parent.height() < compare_size[1]):
-                        new_size =  data.QSize(
+                        new_size =  functions.create_size(
                             int(compare_size[0] + compare_size[0]/5),
                             int(compare_size[1] + compare_size[1]/5)
                         )

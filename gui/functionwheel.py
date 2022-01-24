@@ -121,7 +121,7 @@ class FunctionWheel(data.QGroupBox):
             FunctionWheel.theme_name = data.theme.name
             
             function_wheel_background_image = data.QImage(
-                data.QSize(600, 555),
+                functions.create_size(600, 555),
                 data.QImage.Format_ARGB32_Premultiplied
             )
             function_wheel_background_image.fill(data.Qt.transparent)
@@ -1176,7 +1176,7 @@ class FunctionWheel(data.QGroupBox):
         new_height = int(geo.height() * height_scale_factor)
         rectangle = functions.create_rect(
             geo.topLeft(), 
-            data.QSize(new_width, new_height)
+            functions.create_size(new_width, new_height)
         )
         self.setGeometry(rectangle)
         #Scale all of the function wheel child widgets
@@ -1188,7 +1188,7 @@ class FunctionWheel(data.QGroupBox):
             )
             new_width = int(geo.width() * width_scale_factor)
             new_height = int(geo.height() * height_scale_factor)
-            new_size = data.QSize(new_width, new_height)
+            new_size = functions.create_size(new_width, new_height)
             rectangle = functions.create_rect(new_topLeft, new_size)
             button.setGeometry(rectangle)
         #Center to main form

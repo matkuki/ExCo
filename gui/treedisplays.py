@@ -194,7 +194,7 @@ class TreeDisplay(data.QTreeView):
         
     def update_icon_size(self):
         self.setIconSize(
-            data.QSize(
+            functions.create_size(
                 data.tree_display_icon_size,
                 data.tree_display_icon_size
             )
@@ -2013,7 +2013,7 @@ class TreeDisplayBase(data.QTreeView):
     
     def update_icon_size(self):
         self.setIconSize(
-            data.QSize(
+            functions.create_size(
                 data.tree_display_icon_size, 
                 data.tree_display_icon_size
             )

@@ -265,7 +265,7 @@ class CustomEditor(BaseEditor):
     
     def _init_bookmark_marker(self):
         """Initialize the marker for the bookmarks"""
-        image_scale_size = data.QSize(16, 16)
+        image_scale_size = functions.create_size(16, 16)
         bookmark_image  = functions.create_pixmap('tango_icons/bookmark.png')
         bookmark_image  = bookmark_image.scaled(image_scale_size)
         self.bookmark_marker = self.markerDefine(bookmark_image, 1)

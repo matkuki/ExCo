@@ -86,7 +86,7 @@ class SettingsGuiManipulator(data.QGroupBox):
             )
             adjusted_size = self.DEFAULT_SIZE * self.scale_factor
             self.button_image = self.button_image.scaled(
-                data.QSize(
+                functions.create_size(
                     math.ceil(adjusted_size),
                     math.ceil(adjusted_size),
                 ),
@@ -96,7 +96,7 @@ class SettingsGuiManipulator(data.QGroupBox):
             width, height = components.HexBuilder.get_single_hex_size(adjusted_size, 2)
             def create_base_image():
                 hex_image = data.QImage(
-                    data.QSize(width, height),
+                    functions.create_size(width, height),
                     data.QImage.Format_ARGB32_Premultiplied
                 )
                 hex_image.fill(data.Qt.transparent)
@@ -120,7 +120,7 @@ class SettingsGuiManipulator(data.QGroupBox):
                 return data.QPixmap.fromImage(hex_image)
             self.hex_image = create_base_image()
             self.hex_image = self.hex_image.scaled(
-                data.QSize(
+                functions.create_size(
                     math.ceil(self.hex_image.size().width() * self.scale_factor),
                     math.ceil(self.hex_image.size().height() * self.scale_factor),
                 ),
@@ -130,7 +130,7 @@ class SettingsGuiManipulator(data.QGroupBox):
             # Green hex background
             def create_color_image(color):
                 hex_image = data.QImage(
-                    data.QSize(width, height),
+                    functions.create_size(width, height),
                     data.QImage.Format_ARGB32_Premultiplied
                 )
                 hex_image.fill(data.Qt.transparent)
@@ -154,7 +154,7 @@ class SettingsGuiManipulator(data.QGroupBox):
                 return data.QPixmap.fromImage(hex_image)
             self.hex_image_green = create_color_image(data.QColor(138,226,52))
             self.hex_image_green = self.hex_image_green.scaled(
-                data.QSize(
+                functions.create_size(
                     math.ceil(self.hex_image_green.size().width() * self.scale_factor) - 1,
                     math.ceil(self.hex_image_green.size().height() * self.scale_factor) - 1,
                 ),
@@ -163,14 +163,14 @@ class SettingsGuiManipulator(data.QGroupBox):
             # Red hex background
             self.hex_image_red = create_color_image(data.QColor(239,41,41))
             self.hex_image_red = self.hex_image_red.scaled(
-                data.QSize(
+                functions.create_size(
                     math.ceil(self.hex_image_red.size().width() * self.scale_factor) - 1,
                     math.ceil(self.hex_image_red.size().height() * self.scale_factor) - 1,
                 ),
                 transformMode=data.Qt.SmoothTransformation
             )
             
-            scaled_size = data.QSize(
+            scaled_size = functions.create_size(
                 self.hex_image.size().width(),
                 self.hex_image.size().height(),
             )
@@ -300,7 +300,7 @@ class SettingsGuiManipulator(data.QGroupBox):
             
             self.current_color = color
             
-            scaled_size = data.QSize(
+            scaled_size = functions.create_size(
                 self.hex_image.size().width(),
                 self.hex_image.size().height(),
             )
@@ -503,7 +503,7 @@ class SettingsGuiManipulator(data.QGroupBox):
                 return (offset[0] + x_add, offset[1] + y_add)
             
             settings_background_image = data.QImage(
-                data.QSize(*SettingsGuiManipulator.DEFAULT_SIZE),
+                functions.create_size(*SettingsGuiManipulator.DEFAULT_SIZE),
                 data.QImage.Format_ARGB32_Premultiplied
             )
             settings_background_image.fill(data.Qt.transparent)
@@ -669,7 +669,7 @@ class SettingsGuiManipulator(data.QGroupBox):
         self._init_background()
         # Position the overlay to the center of the screen
         self.center(
-            data.QSize(*self.DEFAULT_SIZE)
+            functions.create_size(*self.DEFAULT_SIZE)
         )
         # Scale the size if needed
         self._init_scaling()
@@ -946,7 +946,7 @@ class SettingsGuiManipulator(data.QGroupBox):
         new_height = int(geo.height() * height_scale_factor)
         rectangle = functions.create_rect(
             geo.topLeft(), 
-            data.QSize(new_width, new_height)
+            functions.create_size(new_width, new_height)
         )
         self.setGeometry(rectangle)
         #Scale all of the function wheel child widgets
@@ -958,7 +958,7 @@ class SettingsGuiManipulator(data.QGroupBox):
             )
             new_width = int(geo.width() * width_scale_factor)
             new_height = int(geo.height() * height_scale_factor)
-            new_size = data.QSize(new_width, new_height)
+            new_size = functions.create_size(new_width, new_height)
             rectangle = functions.create_rect(new_topLeft, new_size)
             button.setGeometry(rectangle)
         #Center to main form

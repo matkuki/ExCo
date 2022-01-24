@@ -2639,7 +2639,7 @@ def unixify_path_remove(whole_path, path_to_remove):
     return unixify_path(os.path.relpath(whole_path, path_to_remove))
 
 def change_icon_opacity(qicon, opacity):
-    pixmap = qicon.pixmap(qicon.actualSize(data.QSize(256, 256)))
+    pixmap = qicon.pixmap(qicon.actualSize(create_size(256, 256)))
     pixmap = change_opacity(pixmap, opacity)
     return data.QIcon(pixmap)
 

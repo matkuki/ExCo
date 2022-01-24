@@ -398,7 +398,7 @@ class TextDiffer(data.QWidget):
     def init_markers(self):
         """Initialize all markers for showing diff symbols"""
         #Set the images
-        image_scale_size = data.QSize(16, 16)
+        image_scale_size = functions.create_size(16, 16)
         image_unique_1  = functions.create_pixmap('tango_icons/diff-unique-1.png')
         image_unique_2  = functions.create_pixmap('tango_icons/diff-unique-2.png')
         image_similar   = functions.create_pixmap('tango_icons/diff-similar.png')

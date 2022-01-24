@@ -494,7 +494,7 @@ class TabWidget(data.QTabWidget):
         if data.custom_menu_scale != None and data.custom_menu_font != None:
             components.TheSquid.customize_menu_style(self.tabBar())
             self.tabBar().setFont(data.QFont(*data.custom_menu_font))
-            new_icon_size = data.QSize(
+            new_icon_size = functions.create_size(
                 data.custom_menu_scale,
                 data.custom_menu_scale
             )
@@ -788,7 +788,7 @@ class TabWidget(data.QTabWidget):
                 size = tuple([(x * data.custom_menu_scale / 16) for x in (16, 16)])
             else:
                 size = (16, 16)
-            movie.setScaledSize(data.QSize(*size))
+            movie.setScaledSize(functions.create_size(*size))
             lbl.setMovie(movie)
             movie.start()
             tabBar.setTabButton(index, data.QTabBar.LeftSide, lbl)

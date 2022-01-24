@@ -143,7 +143,7 @@ class YesNoDialog(data.QDialog):
         # Setup the image
         # First create the background image using the hex builder
         back_image = data.QImage(
-            data.QSize(246, 211),
+            functions.create_size(246, 211),
             data.QImage.Format_ARGB32_Premultiplied
         )
         back_image.fill(data.Qt.transparent)
@@ -429,7 +429,7 @@ class OkDialog(YesNoDialog):
         # Setup the image
         # First create the background image using the hex builder
         back_image = data.QImage(
-            data.QSize(246, 211),
+            functions.create_size(246, 211),
             data.QImage.Format_ARGB32_Premultiplied
         )
         back_image.fill(data.Qt.transparent)
