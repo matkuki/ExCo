@@ -28,6 +28,7 @@ import data
 import components
 import themes
 import pprint
+import subprocess
 
 from .dialogs import *
 from .menu import *
