@@ -2331,17 +2331,24 @@ class TreeExplorer(TreeDisplayBase):
                                          TreeExplorer.ItemType.DIRECTORY]:
                 self.tree_menu.addAction(open_action)
             # Open with system
+            def open_system():
+                if data.platform == 'Windows':
+                    os.startfile(item.attributes.path)
+                else:
+                    subprocess.call(["xdg-open", item.attributes.path])
             if item.attributes.itype == TreeExplorer.ItemType.FILE:
-                def open_system():
-                    if data.platform == 'Windows':
-                        os.startfile(item.attributes.path)
-                    else:
-                        subprocess.call(["xdg-open", item.attributes.path])
                 action_open_system = data.QAction("Open with system", self.tree_menu)
                 action_open_system.triggered.connect(open_system)
                 icon = functions.create_icon('tango_icons/open-with-default-app.png')
                 action_open_system.setIcon(icon)
                 self.tree_menu.addAction(action_open_system)
+            elif item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+                action_open_system = data.QAction("Open in explorer", self.tree_menu)
+                action_open_system.triggered.connect(open_system)
+                icon = functions.create_icon('tango_icons/system-show-cwd-tree.png')
+                action_open_system.setIcon(icon)
+                self.tree_menu.addAction(action_open_system)
+            
             # Copy item name to clipboard
             def copy_item_name_to_clipboard():
                 text = os.path.basename(item.attributes.path)
