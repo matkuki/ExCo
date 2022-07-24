@@ -131,17 +131,24 @@ class CustomEditor(BaseEditor):
         # Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         # Set font family and size
-        self.setFont(settings.Editor.font)
+        self.setFont(
+            data.QFont(
+                data.current_editor_font_name,
+                data.current_editor_font_size
+            )
+        )
         # Set the margin type (0 is by default line numbers, 1 is for non code folding symbols and 2 is for code folding)
         self.setMarginType(0, data.QsciScintilla.NumberMargin)
         # Set margin width and font
         self.setMarginWidth(0, "00")
-        self.setMarginsFont(settings.Editor.font)
+        self.setMarginsFont(data.get_editor_font())
         # Reset the modified status of the document
         self.setModified(False)
         # Set brace matching
         self.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
-        self.setMatchedBraceBackgroundColor(settings.Editor.brace_color)
+        self.setMatchedBraceBackgroundColor(
+            data.QColor(settings.editor['brace_color'])
+        )
         # Autoindentation enabled when using "Enter" to indent to the same level as the previous line
         self.setAutoIndent(True)
         # Tabs are spaces by default
@@ -152,15 +159,15 @@ class CustomEditor(BaseEditor):
         except:
             pass
         # Set tab space indentation width
-        self.setTabWidth(settings.Editor.tab_width)
+        self.setTabWidth(settings.editor['tab_width'])
         # Set backspace to delete by tab widths
         self.setBackspaceUnindents(True)
         # Scintilla widget must not accept drag/drop events, the cursor freezes if it does!!!
         self.setAcceptDrops(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(settings.Editor.end_of_line_mode)
+        self.setEolMode(settings.editor['end_of_line_mode'])
         # Set the initial zoom factor
-        self.zoomTo(settings.Editor.zoom_factor)
+        self.zoomTo(settings.editor['zoom_factor'])
         # Correct the file name if it is unspecified
         if file_with_path == None:
             file_with_path = ""
@@ -192,6 +199,11 @@ class CustomEditor(BaseEditor):
         self.marginClicked.connect(self._margin_clicked)
         self.linesChanged.connect(self._lines_changed)
         self.selectionChanged.connect(self._selection_changed)
+        self.SCN_MODIFIED.connect(self.__text_modified)
+        self.SendScintilla(
+            self.SCI_SETMODEVENTMASK,
+            self.SC_MOD_INSERTTEXT | self.SC_MOD_DELETETEXT,
+        )
         # Initialize components
         self.icon_manipulator = components.IconManipulator(
             parent=self, tab_widget=parent
@@ -213,7 +225,7 @@ class CustomEditor(BaseEditor):
         self.keyboard   = self.Keyboard(self)
         # Set cursor line visibility and color
         self.set_cursor_line_visibility(
-            settings.Editor.cursor_line_visible
+            settings.editor['cursor_line_visible']
         )
         # Make last line scrollable to the top
         self.SendScintilla(self.SCI_SETENDATLASTLINE, False)
@@ -242,7 +254,35 @@ class CustomEditor(BaseEditor):
                 return
         #Call the superclasses/original __setattr__() special method
         super().__setattr__(name, value)
-        
+    
+    def __text_modified(self,
+                        position,
+                        modificationType,
+                        text,
+                        length,
+                        added,
+                        line,
+                        foldLevelNow,
+                        foldLevelPrev,
+                        token,
+                        annotationLinesAdded):
+        lexer = self.lexer()
+        if lexer is not None:
+            if hasattr(lexer, "text_modified_callback"):
+                lexer.text_modified_callback(
+                    position,
+                    modificationType,
+                    text,
+                    length,
+                    added,
+                    line,
+                    foldLevelNow,
+                    foldLevelPrev,
+                    token,
+                    annotationLinesAdded
+                )
+            
+    
     def _init_special_functions(self):
         """Initialize the methods for document manipulation"""
         #Set references to the special functions
@@ -392,7 +432,7 @@ class CustomEditor(BaseEditor):
                     stripped_line = self.line_list[line_number].strip()
                     if stripped_line == "":
                         self.line_list[line_number] = (self.line_list[line_number] +
-                                                       " " * settings.Editor.tab_width)
+                                                       " " * settings.editor['tab_width'])
                         self.setCursorPosition(
                             line_number-1, 
                             len(self.line_list[line_number])
@@ -400,13 +440,13 @@ class CustomEditor(BaseEditor):
                     else:
                         whitespace = len(line) - len(line.lstrip())
                         self.line_list[line_number] = (" " * whitespace + 
-                                                       " " * settings.Editor.tab_width + 
+                                                       " " * settings.editor['tab_width'] + 
                                                        stripped_line)
                         #The line is not empty, move the cursor to the first
                         #non-whitespace character
                         self.setCursorPosition(
                             line_number-1, 
-                            whitespace + settings.Editor.tab_width
+                            whitespace + settings.editor['tab_width']
                         )
         else:
             #Execute the superclass method first, the same trick as in __init__ !
@@ -440,19 +480,9 @@ class CustomEditor(BaseEditor):
         # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Hide the context menu if it is shown
-        if self.context_menu != None:
-            self.delete_context_menu()
+        self.delete_context_menu()
         # Reset the click&drag context menu action
         components.ActionFilter.clear_action()
-    
-    def delete_context_menu(self):
-        # Clean up the context menu
-        if self.context_menu != None:
-            self.context_menu.hide()
-            for b in self.context_menu.button_list:
-                b.setParent(None)
-            self.context_menu.setParent(None)
-            self.context_menu = None
     
     def contextMenuEvent(self, event):
         # Built-in context menu
@@ -466,20 +496,6 @@ class CustomEditor(BaseEditor):
         self.context_menu = ContextMenu(
             self, self.main_form, offset
         )
-        lexer = self.lexer()
-#        if (self.current_file_type == "C" or
-#            isinstance(lexer, lexers.Python) or
-#            isinstance(lexer, lexers.CustomPython) or
-#            (hasattr(lexer, "get_name") and lexer.get_name() == "Nim")):
-#                self.context_menu.create_special_buttons()
-#                self.context_menu.show()
-#        else:
-#            if self.getSelection() != (-1,-1,-1,-1):
-#                self.context_menu.create_standard_buttons()
-#                self.context_menu.show()
-#            else:
-#                self.context_menu.create_standard_buttons()
-#                self.context_menu.show()
         self.context_menu.create_special_buttons()
         self.context_menu.show()
         event.accept()
@@ -893,7 +909,7 @@ class CustomEditor(BaseEditor):
         Scintila indents line-by-line, which is very slow for a large amount of lines. Try indenting 20000 lines.
         This is a custom indentation function that indents all lines in one operation.
         """
-        tab_width = settings.Editor.tab_width
+        tab_width = settings.editor['tab_width']
         # Check QScintilla's tab width
         if self.tabWidth() != tab_width:
             self.setTabWidth(tab_width)
@@ -996,7 +1012,7 @@ class CustomEditor(BaseEditor):
         Scintila unindents line-by-line, which is very slow for a large amount of lines. Try unindenting 20000 lines.
         This is a custom unindentation function that unindents all lines in one operation.
         """
-        tab_width = settings.Editor.tab_width
+        tab_width = settings.editor['tab_width']
         #Check QScintilla's tab width
         if self.tabWidth() != tab_width:
             self.setTabWidth(tab_width)
@@ -1502,7 +1518,7 @@ class CustomEditor(BaseEditor):
                         )
                     )
                 #Display the replacements in the REPL tab
-                if len(corrected_matches) < settings.Editor.maximum_highlights:
+                if len(corrected_matches) < settings.editor['maximum_highlights']:
                     message = "{} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
@@ -1530,7 +1546,7 @@ class CustomEditor(BaseEditor):
                 self.highlight_raw(corrected_matches)
             else:
                 #Display the replacements in the REPL tab
-                if len(matches) < settings.Editor.maximum_highlights:
+                if len(matches) < settings.editor['maximum_highlights']:
                     message = "{} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
                         message, 
@@ -1740,13 +1756,15 @@ class CustomEditor(BaseEditor):
     def _set_indicator(self,
                        indicator, 
                        fore_color):
-        """Set the indicator settings"""
+        """
+        Set the indicator settings
+        """
         self.indicatorDefine(
-            data.QsciScintillaBase.INDIC_ROUNDBOX,
+            data.QsciScintillaBase.INDIC_STRAIGHTBOX,
             indicator
         )
         self.setIndicatorForegroundColor(
-            fore_color, 
+            data.QColor(fore_color),
             indicator
         )
         self.SendScintilla(
@@ -1762,22 +1780,22 @@ class CustomEditor(BaseEditor):
         if indicator == "highlight":
             self._set_indicator(
                 self.HIGHLIGHT_INDICATOR, 
-                data.theme.Indication.Highlight
+                data.theme["indication"]["highlight"]
             )
         elif indicator == "selection":
             self._set_indicator(
                 self.SELECTION_INDICATOR, 
-                data.theme.Indication.Selection
+                data.theme["indication"]["selection"]
             )
         elif indicator == "replace":
             self._set_indicator(
                 self.REPLACE_INDICATOR, 
-                data.theme.Indication.Replace
+                data.theme["indication"]["replace"]
             )
         elif indicator == "find":
             self._set_indicator(
                 self.FIND_INDICATOR, 
-                data.theme.Indication.Find
+                data.theme["indication"]["find"]
             )
         else:
             raise Exception("Unknown indicator: {}".format(indicator))
@@ -1898,7 +1916,7 @@ class CustomEditor(BaseEditor):
         # Save the current file type to a string
         self.current_file_type = file_type.upper()
         # Set the lexer default font family
-        lexer.setDefaultFont(settings.Editor.font)
+        lexer.setDefaultFont(data.get_editor_font())
         # Set the comment options
         result = lexers.get_comment_style_for_lexer(lexer)
         lexer.open_close_comment_style = result[0]
@@ -1910,18 +1928,16 @@ class CustomEditor(BaseEditor):
         # Reset the brace matching color
         self.reset_brace_matching()
         # Change the font style of comments so that they are the same as the default scintilla text
-        # This is done using the low-level API function "SendScintilla" that is documented here: http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciScintillaBase.html
+        # This is done using the low-level API function "SendScintilla" that is documented here:
+        #     http://pyqt.sourceforge.net/Docs/QScintilla2/classQsciScintillaBase.html
         # With it you can invoke C functions documented here: http://www.scintilla.org/ScintillaDoc.html
-        self.SendScintilla(data.QsciScintillaBase.SCI_STYLESETFONT, 1, settings.Editor.comment_font)
+        self.SendScintilla(
+            data.QsciScintillaBase.SCI_STYLESETFONT,
+            1,
+            data.current_editor_font_name.encode("utf-8")
+        )
         # Enable code folding for the file type
         self.setFolding(data.QsciScintilla.PlainFoldStyle)
-        # Set all fonts in the current lexer to the default style
-        # and set the keyword styles to bold
-        if (isinstance(lexer, lexers.Ada) or
-            isinstance(lexer, lexers.Oberon) or
-            (hasattr(lexer, "get_name") and lexer.get_name() == "Nim")):
-            # Set the margin font for the lexers in the lexers.py module
-            self.setMarginsFont(lexer.default_font)
         # Get the icon according to the file type
         self.current_icon = functions.get_language_file_icon(file_type)
         # Update the icon on the parent basic widget
@@ -1935,8 +1951,8 @@ class CustomEditor(BaseEditor):
     def reset_brace_matching(self):
         # Reset the brace matching color
         self.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
-#        self.setMatchedBraceBackgroundColor(settings.Editor.brace_color)
-#        self.setMatchedBraceForegroundColor(data.theme.Font.Default)
+#        self.setMatchedBraceBackgroundColor(data.QColor(settings.editor['brace_color']))
+#        self.setMatchedBraceForegroundColor(data.theme["fonts"]["default"]["color"])
     
     def clear_editor(self):
         """Clear the text from the scintilla document"""
@@ -1944,7 +1960,7 @@ class CustomEditor(BaseEditor):
     
     def tabs_to_spaces(self):
         """Convert all tab(\t) characters to spaces"""
-        spaces = " " * settings.Editor.tab_width
+        spaces = " " * settings.editor['tab_width']
         self.setText(self.text().replace("\t", spaces))
 
     def undo_all(self):
@@ -1968,11 +1984,11 @@ class CustomEditor(BaseEditor):
     def edge_marker_show(self):
         """Show the marker at the specified column number"""
         #Set the marker color to blue
-        marker_color = settings.Editor.edge_marker_color
+        marker_color = settings.editor['edge_marker_color']
         #Set the column number where the marker will be shown
-        marker_column = settings.Editor.edge_marker_column 
+        marker_column = settings.editor['edge_marker_column'] 
         #Set the marker options
-        self.setEdgeColor(marker_color)
+        self.setEdgeColor(data.QColor(marker_color))
         self.setEdgeColumn(marker_column)
         self.setEdgeMode(data.QsciScintilla.EdgeLine)
 
@@ -2090,13 +2106,15 @@ class CustomEditor(BaseEditor):
     def set_cursor_line_visibility(self, new_state):
         self.setCaretLineVisible(new_state)
         if new_state == True:
-            if hasattr(data.theme, "Cursor_Line_Background") == False:
+            if "cursor-line-background" not in data.theme.keys():
                 self.main_form.display.repl_display_message(
-                    "'Cursor_Line_Background' color is not defined in the current theme!", 
+                    "'cursor-line-background' color is not defined in the current theme!", 
                     message_type=data.MessageType.ERROR
                 )
             else:
-                self.setCaretLineBackgroundColor(data.theme.Cursor_Line_Background)
+                self.setCaretLineBackgroundColor(
+                    data.QColor(data.theme["cursor-line-background"])
+                )
     
     def toggle_cursor_line_highlighting(self):
         new_state = bool(not self.SendScintilla(self.SCI_GETCARETLINEVISIBLE))
@@ -2263,53 +2281,53 @@ class CustomEditor(BaseEditor):
                 "\\+Ctrl+Shift" : data.QsciScintillaBase.SCI_WORDPARTRIGHTEXTEND,
                 "Home" : data.QsciScintillaBase.SCI_VCHOME,
                 "Home+Shift" : data.QsciScintillaBase.SCI_VCHOMEEXTEND,
-                settings.Editor.Keys.go_to_start : data.QsciScintillaBase.SCI_DOCUMENTSTART,
-                settings.Editor.Keys.select_to_start : data.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
+                settings.keyboard_shortcuts['editor']['go_to_start'] : data.QsciScintillaBase.SCI_DOCUMENTSTART,
+                settings.keyboard_shortcuts['editor']['select_to_start'] : data.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
                 "Home+Alt" : data.QsciScintillaBase.SCI_HOMEDISPLAY,
                 "Home+Alt+Shift" : data.QsciScintillaBase.SCI_VCHOMERECTEXTEND,
                 "End" : data.QsciScintillaBase.SCI_LINEEND,
                 "End+Shift" : data.QsciScintillaBase.SCI_LINEENDEXTEND,
-                settings.Editor.Keys.go_to_end : data.QsciScintillaBase.SCI_DOCUMENTEND,
-                settings.Editor.Keys.select_to_end : data.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
+                settings.keyboard_shortcuts['editor']['go_to_end'] : data.QsciScintillaBase.SCI_DOCUMENTEND,
+                settings.keyboard_shortcuts['editor']['select_to_end'] : data.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
                 "End+Alt" : data.QsciScintillaBase.SCI_LINEENDDISPLAY,
                 "End+Alt+Shift" : data.QsciScintillaBase.SCI_LINEENDRECTEXTEND,
-                settings.Editor.Keys.scroll_up : data.QsciScintillaBase.SCI_PAGEUP,
-                settings.Editor.Keys.select_page_up : data.QsciScintillaBase.SCI_PAGEUPEXTEND,
+                settings.keyboard_shortcuts['editor']['scroll_up'] : data.QsciScintillaBase.SCI_PAGEUP,
+                settings.keyboard_shortcuts['editor']['select_page_up'] : data.QsciScintillaBase.SCI_PAGEUPEXTEND,
                 "PageUp+Alt+Shift" : data.QsciScintillaBase.SCI_PAGEUPRECTEXTEND,
-                settings.Editor.Keys.scroll_down : data.QsciScintillaBase.SCI_PAGEDOWN,
-                settings.Editor.Keys.select_page_down : data.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
+                settings.keyboard_shortcuts['editor']['scroll_down'] : data.QsciScintillaBase.SCI_PAGEDOWN,
+                settings.keyboard_shortcuts['editor']['select_page_down'] : data.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
                 "PageDown+Alt+Shift" : data.QsciScintillaBase.SCI_PAGEDOWNRECTEXTEND,
                 "Delete" : data.QsciScintillaBase.SCI_CLEAR,
                 "Delete+Shift" : data.QsciScintillaBase.SCI_CUT,
-                settings.Editor.Keys.delete_end_of_word: data.QsciScintillaBase.SCI_DELWORDRIGHT,
-                settings.Editor.Keys.delete_end_of_line : data.QsciScintillaBase.SCI_DELLINERIGHT,
+                settings.keyboard_shortcuts['editor']['delete_end_of_word']: data.QsciScintillaBase.SCI_DELWORDRIGHT,
+                settings.keyboard_shortcuts['editor']['delete_end_of_line'] : data.QsciScintillaBase.SCI_DELLINERIGHT,
                 "Insert" : data.QsciScintillaBase.SCI_EDITTOGGLEOVERTYPE,
                 "Insert+Shift" : data.QsciScintillaBase.SCI_PASTE,
                 "Insert+Ctrl" : data.QsciScintillaBase.SCI_COPY,
                 "Escape" : data.QsciScintillaBase.SCI_CANCEL,
                 "Backspace" : data.QsciScintillaBase.SCI_DELETEBACK,
                 "Backspace+Shift" : data.QsciScintillaBase.SCI_DELETEBACK,
-                settings.Editor.Keys.delete_start_of_word : data.QsciScintillaBase.SCI_DELWORDLEFT,
+                settings.keyboard_shortcuts['editor']['delete_start_of_word'] : data.QsciScintillaBase.SCI_DELWORDLEFT,
                 "Backspace+Alt" : data.QsciScintillaBase.SCI_UNDO,
-                settings.Editor.Keys.delete_start_of_line : data.QsciScintillaBase.SCI_DELLINELEFT,
-                settings.Editor.Keys.undo : data.QsciScintillaBase.SCI_UNDO,
-                settings.Editor.Keys.redo : data.QsciScintillaBase.SCI_REDO,
-                settings.Editor.Keys.cut : data.QsciScintillaBase.SCI_CUT,
-                settings.Editor.Keys.copy : data.QsciScintillaBase.SCI_COPY,
-                settings.Editor.Keys.paste : data.QsciScintillaBase.SCI_PASTE,
-                settings.Editor.Keys.select_all : data.QsciScintillaBase.SCI_SELECTALL,
-                settings.Editor.Keys.indent : data.QsciScintillaBase.SCI_TAB,
-                settings.Editor.Keys.unindent : data.QsciScintillaBase.SCI_BACKTAB,
+                settings.keyboard_shortcuts['editor']['delete_start_of_line'] : data.QsciScintillaBase.SCI_DELLINELEFT,
+                settings.keyboard_shortcuts['editor']['undo'] : data.QsciScintillaBase.SCI_UNDO,
+                settings.keyboard_shortcuts['editor']['redo'] : data.QsciScintillaBase.SCI_REDO,
+                settings.keyboard_shortcuts['editor']['cut'] : data.QsciScintillaBase.SCI_CUT,
+                settings.keyboard_shortcuts['editor']['copy'] : data.QsciScintillaBase.SCI_COPY,
+                settings.keyboard_shortcuts['editor']['paste'] : data.QsciScintillaBase.SCI_PASTE,
+                settings.keyboard_shortcuts['editor']['select_all'] : data.QsciScintillaBase.SCI_SELECTALL,
+                settings.keyboard_shortcuts['editor']['indent'] : data.QsciScintillaBase.SCI_TAB,
+                settings.keyboard_shortcuts['editor']['unindent'] : data.QsciScintillaBase.SCI_BACKTAB,
                 "Return" : data.QsciScintillaBase.SCI_NEWLINE,
                 "Return+Shift" : data.QsciScintillaBase.SCI_NEWLINE,
                 "Add+Ctrl" : data.QsciScintillaBase.SCI_ZOOMIN,
                 "Subtract+Ctrl" : data.QsciScintillaBase.SCI_ZOOMOUT,
                 "Divide+Ctrl" : data.QsciScintillaBase.SCI_SETZOOM,
-                settings.Editor.Keys.line_cut : data.QsciScintillaBase.SCI_LINECUT,
-                settings.Editor.Keys.line_delete : data.QsciScintillaBase.SCI_LINEDELETE,
-                settings.Editor.Keys.line_copy : data.QsciScintillaBase.SCI_LINECOPY,
-                settings.Editor.Keys.line_transpose : data.QsciScintillaBase.SCI_LINETRANSPOSE,
-                settings.Editor.Keys.line_selection_duplicate : data.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
+                settings.keyboard_shortcuts['editor']['line_cut'] : data.QsciScintillaBase.SCI_LINECUT,
+                settings.keyboard_shortcuts['editor']['line_delete'] : data.QsciScintillaBase.SCI_LINEDELETE,
+                settings.keyboard_shortcuts['editor']['line_copy'] : data.QsciScintillaBase.SCI_LINECOPY,
+                settings.keyboard_shortcuts['editor']['line_transpose'] : data.QsciScintillaBase.SCI_LINETRANSPOSE,
+                settings.keyboard_shortcuts['editor']['line_selection_duplicate'] : data.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
                 "U+Ctrl" : data.QsciScintillaBase.SCI_LOWERCASE,
                 "U+Ctrl+Shift" : data.QsciScintillaBase.SCI_UPPERCASE,
             }

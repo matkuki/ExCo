@@ -14,14 +14,14 @@ import functions
 import data
 
 def get_fonts_from_resources():
-    directory = functions.unixify_path_join(data.resources_directory, "fonts/")
+    directory = functions.unixify_join(data.resources_directory, "fonts/")
     font_file_list = []
     for root, dirs, files in os.walk(directory):
         for file in files:
-            item = functions.unixify_path_join(root, file)
+            item = functions.unixify_join(root, file)
             if item.lower().endswith('.ttf') or item.lower().endswith('.otf'):
                 font_file_list.append(
-                    functions.unixify_path_join(directory, item)
+                    functions.unixify_join(directory, item)
                 )
     return font_file_list
 

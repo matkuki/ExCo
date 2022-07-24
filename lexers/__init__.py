@@ -33,6 +33,7 @@ from lexers.cython import *
 from lexers.functions import *
 from lexers.nim import *
 from lexers.oberon import *
+from lexers.php import *
 from lexers.python import *
 from lexers.routeros import *
 from lexers.text import *
@@ -70,17 +71,18 @@ for i in data.__dict__.keys():
             cls_text += "        self.set_theme(data.theme)\n"
             cls_text += "    \n"
             cls_text += "    def set_theme(self, theme):\n"
-            cls_text += "        self.setDefaultColor(theme.Font.Default)\n".format(lexer_name)
-            cls_text += "        self.setDefaultPaper(theme.Paper.Default)\n".format(lexer_name)
+            cls_text += '        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))\n'
+            cls_text += '        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))\n'
+            cls_text += '        self.setDefaultFont(data.get_editor_font())\n'
             cls_text += "        missing_themes['{}'] = []\n".format(lexer_name)
             for style in styles:
                 cls_text += "        for style in self.styles.keys():\n"
                 cls_text += "            try:\n"
                 cls_text += "                self.setPaper(\n"
-                cls_text += "                    data.QColor(theme.Paper.{0}.Default), \n".format(lexer_name)
+                cls_text += '                    data.QColor(data.theme["fonts"][style.lower()]["background"]),\n'
                 cls_text += "                    self.styles[style]\n"
                 cls_text += "                )\n"
-                cls_text += "                lexers.set_font(self, style, getattr(theme.Font.{0}, style))\n".format(lexer_name)
+                cls_text += '                lexers.set_font(self, style, theme["fonts"][style.lower()])\n'
                 cls_text += "            except:\n"
                 cls_text += "               if not(style in missing_themes['{}']):\n".format(lexer_name)
                 cls_text += "                   missing_themes['{}'].append(style)\n".format(lexer_name)

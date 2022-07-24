@@ -22,42 +22,24 @@ import time
 import lexers
 
 def set_font(lexer, style_name, style_options):
-    font, color, size, bold = style_options
-    try:
-        style_index = lexer.styles[style_name]["index"]
-    except:
-        style_index = lexer.styles[style_name]
+    style_index = lexer.styles[style_name]
     lexer.setColor(
-        data.QColor(color),
+        data.QColor(style_options["color"]),
         style_index
     )
     weight = data.QFont.Normal
-    if bold == 1 or bold == True:
+    if style_options["bold"]:
         weight = data.QFont.Bold
-    elif bold == 2:
-        weight = data.QFont.Black
+#    elif bold == 2:
+#        weight = data.QFont.Black
     lexer.setFont(
-        data.QFont(font, size, weight=weight), 
+        data.QFont(
+            data.current_editor_font_name,
+            data.current_editor_font_size,
+            weight=weight
+        ),
         style_index
     )
-
-def set_font_new(lexer, style_name, style_options):
-    font, color, size, bold = style_options
-    style_index = lexer.styles[style_name]["index"]
-    lexer.setColor(
-        data.QColor(color),
-        style_index
-    )
-    weight = data.QFont.Normal
-    if bold == 1 or bold == True:
-        weight = data.QFont.Bold
-    elif bold == 2:
-        weight = data.QFont.Black
-    lexer.setFont(
-        data.QFont(font, size, weight=weight), 
-        style_index
-    )
-
 
 def get_lexer_from_file_type(file_type):
     current_file_type = file_type
@@ -73,6 +55,8 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.CPP()
     elif file_type == "c++":
         lexer = lexers.CPP()
+    elif file_type == "cmake":
+        lexer = lexers.CMake()
     elif file_type == "pascal":
         lexer = lexers.Pascal()
     elif file_type == "oberon/modula":
@@ -112,6 +96,8 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.SQL()
     elif file_type == "postscript":
         lexer = lexers.PostScript()
+    elif file_type == "php":
+        lexer = lexers.Php()
     elif file_type == "fortran":
         lexer = lexers.Fortran()
     elif file_type == "fortran77":

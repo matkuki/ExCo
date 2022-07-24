@@ -294,45 +294,46 @@ class CustomInterpreter(code.InteractiveInterpreter):
         """Function for running a command line process and return the result"""
         #Check what is the current OS
         if data.platform == "Windows":
-            #Remove the PYTHONHOME environment variable that Nuitka creates. It causes problems
-            #when running the system's python interpreter!
-            os.environ['PYTHONHOME'] = ''
             if show_console == True:
                 #Double quotes have to be handled differently on Windows (don't know about Linux yet)
                 if '\"' in command:
                     process_commands = [
-                        "command = 'cmd.exe /c {:s} & pause'".format(command), 
-                        "subprocess.Popen(command)"
+                        "command = 'start cmd.exe /c {:s} & pause'".format(command), 
+                        "subprocess.Popen(command, shell=True)"
                     ]
                 else:
-                    process_commands = ["subprocess.Popen(['cmd.exe', '/c', '" + command + " & pause'])"]
+                    process_commands = ["subprocess.Popen(['start', 'cmd.exe', '/c', '" + command + " & pause'], shell=True)"]
             else:
                 if output_to_repl == True:
-                    options = 'startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT'
+                    options = 'startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True'
                     #Double quotes have to be handled differently on Windows (don't know about Linux yet)
                     if '\"' in command:
-                        sub_call = 'subprocess.Popen(\'cmd.exe /c {:s}\', {:s})'.format(command, options)
+                        sub_call = 'subprocess.Popen(\'start cmd.exe /c {:s}\', {:s})'.format(command, options)
                     else:
-                        sub_call = 'subprocess.Popen(["cmd.exe", "/c", "{:s}"], {:s})'.format(command, options)
-                    process_commands = ['startupinfo = subprocess.STARTUPINFO()', 
-                                        'startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW',
-                                        'result = ' + sub_call, 
-                                        '(output, err) = result.communicate()',
-                                        'print(output)']
+                        sub_call = 'subprocess.Popen(["start", "cmd.exe", "/c", "{:s}"], {:s})'.format(command, options)
+                    process_commands = [
+                        'startupinfo = subprocess.STARTUPINFO()', 
+                        'startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW',
+                        'result = ' + sub_call, 
+                        '(output, err) = result.communicate()',
+                        'print(output)'
+                    ]
                 else:
-                    options     = 'startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT'
+                    options = 'startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True'
                     #Double quotes have to be handled differently on Windows (don't know about Linux yet)
                     if '\"' in command:
-                        sub_call = 'subprocess.Popen(\'cmd.exe /c {:s}\', {:s})'.format(command, options)
+                        sub_call = 'subprocess.Popen(\'start cmd.exe /c {:s}\', {:s})'.format(command, options)
                     else:
-                        sub_call = 'subprocess.Popen(["cmd.exe", "/c", "{:s}"], {:s})'.format(command, options)
+                        sub_call = 'subprocess.Popen(["start", "cmd.exe", "/c", "{:s}"], {:s})'.format(command, options)
                     """
                     'THE THIRD LINE HAS TO CONTAIN MORE THAN JUST sub_call! Otherwise the python
                     interpreter crashes! Don't know why yet.
                     """
-                    process_commands = ['startupinfo = subprocess.STARTUPINFO()', 
-                                        'startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW',
-                                        'try:\n  {:s}\nexcept Exception as ex:\n  print(ex)'.format(sub_call)]
+                    process_commands = [
+                        'startupinfo = subprocess.STARTUPINFO()', 
+                        'startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW',
+                        'try:\n  {:s}\nexcept Exception as ex:\n  print(ex)'.format(sub_call)
+                    ]
                 #Create a function that will evaluate commands in the new thread
                 def threaded_function(commands):
                     #Run the commands sequentially and check the result
@@ -378,16 +379,20 @@ class CustomInterpreter(code.InteractiveInterpreter):
                     ]
             else:
                 if output_to_repl == True:
-                    options     = 'stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True'
-                    sub_call    = 'subprocess.Popen("{:s}", {:s})'.format(command, options)
-                    process_commands =  ['result = ' + sub_call,
-                                         '(output, err) = result.communicate()',
-                                         'print(output)']
+                    options = 'stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True'
+                    sub_call = 'subprocess.Popen("{:s}", {:s})'.format(command, options)
+                    process_commands =  [
+                        'result = ' + sub_call,
+                        '(output, err) = result.communicate()',
+                        'print(output)'
+                    ]
                 else:
-                    options     = 'stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False'
-                    sub_call    = 'subprocess.Popen("{:s}", {:s})'.format(command, options)
-                    process_commands =  ['result = ' + sub_call,
-                                         '(output, err) = result.communicate()']
+                    options = 'stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False'
+                    sub_call = 'subprocess.Popen("{:s}", {:s})'.format(command, options)
+                    process_commands =  [
+                        'result = ' + sub_call,
+                        '(output, err) = result.communicate()'
+                    ]
         #Run the commands sequentially and check the result
         for cmd in process_commands:
             result = self.eval_command(cmd)
@@ -395,7 +400,9 @@ class CustomInterpreter(code.InteractiveInterpreter):
                 return
     
     def create_terminal(self, dir=None):
-        """Spawn a new "terminal/command line" window asynchronously (currently works only on win32)"""
+        """
+        Spawn a new "terminal/command line" window asynchronously (currently works only on win32)
+        """
         #Change current working directory if it was supplied as an argument
         if dir != None:
             try:

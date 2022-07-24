@@ -14,8 +14,8 @@ import time
 import lexers
 
 
-class Text(data.QsciLexerCustom):
-    """Lexer for styling normal text documents"""
+class Php(data.QsciLexerCustom):
+    """Lexer for styling Php documents"""
     # Class variables
     styles = {
         "Default" : 0
@@ -33,20 +33,21 @@ class Text(data.QsciLexerCustom):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        # Papers
-        self.setPaper(
-            data.QColor(data.theme["fonts"]["default"]["background"]), 
-            self.styles["Default"]
-        )
-        # Fonts
-        lexers.set_font(self, "Default", theme["fonts"]["default"])
+        for style in self.styles:
+            # Papers
+            self.setPaper(
+                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
+                self.styles[style]
+            )
+            # Fonts
+            lexers.set_font(self, style, theme["fonts"][style.lower()])
     
     def language(self):
-        return "Plain text"
+        return "Php"
     
     def description(self, style):
         if style == 0:
-            description = "Text"
+            description = "Php"
         else:
             description = ""
         return description

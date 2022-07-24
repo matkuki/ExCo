@@ -9,25 +9,23 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+
+import re
 import os
 import sys
-import itertools
 import inspect
-import functools
 import keyword
-import re
-import collections
 import textwrap
+import functools
+import itertools
 import importlib
+import traceback
+import collections
+
 import data
-import components
 import themes
 import functions
-import interpreter
-import settings
-import lexers
-import traceback
-import gc
+import components
 
 from .customeditor import *
 from .dialogs import *
@@ -66,12 +64,12 @@ class TabWidget(data.QTabWidget):
             self.setFont(data.get_current_font())
         
         def set_style(self):
-            close_image = functions.get_resource_file(data.theme.close_image)
-            close_hover_image = functions.get_resource_file(data.theme.close_hover_image)
-            right_arrow_image = functions.get_resource_file(data.theme.right_arrow_image)
-            right_arrow_hover_image = functions.get_resource_file(data.theme.right_arrow_hover_image)
-            left_arrow_image = functions.get_resource_file(data.theme.left_arrow_image)
-            left_arrow_hover_image = functions.get_resource_file(data.theme.left_arrow_hover_image)
+            close_image = functions.get_resource_file(data.theme["close-image"])
+            close_hover_image = functions.get_resource_file(data.theme["close-hover-image"])
+            right_arrow_image = functions.get_resource_file(data.theme["right-arrow-image"])
+            right_arrow_hover_image = functions.get_resource_file(data.theme["right-arrow-hover-image"])
+            left_arrow_image = functions.get_resource_file(data.theme["left-arrow-image"])
+            left_arrow_hover_image = functions.get_resource_file(data.theme["left-arrow-hover-image"])
             style = """
                 QTabBar::close-button {{
                     image: url({})
@@ -125,15 +123,15 @@ class TabWidget(data.QTabWidget):
                 right_arrow_hover_image,
                 left_arrow_image,
                 left_arrow_hover_image,
-                data.theme.Indication.PassiveBackGround,
-                data.theme.Indication.PassiveBorder,
-                data.theme.Indication.PassiveBackGround,
-                data.theme.Font.DefaultHtml,
-                data.theme.Indication.Hover,
-                data.theme.Indication.Hover,
-                data.theme.Indication.ActiveBackGround,
-                data.theme.Indication.ActiveBorder,
-                data.theme.Indication.PassiveBackGround,
+                data.theme["indication"]["passivebackground"],
+                data.theme["indication"]["passiveborder"],
+                data.theme["indication"]["passivebackground"],
+                data.theme["fonts"]["default"]["color"],
+                data.theme["indication"]["hover"],
+                data.theme["indication"]["hover"],
+                data.theme["indication"]["activebackground"],
+                data.theme["indication"]["activeborder"],
+                data.theme["indication"]["passivebackground"],
             )
             self.setStyleSheet(style)
         
@@ -155,30 +153,49 @@ class TabWidget(data.QTabWidget):
                         drag.setHotSpot(event.pos())
                         drag.exec_(data.Qt.CopyAction | data.Qt.MoveAction)
         
-        def mouseReleaseEvent(self, event):
-            # Execute the superclass event method
-            super().mouseReleaseEvent(event)
-            event_button = event.button()
-            # Check for a right click
-            if event_button == data.Qt.RightButton:
-                # Clean up the old menu
-                if self.tab_menu != None:
-                    self.tab_menu.setParent(None)
-                    self.tab_menu = None
-                # Create the popup tab context menu
-                menu = self._parent.TabMenu(
-                    self, 
-                    self.main_form, 
-                    self._parent, 
-                    self._parent.widget(self.tabAt(event.pos())), 
-                    event.pos()
-                )
-                self.tab_menu = menu
-                # Show the tab context menu
-                cursor = data.QCursor.pos()
-                menu.popup(cursor)
-                # Accept the event
-                event.accept()
+#        def mouseReleaseEvent(self, event):
+#            # Execute the superclass event method
+#            super().mouseReleaseEvent(event)
+#            event_button = event.button()
+#            # Check for a right click
+#            if event_button == data.Qt.RightButton:
+#                # Clean up the old menu
+#                if self.tab_menu != None:
+#                    self.tab_menu.setParent(None)
+#                    self.tab_menu = None
+#                # Create the popup tab context menu
+#                menu = self._parent.TabMenu(
+#                    self, 
+#                    self.main_form, 
+#                    self._parent, 
+#                    self._parent.widget(self.tabAt(event.pos())), 
+#                    event.pos()
+#                )
+#                self.tab_menu = menu
+#                # Show the tab context menu
+#                cursor = data.QCursor.pos()
+#                menu.popup(cursor)
+#                # Accept the event
+#                event.accept()
+        
+        def contextMenuEvent(self, event):
+            # Clean up the old menu
+            if self.tab_menu != None:
+                self.tab_menu.setParent(None)
+                self.tab_menu = None
+            # Create the popup tab context menu
+            menu = self._parent.TabMenu(
+                self, 
+                self.main_form, 
+                self._parent, 
+                self._parent.widget(self.tabAt(event.pos())), 
+                event.pos()
+            )
+            self.tab_menu = menu
+            # Show the tab context menu
+            cursor = data.QCursor.pos()
+            menu.popup(cursor)
+            event.accept()
     
     class TabMenu(Menu):
         """Custom menu that appears when right clicking a tab"""
@@ -335,7 +352,9 @@ class TabWidget(data.QTabWidget):
             #Update current working directory action
             if hasattr(editor_widget, "save_name") == True:
                 update_cwd_action = data.QAction("Update CWD", self)
-                update_cwd_action.setIcon(functions.create_icon('tango_icons/update-cwd.png'))
+                update_cwd_action.setIcon(
+                    functions.create_icon('tango_icons/update-cwd.png')
+                )
                 update_cwd_action.triggered.connect(update_cwd)
                 self.addAction(update_cwd_action)
                 self.addSeparator()
@@ -350,7 +369,37 @@ class TabWidget(data.QTabWidget):
             )
             clipboard_copy_action.triggered.connect(clipboard_copy)
             self.addAction(clipboard_copy_action)
+            # Copy path
+            clipboard_copy_path_action = data.QAction("Copy document path to clipboard", self)
+            def clipboard_path_copy():
+                cb = data.application.clipboard()
+                cb.clear(mode=cb.Clipboard)
+                cb.setText(editor_widget.save_name, mode=cb.Clipboard)
+            clipboard_copy_path_action.setIcon(
+                functions.create_icon('tango_icons/edit-copy.png')
+            )
+            clipboard_copy_path_action.triggered.connect(clipboard_path_copy)
+            self.addAction(clipboard_copy_path_action)
+            # Open path in explorer
+            open_in_explorer_action = data.QAction("Open document in explorer", self)
+            def open_in_explorer():
+                path = editor_widget.save_name
+                try:
+                    result = functions.open_item_in_explorer(path)
+                except:
+                    result = False
+                if result == False:
+                    main_form.display.repl_display_error(
+                        "Error opening path in explorer: '{}'".format(path)
+                    )
+            open_in_explorer_action.setIcon(
+                functions.create_icon('tango_icons/document-open.png')
+            )
+            open_in_explorer_action.triggered.connect(open_in_explorer)
+            self.addAction(open_in_explorer_action)
+            
             self.addSeparator()
+            
             #Nested function for adding diff actions
             def add_diff_actions():
                 #Diff to main window

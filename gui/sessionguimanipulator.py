@@ -10,21 +10,18 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sip
 import os.path
-import collections
-import traceback
-import ast
-import inspect
-import math
-import functools
-import textwrap
-import difflib
-import re
 import time
+import difflib
+import inspect
+import textwrap
+import functools
+import traceback
+import collections
+
+import data
 import settings
 import functions
-import data
 import components
 import themes
 
@@ -43,17 +40,16 @@ class SessionGuiManipulator(data.QTreeView):
     class SessionItem(data.QStandardItem):
         """QStandarItem with overridden methods"""
         #The session that the standard item will store
-        my_parent   = None
-        name        = None
-        type        = None
-        session     = None
+        my_parent = None
+        name      = None
+        type      = None
     
     #Class constants
     class ItemType:
-        SESSION         = 0
-        GROUP           = 1
-        EMPTY_SESSION   = 2
-        EMPTY_GROUP     = 3
+        SESSION       = 0
+        GROUP         = 1
+        EMPTY_SESSION = 2
+        EMPTY_GROUP   = 3
     
     #Class variables
     parent                  = None
@@ -65,10 +61,7 @@ class SessionGuiManipulator(data.QTreeView):
     savable                 = data.CanSave.NO
     last_clicked_session    = None
     tree_model              = None
-    session_nodes           = None
-    refresh_lock            = False
     edit_flag               = False
-    last_created_item       = None
     session_groupbox        = None
     #Icons
     node_icon_group         = None
@@ -159,46 +152,44 @@ class SessionGuiManipulator(data.QTreeView):
         """Callback connected to the treeview's 'clicked' signal"""
         session_item = self.tree_model.itemFromIndex(model_index)
         if session_item.type == self.ItemType.SESSION:
-            #Open the session
-            session = session_item.session
-            #This is a call to the MainWindow class in the forms module
-            self.main_form.sessions.restore(session.name, session.group)
+            # Open the session
+            session = self.settings_manipulator.get_session(
+                session_item.text(),
+                self.__get_node_chain(session_item)
+            )
+            self.main_form.sessions.restore(session)
         elif session_item.type == self.ItemType.GROUP:
             pass
     
     def _item_changed(self, item):
-        """Callback connected to the displays QStandardItemModel 'itemChanged' signal"""
-        #Get the clicked item
+        """
+        Callback connected to the displays QStandardItemModel 'itemChanged' signal
+        """
+        # Get the clicked item
         changed_item = item
-        #Check for editing
+        # Check for editing
         if self.edit_flag == True:
             if changed_item.type == self.ItemType.SESSION:
-                #Item is a session
-                old_item_name = item.session.name
+                self.reset_locks()
+                # Item is a session
+                old_item_name = item.name
                 new_item_name = self.indexWidget(item.index()).text()
-                #Rename all of the sessions with the group name and store them in a new list
-                new_session_list = []
-                for session in self.settings_manipulator.stored_sessions:
-                    if session.name == old_item_name and session.group == item.session.group:
-                        session.name = new_item_name
-                    new_session_list.append(session)
-                #Replace the old list with the new
-                self.settings_manipulator.stored_sessions = new_session_list
-                #Save the the new session list by saving the settings
+                item_chain = self.__get_node_chain(item)
+                # Rename 
+                group = self.settings_manipulator.get_group(item_chain)
+                session = group["sessions"].pop(old_item_name)
+                item.name = new_item_name
+                item.setEditable(False)
+                session["name"] = new_item_name
+                group["sessions"][new_item_name] = session
+                # Save the the new session list by saving the settings
                 self.settings_manipulator.save_settings(
                     self.settings_manipulator.main_window_side, 
                     data.theme
                 )
-                #Update the main forms session menu
-                self.main_form.sessions.update_menu()
-                #Display successful group deletion
-                group_name = item.session.group
-                if group_name == None:
-                    group_name = ""
-                else:
-                    group_name = " / ".join(group_name) + " / "
+                group_name = "/".join(item_chain)
                 self.main_form.display.repl_display_message(
-                    "Session '{:s}{:s}' was renamed to '{:s}{:s}'!".format(
+                    "Session '{}/{}' was renamed to '{}/{}'!".format(
                        group_name, 
                        old_item_name,  
                        group_name, 
@@ -206,30 +197,27 @@ class SessionGuiManipulator(data.QTreeView):
                     ), 
                     message_type=data.MessageType.SUCCESS
                 )
-                #Refresh the session tree
-                self.refresh_display()
-                #Refresh the session tree
+                # Refresh the session tree
                 self.refresh_display()
             elif changed_item.type == self.ItemType.GROUP:
-                #Item is a group
+                self.reset_locks()
+                # Item is a group
                 old_group_name = item.name
                 new_group_name = self.indexWidget(item.index()).text()
-                #Rename all of the session with the group name and store them in a new list
-                new_session_list = []
-                for session in self.settings_manipulator.stored_sessions:
-                    if session.group == old_group_name:
-                        session.group = new_group_name
-                    new_session_list.append(session)
-                #Replace the old list with the new
-                self.settings_manipulator.stored_sessions = new_session_list
-                #Save the the new session list by saving the settings
+                item_chain = self.__get_node_chain(item)
+                # Rename the group
+                parent_group = self.settings_manipulator.get_group(item_chain)
+                group = parent_group["groups"].pop(old_group_name)
+                item.name = new_group_name
+                item.setEditable(False)
+                parent_group["groups"][new_group_name] = group
+                self.settings_manipulator.rename_group(group, new_group_name)
+                # Save the the new session list by saving the settings
                 self.settings_manipulator.save_settings(
                     self.settings_manipulator.main_window_side, 
                     data.theme
                 )
-                #Update the main forms session menu
-                self.main_form.sessions.update_menu()
-                #Display successful group deletion
+                # Display successful group deletion
                 self.main_form.display.repl_display_message(
                     "Group '{}' was renamed to '{}'!".format(
                         old_group_name, 
@@ -237,160 +225,190 @@ class SessionGuiManipulator(data.QTreeView):
                     ), 
                     message_type=data.MessageType.SUCCESS
                 )
-                #Refresh the session tree
+                # Refresh the session tree
                 self.refresh_display()
         else:
             if changed_item.type == self.ItemType.SESSION:
-                #Item is a session
-    #            session = changed_item.session
                 pass
             elif changed_item.type == self.ItemType.GROUP:
-                #Item is a group
-    #            group_name = changed_item.name
                 pass
             elif changed_item.type == self.ItemType.EMPTY_SESSION:
-                #Store the session
-                session = changed_item.session
-                #Adjust the name to the new one, by getting the QLineEdit at the model index
-                session.name = self.indexWidget(item.index()).text()
-                #This is a call to the MainWindow class in the forms module
-                self.main_form.sessions.add(session.name, session.group)
-                #Refresh the session tree
-                self.refresh_display()
-                self.last_created_item = self.ItemType.EMPTY_SESSION
-            elif changed_item.type == self.ItemType.EMPTY_GROUP:
-                #Adjust the name to the new one, by getting the QLineEdit at the model index
-                group_name = self.indexWidget(item.index()).text()
-                #When the item's name is change it refires the itemChanged signal,
-                #so a check of one of the properties is necessary to not repeat the operation
-                if item.name == None:
-                    item.name = group_name
-                    if hasattr(item, "parent_group") == True:
-                        item.name = (group_name, )
-                        if item.parent_group != None:
-                            item.name = item.parent_group + (group_name, )
-                    item.setEditable(False)
-                    #Display the warning
-                    message = "An empty group was created.\n"
-                    message += "A session must be added to it or the empty group will \n"
-                    message += "be deleted on the next refresh!"
+                if len(changed_item.text()) < 3:
+                    # Disconnect the signal
+                    delegate = self.itemDelegate(changed_item.index())
+                    delegate.closeEditor.disconnect()
+                    # Remove the item from the tree
+                    if changed_item.parent() is not None:
+                        changed_item.parent().removeRow(changed_item.row())
+                    else:
+                        self.tree_model.removeRow(changed_item.row())
+                    # Display message
+                    message = "Session must have at least 3 characters in it's name!"
                     self.main_form.display.repl_display_message(
                         message, 
                         message_type=data.MessageType.WARNING
                     )
-                    #Set the refresh lock, so it won't delete the empty group node
-                    self.refresh_lock = True
-                    self.last_created_item = self.ItemType.EMPTY_GROUP
+                else:
+                    # Update item
+                    changed_item.type = self.ItemType.SESSION
+                    changed_item.setEditable(False)
+                    # Adjust the name to the new one, by getting the QLineEdit at the model index
+                    session_name = self.indexWidget(item.index()).text()
+                    session_chain = self.__get_node_chain(item)
+                    # Add session through the main window and check the result
+                    if not self.main_form.sessions.add(session_name, session_chain):
+                        ## Error occured, remove session item from tree widget
+                        # Disconnect the signal
+                        delegate = self.itemDelegate(changed_item.index())
+                        delegate.closeEditor.disconnect()
+                        # Remove the item from the tree
+                        if changed_item.parent() is not None:
+                            changed_item.parent().removeRow(changed_item.row())
+                        else:
+                            self.tree_model.removeRow(changed_item.row())
+                    # Refresh the session tree
+                    self.refresh_display()
+            elif changed_item.type == self.ItemType.EMPTY_GROUP:
+                # When the item's name is changed it refires the itemChanged signal,
+                # so a check of one of the properties is necessary to not repeat the operation
+                if item.name == "":
+                    # Adjust the name to the new one, by getting the QLineEdit at the model index
+                    group_name = self.indexWidget(item.index()).text()
+                    group_chain = self.__get_node_chain(item)
+                    # Set the item attributes
+                    item.name = group_name
+                    item.setEditable(False)
+                    # Add group to sessions
+                    self.settings_manipulator.add_group(group_name, group_chain)
+                    # Save the sessions
+                    self.settings_manipulator.save_settings(
+                        self.settings_manipulator.main_window_side, 
+                        data.theme
+                    )
+                # Update the type
+                changed_item.type = self.ItemType.GROUP
     
-    def _item_editing_closed(self, widget):
-        """Signal that fires when editing was canceled/ended in an empty session or empty group"""
-        if (self.refresh_lock == True and 
-            self.last_created_item == self.ItemType.EMPTY_GROUP):
-            return
+    def _item_editing_closed(self, item, widget):
+        """
+        Signal that fires when editing was canceled/ended in an empty session or empty group
+        """
+        # Close the editor
+        self.closeEditor(widget, data.QAbstractItemDelegate.NoHint)
+        # Check change
+        if item.type == self.ItemType.EMPTY_GROUP:
+            if len(item.text()) < 3:
+                # Disconnect the signal
+                delegate = self.itemDelegate(item.index())
+                delegate.closeEditor.disconnect()
+                # Remove the item from the tree
+                if item.parent() is not None:
+                    item.parent().removeRow(item.row())
+                else:
+                    self.tree_model.removeRow(item.row())
+        elif item.type == self.ItemType.EMPTY_SESSION:
+            if len(item.text()) < 3:
+                # Disconnect the signal
+                delegate = self.itemDelegate(item.index())
+                delegate.closeEditor.disconnect()
+                # Remove the item from the tree
+                if item.parent() is not None:
+                    item.parent().removeRow(item.row())
+                else:
+                    self.tree_model.removeRow(item.row())
+        # Refresh all options
         self.refresh_display()
     
-    def refresh_display(self):
-        """Refresh the displayed session while keeping the expanded groups"""
-        #Reset the all locks/flags
-        self.refresh_lock   = False
-        self.edit_flag      = False
-        #Store which groups are expanded
-        expanded_groups = []
-        for group in self.groups:
-            if self.isExpanded(group.index()):
-                expanded_groups.append(group)
-        #Remove the empty node by refreshing the session tree
-        self.show_sessions()
-        #Expand the groups that were expanded before
-        for exp_group in expanded_groups:
-            for group in self.groups:
-                if group.name == exp_group.name:
-                    self.expand(group.index())
+    def reset_locks(self):
+        # Reset the all locks/flags
+        self.edit_flag = False
     
-    def _get_current_group(self):
+    def refresh_display(self):
+        """
+        Refresh the displayed session while keeping the expanded groups
+        """
+        # Reset the all locks/flags
+        self.reset_locks()
+        # Update the main window menu
+        self.main_form.sessions.update_menu()
+    
+    def __get_node_chain(self, node):
+        parent = node.parent()
+        chain = []
+        while parent is not None:
+            chain.append(parent.text())
+            parent = parent.parent()
+        chain.reverse()
+        return chain
+    
+    def __get_current_group(self):
         if self.selectedIndexes() != []:
             selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
             if selected_item.type == self.ItemType.SESSION:
-                if selected_item.session.group != None:
+                chain = self.__get_node_chain(selected_item)
+                if len(chain) > 0:
                     return selected_item.parent()
                 else:
                     return None
-            elif (selected_item.type == self.ItemType.GROUP or 
+            elif (selected_item.type == self.ItemType.GROUP or
                   selected_item.type == self.ItemType.EMPTY_GROUP):
-                return selected_item
+                    return selected_item
             else:
                 return None
         else:
             return None
     
     def add_empty_group(self):
-        #Check for various flags
+        # Check for various flags
         if self.edit_flag == True:
             return
-        #Check if an empty group is already present
-#        for session_node in self.session_nodes:
-#            if session_node.type == self.ItemType.EMPTY_GROUP:
-#                return
         empty_group_node = self.SessionItem("")
-        empty_group_node.parent    = self
-        empty_group_node.name      = None
-        empty_group_node.parent_group   = None
-        empty_group_node.session   = None
-        empty_group_node.type      = self.ItemType.EMPTY_GROUP
+        empty_group_node._parent = self
+        empty_group_node.name = ""
+        empty_group_node.type = self.ItemType.EMPTY_GROUP
         empty_group_node.setEditable(True)
         empty_group_node.setIcon(self.node_icon_group)
-        parent_group = self._get_current_group()
-        if parent_group != None:
+        parent_group = self.__get_current_group()
+        if parent_group is not None:
             empty_group_node.parent_group = parent_group.name
             parent_group.appendRow(empty_group_node)
         else:
             self.tree_model.appendRow(empty_group_node)
         self.scrollTo(empty_group_node.index())
-        #Start editing the new empty group
-        self.session_nodes.append(empty_group_node)
+        # Start editing the new empty group
         self.edit(empty_group_node.index())
-        #Add the session signal when editing is canceled
+        # Add the session signal when editing is canceled
         delegate = self.itemDelegate(empty_group_node.index())
-        delegate.closeEditor.connect(self._item_editing_closed)
-        #Store last created node type
-        self.last_created_item = self.ItemType.EMPTY_GROUP
+        delegate.closeEditor.connect(
+            functools.partial(self._item_editing_closed, empty_group_node)
+        )
     
     def add_empty_session(self):
-        #Check for various flags
+        # Check for various flags
         if self.edit_flag == True:
             return
-        #Check if an empty session is already present
-        for session_node in self.session_nodes:
-            if session_node.type == self.ItemType.EMPTY_SESSION:
-                return
-        #Check where the session will be added
-        #Initialize the session
-        empty_session = settings.Session("")
+        # Initialize the session
         empty_session_node = self.SessionItem("")
-        empty_session_node.parent    = self
-        empty_session_node.name      = ""
-        empty_session_node.session   = empty_session
-        empty_session_node.type      = self.ItemType.EMPTY_SESSION
+        empty_session_node._parent = self
+        empty_session_node.name = ""
+        empty_session_node.type = self.ItemType.EMPTY_SESSION
         empty_session_node.setEditable(True)
         empty_session_node.setIcon(self.node_icon_session)
-        parent_group = self._get_current_group()
-        if parent_group != None:
-            empty_session.group = parent_group.name
+        parent_group = self.__get_current_group()
+        if parent_group is not None:
             parent_group.appendRow(empty_session_node)
             self.expand(parent_group.index())
         else:
             self.tree_model.appendRow(empty_session_node)
         self.scrollTo(empty_session_node.index())
-        #Start editing the new empty session
-        self.session_nodes.append(empty_session_node)
+        # Start editing the new empty session
         self.edit(empty_session_node.index())
-        #Add the session signal when editing is canceled
+        # Add the session signal when editing is canceled
         delegate = self.itemDelegate(empty_session_node.index())
-        delegate.closeEditor.connect(self._item_editing_closed)
-        #Store last created node type
-        self.last_created_item = self.ItemType.EMPTY_SESSION
+        delegate.closeEditor.connect(
+            functools.partial(self._item_editing_closed, empty_session_node)
+        )
     
-    def remove_session(self):
+    def remove_item(self):
         # Check for various flags
         if self.edit_flag == True:
             return
@@ -400,30 +418,21 @@ class SessionGuiManipulator(data.QTreeView):
         selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
         # Check the selected item type
         if selected_item.type == self.ItemType.GROUP:
-            remove_group = selected_item.name
-            # Adjust the group name string
-            if remove_group == None:
-                selected_item.name = ""
-            remove_group_name = ""
-            if remove_group != "":
-                remove_group_name = "/".join(remove_group) + "/"
-            
-            # First add all of the groups, if any
-            groups = self.settings_manipulator.get_sorted_groups()
-            # Check if the group has subgroups
-            main_group = self.settings_manipulator.Group(
-                "BASE", parent=None, reference=self.tree_model
+            remove_group = self.settings_manipulator.get_group(
+                self.__get_node_chain(selected_item) + [selected_item.text()]
             )
-            current_group = selected_item.name
-            for group in groups:
-                if (len(group) > len(remove_group)) and (set(remove_group).issubset(group)):
-                    message =  "Cannot delete group\n'{:s}'\n".format(remove_group_name)
-                    message += "because it contains subgroups!"
-                    reply = OkDialog.error(message)
-                    return
+            # Check if the group has subgroups
+            group_name_with_chain = "{}/{}".format(
+                "/".join(remove_group["chain"]), remove_group["name"]
+            )
+            if len(remove_group["sessions"]) > 0 or len(remove_group["groups"]) > 0:
+                message =  "Cannot delete group\n'{}'\n".format(group_name_with_chain)
+                message += "because it contains subgroups!"
+                reply = OkDialog.error(message)
+                return
             
             message =  "Are you sure you want to delete group:\n"
-            message += "'{:s}' ?".format(remove_group_name)
+            message += "'{}' ?".format(group_name_with_chain)
             reply = YesNoDialog.warning(message)
             if reply == data.QMessageBox.No:
                 return
@@ -432,39 +441,44 @@ class SessionGuiManipulator(data.QTreeView):
             # Display the deletion result
             if result == True:
                 self.main_form.display.repl_display_message(
-                    "Group '{:s}' was deleted!".format(remove_group_name), 
+                    "Group '{}' was deleted!".format(group_name_with_chain), 
                     message_type=data.MessageType.SUCCESS
                 )
+                # Remove the item from the tree
+                if selected_item.parent() is not None:
+                    selected_item.parent().removeRow(selected_item.row())
+                else:
+                    self.tree_model.removeRow(selected_item.row())
+                # Refresh the session tree
+                self.refresh_display()
             else:
                 message = "An error occured while deleting session "
-                message += "group '{:s}'!".format(remove_group_name)
+                message += "group '{}'!".format(group_name_with_chain)
                 self.main_form.display.repl_display_message(
                     message, 
                     message_type=data.MessageType.ERROR
                 )
-            # Refresh the tree
-            self.refresh_display()
         elif selected_item.type == self.ItemType.SESSION:
-            remove_session = selected_item.session
-            # Adjust the group name string
-            if remove_session.group == None:
-                remove_session.group = ""
-            group_name = ""
-            if remove_session.group != "":
-                group_name = "/".join(remove_session.group) + "/"
+            remove_session = self.settings_manipulator.get_session(
+                selected_item.text(),
+                self.__get_node_chain(selected_item)
+            )
+            session_name_with_chain = "{}/{}".format(
+                "/".join(remove_session["chain"]), remove_session["name"]
+            )
             message =  "Are you sure you want to delete session:\n"
-            message += "'{:s}{:s}' ?".format(group_name, remove_session.name)
+            message += "'{}' ?".format(session_name_with_chain)
             reply = YesNoDialog.warning(message)
             if reply == data.QMessageBox.No:
                 return
             # Delete the session
-            # Delete all of the session with the group name
-            for session in self.settings_manipulator.stored_sessions:
-                if (session.name == remove_session.name and
-                    session.group == remove_session.group):
-                    self.main_form.sessions.remove(session.name, session.group)
-                    break
-            # Refresh the tree
+            self.settings_manipulator.remove_session(remove_session)
+            # Remove the item from the tree
+            if selected_item.parent() is not None:
+                selected_item.parent().removeRow(selected_item.row())
+            else:
+                self.tree_model.removeRow(selected_item.row())
+            # Refresh the session tree
             self.refresh_display()
         elif selected_item.type == self.ItemType.EMPTY_SESSION:
             #Display successful group deletion
@@ -472,7 +486,7 @@ class SessionGuiManipulator(data.QTreeView):
                 "Empty session was deleted!", 
                 message_type=data.MessageType.SUCCESS
             )
-            #Refresh the tree
+            # Refresh the tree
             self.refresh_display()
         elif selected_item.type == self.ItemType.EMPTY_GROUP:
             #Display successful group deletion
@@ -485,10 +499,10 @@ class SessionGuiManipulator(data.QTreeView):
     
     def overwrite_session(self):
         """Overwrite the selected session"""
-        #Check for various flags
+        # Check for various flags
         if self.edit_flag == True:
             return
-        #Check if a session is selected
+        # Check if a session is selected
         if self.selectedIndexes() == []:
             return
         selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
@@ -501,87 +515,90 @@ class SessionGuiManipulator(data.QTreeView):
             )
             return
         elif selected_item.type == self.ItemType.SESSION:
-            selected_session = selected_item.session
-            #Adding a session that is already stored will overwrite it
-            self.main_form.sessions.add(selected_session.name, selected_session.group)
-            #Refresh the tree
+            selected_session = self.settings_manipulator.get_session(
+                selected_item.text(),
+                self.__get_node_chain(selected_item)
+            )
+            # Adding a session that is already stored will overwrite it
+            self.main_form.sessions.add(
+                selected_session["name"],
+                selected_session["chain"]
+            )
+            # Refresh the tree
             self.refresh_display()
     
     def edit_item(self):
-        """Edit the selected session or group name"""
+        """
+        Edit the selected session or group name
+        """
         if self.edit_flag == True:
             return
-        #Check if an item is selected
+        # Check if an item is selected
         if self.selectedIndexes() == []:
             return
         selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
-        #Check the selected item type
-        if selected_item.type == self.ItemType.GROUP or selected_item.type == self.ItemType.SESSION:
-            selected_item.setEditable(True)
-            self.edit(selected_item.index())
-        #Add the session signal when editing is canceled
+        
+        # Check the selected item type
+        if (selected_item.type == self.ItemType.GROUP or
+            selected_item.type == self.ItemType.SESSION):
+                selected_item.setEditable(True)
+                selected_item.name = selected_item.text()
+                self.edit(selected_item.index())
+        # Add the session signal when editing is canceled
         delegate = self.itemDelegate(selected_item.index())
-        delegate.closeEditor.connect(self._item_editing_closed)
-        #Set the editing flag
+        delegate.closeEditor.connect(
+            functools.partial(self._item_editing_closed, selected_item)
+        )
+        # Set the editing flag
         self.edit_flag = True
     
     def show_sessions(self):
-        """Show the current session in a tree structure"""
-        #Initialize the display
+        """
+        Show the current session in a tree structure
+        """
+        if self.tree_model is not None:
+            self.tree_model.itemChanged.disconnect()
+        # Initialize the display
         self.tree_model = data.QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["SESSIONS"])
         self.header().hide()
 #        self.clean_model()
         self.setModel(self.tree_model)
         self.setUniformRowHeights(True)
-        #Connect the tree model signals
+        # Connect the tree model signals
         self.tree_model.itemChanged.connect(self._item_changed)
 #        font = data.QFont(data.current_font_name, data.current_font_size, data.QFont.Bold)
         font = data.QFont(data.current_font_name, data.current_font_size)
-        #First add all of the groups, if any
-        groups = self.settings_manipulator.get_sorted_groups()
-        self.groups = []
-        # Create the Sessions menu
-        main_group = self.settings_manipulator.Group(
-            "BASE", parent=None, reference=self.tree_model
-        )
-        for group in groups:
-            current_node = main_group
-            level_counter = 1
-            for folder in group:
-                new_group = current_node.subgroup_get(folder)
-                if new_group == None:
-                    item_group_node = self.SessionItem(folder)
-                    item_group_node.setFont(font)
-                    item_group_node.my_parent   = self
-                    item_group_node.name        = group[:level_counter]
-                    item_group_node.session     = None
-                    item_group_node.type        = self.ItemType.GROUP
-                    item_group_node.setEditable(False)
-                    item_group_node.setIcon(self.node_icon_group)
-                    current_node.reference.appendRow(item_group_node)
-                current_node = current_node.subgroup_create(folder, item_group_node)
-                self.groups.append(item_group_node)
-                level_counter += 1
-        #Initialize the list of session nodes
-        self.session_nodes = []
-        #Loop through the manipulators sessions and add them to the display
-        for session in self.settings_manipulator.stored_sessions:
-            item_session_node = self.SessionItem(session.name)
-            item_session_node.my_parent = self
-            item_session_node.name      = session.name
-            item_session_node.session   = session
-            item_session_node.type      = self.ItemType.SESSION
-            item_session_node.setEditable(False)
-            item_session_node.setIcon(self.node_icon_session)
-            #Check if the item is in a group
-            if session.group != None:
-                group = main_group.subgroup_get_recursive(session.group)
-                group.reference.appendRow(item_session_node)
+        ## Create the Sessions menu
+        # Group processing function
+        def process_group(in_group, in_menu, create_menu=True):
+            # Create the new group and attach it to the parent menu
+            if create_menu:
+                item_group_node = self.SessionItem(in_group["name"])
+                item_group_node.setFont(font)
+                item_group_node.my_parent = self
+                item_group_node.name = in_group["chain"][-1] if len(in_group["chain"]) > 0 else ""
+                item_group_node.type = self.ItemType.GROUP
+                item_group_node.setEditable(False)
+                item_group_node.setIcon(self.node_icon_group)
+                in_menu.appendRow(item_group_node)
             else:
-                main_group.reference.appendRow(item_session_node)
-            #Append the session to the stored node list
-            self.session_nodes.append(item_session_node)
+                item_group_node = in_menu
+            # Add the groups
+            for g,v in sorted(in_group["groups"].items(), key=lambda x: x[0].lower()):
+                process_group(v, item_group_node)
+            # Add the sessions
+            for s,v in sorted(in_group["sessions"].items(), key=lambda x: x[0].lower()):
+                item_session_node = self.SessionItem(s)
+                item_session_node.my_parent = self
+                item_session_node.name = s
+                item_session_node.type = self.ItemType.SESSION
+                item_session_node.setEditable(False)
+                item_session_node.setIcon(self.node_icon_session)
+                item_group_node.appendRow(item_session_node)
+        # Process the groups
+        main_session_group = self.settings_manipulator.stored_sessions["main"]
+        process_group(main_session_group, self.tree_model, create_menu=False)
     
     def add_corner_buttons(self):
         # Edit session
@@ -608,11 +625,11 @@ class SessionGuiManipulator(data.QTreeView):
             "Add a new session",
             self.add_empty_session
         )
-        # Remove session
+        # Remove session/group
         self.icon_manipulator.add_corner_button(
             "tango_icons/session-remove.png",
-            "Remove the selected session",
-            self.remove_session
+            "Remove the selected session/group",
+            self.remove_item
         )
 
 

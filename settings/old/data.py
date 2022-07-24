@@ -73,43 +73,42 @@ except:
 """
 File extension lists
 """
-supported_file_extentions = {
-    #"assembly": [".s", ".S", ".Asm"],
-    "ada": [".ads", ".adb"],
-    "awk": [".awk"],
-    "bash": [".sh"],
-    "batch": [".bat",  ".batch"],
-    "c": [".c", ".h"],
-    "c++": [".c++", ".h++", ".cc", ".hh", ".cpp", ".hpp", ".cxx", ".hxx"],
-    "cicode": [".ci"],
-    "coffeescript": [".coffee"],
-    "csharp": [".cs"],
-    "css": [".css"],
-    "cython": [".pyx", ".pxd", ".pxi"],
-    "d": [".d"],
-    "fortran": [".f90", ".f95", ".f03"],
-    "fortran77": [".f", ".for"],
-    "html": [".html", ".htm", ".svelte"],
-    "idl": [".idl"],
-    "ini": [".ini"],
-    "java": [".java"],
-    "javascript": [".js"],
-    "json": [".json"],
-    "lua": [".lua"],
-    "nim": [".nim", ".nims"],
-    "oberon/modula": [".mod", ".ob", ".ob2", ".cp"],
-    "octave": [".m"],
-    "pascal": [".pas", ".pp", ".lpr", ".cyp"],
-    "perl": [".pl", ".pm"],
-    "php": [".php"],
-    "postscript": [".ps",],
-    "python": [".py", ".pyw", ".pyi", ".scons"],
-    "routeros": [".rsc"],
-    "ruby": [".rb", ".rbw"],
-    "sql": [".sql"],
-    "text": [".txt", ".text"],
-    "xml": [".xml", ".tpy"],
-}
+ext_python              = [".py", ".pyw", ".pyi", ".scons"]
+ext_cython              = [".pyx", ".pxd", ".pxi"]
+#ext_assembly            = [".s", ".S", ".Asm"]
+ext_c                   = [".c", ".h"]
+ext_cpp                 = [".c++", ".h++", ".cc", ".hh", ".cpp", ".hpp", ".cxx", ".hxx"]
+ext_pascal              = [".pas", ".pp", ".lpr", ".cyp"]
+ext_oberon              = [".mod", ".ob", ".ob2", ".cp"]
+ext_ada                 = [".ads", ".adb"]
+ext_json                = [".json"]
+ext_lua                 = [".lua"]
+ext_d                   = [".d"]
+ext_nim                 = [".nim", ".nims"]
+ext_perl                = [".pl", ".pm"]
+ext_php                 = [".php"]
+ext_xml                 = [".xml", ".tpy"]
+ext_batch               = [".bat",  ".batch"]
+ext_bash                = [".sh"]
+ext_ini                 = [".ini"]
+ext_text                = [".txt", ".text"]
+ext_coffeescript        = [".coffee"]
+ext_csharp              = [".cs"]
+ext_java                = [".java"]
+ext_javascript          = [".js"]
+ext_octave              = [".m"]
+ext_routeros            = [".rsc"]
+ext_sql                 = [".sql"]
+ext_postscript          = [".ps",]
+ext_fortran             = [".f90", ".f95", ".f03"]
+ext_fortran77           = [".f", ".for"]
+ext_idl                 = [".idl"]
+ext_ruby                = [".rb", ".rbw"]
+ext_html                = [".html", ".htm"]
+ext_css                 = [".css"]
+ext_awk                 = [".awk"]
+ext_cicode              = [".ci"]
+
 
 """
 -------------------------------------------------
@@ -179,7 +178,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "7.0"
+application_version = "6.19"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -271,11 +270,6 @@ application_icon = os.path.join(resources_directory, "exco-icon.png") \
 # action is clicked in the menubar "Help" menu
 about_image = os.path.join(resources_directory, "exco-info.png") \
     .replace('\\', '/')
-# Settings filenames
-settings_filename = {
-    "mark-0": "exco.ini",
-    "mark-1": "exco.mk1.ini",
-}
 # Terminal console program used on GNU/Linux
 terminal = "x-terminal-emulator"
 # Default tree display icon size
@@ -283,15 +277,14 @@ tree_display_icon_size = 16
 # Default font
 current_font_name = "Selawik"
 current_font_size = 10
-def get_current_font():
-    return QFont(current_font_name, int(current_font_size))
 current_editor_font_name = "Source Code Pro"
 current_editor_font_size = 10
-def get_editor_font():
-    return QFont(current_editor_font_name, int(current_editor_font_size))
+def get_current_font():
+    return QFont(current_font_name, int(current_font_size))
 # Current theme
 # Themes need PyQt version defined beforehand, as they also import the data module
-theme = None
+from . import themes
+theme = themes.Air
 # Custom MenuBar scale factor
 custom_menu_scale = None
 # Custom MenuBar scale font

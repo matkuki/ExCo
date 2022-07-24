@@ -245,13 +245,27 @@ class TreeDisplay(data.QTreeView):
                     self.tree_menu = None
 
                 self.tree_menu = Menu()
-                action_update_cwd = data.QAction("Update CWD", self.tree_menu)
-                action_update_cwd.triggered.connect(update_cwd)
-                icon = functions.create_icon('tango_icons/update-cwd.png')
-                action_update_cwd.setIcon(icon)
-                self.tree_menu.addAction(action_update_cwd)
+                
+                # Open path in explorer
+                open_in_explorer_action = data.QAction("Open in explorer", self)
+                def open_in_explorer():
+                    path = item.full_name
+                    try:
+                        result = functions.open_item_in_explorer(path)
+                    except:
+                        result = False
+                    if result == False:
+                        main_form.display.repl_display_error(
+                            "Error opening path in explorer: {}".format(path)
+                        )
+                open_in_explorer_action.setIcon(
+                    functions.create_icon('tango_icons/document-open.png')
+                )
+                open_in_explorer_action.triggered.connect(open_in_explorer)
+                self.tree_menu.addAction(open_in_explorer_action)
                 self.tree_menu.addSeparator()
                 
+                # Clipboard copy name
                 clipboard_copy_action = data.QAction("Copy directory name to clipboard", self)
                 def clipboard_copy():
                     cb = data.application.clipboard()
@@ -262,7 +276,25 @@ class TreeDisplay(data.QTreeView):
                 )
                 clipboard_copy_action.triggered.connect(clipboard_copy)
                 self.tree_menu.addAction(clipboard_copy_action)
+                # Clipboard copy path
+                clipboard_copy_path_action = data.QAction("Copy directory path to clipboard", self)
+                def clipboard_copy():
+                    cb = data.application.clipboard()
+                    cb.clear(mode=cb.Clipboard)
+                    cb.setText(item.full_name, mode=cb.Clipboard)
+                clipboard_copy_path_action.setIcon(
+                    functions.create_icon('tango_icons/edit-copy.png')
+                )
+                clipboard_copy_path_action.triggered.connect(clipboard_copy)
+                self.tree_menu.addAction(clipboard_copy_path_action)
                 self.tree_menu.addSeparator()
+                
+                # Update CWD
+                action_update_cwd = data.QAction("Update CWD", self.tree_menu)
+                action_update_cwd.triggered.connect(update_cwd)
+                icon = functions.create_icon('tango_icons/update-cwd.png')
+                action_update_cwd.setIcon(icon)
+                self.tree_menu.addAction(action_update_cwd)
                 
                 if hasattr(item, "is_base") == True:
                     def update_to_parent():
@@ -322,8 +354,26 @@ class TreeDisplay(data.QTreeView):
                 icon = functions.create_icon('tango_icons/open-with-default-app.png')
                 action_open.setIcon(icon)
                 self.tree_menu.addAction(action_open)
+                # Open path in explorer
+                open_in_explorer_action = data.QAction("Open in explorer", self)
+                def open_in_explorer():
+                    path = item.full_name
+                    try:
+                        result = functions.open_item_in_explorer(path)
+                    except:
+                        result = False
+                    if result == False:
+                        main_form.display.repl_display_error(
+                            "Error opening path in explorer: {}".format(path)
+                        )
+                open_in_explorer_action.setIcon(
+                    functions.create_icon('tango_icons/document-open.png')
+                )
+                open_in_explorer_action.triggered.connect(open_in_explorer)
+                self.tree_menu.addAction(open_in_explorer_action)
                 self.tree_menu.addSeparator()
                 
+                # Copy name to clipboard
                 clipboard_copy_action = data.QAction("Copy file name to clipboard", self)
                 def clipboard_copy():
                     cb = data.application.clipboard()
@@ -334,6 +384,17 @@ class TreeDisplay(data.QTreeView):
                 )
                 clipboard_copy_action.triggered.connect(clipboard_copy)
                 self.tree_menu.addAction(clipboard_copy_action)
+                # Clipboard copy path
+                clipboard_copy_path_action = data.QAction("Copy file path to clipboard", self)
+                def clipboard_copy():
+                    cb = data.application.clipboard()
+                    cb.clear(mode=cb.Clipboard)
+                    cb.setText(item.full_name, mode=cb.Clipboard)
+                clipboard_copy_path_action.setIcon(
+                    functions.create_icon('tango_icons/edit-copy.png')
+                )
+                clipboard_copy_path_action.triggered.connect(clipboard_copy)
+                self.tree_menu.addAction(clipboard_copy_path_action)
                 self.tree_menu.addSeparator()
                 
                 def update_to_parent():
@@ -504,7 +565,7 @@ class TreeDisplay(data.QTreeView):
         self.setUniformRowHeights(True)
         #Add the file attributes to the tree display
         description_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.Keyword[1])
+            data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -522,7 +583,7 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_document_type)
         #Set the label properties
         label_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.SingleQuotedString[1])
+            data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
         )
         label_font = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -740,7 +801,7 @@ class TreeDisplay(data.QTreeView):
         self.setUniformRowHeights(True)
         #Add the file attributes to the tree display
         description_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.Keyword[1])
+            data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -758,7 +819,7 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_document_type)
         #Set the label properties
         label_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.SingleQuotedString[1])
+            data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
         )
         label_font  = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -887,7 +948,7 @@ class TreeDisplay(data.QTreeView):
         self.set_display_type(data.TreeDisplayType.NODES)
         # Set the label properties
         label_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.SingleQuotedString[1])
+            data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
         )
         label_font  = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -995,7 +1056,7 @@ class TreeDisplay(data.QTreeView):
         self.setUniformRowHeights(True)
         # Add the file attributes to the tree display
         description_brush   = data.QBrush(
-            data.QColor(data.theme.Font.Python.Keyword[1])
+            data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font    = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -1044,7 +1105,7 @@ class TreeDisplay(data.QTreeView):
         self.setUniformRowHeights(True)
         #Add the file attributes to the tree display
         description_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.Keyword[1])
+            data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -1062,7 +1123,7 @@ class TreeDisplay(data.QTreeView):
         tree_model.appendRow(item_document_type)
         """Add the nodes"""
         label_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.SingleQuotedString[1])
+            data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
         )
         label_font  = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -1318,8 +1379,7 @@ class TreeDisplay(data.QTreeView):
         show_nim_node(tree_model, None, nim_nodes)
     
     def clean_model(self):
-        return
-        if self.model() != None:
+        if self.model() is not None:
             self.model().setParent(None)
             self.setModel(None)
     
@@ -1336,7 +1396,7 @@ class TreeDisplay(data.QTreeView):
         """Define the description details"""
         #Font
         description_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.Keyword[1])
+            data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font    = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -1375,7 +1435,7 @@ class TreeDisplay(data.QTreeView):
         """Define the description details"""
         #Font
         description_brush = data.QBrush(
-            data.QColor(data.theme.Font.Python.Default[1])
+            data.QColor(data.theme["fonts"]["default"]["color"])
         )
         description_font = data.QFont(
             data.current_font_name, data.current_font_size, data.QFont.Bold
@@ -1414,9 +1474,13 @@ class TreeDisplay(data.QTreeView):
         sorted_directories = []
         sorted_files = []
         for item in items:
-            dir = os.path.dirname(item)
-            if (not dir in sorted_directories):
-                sorted_directories.append(dir)
+            _dir = None
+            if os.path.isdir(item):
+                _dir = item
+            else:
+                _dir = os.path.dirname(item)
+            if (not _dir in sorted_directories):
+                sorted_directories.append(_dir)
             if os.path.isfile(item):
                 sorted_files.append(item)
         #Remove the base directory from the directory list, it is not needed
@@ -1430,21 +1494,25 @@ class TreeDisplay(data.QTreeView):
         return sorted_items
     
     def _add_items_to_tree(self, tree_model, directory, items):
-        """ Helper function for adding files to a tree view """
+        """
+        Helper function for adding files to a tree view
+        """
         #Check if any files were found
         if items != []:
             def add_items(directory, items, thread):
                 #Set the UNIX file format to the directory
                 directory = directory.replace("\\", "/")
-                """Adding the files"""
+                """
+                Adding the files
+                """
                 label_brush = data.QBrush(
-                    data.QColor(data.theme.Font.Python.SingleQuotedString[1])
+                    data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
                 )
                 label_font = data.QFont(
                     data.current_font_name, data.current_font_size, data.QFont.Bold
                 )
                 item_brush = data.QBrush(
-                    data.QColor(data.theme.Font.Python.Default[1])
+                    data.QColor(data.theme["fonts"]["default"]["color"])
                 )
                 item_font = data.get_current_font()
                 #Create the base directory item that will hold all of the found files
@@ -1465,7 +1533,6 @@ class TreeDisplay(data.QTreeView):
                 sorted_items = self._sort_item_list(items, directory)
                 #Loop through the files while creating the directory tree
                 for item_with_path in sorted_items:
-                    
                     if thread.stop_flag:
                         return None
                     
@@ -1552,7 +1619,7 @@ class TreeDisplay(data.QTreeView):
             def completed(directory_base, base_directory):
                 tree_model.appendRow(directory_base)
                 # Check if the TreeDisplay underlying C++ object is alive
-                if self._parent == None:
+                if self._parent is None:
                     return
                 # Expand the base directory item
                 self.expand(directory_base.index())
@@ -1584,13 +1651,13 @@ class TreeDisplay(data.QTreeView):
             directory = directory.replace("\\", "/")
             """Adding the files"""
             label_brush = data.QBrush(
-                data.QColor(data.theme.Font.Python.SingleQuotedString[1])
+                data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
             )
             label_font  = data.QFont(
                 data.current_font_name, data.current_font_size, data.QFont.Bold
             )
             item_brush = data.QBrush(
-                data.QColor(data.theme.Font.Python.Default[1])
+                data.QColor(data.theme["fonts"]["default"]["color"])
             )
             item_font = data.get_current_font()
             #Create the base directory item that will hold all of the found files
@@ -1732,8 +1799,8 @@ class TreeDisplay(data.QTreeView):
                     if self.stop_flag:
                         return
                     base_directory = item[0]
-                    for dir in item[1]:
-                        found_items.append(os.path.join(base_directory, dir).replace("\\", "/"))
+                    for _dir in item[1]:
+                        found_items.append(os.path.join(base_directory, _dir).replace("\\", "/"))
                     for file in item[2]:
                         found_items.append(os.path.join(base_directory, file).replace("\\", "/"))
                 self.finished.emit(found_items)
@@ -1771,24 +1838,113 @@ class TreeDisplay(data.QTreeView):
         #Add the items to the treeview
         self._add_items_to_tree(tree_model, directory, found_files)
     
-    def display_found_files_with_lines(self, search_text, found_files, directory):
+    def display_found_files_with_lines(self,
+                                       search_title,
+                                       search_text,
+                                       search_dir,
+                                       case_sensitive,
+                                       search_subdirs,
+                                       break_on_find,
+                                       file_filter):
         """
         Display files with lines that were found using the 'functions' 
         module's find_in_files function
         """
-        #Check if found files are valid
-        if found_files == None:
-            self.main_form.display.repl_display_message(
-                "Error in finding files!", 
-                message_type=data.MessageType.WARNING
-            )
-            return
-        #Set the tree display type to NODE
+        # Set the tree display type to NODE
         self.set_display_type(data.TreeDisplayType.FILES_WITH_LINES)
-        #Initialize and display the search options
-        tree_model = self._init_found_files_options(search_text, directory)
-        #Add the items with lines to the treeview
-        self._add_items_with_lines_to_tree(tree_model, directory, found_files)
+        # Initialize and display the search options
+        tree_model = self._init_found_files_options(search_title, search_dir)
+        
+        class ProcessThread(data.QThread):
+            finished = data.pyqtSignal(dict)
+            error = data.pyqtSignal(str)
+            stop_flag = False
+                
+            def stop(self):
+                self.stop_flag = True
+            
+            def run(self):
+                # Initialize the list that will hold both the directories and files
+                found_items = functions.find_files_with_text_enum(
+                    search_text,
+                    search_dir,
+                    case_sensitive,
+                    search_subdirs,
+                    break_on_find,
+                    file_filter,
+                )
+                if isinstance(found_items, dict):
+                    self.finished.emit(found_items)
+                else:
+                    self.error.emit(found_items)
+        
+        def reset():
+            # Resize the header so the horizontal scrollbar will have the correct width
+            self.resize_horizontal_scrollbar()
+            # Hide the wait animation
+            if self._parent != None:
+                self._parent._set_wait_animation(self._parent.indexOf(self), False)
+        
+        def completed(found_items):
+            # Check if the TreeDisplay underlying C++ object is alive
+            if self._parent is None:
+                reset()
+                return
+            # Check of the function return is valid
+            if found_items == {}:
+                message = "No files found!"
+                # Check if any files were found
+                self.main_form.display.repl_display_message(
+                    message, 
+                    message_type=data.MessageType.WARNING
+                )
+                self.main_form.display.write_to_statusbar(message, 2000)
+                # Display error in tree widget
+                brush = data.QBrush(
+                    data.QColor(data.theme["fonts"]["error"]["color"])
+                )
+                font = data.QFont(
+                    data.current_font_name, data.current_font_size, data.QFont.Bold
+                )
+                error_item  = data.QStandardItem(message)
+                error_item.setEditable(False)
+                error_item.setForeground(brush)
+                error_item.setFont(font)
+                tree_model.appendRow(error_item)
+                reset()
+                return
+            # Add the items with lines to the treeview
+            self._add_items_with_lines_to_tree(tree_model, search_dir, found_items)
+            reset()
+        
+        def error(message):
+            # Check if any files were found
+            self.main_form.display.repl_display_error(message)
+            self.main_form.display.write_to_statusbar(message, 2000)
+            # Display error in tree widget
+            brush = data.QBrush(
+                data.QColor(data.theme["fonts"]["error"]["color"])
+            )
+            font = data.QFont(
+                data.current_font_name, data.current_font_size, data.QFont.Bold
+            )
+            error_item  = data.QStandardItem(message)
+            error_item.setEditable(False)
+            error_item.setForeground(brush)
+            error_item.setFont(font)
+            tree_model.appendRow(error_item)
+            reset()
+            return
+        
+        if self.worker_thread is not None:
+            self.worker_thread.stop()
+            self.worker_thread.wait()
+        self._parent._set_wait_animation(self._parent.indexOf(self), True)
+        self.worker_thread = ProcessThread()
+        self.worker_thread.setTerminationEnabled(True)
+        self.worker_thread.finished.connect(completed)
+        self.worker_thread.error.connect(error)
+        self.worker_thread.start()
     
     def display_replacements_in_files(self, 
                                       search_text, 
@@ -1935,7 +2091,7 @@ class TreeDisplayBase(data.QTreeView):
     """
     def _create_standard_item(self, text, bold=False, icon=None):
         # Font
-#        brush = data.QBrush(data.QColor(data.theme.Font.Python.Keyword[1]))
+#        brush = data.QBrush(data.QColor(data.theme["fonts"]["keyword"]["color"]))
         font = data.get_current_font()
         font.setBold(bold)
         # Item initialization
@@ -2343,6 +2499,23 @@ class TreeExplorer(TreeDisplayBase):
                 icon = functions.create_icon('tango_icons/open-with-default-app.png')
                 action_open_system.setIcon(icon)
                 self.tree_menu.addAction(action_open_system)
+                # Open path in explorer
+                open_in_explorer_action = data.QAction("Open in explorer", self)
+                def open_in_explorer():
+                    path = item.attributes.path
+                    try:
+                        result = functions.open_item_in_explorer(path)
+                    except:
+                        result = False
+                    if result == False:
+                        main_form.display.repl_display_error(
+                            "Error opening path in explorer: {}".format(path)
+                        )
+                open_in_explorer_action.setIcon(
+                    functions.create_icon('tango_icons/document-open.png')
+                )
+                open_in_explorer_action.triggered.connect(open_in_explorer)
+                self.tree_menu.addAction(open_in_explorer_action)
             elif item.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
                 action_open_system = data.QAction("Open in explorer", self.tree_menu)
                 action_open_system.triggered.connect(open_system)
@@ -2895,6 +3068,10 @@ class TreeExplorer(TreeDisplayBase):
             for i in lst:
                 base_item.appendRow(i)
         except:
+            self.main_form.display.repl_display_message(
+                traceback.format_exc(),
+                message_type=data.MessageType.ERROR
+            )
             self.main_form.display.repl_display_message(
                 "Error while parsing directory:\n  '{}'".format(
                     directory),

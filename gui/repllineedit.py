@@ -94,10 +94,10 @@ class ReplLineEdit(data.QLineEdit):
                 background-color: {};
             }}
         """.format(
-                 data.theme.Font.DefaultHtml,
-                 data.theme.Indication.PassiveBackGround,
-                 data.theme.Font.DefaultHtml,
-                 data.theme.Indication.ActiveBackGround,
+                 data.theme["fonts"]["default"]["color"],
+                 data.theme["indication"]["passivebackground"],
+                 data.theme["fonts"]["default"]["color"],
+                 data.theme["indication"]["activebackground"],
         ))
     
     def indication_set(self):

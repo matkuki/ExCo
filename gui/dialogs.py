@@ -75,7 +75,7 @@ class YesNoDialog(data.QDialog):
             painter.drawPixmap(0, 0, self.pixmap)
             
             if opacity < 0.5:
-                painter.setPen(data.theme.Font.Default)
+                painter.setPen(data.QColor(data.theme["fonts"]["default"]["color"]))
             else:
                 painter.setPen(data.QColor(255, 255, 255))
             painter.setFont(
@@ -158,9 +158,9 @@ class YesNoDialog(data.QDialog):
             (123,28), 
             30, 
             1.0, 
-            fill_color=data.theme.YesNoDialog_Background,
+            fill_color=data.QColor(data.theme["yesnodialog-background"]),
             line_width=3,
-            line_color=data.theme.YesNoDialog_Edge,
+            line_color=data.QColor(data.theme["yesnodialog-edge"]),
         )
         hex_builder.create_grid(
             True,2,2,3,4,0,5,3,(3,True),5,0,0,4,3 # YesNoDialog
@@ -243,11 +243,7 @@ class YesNoDialog(data.QDialog):
         self.label.setWordWrap(True)
         self.label.setAlignment(data.Qt.AlignCenter)
         self.label.setStyleSheet(
-            'color: rgb({}, {}, {})'.format(
-                data.theme.Font.Default.red(),
-                data.theme.Font.Default.green(),
-                data.theme.Font.Default.blue(),
-            )
+            'color: {};'.format(data.theme["fonts"]["default"]["color"])
         )
         self.label.setText(text)
         width_diff = self.image.rect().width() - original_dialog_image.width()
@@ -444,9 +440,9 @@ class OkDialog(YesNoDialog):
             (123,28), 
             30, 
             1.0, 
-            fill_color=data.theme.YesNoDialog_Background,
+            fill_color=data.QColor(data.theme["yesnodialog-background"]),
             line_width=3,
-            line_color=data.theme.YesNoDialog_Edge,
+            line_color=data.QColor(data.theme["yesnodialog-edge"]),
         )
         hex_builder.create_grid(
             False,2,2,3,4,0,5,3,(3,True),5,0,0,4,3 # OkDialog
@@ -529,11 +525,7 @@ class OkDialog(YesNoDialog):
         self.label.setWordWrap(True)
         self.label.setAlignment(data.Qt.AlignCenter)
         self.label.setStyleSheet(
-            'color: rgb({}, {}, {})'.format(
-                data.theme.Font.Default.red(),
-                data.theme.Font.Default.green(),
-                data.theme.Font.Default.blue(),
-            )
+            'color: {};'.format(data.theme["fonts"]["default"]["color"])
         )
         self.label.setText(text)
         width_diff = self.image.rect().width() - original_dialog_image.width()

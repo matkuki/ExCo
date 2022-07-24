@@ -84,17 +84,17 @@ class PlainEditor(BaseEditor):
         self._parent = parent
         self.main_form = main_form
         # Set font family and size
-        self.setFont(settings.Editor.font)
+        self.setFont(data.get_editor_font())
         # Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(settings.Editor.end_of_line_mode)
+        self.setEolMode(settings.editor['end_of_line_mode'])
         # Initialize the namespace references
         self.hotspots = components.Hotspots()
         # Set the initial zoom factor
-        self.zoomTo(settings.Editor.zoom_factor)
+        self.zoomTo(settings.editor['zoom_factor'])
         # Set the theme
         self.set_theme(data.theme)
     
@@ -107,15 +107,6 @@ class PlainEditor(BaseEditor):
             "Clear messages",
             clear
         )
-    
-    def delete_context_menu(self):
-        # Clean up the context menu
-        if self.context_menu != None:
-            self.context_menu.hide()
-            for b in self.context_menu.button_list:
-                b.setParent(None)
-            self.context_menu.setParent(None)
-            self.context_menu = None
     
     def contextMenuEvent(self, event):
         # Built-in context menu

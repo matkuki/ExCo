@@ -43,11 +43,7 @@ class Nim(data.QsciLexerCustom):
         "MultilineDocumentation" : 19
     }
     
-    #Class variables
-    default_color       = data.QColor(data.theme.Font.Nim.Default[1])
-    default_paper       = data.QColor(data.theme.Paper.Nim.Default)
-    default_font        = data.QFont(data.current_font_name, data.current_font_size)
-    #Basic keywords and built-in procedures and templates
+    # Basic keywords and built-in procedures and templates
     basic_keyword_list  = [
         "as", "atomic", "bind", "sizeof", 
         "break", "case", "continue", "converter",
@@ -128,9 +124,9 @@ class Nim(data.QsciLexerCustom):
         #Initialize superclass
         super().__init__()
         #Set the default style values
-        self.setDefaultColor(self.default_color)
-        self.setDefaultPaper(self.default_paper)
-        self.setDefaultFont(self.default_font)
+        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultFont(data.get_editor_font())
         #Reset autoindentation style
         self.setAutoIndentStyle(0)
         #Set the theme
@@ -156,14 +152,14 @@ class Nim(data.QsciLexerCustom):
         return data.QFont(data.current_font_name, data.current_font_size)
     
     def set_theme(self, theme):
-        for style in self.styles.keys():
+        for style in self.styles:
             # Papers
             self.setPaper(
-                data.QColor(theme.Paper.Nim.Default), 
+                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
                 self.styles[style]
             )
             # Fonts
-            set_font(self, style, getattr(theme.Font.Nim, style))
+            lexers.set_font(self, style, theme["fonts"][style.lower()])
         
     
     def styleText(self, start, end):

@@ -54,7 +54,7 @@ class HexBuilder:
     
     def __init__(self, 
                  painter, 
-                 first_position, 
+                 first_position,
                  edge_length, 
                  scale=1.0,
                  fill_color=data.QColor(255,255,255),

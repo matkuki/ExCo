@@ -1,0 +1,427 @@
+# -*- coding: utf-8 -*-
+
+"""
+Copyright (c) 2013-2022 Matic Kukovec. 
+Released under the GNU GPL3 license.
+
+For more information check the 'LICENSE.txt' file.
+For complete license information of the dependencies, check the 'additional_licenses' directory.
+"""
+
+
+##  FILE DESCRIPTION:
+##      Module used to save, load, ... settings of Ex.Co.
+
+import os
+import os.path
+import json
+import pprint
+import traceback
+import data
+import themes
+import settings.constants
+import settings.functions
+import settings.old.settings as oldsettings
+import functions
+
+
+# Editor settings
+editor = settings.constants.editor["default"].copy()
+# Keyboard shortcuts
+keyboard_shortcuts = settings.constants.keyboard_shortcuts["default"].copy()
+
+
+"""
+-------------------------------------------
+Object for manipulating settings/sessions
+-------------------------------------------
+"""
+class SettingsFileManipulator:
+    """
+    Object that will be used for saving, loading, ... all of the Ex.Co. settings
+    """
+    settings_filename_with_path = None
+    directories = {
+        "application": None,
+        "resources": None,
+    }
+    max_number_of_recent_files = 100
+    recent_files = []
+    stored_sessions = {}
+    context_menu_functions = {}
+    error_lock = False
+    # General settings
+    main_window_side = data.MainWindowSide.RIGHT
+    theme = None
+    data_variables = (
+        "terminal",
+        "tree_display_icon_size",
+        "current_font_name",
+        "current_font_size",
+        "current_editor_font_name",
+        "current_editor_font_size",
+    )
+    
+    def __init__(self):
+        # Assign the application directory
+        self.directories["application"] = data.application_directory
+        self.directories["resources"] = data.resources_directory
+        # Create the settings file path
+        functions.create_directory(data.settings_directory)
+        self.settings_filename_with_path = functions.unixify_join(
+            data.settings_directory,
+            data.settings_filename["mark-1"]
+        )
+        # Initialize an empty sessions list
+        self.stored_sessions = {
+            "main": self.create_empty_session_group()
+        }
+        # Check if the settings file exists
+        if self.check_settings_file() == None:
+            old_file = settings_filename_with_path = functions.unixify_join(
+                data.settings_directory,
+                data.settings_filename["mark-0"]
+            )
+            if os.path.isfile(old_file):
+                old_data = oldsettings.parse_settings_file(old_file)
+                for k,v in old_data["sessions"].items():
+                    v["Name"] = k
+                self.write_settings_file(
+                    old_data["main_window_side"],
+                    old_data["theme"],
+                    old_data["recent_files"],
+                    old_data["sessions"],
+                    old_data["context_menu_functions"],
+                )
+            else:
+                self.write_settings_file(
+                    data.MainWindowSide.LEFT,
+                    "Air",
+                    self.recent_files,
+                    self.stored_sessions,
+                    self.context_menu_functions
+                )
+        # Load the settings from the settings file
+        self.load_settings()
+    
+    def check_settings_file(self):
+        """Check if the settings file exists"""
+        return functions.test_text_file(self.settings_filename_with_path)
+    
+    def create_settings_file(self, settings_data):
+        """Create the settings file"""
+        functions.write_json_file(
+            self.settings_filename_with_path,
+            settings_data
+        )
+    
+    def write_settings_file(self,
+                            main_window_side,
+                            theme,
+                            recent_files,
+                            stored_sessions,
+                            context_menu_functions):
+        settings_data = {
+            "main_window_side": main_window_side,
+            "theme": theme["name"],
+            "recent_files": recent_files,
+            "stored_sessions": stored_sessions,
+            "context_menu_functions": context_menu_functions,
+            "editor": editor,
+            "keyboard_shortcuts": keyboard_shortcuts,
+        }
+        for dv in self.data_variables:
+            settings_data[dv] = getattr(data, dv)
+        
+        # Save settings data to disk
+        self.create_settings_file(settings_data)
+    
+    def save_settings(self, 
+                      main_window_side, 
+                      theme,
+                      context_menu_functions=None):
+        """
+        Save all settings to the settings file
+        """
+        if self.error_lock == True:
+            return
+        if context_menu_functions == None:
+            context_menu_functions = self.context_menu_functions
+        else:
+            self.context_menu_functions = context_menu_functions
+        self.write_settings_file(
+            main_window_side,
+            theme,
+            self.recent_files,
+            self.stored_sessions,
+            context_menu_functions
+        )
+    
+    def update_recent_files(self):
+        """Update only the recent file list in settings file"""
+        if self.error_lock == True:
+            return
+        settings_data = functions.load_json_file(
+            self.settings_filename_with_path
+        )
+        # Update only the recent file list
+        stored_sessions = settings_data["stored_sessions"]
+        # Save the updated settings
+        self.write_settings_file(
+            settings_data["main_window_side"],
+            data.theme,
+            self.recent_files,
+            stored_sessions,
+            self.context_menu_functions
+        )
+    
+    def load_settings(self):
+        """Load all setting from the settings file"""
+        try:
+            settings_data = functions.load_json_file(
+                self.settings_filename_with_path
+            )
+            # Main window side
+            self.main_window_side = settings_data["main_window_side"]
+            # Theme
+            self.theme = themes.get(settings_data["theme"])
+            data.theme = self.theme
+            # Recent files
+            self.recent_files = settings_data["recent_files"]
+            # Sessions
+            self.stored_sessions = settings_data["stored_sessions"]
+            # Load custom context menu functions
+            if "context_menu_functions" in settings_data.keys():
+                self.context_menu_functions = settings_data["context_menu_functions"]
+            else:
+                self.context_menu_functions = {}
+            # Check if old-style session file
+            if self.check_old_style_sessions():
+                self.write_settings_file(
+                    self.main_window_side,
+                    data.theme,
+                    self.recent_files,
+                    self.stored_sessions,
+                    self.context_menu_functions
+                )
+            # Return success
+            return True
+        except:
+            traceback.print_exc()
+            # Set the default settings values
+            self.main_window_side = data.MainWindowSide.LEFT
+            self.theme = themes.get("Air")
+            data.theme = self.theme
+            self.recent_files = []
+            self.stored_sessions = {}
+            self.context_menu_functions = {}
+            # Set the error flag
+            self.error_lock = True
+            # Return error
+            return False
+        
+    
+    def check_old_style_sessions(self):
+        if "main" not in self.stored_sessions.keys():
+            new_sessions = {
+                "main": {
+                    "name": "main",
+                    "chain": [],
+                    "groups": {},
+                    "sessions": {},
+                }
+            }
+            for k,v in sorted(self.stored_sessions.items(), key=lambda x: x[0].lower()):
+                group = new_sessions["main"]
+                for g in v["Group"]:
+                    if g not in group["groups"].keys():
+                        group["groups"][g] = {
+                            "name": g,
+                            "chain": [],
+                            "groups": {},
+                            "sessions": {},
+                        }
+                        if group["chain"] is not None:
+                            for x in group["chain"]:
+                                group["groups"][g]["chain"].append(x)
+                        group["groups"][g]["chain"].append(g)
+                    group = group["groups"][g]
+                if k not in group["sessions"].keys():
+                    group["sessions"][k] = {
+                        "name": k,
+                        "chain": [],
+                        "main-window-files": v["Main window files"],
+                        "upper-window-files": v["Upper window files"],
+                        "lower-window-files": v["Lower window files"],
+                    }
+                    if group["chain"] is not None:
+                        for x in group["chain"]:
+                            group["sessions"][k]["chain"].append(x)
+            self.stored_sessions = new_sessions
+            return True
+        return False
+    
+    def create_empty_session(self,
+                             name="",
+                             chain=[],
+                             main_window_files=[],
+                             upper_window_files=[],
+                             lower_window_files=[]):
+        return {
+            "name": name,
+            "chain": chain,
+            "main-window-files": main_window_files,
+            "upper-window-files": upper_window_files,
+            "lower-window-files": lower_window_files,
+        }
+    
+    def create_empty_session_group(self,
+                                   name="",
+                                   chain=[],
+                                   groups={},
+                                   sessions={}):
+        return {
+            "name": name,
+            "chain": chain,
+            "groups": groups,
+            "sessions": sessions
+        }
+    
+    def add_session(self, 
+                    session_name, 
+                    session_group_chain, 
+                    main, 
+                    upper, 
+                    lower):
+        """
+        Add a new session to the stored session list
+        """
+        # Create the new session object
+        new_session = self.create_empty_session(
+            name=session_name,
+            chain=session_group_chain,
+            main_window_files=main,
+            upper_window_files=upper,
+            lower_window_files=lower
+        )
+        # Add/replace the session in the dictionary
+        group = self.stored_sessions["main"]
+        for c in new_session["chain"]:
+            group = group["groups"][c]
+        group["sessions"][session_name] = new_session
+        # Save the new settings
+        self.save_settings(self.main_window_side, self.theme)
+    
+    def add_group(self, group_name, group_chain):
+        """
+        Add a new group to the stored session list
+        """
+        # Create the new group object
+        new_group = self.create_empty_session_group(
+            name=group_name,
+            chain=group_chain,
+            groups={},
+            sessions={}
+        )
+        # Add/replace the session in the dictionary
+        group = self.stored_sessions["main"]
+        for c in group_chain:
+            group = group["groups"][c]
+        group["groups"][group_name] = new_group
+        # Save the new settings
+        self.save_settings(self.main_window_side, self.theme)
+
+    def remove_session(self, session_to_remove):
+        """
+        Remove a session from the stored session list
+        """
+        group = self.stored_sessions["main"]
+        for c in session_to_remove["chain"]:
+            group = group["groups"][c]
+        if session_to_remove["name"] in group["sessions"].keys():
+            # Remove the session from the stored session list
+            group["sessions"].pop(session_to_remove["name"])
+            # Save the new settings
+            self.save_settings(self.main_window_side, self.theme)
+            return True
+        # Signal that the session was not removed
+        return False
+    
+    def remove_group(self, remove_group):
+        """
+        Remove an entire group from the stored session list
+        """
+        group = self.stored_sessions["main"]
+        if len(remove_group["chain"]) > 0:
+            for c in remove_group["chain"]:
+                group = group["groups"][c]
+        if remove_group["name"] in group["groups"].keys():
+            # Remove the session from the stored session list
+            group["groups"].pop(remove_group["name"])
+            # Save the new settings
+            self.save_settings(self.main_window_side, self.theme)
+            return True
+        # Signal that the group was not removed
+        return False
+    
+    def sort_sessions(self):
+        """
+        Sort the stored sessions alphabetically by name
+        """
+        # Create a new empty dict
+        sorted_sessions = {}
+        # Add sorted keys
+        for k in sorted(self.stored_sessions.keys(), key=lambda x: x.lower()):
+            sorted_sessions[k] = self.stored_sessions[k]
+        # Sort the stored sessions
+        self.stored_sessions = sorted_sessions
+    
+    def get_session(self, name, chain):
+        session = None
+        group = self.stored_sessions["main"]
+        for c in chain:
+            group = group["groups"][c]
+        if name in group["sessions"].keys():
+            session = group["sessions"][name]
+        return session
+    
+    def get_group(self, chain):
+        group = self.stored_sessions["main"]
+        for c in chain:
+            group = group["groups"][c]
+        return group
+    
+    def rename_group(self, group, new_group_name):
+        def rename_first_group(grp, new_name, in_level):
+            grp["chain"][in_level] = new_name
+            for k,v in grp["groups"].items():
+                rename_first_group(v, new_name, in_level)
+            for k,v in grp["sessions"].items():
+                v["chain"][in_level] = new_name
+        level = len(group["chain"]) - 1
+        rename_first_group(group, new_group_name, level)
+        group["name"] = new_group_name
+
+    def add_recent_file(self, new_file):
+        """Add a new file to the recent file list"""
+        # Replace back-slashes to forward-slashes on Windows
+        if data.platform == "Windows":
+            new_file = new_file.replace("\\", "/")
+        # Check recent files list length
+        while len(self.recent_files) > self.max_number_of_recent_files:
+            # The recent files list is to long
+            self.recent_files.pop(0)
+        # Check if he new file is already in the list
+        if new_file in self.recent_files:
+            # Check if the file is already at the top
+            if self.recent_files.index(new_file) == (self.max_number_of_recent_files-1):
+                return
+            # Remove the old file with the same name as the new file from the list
+            self.recent_files.pop(self.recent_files.index(new_file))
+            # Add the new file to the end of the list
+            self.recent_files.append(new_file)
+        else:
+            # The new file is not in the list, append it to the end of the list
+            self.recent_files.append(new_file)
+        # Save the new settings
+        self.update_recent_files()

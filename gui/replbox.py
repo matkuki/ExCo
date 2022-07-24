@@ -82,11 +82,11 @@ class ReplBox(data.QGroupBox):
     
     def set_style(self, indicated):
         if indicated:
-            background = data.theme.Indication.ActiveBackGround
-            border = data.theme.Indication.ActiveBorder
+            background = data.theme["indication"]["activebackground"]
+            border = data.theme["indication"]["activeborder"]
         else:
-            background = data.theme.Indication.PassiveBackGround
-            border = data.theme.Indication.PassiveBorder
+            background = data.theme["indication"]["passivebackground"]
+            border = data.theme["indication"]["passiveborder"]
         self.setStyleSheet("""
             #REPL_Box {{
                 font-size: 8pt;
@@ -113,9 +113,9 @@ class ReplBox(data.QGroupBox):
             }}
         """.format(
                  border,
-                 data.theme.Indication.PassiveBackGround,
+                 data.theme["indication"]["passivebackground"],
                  border,
-                 data.theme.Indication.ActiveBorder,
+                 data.theme["indication"]["activeborder"],
         ))
         
         

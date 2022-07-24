@@ -111,7 +111,7 @@ class SettingsGuiManipulator(data.QGroupBox):
                     (width/2, height/2), 
                     self.DEFAULT_SIZE, 
                     self.scale_factor, 
-                    fill_color=data.theme.Settings_Hex_Background,
+                    fill_color=data.QColor(data.theme["settings-hex-background"]),
                     line_width=2,
                     line_color=data.QColor(64,64,64),
                 )
@@ -480,7 +480,7 @@ class SettingsGuiManipulator(data.QGroupBox):
     
     @staticmethod
     def check_theme_state():
-        return SettingsGuiManipulator.theme_name != data.theme.name
+        return SettingsGuiManipulator.theme_name != data.theme["name"]
     
     @staticmethod
     def create_background_image(in_scale=1.0):
@@ -492,10 +492,10 @@ class SettingsGuiManipulator(data.QGroupBox):
             scale = in_scale
             edge_length = 27
             scaled_edge_diff = (edge_length - (edge_length * scale)) / edge_length
-            back_color = data.theme.Settings_Background
-            edge_color = data.QColor(data.theme.Settings_Hex_Edge)
+            back_color = data.QColor(data.theme["settings-background"])
+            edge_color = data.QColor(data.theme["settings-hex-edge"])
             
-            SettingsGuiManipulator.theme_name = data.theme.name
+            SettingsGuiManipulator.theme_name = data.theme["name"]
             
             def add_offset(offset):
                 x_add = 64.0
@@ -540,7 +540,7 @@ class SettingsGuiManipulator(data.QGroupBox):
                 offset, 
                 edge_length, 
                 scale, 
-                fill_color=data.theme.Settings_Label_Background,
+                fill_color=data.QColor(data.theme["settings-label-background"]),
                 line_width=3,
                 line_color=data.QColor(146,146,146),
             )
@@ -712,11 +712,7 @@ class SettingsGuiManipulator(data.QGroupBox):
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setStyleSheet(
-            'color: rgb({}, {}, {})'.format(
-                data.theme.Font.Default.red(),
-                data.theme.Font.Default.green(),
-                data.theme.Font.Default.blue(),
-            )
+            'color: rgb({}, {}, {})'.format(data.theme["fonts"]["default"]["color"])
         )
         self.display_label.setAlignment(
             data.Qt.AlignHCenter | data.Qt.AlignVCenter
@@ -817,11 +813,11 @@ class SettingsGuiManipulator(data.QGroupBox):
                     key_combination=b_keys,
                     func=None
                 )
-                if settings.Keys.check_combination(b_keys):
+                if settings.functions.check_shortcut_combination(b_keys):
                     buttons.append(
                         (b_name, b_icon, b_keys, mef, mlf)
                     )
-                elif settings.Editor.Keys.check_combination(b_keys):
+                elif settings.functions.check_shortcut_combination(b_keys):
                     editor_buttons.append(
                         (b_name, b_icon, b_keys, mef, mlf)
                     )

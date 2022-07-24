@@ -20,7 +20,7 @@ import os
 import argparse
 import data
 import components
-import gui
+import gui.mainwindow
 
 
 def parse_arguments():
@@ -122,7 +122,7 @@ def main():
         data.current_font_size,
     )
     # Create the main window, pass the filename that may have been passed as an argument
-    main_window = gui.MainWindow(
+    main_window = gui.mainwindow.MainWindow(
         new_document = options.new_document, 
         logging=data.logging_mode, 
         file_arguments=file_arguments

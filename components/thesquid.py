@@ -9,13 +9,12 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import data
-import functions
-import gui
 import re
 import math
 import typing
-
+import data
+import functions
+import gui.treedisplays
 from .customstyle import *
 
 
@@ -98,7 +97,7 @@ class TheSquid:
                         )
                 if hasattr(window.widget(i), "icon_manipulator"):
                     window.widget(i).icon_manipulator.restyle_corner_button_icons()
-                if isinstance(window.widget(i), gui.TreeDisplayBase):
+                if isinstance(window.widget(i), gui.treedisplays.TreeDisplayBase):
                     window.widget(i).update_styles()
     
     @staticmethod

@@ -20,9 +20,9 @@ class StyleSheetScrollbar:
     def horizontal():
         width = 10
         height = 10
-        color_background = data.theme.ScrollBar.background
-        color_handle = data.theme.ScrollBar.handle
-        color_handle_hover = data.theme.ScrollBar.handle_hover
+        color_background = data.theme["scrollbar"]["background"]
+        color_handle = data.theme["scrollbar"]["handle"]
+        color_handle_hover = data.theme["scrollbar"]["handle-hover"]
         style_sheet = """
             QScrollBar:horizontal {{
                 border: none;
@@ -61,9 +61,9 @@ class StyleSheetScrollbar:
     def vertical():
         width = 10
         height = 10
-        color_background = data.theme.ScrollBar.background
-        color_handle = data.theme.ScrollBar.handle
-        color_handle_hover = data.theme.ScrollBar.handle_hover
+        color_background = data.theme["scrollbar"]["background"]
+        color_handle = data.theme["scrollbar"]["handle"]
+        color_handle_hover = data.theme["scrollbar"]["handle-hover"]
         style_sheet = """
             QScrollBar:vertical {{
                 border: none;
@@ -105,4 +105,27 @@ class StyleSheetScrollbar:
             StyleSheetScrollbar.horizontal() +
             StyleSheetScrollbar.vertical()
         )
+        return style_sheet
+
+class StyleSheetButton:
+    @staticmethod
+    def standard():
+        style_sheet = f"""
+            QPushButton {{
+                background-color: {data.theme["indication"]["passivebackground"]};
+                color: {data.theme["indication"]["font"]};
+                border: 1px solid {data.theme["indication"]["passiveborder"]};
+                border-radius: 4px;
+            }}
+            QPushButton:hover {{
+                background-color: {data.theme["indication"]["hover"]};
+                color: {data.theme["indication"]["font"]};
+                border: 1px solid {data.theme["indication"]["activeborder"]};
+            }}
+            QPushButton:pressed {{
+                background-color: {data.theme["indication"]["activebackground"]};
+                color: {data.theme["indication"]["font"]};
+                border: 1px solid {data.theme["indication"]["activeborder"]};
+            }}
+        """
         return style_sheet

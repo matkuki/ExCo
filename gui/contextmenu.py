@@ -27,7 +27,7 @@ import functions
 import data
 import components
 import themes
-from .custombuttons import CustomButton
+from .custombuttons import *
 
 
 """
@@ -48,7 +48,7 @@ class ContextMenu(data.QGroupBox):
             p = self.palette()
             p.setColor(
                 self.backgroundRole(), 
-                data.theme.Context_Menu_Background
+                data.QColor(data.theme["context-menu-background"])
             )
             self.setPalette(p)
         
@@ -65,18 +65,18 @@ class ContextMenu(data.QGroupBox):
             button = event.button()
             if button == data.Qt.LeftButton:
                 # Execute the function if it was initialized
-                if self.function != None:
-                    if components.ActionFilter.click_drag_action != None:
+                if self.function is not None:
+                    if components.ActionFilter.click_drag_action is not None:
                         function_name = components.ActionFilter.click_drag_action.function.__name__
 #                        print(self.number, function_name)
                         if self._parent.functions_type == "standard":
-                            ContextMenu.standard_buttons[self.number] = function_name
+                            ContextMenu.standard_buttons[str(self.number)] = function_name
                         elif self._parent.functions_type == "plain":
-                            ContextMenu.standard_buttons[self.number] = function_name
+                            ContextMenu.standard_buttons[str(self.number)] = function_name
                         elif self._parent.functions_type == "horizontal":
-                            ContextMenu.horizontal_buttons[self.number] = function_name
+                            ContextMenu.horizontal_buttons[str(self.number)] = function_name
                         elif self._parent.functions_type == "special":
-                            ContextMenu.special_buttons[self.number] = function_name
+                            ContextMenu.special_buttons[str(self.number)] = function_name
                         # Show the newly added function
                         message = "Added function '{}' at button number {}".format(
                             components.ActionFilter.click_drag_action.text(),
@@ -170,59 +170,59 @@ class ContextMenu(data.QGroupBox):
         (94, 0, 25),
     ]
     standard_buttons = {
-        0: "copy",
-        1: "cut",
-        2: "paste",
-        3: "line_copy",
-        4: "undo",
-        5: "redo",
-        6: "line_duplicate",
-        7: "line_transpose",
-        8: "line_cut",
-        9: "line_delete",
-        10: "select_all",
-        11: "special_to_uppercase",
-        12: "special_to_lowercase",
-        13: "show_edge",
-        14: "toggle_line_endings",
-        15: "goto_to_end",
-        16: "goto_to_start",
-        17: "special_indent_to_cursor",
-        18: "reset_zoom",
+        "0": "copy",
+        "1": "cut",
+        "2": "paste",
+        "3": "line_copy",
+        "4": "undo",
+        "5": "redo",
+        "6": "line_duplicate",
+        "7": "line_transpose",
+        "8": "line_cut",
+        "9": "line_delete",
+        "10": "select_all",
+        "11": "special_to_uppercase",
+        "12": "special_to_lowercase",
+        "13": "show_edge",
+        "14": "toggle_line_endings",
+        "15": "goto_to_end",
+        "16": "goto_to_start",
+        "17": "special_indent_to_cursor",
+        "18": "open_in_browser",
     }
     # A Copy for when the functions need to be reset
     stored_standard_buttons = dict(standard_buttons) # or standard_buttons[:]
     special_buttons = {
-        0: "copy",
-        1: "cut",
-        2: "paste",
-        3: "line_copy",
-        4: "undo",
-        5: "redo",
-        6: "line_duplicate",
-        7: "line_transpose",
-        8: "line_cut",
-        9: "line_delete",
-        10: "select_all",
-        11: "special_to_uppercase",
-        12: "special_to_lowercase",
-        13: "comment_uncomment",
-        14: "toggle_line_endings",
-        15: "goto_to_end",
-        16: "goto_to_start",
-        17: "special_indent_to_cursor",
-        18: "create_node_tree",
+        "0": "copy",
+        "1": "cut",
+        "2": "paste",
+        "3": "line_copy",
+        "4": "undo",
+        "5": "redo",
+        "6": "line_duplicate",
+        "7": "open_in_browser",
+        "8": "line_cut",
+        "9": "line_delete",
+        "10": "select_all",
+        "11": "special_to_uppercase",
+        "12": "special_to_lowercase",
+        "13": "comment_uncomment",
+        "14": "toggle_line_endings",
+        "15": "goto_to_end",
+        "16": "goto_to_start",
+        "17": "special_indent_to_cursor",
+        "18": "create_node_tree",
     }
     # A Copy for when the functions need to be reset
     stored_special_buttons = dict(special_buttons) # or special_buttons[:]
     horizontal_buttons = {
-        19: "copy",
-        20: "cut",
-        21: "paste",
-        22: "comment_uncomment",
-        23: "undo",
-        24: "redo",
-        25: "line_duplicate",
+        "19": "copy",
+        "20": "cut",
+        "21": "paste",
+        "22": "comment_uncomment",
+        "23": "undo",
+        "24": "redo",
+        "25": "line_duplicate",
     }
     # A Copy for when the functions need to be reset
     stored_horizontal_buttons = dict(horizontal_buttons) # or horizontal_buttons[:]
@@ -255,6 +255,7 @@ class ContextMenu(data.QGroupBox):
         self.setGeometry(
             functions.create_rect(0, 0, width, height)
         )
+        self.update_style()
     
     @staticmethod
     def reset_functions():
@@ -325,7 +326,7 @@ class ContextMenu(data.QGroupBox):
     def mousePressEvent(self, event):
         button = event.button()
         super().mousePressEvent(event)
-        self.hide()
+        self.parent().delete_context_menu()
     
     def add_buttons(self, buttons):
         """
@@ -361,31 +362,31 @@ class ContextMenu(data.QGroupBox):
             outer_buttons=False,
             horizontal_buttons=True
         )
-        buttons = [ContextMenu.horizontal_buttons[x] for x in range(19, 26)]
+        buttons = [ContextMenu.horizontal_buttons[str(x)] for x in range(19, 26)]
         # Add the buttons
         self.button_list = []
         self.add_horizontal_buttons(buttons)
         self.functions_type = "horizontal"
     
     def create_multiline_repl_buttons(self):
-        inner_buttons = [ContextMenu.horizontal_buttons[x] for x in range(19, 26)]
+        inner_buttons = [ContextMenu.horizontal_buttons[str(x)] for x in range(19, 26)]
         self.create_buttons(inner_buttons)
         self.functions_type = "horizontal"
     
     def create_plain_buttons(self):
-        inner_buttons = [ContextMenu.standard_buttons[x] for x in range(7)]
+        inner_buttons = [ContextMenu.standard_buttons[str(x)] for x in range(7)]
         self.create_buttons(inner_buttons)
         self.functions_type = "plain"
     
     def create_standard_buttons(self):
-        inner_buttons = [ContextMenu.standard_buttons[x] for x in range(7)]
-        outer_buttons = [ContextMenu.standard_buttons[x] for x in range(7, len(ContextMenu.standard_buttons))]
+        inner_buttons = [ContextMenu.standard_buttons[str(x)] for x in range(7)]
+        outer_buttons = [ContextMenu.standard_buttons[str(x)] for x in range(7, len(ContextMenu.standard_buttons))]
         self.create_buttons(inner_buttons, outer_buttons)
         self.functions_type = "standard"
     
     def create_special_buttons(self):
-        inner_buttons = [ContextMenu.special_buttons[x] for x in range(7)]
-        outer_buttons = [ContextMenu.special_buttons[x] for x in range(7, len(ContextMenu.standard_buttons))]
+        inner_buttons = [ContextMenu.special_buttons[str(x)] for x in range(7)]
+        outer_buttons = [ContextMenu.special_buttons[str(x)] for x in range(7, len(ContextMenu.standard_buttons))]
         self.create_buttons(inner_buttons, outer_buttons)
         self.functions_type = "special"
     
@@ -434,6 +435,25 @@ class ContextMenu(data.QGroupBox):
                     (ContextMenu.function_list[button], positions[i])
                 )
         self.add_buttons(buttons)
+    
+    def update_style(self):
+        self.setStyleSheet(f"""
+            QGroupBox {{
+                /*
+                background-color: {data.theme["fonts"]["default"]["background"]};
+                */
+                background-color: transparent;
+                color: {data.theme["fonts"]["default"]["color"]};
+                border: 1px solid {data.theme["indication"]["passiveborder"]};
+                margin: 0px;
+                padding: 0px;
+                spacing: 0px;
+            }}
+            QLabel {{
+                background-color: {data.theme["fonts"]["default"]["background"]};
+                color: {data.theme["fonts"]["default"]["color"]};
+            }}
+        """)
     
     def show(self):
         super().show()

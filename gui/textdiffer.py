@@ -122,9 +122,9 @@ class TextDiffer(data.QWidget):
         # Initialize components
         self.icon_manipulator = components.IconManipulator(self, parent)
         # Initialize colors according to theme
-        self.Indicator_Unique_1_Color = data.theme.TextDifferColors.Indicator_Unique_1_Color
-        self.Indicator_Unique_2_Color = data.theme.TextDifferColors.Indicator_Unique_2_Color
-        self.Indicator_Similar_Color = data.theme.TextDifferColors.Indicator_Similar_Color
+        self.Indicator_Unique_1_Color = data.QColor(data.theme["textdiffercolors"]["indicator-unique-1-color"])
+        self.Indicator_Unique_2_Color = data.QColor(data.theme["textdiffercolors"]["indicator-unique-2-color"])
+        self.Indicator_Similar_Color = data.QColor(data.theme["textdiffercolors"]["indicator-similar-color"])
         # Store the reference to the parent
         self._parent = parent
         # Store the reference to the main form
@@ -466,7 +466,7 @@ class TextDiffer(data.QWidget):
         editor.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
         editor.setMatchedBraceBackgroundColor(data.QColor(255, 153, 0))
         editor.setAcceptDrops(False)
-        editor.setEolMode(settings.Editor.end_of_line_mode)
+        editor.setEolMode(settings.editor['end_of_line_mode'])
         editor.setReadOnly(True)
         editor.savable = data.CanSave.NO
     
@@ -765,28 +765,28 @@ class TextDiffer(data.QWidget):
     
     def set_theme(self, theme):
         def set_editor_theme(editor):
-            if theme == themes.Air:
+            if theme["name"] == "Air":
                 editor.resetFoldMarginColors()
-            elif theme == themes.Earth:
+            elif theme["name"] == "Earth":
                 editor.setFoldMarginColors(
-                    theme.FoldMargin.ForeGround, 
-                    theme.FoldMargin.BackGround
+                    data.QColor(theme["foldmargin"]["foreground"]), 
+                    data.QColor(theme["foldmargin"]["background"])
                 )
-            editor.setMarginsForegroundColor(theme.LineMargin.ForeGround)
-            editor.setMarginsBackgroundColor(theme.LineMargin.BackGround)
+            editor.setMarginsForegroundColor(data.QColor(theme["linemargin"]["foreground"]))
+            editor.setMarginsBackgroundColor(data.QColor(theme["linemargin"]["background"]))
             editor.SendScintilla(
                 data.QsciScintillaBase.SCI_STYLESETBACK, 
                 data.QsciScintillaBase.STYLE_DEFAULT, 
-                theme.Paper.Default
+                data.QColor(theme["fonts"]["default"]["color"])
             )
             editor.SendScintilla(
                 data.QsciScintillaBase.SCI_STYLESETBACK, 
                 data.QsciScintillaBase.STYLE_LINENUMBER, 
-                theme.LineMargin.BackGround
+                data.QColor(theme["linemargin"]["background"])
             )
             editor.SendScintilla(
                 data.QsciScintillaBase.SCI_SETCARETFORE, 
-                theme.Cursor
+                data.QColor(theme["cursor"])
             )
             editor.choose_lexer("text")
         set_editor_theme(self.editor_1)

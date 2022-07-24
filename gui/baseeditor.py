@@ -40,15 +40,15 @@ Subclassed QScintilla widget used for displaying REPL messages, Python/C node tr
 class BaseEditor(data.QsciScintilla):
     
     def set_theme(self, theme):
-        if theme == themes.Air:
+        if theme["name"] == "Air":
             self.resetFoldMarginColors()
         else:
             self.setFoldMarginColors(
-                theme.FoldMargin.ForeGround, 
-                theme.FoldMargin.BackGround
+                data.QColor(theme["foldmargin"]["foreground"]),
+                data.QColor(theme["foldmargin"]["background"])
             )
-        self.setMarginsForegroundColor(theme.LineMargin.ForeGround)
-        self.setMarginsBackgroundColor(theme.LineMargin.BackGround)
+        self.setMarginsForegroundColor(data.QColor(theme["linemargin"]["foreground"]))
+        self.setMarginsBackgroundColor(data.QColor(theme["linemargin"]["background"]))
         if self.lexer() is not None and hasattr(self.lexer(), "get_default_background_color"):
             self.SendScintilla(
                 data.QsciScintillaBase.SCI_STYLESETBACK, 
@@ -59,19 +59,19 @@ class BaseEditor(data.QsciScintilla):
             self.SendScintilla(
                 data.QsciScintillaBase.SCI_STYLESETBACK, 
                 data.QsciScintillaBase.STYLE_DEFAULT, 
-                theme.Paper.Default
+                data.QColor(theme["fonts"]["default"]["background"])
             )
         self.SendScintilla(
             data.QsciScintillaBase.SCI_STYLESETBACK, 
             data.QsciScintillaBase.STYLE_LINENUMBER, 
-            theme.LineMargin.BackGround
+            data.QColor(theme["linemargin"]["background"])
         )
         self.SendScintilla(
             data.QsciScintillaBase.SCI_SETCARETFORE, 
-            theme.Cursor
+            data.QColor(theme["cursor"])
         )
         self.setCaretLineBackgroundColor(
-            theme.Cursor_Line_Background
+            data.QColor(theme["cursor-line-background"])
         )
         self.setStyleSheet("""
             BaseEditor {{
@@ -81,8 +81,37 @@ class BaseEditor(data.QsciScintilla):
                 spacing: 0px;
                 margin: 0px;
             }}
+            QListView {{
+                background-color: {};
+                color: {};
+            }}
+            QListView::item:selected {{
+                background-color: {};
+                color: {};
+            }}
+            QListView::item:selected {{
+                background-color: {};
+                color: {};
+            }}
             {}
         """.format(
-            data.theme.Indication.PassiveBackGround,
+            theme["indication"]["passivebackground"],
+            theme["indication"]["passivebackground"],
+            theme["fonts"]["default"]["color"],
+            theme["indication"]["passivebackground"],
+            theme["fonts"]["default"]["color"],
+            theme["indication"]["activebackground"],
+            theme["fonts"]["default"]["color"],
             StyleSheetScrollbar.full(),
         ))
+    
+    def delete_context_menu(self):
+        # Clean up the context menu
+        if self.context_menu is not None:
+            self.context_menu.hide()
+        if self.context_menu is not None:
+            for b in self.context_menu.button_list:
+                b.setParent(None)
+        if self.context_menu is not None:
+            self.context_menu.setParent(None)
+        self.context_menu = None

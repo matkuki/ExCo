@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2018 Matic Kukovec. 
+Copyright (c) 2018-2022 Matic Kukovec. 
 """
 
 import keyword
@@ -27,11 +27,8 @@ class Ada(data.QsciLexerCustom):
         "Package" : 7
     }
     
-    #Class variables
-    default_color       = data.QColor(data.theme.Font.Ada.Default[1])
-    default_paper       = data.QColor(data.theme.Paper.Ada.Default)
-    default_font        = data.QFont(data.current_font_name, data.current_font_size)
-    keyword_list        =   [ 
+    # Class variables
+    keyword_list = [ 
         "abort", "else", "new", "return",
         "abs", "elsif", "not", "reverse",
         "abstract", "end", "null", "accept",
@@ -55,15 +52,15 @@ class Ada(data.QsciLexerCustom):
     
     def __init__(self,  parent=None):
         """Overridden initialization"""
-        #Initialize superclass
+        # Initialize superclass
         super().__init__()
-        #Set the default style values
-        self.setDefaultColor(self.default_color)
-        self.setDefaultPaper(self.default_paper)
-        self.setDefaultFont(self.default_font)
-        #Reset autoindentation style
+        # Set the default style values
+        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultFont(data.get_editor_font())
+        # Reset autoindentation style
         self.setAutoIndentStyle(0)
-        #Set the theme
+        # Set the theme
         self.set_theme(data.theme)
     
     def language(self):
@@ -80,11 +77,11 @@ class Ada(data.QsciLexerCustom):
         for style in self.styles:
             # Papers
             self.setPaper(
-                data.QColor(theme.Paper.Ada.Default), 
+                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
                 self.styles[style]
             )
             # Fonts
-            lexers.set_font(self, style, getattr(theme.Font.Ada, style))
+            lexers.set_font(self, style, theme["fonts"][style.lower()])
         
     def styleText(self, start, end):
         """

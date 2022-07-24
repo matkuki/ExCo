@@ -305,6 +305,3 @@ proc python_style_test*(lexer_index: int,
                         end_pos: int,) {.exportpy.} =
     echo "HERE"
 
-echo "Nim lexers imported!"
-
-

@@ -75,11 +75,11 @@ class Cython(data.QsciLexerPython):
         for style in self.styles:
             # Papers
             self.setPaper(
-                data.QColor(theme.Paper.Python.Default), 
+                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
                 self.styles[style]
             )
             # Fonts
-            lexers.set_font(self, style, getattr(theme.Font.Python, style))
+            lexers.set_font(self, style, theme["fonts"][style.lower()])
     
     def keywords(self, state):
         """

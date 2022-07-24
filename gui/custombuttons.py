@@ -22,11 +22,13 @@ import textwrap
 import difflib
 import re
 import time
+import data
+import themes
 import settings
 import functions
-import data
 import components
-import themes
+
+from . import stylesheets
 
 
 """
@@ -98,12 +100,7 @@ class CustomButton(data.QLabel):
         #Store the main function image
         self.stored_pixmap = input_pixmap
         #Store the hex edge image
-        self.stored_hex = data.QPixmap(
-            os.path.join(
-                data.resources_directory, 
-                "various/hex-button-edge.png"
-            )
-        )
+        self.__create_hex_pixmap()
         #Store the function that will be executed on the click event
         self.function = input_function
         #Store the function text
@@ -124,21 +121,41 @@ class CustomButton(data.QLabel):
         self.stored_font = input_font
         #Enable mouse move events
         self.setMouseTracking(True)
-        #Set the image for displaying
-#        self.setPixmap(input_pixmap)
-#        #Image should scale to the button size
-#        self.setScaledContents(True)
-#        # Set the button mask, which sets the button area to the shape of
-#        # the button image instead of a rectangle
-#        self.setMask(self.stored_hex.mask())
-#        #Set the initial opacity to low
-#        self._set_opacity_with_hex_edge(self.OPACITY_LOW)
         #Set the tooltip if it was set
         if input_tool_tip != None:
             self.setToolTip(input_tool_tip)
         # Set the scaling
         self.scale = input_scale
-
+    
+    @staticmethod
+    def __create_hex_pixmap():
+        if CustomButton.stored_hex is None:
+            #CustomButton.stored_hex = functions.create_pixmap("various/hex-button-edge.png")
+            hex_image_size = CustomButton.HEX_IMAGE_SIZE
+            hex_edge_length = 29
+            hex_edge_width = 4
+            image = data.QImage(
+                *hex_image_size,
+                data.QImage.Format_ARGB32_Premultiplied
+            )
+            image.fill(data.Qt.transparent)
+            painter = data.QPainter()
+            painter.begin(image)
+            
+            hex_builder = components.HexBuilder(
+                painter,
+                (0, 0),
+                hex_edge_length
+            )
+            hex_builder.draw_full_hexagon(
+                (int(hex_image_size[0]/2)+1, int(hex_image_size[1]/2)),
+                data.QColor(data.theme["indication"]["passivebackground"]),
+                hex_edge_width,
+                data.QColor(data.theme["context-menu-hex-edge"]),
+            )
+            painter.end()
+            CustomButton.stored_hex = data.QPixmap.fromImage(image)
+    
     def _set_opacity(self, input_opacity):
         """Set the opacity of the stored QPixmap image and display it"""
         # Store the opacity
@@ -205,7 +222,7 @@ class CustomButton(data.QLabel):
             data.QImage.Format_ARGB32_Premultiplied,
         )
         image.fill(data.Qt.transparent)
-#        image.fill(data.theme.Context_Menu_Background)
+#        image.fill(data.theme["context-menu-background"])
         # Create and initialize the QPainter that will manipulate the QImage
         button_painter = data.QPainter(image)
         button_painter.setCompositionMode(
@@ -460,3 +477,86 @@ class DoubleButton(CustomButton):
         #Display the manipulated image
         self.extra_button.setPixmap(data.QPixmap.fromImage(image))
 
+
+class PushButtonBase(data.QPushButton):
+    function = None
+    enter_function = None
+    leave_function = None
+    # Signals
+    right_clicked = data.pyqtSignal()
+    text_changed = data.pyqtSignal(str)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.update_style()
+    
+    def set_click_function(self, func):
+        if self.function is not None:
+            try:
+                self.clicked.disconnect()
+            except TypeError as e:
+                print('ERROR: Could not disconnect clicked signal')
+            self.function = None
+        def actual_func(state):
+            func()
+        self.clicked.connect(actual_func)
+        self.function = func
+    
+    def set_enter_function(self, func):
+        self.enter_function = func
+
+    def set_leave_function(self, func):
+        self.leave_function = func
+    
+    def enable(self):
+        self.setEnabled(True)
+
+    def disable(self):
+        self.setEnabled(False)
+    
+    def keyPressEvent(self, e):
+        super().keyReleaseEvent(e)
+        if e.key() == data.Qt.Key_Enter or e.key() == data.Qt.Key_Return:
+            self.animateClick()
+    
+    def mousePressEvent(self, event):
+        if event.button() == data.Qt.RightButton:
+            self.right_clicked.emit()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+         super().mouseReleaseEvent(event)
+         event.ignore()
+
+    def enterEvent(self, e):
+        super().enterEvent(e)
+        if self.isEnabled() == False:
+            return
+        # Execute the additional enter function
+        if self.enter_function is not None:
+            self.enter_function()
+
+    def leaveEvent(self, e):
+        super().leaveEvent(e)
+        if self.isEnabled() == False:
+            return
+        # Execute the additional leave function
+        if self.leave_function is not None:
+            self.leave_function()
+    
+    def setText(self, e):
+        super().setText(e)
+        self.text_changed.emit(self.text())
+    
+    def update_style(self):
+        style_sheet = stylesheets.StyleSheetButton.standard()
+        self.setStyleSheet(style_sheet)
+
+class StandardButton(PushButtonBase):
+    # Class variables
+    main_form = None
+    
+    def __init__(self, parent, main_form, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.main_form = main_form

@@ -15,8 +15,10 @@ import lexers
 
 
 class Python(data.QsciLexerPython):
-    """Standard Python lexer with added keywords from built-in functions"""
-    #Class variables
+    """
+    Standard Python lexer with added keywords from built-in functions
+    """
+    # Class variables
     _kwrds = None
     styles = {
         "Default" : 0,
@@ -34,13 +36,21 @@ class Python(data.QsciLexerPython):
         "CommentBlock" : 12,
         "UnclosedString" : 13,
         "HighlightedIdentifier" : 14,
-        "Decorator" : 15
+        "Decorator" : 15,
+        "DoubleQuotedFString": 16,
+        "SingleQuotedFString": 17,
+        "TripleSingleQuotedFString": 18,
+        "TripleDoubleQuotedFString": 19,
     }
     
     def __init__(self, parent=None, additional_keywords=[]):
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
+        # Set default colors
+        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultFont(data.QFont(data.current_font_name, data.current_font_size))
         # Initialize the keyword list
         self.init_kwrds(additional_keywords)
         # Set the theme
@@ -60,10 +70,12 @@ class Python(data.QsciLexerPython):
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
-            paper = data.QColor(getattr(theme.Paper.Python, style))
-            self.setPaper(paper, self.styles[style])
+            self.setPaper(
+                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
+                self.styles[style]
+            )
             # Fonts
-            lexers.set_font(self, style, getattr(theme.Font.Python, style))
+            lexers.set_font(self, style, theme["fonts"][style.lower()])
     
     def keywords(self, state):
         """
@@ -115,9 +127,6 @@ class CustomPython(data.QsciLexerCustom):
         "Decorator" : 15,
         "CustomKeyword" : 16,
     }
-    default_color       = data.QColor(data.theme.Font.Python.Default[1])
-    default_paper       = data.QColor(data.theme.Paper.Python.Default)
-    default_font        = data.QFont(data.current_font_name, data.current_font_size)
     # Styling lists and characters
     keyword_list        = list(set(keyword.kwlist + dir(builtins)))
     additional_list     = []
@@ -155,9 +164,9 @@ class CustomPython(data.QsciLexerCustom):
         if lexers.nim_lexers_found == True:
             lexers.nim_lexers.python_set_keywords(self.index, additional_keywords)
         # Set the default style values
-        self.setDefaultColor(self.default_color)
-        self.setDefaultPaper(self.default_paper)
-        self.setDefaultFont(self.default_font)
+        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultFont(data.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
@@ -185,10 +194,12 @@ class CustomPython(data.QsciLexerCustom):
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
-            paper = data.QColor(getattr(theme.Paper.Python, style))
-            self.setPaper(paper, self.styles[style])
+            self.setPaper(
+                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
+                self.styles[style]
+            )
             # Fonts
-            lexers.set_font(self, style, getattr(theme.Font.Python, style))
+            lexers.set_font(self, style, theme["fonts"][style.lower()])
     
     if lexers.nim_lexers_found == True:
         def __del__(self):
@@ -198,10 +209,10 @@ class CustomPython(data.QsciLexerCustom):
             editor = self.editor()
             if editor is None:
                 return
-#            lexers.nim_lexers.python_style_text(
-#                self.index, start, end, self, editor
-#            )
-            lexers.nim_lexers.python_style_test(self.index, start, end)
+#            lexers.nim_lexers.python_style_test(self.index, start, end)
+            lexers.nim_lexers.python_style_text(
+                self.index, start, end, self, editor
+            )
     else:
         def styleText(self, start, end):
             editor = self.editor()

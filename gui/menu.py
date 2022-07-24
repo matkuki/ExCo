@@ -27,7 +27,6 @@ import settings
 import functions
 import data
 import components
-import themes
 
 
 class Menu(data.QMenu):
@@ -65,7 +64,7 @@ class Menu(data.QMenu):
             QMenu {{
                 background-color: {};
                 border: 1px solid {};
-                color: {}
+                color: {};
             }}
             QMenu::item {{
                 background-color: transparent;
@@ -90,12 +89,12 @@ class Menu(data.QMenu):
                 height: 14px;
             }}
         """.format(
-            data.theme.Indication.PassiveBackGround,
-            data.theme.Indication.PassiveBorder,
-            data.theme.Font.DefaultHtml,
-            data.theme.Indication.Hover,
-            functions.get_resource_file(data.theme.right_arrow_menu_image),
-            functions.get_resource_file(data.theme.right_arrow_menu_disabled_image),
+            data.theme["indication"]["passivebackground"],
+            data.theme["indication"]["passiveborder"],
+            data.theme["fonts"]["default"]["color"],
+            data.theme["indication"]["hover"],
+            functions.get_resource_file(data.theme["right-arrow-menu-image"]),
+            functions.get_resource_file(data.theme["right-arrow-menu-disabled-image"]),
         )
         self.setStyleSheet(style_sheet)
 
@@ -121,9 +120,9 @@ class MenuBar(data.QMenuBar):
                 background-color: {};
             }}
         """.format(
-                data.theme.Indication.PassiveBackGround,
-                data.theme.Font.DefaultHtml,
-                data.theme.Indication.Hover,
+                data.theme["indication"]["passivebackground"],
+                data.theme["fonts"]["default"]["color"],
+                data.theme["indication"]["hover"],
         ))
 
 

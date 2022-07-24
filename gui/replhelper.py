@@ -64,7 +64,7 @@ class ReplHelper(data.QsciScintilla):
         #Initialize superclass, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(data.get_editor_font())
         #Save the reference to the parent(main window)
         self._parent = parent
         self.main_form = main_form
@@ -80,7 +80,7 @@ class ReplHelper(data.QsciScintilla):
         #Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         #Set tab space indentation width
-        self.setTabWidth(settings.Editor.tab_width)
+        self.setTabWidth(settings.editor['tab_width'])
         #Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         #Set brace matching
@@ -93,9 +93,9 @@ class ReplHelper(data.QsciScintilla):
         #Disable drops
         self.setAcceptDrops(False)
         #Set line endings to be Unix style ("\n")
-        self.setEolMode(settings.Editor.end_of_line_mode)
+        self.setEolMode(settings.editor['end_of_line_mode'])
         #Set the initial zoom factor
-        self.zoomTo(settings.Editor.zoom_factor)
+        self.zoomTo(settings.editor['zoom_factor'])
         """
         Functionality copied from the CustomEditor to copy some of 
         the neede editing functionality like commenting, ...
@@ -234,7 +234,7 @@ class ReplHelper(data.QsciScintilla):
         # Show a context menu according to the current lexer
         offset = (event.x(), event.y())
         self.context_menu = ContextMenu(
-            self, self._parent, offset
+            self, self.main_form, offset
         )
         height = self.size().height()
         if height < 100:
@@ -256,7 +256,7 @@ class ReplHelper(data.QsciScintilla):
         lexer.comment_string = result[1]
         lexer.end_comment_string = result[2]
         #Set the lexers default font
-        lexer.setDefaultFont(settings.Editor.font)
+        lexer.setDefaultFont(data.get_editor_font())
         #Set the lexer with the initial autocompletions
         self.setLexer(lexer)
         #Set the theme
