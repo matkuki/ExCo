@@ -158,8 +158,9 @@ class SettingsFileManipulator:
                     old_data["context_menu_functions"],
                 )
             else:
+                self.theme = themes.get("Air")
                 self.write_settings_file(
-                    "Air",
+                    self.theme,
                     self.recent_files,
                     self.stored_sessions,
                     self.context_menu_functions
