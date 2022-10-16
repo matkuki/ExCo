@@ -71,7 +71,12 @@ QLabel:hover {{
                 )
             )
             
-            self.setGeometry(*initial_position, *initial_size)
+            self.setGeometry(
+                int(initial_position[0]),
+                int(initial_position[1]),
+                int(initial_size[0]),
+                int(initial_size[1]),
+            )
             self.initial_position = initial_position
             self.expanded_position = expanded_position
             self.initial_size = initial_size
