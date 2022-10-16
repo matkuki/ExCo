@@ -5,6 +5,8 @@
   "context-menu-hex-edge": "#ff303638",
   "cursor": "#ff000000",
   "cursor-line-background": "#50729fcf",
+  "dock_point_color_active": "#ff729fcf",
+  "dock_point_color_passive": "#77729fcf",
   "foldmargin": {
     "background": "#ff000000",
     "foreground": "#ff000000"
@@ -2031,6 +2033,27 @@
         "background": "#ff112435"
     },
     "triplesinglequotedfstring": {
+        "color": "#fff5b0cb",
+        "bold": false,
+        "background": "#ff112435"
+    },
+    
+    "iri": {
+        "color": "#fff5b0cb",
+        "bold": false,
+        "background": "#ff112435"
+    },
+    "iricompact": {
+        "color": "#fff5b0cb",
+        "bold": false,
+        "background": "#ff112435"
+    },
+    "keywordld": {
+        "color": "#fff5b0cb",
+        "bold": false,
+        "background": "#ff112435"
+    },
+    "property": {
         "color": "#fff5b0cb",
         "bold": false,
         "background": "#ff112435"

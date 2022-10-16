@@ -138,14 +138,14 @@ class CustomEditor(BaseEditor):
             )
         )
         # Set the margin type (0 is by default line numbers, 1 is for non code folding symbols and 2 is for code folding)
-        self.setMarginType(0, data.QsciScintilla.NumberMargin)
+        self.setMarginType(0, data.QsciScintilla.MarginType.NumberMargin)
         # Set margin width and font
         self.setMarginWidth(0, "00")
         self.setMarginsFont(data.get_editor_font())
         # Reset the modified status of the document
         self.setModified(False)
         # Set brace matching
-        self.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
+        self.setBraceMatching(data.QsciScintilla.BraceMatch.SloppyBraceMatch)
         self.setMatchedBraceBackgroundColor(
             data.QColor(settings.editor['brace_color'])
         )
@@ -165,7 +165,7 @@ class CustomEditor(BaseEditor):
         # Scintilla widget must not accept drag/drop events, the cursor freezes if it does!!!
         self.setAcceptDrops(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(settings.editor['end_of_line_mode'])
+        self.setEolMode(data.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
         # Set the initial zoom factor
         self.zoomTo(settings.editor['zoom_factor'])
         # Correct the file name if it is unspecified
@@ -196,9 +196,9 @@ class CustomEditor(BaseEditor):
         self.cursorPositionChanged.connect(
             self._parent._signal_editor_cursor_change
         )
-        self.marginClicked.connect(self._margin_clicked)
-        self.linesChanged.connect(self._lines_changed)
-        self.selectionChanged.connect(self._selection_changed)
+        self.marginClicked.connect(self.__margin_clicked)
+        self.linesChanged.connect(self.__lines_changed)
+        self.selectionChanged.connect(self.__selection_changed)
         self.SCN_MODIFIED.connect(self.__text_modified)
         self.SendScintilla(
             self.SCI_SETMODEVENTMASK,
@@ -221,8 +221,8 @@ class CustomEditor(BaseEditor):
         self._init_bookmark_marker()
         # Initialize the namespace references
         self.hotspots   = components.Hotspots()
-        self.bookmarks  = self.Bookmarks(self)
-        self.keyboard   = self.Keyboard(self)
+        self.bookmarks  = Bookmarks(self)
+        self.keyboard   = Keyboard(self)
         # Set cursor line visibility and color
         self.set_cursor_line_visibility(
             settings.editor['cursor_line_visible']
@@ -310,23 +310,25 @@ class CustomEditor(BaseEditor):
         bookmark_image  = bookmark_image.scaled(image_scale_size)
         self.bookmark_marker = self.markerDefine(bookmark_image, 1)
     
-    def _margin_clicked(self, margin, line, state):
+    def __margin_clicked(self, margin, line, state):
         """Signal for a mouseclick on the margin"""
         #Adjust line index to the line list indexing (1..lines)
         adjusted_line = line + 1
         #Add/remove bookmark
         self.bookmarks.toggle_at_line(adjusted_line)
     
-    def _lines_changed(self):
-        """Signal that fires when the number of lines changes"""
-        self.markerDeleteAll(self.bookmark_marker)
+    def __lines_changed(self):
+        """
+        Signal that fires when the number of lines changes
+        """
         bookmarks = self.main_form.bookmarks.marks
         for i in bookmarks:
-            if bookmarks[i][0] == self:
-                self.bookmarks.add_marker_at_line(bookmarks[i][1])
+            if bookmarks[i]["editor"] == self:
+                line = self.markerLine(bookmarks[i]["handle"]) + 1
+                bookmarks[i]["line"] = line
     
     selection_lock = False
-    def _selection_changed(self):
+    def __selection_changed(self):
         """
         Signal that fires when selected text changes
         """
@@ -354,7 +356,7 @@ class CustomEditor(BaseEditor):
         #Disable REPL focus after the REPL evaluation
         self.main_form.repl.skip_next_repl_focus()
         #Set focus to the basic widget that holds this document
-        self.main_form.view.set_window_focus(self._parent.name.lower())
+        self.main_form.view.set_window_focus(self._parent)
     
     def add_corner_buttons(self):
         def show_lexer_menu():
@@ -409,12 +411,12 @@ class CustomEditor(BaseEditor):
         key = event.key()
 #        char = event.text()
 #        key_modifiers = data.QApplication.keyboardModifiers()
-        if key == data.Qt.Key_Tab:
+        if key == data.Qt.Key.Key_Tab:
             self.custom_indent()
-        elif key == data.Qt.Key_Backtab:
+        elif key == data.Qt.Key.Key_Backtab:
             self.custom_unindent()
-        elif (key == data.Qt.Key_Enter or
-              key == data.Qt.Key_Return):
+        elif (key == data.Qt.Key.Key_Enter or
+              key == data.Qt.Key.Key_Return):
             super().keyPressEvent(event)
             #Check for autoindent character list
             if hasattr(self.lexer(), "autoindent_characters"):
@@ -455,14 +457,18 @@ class CustomEditor(BaseEditor):
             self._filter_keypress(event)
 
     def keyReleaseEvent(self, event):
-        """QScintila KeyReleaseEvent, to catch which key was released"""
-        #Execute the superclass method first, the same trick as in __init__ !
+        """
+        QScintila KeyReleaseEvent, to catch which key was released
+        """
+        # Execute the superclass method first, the same trick as in __init__ !
         super().keyReleaseEvent(event)
-        #Filter the event
+        # Filter the event
         self._filter_keyrelease(event)
 
     def mousePressEvent(self, event):
-        """Overloaded mouse click event"""
+        """
+        Overloaded mouse click event
+        """
         # Execute the superclass method first, the same trick as in __init__ !
         super().mousePressEvent(event)
         # Set focus to the clicked editor
@@ -476,7 +482,6 @@ class CustomEditor(BaseEditor):
         self.main_form.display.update_cursor_position(line, column, index)
         # Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self._parent
-        data.print_log("Stored \"{}\" as last focused widget".format(self._parent.name))
         # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Hide the context menu if it is shown
@@ -503,7 +508,7 @@ class CustomEditor(BaseEditor):
     def wheelEvent(self, event):
         """Mouse scroll event of the custom editor"""
         key_modifiers = data.QApplication.keyboardModifiers()
-        if key_modifiers != data.Qt.ControlModifier:
+        if key_modifiers != data.Qt.KeyboardModifier.ControlModifier:
             #Execute the superclass method
             super().wheelEvent(event)
         else:
@@ -527,6 +532,20 @@ class CustomEditor(BaseEditor):
         self._parent._set_save_status()
         #Check indication
         self.main_form.view.indication_check()
+    
+    def replaceSelectedText(self, *args, **kwargs):
+        marks = self.main_form.bookmarks.get_editor_all(self)
+        mark_data = []
+        for mark in marks:
+            mark_data.append((mark["line"], mark))
+        for line, mark in mark_data:
+            self.bookmarks.remove_marker_at_line(line)
+        super().replaceSelectedText(*args, **kwargs)
+        for line, mark in mark_data:
+            new_handle = self.bookmarks.add_marker_at_line(line)
+            mark["line"] = line
+            mark["handle"] = new_handle
+        
 
     """
     Line manipulation functions
@@ -1118,22 +1137,22 @@ class CustomEditor(BaseEditor):
     def text_to_list(self, input_text):
         """Split the input text into a list of lines according to the document EOL delimiter"""
         out_list = []
-        if self.eolMode() == data.QsciScintilla.EolUnix:
+        if self.eolMode() == data.QsciScintilla.EolMode.EolUnix:
             out_list = input_text.split("\n")
-        elif self.eolMode() == data.QsciScintilla.EolWindows:
+        elif self.eolMode() == data.QsciScintilla.EolMode.EolWindows:
             out_list = input_text.split("\r\n")
-        elif self.eolMode() == data.QsciScintilla.EolMac:
+        elif self.eolMode() == data.QsciScintilla.EolMode.EolMac:
             out_list = input_text.split("\r")
         return out_list
     
     def list_to_text(self, line_list):
         """Convert a list of lines to one string according to the document EOL delimiter"""
         out_text = ""
-        if self.eolMode() == data.QsciScintilla.EolUnix:
+        if self.eolMode() == data.QsciScintilla.EolMode.EolUnix:
             out_text = "\n".join(line_list)
-        elif self.eolMode() == data.QsciScintilla.EolWindows:
+        elif self.eolMode() == data.QsciScintilla.EolMode.EolWindows:
             out_text = "\r\n".join(line_list)
-        elif self.eolMode() == data.QsciScintilla.EolMac:
+        elif self.eolMode() == data.QsciScintilla.EolMode.EolMac:
             out_text = "\r".join(line_list)
         return out_text
 
@@ -1456,25 +1475,27 @@ class CustomEditor(BaseEditor):
                     replace_text, 
                     case_sensitive=False,
                     regular_expression=False):
-        """Replace all occurences of a string in a scintilla document"""
-        #Store the current cursor position
+        """
+        Replace all occurences of a string in a scintilla document
+        """
+        # Store the current cursor position
         current_position = self.getCursorPosition()
-        #Move cursor to the top of the document, so all the search string instances will be found
+        # Move cursor to the top of the document, so all the search string instances will be found
         self.setCursorPosition(0, 0)
-        #Clear all previous highlights
+        # Clear all previous highlights
         self.clear_highlights()
-        #Setup the indicator style, the replace indicator is 1
+        # Setup the indicator style, the replace indicator is 1
         self.set_indicator("replace")
-        #Correct the displayed file name
+        # Correct the displayed file name
         if self.save_name == None or self.save_name == "":
             file_name = self._parent.tabText(self._parent.currentIndex())
         else:
             file_name = os.path.basename(self.save_name)
-        #Check if there are any instances of the search text in the document
+        # Check if there are any instances of the search text in the document
         #based on the regular expression flag
         search_result = None
         if regular_expression == True:
-            #Check case sensitivity for regular expression
+            # Check case sensitivity for regular expression
             if case_sensitive == True:
                 compiled_search_re = re.compile(search_text)
             else:
@@ -1489,23 +1510,23 @@ class CustomEditor(BaseEditor):
                 message_type=data.MessageType.WARNING
             )
             return
-        #Use the re module to replace the text
+        # Use the re module to replace the text
         text = self.text()
-        matches, replaced_text  =   functions.replace_and_index(
-                                        text, 
-                                        search_text, 
-                                        replace_text, 
-                                        case_sensitive, 
-                                        regular_expression, 
-                                    )
-        #Check if there were any matches or
-        #if the search and replace text were equivalent!
+        matches, replaced_text = functions.replace_and_index(
+            text, 
+            search_text, 
+            replace_text, 
+            case_sensitive, 
+            regular_expression, 
+        )
+        # Check if there were any matches or
+        # if the search and replace text were equivalent!
         if matches != None:
-            #Replace the text
+            # Replace the text
             self.replace_entire_text(replaced_text)
-            #Matches can only be displayed for non-regex functionality
+            # Matches can only be displayed for non-regex functionality
             if regular_expression == True:
-                #Build the list of matches used by the highlight_raw function
+                # Build the list of matches used by the highlight_raw function
                 corrected_matches = []
                 for i in matches:
                     index = self.positionFromLineIndex(i, 0)
@@ -1517,7 +1538,7 @@ class CustomEditor(BaseEditor):
                             index+len(self.text(i)), 
                         )
                     )
-                #Display the replacements in the REPL tab
+                # Display the replacements in the REPL tab
                 if len(corrected_matches) < settings.editor['maximum_highlights']:
                     message = "{} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
@@ -1542,10 +1563,10 @@ class CustomEditor(BaseEditor):
                         message, 
                         message_type=data.MessageType.WARNING
                     )
-                #Highlight and display the line difference between the old and new texts
+                # Highlight and display the line difference between the old and new texts
                 self.highlight_raw(corrected_matches)
             else:
-                #Display the replacements in the REPL tab
+                # Display the replacements in the REPL tab
                 if len(matches) < settings.editor['maximum_highlights']:
                     message = "{} replacements:".format(file_name)
                     self.main_form.display.repl_display_message(
@@ -1574,9 +1595,9 @@ class CustomEditor(BaseEditor):
                         message, 
                         message_type=data.MessageType.WARNING
                     )
-                #Highlight and display the replaced text
+                # Highlight and display the replaced text
                 self.highlight_raw(matches)
-            #Restore the previous cursor position
+            # Restore the previous cursor position
             self.setCursorPosition(current_position[0], current_position[1])
         else:
             message = "The search string and replace string are equivalent!\n"
@@ -1618,26 +1639,30 @@ class CustomEditor(BaseEditor):
             )    
     
     def replace_entire_text(self, new_text):
-        """Replace the entire text of the document"""
-        #Select the entire text
+        """
+        Replace the entire text of the document
+        """
+        # Select the entire text
         self.selectAll(True)
-        #Replace the text with the new
+        # Replace the text with the new
         self.replaceSelectedText(new_text)
     
     def convert_case(self, uppercase=False):
-        """Convert selected text in the scintilla document into the selected case letters"""
-        #Get the start and end point of the selected text
-        start_line, start_index,  end_line, end_index = self.getSelection()
-        #Get the currently selected text
-        selected_text   = self.selectedText()
-        #Convert it to the selected case
+        """
+        Convert selected text in the scintilla document into the selected case letters
+        """
+        # Get the start and end point of the selected text
+        start_line, start_index, end_line, end_index = self.getSelection()
+        # Get the currently selected text
+        selected_text = self.selectedText()
+        # Convert it to the selected case
         if uppercase == False:
-            selected_text   = selected_text.lower()
+            selected_text = selected_text.lower()
         else:
-            selected_text   = selected_text.upper()
-        #Replace the selection with the new upercase text
+            selected_text = selected_text.upper()
+        # Replace the selection with the new upercase text
         self.replaceSelectedText(selected_text)
-        #Reselect the previously selected text
+        # Reselect the previously selected text
         self.setSelection(start_line, start_index,  end_line, end_index)
     
     
@@ -1699,7 +1724,7 @@ class CustomEditor(BaseEditor):
                         regular_expression=False):
         """
         Same as the highlight_text function, but adapted for the use
-        with the _selection_changed functionality.
+        with the __selection_changed functionality.
         """
         # Setup the indicator style, the highlight indicator will be 0
         self.set_indicator("selection")
@@ -1760,7 +1785,7 @@ class CustomEditor(BaseEditor):
         Set the indicator settings
         """
         self.indicatorDefine(
-            data.QsciScintillaBase.INDIC_STRAIGHTBOX,
+            data.QsciScintilla.IndicatorStyle.StraightBoxIndicator ,
             indicator
         )
         self.setIndicatorForegroundColor(
@@ -1829,7 +1854,7 @@ class CustomEditor(BaseEditor):
                 os.getcwd() + self.save_name, 
                 "All Files(*)"
             )
-            if data.PYQT_MODE == 5:
+            if data.PYQT_MODE > 4:
                 # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
                 # so pass only the files to the function
                 temp_save_name = temp_save_name[0]
@@ -1838,7 +1863,7 @@ class CustomEditor(BaseEditor):
                 return
             # Replace back-slashes to forward-slashes on Windows
             if data.platform == "Windows":
-                temp_save_name = temp_save_name.replace("\\", "/")
+                temp_save_name = functions.unixify_path(temp_save_name)
             # Save the chosen file name to the document "save_name" attribute
             self.save_name = temp_save_name
         # Set the tab name by filtering it out from the QFileDialog result
@@ -1937,7 +1962,7 @@ class CustomEditor(BaseEditor):
             data.current_editor_font_name.encode("utf-8")
         )
         # Enable code folding for the file type
-        self.setFolding(data.QsciScintilla.PlainFoldStyle)
+        self.setFolding(data.QsciScintilla.FoldStyle.PlainFoldStyle)
         # Get the icon according to the file type
         self.current_icon = functions.get_language_file_icon(file_type)
         # Update the icon on the parent basic widget
@@ -1950,7 +1975,7 @@ class CustomEditor(BaseEditor):
         
     def reset_brace_matching(self):
         # Reset the brace matching color
-        self.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
+        self.setBraceMatching(data.QsciScintilla.BraceMatch.SloppyBraceMatch)
 #        self.setMatchedBraceBackgroundColor(data.QColor(settings.editor['brace_color']))
 #        self.setMatchedBraceForegroundColor(data.theme["fonts"]["default"]["color"])
     
@@ -1990,15 +2015,15 @@ class CustomEditor(BaseEditor):
         #Set the marker options
         self.setEdgeColor(data.QColor(marker_color))
         self.setEdgeColumn(marker_column)
-        self.setEdgeMode(data.QsciScintilla.EdgeLine)
+        self.setEdgeMode(data.QsciScintilla.EdgeMode.EdgeLine)
 
     def edge_marker_hide(self):
         """Hide the column marker"""
-        self.setEdgeMode(data.QsciScintilla.EdgeNone)
+        self.setEdgeMode(data.QsciScintilla.EdgeMode.EdgeNone)
     
     def edge_marker_toggle(self):
         """Toggle edge marker display"""
-        if self.edgeMode() == data.QsciScintilla.EdgeNone:
+        if self.edgeMode() == data.QsciScintilla.EdgeMode.EdgeNone:
             self.edge_marker_show()
         else:
             self.edge_marker_hide()
@@ -2013,12 +2038,10 @@ class CustomEditor(BaseEditor):
             return
         #Check the file status
         if self.save_status == data.FileStatus.MODIFIED:
-            #Close the log window if it is displayed
-            self.main_form.view.set_log_window(False)
             #Display the close notification
             reload_message = "Document '" + self.name+ "' has been modified!\nReload it from disk anyway?"
             reply = YesNoDialog.question(reload_message)
-            if reply == data.QMessageBox.No:
+            if reply == data.QMessageBox.StandardButton.No:
                 #Cancel tab file reloading
                 return
         #Check if the name of the document is valid
@@ -2042,8 +2065,8 @@ class CustomEditor(BaseEditor):
         selected_text = self.selectedText()
         if selected_text:
             cb = data.application.clipboard()
-            cb.clear(mode=cb.Clipboard)
-            cb.setText(selected_text, mode=cb.Clipboard)
+            cb.clear(mode=cb.Mode.Clipboard)
+            cb.setText(selected_text, mode=cb.Mode.Clipboard)
     
     def copy_self(self, new_editor):
         """Copy everything needed from self to the destination editor"""
@@ -2058,31 +2081,31 @@ class CustomEditor(BaseEditor):
         """ 
         Toggle word wrap on/off.
         Wrap modes:
-            data.QsciScintilla.WrapNone - Lines are not wrapped.
-            data.QsciScintilla.WrapWord - Lines are wrapped at word boundaries.
-            data.QsciScintilla.WrapCharacter - Lines are wrapped at character boundaries.
-            data.QsciScintilla.WrapWhitespace - Lines are wrapped at whitespace boundaries. 
+            data.QsciScintilla.WrapMode.WrapNone - Lines are not wrapped.
+            data.QsciScintilla.WrapMode.WrapWord - Lines are wrapped at word boundaries.
+            data.QsciScintilla.WrapMode.WrapCharacter - Lines are wrapped at character boundaries.
+            data.QsciScintilla.WrapMode.WrapWhitespace - Lines are wrapped at whitespace boundaries. 
         Wrap visual flags:
-            data.QsciScintilla.WrapFlagNone - No wrap flag is displayed.
-            data.QsciScintilla.WrapFlagByText - A wrap flag is displayed by the text.
-            data.QsciScintilla.WrapFlagByBorder - A wrap flag is displayed by the border.
-            data.QsciScintilla.WrapFlagInMargin - A wrap flag is displayed in the line number margin. 
+            data.QsciScintilla.WrapVisualFlag.WrapFlagNone - No wrap flag is displayed.
+            data.QsciScintilla.WrapVisualFlag.WrapFlagByText - A wrap flag is displayed by the text.
+            data.QsciScintilla.WrapVisualFlag.WrapFlagByBorder - A wrap flag is displayed by the border.
+            data.QsciScintilla.WrapVisualFlag.WrapFlagInMargin - A wrap flag is displayed in the line number margin. 
         Wrap indentation:
-            data.QsciScintilla.WrapIndentFixed - Wrapped sub-lines are indented by the amount set by setWrapVisualFlags().
-            data.QsciScintilla.WrapIndentSame - Wrapped sub-lines are indented by the same amount as the first sub-line.
-            data.QsciScintilla.WrapIndentIndented - Wrapped sub-lines are indented by the same amount as the first sub-line plus one more level of indentation. 
+            data.QsciScintilla.WrapIndentMode.WrapIndentFixed - Wrapped sub-lines are indented by the amount set by setWrapVisualFlags().
+            data.QsciScintilla.WrapIndentMode.WrapIndentSame - Wrapped sub-lines are indented by the same amount as the first sub-line.
+            data.QsciScintilla.WrapIndentMode.WrapIndentIndented - Wrapped sub-lines are indented by the same amount as the first sub-line plus one more level of indentation. 
         """
-        if self.wrapMode() == data.QsciScintilla.WrapNone:
-            self.setWrapMode(data.QsciScintilla.WrapWord)
-            self.setWrapVisualFlags(data.QsciScintilla.WrapFlagByText)
-            self.setWrapIndentMode(data.QsciScintilla.WrapIndentSame)
+        if self.wrapMode() == data.QsciScintilla.WrapMode.WrapNone:
+            self.setWrapMode(data.QsciScintilla.WrapMode.WrapWord)
+            self.setWrapVisualFlags(data.QsciScintilla.WrapVisualFlag.WrapFlagByText)
+            self.setWrapIndentMode(data.QsciScintilla.WrapIndentMode.WrapIndentSame)
             self.main_form.display.repl_display_message(
                 "Line wrapping ON", 
                 message_type=data.MessageType.WARNING
             )
         else:
-            self.setWrapMode(data.QsciScintilla.WrapNone)
-            self.setWrapVisualFlags(data.QsciScintilla.WrapFlagNone)
+            self.setWrapMode(data.QsciScintilla.WrapMode.WrapNone)
+            self.setWrapVisualFlags(data.QsciScintilla.WrapVisualFlag.WrapFlagNone)
             self.main_form.display.repl_display_message(
                 "Line wrapping OFF", 
                 message_type=data.MessageType.WARNING
@@ -2144,7 +2167,7 @@ class CustomEditor(BaseEditor):
         # Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         # Set the source from where the autocompletions will be fetched
-        self.setAutoCompletionSource(data.QsciScintilla.AcsDocument)
+        self.setAutoCompletionSource(data.QsciScintilla.AutoCompletionSource.AcsDocument)
         # Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
         # Correct autocompletion behaviour to select
@@ -2168,7 +2191,7 @@ class CustomEditor(BaseEditor):
     
     def disable_autocompletions(self):
         """Disable the CustomEditor autocompletions"""
-        self.setAutoCompletionSource(data.QsciScintilla.AcsNone)
+        self.setAutoCompletionSource(data.QsciScintilla.AutoCompletionSource.AcsNone)
     
     def toggle_autocompletions(self):
         """Enable/disable autocompletions for the CustomEditor"""
@@ -2178,7 +2201,7 @@ class CustomEditor(BaseEditor):
         else:
             document_name = os.path.basename(self.save_name)
         #Check the autocompletion source
-        if self.autoCompletionSource() == data.QsciScintilla.AcsDocument:
+        if self.autoCompletionSource() == data.QsciScintilla.AutoCompletionSource.AcsDocument:
             self.disable_autocompletions()
             message = "Autocompletions DISABLED in {}".format(document_name)
             self.main_form.display.repl_display_message(
@@ -2195,301 +2218,313 @@ class CustomEditor(BaseEditor):
             )
             self.main_form.display.write_to_statusbar("Autocompletions ENABLED")
     
-    class Bookmarks:
+class Bookmarks:
+    """
+    Bookmark functionality
+    """
+    def __init__(self, parent):
         """
-        Bookmark functionality
+        Initialization of the Editing object instance
         """
-        def __init__(self, parent):
-            """Initialization of the Editing object instance"""
-            #Get the reference to the MainWindow parent object instance
-            self._parent = parent
-        
-        def toggle(self):
-            """Add/Remove a bookmark at the current line"""
-            #Get the cursor line position
-            current_line = self._parent.getCursorPosition()[0] + 1
-            #Toggle the bookmark
-            self.toggle_at_line(current_line)
-        
-        def toggle_at_line(self, line):
-            """
-            Toggle a bookmarks at the specified line
-            (Line indexing has to be 1..lines)
-            """
-            #MarkerAdd function needs the standard line indexing
-            scintilla_line = line - 1
-            #Check if the line is already bookmarked
-            if self._parent.main_form.bookmarks.check(self._parent, line) == None:
-                if self._parent.main_form.bookmarks.add(self._parent, line) != None:
-                    self._parent.markerAdd(scintilla_line, self._parent.bookmark_marker)
-            else:
-                self._parent.main_form.bookmarks.remove_by_reference(self._parent, line)
-                self._parent.markerDelete(scintilla_line, self._parent.bookmark_marker)
-        
-        def add_marker_at_line(self, line):
-            #MarkerAdd function needs the standard line indexing
-            scintilla_line = line - 1
-            self._parent.markerAdd(scintilla_line, self._parent.bookmark_marker)
-        
-        def remove_marker_at_line(self, line):
-            #MarkerAdd function needs the standard line indexing
-            scintilla_line = line - 1
+        # Get the reference to the MainWindow parent object instance
+        self._parent = parent
+
+    def toggle(self):
+        """
+        Add/Remove a bookmark at the current line
+        """
+        # Get the cursor line position
+        current_line = self._parent.getCursorPosition()[0] + 1
+        # Toggle the bookmark
+        self.toggle_at_line(current_line)
+
+    def toggle_at_line(self, line):
+        """
+        Toggle a bookmarks at the specified line
+        (Line indexing has to be 1..lines)
+        """
+        # MarkerAdd function needs the standard line indexing
+        scintilla_line = line - 1
+        # Check if the line is already bookmarked
+        bookmarks:_mainwindow_.MainWindow.Bookmarks = self._parent.main_form.bookmarks
+        if bookmarks.check(self._parent, line) is None:
+            new_marker_index = bookmarks.add(self._parent, line)
+            if new_marker_index is not None:
+                handle = self._parent.markerAdd(scintilla_line, self._parent.bookmark_marker)
+                self._parent.main_form.bookmarks.marks[new_marker_index]["handle"] = handle
+        else:
+            self._parent.main_form.bookmarks.remove_by_reference(self._parent, line)
             self._parent.markerDelete(scintilla_line, self._parent.bookmark_marker)
+
+    def add_marker_at_line(self, line):
+        # MarkerAdd function needs the standard line indexing
+        scintilla_line = line - 1
+        handle = self._parent.markerAdd(scintilla_line, self._parent.bookmark_marker)
+        return handle
+
+    def remove_marker_at_line(self, line):
+        # MarkerAdd function needs the standard line indexing
+        scintilla_line = line - 1
+        self._parent.markerDelete(scintilla_line, self._parent.bookmark_marker)
+
+class Keyboard:
+    """
+    Keyboard command assignment, ...
+    Relevant Scintilla items:
+        SCI_ASSIGNCMDKEY(int keyDefinition, int sciCommand)
+        SCI_CLEARCMDKEY(int keyDefinition)
+        SCI_CLEARALLCMDKEYS
+        SCI_NULL
+    """
+    _parent = None
+    #GNU/Linux and Windows bindings copied from Scintila source 'KeyMap.cxx'
+    bindings = None
+    scintilla_keys = None
+    valid_modifiers = None
     
-    class Keyboard:
+    def init_bindings(self):
+        self.bindings = {
+            "Down" : data.QsciScintillaBase.SCI_LINEDOWN,
+            "Down+Shift" : data.QsciScintillaBase.SCI_LINEDOWNEXTEND,
+            "Down+Ctrl" : data.QsciScintillaBase.SCI_LINESCROLLDOWN,
+            "Down+Alt+Shift" : data.QsciScintillaBase.SCI_LINEDOWNRECTEXTEND,
+            "Up" : data.QsciScintillaBase.SCI_LINEUP,
+            "Up+Shift" : data.QsciScintillaBase.SCI_LINEUPEXTEND,
+            "Up+Ctrl" : data.QsciScintillaBase.SCI_LINESCROLLUP,
+            "Up+Alt+Shift" : data.QsciScintillaBase.SCI_LINEUPRECTEXTEND,
+            "[+Ctrl" : data.QsciScintillaBase.SCI_PARAUP,
+            "[+Ctrl+Shift" : data.QsciScintillaBase.SCI_PARAUPEXTEND,
+            "]+Ctrl" : data.QsciScintillaBase.SCI_PARADOWN,
+            "]+Ctrl+Shift" : data.QsciScintillaBase.SCI_PARADOWNEXTEND,
+            "Left" : data.QsciScintillaBase.SCI_CHARLEFT,
+            "Left+Shift" : data.QsciScintillaBase.SCI_CHARLEFTEXTEND,
+            "Left+Ctrl" : data.QsciScintillaBase.SCI_WORDLEFT,
+            "Left+Shift+Ctrl" : data.QsciScintillaBase.SCI_WORDLEFTEXTEND,
+            "Left+Alt+Shift" : data.QsciScintillaBase.SCI_CHARLEFTRECTEXTEND,
+            "Right" : data.QsciScintillaBase.SCI_CHARRIGHT,
+            "Right+Shift" : data.QsciScintillaBase.SCI_CHARRIGHTEXTEND,
+            "Right+Ctrl" : data.QsciScintillaBase.SCI_WORDRIGHT,
+            "Right+Shift+Ctrl" : data.QsciScintillaBase.SCI_WORDRIGHTEXTEND,
+            "Right+Alt+Shift" : data.QsciScintillaBase.SCI_CHARRIGHTRECTEXTEND,
+            "/+Ctrl" : data.QsciScintillaBase.SCI_WORDPARTLEFT,
+            "/+Ctrl+Shift" : data.QsciScintillaBase.SCI_WORDPARTLEFTEXTEND,
+            "\\+Ctrl" : data.QsciScintillaBase.SCI_WORDPARTRIGHT,
+            "\\+Ctrl+Shift" : data.QsciScintillaBase.SCI_WORDPARTRIGHTEXTEND,
+            "Home" : data.QsciScintillaBase.SCI_VCHOME,
+            "Home+Shift" : data.QsciScintillaBase.SCI_VCHOMEEXTEND,
+            settings.keyboard_shortcuts['editor']['go_to_start'] : data.QsciScintillaBase.SCI_DOCUMENTSTART,
+            settings.keyboard_shortcuts['editor']['select_to_start'] : data.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
+            "Home+Alt" : data.QsciScintillaBase.SCI_HOMEDISPLAY,
+            "Home+Alt+Shift" : data.QsciScintillaBase.SCI_VCHOMERECTEXTEND,
+            "End" : data.QsciScintillaBase.SCI_LINEEND,
+            "End+Shift" : data.QsciScintillaBase.SCI_LINEENDEXTEND,
+            settings.keyboard_shortcuts['editor']['go_to_end'] : data.QsciScintillaBase.SCI_DOCUMENTEND,
+            settings.keyboard_shortcuts['editor']['select_to_end'] : data.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
+            "End+Alt" : data.QsciScintillaBase.SCI_LINEENDDISPLAY,
+            "End+Alt+Shift" : data.QsciScintillaBase.SCI_LINEENDRECTEXTEND,
+            settings.keyboard_shortcuts['editor']['scroll_up'] : data.QsciScintillaBase.SCI_PAGEUP,
+            settings.keyboard_shortcuts['editor']['select_page_up'] : data.QsciScintillaBase.SCI_PAGEUPEXTEND,
+            "PageUp+Alt+Shift" : data.QsciScintillaBase.SCI_PAGEUPRECTEXTEND,
+            settings.keyboard_shortcuts['editor']['scroll_down'] : data.QsciScintillaBase.SCI_PAGEDOWN,
+            settings.keyboard_shortcuts['editor']['select_page_down'] : data.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
+            "PageDown+Alt+Shift" : data.QsciScintillaBase.SCI_PAGEDOWNRECTEXTEND,
+            "Delete" : data.QsciScintillaBase.SCI_CLEAR,
+            "Delete+Shift" : data.QsciScintillaBase.SCI_CUT,
+            settings.keyboard_shortcuts['editor']['delete_end_of_word']: data.QsciScintillaBase.SCI_DELWORDRIGHT,
+            settings.keyboard_shortcuts['editor']['delete_end_of_line'] : data.QsciScintillaBase.SCI_DELLINERIGHT,
+            "Insert" : data.QsciScintillaBase.SCI_EDITTOGGLEOVERTYPE,
+            "Insert+Shift" : data.QsciScintillaBase.SCI_PASTE,
+            "Insert+Ctrl" : data.QsciScintillaBase.SCI_COPY,
+            "Escape" : data.QsciScintillaBase.SCI_CANCEL,
+            "Backspace" : data.QsciScintillaBase.SCI_DELETEBACK,
+            "Backspace+Shift" : data.QsciScintillaBase.SCI_DELETEBACK,
+            settings.keyboard_shortcuts['editor']['delete_start_of_word'] : data.QsciScintillaBase.SCI_DELWORDLEFT,
+            "Backspace+Alt" : data.QsciScintillaBase.SCI_UNDO,
+            settings.keyboard_shortcuts['editor']['delete_start_of_line'] : data.QsciScintillaBase.SCI_DELLINELEFT,
+            settings.keyboard_shortcuts['editor']['undo'] : data.QsciScintillaBase.SCI_UNDO,
+            settings.keyboard_shortcuts['editor']['redo'] : data.QsciScintillaBase.SCI_REDO,
+            settings.keyboard_shortcuts['editor']['cut'] : data.QsciScintillaBase.SCI_CUT,
+            settings.keyboard_shortcuts['editor']['copy'] : data.QsciScintillaBase.SCI_COPY,
+            settings.keyboard_shortcuts['editor']['paste'] : data.QsciScintillaBase.SCI_PASTE,
+            settings.keyboard_shortcuts['editor']['select_all'] : data.QsciScintillaBase.SCI_SELECTALL,
+            settings.keyboard_shortcuts['editor']['indent'] : data.QsciScintillaBase.SCI_TAB,
+            settings.keyboard_shortcuts['editor']['unindent'] : data.QsciScintillaBase.SCI_BACKTAB,
+            "Return" : data.QsciScintillaBase.SCI_NEWLINE,
+            "Return+Shift" : data.QsciScintillaBase.SCI_NEWLINE,
+            "Add+Ctrl" : data.QsciScintillaBase.SCI_ZOOMIN,
+            "Subtract+Ctrl" : data.QsciScintillaBase.SCI_ZOOMOUT,
+            "Divide+Ctrl" : data.QsciScintillaBase.SCI_SETZOOM,
+            settings.keyboard_shortcuts['editor']['line_cut'] : data.QsciScintillaBase.SCI_LINECUT,
+            settings.keyboard_shortcuts['editor']['line_delete'] : data.QsciScintillaBase.SCI_LINEDELETE,
+            settings.keyboard_shortcuts['editor']['line_copy'] : data.QsciScintillaBase.SCI_LINECOPY,
+            settings.keyboard_shortcuts['editor']['line_transpose'] : data.QsciScintillaBase.SCI_LINETRANSPOSE,
+            settings.keyboard_shortcuts['editor']['line_selection_duplicate'] : data.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
+            "U+Ctrl" : data.QsciScintillaBase.SCI_LOWERCASE,
+            "U+Ctrl+Shift" : data.QsciScintillaBase.SCI_UPPERCASE,
+        }
+        self.scintilla_keys = {
+            "down" : data.QsciScintillaBase.SCK_DOWN,
+            "up" : data.QsciScintillaBase.SCK_UP,
+            "left" : data.QsciScintillaBase.SCK_LEFT,
+            "right" : data.QsciScintillaBase.SCK_RIGHT,
+            "home" : data.QsciScintillaBase.SCK_HOME,
+            "end" : data.QsciScintillaBase.SCK_END,
+            "pageup" : data.QsciScintillaBase.SCK_PRIOR,
+            "pagedown" : data.QsciScintillaBase.SCK_NEXT,
+            "delete" : data.QsciScintillaBase.SCK_DELETE,
+            "insert" : data.QsciScintillaBase.SCK_INSERT,
+            "escape" : data.QsciScintillaBase.SCK_ESCAPE,
+            "backspace" : data.QsciScintillaBase.SCK_BACK,
+            "tab" : data.QsciScintillaBase.SCK_TAB,
+            "return" : data.QsciScintillaBase.SCK_RETURN,
+            "add" : data.QsciScintillaBase.SCK_ADD,
+            "subtract" : data.QsciScintillaBase.SCK_SUBTRACT,
+            "divide" : data.QsciScintillaBase.SCK_DIVIDE,
+            "win" : data.QsciScintillaBase.SCK_WIN,
+            "rwin" : data.QsciScintillaBase.SCK_RWIN,
+            "menu" : data.QsciScintillaBase.SCK_MENU,
+        }
+        self.valid_modifiers = [
+            data.QsciScintillaBase.SCMOD_NORM, 
+            data.QsciScintillaBase.SCMOD_SHIFT, 
+            data.QsciScintillaBase.SCMOD_CTRL, 
+            data.QsciScintillaBase.SCMOD_ALT, 
+            data.QsciScintillaBase.SCMOD_SUPER, 
+            data.QsciScintillaBase.SCMOD_META
+        ]
+    
+    def __init__(self, parent):
         """
-        Keyboard command assignment, ...
-        Relevant Scintilla items:
-            SCI_ASSIGNCMDKEY(int keyDefinition, int sciCommand)
-            SCI_CLEARCMDKEY(int keyDefinition)
-            SCI_CLEARALLCMDKEYS
-            SCI_NULL
+        Initialization of the Keyboard object instance
         """
-        _parent = None
-        #GNU/Linux and Windows bindings copied from Scintila source 'KeyMap.cxx'
-        bindings = None
-        scintilla_keys = None
-        valid_modifiers = None
-        
-        def init_bindings(self):
-            self.bindings = {
-                "Down" : data.QsciScintillaBase.SCI_LINEDOWN,
-                "Down+Shift" : data.QsciScintillaBase.SCI_LINEDOWNEXTEND,
-                "Down+Ctrl" : data.QsciScintillaBase.SCI_LINESCROLLDOWN,
-                "Down+Alt+Shift" : data.QsciScintillaBase.SCI_LINEDOWNRECTEXTEND,
-                "Up" : data.QsciScintillaBase.SCI_LINEUP,
-                "Up+Shift" : data.QsciScintillaBase.SCI_LINEUPEXTEND,
-                "Up+Ctrl" : data.QsciScintillaBase.SCI_LINESCROLLUP,
-                "Up+Alt+Shift" : data.QsciScintillaBase.SCI_LINEUPRECTEXTEND,
-                "[+Ctrl" : data.QsciScintillaBase.SCI_PARAUP,
-                "[+Ctrl+Shift" : data.QsciScintillaBase.SCI_PARAUPEXTEND,
-                "]+Ctrl" : data.QsciScintillaBase.SCI_PARADOWN,
-                "]+Ctrl+Shift" : data.QsciScintillaBase.SCI_PARADOWNEXTEND,
-                "Left" : data.QsciScintillaBase.SCI_CHARLEFT,
-                "Left+Shift" : data.QsciScintillaBase.SCI_CHARLEFTEXTEND,
-                "Left+Ctrl" : data.QsciScintillaBase.SCI_WORDLEFT,
-                "Left+Shift+Ctrl" : data.QsciScintillaBase.SCI_WORDLEFTEXTEND,
-                "Left+Alt+Shift" : data.QsciScintillaBase.SCI_CHARLEFTRECTEXTEND,
-                "Right" : data.QsciScintillaBase.SCI_CHARRIGHT,
-                "Right+Shift" : data.QsciScintillaBase.SCI_CHARRIGHTEXTEND,
-                "Right+Ctrl" : data.QsciScintillaBase.SCI_WORDRIGHT,
-                "Right+Shift+Ctrl" : data.QsciScintillaBase.SCI_WORDRIGHTEXTEND,
-                "Right+Alt+Shift" : data.QsciScintillaBase.SCI_CHARRIGHTRECTEXTEND,
-                "/+Ctrl" : data.QsciScintillaBase.SCI_WORDPARTLEFT,
-                "/+Ctrl+Shift" : data.QsciScintillaBase.SCI_WORDPARTLEFTEXTEND,
-                "\\+Ctrl" : data.QsciScintillaBase.SCI_WORDPARTRIGHT,
-                "\\+Ctrl+Shift" : data.QsciScintillaBase.SCI_WORDPARTRIGHTEXTEND,
-                "Home" : data.QsciScintillaBase.SCI_VCHOME,
-                "Home+Shift" : data.QsciScintillaBase.SCI_VCHOMEEXTEND,
-                settings.keyboard_shortcuts['editor']['go_to_start'] : data.QsciScintillaBase.SCI_DOCUMENTSTART,
-                settings.keyboard_shortcuts['editor']['select_to_start'] : data.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND,
-                "Home+Alt" : data.QsciScintillaBase.SCI_HOMEDISPLAY,
-                "Home+Alt+Shift" : data.QsciScintillaBase.SCI_VCHOMERECTEXTEND,
-                "End" : data.QsciScintillaBase.SCI_LINEEND,
-                "End+Shift" : data.QsciScintillaBase.SCI_LINEENDEXTEND,
-                settings.keyboard_shortcuts['editor']['go_to_end'] : data.QsciScintillaBase.SCI_DOCUMENTEND,
-                settings.keyboard_shortcuts['editor']['select_to_end'] : data.QsciScintillaBase.SCI_DOCUMENTENDEXTEND,
-                "End+Alt" : data.QsciScintillaBase.SCI_LINEENDDISPLAY,
-                "End+Alt+Shift" : data.QsciScintillaBase.SCI_LINEENDRECTEXTEND,
-                settings.keyboard_shortcuts['editor']['scroll_up'] : data.QsciScintillaBase.SCI_PAGEUP,
-                settings.keyboard_shortcuts['editor']['select_page_up'] : data.QsciScintillaBase.SCI_PAGEUPEXTEND,
-                "PageUp+Alt+Shift" : data.QsciScintillaBase.SCI_PAGEUPRECTEXTEND,
-                settings.keyboard_shortcuts['editor']['scroll_down'] : data.QsciScintillaBase.SCI_PAGEDOWN,
-                settings.keyboard_shortcuts['editor']['select_page_down'] : data.QsciScintillaBase.SCI_PAGEDOWNEXTEND,
-                "PageDown+Alt+Shift" : data.QsciScintillaBase.SCI_PAGEDOWNRECTEXTEND,
-                "Delete" : data.QsciScintillaBase.SCI_CLEAR,
-                "Delete+Shift" : data.QsciScintillaBase.SCI_CUT,
-                settings.keyboard_shortcuts['editor']['delete_end_of_word']: data.QsciScintillaBase.SCI_DELWORDRIGHT,
-                settings.keyboard_shortcuts['editor']['delete_end_of_line'] : data.QsciScintillaBase.SCI_DELLINERIGHT,
-                "Insert" : data.QsciScintillaBase.SCI_EDITTOGGLEOVERTYPE,
-                "Insert+Shift" : data.QsciScintillaBase.SCI_PASTE,
-                "Insert+Ctrl" : data.QsciScintillaBase.SCI_COPY,
-                "Escape" : data.QsciScintillaBase.SCI_CANCEL,
-                "Backspace" : data.QsciScintillaBase.SCI_DELETEBACK,
-                "Backspace+Shift" : data.QsciScintillaBase.SCI_DELETEBACK,
-                settings.keyboard_shortcuts['editor']['delete_start_of_word'] : data.QsciScintillaBase.SCI_DELWORDLEFT,
-                "Backspace+Alt" : data.QsciScintillaBase.SCI_UNDO,
-                settings.keyboard_shortcuts['editor']['delete_start_of_line'] : data.QsciScintillaBase.SCI_DELLINELEFT,
-                settings.keyboard_shortcuts['editor']['undo'] : data.QsciScintillaBase.SCI_UNDO,
-                settings.keyboard_shortcuts['editor']['redo'] : data.QsciScintillaBase.SCI_REDO,
-                settings.keyboard_shortcuts['editor']['cut'] : data.QsciScintillaBase.SCI_CUT,
-                settings.keyboard_shortcuts['editor']['copy'] : data.QsciScintillaBase.SCI_COPY,
-                settings.keyboard_shortcuts['editor']['paste'] : data.QsciScintillaBase.SCI_PASTE,
-                settings.keyboard_shortcuts['editor']['select_all'] : data.QsciScintillaBase.SCI_SELECTALL,
-                settings.keyboard_shortcuts['editor']['indent'] : data.QsciScintillaBase.SCI_TAB,
-                settings.keyboard_shortcuts['editor']['unindent'] : data.QsciScintillaBase.SCI_BACKTAB,
-                "Return" : data.QsciScintillaBase.SCI_NEWLINE,
-                "Return+Shift" : data.QsciScintillaBase.SCI_NEWLINE,
-                "Add+Ctrl" : data.QsciScintillaBase.SCI_ZOOMIN,
-                "Subtract+Ctrl" : data.QsciScintillaBase.SCI_ZOOMOUT,
-                "Divide+Ctrl" : data.QsciScintillaBase.SCI_SETZOOM,
-                settings.keyboard_shortcuts['editor']['line_cut'] : data.QsciScintillaBase.SCI_LINECUT,
-                settings.keyboard_shortcuts['editor']['line_delete'] : data.QsciScintillaBase.SCI_LINEDELETE,
-                settings.keyboard_shortcuts['editor']['line_copy'] : data.QsciScintillaBase.SCI_LINECOPY,
-                settings.keyboard_shortcuts['editor']['line_transpose'] : data.QsciScintillaBase.SCI_LINETRANSPOSE,
-                settings.keyboard_shortcuts['editor']['line_selection_duplicate'] : data.QsciScintillaBase.SCI_SELECTIONDUPLICATE,
-                "U+Ctrl" : data.QsciScintillaBase.SCI_LOWERCASE,
-                "U+Ctrl+Shift" : data.QsciScintillaBase.SCI_UPPERCASE,
-            }
-            self.scintilla_keys = {
-                "down" : data.QsciScintillaBase.SCK_DOWN,
-                "up" : data.QsciScintillaBase.SCK_UP,
-                "left" : data.QsciScintillaBase.SCK_LEFT,
-                "right" : data.QsciScintillaBase.SCK_RIGHT,
-                "home" : data.QsciScintillaBase.SCK_HOME,
-                "end" : data.QsciScintillaBase.SCK_END,
-                "pageup" : data.QsciScintillaBase.SCK_PRIOR,
-                "pagedown" : data.QsciScintillaBase.SCK_NEXT,
-                "delete" : data.QsciScintillaBase.SCK_DELETE,
-                "insert" : data.QsciScintillaBase.SCK_INSERT,
-                "escape" : data.QsciScintillaBase.SCK_ESCAPE,
-                "backspace" : data.QsciScintillaBase.SCK_BACK,
-                "tab" : data.QsciScintillaBase.SCK_TAB,
-                "return" : data.QsciScintillaBase.SCK_RETURN,
-                "add" : data.QsciScintillaBase.SCK_ADD,
-                "subtract" : data.QsciScintillaBase.SCK_SUBTRACT,
-                "divide" : data.QsciScintillaBase.SCK_DIVIDE,
-                "win" : data.QsciScintillaBase.SCK_WIN,
-                "rwin" : data.QsciScintillaBase.SCK_RWIN,
-                "menu" : data.QsciScintillaBase.SCK_MENU,
-            }
-            self.valid_modifiers = [
-                data.QsciScintillaBase.SCMOD_NORM, 
-                data.QsciScintillaBase.SCMOD_SHIFT, 
-                data.QsciScintillaBase.SCMOD_CTRL, 
-                data.QsciScintillaBase.SCMOD_ALT, 
-                data.QsciScintillaBase.SCMOD_SUPER, 
-                data.QsciScintillaBase.SCMOD_META
-            ]
-        
-        def __init__(self, parent):
-            """Initialization of the Keyboard object instance"""
-            #Get the reference to the MainWindow parent object instance
-            self._parent = parent
-            #Assign keyboard commands
-            self.init_bindings()
-            self.clear_all_keys()
-            bindings = self.bindings
-            set_key_combination = self.set_key_combination
-            for keys in bindings:
-                set_key_combination(
-                    keys, bindings[keys]
-                )
-        
-        def _parse_key_string(self, key_string):
-            """ Parse a '+' delimited string for a key combination """
-            split_keys = key_string.replace(" ", "").lower().split("+")
-            #Check for to many keys in binding
-            if len(split_keys) > 4:
-                raise ValueError("Too many items in key string!")
-            #Parse the items
-            modifiers = []
-            key_combination = 0
-            if "ctrl" in split_keys:
-                modifiers.append(data.QsciScintillaBase.SCMOD_CTRL)
-                split_keys.remove("ctrl")
-            if "alt" in split_keys:
-                modifiers.append(data.QsciScintillaBase.SCMOD_ALT)
-                split_keys.remove("alt")
-            if "shift" in split_keys:
-                modifiers.append(data.QsciScintillaBase.SCMOD_SHIFT)
-                split_keys.remove("shift")
-            if "meta" in split_keys:
-                modifiers.append(data.QsciScintillaBase.SCMOD_META)
-                split_keys.remove("meta")
-            base_key = split_keys[0]
-            if len(split_keys) == 0:
-                raise ValueError("Key string has to have a base character!")
-            if len(base_key) != 1:
-                if base_key in self.scintilla_keys:
-                    key_combination = self.scintilla_keys[base_key]
-                else:
-                    raise ValueError("Unknown base key!")
-            else:
-                key_combination = ord(base_key.upper())
-            if modifiers != []:
-                for m in modifiers:
-                    key_combination += (m << 16)
-            return key_combination
-        
-        def _check_keys(self, key, modifier=None):
-            """ Check the validity of the key and modifier """
-            if isinstance(key, str) == True:
-                if len(key) != 1:
-                    if modifier != None:
-                        raise ValueError("modifier argument has to be 'None' with a key string!")
-                    #key argument is going to be parsed as a combination
-                    key = self._parse_key_string(key)
-                else:
-                    if key in self.scintilla_keys:
-                        key = self.scintilla_keys[key]
-                    else:
-                        key = ord(key)
-            if modifier == None:
-                key_combination = key
-            else:
-                if not(modifier in self.valid_modifiers):
-                    raise ValueError("The keyboard modifier is not valid: {}".format(modifier))
-                key_combination = key + (modifier << 16)
-            return key_combination
-        
-        def clear_all_keys(self):
-            """
-            Clear all mappings from the internal Scintilla mapping table
-            """
-            self._parent.SendScintilla(
-                data.QsciScintillaBase.SCI_CLEARALLCMDKEYS
+        # Get the reference to the MainWindow parent object instance
+        self._parent = parent
+        # Assign keyboard commands
+        self.init_bindings()
+        self.clear_all_keys()
+        bindings = self.bindings
+        set_key_combination = self.set_key_combination
+        for keys in bindings:
+            set_key_combination(
+                keys, bindings[keys]
             )
-        
-        def clear_key_combination(self, key, modifier=None):
-            """
-            Clear the key combination from the internal Scintilla Mapping
-            Raw example of clearing the CTRL+X (Cut text function) combination:
-                cmain.SendScintilla(
-                    data.QsciScintillaBase.SCI_CLEARCMDKEY, 
-                    ord('X') + (data.QsciScintillaBase.SCMOD_CTRL << 16)
-                )
-            """
-            try:
-                key_combination = self._check_keys(key, modifier)
-            except Exception as ex:
-                self._parent.main_form.display.repl_display_message(
-                    str(ex), 
-                    message_type=data.MessageType.ERROR
-                )
-                return
-            self._parent.SendScintilla(
+    
+    def _parse_key_string(self, key_string):
+        """
+        Parse a '+' delimited string for a key combination
+        """
+        split_keys = key_string.replace(" ", "").lower().split("+")
+        # Check for to many keys in binding
+        if len(split_keys) > 4:
+            raise ValueError("Too many items in key string!")
+        # Parse the items
+        modifiers = []
+        key_combination = 0
+        if "ctrl" in split_keys:
+            modifiers.append(data.QsciScintillaBase.SCMOD_CTRL)
+            split_keys.remove("ctrl")
+        if "alt" in split_keys:
+            modifiers.append(data.QsciScintillaBase.SCMOD_ALT)
+            split_keys.remove("alt")
+        if "shift" in split_keys:
+            modifiers.append(data.QsciScintillaBase.SCMOD_SHIFT)
+            split_keys.remove("shift")
+        if "meta" in split_keys:
+            modifiers.append(data.QsciScintillaBase.SCMOD_META)
+            split_keys.remove("meta")
+        base_key = split_keys[0]
+        if len(split_keys) == 0:
+            raise ValueError("Key string has to have a base character!")
+        if len(base_key) != 1:
+            if base_key in self.scintilla_keys:
+                key_combination = self.scintilla_keys[base_key]
+            else:
+                raise ValueError("Unknown base key!")
+        else:
+            key_combination = ord(base_key.upper())
+        if modifiers != []:
+            for m in modifiers:
+                key_combination += (m << 16)
+        return key_combination
+    
+    def _check_keys(self, key, modifier=None):
+        """ Check the validity of the key and modifier """
+        if isinstance(key, str) == True:
+            if len(key) != 1:
+                if modifier != None:
+                    raise ValueError("modifier argument has to be 'None' with a key string!")
+                #key argument is going to be parsed as a combination
+                key = self._parse_key_string(key)
+            else:
+                if key in self.scintilla_keys:
+                    key = self.scintilla_keys[key]
+                else:
+                    key = ord(key)
+        if modifier == None:
+            key_combination = key
+        else:
+            if not(modifier in self.valid_modifiers):
+                raise ValueError("The keyboard modifier is not valid: {}".format(modifier))
+            key_combination = key + (modifier << 16)
+        return key_combination
+    
+    def clear_all_keys(self):
+        """
+        Clear all mappings from the internal Scintilla mapping table
+        """
+        self._parent.SendScintilla(
+            data.QsciScintillaBase.SCI_CLEARALLCMDKEYS
+        )
+    
+    def clear_key_combination(self, key, modifier=None):
+        """
+        Clear the key combination from the internal Scintilla Mapping
+        Raw example of clearing the CTRL+X (Cut text function) combination:
+            cmain.SendScintilla(
                 data.QsciScintillaBase.SCI_CLEARCMDKEY, 
-                key_combination
+                ord('X') + (data.QsciScintillaBase.SCMOD_CTRL << 16)
             )
-        
-        def set_key_combination(self, key, command, modifier=None):
-            """
-            Assign a key combination to a command.
-            Parameters:
-                key - character or key string combination
-                command - Scintilla command that will execute on the key combination
-                modifier - Ctrl, Alt, ...
-            Raw example of assigning CTRL+D to the Cut function:
-                cmain.SendScintilla(
-                    data.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
-                    ord('D') + (data.QsciScintillaBase.SCMOD_CTRL << 16),
-                    data.QsciScintillaBase.SCI_CUT
-                )
-            """
-            try:
-                key_combination = self._check_keys(key, modifier)
-            except Exception as ex:
-                self._parent.main_form.display.repl_display_message(
-                    str(ex), 
-                    message_type=data.MessageType.ERROR
-                )
-                return
-            self._parent.SendScintilla(
+        """
+        try:
+            key_combination = self._check_keys(key, modifier)
+        except Exception as ex:
+            self._parent.main_form.display.repl_display_message(
+                str(ex), 
+                message_type=data.MessageType.ERROR
+            )
+            return
+        self._parent.SendScintilla(
+            data.QsciScintillaBase.SCI_CLEARCMDKEY, 
+            key_combination
+        )
+    
+    def set_key_combination(self, key, command, modifier=None):
+        """
+        Assign a key combination to a command.
+        Parameters:
+            key - character or key string combination
+            command - Scintilla command that will execute on the key combination
+            modifier - Ctrl, Alt, ...
+        Raw example of assigning CTRL+D to the Cut function:
+            cmain.SendScintilla(
                 data.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
-                key_combination,
-                command
+                ord('D') + (data.QsciScintillaBase.SCMOD_CTRL << 16),
+                data.QsciScintillaBase.SCI_CUT
             )
+        """
+        try:
+            key_combination = self._check_keys(key, modifier)
+        except Exception as ex:
+            self._parent.main_form.display.repl_display_message(
+                str(ex), 
+                message_type=data.MessageType.ERROR
+            )
+            return
+        self._parent.SendScintilla(
+            data.QsciScintillaBase.SCI_ASSIGNCMDKEY, 
+            key_combination,
+            command
+        )
 
 
 

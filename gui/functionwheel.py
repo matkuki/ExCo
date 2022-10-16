@@ -95,7 +95,7 @@ class FunctionWheel(data.QGroupBox):
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            data.Qt.AlignHCenter | data.Qt.AlignVCenter
+            data.Qt.AlignmentFlag.AlignHCenter | data.Qt.AlignmentFlag.AlignVCenter
         )
         #Initialize all of the hex function buttons
         self.__init_all_buttons()
@@ -652,74 +652,6 @@ class FunctionWheel(data.QGroupBox):
                 input_no_document_focus_disable=False,
             ),
             ButtonInfo(
-                "button_45",
-                geometries[next(gi)],
-                "tango_icons/view-focus-main.png",
-                f_p(form.view.set_window_focus, "main"),
-                "Focus Main\nWindow",
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
-                "button_46",
-                geometries[next(gi)],
-                "tango_icons/view-focus-upper.png",
-                f_p(form.view.set_window_focus, "upper"),
-                "Focus Upper\nWindow",
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
-                "button_47",
-                geometries[next(gi)],
-                "tango_icons/view-focus-lower.png",
-                f_p(form.view.set_window_focus, "lower"),
-                "Focus Lower\nWindow",
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
-                "button_48",
-                geometries[next(gi)],
-                "tango_icons/view-log.png",
-                form.view.toggle_log_window,
-                "Show/Hide\nLog Window",
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
-                "button_49",
-                geometries[next(gi)],
-                "tango_icons/view-spin-clock.png",
-                form.view.spin_widgets_clockwise,
-                "Spin Windows\nClockwise",
-                input_focus_last_widget=False,
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
-                "button_50",
-                geometries[next(gi)],
-                "tango_icons/view-spin-counter.png",
-                form.view.spin_widgets_counterclockwise,
-                "Spin Windows\nCounter\nClockwise",
-                input_focus_last_widget=False,
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
-                "button_51",
-                geometries[next(gi)],
-                "tango_icons/view-toggle-window-mode.png",
-                form.view.toggle_window_mode,
-                "Toggle\nWindow Mode",
-                input_focus_last_widget=False,
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
-                "button_52",
-                geometries[next(gi)],
-                "tango_icons/view-toggle-window-side.png",
-                form.view.toggle_main_window_side,
-                "Toggle\nWindow Side",
-                input_focus_last_widget=False,
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
                 "button_move_tab_left",
                 geometries[next(gi)],
                 "tango_icons/view-move-tab-left.png",
@@ -776,7 +708,12 @@ class FunctionWheel(data.QGroupBox):
             ButtonInfo(
                 "button_find_files",
                 geometries[next(gi)],
-                "tango_icons/system-find-files.png",
+                functions.create_icon(
+                    functions.ovarlay_images(
+                        "tango_icons/system-find-files.png",
+                        "various/hex-button-dir-dialog.png",
+                    )
+                ),
                 menubar_functions["special_find_file_with_dialog"],
                 "Find Files\nwith dialog",
                 input_no_document_focus_disable=False,
@@ -792,7 +729,12 @@ class FunctionWheel(data.QGroupBox):
             ButtonInfo(
                 "button_find_in_files",
                 geometries[next(gi)],
-                "tango_icons/system-find-in-files.png",
+                functions.create_icon(
+                    functions.ovarlay_images(
+                        "tango_icons/system-find-in-files.png",
+                        "various/hex-button-dir-dialog.png",
+                    )
+                ),
                 menubar_functions["special_find_in_with_dialog"],
                 "Find in\nFiles with\ndialog",
                 input_no_document_focus_disable=False,
@@ -808,7 +750,12 @@ class FunctionWheel(data.QGroupBox):
             ButtonInfo(
                 "button_replace_in_files",
                 geometries[next(gi)],
-                "tango_icons/system-replace-in-files.png",
+                functions.create_icon(
+                    functions.ovarlay_images(
+                        "tango_icons/system-replace-in-files.png",
+                        "various/hex-button-dir-dialog.png",
+                    )
+                ),
                 menubar_functions["special_replace_in_files_with_dialog"],
                 "Replace all\nin Files\nwith dialog",
                 input_no_document_focus_disable=False,
@@ -967,7 +914,12 @@ class FunctionWheel(data.QGroupBox):
             )
             for att in attributes:
                 setattr(init_button, att, getattr(button, att))
-            init_button.setIcon(functions.create_icon(button.pixmap))
+            if isinstance(button.pixmap, data.QIcon):
+                init_button.setIcon(button.pixmap)
+            elif isinstance(button.pixmap, str):
+                init_button.setIcon(functions.create_icon(button.pixmap))
+            else:
+                raise Exception("[FunctionWheel] Unknown pixmap type: {}".format(button.pixmap))
             init_button.setIconSize(
                 data.QSize(
                     int(button.geometry[2]),
@@ -1008,9 +960,9 @@ class FunctionWheel(data.QGroupBox):
             # If the button needs to focus on the last focused widget,
             # check if the last focused widget is valid
             last_widget = self.main_form.last_focused_widget
-            last_tab    = self.main_form.last_focused_tab
+            indicated_widget = self.main_form.get_tab_by_indication()
             result = False
-            if last_widget != None and last_widget.count() != 0:
+            if last_widget is not None and last_widget.count() != 0:
                 result = True
             if result == False and child_widget.no_tab_focus_disable == True:
                 # Disable if no tab is focused
@@ -1019,17 +971,17 @@ class FunctionWheel(data.QGroupBox):
                 # If document focus is needed by the button, check if a tab is a focused document
                 child_widget.setEnabled(False)
             elif (child_widget.no_document_focus_disable == True and
-                 (isinstance(last_tab, CustomEditor) == False and
-                  isinstance(last_tab, PlainEditor) == False)):
+                 (isinstance(indicated_widget, CustomEditor) == False and
+                  isinstance(indicated_widget, PlainEditor) == False)):
                 # If focus is needed by the button, check the tab is an editing widget
                 child_widget.setEnabled(False)
             elif (child_widget.check_last_tab_type == True and
-                  isinstance(last_tab, CustomEditor) == False):
+                  isinstance(indicated_widget, CustomEditor) == False):
                 # Check tab type for save/save_as/save_all buttons, it must be a CustomEditor
                 child_widget.setEnabled(False)
             elif (child_widget.no_document_focus_disable == True and
-                  hasattr(last_tab, "actual_parent") == True and
-                  isinstance(last_tab.actual_parent, TextDiffer) == True):
+                  hasattr(indicated_widget, "actual_parent") == True and
+                  isinstance(indicated_widget.actual_parent, TextDiffer) == True):
                 # Check if tab is a TextDiffer, enable only the supported functions
                 if (child_widget.function_text != "Find" and
                     child_widget.function_text != "Regex Find" and
@@ -1045,8 +997,8 @@ class FunctionWheel(data.QGroupBox):
         """
         # Set focus to the last focused widget stored on the main form
         last_widget = self.main_form.last_focused_widget
-        if last_widget != None:
-            if last_widget.currentWidget() != None:
+        if last_widget is not None:
+            if last_widget.currentWidget() is not None:
                 last_widget.currentWidget().setFocus()
 
     def display(self, string, font):
@@ -1057,7 +1009,7 @@ class FunctionWheel(data.QGroupBox):
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            data.Qt.AlignHCenter | data.Qt.AlignVCenter
+            data.Qt.AlignmentFlag.AlignHCenter | data.Qt.AlignmentFlag.AlignVCenter
         )
         # Display the string
         self.display_label.setText(string)
@@ -1083,17 +1035,17 @@ class FunctionWheel(data.QGroupBox):
         """
         self.setVisible(True)
         self.setEnabled(True)
-        #Refresh the states of the hex function buttons
+        # Refresh the states of the hex function buttons
         self.__check_hex_button_states()
-        #Center to main form
+        # Center to main form
         self.center(self.size())
-        #Set the cursor to the center of the last executed function, if any
-        self.highlight_last_clicked_button()
         self.setFocus()
 
     def scale(self, width_scale_factor=1, height_scale_factor=1):
-        """Scale the size of the function wheel and all of its child widgets"""
-        #Scale the function wheel form
+        """
+        Scale the size of the function wheel and all of its child widgets
+        """
+        # Scale the function wheel form
         geo = self.geometry()
         new_width = int(geo.width() * width_scale_factor)
         new_height = int(geo.height() * height_scale_factor)
@@ -1102,7 +1054,7 @@ class FunctionWheel(data.QGroupBox):
             functions.create_size(new_width, new_height)
         )
         self.setGeometry(rectangle)
-        #Scale all of the function wheel child widgets
+        # Scale all of the function wheel child widgets
         for button in self.children():
             geo = button.geometry()
             new_topLeft = functions.create_point(
@@ -1114,7 +1066,7 @@ class FunctionWheel(data.QGroupBox):
             new_size = functions.create_size(new_width, new_height)
             rectangle = functions.create_rect(new_topLeft, new_size)
             button.setGeometry(rectangle)
-        #Center to main form
+        # Center to main form
         self.center(self.size())
 
     def center(self, size):
@@ -1129,46 +1081,24 @@ class FunctionWheel(data.QGroupBox):
         rectangle = functions.create_rect(rectangle_top_left, rectangle_size)
         self.setGeometry(rectangle)
 
-    def highlight_last_clicked_button(self):
-        """Name says it all"""
-        #Check if there is a stored button function
-        last_function_text = self.main_form.view.last_executed_function_text
-        if last_function_text == None:
-            return
-        #Loop through the buttons and check its function
-        for button in self.children():
-            if isinstance(button, CustomButton):
-                #Compare the stored function text with the buttons function text
-                if button.function_text == last_function_text:
-                    #Only higlight the button if it is enabled
-                    if button.isEnabled() == True:
-                        button.highlight()
-                    button_position = self.mapToGlobal(button.geometry().topLeft())
-                    cursor = data.QCursor()
-                    cursor.setPos(
-                        button_position.x() + int(button.geometry().width()/2),
-                        button_position.y() + int(button.geometry().height()/2)
-                    )
-                    break
-
     def update_style(self):
         self.setStyleSheet(f"""
-            QGroupBox {{
-                background-color: {data.theme["fonts"]["default"]["background"]};
-                color: {data.theme["fonts"]["default"]["color"]};
-                border: 1px solid {data.theme["indication"]["passiveborder"]};
-                margin: 0px;
-                padding: 0px;
-                spacing: 0px;
-            }}
+QGroupBox {{
+    background-color: {data.theme["fonts"]["default"]["background"]};
+    color: {data.theme["fonts"]["default"]["color"]};
+    border: 1px solid {data.theme["indication"]["passiveborder"]};
+    margin: 0px;
+    padding: 0px;
+    spacing: 0px;
+}}
         """)
         self.display_label.setStyleSheet(f"""
-            QLabel {{
-                background-color: {data.theme["fonts"]["default"]["background"]};
-                color: {data.theme["fonts"]["default"]["color"]};
-                border: 1px solid {data.theme["indication"]["activeborder"]};
-                border-radius: 4px;
-            }}
+QLabel {{
+    background-color: {data.theme["fonts"]["default"]["background"]};
+    color: {data.theme["fonts"]["default"]["color"]};
+    border: 1px solid {data.theme["indication"]["activeborder"]};
+    border-radius: 4px;
+}}
         """)
         for b in self.button_cache:
             b.update_style()
@@ -1184,7 +1114,7 @@ class ButtonInfo:
                 input_function,
                 input_function_text,
                 input_font=data.QFont(
-                    data.current_font_name, 14, weight=data.QFont.Bold
+                    data.current_font_name, 14, weight=data.QFont.Weight.Bold
                 ),
                 input_focus_last_widget=data.HexButtonFocus.NONE,
                 input_no_tab_focus_disable=False,

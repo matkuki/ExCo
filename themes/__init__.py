@@ -137,7 +137,9 @@ def __check(theme_data):
         "context-menu-background": __check_color,
         "context-menu-hex-edge": __check_color,
         "cursor": __check_color,
-        "cursor-line-background": __check_color,
+        "cursor-line-background": __check_color,        
+        "dock_point_color_active": __check_color,
+        "dock_point_color_passive": __check_color,
         "foldmargin": {
             "background": __check_color,
             "foreground": __check_color
@@ -2167,7 +2169,27 @@ def __check(theme_data):
                 "color": __check_color,
                 "bold": __check_bool,
                 "background": __check_color
-            }
+            },
+            "iri": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color
+            },
+            "iricompact": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color
+            },
+            "keywordld": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color
+            },
+            "property": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color
+            },
         },
         "form": __check_color,
         "image-file": __check_string,

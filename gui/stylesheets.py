@@ -24,30 +24,30 @@ class StyleSheetScrollbar:
         color_handle = data.theme["scrollbar"]["handle"]
         color_handle_hover = data.theme["scrollbar"]["handle-hover"]
         style_sheet = """
-            QScrollBar:horizontal {{
-                border: none;
-                background: {};
-                height: {}px;
-                margin: 0px 0px 0px 0px;
-            }}
-            QScrollBar::handle:horizontal {{
-                background: {};
-                min-width: 20px;
-            }}
-            QScrollBar::handle:hover {{
-                background: {};
-            }}
-            QScrollBar::handle:horizontal:pressed {{
-                background: {};
-            }}
-            
-            QScrollBar::sub-line:horizontal, QScrollBar::add-line:horizontal,
-            QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal,
-            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
-                background: none;
-                width: 0px;
-                height: 0px;
-            }}
+QScrollBar:horizontal {{
+    border: none;
+    background: {};
+    height: {}px;
+    margin: 0px 0px 0px 0px;
+}}
+QScrollBar::handle:horizontal {{
+    background: {};
+    min-width: 20px;
+}}
+QScrollBar::handle:hover {{
+    background: {};
+}}
+QScrollBar::handle:horizontal:pressed {{
+    background: {};
+}}
+
+QScrollBar::sub-line:horizontal, QScrollBar::add-line:horizontal,
+QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal,
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+    background: none;
+    width: 0px;
+    height: 0px;
+}}
         """.format(
             color_background,
             height,
@@ -65,30 +65,30 @@ class StyleSheetScrollbar:
         color_handle = data.theme["scrollbar"]["handle"]
         color_handle_hover = data.theme["scrollbar"]["handle-hover"]
         style_sheet = """
-            QScrollBar:vertical {{
-                border: none;
-                background: {};
-                width: {}px;
-                margin: 0px 0px 0px 0px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {};
-                min-height: 20px;
-            }}
-            QScrollBar::handle:hover {{
-                background: {};
-            }}
-            QScrollBar::handle:vertical:pressed {{
-                background: {};
-            }}
-            
-            QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical,
-            QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical,
-            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
-                background: none;
-                width: 0px;
-                height: 0px;
-            }}
+QScrollBar:vertical {{
+    border: none;
+    background: {};
+    width: {}px;
+    margin: 0px 0px 0px 0px;
+}}
+QScrollBar::handle:vertical {{
+    background: {};
+    min-height: 20px;
+}}
+QScrollBar::handle:hover {{
+    background: {};
+}}
+QScrollBar::handle:vertical:pressed {{
+    background: {};
+}}
+
+QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical,
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical,
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+    background: none;
+    width: 0px;
+    height: 0px;
+}}
         """.format(
             color_background,
             width,
@@ -111,21 +111,98 @@ class StyleSheetButton:
     @staticmethod
     def standard():
         style_sheet = f"""
-            QPushButton {{
-                background-color: {data.theme["indication"]["passivebackground"]};
-                color: {data.theme["indication"]["font"]};
-                border: 1px solid {data.theme["indication"]["passiveborder"]};
-                border-radius: 4px;
-            }}
-            QPushButton:hover {{
-                background-color: {data.theme["indication"]["hover"]};
-                color: {data.theme["indication"]["font"]};
-                border: 1px solid {data.theme["indication"]["activeborder"]};
-            }}
-            QPushButton:pressed {{
-                background-color: {data.theme["indication"]["activebackground"]};
-                color: {data.theme["indication"]["font"]};
-                border: 1px solid {data.theme["indication"]["activeborder"]};
-            }}
+QPushButton {{
+    background-color: {data.theme["indication"]["passivebackground"]};
+    color: {data.theme["indication"]["font"]};
+    border: 1px solid {data.theme["indication"]["passiveborder"]};
+    border-radius: 4px;
+}}
+QPushButton:hover {{
+    background-color: {data.theme["indication"]["hover"]};
+    color: {data.theme["indication"]["font"]};
+    border: 1px solid {data.theme["indication"]["activeborder"]};
+}}
+QPushButton:pressed {{
+    background-color: {data.theme["indication"]["activebackground"]};
+    color: {data.theme["indication"]["font"]};
+    border: 1px solid {data.theme["indication"]["activeborder"]};
+}}
+        """
+        return style_sheet
+
+class StyleSheetMenu:
+    @staticmethod
+    def standard():
+        style_sheet = """
+QMenu {{
+    background-color: {};
+    border: 1px solid {};
+    color: {};
+    menu-scrollable: 1;
+}}
+QMenu::item {{
+    background-color: transparent;
+    border: none;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 20px;
+    spacing: 12px;
+    margin: 1px;
+}}
+QMenu::item:selected  {{
+    background-color: {};
+}}
+QMenu::right-arrow  {{
+    image: url({});
+    width: 14px;
+    height: 14px;
+}}
+QMenu::right-arrow:disabled  {{
+    image: url({});
+    width: 14px;
+    height: 14px;
+}}
+        """.format(
+            data.theme["indication"]["passivebackground"],
+            data.theme["indication"]["passiveborder"],
+            data.theme["fonts"]["default"]["color"],
+            data.theme["indication"]["hover"],
+            functions.get_resource_file(data.theme["right-arrow-menu-image"]),
+            functions.get_resource_file(data.theme["right-arrow-menu-disabled-image"]),
+        )
+        return style_sheet
+
+class StyleSheetMenuBar:
+    @staticmethod
+    def standard():
+        style_sheet = """
+QMenuBar {{
+    background-color: {};
+    color: {};
+}}
+QMenuBar::item {{
+    background-color: transparent;
+}}
+QMenuBar::item:selected {{
+    background-color: {};
+}}
+        """.format(
+                data.theme["indication"]["passivebackground"],
+                data.theme["fonts"]["default"]["color"],
+                data.theme["indication"]["hover"],
+        )
+        return style_sheet
+
+class StyleSheetTooltip:
+    @staticmethod
+    def standard():
+        style_sheet = f"""
+QToolTip {{
+    font-family: {data.current_font_name};
+    font-size: {data.current_font_size};
+    background-color: {data.theme["indication"]["passivebackground"]}; 
+    color: {data.theme["indication"]["font"]}; 
+    border: {data.theme["indication"]["passiveborder"]} solid 1px;
+}}
         """
         return style_sheet

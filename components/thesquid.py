@@ -23,26 +23,17 @@ class TheSquid:
     The static object for executing functions that encompass multiple objects.
     """
     main_form = None
-    main_window = None
-    upper_window = None
-    lower_window = None
     repl = None
     repl_helper = None
     
     @staticmethod
     def init_objects(main_form):
         TheSquid.main_form = main_form
-        TheSquid.main_window = main_form.main_window
-        TheSquid.upper_window = main_form.upper_window
-        TheSquid.lower_window = main_form.lower_window
         TheSquid.repl = main_form.repl
         TheSquid.repl_helper = main_form.repl_helper
     
     @staticmethod
     def update_objects():
-        TheSquid.main_window = TheSquid.main_form.main_window
-        TheSquid.upper_window = TheSquid.main_form.upper_window
-        TheSquid.lower_window = TheSquid.main_form.lower_window
         TheSquid.repl = TheSquid.main_form.repl
         TheSquid.repl_helper = TheSquid.main_form.repl_helper
     
@@ -65,17 +56,14 @@ class TheSquid:
         def set_style(menu):
             if hasattr(menu, "actions"):
                 TheSquid.customize_menu_style(menu)
-                for item in menu.actions():
-                    if item.menu() != None:
-                        TheSquid.customize_menu_style(item.menu())
-                        set_style(item)
+                if data.PYQT_MODE < 6:
+                    for item in menu.actions():
+                        if item.menu() != None:
+                            TheSquid.customize_menu_style(item.menu())
+                            set_style(item)
         set_style(TheSquid.main_form.sessions_menu)
         
-        windows = [
-            TheSquid.main_window,
-            TheSquid.upper_window,
-            TheSquid.lower_window
-        ]
+        windows = TheSquid.main_form.get_all_windows()
         
         for window in windows:
             window.customize_tab_bar()
@@ -102,7 +90,7 @@ class TheSquid:
     
     @staticmethod
     def customize_menu_style(menu):
-        if data.custom_menu_scale != None and data.custom_menu_font != None:
+        if data.custom_menu_scale is not None and data.custom_menu_font is not None:
             # Customize the style
             try:
                 default_style_name = data.QApplication.style().objectName()

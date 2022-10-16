@@ -10,7 +10,6 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sip
 import os.path
 import collections
 import traceback
@@ -47,7 +46,7 @@ class ExCoInfo(data.QDialog):
         super().__init__()
         #Setup the window
         self.setWindowTitle("About Ex.Co.")
-        self.setWindowFlags(data.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(data.Qt.WindowType.WindowStaysOnTopHint)
         #Setup the picture
         exco_picture = data.QPixmap(data.about_image)
         self.picture = data.QLabel(self)
@@ -89,8 +88,8 @@ class ExCoInfo(data.QDialog):
         )
         self.setFixedSize(my_width, my_height)
 #        self.setStyleSheet("background-color:transparent;")
-#        self.setWindowFlags(data.Qt.WindowStaysOnTopHint | data.Qt.Dialog | data.Qt.FramelessWindowHint)
-#        self.setAttribute(data.Qt.WA_TranslucentBackground)
+#        self.setWindowFlags(data.Qt.WindowType.WindowStaysOnTopHint | data.Qt.Dialog | data.Qt.WindowType.FramelessWindowHint)
+#        self.setAttribute(data.Qt.WidgetAttribute.WA_TranslucentBackground)
     
     def _close(self, event):
         """Close the widget"""

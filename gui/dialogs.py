@@ -10,7 +10,6 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sip
 import os.path
 import collections
 import traceback
@@ -53,7 +52,7 @@ class YesNoDialog(data.QDialog):
             if scale != 1.0:
                 self.pixmap = self.pixmap.scaled(
                     self.pixmap.size() * scale, 
-                    transformMode=data.Qt.SmoothTransformation
+                    transformMode=data.Qt.TransformationMode.SmoothTransformation
                 )
             # Set the text and return code
             self.text = text
@@ -67,9 +66,9 @@ class YesNoDialog(data.QDialog):
         def draw(self, opacity):
             image = data.QImage(
                 self.pixmap.size(),
-                data.QImage.Format_ARGB32_Premultiplied
+                data.QImage.Format.Format_ARGB32_Premultiplied
             )
-            image.fill(data.Qt.transparent)
+            image.fill(data.Qt.GlobalColor.transparent)
             painter = data.QPainter(image)
             painter.setOpacity(opacity)
             painter.drawPixmap(0, 0, self.pixmap)
@@ -80,12 +79,12 @@ class YesNoDialog(data.QDialog):
                 painter.setPen(data.QColor(255, 255, 255))
             painter.setFont(
                 data.QFont(
-                    'Segoe UI', int(16 * self.scale), data.QFont.Bold
+                    data.current_font_name, int(16 * self.scale), data.QFont.Weight.Bold
                 )
             )
             painter.setOpacity(1.0)
             painter.drawText(
-                self.pixmap.rect(), data.Qt.AlignCenter, self.text
+                self.pixmap.rect(), data.Qt.AlignmentFlag.AlignCenter, self.text
             )
             painter.end()
             # Display the manipulated image
@@ -131,7 +130,7 @@ class YesNoDialog(data.QDialog):
     def __init__(self, text, dialog_type=None, parent=None):
         super().__init__(parent)
         # Make the dialog stay on top
-        self.setWindowFlags(data.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(data.Qt.WindowType.WindowStaysOnTopHint)
         # Set the dialog icon and title
         self.setWindowIcon(data.QIcon(data.application_icon))
         self.setWindowTitle(dialog_type.title())
@@ -144,14 +143,14 @@ class YesNoDialog(data.QDialog):
         # First create the background image using the hex builder
         back_image = data.QImage(
             functions.create_size(246, 211),
-            data.QImage.Format_ARGB32_Premultiplied
+            data.QImage.Format.Format_ARGB32_Premultiplied
         )
-        back_image.fill(data.Qt.transparent)
+        back_image.fill(data.Qt.GlobalColor.transparent)
         painter = data.QPainter(back_image)
         painter.setRenderHints(
-            data.QPainter.Antialiasing | 
-            data.QPainter.TextAntialiasing | 
-            data.QPainter.SmoothPixmapTransform
+            data.QPainter.RenderHint.Antialiasing | 
+            data.QPainter.RenderHint.TextAntialiasing | 
+            data.QPainter.RenderHint.SmoothPixmapTransform
         )
         hex_builder = components.HexBuilder(
             painter, 
@@ -171,7 +170,7 @@ class YesNoDialog(data.QDialog):
         # Now add the images according to the type of dialog
         dialog_image = original_dialog_image.scaled(
             original_dialog_image.size() * self.scale,
-            transformMode=data.Qt.SmoothTransformation
+            transformMode=data.Qt.TransformationMode.SmoothTransformation
         )
         self.image = data.QLabel(self)
         self.image.setPixmap(dialog_image)
@@ -211,9 +210,9 @@ class YesNoDialog(data.QDialog):
                 raise Exception("Wrong dialog type!")
             image = data.QImage(
                 type_pixmap.size(),
-                data.QImage.Format_ARGB32_Premultiplied
+                data.QImage.Format.Format_ARGB32_Premultiplied
             )
-            image.fill(data.Qt.transparent)
+            image.fill(data.Qt.GlobalColor.transparent)
             painter = data.QPainter(image)
             painter.setOpacity(0.2)
             painter.drawPixmap(0, 0, type_pixmap)
@@ -221,7 +220,7 @@ class YesNoDialog(data.QDialog):
             type_pixmap = data.QPixmap.fromImage(image)
             type_pixmap = type_pixmap.scaled(
                 type_pixmap.size() * 2.0 * self.scale, 
-                transformMode=data.Qt.SmoothTransformation
+                transformMode=data.Qt.TransformationMode.SmoothTransformation
             )
             self.type_label = data.QLabel(self)
             self.type_label.setPixmap(type_pixmap)
@@ -237,11 +236,11 @@ class YesNoDialog(data.QDialog):
         self.label = data.QLabel(self)
         self.label.setFont(
             data.QFont(
-                'Segoe UI', int(12 * self.scale), data.QFont.Bold
+                data.current_font_name, int(12 * self.scale), data.QFont.Weight.Bold
             )
         )
         self.label.setWordWrap(True)
-        self.label.setAlignment(data.Qt.AlignCenter)
+        self.label.setAlignment(data.Qt.AlignmentFlag.AlignCenter)
         self.label.setStyleSheet(
             'color: {};'.format(data.theme["fonts"]["default"]["color"])
         )
@@ -264,14 +263,14 @@ class YesNoDialog(data.QDialog):
             font_metrics = data.QFontMetrics(self.label.font())
             bounding_rectangle = font_metrics.boundingRect(
                 functions.create_rect(0, 0, label_width, label_height),
-                self.label.alignment() | data.Qt.TextWordWrap,
+                self.label.alignment() | data.Qt.TextFlag.TextWordWrap,
                 text
             )
             if (bounding_rectangle.width() > label_width or 
                 bounding_rectangle.height() > label_height):
                 self.label.setFont(
                     data.QFont(
-                        'Segoe UI', int((12-i) * self.scale), data.QFont.Bold
+                        data.current_font_name, int((12-i) * self.scale), data.QFont.Weight.Bold
                     )
                 )
             else:
@@ -284,7 +283,7 @@ class YesNoDialog(data.QDialog):
                 "various/hex-green.png"
             ),
             "Yes", 
-            data.QMessageBox.Yes, 
+            data.QMessageBox.StandardButton.Yes, 
             self.scale
         )
         x_offset = 93 * (self.scale - 1.0)
@@ -304,7 +303,7 @@ class YesNoDialog(data.QDialog):
                 "various/hex-red.png"
             ),
             "No", 
-            data.QMessageBox.No, 
+            data.QMessageBox.StandardButton.No, 
             self.scale
         )
         x_offset = 93 * (self.scale - 1.0)
@@ -330,12 +329,12 @@ class YesNoDialog(data.QDialog):
                 "background-color:white;"
             )
         else:
-            self.image.setAttribute(data.Qt.WA_TranslucentBackground)
+            self.image.setAttribute(data.Qt.WidgetAttribute.WA_TranslucentBackground)
             self.image.setStyleSheet(
                 "border:0;" +
                 "background-color:transparent;"
             )
-        self.setAttribute(data.Qt.WA_TranslucentBackground)
+        self.setAttribute(data.Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setStyleSheet(
             "border:0;" +
             "background-color:transparent;"
@@ -343,7 +342,7 @@ class YesNoDialog(data.QDialog):
         
         self.setGeometry(dialog_image.rect())
         self.center()
-        self.setWindowFlags(data.Qt.FramelessWindowHint)
+        self.setWindowFlags(data.Qt.WindowType.FramelessWindowHint)
     
     def update_state_on(self):
         self.state = True
@@ -382,43 +381,43 @@ class YesNoDialog(data.QDialog):
             self.move(cp)
         else:
             qr = self.frameGeometry()
-            cp = data.QDesktopWidget().availableGeometry().center()
+            cp = self.screen().geometry().center()
             qr.moveCenter(cp)
             self.move(qr.topLeft())
     
     def keyPressEvent(self, key_event):
         pressed_key = key_event.key()
         #Check for escape keypress
-        if pressed_key == data.Qt.Key_Escape:
+        if pressed_key == data.Qt.Key.Key_Escape:
             self.button_no.on()
             self.repaint()
             time.sleep(0.1)
-            self.done(data.QMessageBox.No)
-        elif pressed_key == data.Qt.Key_Down:
+            self.done(data.QMessageBox.StandardButton.No)
+        elif pressed_key == data.Qt.Key.Key_Down:
             self.state_off()
-        elif pressed_key == data.Qt.Key_Up:
+        elif pressed_key == data.Qt.Key.Key_Up:
             self.state_on()
-        elif pressed_key == data.Qt.Key_Enter or pressed_key == data.Qt.Key_Return:
+        elif pressed_key == data.Qt.Key.Key_Enter or pressed_key == data.Qt.Key.Key_Return:
             if self.state == True:
-                self.done(data.QMessageBox.Yes)
+                self.done(data.QMessageBox.StandardButton.Yes)
             elif self.state == False:
-                self.done(data.QMessageBox.No)
+                self.done(data.QMessageBox.StandardButton.No)
     
     @classmethod
     def blank(cls, text):
-        return cls(text).exec_()
+        return cls(text).exec()
     
     @classmethod
     def question(cls, text):
-        return cls(text, "question").exec_()
+        return cls(text, "question").exec()
     
     @classmethod
     def warning(cls, text):
-        return cls(text, "warning").exec_()
+        return cls(text, "warning").exec()
     
     @classmethod
     def error(cls, text):
-        return cls(text, "error").exec_()
+        return cls(text, "error").exec()
 
 class OkDialog(YesNoDialog):
     def init_layout(self, text, dialog_type):
@@ -426,14 +425,14 @@ class OkDialog(YesNoDialog):
         # First create the background image using the hex builder
         back_image = data.QImage(
             functions.create_size(246, 211),
-            data.QImage.Format_ARGB32_Premultiplied
+            data.QImage.Format.Format_ARGB32_Premultiplied
         )
-        back_image.fill(data.Qt.transparent)
+        back_image.fill(data.Qt.GlobalColor.transparent)
         painter = data.QPainter(back_image)
         painter.setRenderHints(
-            data.QPainter.Antialiasing | 
-            data.QPainter.TextAntialiasing | 
-            data.QPainter.SmoothPixmapTransform
+            data.QPainter.RenderHint.Antialiasing | 
+            data.QPainter.RenderHint.TextAntialiasing | 
+            data.QPainter.RenderHint.SmoothPixmapTransform
         )
         hex_builder = components.HexBuilder(
             painter, 
@@ -453,7 +452,7 @@ class OkDialog(YesNoDialog):
         # Now add the images according to the type of dialog
         dialog_image = original_dialog_image.scaled(
             original_dialog_image.size() * self.scale,
-            transformMode=data.Qt.SmoothTransformation
+            transformMode=data.Qt.TransformationMode.SmoothTransformation
         )
         self.image = data.QLabel(self)
         self.image.setPixmap(dialog_image)
@@ -493,9 +492,9 @@ class OkDialog(YesNoDialog):
                 raise Exception("Wrong dialog type!")
             image = data.QImage(
                 type_pixmap.size(),
-                data.QImage.Format_ARGB32_Premultiplied
+                data.QImage.Format.Format_ARGB32_Premultiplied
             )
-            image.fill(data.Qt.transparent)
+            image.fill(data.Qt.GlobalColor.transparent)
             painter = data.QPainter(image)
             painter.setOpacity(0.2)
             painter.drawPixmap(0, 0, type_pixmap)
@@ -503,7 +502,7 @@ class OkDialog(YesNoDialog):
             type_pixmap = data.QPixmap.fromImage(image)
             type_pixmap = type_pixmap.scaled(
                 type_pixmap.size() * 2.0 * self.scale, 
-                transformMode=data.Qt.SmoothTransformation
+                transformMode=data.Qt.TransformationMode.SmoothTransformation
             )
             self.type_label = data.QLabel(self)
             self.type_label.setPixmap(type_pixmap)
@@ -519,11 +518,11 @@ class OkDialog(YesNoDialog):
         self.label = data.QLabel(self)
         self.label.setFont(
             data.QFont(
-                'Segoe UI', int(12 * self.scale), data.QFont.Bold
+                data.current_font_name, int(12 * self.scale), data.QFont.Weight.Bold
             )
         )
         self.label.setWordWrap(True)
-        self.label.setAlignment(data.Qt.AlignCenter)
+        self.label.setAlignment(data.Qt.AlignmentFlag.AlignCenter)
         self.label.setStyleSheet(
             'color: {};'.format(data.theme["fonts"]["default"]["color"])
         )
@@ -546,14 +545,14 @@ class OkDialog(YesNoDialog):
             font_metrics = data.QFontMetrics(self.label.font())
             bounding_rectangle = font_metrics.boundingRect(
                 functions.create_rect(0, 0, label_width, label_height),
-                self.label.alignment() | data.Qt.TextWordWrap,
+                self.label.alignment() | data.Qt.TextFlag.TextWordWrap,
                 text
             )
             if (bounding_rectangle.width() > label_width or 
                 bounding_rectangle.height() > label_height):
                 self.label.setFont(
                     data.QFont(
-                        'Segoe UI', int((12-i) * self.scale), data.QFont.Bold
+                        data.current_font_name, int((12-i) * self.scale), data.QFont.Weight.Bold
                     )
                 )
             else:
@@ -566,7 +565,7 @@ class OkDialog(YesNoDialog):
                 "various/hex-red.png"
             ),
             "OK", 
-            data.QMessageBox.No, 
+            data.QMessageBox.StandardButton.No, 
             self.scale
         )
         x_offset = 93 * (self.scale - 1.0)
@@ -592,12 +591,12 @@ class OkDialog(YesNoDialog):
                 "background-color:white;"
             )
         else:
-            self.image.setAttribute(data.Qt.WA_TranslucentBackground)
+            self.image.setAttribute(data.Qt.WidgetAttribute.WA_TranslucentBackground)
             self.image.setStyleSheet(
                 "border:0;" +
                 "background-color:transparent;"
             )
-        self.setAttribute(data.Qt.WA_TranslucentBackground)
+        self.setAttribute(data.Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setStyleSheet(
             "border:0;" +
             "background-color:transparent;"
@@ -605,7 +604,7 @@ class OkDialog(YesNoDialog):
         
         self.setGeometry(dialog_image.rect())
         self.center()
-        self.setWindowFlags(data.Qt.FramelessWindowHint)
+        self.setWindowFlags(data.Qt.WindowType.FramelessWindowHint)
     
     def update_state_off(self):
         self.state = False
@@ -613,13 +612,13 @@ class OkDialog(YesNoDialog):
     def keyPressEvent(self, key_event):
         pressed_key = key_event.key()
         # Check for escape keypress
-        if pressed_key == data.Qt.Key_Escape:
+        if pressed_key == data.Qt.Key.Key_Escape:
             self.button_no.on()
             self.repaint()
             time.sleep(0.1)
-            self.done(data.QMessageBox.No)
-        elif pressed_key == data.Qt.Key_Down:
+            self.done(data.QMessageBox.StandardButton.No)
+        elif pressed_key == data.Qt.Key.Key_Down:
             self.state_off()
         # Check for Enter/Return keypress
-        elif pressed_key == data.Qt.Key_Enter or pressed_key == data.Qt.Key_Return:
-            self.done(data.QMessageBox.No)
+        elif pressed_key == data.Qt.Key.Key_Enter or pressed_key == data.Qt.Key.Key_Return:
+            self.done(data.QMessageBox.StandardButton.No)

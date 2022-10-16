@@ -40,8 +40,6 @@ class ReplLineEdit(data.QLineEdit):
     #Class variables  (class variables >> this means that these variables are shared accross instances of this class, until you assign a new value to them, then they become instance variables)
     _parent                         = None          #Main window reference
     interpreter                     = None          #Custom interpreter used with the REPL
-    #Attribute for indicating if the REPL is indicated
-    indicated                       = False
     #List of characters to use for splitting the compare string for sequences. Minus (-) was taken out because it can appear in path names 
     _comparison_list                = [".", "(", " ", "+", "-", "*", "%", ",", "\"", "'"]
     _reduced_comparison_list        = ["(", " ", "+", "-", "*", "%", ",", "\"", "'"]
@@ -69,7 +67,7 @@ class ReplLineEdit(data.QLineEdit):
         font = data.QFont(
             data.current_font_name,
             data.current_font_size+2,
-            data.QFont.Bold
+            data.QFont.Weight.Bold
         )
         self.setFont(font)
         # Initialize the interpreter
@@ -85,14 +83,14 @@ class ReplLineEdit(data.QLineEdit):
     def update_style(self):
         # REPL and REPL helper have to be set directly
         self.setStyleSheet("""
-            QLineEdit[indicated=false] {{
-                color: {};
-                background-color: {};
-            }}
-            QLineEdit[indicated=true] {{
-                color: {};
-                background-color: {};
-            }}
+QLineEdit[indicated=false] {{
+    color: {};
+    background-color: {};
+}}
+QLineEdit[indicated=true] {{
+    color: {};
+    background-color: {};
+}}
         """.format(
                  data.theme["fonts"]["default"]["color"],
                  data.theme["indication"]["passivebackground"],
@@ -154,8 +152,8 @@ class ReplLineEdit(data.QLineEdit):
         elif pressed_key == 16777219:
             #A new character has been typed, reset the input buffer counter
             self._input_buffer["count"] = 0
-        elif (pressed_key == data.Qt.Key_Enter or
-                pressed_key == data.Qt.Key_Return):
+        elif (pressed_key == data.Qt.Key.Key_Enter or
+                pressed_key == data.Qt.Key.Key_Return):
             if self.selectedText() != "":
                 self.setCursorPosition(len(self.text()))
             else:
@@ -164,7 +162,6 @@ class ReplLineEdit(data.QLineEdit):
 
     def _repl_eval(self, external_string=None, display_action=True):
         """Evaluate string entered into the REPL widget"""
-        data.print_log("REPL evaluated")
         #Check if an external evaluation string was specified
         if external_string == None:
             #No external evaluation string, evaluate the REPL text
@@ -204,7 +201,6 @@ class ReplLineEdit(data.QLineEdit):
             self.setFocus()
         #Check evaluation return message and display it in the "REPL Messages" tab
         if eval_return is not None:
-            data.print_log(eval_return)
             if display_action == True:
                 self.main_form.display.repl_display_message(
                     eval_return,
@@ -212,8 +208,6 @@ class ReplLineEdit(data.QLineEdit):
                 )
             else:
                 return eval_return
-        else:
-            data.print_log("EVALUATION/EXECUTION SUCCESS")
         return None
 
 
@@ -335,7 +329,6 @@ class ReplLineEdit(data.QLineEdit):
         if not [x for x in raw_text if x in self._comparison_list]:
             #None of the separator characters were found in current text
             current_sequence = self.text()
-        data.print_log(previous_sequence + "  " + current_sequence)
         return [current_sequence, previous_sequence]
     
     def _find_autocompletions(self, current_sequences_list):
@@ -379,7 +372,7 @@ class ReplLineEdit(data.QLineEdit):
     """
     def event(self, event):
         """Rereferenced/overloaded main QWidget event, that is executed before all other events of the widget"""
-        if (event.type() == data.QEvent.KeyPress) and (event.key() == data.Qt.Key_Tab):
+        if (event.type() == data.QEvent.Type.KeyPress) and (event.key() == data.Qt.Key.Key_Tab):
             self._cycle_autocompletion()
             return True
         return data.QLineEdit.event(self, event)
@@ -406,21 +399,21 @@ class ReplLineEdit(data.QLineEdit):
         event.accept()
 
     def focusInEvent(self, event):
-        """Event that fires when the REPL gets focus"""
-        self.main_form._key_events_lock()
-        #Set the focus to the REPL
+        """
+        Event that fires when the REPL gets focus
+        """
+        self.main_form.key_events_lock()
+        # Set the focus to the REPL
         self.setFocus()
-        #Clear the cursor position from the statusbar
+        # Clear the cursor position from the statusbar
         self.main_form.display.update_cursor_position()
-        data.print_log("Entered REPL")
-        #Reset the main forms last focused widget
+        # Reset the main forms last focused widget
         self.main_form.last_focused_widget = None
-        data.print_log("Reset last focused widget attribute")
-        #Hide the function wheel if it is shown
+        # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
-        #Ignore the event
+        # Ignore the event
         event.ignore()
-        #Return the focus event
+        # Return the focus event
         return data.QLineEdit.focusInEvent(self, event)
     
     def setFocus(self):
@@ -432,8 +425,7 @@ class ReplLineEdit(data.QLineEdit):
 
     def focusOutEvent(self, event):
         """Event that fires when the REPL loses focus"""
-        self.main_form._key_events_unlock()
-        data.print_log("Left REPL")
+        self.main_form.key_events_unlock()
         #Ignore the event
         event.ignore()
         #Return the focus event
@@ -447,17 +439,15 @@ class ReplLineEdit(data.QLineEdit):
         else:
             delta = wheel_event.angleDelta().y()
         if delta < 0:
-            data.print_log("REPL helper mouse rotate down event")
-            if key_modifiers == data.Qt.ControlModifier:
+            if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.decrease_text_size()
         else:
-            data.print_log("REPL helper mouse rotate up event")
-            if key_modifiers == data.Qt.ControlModifier:
+            if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.increase_text_size()
         #Handle the event
-        if key_modifiers == data.Qt.ControlModifier:
+        if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
             #Accept the event, the event will not be propageted(sent forward) to the parent
             wheel_event.accept()
         else:

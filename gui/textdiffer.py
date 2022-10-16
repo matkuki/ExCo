@@ -10,7 +10,6 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sip
 import os.path
 import collections
 import traceback
@@ -145,7 +144,7 @@ class TextDiffer(data.QWidget):
         self.icon_unique_2  = functions.create_icon("tango_icons/diff-unique-2.png")
         self.icon_similar   = functions.create_icon("tango_icons/diff-similar.png")
         # Create the horizontal splitter and two editor widgets
-        self.splitter = data.QSplitter(data.Qt.Horizontal, self)
+        self.splitter = data.QSplitter(data.Qt.Orientation.Horizontal, self)
         self.editor_1 = CustomEditor(self, main_form)
         self.init_editor(self.editor_1)
         self.editor_2 = CustomEditor(self, main_form)
@@ -353,7 +352,6 @@ class TextDiffer(data.QWidget):
         self.setFocus()
         #Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self._parent
-        data.print_log("Stored \"{:s}\" as last focused widget".format(self._parent.name))
         #Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
@@ -380,9 +378,9 @@ class TextDiffer(data.QWidget):
         #to the marker background color
         editor.setMarginWidth(1, "00")
         editor.setMarginWidth(2, 0)        
-        editor.setMarginType(0, data.QsciScintilla.TextMargin)
-        editor.setMarginType(1, data.QsciScintilla.SymbolMargin)
-        editor.setMarginType(2, data.QsciScintilla.SymbolMargin)
+        editor.setMarginType(0, data.QsciScintilla.MarginType.TextMargin)
+        editor.setMarginType(1, data.QsciScintilla.MarginType.SymbolMargin)
+        editor.setMarginType(2, data.QsciScintilla.MarginType.SymbolMargin)
         #I DON'T KNOW THE ENTIRE LOGIC BEHIND MARKERS AND MARGINS! If you set 
         #something wrong in the margin mask, the markers on a different margin don't appear!
         #http://www.scintilla.org/ScintillaDoc.html#SCI_SETMARGINMASKN
@@ -407,9 +405,9 @@ class TextDiffer(data.QWidget):
         image_unique_2  = image_unique_2.scaled(image_scale_size)
         image_similar   = image_similar.scaled(image_scale_size)
         #Markers for editor 1
-        self.marker_unique_1            = self.editor_1.markerDefine(data.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
+        self.marker_unique_1            = self.editor_1.markerDefine(data.QsciScintilla.MarkerSymbol.Background, 0)
         self.marker_unique_symbol_1     = self.editor_1.markerDefine(image_unique_1, 1)
-        self.marker_similar_1           = self.editor_1.markerDefine(data.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
+        self.marker_similar_1           = self.editor_1.markerDefine(data.QsciScintilla.MarkerSymbol.Background, 2)
         self.marker_similar_symbol_1    = self.editor_1.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
         self.editor_1.setMarkerBackgroundColor(self.Indicator_Unique_1_Color, self.marker_unique_1)
@@ -423,9 +421,9 @@ class TextDiffer(data.QWidget):
             self.marker_similar_symbol_1
         )
         #Markers for editor 2
-        self.marker_unique_2            = self.editor_2.markerDefine(data.QsciScintillaBase.SC_MARK_BACKGROUND, 0)
+        self.marker_unique_2            = self.editor_2.markerDefine(data.QsciScintilla.MarkerSymbol.Background, 0)
         self.marker_unique_symbol_2     = self.editor_2.markerDefine(image_unique_2, 1)
-        self.marker_similar_2           = self.editor_2.markerDefine(data.QsciScintillaBase.SC_MARK_BACKGROUND, 2)
+        self.marker_similar_2           = self.editor_2.markerDefine(data.QsciScintilla.MarkerSymbol.Background, 2)
         self.marker_similar_symbol_2    = self.editor_2.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
         self.editor_2.setMarkerBackgroundColor(self.Indicator_Unique_2_Color, self.marker_unique_2)
@@ -443,7 +441,9 @@ class TextDiffer(data.QWidget):
                        editor, 
                        indicator, 
                        color):
-        """Set the indicator settings"""
+        """
+        Set the indicator settings
+        """
         editor.indicatorDefine(
             data.QsciScintillaBase.INDIC_ROUNDBOX,
             indicator
@@ -463,10 +463,10 @@ class TextDiffer(data.QWidget):
         editor.setUtf8(True)
         editor.setIndentationsUseTabs(False)
         editor.setFont(self.DEFAULT_FONT)
-        editor.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
+        editor.setBraceMatching(data.QsciScintilla.BraceMatch.SloppyBraceMatch)
         editor.setMatchedBraceBackgroundColor(data.QColor(255, 153, 0))
         editor.setAcceptDrops(False)
-        editor.setEolMode(settings.editor['end_of_line_mode'])
+        editor.setEolMode(data.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
         editor.setReadOnly(True)
         editor.savable = data.CanSave.NO
     

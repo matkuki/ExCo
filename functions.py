@@ -1,8 +1,7 @@
-
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2021 Matic Kukovec.
+Copyright (c) 2013-2022 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -54,22 +53,27 @@ def create_directory(directory):
         os.mkdir(directory)
 
 icon_cache = {}
-def create_icon(icon_name):
+def create_icon(icon):
     """
     Function for initializing and returning an QIcon object
     """
     global icon_cache
-    full_icon_path = unixify_join(
-        data.resources_directory,
-        icon_name
-    )
-    if full_icon_path in icon_cache.keys():
-        cached_icon = icon_cache[full_icon_path]
-        return data.QIcon(cached_icon)
-    if not os.path.isfile(full_icon_path):
-        raise Exception("Icon file doesn't exist: {}".format(full_icon_path))
-    new_icon = data.QIcon(full_icon_path)
-    icon_cache[full_icon_path] = new_icon
+    # Pixmap
+    if isinstance(icon, data.QPixmap):
+        new_icon = data.QIcon(icon)
+    # Path
+    elif isinstance(icon, str):
+        full_icon_path = unixify_join(data.resources_directory, icon)
+        if full_icon_path in icon_cache.keys():
+            cached_icon = icon_cache[full_icon_path]
+            return data.QIcon(cached_icon)
+        if not os.path.isfile(full_icon_path):
+            raise Exception("Icon file doesn't exist: {}".format(full_icon_path))
+        new_icon = data.QIcon(full_icon_path)
+        icon_cache[full_icon_path] = new_icon
+    # Unknown
+    else:
+        raise Exception("Unknown icon construction type: {}".format(icon))
     return new_icon
 
 def get_resource_file(relative_path):
@@ -102,10 +106,34 @@ def create_pixmap_with_size(pixmap_name, width=None, height=None):
     """
     pixmap = create_pixmap(pixmap_name)
     if width:
-        pixmap = pixmap.scaledToWidth(width, data.Qt.SmoothTransformation)
+        pixmap = pixmap.scaledToWidth(
+            width, data.Qt.TransformationMode.SmoothTransformation
+        )
     if height:
-        pixmap = pixmap.scaledToHeight(height, data.Qt.SmoothTransformation)
+        pixmap = pixmap.scaledToHeight(
+            height, data.Qt.TransformationMode.SmoothTransformation
+        )
     return pixmap
+
+__overlay_cache = {}
+def ovarlay_images(base_path, overlay_path):
+    base_pixmap = create_pixmap(base_path)
+    if base_pixmap.isNull():
+        raise Exception(f"Cannot create base pixmap: {base_path}")
+    
+    overlay_pixmap = create_pixmap(overlay_path)
+    if overlay_pixmap.isNull():
+        raise Exception(f"Cannot create base pixmap: {overlay_path}")
+    
+    if overlay_pixmap.size().width() > base_pixmap.size().width() or overlay_pixmap.size().height() > base_pixmap.size().height():
+        overlay_pixmap = overlay_pixmap.scaled(base_pixmap.size(), data.Qt.AspectRatioMode.KeepAspectRatio)
+    
+    painter = data.QPainter()
+    painter.begin(base_pixmap)
+    painter.drawPixmap(0, 0, overlay_pixmap)
+    painter.end()
+    
+    return base_pixmap
 
 def get_language_file_icon(language_name):
     """
@@ -1167,12 +1195,16 @@ def get_python_node_tree(python_code):
                         new_node.children.append(result)
             new_node.children = sorted(new_node.children, key=lambda x: x.name)
         elif isinstance(ast_node, ast.Import):
-            new_node = PythonNode(
-                ast_node.names[0].name, 
-                "import", 
-                ast_node.lineno, 
-                level
-            )
+            new_nodes = []
+            for imp in ast_node.names:
+                new_node = PythonNode(
+                    imp.name, 
+                    "import",
+                    ast_node.lineno, 
+                    level
+                )
+                new_nodes.append(new_node)
+            return new_nodes
         elif isinstance(ast_node, ast.Assign) and (level == 0 or parent_node == None):
             # Globals that do are not defined with the 'global' keyword,
             # but are defined on the top level
@@ -1437,7 +1469,7 @@ def get_c_function_list(c_code):
     #Return the function list
     return function_list
 
-def get_node_tree_with_ctags(c_code, parser):
+def get_node_tree_with_ctags(code, parser):
     # Node object
     class CNode:
         def __init__(self, 
@@ -1530,9 +1562,14 @@ def get_node_tree_with_ctags(c_code, parser):
                     "try executing 'sudo apt-get install exuberant-ctags' to install Exuberant-Ctags."
                 )
     # Create the file for parsing
-    filename = "temporary_ctags_file.c"
+    filename = "temporary_ctags_file"
+    replace_word = "/\\/"
+    if parser == "JSON":
+        filtered_code = code.replace('.', replace_word)
+    else:
+        filtered_code = code
     with open(filename, "w+") as f:
-        f.write(c_code)
+        f.write(filtered_code)
         f.close()
     # Parse the file with ctags
     try:
@@ -1595,6 +1632,13 @@ def get_node_tree_with_ctags(c_code, parser):
                 "--excmd=number",
                 "--language-force=Make",
             )
+        elif parser == "HTML":
+            flags = (
+                "-R",
+                "--fields=-f-k-t+K+n",
+                "--excmd=number",
+                "--language-force=HTML",
+            )
         else:
             raise Exception(
                 "[Ctags-parsing] Unsupported file type: {}".format(parser)
@@ -1608,6 +1652,7 @@ def get_node_tree_with_ctags(c_code, parser):
                 [
                     ctags_program, 
                     *flags,
+                    "--output-format=json",
                     filename,
                 ], 
                 stdout=subprocess.PIPE,
@@ -1619,27 +1664,19 @@ def get_node_tree_with_ctags(c_code, parser):
                 [
                     ctags_program, 
                     *flags,
+                    "--output-format=json",
                     filename
                 ], 
                 stdout=subprocess.PIPE,
                 shell=False
             ).communicate()[0]
         output_utf = output.decode("utf-8")
+#        with open("D:/ctags.out.json", 'w+', encoding="utf-8") as f:
+#            lines = f.write(output_utf)
+#            f.close()
     except Exception as ex:
         repl_print(ex)
         raise Exception("Parse error!")
-    # Read the tag file
-    lines = []
-    try:
-        tag_filename = "tags"
-        with open(tag_filename, 'r') as f:
-            lines = f.readlines()
-            f.close()
-        # Delete the tag file
-        os.remove(tag_filename)
-    except Exception as ex:
-        repl_print(ex)
-        raise Exception("Tag file parse error!")
     # Initialize state variables
     main_node = CNode("module", "", 0, -1)
     main_node_list = []
@@ -1651,26 +1688,33 @@ def get_node_tree_with_ctags(c_code, parser):
         else:
             main_node_list.append(in_node)
     main_node = CNode("module", "", 0, -1)
-    # Parse the output
-    for line in lines:
-        if line.startswith("!_TAG"):
+
+    # Parse the output (NEW)
+    for line in output_utf.split('\n'):
+        # Parse JSON
+        if line.strip() == '':
             continue
-        split_line = line.split('\t')
-        if len(split_line) == 5:
-            name, file, ex_data, typ, line_number = split_line
-            line_number = int(line_number.split(':')[1])
-            add_node(
-                CNode(name, typ, line_number, 0, in_parent=None)
-            )
-        elif len(split_line) == 6:
-            name, file, ex_data, typ, line_number, parent = split_line
-            line_number = int(line_number.split(':')[1])
-            parent_type, parent_name = parent.replace("::", '-').split(':')
-            parent_type = parent_type.replace('-', "::")
-            parent_name = parent_name.replace('-', "::")
-            add_node(
-                CNode(name, typ, line_number, 0, in_parent=(parent_type, parent_name))
-            )
+        try:
+            json_data = json.loads(line)
+        except:
+            traceback.print_exc()
+            continue
+        # Skip non-tag items
+        if json_data["_type"] != "tag":
+            continue
+        
+        name = json_data["name"]
+        line_number = json_data["line"]
+        kind = json_data["kind"]
+        parent = None
+        if "scope" in json_data.keys():
+            parent_name = json_data["scope"]
+            parent_type = json_data["scopeKind"]
+            parent = (parent_type, parent_name)
+        add_node(
+            CNode(name, kind, line_number, 0, in_parent=parent)
+        )
+    
     # Delete the temporary parsing file
     os.remove(filename)
     # Sort the nodes alphabetically
@@ -2627,14 +2671,14 @@ def change_opacity(pixmap_or_file, opacity):
     base_image = data.QImage(pixmap_or_file)
     image = data.QImage(
         base_image.size(),
-        data.QImage.Format_ARGB32_Premultiplied
+        data.QImage.Format.Format_ARGB32_Premultiplied
     )
-    image.fill(data.Qt.transparent)    
+    image.fill(data.Qt.GlobalColor.transparent)    
     painter = data.QPainter(image)
     painter.setRenderHints(
-        data.QPainter.Antialiasing | 
-        data.QPainter.TextAntialiasing | 
-        data.QPainter.SmoothPixmapTransform
+        data.QPainter.RenderHint.Antialiasing | 
+        data.QPainter.RenderHint.TextAntialiasing | 
+        data.QPainter.RenderHint.SmoothPixmapTransform
     )
     painter.setOpacity(opacity)
     painter.drawImage(
@@ -2743,3 +2787,75 @@ def open_item_in_explorer(path):
         # No error
         return True
     return False
+
+def get_edges_to_widget(widget, widget_window, size, offset=(0, 0)):
+    rect = widget.geometry()
+    window_position = widget_window.mapToGlobal(rect.topLeft())
+    widget_position = widget.mapToGlobal(rect.topLeft())
+    position = widget_position - window_position
+    # Center the rectangle to the widget
+    center = (
+        position.x() + ((rect.width() - size[0]) / 2) + offset[0],
+        position.y() + ((rect.height() - size[1]) / 2) + offset[1]
+    )
+    left = (
+        center[0] - (rect.width() / 2) + (size[0] / 2),
+        center[1]
+    )
+    right = (
+        center[0] + (rect.width() / 2) - (size[0] / 2),
+        center[1]
+    )
+    top = (
+        center[0],
+        center[1] - (rect.height() / 2) + (size[1] / 2)
+    )
+    bottom = (
+        center[0],
+        center[1] + (rect.height() / 2) - (size[1] / 2)
+    )
+    return (center, left, right, top, bottom)
+
+def get_screen_size():
+    if data.PYQT_MODE < 6:
+        size = data.application.desktop().screen().rect().size()
+    else:
+        size = data.application.primaryScreen().size()
+    return size.width(), size.height()
+
+def center_to_current_screen(widget):
+    screens = data.application.screens()
+    if widget.windowHandle() is None:
+        return
+    for i,s in enumerate(screens):
+        if s is widget.windowHandle().screen():
+            geometry = s.geometry()
+            left = geometry.left()
+            top = geometry.top()
+            offset_width = (geometry.width() / 2) - (widget.width() / 2)
+            offset_height = (geometry.height() / 2) - (widget.height() / 2)
+            center = data.QPoint(int(left + offset_width), int(top + offset_height))
+            def move(*args):
+                widget.move(
+                    center -
+                    data.QPoint(0, 50) # Manual offset
+                )
+            data.QTimer.singleShot(0, move)
+
+"""
+Docking system helpers
+"""
+def right_replace(s, old, new, occurrence):
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
+
+def remove_last_box(name):
+    split = name.split('.')
+    return ".".join(split[:-1])
+
+def remove_tabs_from_name(name):
+    return name[ : name.index(".Tabs")]
+
+def remove_tab_number_from_name(name):
+    tabs_string = ".Tabs"
+    return name[ : (name.index(tabs_string)+len(tabs_string))]

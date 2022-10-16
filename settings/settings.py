@@ -21,7 +21,11 @@ import data
 import themes
 import settings.constants
 import settings.functions
-import settings.old.settings as oldsettings
+try:
+    import settings.old.settings as oldsettings
+    OLD_SETTINGS_IMPORTED = True
+except:
+    OLD_SETTINGS_IMPORTED = False
 import functions
 
 
@@ -51,7 +55,6 @@ class SettingsFileManipulator:
     context_menu_functions = {}
     error_lock = False
     # General settings
-    main_window_side = data.MainWindowSide.RIGHT
     theme = None
     data_variables = (
         "terminal",
@@ -60,6 +63,7 @@ class SettingsFileManipulator:
         "current_font_size",
         "current_editor_font_name",
         "current_editor_font_size",
+        "toplevel_menu_scale",
     )
     
     def __init__(self):
@@ -70,7 +74,7 @@ class SettingsFileManipulator:
         functions.create_directory(data.settings_directory)
         self.settings_filename_with_path = functions.unixify_join(
             data.settings_directory,
-            data.settings_filename["mark-1"]
+            data.settings_filename["mark-2"]
         )
         # Initialize an empty sessions list
         self.stored_sessions = {
@@ -78,16 +82,76 @@ class SettingsFileManipulator:
         }
         # Check if the settings file exists
         if self.check_settings_file() == None:
-            old_file = settings_filename_with_path = functions.unixify_join(
-                data.settings_directory,
-                data.settings_filename["mark-0"]
-            )
-            if os.path.isfile(old_file):
-                old_data = oldsettings.parse_settings_file(old_file)
+            old_files = {}
+            for k,v in data.settings_filename.items():
+                old_files[k] = settings_filename_with_path = functions.unixify_join(
+                    data.settings_directory,
+                    v
+                )
+            if os.path.isfile(old_files["mark-1"]):
+                # Convert MK-I setting file to to MK-II
+                self.settings_filename_with_path = old_files["mark-1"]
+                self.load_settings()
+                def recurse_groups(item):
+                    # Sessions
+                    if "sessions" in item.keys():
+                        for k,v in item["sessions"].items():
+                            new_session = {
+                                "name": v["name"],
+                                "chain": v["chain"],
+                                "layout": None,
+                            }
+                            layout = json.loads(settings.constants.default_layout)
+                            windows = {
+                                "main-window-files": layout["BOXES"]["0"]["BOX-H"]["0"]["BOX-V"]["0"]["TABS"],
+                                "upper-window-files": layout["BOXES"]["0"]["BOX-H"]["1"]["BOX-V"]["0"]["BOX-H"]["0"]["TABS"],
+                                "lower-window-files": layout["BOXES"]["0"]["BOX-H"]["1"]["BOX-V"]["1"]["BOX-H"]["0"]["TABS"],
+                            }
+                            for kk,vv in windows.items():
+                                files = v[kk]["files"]
+                                for f in files:
+                                    if isinstance(f, dict):
+                                        vv[f["path"]] = [
+                                            "CustomEditor",
+                                            0,
+                                            [
+                                                f["line"],
+                                                f["index"],
+                                                f["first-visible-line"],
+                                            ]
+                                        ]
+                                    else:
+                                        vv[f] = [
+                                            "CustomEditor",
+                                            0,
+                                            [
+                                                0,
+                                                0,
+                                                0
+                                            ]
+                                        ]
+                            new_session["layout"] = layout
+                            for kk,vv in windows.items():
+                                v.pop(kk)
+                            v["layout"] = layout
+                    # Groups
+                    if "groups" in item.keys():
+                        for k,v in item["groups"].items():
+                            recurse_groups(v)
+                recurse_groups(self.stored_sessions["main"])
+                self.settings_filename_with_path = old_files["mark-2"]
+                self.write_settings_file(
+                    self.theme,
+                    self.recent_files,
+                    self.stored_sessions,
+                    self.context_menu_functions
+                )
+            elif OLD_SETTINGS_IMPORTED == True and os.path.isfile(old_files["mark-0"]):
+                # Convert MK-0 setting file to to MK-1
+                old_data = oldsettings.parse_settings_file(old_files["mark-0"])
                 for k,v in old_data["sessions"].items():
                     v["Name"] = k
                 self.write_settings_file(
-                    old_data["main_window_side"],
                     old_data["theme"],
                     old_data["recent_files"],
                     old_data["sessions"],
@@ -95,7 +159,6 @@ class SettingsFileManipulator:
                 )
             else:
                 self.write_settings_file(
-                    data.MainWindowSide.LEFT,
                     "Air",
                     self.recent_files,
                     self.stored_sessions,
@@ -105,24 +168,26 @@ class SettingsFileManipulator:
         self.load_settings()
     
     def check_settings_file(self):
-        """Check if the settings file exists"""
+        """
+        Check if the settings file exists
+        """
         return functions.test_text_file(self.settings_filename_with_path)
     
     def create_settings_file(self, settings_data):
-        """Create the settings file"""
+        """
+        Create the settings file
+        """
         functions.write_json_file(
             self.settings_filename_with_path,
             settings_data
         )
     
     def write_settings_file(self,
-                            main_window_side,
                             theme,
                             recent_files,
                             stored_sessions,
                             context_menu_functions):
         settings_data = {
-            "main_window_side": main_window_side,
             "theme": theme["name"],
             "recent_files": recent_files,
             "stored_sessions": stored_sessions,
@@ -136,8 +201,7 @@ class SettingsFileManipulator:
         # Save settings data to disk
         self.create_settings_file(settings_data)
     
-    def save_settings(self, 
-                      main_window_side, 
+    def save_settings(self,
                       theme,
                       context_menu_functions=None):
         """
@@ -150,7 +214,6 @@ class SettingsFileManipulator:
         else:
             self.context_menu_functions = context_menu_functions
         self.write_settings_file(
-            main_window_side,
             theme,
             self.recent_files,
             self.stored_sessions,
@@ -158,7 +221,9 @@ class SettingsFileManipulator:
         )
     
     def update_recent_files(self):
-        """Update only the recent file list in settings file"""
+        """
+        Update only the recent file list in settings file
+        """
         if self.error_lock == True:
             return
         settings_data = functions.load_json_file(
@@ -168,7 +233,6 @@ class SettingsFileManipulator:
         stored_sessions = settings_data["stored_sessions"]
         # Save the updated settings
         self.write_settings_file(
-            settings_data["main_window_side"],
             data.theme,
             self.recent_files,
             stored_sessions,
@@ -176,13 +240,13 @@ class SettingsFileManipulator:
         )
     
     def load_settings(self):
-        """Load all setting from the settings file"""
+        """
+        Load all setting from the settings file
+        """
         try:
             settings_data = functions.load_json_file(
                 self.settings_filename_with_path
             )
-            # Main window side
-            self.main_window_side = settings_data["main_window_side"]
             # Theme
             self.theme = themes.get(settings_data["theme"])
             data.theme = self.theme
@@ -198,7 +262,6 @@ class SettingsFileManipulator:
             # Check if old-style session file
             if self.check_old_style_sessions():
                 self.write_settings_file(
-                    self.main_window_side,
                     data.theme,
                     self.recent_files,
                     self.stored_sessions,
@@ -209,7 +272,6 @@ class SettingsFileManipulator:
         except:
             traceback.print_exc()
             # Set the default settings values
-            self.main_window_side = data.MainWindowSide.LEFT
             self.theme = themes.get("Air")
             data.theme = self.theme
             self.recent_files = []
@@ -264,15 +326,11 @@ class SettingsFileManipulator:
     def create_empty_session(self,
                              name="",
                              chain=[],
-                             main_window_files=[],
-                             upper_window_files=[],
-                             lower_window_files=[]):
+                             layout=""):
         return {
             "name": name,
             "chain": chain,
-            "main-window-files": main_window_files,
-            "upper-window-files": upper_window_files,
-            "lower-window-files": lower_window_files,
+            "layout": layout,
         }
     
     def create_empty_session_group(self,
@@ -290,9 +348,7 @@ class SettingsFileManipulator:
     def add_session(self, 
                     session_name, 
                     session_group_chain, 
-                    main, 
-                    upper, 
-                    lower):
+                    layout,):
         """
         Add a new session to the stored session list
         """
@@ -300,9 +356,7 @@ class SettingsFileManipulator:
         new_session = self.create_empty_session(
             name=session_name,
             chain=session_group_chain,
-            main_window_files=main,
-            upper_window_files=upper,
-            lower_window_files=lower
+            layout=layout,
         )
         # Add/replace the session in the dictionary
         group = self.stored_sessions["main"]
@@ -310,7 +364,7 @@ class SettingsFileManipulator:
             group = group["groups"][c]
         group["sessions"][session_name] = new_session
         # Save the new settings
-        self.save_settings(self.main_window_side, self.theme)
+        self.save_settings(self.theme)
     
     def add_group(self, group_name, group_chain):
         """
@@ -329,7 +383,7 @@ class SettingsFileManipulator:
             group = group["groups"][c]
         group["groups"][group_name] = new_group
         # Save the new settings
-        self.save_settings(self.main_window_side, self.theme)
+        self.save_settings(self.theme)
 
     def remove_session(self, session_to_remove):
         """
@@ -342,7 +396,7 @@ class SettingsFileManipulator:
             # Remove the session from the stored session list
             group["sessions"].pop(session_to_remove["name"])
             # Save the new settings
-            self.save_settings(self.main_window_side, self.theme)
+            self.save_settings(self.theme)
             return True
         # Signal that the session was not removed
         return False
@@ -359,7 +413,7 @@ class SettingsFileManipulator:
             # Remove the session from the stored session list
             group["groups"].pop(remove_group["name"])
             # Save the new settings
-            self.save_settings(self.main_window_side, self.theme)
+            self.save_settings(self.theme)
             return True
         # Signal that the group was not removed
         return False

@@ -10,7 +10,6 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sip
 import os.path
 import collections
 import traceback

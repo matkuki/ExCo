@@ -27,11 +27,11 @@ def set_font(lexer, style_name, style_options):
         data.QColor(style_options["color"]),
         style_index
     )
-    weight = data.QFont.Normal
+    weight = data.QFont.Weight.Normal
     if style_options["bold"]:
-        weight = data.QFont.Bold
+        weight = data.QFont.Weight.Bold
 #    elif bold == 2:
-#        weight = data.QFont.Black
+#        weight = data.QFont.Weight.Black
     lexer.setFont(
         data.QFont(
             data.current_editor_font_name,

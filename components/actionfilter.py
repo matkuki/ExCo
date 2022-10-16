@@ -29,11 +29,13 @@ class ActionFilter(data.QObject):
     
     # Overridden filter method
     def eventFilter(self, receiver, event):
-        if(event.type() == data.QEvent.MouseButtonPress):
+        if(event.type() == data.QEvent.Type.MouseButtonPress):
             cursor = data.QCursor.pos()
             cursor = cursor - receiver.pos()
             if receiver.actionAt(cursor) != None:
                 action = receiver.actionAt(cursor)
+                if hasattr(action, "pixmap") and action.pixmap is None:
+                    return super().eventFilter(receiver, event)
 #                print(action.text())
                 # Create the click&drag detect timer
                 def click_and_drag():
@@ -54,7 +56,7 @@ class ActionFilter(data.QObject):
                 ActionFilter.click_timer.setSingleShot(True)
                 ActionFilter.click_timer.timeout.connect(click_and_drag)
                 ActionFilter.click_timer.start()
-        elif(event.type() == data.QEvent.MouseButtonRelease):
+        elif(event.type() == data.QEvent.Type.MouseButtonRelease):
             ActionFilter.clear_action()
         return super().eventFilter(receiver, event)
 

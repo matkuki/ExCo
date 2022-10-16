@@ -84,7 +84,7 @@ class ReplHelper(data.QsciScintilla):
         #Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
         #Set brace matching
-        self.setBraceMatching(data.QsciScintilla.SloppyBraceMatch)
+        self.setBraceMatching(data.QsciScintilla.BraceMatch.SloppyBraceMatch)
         self.setMatchedBraceBackgroundColor(data.QColor(255, 153, 0))
         #Tabs are spaces by default
         self.setIndentationsUseTabs(False)
@@ -93,7 +93,7 @@ class ReplHelper(data.QsciScintilla):
         #Disable drops
         self.setAcceptDrops(False)
         #Set line endings to be Unix style ("\n")
-        self.setEolMode(settings.editor['end_of_line_mode'])
+        self.setEolMode(data.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
         #Set the initial zoom factor
         self.zoomTo(settings.editor['zoom_factor'])
         """
@@ -138,8 +138,8 @@ class ReplHelper(data.QsciScintilla):
         accept_keypress = False
         #Get key modifiers and check if the Ctrl+Enter was pressed
         key_modifiers = data.QApplication.keyboardModifiers()
-        if ((key_modifiers == data.Qt.ControlModifier and pressed_key == data.Qt.Key_Return) or
-            pressed_key == data.Qt.Key_Enter):
+        if ((key_modifiers == data.Qt.KeyboardModifier.ControlModifier and pressed_key == data.Qt.Key.Key_Return) or
+            pressed_key == data.Qt.Key.Key_Enter):
                 #ON MY KEYBOARD Ctrl+Enter CANNOT BE DETECTED!
                 #Qt.ControlModifier  MODIFIER SHOWS FALSE WHEN USING data.QApplication.keyboardModifiers() + Enter
                 self.repl_master.external_eval_request(self.text(), self)
@@ -176,7 +176,6 @@ class ReplHelper(data.QsciScintilla):
         super().mousePressEvent(event)
         # Reset the main forms last focused widget
         self.main_form.last_focused_widget = None
-        data.print_log("Reset last focused widget attribute")
         # Set focus to the clicked helper
         self.setFocus()
         # Hide the function wheel if it is shown
@@ -202,17 +201,15 @@ class ReplHelper(data.QsciScintilla):
         else:
             delta = wheel_event.angleDelta().y()
         if delta < 0:
-            data.print_log("REPL helper mouse rotate down event")
-            if key_modifiers == data.Qt.ControlModifier:
+            if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.zoomOut()
         else:
-            data.print_log("REPL helper mouse rotate up event")
-            if key_modifiers == data.Qt.ControlModifier:
+            if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.zoomIn()
         #Handle the event
-        if key_modifiers != data.Qt.ControlModifier:
+        if key_modifiers != data.Qt.KeyboardModifier.ControlModifier:
             #Execute the superclass method
             super().wheelEvent(wheel_event)
         else:
@@ -292,7 +289,7 @@ class ReplHelper(data.QsciScintilla):
         #Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         #Set the source from where the autocompletions will be fetched
-        self.setAutoCompletionSource(data.QsciScintilla.AcsAll)
+        self.setAutoCompletionSource(data.QsciScintilla.AutoCompletionSource.AcsAll)
         #Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
 

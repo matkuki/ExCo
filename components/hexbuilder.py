@@ -159,9 +159,9 @@ class HexBuilder:
         if line_width == 0:
             return
         
-        pen = data.QPen(data.Qt.SolidLine)
-        pen.setCapStyle(data.Qt.RoundCap)
-        pen.setJoinStyle(data.Qt.RoundJoin)
+        pen = data.QPen(data.Qt.PenStyle.SolidLine)
+        pen.setCapStyle(data.Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(data.Qt.PenJoinStyle.RoundJoin)
         pen.setWidth(int(line_width))
         pen.setColor(line_color)
         qpainter.setPen(pen)
@@ -251,9 +251,9 @@ class HexBuilder:
         if line_width == 0:
             return
         
-        pen = data.QPen(data.Qt.SolidLine)
-        pen.setCapStyle(data.Qt.RoundCap)
-        pen.setJoinStyle(data.Qt.RoundJoin)
+        pen = data.QPen(data.Qt.PenStyle.SolidLine)
+        pen.setCapStyle(data.Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(data.Qt.PenJoinStyle.RoundJoin)
         pen.setWidth(int(line_width))
         pen.setColor(line_color)
         qpainter.setPen(pen)
@@ -302,9 +302,9 @@ class HexBuilder:
     def draw_filled_hexagon(self, position, fill_color, number=None):
         qpainter = self.painter
         
-        pen = data.QPen(data.Qt.SolidLine)
+        pen = data.QPen(data.Qt.PenStyle.SolidLine)
         pen.setColor(fill_color)
-        brush = data.QBrush(data.Qt.SolidPattern)
+        brush = data.QBrush(data.Qt.BrushStyle.SolidPattern)
         brush.setColor(fill_color)
         qpainter.setBrush(brush)
         qpainter.setPen(pen)
@@ -319,7 +319,7 @@ class HexBuilder:
             font = data.QFont('Courier', 8)
             font.setBold(True)
             qpainter.setFont(font)
-            pen = data.QPen(data.Qt.SolidLine)
+            pen = data.QPen(data.Qt.PenStyle.SolidLine)
             pen.setColor(data.QColor(0,0,0))
             qpainter.setPen(pen)
             
@@ -335,11 +335,11 @@ class HexBuilder:
                           line_color):
         qpainter = self.painter
         
-        pen = data.QPen(data.Qt.SolidLine)
+        pen = data.QPen(data.Qt.PenStyle.SolidLine)
         pen.setColor(line_color)
-        pen.setCapStyle(data.Qt.RoundCap)
+        pen.setCapStyle(data.Qt.PenCapStyle.RoundCap)
         pen.setWidth(int(line_width))
-        brush = data.QBrush(data.Qt.SolidPattern)
+        brush = data.QBrush(data.Qt.BrushStyle.SolidPattern)
         brush.setColor(fill_color)
         qpainter.setBrush(brush)
         qpainter.setPen(pen)

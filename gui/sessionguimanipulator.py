@@ -91,28 +91,28 @@ class SessionGuiManipulator(data.QTreeView):
     
     def __init__(self, settings_manipulator, parent, main_form):
         """Initialization"""
-        #Initialize the superclass
+        # Initialize the superclass
         super().__init__(parent)
         # Initialize components
         self.icon_manipulator = components.IconManipulator(
             parent=self, tab_widget=parent
         )
         self.add_corner_buttons()
-        #Store the reference to the parent TabWidget from the "forms" module
+        # Store the reference to the parent TabWidget from the "forms" module
         self._parent = parent
-        #Store the reference to the MainWindow form from the "forms" module
+        # Store the reference to the MainWindow form from the "forms" module
         self.main_form = main_form
         # Set default font
         self.setFont(data.get_current_font())
-        #Store the reference to the active SettingsManipulator
+        # Store the reference to the active SettingsManipulator
         self.settings_manipulator = settings_manipulator
-        #Set the icon
+        # Set the icon
         self.current_icon = functions.create_icon("tango_icons/sessions.png")
-        #Store name of self
+        # Store name of self
         self.name = "Session editing tree display"
-        #Enable node expansion on double click
+        # Enable node expansion on double click
         self.setExpandsOnDoubleClick(True)
-        #Set the node icons
+        # Set the node icons
         self.node_icon_group        = functions.create_icon("tango_icons/folder.png")
         self.node_icon_session      = functions.create_icon("tango_icons/sessions.png")
         self.icon_session_add       = functions.create_icon("tango_icons/session-add.png")
@@ -120,8 +120,9 @@ class SessionGuiManipulator(data.QTreeView):
         self.icon_session_overwrite = functions.create_icon("tango_icons/session-overwrite.png")
         self.icon_group_add         = functions.create_icon("tango_icons/folder-add.png")
         self.icon_session_edit      = functions.create_icon("tango_icons/session-edit.png")
-        #Connect the signals
-        self.doubleClicked.connect(self._item_double_clicked)
+        # Connect the signals
+        self.doubleClicked.connect(self.__item_double_clicked)
+        self.itemDelegate().closeEditor.connect(self.__item_editing_closed)
     
     def clean_model(self):
         if self.model() != None:
@@ -135,7 +136,6 @@ class SessionGuiManipulator(data.QTreeView):
         self.setFocus()
         #Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self._parent
-        data.print_log("Stored \"{:s}\" as last focused widget".format(self._parent.name))
         #Set Save/SaveAs buttons in the menubar
         self._parent._set_save_status()
         # Reset the click&drag context menu action
@@ -148,7 +148,7 @@ class SessionGuiManipulator(data.QTreeView):
         #Check indication
         self.main_form.view.indication_check()
     
-    def _item_double_clicked(self, model_index):
+    def __item_double_clicked(self, model_index):
         """Callback connected to the treeview's 'clicked' signal"""
         session_item = self.tree_model.itemFromIndex(model_index)
         if session_item.type == self.ItemType.SESSION:
@@ -161,7 +161,7 @@ class SessionGuiManipulator(data.QTreeView):
         elif session_item.type == self.ItemType.GROUP:
             pass
     
-    def _item_changed(self, item):
+    def __item_changed(self, item):
         """
         Callback connected to the displays QStandardItemModel 'itemChanged' signal
         """
@@ -184,7 +184,6 @@ class SessionGuiManipulator(data.QTreeView):
                 group["sessions"][new_item_name] = session
                 # Save the the new session list by saving the settings
                 self.settings_manipulator.save_settings(
-                    self.settings_manipulator.main_window_side, 
                     data.theme
                 )
                 group_name = "/".join(item_chain)
@@ -214,7 +213,6 @@ class SessionGuiManipulator(data.QTreeView):
                 self.settings_manipulator.rename_group(group, new_group_name)
                 # Save the the new session list by saving the settings
                 self.settings_manipulator.save_settings(
-                    self.settings_manipulator.main_window_side, 
                     data.theme
                 )
                 # Display successful group deletion
@@ -282,24 +280,20 @@ class SessionGuiManipulator(data.QTreeView):
                     self.settings_manipulator.add_group(group_name, group_chain)
                     # Save the sessions
                     self.settings_manipulator.save_settings(
-                        self.settings_manipulator.main_window_side, 
                         data.theme
                     )
                 # Update the type
                 changed_item.type = self.ItemType.GROUP
     
-    def _item_editing_closed(self, item, widget):
+    def __item_editing_closed(self, editor, hint):
         """
         Signal that fires when editing was canceled/ended in an empty session or empty group
         """
-        # Close the editor
-        self.closeEditor(widget, data.QAbstractItemDelegate.NoHint)
+        item = self.__edit_item
+        self.__edit_item = None
         # Check change
         if item.type == self.ItemType.EMPTY_GROUP:
             if len(item.text()) < 3:
-                # Disconnect the signal
-                delegate = self.itemDelegate(item.index())
-                delegate.closeEditor.disconnect()
                 # Remove the item from the tree
                 if item.parent() is not None:
                     item.parent().removeRow(item.row())
@@ -307,9 +301,6 @@ class SessionGuiManipulator(data.QTreeView):
                     self.tree_model.removeRow(item.row())
         elif item.type == self.ItemType.EMPTY_SESSION:
             if len(item.text()) < 3:
-                # Disconnect the signal
-                delegate = self.itemDelegate(item.index())
-                delegate.closeEditor.disconnect()
                 # Remove the item from the tree
                 if item.parent() is not None:
                     item.parent().removeRow(item.row())
@@ -375,12 +366,12 @@ class SessionGuiManipulator(data.QTreeView):
             self.tree_model.appendRow(empty_group_node)
         self.scrollTo(empty_group_node.index())
         # Start editing the new empty group
-        self.edit(empty_group_node.index())
+        self.__start_editing_item(empty_group_node)
         # Add the session signal when editing is canceled
-        delegate = self.itemDelegate(empty_group_node.index())
-        delegate.closeEditor.connect(
-            functools.partial(self._item_editing_closed, empty_group_node)
-        )
+#        delegate = self.itemDelegate(empty_group_node.index())
+#        delegate.closeEditor.connect(
+#            functools.partial(self.__item_editing_closed, empty_group_node)
+#        )
     
     def add_empty_session(self):
         # Check for various flags
@@ -401,12 +392,12 @@ class SessionGuiManipulator(data.QTreeView):
             self.tree_model.appendRow(empty_session_node)
         self.scrollTo(empty_session_node.index())
         # Start editing the new empty session
-        self.edit(empty_session_node.index())
+        self.__start_editing_item(empty_session_node)
         # Add the session signal when editing is canceled
-        delegate = self.itemDelegate(empty_session_node.index())
-        delegate.closeEditor.connect(
-            functools.partial(self._item_editing_closed, empty_session_node)
-        )
+#        delegate = self.itemDelegate(empty_session_node.index())
+#        delegate.closeEditor.connect(
+#            functools.partial(self.__item_editing_closed, empty_session_node)
+#        )
     
     def remove_item(self):
         # Check for various flags
@@ -434,7 +425,7 @@ class SessionGuiManipulator(data.QTreeView):
             message =  "Are you sure you want to delete group:\n"
             message += "'{}' ?".format(group_name_with_chain)
             reply = YesNoDialog.warning(message)
-            if reply == data.QMessageBox.No:
+            if reply == data.QMessageBox.StandardButton.No:
                 return
             # Delete the group
             result = self.settings_manipulator.remove_group(remove_group)
@@ -469,7 +460,7 @@ class SessionGuiManipulator(data.QTreeView):
             message =  "Are you sure you want to delete session:\n"
             message += "'{}' ?".format(session_name_with_chain)
             reply = YesNoDialog.warning(message)
-            if reply == data.QMessageBox.No:
+            if reply == data.QMessageBox.StandardButton.No:
                 return
             # Delete the session
             self.settings_manipulator.remove_session(remove_session)
@@ -498,7 +489,9 @@ class SessionGuiManipulator(data.QTreeView):
             self.refresh_display()
     
     def overwrite_session(self):
-        """Overwrite the selected session"""
+        """
+        Overwrite the selected session
+        """
         # Check for various flags
         if self.edit_flag == True:
             return
@@ -527,6 +520,10 @@ class SessionGuiManipulator(data.QTreeView):
             # Refresh the tree
             self.refresh_display()
     
+    def __start_editing_item(self, item):
+        self.edit(item.index())
+        self.__edit_item = item
+    
     def edit_item(self):
         """
         Edit the selected session or group name
@@ -543,12 +540,7 @@ class SessionGuiManipulator(data.QTreeView):
             selected_item.type == self.ItemType.SESSION):
                 selected_item.setEditable(True)
                 selected_item.name = selected_item.text()
-                self.edit(selected_item.index())
-        # Add the session signal when editing is canceled
-        delegate = self.itemDelegate(selected_item.index())
-        delegate.closeEditor.connect(
-            functools.partial(self._item_editing_closed, selected_item)
-        )
+                self.__start_editing_item(selected_item)
         # Set the editing flag
         self.edit_flag = True
     
@@ -566,7 +558,7 @@ class SessionGuiManipulator(data.QTreeView):
         self.setModel(self.tree_model)
         self.setUniformRowHeights(True)
         # Connect the tree model signals
-        self.tree_model.itemChanged.connect(self._item_changed)
+        self.tree_model.itemChanged.connect(self.__item_changed)
 #        font = data.QFont(data.current_font_name, data.current_font_size, data.QFont.Bold)
         font = data.QFont(data.current_font_name, data.current_font_size)
         ## Create the Sessions menu

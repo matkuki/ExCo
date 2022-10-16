@@ -88,29 +88,29 @@ class ReplBox(data.QGroupBox):
             background = data.theme["indication"]["passivebackground"]
             border = data.theme["indication"]["passiveborder"]
         self.setStyleSheet("""
-            #REPL_Box {{
-                font-size: 8pt;
-                font-weight: bold;
-                color: {};
-                background-color: {};
-                border: 2px solid {};
-                border-radius: 0px;
-                margin-top: 6px;
-                margin-bottom: 0px;
-                margin-left: 0px;
-                margin-right: 0px;
-                padding-top: 4px;
-                padding-bottom: 0px;
-                padding-left: 0px;
-                padding-right: 0px;
-            }}
-            #REPL_Box::title {{
-                color: {};
-                subcontrol-position: top left;
-                padding: 0px; 
-                left: 8px;
-                top: -6px;
-            }}
+#REPL_Box {{
+    font-size: 8pt;
+    font-weight: bold;
+    color: {};
+    background-color: {};
+    border: 2px solid {};
+    border-radius: 0px;
+    margin-top: 6px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    padding-top: 4px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
+}}
+#REPL_Box::title {{
+    color: {};
+    subcontrol-position: top left;
+    padding: 0px; 
+    left: 8px;
+    top: -6px;
+}}
         """.format(
                  border,
                  data.theme["indication"]["passivebackground"],

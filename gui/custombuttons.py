@@ -10,7 +10,6 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sip
 import os.path
 import collections
 import traceback
@@ -77,7 +76,7 @@ class CustomButton(data.QLabel):
                  input_function=None, 
                  input_function_text="", 
                  input_font=data.QFont(
-                 'Courier', 14, weight=data.QFont.Bold
+                 'Courier', 14, weight=data.QFont.Weight.Bold
                  ), 
                  input_focus_last_widget=data.HexButtonFocus.NONE, 
                  input_no_tab_focus_disable=False, 
@@ -124,6 +123,7 @@ class CustomButton(data.QLabel):
         #Set the tooltip if it was set
         if input_tool_tip != None:
             self.setToolTip(input_tool_tip)
+        self.setToolTipDuration(0)
         # Set the scaling
         self.scale = input_scale
     
@@ -136,9 +136,9 @@ class CustomButton(data.QLabel):
             hex_edge_width = 4
             image = data.QImage(
                 *hex_image_size,
-                data.QImage.Format_ARGB32_Premultiplied
+                data.QImage.Format.Format_ARGB32_Premultiplied
             )
-            image.fill(data.Qt.transparent)
+            image.fill(data.Qt.GlobalColor.transparent)
             painter = data.QPainter()
             painter.begin(image)
             
@@ -168,7 +168,7 @@ class CustomButton(data.QLabel):
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.Qt.SmoothTransformation
+            transformMode=data.Qt.TransformationMode.SmoothTransformation
         )
         # Scale the hex image
         hex_image = self.stored_hex
@@ -178,9 +178,9 @@ class CustomButton(data.QLabel):
         )
         image = data.QImage(
             scaled_size, #hex_image.size(), 
-            data.QImage.Format_ARGB32_Premultiplied
+            data.QImage.Format.Format_ARGB32_Premultiplied
         )
-        image.fill(data.Qt.transparent)
+        image.fill(data.Qt.GlobalColor.transparent)
         # Create and initialize the QPainter that will manipulate the QImage
         button_painter = data.QPainter(image)
         button_painter.setOpacity(input_opacity)
@@ -209,7 +209,7 @@ class CustomButton(data.QLabel):
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.Qt.SmoothTransformation
+            transformMode=data.Qt.TransformationMode.SmoothTransformation
         )        
         # Scale the hex image
         hex_image = self.stored_hex
@@ -219,14 +219,14 @@ class CustomButton(data.QLabel):
         )
         image = data.QImage(
             scaled_size,
-            data.QImage.Format_ARGB32_Premultiplied,
+            data.QImage.Format.Format_ARGB32_Premultiplied,
         )
-        image.fill(data.Qt.transparent)
+        image.fill(data.Qt.GlobalColor.transparent)
 #        image.fill(data.theme["context-menu-background"])
         # Create and initialize the QPainter that will manipulate the QImage
         button_painter = data.QPainter(image)
         button_painter.setCompositionMode(
-            data.QPainter.CompositionMode_SourceOver
+            data.QPainter.CompositionMode.CompositionMode_SourceOver
         )
         button_painter.setOpacity(input_opacity)
         # Resize the hex image to scale
@@ -235,7 +235,7 @@ class CustomButton(data.QLabel):
                 math.ceil(hex_image.size().width() * self.scale[0]),
                 math.ceil(hex_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.Qt.SmoothTransformation
+            transformMode=data.Qt.TransformationMode.SmoothTransformation
         )
         # Adjust inner button positioning according to the scale
         button_painter.drawPixmap(0, 0, hex_image)
@@ -411,7 +411,7 @@ class DoubleButton(CustomButton):
             extra_button_font = data.QFont(
                 data.current_font_name, 
                 self.stored_font.pointSize()-2, 
-                weight=data.QFont.Bold
+                weight=data.QFont.Weight.Bold
             )
             self._parent.display(
                 self.extra_button_function_text, 
@@ -427,7 +427,7 @@ class DoubleButton(CustomButton):
             extra_button_font = data.QFont(
                 'Courier', 
                 self.stored_font.pointSize()-2, 
-                weight=data.QFont.Bold
+                weight=data.QFont.Weight.Bold
             )
             self._parent.display(
                 "", 
@@ -466,9 +466,9 @@ class DoubleButton(CustomButton):
         button_image = self.extra_button_stored_pixmap
         image = data.QImage(
             button_image.size(), 
-            data.QImage.Format_ARGB32_Premultiplied
+            data.QImage.Format.Format_ARGB32_Premultiplied
         )
-        image.fill(data.Qt.transparent)
+        image.fill(data.Qt.GlobalColor.transparent)
         #Create and initialize the QPainter that will manipulate the QImage
         button_painter = data.QPainter(image)
         button_painter.setOpacity(input_opacity)
@@ -516,11 +516,11 @@ class PushButtonBase(data.QPushButton):
     
     def keyPressEvent(self, e):
         super().keyReleaseEvent(e)
-        if e.key() == data.Qt.Key_Enter or e.key() == data.Qt.Key_Return:
+        if e.key() == data.Qt.Key.Key_Enter or e.key() == data.Qt.Key.Key_Return:
             self.animateClick()
     
     def mousePressEvent(self, event):
-        if event.button() == data.Qt.RightButton:
+        if event.button() == data.Qt.MouseButton.RightButton:
             self.right_clicked.emit()
         else:
             super().mousePressEvent(event)
@@ -550,8 +550,9 @@ class PushButtonBase(data.QPushButton):
         self.text_changed.emit(self.text())
     
     def update_style(self):
-        style_sheet = stylesheets.StyleSheetButton.standard()
-        self.setStyleSheet(style_sheet)
+#        style_sheet = stylesheets.StyleSheetButton.standard()
+#        self.setStyleSheet(style_sheet)
+        pass
 
 class StandardButton(PushButtonBase):
     # Class variables

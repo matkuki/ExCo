@@ -74,26 +74,26 @@ class BaseEditor(data.QsciScintilla):
             data.QColor(theme["cursor-line-background"])
         )
         self.setStyleSheet("""
-            BaseEditor {{
-                border: 0px;
-                background-color: {};
-                padding: 0px;
-                spacing: 0px;
-                margin: 0px;
-            }}
-            QListView {{
-                background-color: {};
-                color: {};
-            }}
-            QListView::item:selected {{
-                background-color: {};
-                color: {};
-            }}
-            QListView::item:selected {{
-                background-color: {};
-                color: {};
-            }}
-            {}
+BaseEditor {{
+    border: 0px;
+    background-color: {};
+    padding: 0px;
+    spacing: 0px;
+    margin: 0px;
+}}
+QListView {{
+    background-color: {};
+    color: {};
+}}
+QListView::item:selected {{
+    background-color: {};
+    color: {};
+}}
+QListView::item:selected {{
+    background-color: {};
+    color: {};
+}}
+{}
         """.format(
             theme["indication"]["passivebackground"],
             theme["indication"]["passivebackground"],

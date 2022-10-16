@@ -10,7 +10,6 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sip
 import os.path
 import collections
 import traceback
@@ -104,10 +103,10 @@ class TreeDisplay(data.QTreeView):
         self.main_form = None
         self.icon_manipulator = None
         self.bound_tab = None
-        if self.tree_menu != None:
+        if self.tree_menu is not None:
             self.tree_menu.setParent(None)
             self.tree_menu = None
-        if self.worker_thread != None:
+        if self.worker_thread is not None:
             self.worker_thread.stop()
             self.worker_thread.wait()
             self.worker_thread.quit()
@@ -119,7 +118,7 @@ class TreeDisplay(data.QTreeView):
     def parent_destroyed(self, event):
         # Connect the bound tab 'destroy' signal to this function
         # for automatic closing of this tree widget
-        if self._parent != None:
+        if self._parent is not None:
             self._parent.close_tab(self)
     
     def __init__(self, parent=None, main_form=None):
@@ -221,11 +220,10 @@ class TreeDisplay(data.QTreeView):
         self.setFocus()
         # Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self._parent
-        data.print_log("Stored \"{:s}\" as last focused widget".format(self._parent.name))
         # Set Save/SaveAs buttons in the menubar
         self._parent._set_save_status()
         # Get the index of the clicked item and execute the item's procedure
-        if event.button() == data.Qt.RightButton:
+        if event.button() == data.Qt.MouseButton.RightButton:
             index = self.indexAt(event.pos())
             self._item_click(index)
         # Reset the click&drag context menu action
@@ -240,11 +238,11 @@ class TreeDisplay(data.QTreeView):
                     self.main_form.set_cwd(item.full_name)
                 cursor = data.QCursor.pos()
                 
-                if self.tree_menu != None:
+                if self.tree_menu is not None:
                     self.tree_menu.setParent(None)
                     self.tree_menu = None
 
-                self.tree_menu = Menu()
+                self.tree_menu = Menu(self)
                 
                 # Open path in explorer
                 open_in_explorer_action = data.QAction("Open in explorer", self)
@@ -269,8 +267,8 @@ class TreeDisplay(data.QTreeView):
                 clipboard_copy_action = data.QAction("Copy directory name to clipboard", self)
                 def clipboard_copy():
                     cb = data.application.clipboard()
-                    cb.clear(mode=cb.Clipboard)
-                    cb.setText(item.text(), mode=cb.Clipboard)
+                    cb.clear(mode=cb.Mode.Clipboard)
+                    cb.setText(item.text(), mode=cb.Mode.Clipboard)
                 clipboard_copy_action.setIcon(
                     functions.create_icon('tango_icons/edit-copy.png')
                 )
@@ -280,8 +278,8 @@ class TreeDisplay(data.QTreeView):
                 clipboard_copy_path_action = data.QAction("Copy directory path to clipboard", self)
                 def clipboard_copy():
                     cb = data.application.clipboard()
-                    cb.clear(mode=cb.Clipboard)
-                    cb.setText(item.full_name, mode=cb.Clipboard)
+                    cb.clear(mode=cb.Mode.Clipboard)
+                    cb.setText(item.full_name, mode=cb.Mode.Clipboard)
                 clipboard_copy_path_action.setIcon(
                     functions.create_icon('tango_icons/edit-copy.png')
                 )
@@ -332,11 +330,11 @@ class TreeDisplay(data.QTreeView):
                     self.main_form.open_file(item.full_name)
                 cursor = data.QCursor.pos()
                 
-                if self.tree_menu != None:
+                if self.tree_menu is not None:
                     self.tree_menu.setParent(None)
                     self.tree_menu = None
                 
-                self.tree_menu = Menu()
+                self.tree_menu = Menu(self)
                 # Open in Ex.Co.
                 action_open_file = data.QAction("Open", self.tree_menu)
                 action_open_file.triggered.connect(open_file)
@@ -345,10 +343,13 @@ class TreeDisplay(data.QTreeView):
                 self.tree_menu.addAction(action_open_file)
                 # Open with system
                 def open_system():
-                    if data.platform == 'Windows':
-                        os.startfile(item.full_name)
-                    else:
-                        subprocess.call(["xdg-open", item.full_name])
+                    try:
+                        if data.platform == 'Windows':
+                            os.startfile(item.full_name)
+                        else:
+                            subprocess.call(["xdg-open", item.full_name])
+                    except:
+                        main_form.display.repl_display_error(traceback.format_exc())
                 action_open = data.QAction("Open with system", self.tree_menu)
                 action_open.triggered.connect(open_system)
                 icon = functions.create_icon('tango_icons/open-with-default-app.png')
@@ -377,8 +378,8 @@ class TreeDisplay(data.QTreeView):
                 clipboard_copy_action = data.QAction("Copy file name to clipboard", self)
                 def clipboard_copy():
                     cb = data.application.clipboard()
-                    cb.clear(mode=cb.Clipboard)
-                    cb.setText(item.text(), mode=cb.Clipboard)
+                    cb.clear(mode=cb.Mode.Clipboard)
+                    cb.setText(item.text(), mode=cb.Mode.Clipboard)
                 clipboard_copy_action.setIcon(
                     functions.create_icon('tango_icons/edit-copy.png')
                 )
@@ -388,8 +389,8 @@ class TreeDisplay(data.QTreeView):
                 clipboard_copy_path_action = data.QAction("Copy file path to clipboard", self)
                 def clipboard_copy():
                     cb = data.application.clipboard()
-                    cb.clear(mode=cb.Clipboard)
-                    cb.setText(item.full_name, mode=cb.Clipboard)
+                    cb.clear(mode=cb.Mode.Clipboard)
+                    cb.setText(item.full_name, mode=cb.Mode.Clipboard)
                 clipboard_copy_path_action.setIcon(
                     functions.create_icon('tango_icons/edit-copy.png')
                 )
@@ -417,8 +418,8 @@ class TreeDisplay(data.QTreeView):
             def copy_node_to_clipboard():
                 try:
                     cb = data.application.clipboard()
-                    cb.clear(mode=cb.Clipboard)
-                    cb.setText(item_text.split()[0], mode=cb.Clipboard)
+                    cb.clear(mode=cb.Mode.Clipboard)
+                    cb.setText(item_text.split()[0], mode=cb.Mode.Clipboard)
                 except:
                     pass
             
@@ -432,12 +433,13 @@ class TreeDisplay(data.QTreeView):
             item_text = item.text()
             cursor = data.QCursor.pos()
             
-            if self.tree_menu != None:
+            if self.tree_menu is not None:
                 self.tree_menu.setParent(None)
                 self.tree_menu = None
             
-            self.tree_menu = Menu()
+            self.tree_menu = Menu(self)
             
+            show_menu = True
             if (hasattr(item, "line_number") == True or "line:" in item_text):
                 action_goto_line = data.QAction("Goto node item", self.tree_menu)
                 action_goto_line.triggered.connect(goto_item)
@@ -455,42 +457,47 @@ class TreeDisplay(data.QTreeView):
                 icon = functions.create_icon('tango_icons/document-open.png')
                 action_open.setIcon(icon)
                 self.tree_menu.addAction(action_open)
-
-            self.tree_menu.popup(cursor)
+            else:
+                show_menu = False
+            
+            if show_menu:
+                self.tree_menu.popup(cursor)
     
     def _item_double_click(self, model_index):
-        """Function connected to the doubleClicked signal of the tree display"""
-        #Use the item text according to the tree display type
+        """
+        Function connected to the doubleClicked signal of the tree display
+        """
+        # Use the item text according to the tree display type
         if self.tree_display_type == data.TreeDisplayType.NODES:
-            #Get the text of the double clicked item
+            # Get the text of the double clicked item
             item = self.model().itemFromIndex(model_index)
             self._node_item_parse(item)
         elif self.tree_display_type == data.TreeDisplayType.FILES:
-            #Get the double clicked item
+            # Get the double clicked item
             item = self.model().itemFromIndex(model_index)
-            #Test if the item has the 'full_name' attribute
+            # Test if the item has the 'full_name' attribute
             if hasattr(item, "is_dir") == True:
-                #Expand/collapse the directory node
+                # Expand/collapse the directory node
                 if self.isExpanded(item.index()) == True:
                     self.collapse(item.index())
                 else:
                     self.expand(item.index())
                 return
             elif hasattr(item, "full_name") == True:
-                #Open the file
+                # Open the file
                 self.main_form.open_file(file=item.full_name)
         elif self.tree_display_type == data.TreeDisplayType.FILES_WITH_LINES:
-            #Get the double clicked item
+            # Get the double clicked item
             item = self.model().itemFromIndex(model_index)
             #Test if the item has the 'full_name' attribute
             if hasattr(item, "full_name") == False:
                 return
-            #Open the file
+            # Open the file
             self.main_form.open_file(file=item.full_name)
-            #Check if a line item was clicked
+            # Check if a line item was clicked
             if hasattr(item, "line_number") == True:
-                #Goto the stored line number
-                document = self.main_form.main_window.currentWidget()
+                # Goto the stored line number
+                document = self.main_form.get_largest_window().currentWidget()
                 document.goto_line(item.line_number)
     
     def _node_item_parse(self, item):
@@ -557,7 +564,7 @@ class TreeDisplay(data.QTreeView):
         class_text          = "CLASS/METHOD TREE:"
         function_text       = "FUNCTIONS:"
         #Initialize the tree display to Python file type
-        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
         tree_model = data.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels([document_name])
         self.clean_model()
@@ -568,7 +575,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -586,13 +593,13 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
         )
         label_font = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         #Check if there was a parsing error
         if parse_error != False:
             error_brush = data.QBrush(data.QColor(180, 0, 0))
             error_font  = data.QFont(
-                data.current_font_name, data.current_font_size, data.QFont.Bold
+                data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
             )
             item_error = data.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
@@ -792,7 +799,7 @@ class TreeDisplay(data.QTreeView):
         class_text          = "CLASS/METHOD TREE:"
         function_text       = "FUNCTIONS:"
         #Initialize the tree display to Python file type
-        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
         tree_model = data.QStandardItemModel()
 #        tree_model.setHorizontalHeaderLabels([document_name])
         self.header().hide()
@@ -804,7 +811,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -822,13 +829,13 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
         )
         label_font  = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         #Check if there was a parsing error
         if parse_error != False:
             error_brush = data.QBrush(data.QColor(180, 0, 0))
             error_font  = data.QFont(
-                data.current_font_name, data.current_font_size, data.QFont.Bold
+                data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
             )
             item_error = data.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
@@ -951,7 +958,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
         )
         label_font  = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         # Filter the nodes
         def display_node(tree_node, c_node):
@@ -1047,7 +1054,7 @@ class TreeDisplay(data.QTreeView):
         document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
         document_type_icon  = parser_icon
         # Initialize the tree display
-        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
         tree_model = data.QStandardItemModel()
 #        tree_model.setHorizontalHeaderLabels([document_name])
         self.header().hide()
@@ -1059,7 +1066,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font    = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -1096,7 +1103,7 @@ class TreeDisplay(data.QTreeView):
         document_name_text  = "DOCUMENT: {:s}".format(document_name)
         document_type_text  = "TYPE: {:s}".format(custom_editor.current_file_type)
         #Initialize the tree display
-        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
         tree_model = data.QStandardItemModel()
 #        tree_model.setHorizontalHeaderLabels([document_name])
         self.header().hide()
@@ -1108,7 +1115,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         item_document_name  = data.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -1126,7 +1133,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
         )
         label_font  = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         #Nested function for creating a tree node
         def create_tree_node(node_text, 
@@ -1136,13 +1143,13 @@ class TreeDisplay(data.QTreeView):
                              node_line_number):
             tree_node = data.QStandardItem(node_text)
             tree_node.setEditable(False)
-            if node_text_brush != None:
+            if node_text_brush is not None:
                 tree_node.setForeground(node_text_brush)
-            if node_text_font != None:
+            if node_text_font is not None:
                 tree_node.setFont(node_text_font)
-            if node_icon != None:
+            if node_icon is not None:
                 tree_node.setIcon(node_icon)
-            if node_line_number != None:
+            if node_line_number is not None:
                 tree_node.line_number = node_line_number
             return tree_node
         #Nested recursive function for displaying nodes
@@ -1386,7 +1393,7 @@ class TreeDisplay(data.QTreeView):
     def _init_found_files_options(self, search_text, directory, custom_text=None):
         #Initialize the tree display to the found files type
         self.horizontalScrollbarAction(1)
-        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
         tree_model = data.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["FOUND FILES TREE"])
         self.header().hide()
@@ -1399,7 +1406,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["keyword"]["color"])
         )
         description_font    = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         #Directory item
         item_directory  = data.QStandardItem(
@@ -1425,7 +1432,7 @@ class TreeDisplay(data.QTreeView):
     def _init_replace_in_files_options(self, search_text, replace_text, directory):
         #Initialize the tree display to the found files type
         self.horizontalScrollbarAction(1)
-        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
         tree_model = data.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["REPLACED IN FILES TREE"])
         self.header().hide()
@@ -1438,7 +1445,7 @@ class TreeDisplay(data.QTreeView):
             data.QColor(data.theme["fonts"]["default"]["color"])
         )
         description_font = data.QFont(
-            data.current_font_name, data.current_font_size, data.QFont.Bold
+            data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
         )
         #Directory item
         item_directory  = data.QStandardItem(
@@ -1509,7 +1516,7 @@ class TreeDisplay(data.QTreeView):
                     data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
                 )
                 label_font = data.QFont(
-                    data.current_font_name, data.current_font_size, data.QFont.Bold
+                    data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
                 )
                 item_brush = data.QBrush(
                     data.QColor(data.theme["fonts"]["default"]["color"])
@@ -1626,10 +1633,10 @@ class TreeDisplay(data.QTreeView):
                 # Resize the header so the horizontal scrollbar will have the correct width
                 self.resize_horizontal_scrollbar()
                 # Hide the wait animation
-                if self._parent != None:
+                if self._parent is not None:
                     self._parent._set_wait_animation(self._parent.indexOf(self), False)
             
-            if self.worker_thread != None:
+            if self.worker_thread is not None:
                 self.worker_thread.wait()
             self.worker_thread = ProcessThread()
             self.worker_thread.setTerminationEnabled(True)
@@ -1654,7 +1661,7 @@ class TreeDisplay(data.QTreeView):
                 data.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
             )
             label_font  = data.QFont(
-                data.current_font_name, data.current_font_size, data.QFont.Bold
+                data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
             )
             item_brush = data.QBrush(
                 data.QColor(data.theme["fonts"]["default"]["color"])
@@ -1809,7 +1816,7 @@ class TreeDisplay(data.QTreeView):
             #Add the items to the treeview
             self._add_items_to_tree(tree_model, directory, items)
         
-        if self.worker_thread != None:
+        if self.worker_thread is not None:
             self.worker_thread.wait()
         self._parent._set_wait_animation(self._parent.indexOf(self), True)
         self.worker_thread = ProcessThread()
@@ -1882,7 +1889,7 @@ class TreeDisplay(data.QTreeView):
             # Resize the header so the horizontal scrollbar will have the correct width
             self.resize_horizontal_scrollbar()
             # Hide the wait animation
-            if self._parent != None:
+            if self._parent is not None:
                 self._parent._set_wait_animation(self._parent.indexOf(self), False)
         
         def completed(found_items):
@@ -1904,7 +1911,7 @@ class TreeDisplay(data.QTreeView):
                     data.QColor(data.theme["fonts"]["error"]["color"])
                 )
                 font = data.QFont(
-                    data.current_font_name, data.current_font_size, data.QFont.Bold
+                    data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
                 )
                 error_item  = data.QStandardItem(message)
                 error_item.setEditable(False)
@@ -1926,7 +1933,7 @@ class TreeDisplay(data.QTreeView):
                 data.QColor(data.theme["fonts"]["error"]["color"])
             )
             font = data.QFont(
-                data.current_font_name, data.current_font_size, data.QFont.Bold
+                data.current_font_name, data.current_font_size, data.QFont.Weight.Bold
             )
             error_item  = data.QStandardItem(message)
             error_item.setEditable(False)
@@ -2006,9 +2013,6 @@ class TreeDisplayBase(data.QTreeView):
             print(ex)
     
     def clean_up(self):
-        if sip.isdeleted(self):
-            return
-        
         model = self.model()
         if model:
             root = model.invisibleRootItem()
@@ -2035,7 +2039,7 @@ class TreeDisplayBase(data.QTreeView):
         self._parent = None
         self.main_form = None
         self.icon_manipulator = None
-        if self.tree_menu != None:
+        if self.tree_menu is not None:
             self.tree_menu.setParent(None)
             self.tree_menu = None
         # Clean up self
@@ -2066,14 +2070,14 @@ class TreeDisplayBase(data.QTreeView):
     def eventFilter(self, object, event):
         if not self.key_release_lock:
             # Check for keyboard releases
-            if event.type() == data.QEvent.KeyRelease:
+            if event.type() == data.QEvent.Type.KeyRelease:
                 key = data.keys[event.key()]
                 modifiers = event.modifiers()
-                modifier_shift = (modifiers & data.Qt.ShiftModifier) == data.Qt.ShiftModifier
-                modifier_control = (modifiers & data.Qt.ControlModifier) == data.Qt.ControlModifier
-                modifier_alt = (modifiers & data.Qt.AltModifier) == data.Qt.AltModifier
-                modifier_meta = (modifiers & data.Qt.MetaModifier) == data.Qt.MetaModifier
-                modifier_keypad = (modifiers & data.Qt.KeypadModifier) == data.Qt.KeypadModifier
+                modifier_shift = (modifiers & data.Qt.KeyboardModifier.ShiftModifier) == data.Qt.KeyboardModifier.ShiftModifier
+                modifier_control = (modifiers & data.Qt.KeyboardModifier.ControlModifier) == data.Qt.KeyboardModifier.ControlModifier
+                modifier_alt = (modifiers & data.Qt.KeyboardModifier.AltModifier) == data.Qt.KeyboardModifier.AltModifier
+                modifier_meta = (modifiers & data.Qt.KeyboardModifier.MetaModifier) == data.Qt.KeyboardModifier.MetaModifier
+                modifier_keypad = (modifiers & data.Qt.KeyboardModifier.KeypadModifier) == data.Qt.KeyboardModifier.KeypadModifier
                 modifier_dict = {
                     "shift": modifier_shift,
                     "control": modifier_control,
@@ -2100,18 +2104,18 @@ class TreeDisplayBase(data.QTreeView):
 #        item.setForeground(brush)
         item.setFont(font)
         # Set icon if needed
-        if icon != None:
+        if icon is not None:
             item.setIcon(icon)
         return item
     
     def _create_menu(self):
-        self.tree_menu = Menu()
+        self.tree_menu = Menu(self)
         self.default_menu_font = self.tree_menu.font()
         self.customize_context_menu()
         return self.tree_menu
     
     def _clean_model(self):
-        if self.model() != None:
+        if self.model() is not None:
             self.model().setParent(None)
             self.setModel(None)
     
@@ -2180,10 +2184,10 @@ class TreeDisplayBase(data.QTreeView):
         """
         This needs to be called in a subclass as needed
         """
-        if data.custom_menu_scale != None and data.custom_menu_font != None:
+        if data.custom_menu_scale is not None and data.custom_menu_font is not None:
             components.TheSquid.customize_menu_style(menu)
             font = data.get_current_font()
-            if menu != None:
+            if menu is not None:
                 menu.setFont(font)
             # Recursively change the fonts of all items
             root = self.model().invisibleRootItem()
@@ -2196,7 +2200,7 @@ class TreeDisplayBase(data.QTreeView):
             if default_menu_font == None:
                 return
             components.TheSquid.customize_menu_style(menu)
-            if menu != None:
+            if menu is not None:
                 menu.setFont(default_menu_font)
             # Recursively change the fonts of all items
             root = self.model().invisibleRootItem()
@@ -2218,7 +2222,7 @@ class TreeDisplayBase(data.QTreeView):
                     for column in range(parent.columnCount()):
                         child = parent.child(row, column)
                         yield child
-                        if child != None:
+                        if child is not None:
                             if child.hasChildren():
                                 stack.append(child)
 
@@ -2254,7 +2258,7 @@ class TreeExplorer(TreeDisplayBase):
         super().__init__(parent, main_form, "Tree Explorer")
         self.setAnimated(True)
         self.setObjectName("TreeExplorer")
-        self.setSelectionMode(data.QTreeView.ExtendedSelection)
+        self.setSelectionMode(data.QAbstractItemView.SelectionMode.ExtendedSelection)
         # Icons
         self.project_icon = functions.create_icon("tango_icons/sessions.png")
         self.file_icon = functions.create_icon("tango_icons/file.png")
@@ -2287,7 +2291,7 @@ class TreeExplorer(TreeDisplayBase):
     
     def _init_tree_model(self):
         self.horizontalScrollbarAction(1)
-        self.setSelectionBehavior(data.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
         tree_model = data.QStandardItemModel()
         tree_model.setHorizontalHeaderLabels(["TREE FILE EXPLORER"])
         self.header().hide()
@@ -2336,6 +2340,21 @@ class TreeExplorer(TreeDisplayBase):
         self.__item_editing_closed(widget)
         return super().closeEditor(*args)
     
+    def commitData(self, editor):
+        self.__commit_data(editor)
+        return super().commitData(editor)
+    
+    def __commit_data(self, editor):
+        searched_item = editor.text()
+        root = self.model().invisibleRootItem()
+        for it in self.iterate_items(root):
+            if it.text() == searched_item and it.attributes.itype == TreeExplorer.ItemType.FILE:
+                self.setCurrentIndex(it.index())
+                break
+            elif it.text() == searched_item and it.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
+                self.setCurrentIndex(it.index())
+                break
+    
     def __item_editing_closed(self, widget):
         """
         Signal that fires when editing was canceled/ended
@@ -2343,13 +2362,12 @@ class TreeExplorer(TreeDisplayBase):
 #        print(widget.text())
 #        self.display_directory(self.current_viewed_directory)
         # Check if the directory name is valid
-        if self.added_item != None and self.added_item.text() == "":
+        if self.added_item is not None and self.added_item.text() == "":
             self.base_item.removeRow(self.added_item.row())
             self.added_item = None
-        elif self.renamed_item != None:
-            if not sip.isdeleted(self.renamed_item):
-                self.renamed_item.setEditable(False)
-                self.renamed_item = None
+        elif self.renamed_item is not None:
+#            self.renamed_item.setEditable(False)
+            self.renamed_item = None
         self._unlock_key_release()
     
     def _item_changed(self, item):
@@ -2457,17 +2475,17 @@ class TreeExplorer(TreeDisplayBase):
         item = self.model().itemFromIndex(model_index)
         cursor = data.QCursor.pos()  
         # Clean up the menu if needed
-        if self.tree_menu != None:
+        if self.tree_menu is not None:
             self.tree_menu.setParent(None)
             self.tree_menu.deleteLater()
         # Initialize the menu
-        self.tree_menu = Menu()
+        self.tree_menu = Menu(self)
         self.default_menu_font = self.tree_menu.font()
         self.customize_context_menu()
         
         # First check if the click was in an empty space
         # and create item actions accordingly
-        if item != None:
+        if item is not None:
             # Open the current item
             def open_item():
                 self._open_item(item)
@@ -2527,8 +2545,8 @@ class TreeExplorer(TreeDisplayBase):
             def copy_item_name_to_clipboard():
                 text = os.path.basename(item.attributes.path)
                 cb = data.application.clipboard()
-                cb.clear(mode=cb.Clipboard)
-                cb.setText(text, mode=cb.Clipboard)
+                cb.clear(mode=cb.Mode.Clipboard)
+                cb.setText(text, mode=cb.Mode.Clipboard)
                 self.main_form.display.repl_display_message(
                     "Copied to clipboard: \"{}\"".format(text)
                 )
@@ -2547,8 +2565,8 @@ class TreeExplorer(TreeDisplayBase):
             def copy_item_path_to_clipboard():
                 text = item.attributes.path
                 cb = data.application.clipboard()
-                cb.clear(mode=cb.Clipboard)
-                cb.setText(text, mode=cb.Clipboard)
+                cb.clear(mode=cb.Mode.Clipboard)
+                cb.setText(text, mode=cb.Mode.Clipboard)
                 self.main_form.display.repl_display_message(
                     "Copied to clipboard: \"{}\"".format(text)
                 )
@@ -2613,7 +2631,7 @@ class TreeExplorer(TreeDisplayBase):
             if item.attributes.itype in [TreeExplorer.ItemType.FILE,
                                          TreeExplorer.ItemType.DIRECTORY,
                                          TreeExplorer.ItemType.BASE_DIRECTORY]:
-                if TreeExplorer.cut_items != None or TreeExplorer.copy_items != None:
+                if TreeExplorer.cut_items is not None or TreeExplorer.copy_items is not None:
                     self.tree_menu.addAction(paste_item_action)
             # Separator
             self.tree_menu.addSeparator()
@@ -2661,7 +2679,7 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action.triggered.connect(self.__paste_items)
             icon = functions.create_icon('tango_icons/edit-paste.png')
             paste_item_action.setIcon(icon)
-            if TreeExplorer.cut_items != None or TreeExplorer.copy_items != None:
+            if TreeExplorer.cut_items is not None or TreeExplorer.copy_items is not None:
                 self.tree_menu.addAction(paste_item_action)
         # Add the actions that are on every menu
         # Separator
@@ -2695,15 +2713,6 @@ class TreeExplorer(TreeDisplayBase):
             self.scrollTo(index)
             # Start editing the new empty file name
             self.start_editing_item(index)
-            def _select_item(*args):
-                searched_item = args[0].text()
-                root = self.model().invisibleRootItem()
-                for it in self.iterate_items(root):
-                    if it.text() == searched_item and it.attributes.itype == TreeExplorer.ItemType.FILE:
-                        self.setCurrentIndex(it.index())
-                        break
-            delegate = self.itemDelegate(index)
-            delegate.commitData.connect(_select_item)
         new_file_action = data.QAction(
             "New file", self.tree_menu
         )
@@ -2730,16 +2739,6 @@ class TreeExplorer(TreeDisplayBase):
             self.scrollTo(index)
             # Start editing the new empty directory name
             self.start_editing_item(index)
-            # Select the newly created directory
-            def _select_item(*args):
-                searched_item = args[0].text()
-                root = self.model().invisibleRootItem()
-                for it in self.iterate_items(root):
-                    if it.text() == searched_item and it.attributes.itype == TreeExplorer.ItemType.DIRECTORY:
-                        self.setCurrentIndex(it.index())
-                        break
-            delegate = self.itemDelegate(index)
-            delegate.commitData.connect(_select_item)
             
         new_directory_action = data.QAction(
             "New Directory", self.tree_menu
@@ -2752,11 +2751,9 @@ class TreeExplorer(TreeDisplayBase):
         self.tree_menu.popup(cursor)
     
     def __paste_items(self):
-        if TreeExplorer.cut_items != None:
+        if TreeExplorer.cut_items is not None:
             items = TreeExplorer.cut_items
-            for it in items:
-                print(it)
-        elif TreeExplorer.copy_items != None:
+        elif TreeExplorer.copy_items is not None:
             items = TreeExplorer.copy_items
         else:
             self.main_form.display.display_error(
@@ -2778,25 +2775,25 @@ class TreeExplorer(TreeDisplayBase):
                     message = "The PASTE directory already exists! "
                     message += "Do you wish to overwrite it?"
                     reply = YesNoDialog.question(message)
-                    if reply != data.QMessageBox.Yes:
+                    if reply != data.QMessageBox.StandardButton.Yes:
                         return
                 if os.path.isdir(new_path):
                     shutil.rmtree(new_path)
                     time.sleep(0.1)
                 shutil.copytree(path, new_path)
-                if TreeExplorer.cut_items != None:
+                if TreeExplorer.cut_items is not None:
                     shutil.rmtree(path)
             else:
                 if os.path.exists(new_path):
                     message = "The PASTE file already exists! "
                     message += "Do you wish to overwrite it?"
                     reply = YesNoDialog.question(message)
-                    if reply != data.QMessageBox.Yes:
+                    if reply != data.QMessageBox.StandardButton.Yes:
                         return
                 shutil.copy(path, new_path)
-                if TreeExplorer.cut_items != None:
+                if TreeExplorer.cut_items is not None:
                     os.remove(path)
-        if TreeExplorer.cut_items != None:
+        if TreeExplorer.cut_items is not None:
             TreeExplorer.cut_items = None
             TreeExplorer.copy_items = None
         self.display_directory(self.current_viewed_directory)
@@ -2853,7 +2850,7 @@ class TreeExplorer(TreeDisplayBase):
             items.append(item.attributes)
         message = "Are you sure you want to delete the {} selected items?".format(len(items))
         reply = YesNoDialog.question(message)
-        if reply != data.QMessageBox.Yes:
+        if reply != data.QMessageBox.StandardButton.Yes:
             return
         for it in items:
             path = it.path
@@ -3006,7 +3003,7 @@ class TreeExplorer(TreeDisplayBase):
     """
     def mousePressEvent(self, event):
         # First execute any special routine ...
-        if event.button() == data.Qt.RightButton:
+        if event.button() == data.Qt.MouseButton.RightButton:
             index = self.indexAt(event.pos())
             self._item_right_click(index)
         # ... then call the super-class event

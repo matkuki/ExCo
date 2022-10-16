@@ -10,7 +10,6 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sip
 import os.path
 import collections
 import traceback
@@ -36,97 +35,6 @@ Custom context menu for the editors and REPL
 ---------------------------------------------------------
 """ 
 class ContextMenu(data.QGroupBox):
-    class ContextButton(CustomButton):
-        """
-        Subclassed custom button
-        """
-        # The button's number in the context menu
-        number = None
-        
-        def _fill_background_color(self):
-            self.setAutoFillBackground(True)
-            p = self.palette()
-            p.setColor(
-                self.backgroundRole(), 
-                data.QColor(data.theme["context-menu-background"])
-            )
-            self.setPalette(p)
-        
-        def _set_opacity(self, input_opacity):
-            super()._set_opacity(input_opacity)
-            self._fill_background_color()
-        
-        def _set_opacity_with_hex_edge(self, input_opacity):
-            super()._set_opacity_with_hex_edge(input_opacity)
-            self._fill_background_color()
-        
-        def mousePressEvent(self, event):
-            """Overloaded widget click event"""
-            button = event.button()
-            if button == data.Qt.LeftButton:
-                # Execute the function if it was initialized
-                if self.function is not None:
-                    if components.ActionFilter.click_drag_action is not None:
-                        function_name = components.ActionFilter.click_drag_action.function.__name__
-#                        print(self.number, function_name)
-                        if self._parent.functions_type == "standard":
-                            ContextMenu.standard_buttons[str(self.number)] = function_name
-                        elif self._parent.functions_type == "plain":
-                            ContextMenu.standard_buttons[str(self.number)] = function_name
-                        elif self._parent.functions_type == "horizontal":
-                            ContextMenu.horizontal_buttons[str(self.number)] = function_name
-                        elif self._parent.functions_type == "special":
-                            ContextMenu.special_buttons[str(self.number)] = function_name
-                        # Show the newly added function
-                        message = "Added function '{}' at button number {}".format(
-                            components.ActionFilter.click_drag_action.text(),
-                            self.number
-                        )
-                        self.main_form.display.repl_display_message(
-                            message, 
-                            message_type=data.MessageType.SUCCESS
-                        )
-                        # Reset cursor and stored action
-                        data.application.restoreOverrideCursor()
-                        components.ActionFilter.click_drag_action = None
-                    else:
-                        try:
-                            # Execute the buttons stored function
-                            self.function()
-                        except:
-                            traceback.print_exc()
-                            message = "You need to focus one of the editor windows first!"
-                            self.main_form.display.repl_display_message(
-                                message, 
-                                message_type=data.MessageType.ERROR
-                            )
-                    # Close the function wheel
-                    self._parent.hide()
-                    event.accept()
-                else:
-                    event.ignore()
-            elif button == data.Qt.RightButton:
-                # Close the function wheel
-                self._parent.hide()
-                event.accept()
-            else:
-                event.ignore()
-        
-        def dim(self, clear_hex_edge=False):
-            """Set the buttons opacity to low and clear the function text"""
-            # Set the opacity to low
-            if clear_hex_edge == True:
-                self._set_opacity(self.OPACITY_LOW)
-            else:
-                self._set_opacity_with_hex_edge(self.OPACITY_LOW)
-        
-        def highlight(self):
-            """Set the buttons opacity to high and display the buttons function text"""
-            # Set the opacity to full
-            self._set_opacity_with_hex_edge(self.OPACITY_HIGH)
-            # Display the stored function text
-            self.main_form.display.write_to_statusbar(self.function_text)
-    
     # Various references
     main_form = None
     # Painting offset
@@ -250,7 +158,7 @@ class ContextMenu(data.QGroupBox):
         style_sheet += "border: 0 px;"
         self.setStyleSheet(style_sheet)
         # Set the groupbox size
-        screen_resolution = data.application.desktop().screenGeometry()
+        screen_resolution = data.application.primaryScreen().geometry()
         width, height = screen_resolution.width(), screen_resolution.height()
         self.setGeometry(
             functions.create_rect(0, 0, width, height)
@@ -288,8 +196,8 @@ class ContextMenu(data.QGroupBox):
             button_positions.extend(ContextMenu.outer_button_positions)
         if horizontal_buttons == True:
             button_positions.extend(self.horizontal_button_positions)
-        hex_x_size = self.ContextButton.HEX_IMAGE_SIZE[0] * self.x_scale
-        hex_y_size = self.ContextButton.HEX_IMAGE_SIZE[1] * self.y_scale
+        hex_x_size = ContextButton.HEX_IMAGE_SIZE[0] * self.x_scale
+        hex_y_size = ContextButton.HEX_IMAGE_SIZE[1] * self.y_scale
         window_size = self.parent().size() - functions.create_size(hex_x_size, hex_y_size)
         min_x = 0
         min_y = 0
@@ -337,12 +245,13 @@ class ContextMenu(data.QGroupBox):
             function_info = b[0]
             button_position = b[1]
             button_number = button_position[2]
-            button = self.ContextButton(
+            button = ContextButton(
                 self, 
                 self.main_form, 
                 input_pixmap=function_info[0], 
                 input_function=function_info[1], 
                 input_function_text=function_info[2],
+                input_tool_tip=function_info[2],
                 input_focus_last_widget=data.HexButtonFocus.TAB,
                 input_scale=(self.x_scale, self.y_scale),
             )
@@ -412,15 +321,15 @@ class ContextMenu(data.QGroupBox):
             self.add_outer_buttons(outer_buttons)
     
     def add_inner_buttons(self, in_buttons):
-        self._add_buttons(in_buttons, 7, ContextMenu.inner_button_positions)
+        self.__add_buttons(in_buttons, 7, ContextMenu.inner_button_positions)
     
     def add_outer_buttons(self, in_buttons):
-        self._add_buttons(in_buttons, 12, ContextMenu.outer_button_positions)
+        self.__add_buttons(in_buttons, 12, ContextMenu.outer_button_positions)
     
     def add_horizontal_buttons(self, in_buttons):
-        self._add_buttons(in_buttons, 7, ContextMenu.horizontal_button_positions)
+        self.__add_buttons(in_buttons, 7, ContextMenu.horizontal_button_positions)
     
-    def _add_buttons(self, in_buttons, max_count, positions):
+    def __add_buttons(self, in_buttons, max_count, positions):
         if len(in_buttons) > max_count:
             raise Exception("Too many inner buttons in context menu!")
         buttons = []
@@ -461,7 +370,96 @@ class ContextMenu(data.QGroupBox):
         # the background or the backgrounds will be transparent
         for button in self.button_list:
             button.setVisible(True)
-            button._fill_background_color()
+            button.fill_background_color()
 
 
-
+class ContextButton(CustomButton):
+    """
+    Subclassed custom button
+    """
+    # The button's number in the context menu
+    number = None
+    
+    def fill_background_color(self):
+        self.setAutoFillBackground(True)
+        p = self.palette()
+        p.setColor(
+            self.backgroundRole(), 
+            data.QColor(data.theme["context-menu-background"])
+        )
+        self.setPalette(p)
+    
+    def set_opacity(self, input_opacity):
+        super().set_opacity(input_opacity)
+        self.fill_background_color()
+    
+    def set_opacity_with_hex_edge(self, input_opacity):
+        super()._set_opacity_with_hex_edge(input_opacity)
+        self.fill_background_color()
+    
+    def mousePressEvent(self, event):
+        """Overloaded widget click event"""
+        button = event.button()
+        if button == data.Qt.MouseButton.LeftButton:
+            # Execute the function if it was initialized
+            if self.function is not None:
+                if components.ActionFilter.click_drag_action is not None:
+                    function_name = components.ActionFilter.click_drag_action.function.__name__
+#                        print(self.number, function_name)
+                    if self._parent.functions_type == "standard":
+                        ContextMenu.standard_buttons[str(self.number)] = function_name
+                    elif self._parent.functions_type == "plain":
+                        ContextMenu.standard_buttons[str(self.number)] = function_name
+                    elif self._parent.functions_type == "horizontal":
+                        ContextMenu.horizontal_buttons[str(self.number)] = function_name
+                    elif self._parent.functions_type == "special":
+                        ContextMenu.special_buttons[str(self.number)] = function_name
+                    # Show the newly added function
+                    message = "Added function '{}' at button number {}".format(
+                        components.ActionFilter.click_drag_action.text(),
+                        self.number
+                    )
+                    self.main_form.display.repl_display_message(
+                        message, 
+                        message_type=data.MessageType.SUCCESS
+                    )
+                    # Reset cursor and stored action
+                    data.application.restoreOverrideCursor()
+                    components.ActionFilter.click_drag_action = None
+                else:
+                    try:
+                        # Execute the buttons stored function
+                        self.function()
+                    except:
+                        traceback.print_exc()
+                        message = "You need to focus one of the editor windows first!"
+                        self.main_form.display.repl_display_message(
+                            message, 
+                            message_type=data.MessageType.ERROR
+                        )
+                # Close the function wheel
+                self._parent.hide()
+                event.accept()
+            else:
+                event.ignore()
+        elif button == data.Qt.MouseButton.RightButton:
+            # Close the function wheel
+            self._parent.hide()
+            event.accept()
+        else:
+            event.ignore()
+    
+    def dim(self, clear_hex_edge=False):
+        """Set the buttons opacity to low and clear the function text"""
+        # Set the opacity to low
+        if clear_hex_edge == True:
+            self.set_opacity(self.OPACITY_LOW)
+        else:
+            self.set_opacity_with_hex_edge(self.OPACITY_LOW)
+    
+    def highlight(self):
+        """Set the buttons opacity to high and display the buttons function text"""
+        # Set the opacity to full
+        self.set_opacity_with_hex_edge(self.OPACITY_HIGH)
+        # Display the stored function text
+        self.main_form.display.write_to_statusbar(self.function_text)

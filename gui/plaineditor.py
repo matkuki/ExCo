@@ -27,7 +27,6 @@ import interpreter
 import settings
 import lexers
 import traceback
-import gc
 
 from .contextmenu import *
 from .baseeditor import *
@@ -47,7 +46,7 @@ class PlainEditor(BaseEditor):
     savable         = data.CanSave.NO
     # Reference to the custom context menu
     context_menu    = None
-    """Namespace references for grouping functionality"""
+    # Namespace references for grouping functionality
     hotspots        = None
 
     
@@ -90,7 +89,7 @@ class PlainEditor(BaseEditor):
         # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(settings.editor['end_of_line_mode'])
+        self.setEolMode(data.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
         # Initialize the namespace references
         self.hotspots = components.Hotspots()
         # Set the initial zoom factor
@@ -129,9 +128,6 @@ class PlainEditor(BaseEditor):
         self.setFocus()
         #Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self._parent
-        data.print_log(
-            "Stored \"{}\" as last focused widget".format(self._parent.name)
-        )
         #Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action

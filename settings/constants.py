@@ -8,12 +8,23 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+"""
+Sessions
+"""
+session_structures = {
+    "mark-1": {
+        "name": str,
+        "chain": str,
+        "main-window-files": list,
+        "upper-window-files": list,
+        "lower-window-files": list,
+    },
+    "mark-2": {
+        "name": str,
+        "layout": str
+    },
+}
 
-WINDOWS = (
-    "Main window files",
-    "Upper window files",
-    "Lower window files",
-)
 
 """
 Settings tables
@@ -83,7 +94,7 @@ keyboard_shortcuts = {
             'indent_to_cursor': 'Ctrl+I',
             'lower_focus': 'Ctrl+3',
             'main_focus': 'Ctrl+1',
-            'maximize_window': 'F12',
+            'maximize_window': 'F11',
             'move_tab_left': 'Ctrl+,',
             'move_tab_right': 'Ctrl+.',
             'new_file': 'Ctrl+N',
@@ -202,3 +213,67 @@ keyboard_shortcuts = {
         },
     }
 }
+
+# Default layout
+default_layout = """
+{
+    "WINDOW-SIZE": [
+        1000,
+        600
+    ],
+    "BOXES": {
+        "0": {
+            "BOX-H": {
+                "0": {
+                    "BOX-V": {
+                        "0": {
+                            "TABS": {
+                                "CURRENT-INDEX": -1
+                            }
+                        }
+                    },
+                    "SIZES": [
+                        600
+                    ]
+                },
+                "1": {
+                    "BOX-V": {
+                        "0": {
+                            "BOX-H": {
+                                "0": {
+                                    "TABS": {
+                                        "CURRENT-INDEX": -1
+                                    }
+                                }
+                            },
+                            "SIZES": [
+                                300
+                            ]
+                        },
+                        "1": {
+                            "BOX-H": {
+                                "0": {
+                                    "TABS": {
+                                        "CURRENT-INDEX": -1
+                                    }
+                                }
+                            },
+                            "SIZES": [
+                                300
+                            ]
+                        }
+                    },
+                    "SIZES": [
+                        300,
+                        300
+                    ]
+                }
+            },
+            "SIZES": [
+                600,
+                400
+            ]
+        }
+    }
+}
+"""

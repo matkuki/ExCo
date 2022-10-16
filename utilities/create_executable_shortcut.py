@@ -36,7 +36,7 @@ import osproc
 # Parse the arguments
 let arguments = os.commandLineParams()
 let main_script_path = ospaths.joinPath(
-    ospaths.parentDir(os.getAppFilename()), "main.py"
+    ospaths.parentDir(os.getAppFilename()), "exco.py"
 )
 echo main_script_path
 var parameters = @[main_script_path]
@@ -44,7 +44,7 @@ for arg in arguments:
     parameters.add(arg)
 # Run ExCo process
 discard osproc.startProcess(
-    command="pythonw.exe",
+    command="C:/Python310/pythonw.exe",
     workingDir="",
     args=parameters,
     env=nil
@@ -63,4 +63,4 @@ os.remove("exco.rs")
 os.remove("exco.res")
 os.remove("exco.nim")
 os.remove("exco-icon-win.ico")
-shutil.rmtree("nimcache/")
+#shutil.rmtree("nimcache/")

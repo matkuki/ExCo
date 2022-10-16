@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 """
@@ -14,6 +13,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import sys
+import enum
 import inspect
 import pathlib
 import platform
@@ -34,28 +34,37 @@ NOTE:
     or by specifiying the full namespace with data.PyQt.QtCore.QSize!
 """
 try:
-    import PyQt5.Qsci
-    import PyQt5.QtCore
-    import PyQt5.QtGui
-    import PyQt5.QtWidgets
-    PyQt = PyQt5
-    from PyQt5.Qsci import *
-    from PyQt5.QtCore import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtWidgets import *
-    PYQT_MODE = 5
+    import PyQt6.Qsci
+    import PyQt6.QtCore
+    import PyQt6.QtGui
+    import PyQt6.QtWidgets
+    PyQt = PyQt6
+    from PyQt6.Qsci import *
+    from PyQt6.QtCore import *
+    from PyQt6.QtGui import *
+    from PyQt6.QtWidgets import *
+    PYQT_MODE = 6
 except:
-    import PyQt4.Qsci
-    import PyQt4.QtCore
-    import PyQt4.QtGui
-    PyQt = PyQt4
-    from PyQt4.Qsci import *
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-    PYQT_MODE = 4
-# Safety check for PyQt mode selection
-if PYQT_MODE != 4 and PYQT_MODE != 5:
-    raise Exception("PyQt mode has to be either 4 or 5!")
+    try:
+        import PyQt5.Qsci
+        import PyQt5.QtCore
+        import PyQt5.QtGui
+        import PyQt5.QtWidgets
+        PyQt = PyQt5
+        from PyQt5.Qsci import *
+        from PyQt5.QtCore import *
+        from PyQt5.QtGui import *
+        from PyQt5.QtWidgets import *
+        PYQT_MODE = 5
+    except:
+        import PyQt4.Qsci
+        import PyQt4.QtCore
+        import PyQt4.QtGui
+        PyQt = PyQt4
+        from PyQt4.Qsci import *
+        from PyQt4.QtCore import *
+        from PyQt4.QtGui import *
+        PYQT_MODE = 4
 
 
 """
@@ -93,7 +102,7 @@ supported_file_extentions = {
     "idl": [".idl"],
     "ini": [".ini"],
     "java": [".java"],
-    "javascript": [".js"],
+    "javascript": [".js", ".jsx", ".ts", ".tsx"],
     "json": [".json"],
     "lua": [".lua"],
     "nim": [".nim", ".nims"],
@@ -116,60 +125,60 @@ supported_file_extentions = {
 Global enumerations
 -------------------------------------------------
 """
-class FileStatus:
-    OK          = 0
-    MODIFIED    = 1
+class FileStatus(enum.Enum):
+    OK       = 0
+    MODIFIED = 1
 
 class CanSave:
     YES = 0
     NO  = 1
 
-class SearchResult:
-    NOT_FOUND   = None
-    FOUND       = 1
-    CYCLED      = 2
+class SearchResult(enum.Enum):
+    NOT_FOUND = None
+    FOUND     = 1
+    CYCLED    = 2
 
-class WindowMode:
-    THREE   = 0
-    ONE     = 1
+class WindowMode(enum.Enum):
+    THREE = 0
+    ONE   = 1
 
-class MainWindowSide:
-    LEFT    = 0
-    RIGHT   = 1
+class MainWindowSide(enum.Enum):
+    LEFT  = 0
+    RIGHT = 1
 
-class ReplType:
+class ReplType(enum.Enum):
     SINGLE_LINE = 0
     MULTI_LINE  = 1
 
-class Direction:
-    LEFT    = 0
-    RIGHT   = 1 
+class Direction(enum.Enum):
+    LEFT  = 0
+    RIGHT = 1
 
-class SpinDirection:
-    CLOCKWISE           = 0
-    COUNTER_CLOCKWISE   = 1
+class SpinDirection(enum.Enum):
+    CLOCKWISE         = 0
+    COUNTER_CLOCKWISE = 1
 
-class MessageType:
-    ERROR           = 0
-    WARNING         = 1
-    SUCCESS         = 2
-    DIFF_UNIQUE_1   = 3
-    DIFF_UNIQUE_2   = 4
-    DIFF_SIMILAR    = 5
+class MessageType(enum.Enum):
+    ERROR         = 0
+    WARNING       = 1
+    SUCCESS       = 2
+    DIFF_UNIQUE_1 = 3
+    DIFF_UNIQUE_2 = 4
+    DIFF_SIMILAR  = 5
 
-class HexButtonFocus:
-    NONE        = 0
-    TAB         = 1
-    WINDOW      = 2
+class HexButtonFocus(enum.Enum):
+    NONE   = 0
+    TAB    = 1
+    WINDOW = 2
 
-class NodeDisplayType:
-    DOCUMENT    = 0
-    TREE        = 1
+class NodeDisplayType(enum.Enum):
+    DOCUMENT = 0
+    TREE     = 1
 
-class TreeDisplayType:
-    NODES               = 0
-    FILES               = 1
-    FILES_WITH_LINES    = 2
+class TreeDisplayType(enum.Enum):
+    NODES            = 0
+    FILES            = 1
+    FILES_WITH_LINES = 2
 
 
 """
@@ -238,9 +247,46 @@ def first_scan():
 
 # Example of got to customize the menu font and menu font scaling
 #data.custom_menu_scale = 25
-#data.custom_menu_font = ("Segoe UI", 10, data.QFont.Bold)
+#data.custom_menu_font = ("Segoe UI", 10, data.QFont.Weight.Bold)
 #data.custom_menu_scale = None
 #data.custom_menu_font = None
+
+def trim_whitespace():
+    """
+    Remove whitespace from back of every line in the main document
+    """
+    ll = []
+    tab = form.get_tab_by_indication()
+    for line in tab.line_list:
+        ll.append(line.rstrip())
+    tab.line_list = ll
+trim_whitespace.autocompletion = "trim_whitespace()"
+
+def align_assignments():
+    """
+    Align any assignments in the selected lines
+    """
+    tab = form.get_tab_by_indication()
+    new_lines = []
+    selected_text = tab.selectedText()
+    max_left_size = 0
+    for line in selected_text.split('\n'):
+        if '=' in line and line.count('=') == 1:
+            split_line = line.split('=')
+            left_size = len(split_line[0].rstrip())
+            if left_size > max_left_size:
+                max_left_size = left_size
+            new_lines.append(split_line)
+        else:
+            new_lines.append(line)
+    for i in range(len(new_lines)):
+        if isinstance(new_lines[i], list):
+            new_lines[i] = "{} = {}".format(
+                new_lines[i][0].rstrip().ljust(max_left_size, ' '),
+                new_lines[i][1].strip()
+            )
+    tab.replaceSelectedText('\n'.join(new_lines))
+align_assignments.autocompletion = "align_assignments()"
 
 # Example function definition with defined autocompletion string
 def delete_files_in_dir(extension=None, directory=None):
@@ -275,6 +321,7 @@ about_image = os.path.join(resources_directory, "exco-info.png") \
 settings_filename = {
     "mark-0": "exco.ini",
     "mark-1": "exco.mk1.ini",
+    "mark-2": "exco.mk2.ini",
 }
 # Terminal console program used on GNU/Linux
 terminal = "x-terminal-emulator"
@@ -289,6 +336,10 @@ current_editor_font_name = "Source Code Pro"
 current_editor_font_size = 10
 def get_editor_font():
     return QFont(current_editor_font_name, int(current_editor_font_size))
+
+# Scaling
+toplevel_menu_scale = 100.0
+
 # Current theme
 # Themes need PyQt version defined beforehand, as they also import the data module
 theme = None
@@ -303,6 +354,10 @@ custom_menu_font = None
 # Function information that is used between modules
 global_function_information = {}
 
+# REPL messages tab name
+repl_messages_tab_name = "REPL MESSAGES"
+file_explorer_tab_name = "FILE EXPLORER"
+
 # Show PyQt/QScintilla version that is being used and if running in 
 # QScintilla compatibility mode
 LIBRARY_VERSIONS = "PyQt" + PyQt.QtCore.PYQT_VERSION_STR
@@ -313,18 +368,12 @@ if compatibility_mode == True:
 
 # Store all Qt keys as a dictionary
 keys = {}
-for k in dir(Qt):
+if PYQT_MODE < 6:
+    keys_namespace = Qt
+else:
+    keys_namespace = Qt.Key
+ 
+for k in dir(keys_namespace):
     if k.startswith("Key_"):
-        value = getattr(Qt, k)
+        value = getattr(keys_namespace, k)
         keys[value] = k
-
-
-"""
---------------------------------------
-Various global functions and routines
---------------------------------------
-"""
-def print_log(*args, **kwargs):
-    """Internal module function that runs the append_message method of the log window"""
-    if log_window != None:
-        log_window.append_message(*args)
