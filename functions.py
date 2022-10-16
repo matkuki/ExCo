@@ -107,11 +107,11 @@ def create_pixmap_with_size(pixmap_name, width=None, height=None):
     pixmap = create_pixmap(pixmap_name)
     if width:
         pixmap = pixmap.scaledToWidth(
-            width, data.Qt.TransformationMode.SmoothTransformation
+            int(width), data.Qt.TransformationMode.SmoothTransformation
         )
     if height:
         pixmap = pixmap.scaledToHeight(
-            height, data.Qt.TransformationMode.SmoothTransformation
+            int(height), data.Qt.TransformationMode.SmoothTransformation
         )
     return pixmap
 
