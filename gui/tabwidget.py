@@ -669,11 +669,18 @@ class TabWidget(data.QTabWidget):
             if tab.save_status == data.FileStatus.MODIFIED and force == False:
                 #Display the close notification
                 close_message = "Document '" + self.tabText(emmited_tab_number)
-                close_message += "' has been modified!\nClose it anyway?"
-                reply = YesNoDialog.question(close_message)
-                if reply == data.DialogResult.Yes.value:
+                close_message += "' has been modified!\nWhat do you wish to do?"
+                reply = CloseEditorDialog.question(close_message)
+                if reply == data.DialogResult.SaveAndClose.value:
+                    result = tab.save_document()
+                    if result == False:
+                        return
                     clear_document_bookmarks()
-                    #Close tab anyway
+                    # Close tab anyway
+                    self.removeTab(emmited_tab_number)
+                elif reply == data.DialogResult.Close.value:
+                    clear_document_bookmarks()
+                    # Close tab anyway
                     self.removeTab(emmited_tab_number)
                 else:
                     #Cancel tab closing

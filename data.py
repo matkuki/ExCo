@@ -182,10 +182,13 @@ class TreeDisplayType(enum.Enum):
 
 class DialogResult(enum.Enum):
     Ok = 0
-    Yes = 1
-    No = 2
-    Quit = 3
-    SaveAllAndQuit = 4
+    Cancel = 1
+    Yes = 2
+    No = 3
+    Quit = 4
+    Close = 5
+    SaveAllAndQuit = 6
+    SaveAndClose = 7
 
 
 """
