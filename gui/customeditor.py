@@ -1844,13 +1844,16 @@ class CustomEditor(BaseEditor):
         return line_number
     
     def save_document(self, saveas=False, encoding="utf-8", line_ending=None):
-        """Save a document to a file"""
+        """
+        Save a document to a file
+        """
         if self.save_name == "" or saveas != False:
             # Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QFileDialog
             # Get the filename from the QFileDialog window
+            tab_text = self._parent.tabText(self._parent.indexOf(self))
             temp_save_name = data.QFileDialog.getSaveFileName(
-                self, 
-                "Save File", 
+                self,
+                "Save File: '{}'".format(tab_text), 
                 os.getcwd() + self.save_name, 
                 "All Files(*)"
             )
@@ -1860,7 +1863,7 @@ class CustomEditor(BaseEditor):
                 temp_save_name = temp_save_name[0]
             # Check if the user has selected a file
             if temp_save_name == "":
-                return
+                return False
             # Replace back-slashes to forward-slashes on Windows
             if data.platform == "Windows":
                 temp_save_name = functions.unixify_path(temp_save_name)
@@ -1881,7 +1884,7 @@ class CustomEditor(BaseEditor):
                     "Line ending has to be a string!", 
                     message_type=data.MessageType.ERROR
                 )
-                return
+                return False
             else:
                 # Convert the text into a list and join it together with the specified line ending
                 text_list = self.line_list
@@ -1897,6 +1900,7 @@ class CustomEditor(BaseEditor):
                 self.choose_lexer(file_type)
             # Update the settings manipulator with the new file
             self.main_form.settings.update_recent_list(self.save_name)
+            return True
         else:
             # Saving has failed
             error_message = "Error while trying to write file to disk:\n"
@@ -1908,6 +1912,7 @@ class CustomEditor(BaseEditor):
             self.main_form.display.write_to_statusbar(
                 "Saving to file failed, check path and disk space!"
             )
+            return False
     
     def refresh_lexer(self):
         """ Refresh the current lexer (used by themes) """
@@ -2041,7 +2046,7 @@ class CustomEditor(BaseEditor):
             #Display the close notification
             reload_message = "Document '" + self.name+ "' has been modified!\nReload it from disk anyway?"
             reply = YesNoDialog.question(reload_message)
-            if reply == data.QMessageBox.StandardButton.No:
+            if reply == data.DialogResult.No.value:
                 #Cancel tab file reloading
                 return
         #Check if the name of the document is valid

@@ -561,3 +561,11 @@ class StandardButton(PushButtonBase):
     def __init__(self, parent, main_form, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.main_form = main_form
+        # Initialize focus
+        self.set_focused(False)
+    
+    def set_focused(self, value):
+        self.setProperty("focused", value)
+        self.style().unpolish(self)
+        self.style().polish(self)
+    

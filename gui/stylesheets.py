@@ -122,6 +122,11 @@ QPushButton:hover {{
     color: {data.theme["indication"]["font"]};
     border: 1px solid {data.theme["indication"]["activeborder"]};
 }}
+QPushButton[focused=true] {{
+    background-color: {data.theme["indication"]["hover"]};
+    color: {data.theme["indication"]["font"]};
+    border: 1px solid {data.theme["indication"]["activeborder"]};
+}}
 QPushButton:pressed {{
     background-color: {data.theme["indication"]["activebackground"]};
     color: {data.theme["indication"]["font"]};

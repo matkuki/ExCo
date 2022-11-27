@@ -8,28 +8,35 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import enum
+
 import data
 import functions
 
+class LayoutType(enum.Enum):
+    Horizontal = 0
+    Vertical = 1
+    Grid = 2
+    Stack = 3
 
-def create_layout(vertical=False,
+def create_layout(layout=LayoutType.Horizontal,
                   spacing=0,
                   margins=(0,0,0,0),
-                  parent=None,
-                  ):
-    if isinstance(vertical, bool) and vertical:
-        assert vertical == True
+                  parent=None,):
+    if layout == LayoutType.Horizontal:
+        new_layout = data.QHBoxLayout(parent)
+    
+    elif layout == LayoutType.Vertical:
         new_layout = data.QVBoxLayout(parent)
 
-    elif vertical == 'grid':
+    elif layout == LayoutType.Grid:
         new_layout = data.QGridLayout(parent)
 
-    elif vertical == 'stack':
+    elif layout == LayoutType.Stack:
         new_layout = data.QStackedLayout(parent)
 
     else:
-        assert vertical == False
-        new_layout = data.QHBoxLayout(parent)
+        raise Exception("Unknown layout type: '{}'".format(layout))
 
     new_layout.setSpacing(spacing)
     new_layout.setContentsMargins(*margins)
@@ -56,8 +63,8 @@ QGroupBox {{
 
 def create_groupbox_with_layout(name=None,
                                 text=None,
-                                vertical=True,
-                                borderless=False,
+                                layout=LayoutType.Horizontal,
+                                borderless=True,
                                 background_color=None,
                                 spacing=None,
                                 margins=None,
@@ -73,15 +80,11 @@ def create_groupbox_with_layout(name=None,
             name, parent=parent
         )
     else:
-        groupbox = create_groupbox(
-            name,
-            text,
-            parent=parent,
-            override_margin_top=override_margin_top
-        )
+        raise Exception("UNIMPLEMENTED!")
+    
     groupbox.setLayout(
         create_layout(
-            vertical=vertical
+            layout=layout
         )
     )
     if background_color is not None:
@@ -106,3 +109,17 @@ def create_groupbox_with_layout(name=None,
             margins.bottom()
         )
     return groupbox
+
+def create_frame(parent=None,
+                 layout=LayoutType.Horizontal,
+                 spacing=0,
+                 margins=(0,0,0,0),):
+    frame = data.QFrame(parent)
+    layout = create_layout(
+        layout=layout,
+        spacing=spacing,
+        margins=margins,
+        parent=frame
+    )
+    frame.setLayout(layout)
+    return frame

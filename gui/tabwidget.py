@@ -671,7 +671,7 @@ class TabWidget(data.QTabWidget):
                 close_message = "Document '" + self.tabText(emmited_tab_number)
                 close_message += "' has been modified!\nClose it anyway?"
                 reply = YesNoDialog.question(close_message)
-                if reply == data.QMessageBox.StandardButton.Yes:
+                if reply == data.DialogResult.Yes.value:
                     clear_document_bookmarks()
                     #Close tab anyway
                     self.removeTab(emmited_tab_number)
@@ -1013,10 +1013,10 @@ class TabWidget(data.QTabWidget):
                 message_type=data.MessageType.ERROR
             )
             return
-        #Check if the source file already exists in the target basic widget
-        check_index = self.main_form.check_open_file(source_widget.save_name, self)
-        if check_index != None:
-            #File is already open, focus it
+        # Check if the source file already exists in the target basic widget
+        check_tab_widget, check_index = self.main_form.check_open_file(source_widget.save_name)
+        if check_index is not None and check_tab_widget is self:
+            # File is already open, focus it
             self.setCurrentIndex(check_index)
             return
         #Create a new editor document
@@ -1049,8 +1049,8 @@ class TabWidget(data.QTabWidget):
         # PlainEditor tabs should not evaluate its name
         if isinstance(moved_widget, CustomEditor) == True:
             # Check if the source file already exists in the target basic widget
-            check_index = self.main_form.check_open_file(moved_widget.save_name, self)
-            if check_index != None:
+            check_tab_widget, check_index = self.main_form.check_open_file(moved_widget.save_name)
+            if check_index is not None and check_tab_widget is self:
                 # File is already open, focus it
                 self.setCurrentIndex(check_index)
                 return
@@ -1086,10 +1086,8 @@ class TabWidget(data.QTabWidget):
         if isinstance(dragged_widget, CustomEditor) == True:
             # Check if the source file already exists
             # in the target basic widget
-            check_index = self.main_form.check_open_file(
-                dragged_widget.save_name, self
-            )
-            if check_index is not None:
+            check_tab_widget, check_index = self.main_form.check_open_file(dragged_widget.save_name)
+            if check_index is not None and check_tab_widget is self:
                 # File is already open, focus it
                 self.setCurrentIndex(check_index)
                 return

@@ -425,7 +425,7 @@ class SessionGuiManipulator(data.QTreeView):
             message =  "Are you sure you want to delete group:\n"
             message += "'{}' ?".format(group_name_with_chain)
             reply = YesNoDialog.warning(message)
-            if reply == data.QMessageBox.StandardButton.No:
+            if reply == data.DialogResult.No.value:
                 return
             # Delete the group
             result = self.settings_manipulator.remove_group(remove_group)
@@ -460,7 +460,7 @@ class SessionGuiManipulator(data.QTreeView):
             message =  "Are you sure you want to delete session:\n"
             message += "'{}' ?".format(session_name_with_chain)
             reply = YesNoDialog.warning(message)
-            if reply == data.QMessageBox.StandardButton.No:
+            if reply == data.DialogResult.No.value:
                 return
             # Delete the session
             self.settings_manipulator.remove_session(remove_session)

@@ -497,7 +497,7 @@ class TreeDisplay(data.QTreeView):
             # Check if a line item was clicked
             if hasattr(item, "line_number") == True:
                 # Goto the stored line number
-                document = self.main_form.get_largest_window().currentWidget()
+                document = self.main_form.get_tab_by_save_name(item.full_name)
                 document.goto_line(item.line_number)
     
     def _node_item_parse(self, item):
@@ -2775,7 +2775,7 @@ class TreeExplorer(TreeDisplayBase):
                     message = "The PASTE directory already exists! "
                     message += "Do you wish to overwrite it?"
                     reply = YesNoDialog.question(message)
-                    if reply != data.QMessageBox.StandardButton.Yes:
+                    if reply != data.DialogResult.Yes.value:
                         return
                 if os.path.isdir(new_path):
                     shutil.rmtree(new_path)
@@ -2788,7 +2788,7 @@ class TreeExplorer(TreeDisplayBase):
                     message = "The PASTE file already exists! "
                     message += "Do you wish to overwrite it?"
                     reply = YesNoDialog.question(message)
-                    if reply != data.QMessageBox.StandardButton.Yes:
+                    if reply != data.DialogResult.Yes.value:
                         return
                 shutil.copy(path, new_path)
                 if TreeExplorer.cut_items is not None:
@@ -2850,7 +2850,7 @@ class TreeExplorer(TreeDisplayBase):
             items.append(item.attributes)
         message = "Are you sure you want to delete the {} selected items?".format(len(items))
         reply = YesNoDialog.question(message)
-        if reply != data.QMessageBox.StandardButton.Yes:
+        if reply != data.DialogResult.Yes.value:
             return
         for it in items:
             path = it.path

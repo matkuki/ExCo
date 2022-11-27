@@ -126,7 +126,7 @@ class FunctionWheel(data.QGroupBox):
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
         # Generate positions/size
-        size = (50, 50)
+        size = (data.standard_button_size, data.standard_button_size)
         start = (0, 0)
         row = 0
         col = 0
@@ -144,7 +144,7 @@ class FunctionWheel(data.QGroupBox):
                 row += 1
         gi = functions.count_iterator()
         # Create the list from which the hex buttons will be constructed
-        hex_button_list = [
+        button_list = [
             ButtonInfo(
                 "button_line_cut",
                 geometries[next(gi)],
@@ -242,7 +242,7 @@ class FunctionWheel(data.QGroupBox):
                 input_focus_last_widget=data.HexButtonFocus.TAB,
             ),
         ]
-        self.__create_hex_buttons_from_list(hex_button_list)
+        self.__create_buttons_from_list(button_list)
 
     def __init_advanced_buttons(self):
         # Alias the class references to shorten the names
@@ -267,7 +267,7 @@ class FunctionWheel(data.QGroupBox):
                 row += 1
         gi = functions.count_iterator()
         # Create the list from which the hex buttons will be constructed
-        hex_button_list = [
+        button_list = [
             ButtonInfo(
                 "button_find",
                 geometries[next(gi)],
@@ -484,7 +484,7 @@ class FunctionWheel(data.QGroupBox):
                 input_focus_last_widget=data.HexButtonFocus.TAB,
             ),
         ]
-        self.__create_hex_buttons_from_list(hex_button_list)
+        self.__create_buttons_from_list(button_list)
 
     def __init_file_buttons(self):
         # Alias the class references to shorten the names
@@ -509,7 +509,7 @@ class FunctionWheel(data.QGroupBox):
                 row += 1
         gi = functions.count_iterator()
         # Create the list from which the hex buttons will be constructed
-        hex_button_list = [
+        button_list = [
             ButtonInfo(
                 "button_new",
                 geometries[next(gi)],
@@ -608,7 +608,7 @@ class FunctionWheel(data.QGroupBox):
                 input_no_document_focus_disable=False,
             ),
         ]
-        self.__create_hex_buttons_from_list(hex_button_list)
+        self.__create_buttons_from_list(button_list)
 
     def __init_system_view_buttons(self):
         # Alias the class references to shorten the names
@@ -634,7 +634,7 @@ class FunctionWheel(data.QGroupBox):
                 row += 1
         gi = functions.count_iterator()
         # Create the list from which the hex buttons will be constructed
-        hex_button_list = [
+        button_list = [
             ButtonInfo(
                 "button_43",
                 geometries[next(gi)],
@@ -789,7 +789,7 @@ class FunctionWheel(data.QGroupBox):
                 input_no_document_focus_disable=False,
             ),
         ]
-        self.__create_hex_buttons_from_list(hex_button_list)
+        self.__create_buttons_from_list(button_list)
 
     def __init_repl_buttons(self):
         # Alias the class references to shorten the names
@@ -814,7 +814,7 @@ class FunctionWheel(data.QGroupBox):
                 row += 1
         gi = functions.count_iterator()
         # Create the list from which the hex buttons will be constructed
-        hex_button_list = [
+        button_list = [
             ButtonInfo(
                 "button_57",
                 geometries[next(gi)],
@@ -843,7 +843,7 @@ class FunctionWheel(data.QGroupBox):
                 input_no_document_focus_disable=False,
             ),
         ]
-        self.__create_hex_buttons_from_list(hex_button_list)
+        self.__create_buttons_from_list(button_list)
     
     def __init_special_system_buttons(self):
         # Alias the class references to shorten the names
@@ -871,7 +871,7 @@ class FunctionWheel(data.QGroupBox):
                 row += 1
         gi = functions.count_iterator()
         # Create the list from which the hex buttons will be constructed
-        hex_button_list = [
+        button_list = [
             ButtonInfo(
                 "button_39",
                 geometries[next(gi)],
@@ -881,9 +881,9 @@ class FunctionWheel(data.QGroupBox):
                 input_no_document_focus_disable=False,
             ),
         ]
-        self.__create_hex_buttons_from_list(hex_button_list)
+        self.__create_buttons_from_list(button_list)
 
-    def __create_hex_buttons_from_list(self, hex_button_list):
+    def __create_buttons_from_list(self, button_list):
         def create_click_func(func):
             def wrapper_click_func(*args):
                 self.main_form.view.hide_function_wheel()
@@ -898,7 +898,7 @@ class FunctionWheel(data.QGroupBox):
                 self.display("", font)
             return wrapper_leave_func
         # Create all of the buttons from the list
-        for button in hex_button_list:
+        for button in button_list:
             init_button = StandardButton(
                 self,
                 self.main_form,

@@ -442,9 +442,15 @@ class MainWindow(data.QMainWindow):
         """Event that fires when the main window is closed"""
         #Check if there are any modified documents
         if self.check_document_states() == True:
-            quit_message = "You have modified documents!\nQuit anyway?"
-            reply = YesNoDialog.question(quit_message)
-            if reply != data.QMessageBox.StandardButton.Yes:
+            quit_message = "You have modified documents!\nWhat do you wish to do?"
+            reply = QuitDialog.question(quit_message)
+            if reply == data.DialogResult.Quit.value:
+                pass
+            elif reply == data.DialogResult.SaveAllAndQuit.value:
+                result = self.file_save_all()
+                if result == False:
+                    event.ignore()
+            else:
                 event.ignore()
 
     def resizeEvent(self, event):
@@ -584,27 +590,31 @@ class MainWindow(data.QMainWindow):
                 self.import_user_functions()
 
     def file_save_all(self, encoding="utf-8"):
-        """Save all open modified files"""
-        #Create a list of the windows
+        """
+        Save all open modified files
+        """
+        # Create a list of the windows
         windows = self.get_all_windows()
-        #Loop through all the basic widgets/windows and check the tabs
+        # Loop through all the basic widgets/windows and check the tabs
         saved_something = False
         for window in windows:
             for i in range(0, window.count()):
                 tab = window.widget(i)
-                #Skip to next tab if it is not a CustomEditor
+                # Skip to next tab if it is not a CustomEditor
                 if isinstance(tab, CustomEditor) == False:
                     continue
-                #Test if the tab is modified and savable
+                # Test if the tab is modified and savable
                 if (tab.savable == data.CanSave.YES and
                     tab.save_status == data.FileStatus.MODIFIED):
-                    #Save the file
-                    tab.save_document(saveas=False, encoding=encoding)
-                    #Set the icon if it was set by the lexer
+                    # Save the file
+                    result = tab.save_document(saveas=False, encoding=encoding)
+                    # Set the icon if it was set by the lexer
                     tab.icon_manipulator.update_icon(tab)
-                    #Set the saved something flag
+                    # Set the saved something flag
                     saved_something = True
-        #Display the successful save
+                    if result == False:
+                        return False
+        # Display the successful save
         if saved_something == False:
             self.display.repl_display_message(
                 "No modified documents to save",
@@ -615,6 +625,7 @@ class MainWindow(data.QMainWindow):
                 "'Save all' executed successfully",
                 message_type=data.MessageType.SUCCESS
             )
+        return True
 
     def update_menubar(self):
         """
@@ -768,7 +779,8 @@ class MainWindow(data.QMainWindow):
                     current_index   = current_window.currentIndex()
                     current_window.close_tab(current_index)
                     #Focus the newly displayed tab
-                    current_window.currentWidget().setFocus()
+                    if current_window.count() > 0:
+                        current_window.currentWidget().setFocus()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             close_tab_action = create_action('Close Tab', settings.keyboard_shortcuts['general']['close_tab'], 'Close the current tab', 'tango_icons/close-tab.png', close_tab)
@@ -790,7 +802,7 @@ class MainWindow(data.QMainWindow):
                     )
                     message = "Do you wish to generate the default user definition and function file?"
                     reply = YesNoDialog.question(message)
-                    if reply == data.QMessageBox.StandardButton.Yes:
+                    if reply == data.DialogResult.Yes.value:
                         functions.create_default_config_file()
                         self.display.repl_display_message(
                             "Default user definitions file generated!",
@@ -2250,7 +2262,7 @@ class MainWindow(data.QMainWindow):
             )
             message = "Do you wish to generate the default user definition and function file?"
             reply = YesNoDialog.question(message)
-            if reply == data.QMessageBox.StandardButton.Yes:
+            if reply == data.DialogResult.Yes.value:
                 functions.create_default_config_file()
                 self.display.repl_display_success(
                     "Default user definitions file generated!"
@@ -2363,14 +2375,14 @@ class MainWindow(data.QMainWindow):
         Read file contents into a TabWidget
         """
         def open_file_function(in_file, tab_widget):
-            #Check if file exists
+            # Check if file exists
             if os.path.isfile(in_file) == False:
                 self.display.repl_display_message(
                     "File: {}\ndoesn't exist!".format(in_file),
                     message_type=data.MessageType.ERROR
                 )
                 return
-            #Check the file size
+            # Check the file size
             file_size = functions.get_file_size_Mb(in_file)
             if file_size  > 50:
                 #Create the warning message
@@ -2379,19 +2391,20 @@ class MainWindow(data.QMainWindow):
                 warning +=  "Files larger than 300 MB can cause the system to hang!\n"
                 warning +=  "Are you sure you want to open it?"
                 reply = YesNoDialog.warning(warning)
-                if reply == data.QMessageBox.StandardButton.No:
+                if reply == data.DialogResult.No.value:
                     return
-            #Check selected window
+            # Check if file is already open
+            check_tab_widget, check_index = self.check_open_file(in_file)
+            if check_index is not None and check_tab_widget is not None:
+                check_tab_widget.setCurrentIndex(check_index)
+                return
+            
             if tab_widget is None:
                 tab_widget = self.get_largest_window()
-            #Check if file is already open
-            index = self.check_open_file(in_file, tab_widget)
-            if index is not None:
-                tab_widget.setCurrentIndex(index)
-                return
-            #Add new scintilla document tab to the basic widget
+            
+            # Add new scintilla document tab to the basic widget
             new_tab = tab_widget.editor_add_document(in_file, "file", bypass_check=False)
-            #Set the icon if it was set by the lexer
+            # Set the icon if it was set by the lexer
             new_tab.icon_manipulator.update_icon(new_tab)
 
             if new_tab is not None:
@@ -2471,20 +2484,25 @@ class MainWindow(data.QMainWindow):
             return None
 
 
-    def check_open_file(self, file_with_path, tab_widget):
-        """Check if a file is already open in one of the windows"""
+    def check_open_file(self, file_with_path):
+        """
+        Check if a file is already open in one of the windows
+        """
+        found_tab_widget = None
         found_index = None
-        #Change the Windows style path to the Unix style
+        # Change the windows style path to the Unix style
         file_with_path = file_with_path.replace("\\", "/")
-        #Loop through all of the documents in the basic widget
-        for i in range(tab_widget.count()):
-            #Check the file name and file name with path
-            if (tab_widget.widget(i).name == os.path.basename(file_with_path) and
-                tab_widget.widget(i).save_name == file_with_path):
-                #If the file is already open, get its index in the tab widget
-                found_index = i
-                break
-        return found_index
+        for tab_widget in self.get_all_windows():
+            # Loop through all of the documents in the tab widget
+            for i in range(tab_widget.count()):
+                # Check the file name and file name with path
+                if (tab_widget.widget(i).name == os.path.basename(file_with_path) and 
+                    tab_widget.widget(i).save_name == file_with_path):
+                    # If the file is already open, get its index in the tab widget
+                    found_tab_widget = tab_widget
+                    found_index = i
+                    break
+        return found_tab_widget, found_index
 
     def close_all_tabs(self):
         """Clear all documents from the main and upper window"""
@@ -2492,7 +2510,7 @@ class MainWindow(data.QMainWindow):
         if self.check_document_states() == True:
             message = "You have modified documents!\nClose all tabs?"
             reply = YesNoDialog.question(message)
-            if reply == data.QMessageBox.StandardButton.No:
+            if reply == data.DialogResult.No.value:
                 return
         # Close all tabs and remove all bookmarks from them
         for window in self.get_all_windows():
@@ -2512,7 +2530,7 @@ class MainWindow(data.QMainWindow):
         if self.check_document_states(tab_widget) == True:
             message = "You have modified documents!\nClose all tabs?"
             reply = YesNoDialog.question(message)
-            if reply == data.QMessageBox.StandardButton.No:
+            if reply == data.DialogResult.No.value:
                 return
         #Close all tabs and remove all bookmarks from them
         clear_index = 0
@@ -2545,6 +2563,20 @@ class MainWindow(data.QMainWindow):
             for i in range(0, window.count()):
                 if window.tabText(i) == tab_name:
                     return window.widget(i)
+        #Tab was not found
+        return None
+    
+    def get_tab_by_save_name(self, in_save_name):
+        """
+        Find a tab using its save name (file path) in the tab widgets
+        """
+        windows = self.get_all_windows()
+        #Loop through all the tab widgets/windows and check the tabs
+        for window in windows:
+            for i in range(0, window.count()):
+                if isinstance(window.widget(i), CustomEditor) and \
+                   window.widget(i).save_name == in_save_name:
+                        return window.widget(i)
         #Tab was not found
         return None
 
@@ -2870,7 +2902,7 @@ class MainWindow(data.QMainWindow):
                 message =  "You have modified documents!\n"
                 message += "Restore session '{}' anyway?".format(session_name)
                 reply = YesNoDialog.question(message)
-                if reply == data.QMessageBox.StandardButton.No:
+                if reply == data.DialogResult.No.value:
                     return
             # Check if session was found
             if session is not None:
@@ -2898,7 +2930,7 @@ class MainWindow(data.QMainWindow):
                 message =  "You have modified documents!\n"
                 message += "Restore Ex.Co development session anyway?"
                 reply = YesNoDialog.question(message)
-                if reply == data.QMessageBox.StandardButton.No:
+                if reply == data.DialogResult.No.value:
                     return
             # Clear all documents from the main and upper window
             self._parent.get_largest_window().clear()
@@ -3847,7 +3879,7 @@ TabWidget QToolButton:hover {{
             warning += "because this action CANNOT be undone!\n"
             warning += "Do you want to continue?"
             reply = YesNoDialog.warning(warning)
-            if reply == data.QMessageBox.StandardButton.No:
+            if reply == data.DialogResult.No.value:
                 return
             #Check if the search directory is none, then use a dialog window
             #to select the real search directory
