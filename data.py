@@ -180,6 +180,13 @@ class TreeDisplayType(enum.Enum):
     FILES            = 1
     FILES_WITH_LINES = 2
 
+class DialogResult(enum.Enum):
+    Ok = 0
+    Yes = 1
+    No = 2
+    Quit = 3
+    SaveAllAndQuit = 4
+
 
 """
 --------------------------------------------------------
@@ -188,7 +195,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "7.0"
+application_version = "7.1"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -339,6 +346,9 @@ def get_editor_font():
 
 # Scaling
 toplevel_menu_scale = 100.0
+
+# Sizes
+standard_button_size = 50
 
 # Current theme
 # Themes need PyQt version defined beforehand, as they also import the data module
