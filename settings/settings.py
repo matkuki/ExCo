@@ -188,8 +188,12 @@ class SettingsFileManipulator:
                             recent_files,
                             stored_sessions,
                             context_menu_functions):
+        try:
+            theme_name = theme["name"]
+        except:
+            theme_name = theme.name
         settings_data = {
-            "theme": theme["name"],
+            "theme": theme_name,
             "recent_files": recent_files,
             "stored_sessions": stored_sessions,
             "context_menu_functions": context_menu_functions,
