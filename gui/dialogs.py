@@ -29,7 +29,7 @@ from .templates import *
 Custom Yes/No dialog window
 ---------------------------------------------------------
 """ 
-class YesNoDialog(data.QDialog):    
+class BaseDialog(data.QDialog):    
     def __init__(self, text, dialog_type=None, parent=None):
         super().__init__(parent)
         # Set the internal state
@@ -46,27 +46,10 @@ class YesNoDialog(data.QDialog):
         self.update_style()
     
     def create_button_list(self):
-        return (
-            {
-                "name": "yes",
-                "text": "Yes",
-                "icon": None,
-                "size": (data.standard_button_size, data.standard_button_size),
-                "tooltip": "Confirm the action",
-                "click-func": lambda *args: self.done(data.DialogResult.Yes.value),
-            },
-            {
-                "name": "no",
-                "text": "No",
-                "icon": None,
-                "size": (data.standard_button_size, data.standard_button_size),
-                "tooltip": "Decline the action",
-                "click-func": lambda *args: self.done(data.DialogResult.No.value),
-            },
-        )
+        raise Exception("[BaseDialog] This method needs to be overridden!")
     
     def init_layout(self, text, dialog_type):
-        self.button_cache = {}
+        self.button_cache = []
         
         # Create the main layout
         main_layout = create_layout(
@@ -114,6 +97,7 @@ class YesNoDialog(data.QDialog):
             new_button.setToolTip(button["tooltip"])
             new_button.setStatusTip(button["tooltip"])
             new_button.set_click_function(button["click-func"])
+            new_button.state = button["state"]
 #            new_button.set_enter_function(
 #                create_enter_func(button.function_text, button.font)
 #            )
@@ -129,7 +113,9 @@ class YesNoDialog(data.QDialog):
                 )
             
             button_layout.addWidget(new_button)
-            self.button_cache[button["name"]] = new_button
+            self.button_cache.append(new_button)
+        
+        self.set_state(len(self.button_cache) - 1)
         
         self.setWindowFlags(data.Qt.WindowType.FramelessWindowHint)
     
@@ -137,20 +123,48 @@ class YesNoDialog(data.QDialog):
         super().showEvent(event)
         self.center()
     
-    def state_on(self):
-        self.state = True
-        self.button_cache["no"].set_focused(False)
-        self.button_cache["yes"].set_focused(True)
+    def __set_button_states(self, button_states):
+        if len(button_states) != len(self.button_cache):
+            raise Exception(
+                "Length mismatch: {} != {}".format(
+                    len(button_states), len(self.button_cache)
+                )
+            )
+        for i,item in enumerate(self.button_cache):
+            item.set_focused(button_states[i])
     
-    def state_off(self):
-        self.state = False
-        self.button_cache["no"].set_focused(True)
-        self.button_cache["yes"].set_focused(False)
+    def __state_cycle(self, none_index, _reversed):
+        if self.state is None:
+            button = self.button_cache[none_index]
+            button.set_focused(True)
+            self.state = button.state
+        
+        next_state = -1
+        button_list = self.button_cache
+        if _reversed:
+            button_list = reversed(self.button_cache)
+        for i,button in enumerate(button_list):
+            if self.state == button.state:
+                next_state = i + 1 if i < (len(self.button_cache) - 1) else i
+            if next_state == i:
+                button.set_focused(True)
+                self.state = button.state
+            else:
+                button.set_focused(False)
     
-    def state_reset(self):
-        self.state = None
-        self.button_cache["no"].set_focused(False)
-        self.button_cache["yes"].set_focused(False)
+    def state_cycle_right(self):
+        self.__state_cycle(0, False)
+    
+    def state_cycle_left(self):
+        self.__state_cycle(len(self.button_cache) - 1, True)
+    
+    def set_state(self, index):
+        for i,button in enumerate(self.button_cache):
+            if index == i:
+                button.set_focused(True)
+                self.state = button.state
+            else:
+                button.set_focused(False)
     
     def center(self):
         if self.parent() is not None:
@@ -171,19 +185,19 @@ class YesNoDialog(data.QDialog):
         pressed_key = key_event.key()
         #Check for escape keypress
         if pressed_key == data.Qt.Key.Key_Escape:
-            self.button_cache["no"].set_focused(True)
+            rightmost_button = self.button_cache[len(self.button_cache)-1]
+            rightmost_button.set_focused(True)
             self.repaint()
             time.sleep(0.1)
-            self.done(data.DialogResult.No.value)
+            self.done(rightmost_button.state)
         elif pressed_key == data.Qt.Key.Key_Right:
-            self.state_off()
+            self.state_cycle_right()
         elif pressed_key == data.Qt.Key.Key_Left:
-            self.state_on()
+            self.state_cycle_left()
         elif pressed_key == data.Qt.Key.Key_Enter or pressed_key == data.Qt.Key.Key_Return:
-            if self.state == True:
-                self.done(data.DialogResult.Yes.value)
-            elif self.state == False:
-                self.done(data.DialogResult.No.value)
+            if self.state is None:
+                self.state = self.button_cache[len(self.button_cache)-1].state
+            self.done(self.state)
     
     def update_style(self):
         self.setStyleSheet(f"""
@@ -212,8 +226,8 @@ QLabel {{
 }}
 {StyleSheetButton.standard()}
         """)
-        for k,v in self.button_cache.items():
-            v.update_style()
+        for button in self.button_cache:
+            button.update_style()
     
     @classmethod
     def blank(cls, text):
@@ -231,7 +245,30 @@ QLabel {{
     def error(cls, text):
         return cls(text, "error").exec()
 
-class OkDialog(YesNoDialog):
+class YesNoDialog(BaseDialog):    
+    def create_button_list(self):
+        return (
+            {
+                "name": "yes",
+                "text": "Yes",
+                "icon": None,
+                "size": (data.standard_button_size, data.standard_button_size),
+                "tooltip": "Confirm the action",
+                "state": data.DialogResult.Yes.value,
+                "click-func": lambda *args: self.done(data.DialogResult.Yes.value),
+            },
+            {
+                "name": "no",
+                "text": "No",
+                "icon": None,
+                "size": (data.standard_button_size, data.standard_button_size),
+                "tooltip": "Decline the action",
+                "state": data.DialogResult.No.value,
+                "click-func": lambda *args: self.done(data.DialogResult.No.value),
+            },
+        )
+
+class OkDialog(BaseDialog):
     def create_button_list(self):
         return (
             {
@@ -240,25 +277,12 @@ class OkDialog(YesNoDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Close the dialog window",
+                "state": data.DialogResult.No.value,
                 "click-func": lambda *args: self.done(data.DialogResult.No.value),
             },
         )
-    
-    def keyPressEvent(self, key_event):
-        pressed_key = key_event.key()
-        # Check for escape keypress
-        if pressed_key == data.Qt.Key.Key_Escape:
-            self.button_cache["ok"].set_focused(True)
-            self.repaint()
-            time.sleep(0.1)
-            self.done(data.DialogResult.No.value)
-        elif pressed_key == data.Qt.Key.Key_Left or pressed_key == data.Qt.Key.Key_Right:
-            self.state_off()
-        # Check for Enter/Return keypress
-        elif pressed_key == data.Qt.Key.Key_Enter or pressed_key == data.Qt.Key.Key_Return:
-            self.done(data.DialogResult.No.value)
 
-class CloseEditorDialog(YesNoDialog):
+class CloseEditorDialog(BaseDialog):
     def create_button_list(self):
         return (
             {
@@ -267,6 +291,7 @@ class CloseEditorDialog(YesNoDialog):
                 "icon": None,
                 "size": (int(data.standard_button_size*1.5), data.standard_button_size),
                 "tooltip": "Save document and close it",
+                "state": data.DialogResult.SaveAndClose.value,
                 "click-func": lambda *args: self.done(data.DialogResult.SaveAndClose.value),
             },
             {
@@ -275,6 +300,7 @@ class CloseEditorDialog(YesNoDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Close the document without saving",
+                "state": data.DialogResult.Close.value,
                 "click-func": lambda *args: self.done(data.DialogResult.Close.value),
             },
             {
@@ -283,53 +309,13 @@ class CloseEditorDialog(YesNoDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Cancel closing of the document",
+                "state": data.DialogResult.Cancel.value,
                 "click-func": lambda *args: self.done(data.DialogResult.Cancel.value),
             },
         )
-    
-    def __set_button_states(self,
-                            button_save_and_close,
-                            button_close,
-                            button_cancel):
-        self.button_cache["save-and-close"].set_focused(button_save_and_close)
-        self.button_cache["close"].set_focused(button_close)
-        self.button_cache["cancel"].set_focused(button_cancel)
-    
-    def state_cycle_right(self):
-        if self.state == data.DialogResult.SaveAndClose.value:
-            self.state = data.DialogResult.Close.value
-            self.__set_button_states(False, True, False)
-        else:
-            self.state = data.DialogResult.Cancel.value
-            self.__set_button_states(False, False, True)
-    
-    def state_cycle_left(self):
-        if self.state == data.DialogResult.Cancel.value:
-            self.state = data.DialogResult.Close.value
-            self.__set_button_states(False, True, False)
-        else:
-            self.state = data.DialogResult.SaveAndClose.value
-            self.__set_button_states(True, False, False)
-    
-    def keyPressEvent(self, key_event):
-        pressed_key = key_event.key()
-        # Check for escape keypress
-        if pressed_key == data.Qt.Key.Key_Escape:
-            self.button_cache["cancel"].set_focused(True)
-            self.repaint()
-            time.sleep(0.1)
-            self.done(data.DialogResult.Cancel.value)
-        elif pressed_key == data.Qt.Key.Key_Left:
-            self.state_cycle_left()
-        elif pressed_key == data.Qt.Key.Key_Right:
-            self.state_cycle_right()
-        # Check for Enter/Return keypress
-        elif pressed_key == data.Qt.Key.Key_Enter or pressed_key == data.Qt.Key.Key_Return:
-            if self.state is None:
-                self.state = data.DialogResult.Cancel.value
-            self.done(self.state)
 
-class QuitDialog(YesNoDialog):
+
+class QuitDialog(BaseDialog):
     def create_button_list(self):
         return (
             {
@@ -338,6 +324,7 @@ class QuitDialog(YesNoDialog):
                 "icon": None,
                 "size": (int(data.standard_button_size*1.5), data.standard_button_size),
                 "tooltip": "Save all unsaved documents and quit ExCo",
+                "state": data.DialogResult.SaveAllAndQuit.value,
                 "click-func": lambda *args: self.done(data.DialogResult.SaveAllAndQuit.value),
             },
             {
@@ -346,6 +333,7 @@ class QuitDialog(YesNoDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Quit ExCo without saving",
+                "state": data.DialogResult.Quit.value,
                 "click-func": lambda *args: self.done(data.DialogResult.Quit.value),
             },
             {
@@ -354,48 +342,39 @@ class QuitDialog(YesNoDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Cancel quitting ExCo",
+                "state": data.DialogResult.Cancel.value,
                 "click-func": lambda *args: self.done(data.DialogResult.Cancel.value),
             },
         )
-    
-    def __set_button_states(self,
-                            button_save_and_quit,
-                            button_quit,
-                            button_cancel):
-        self.button_cache["save-and-quit"].set_focused(button_save_and_quit)
-        self.button_cache["quit"].set_focused(button_quit)
-        self.button_cache["cancel"].set_focused(button_cancel)
-    
-    def state_cycle_right(self):
-        if self.state == data.DialogResult.SaveAllAndQuit.value:
-            self.state = data.DialogResult.Quit.value
-            self.__set_button_states(False, True, False)
-        else:
-            self.state = data.DialogResult.Cancel.value
-            self.__set_button_states(False, False, True)
-    
-    def state_cycle_left(self):
-        if self.state == data.DialogResult.Cancel.value:
-            self.state = data.DialogResult.Quit.value
-            self.__set_button_states(False, True, False)
-        else:
-            self.state = data.DialogResult.SaveAllAndQuit.value
-            self.__set_button_states(True, False, False)
-    
-    def keyPressEvent(self, key_event):
-        pressed_key = key_event.key()
-        # Check for escape keypress
-        if pressed_key == data.Qt.Key.Key_Escape:
-            self.button_cache["cancel"].set_focused(True)
-            self.repaint()
-            time.sleep(0.1)
-            self.done(data.DialogResult.Cancel.value)
-        elif pressed_key == data.Qt.Key.Key_Left:
-            self.state_cycle_left()
-        elif pressed_key == data.Qt.Key.Key_Right:
-            self.state_cycle_right()
-        # Check for Enter/Return keypress
-        elif pressed_key == data.Qt.Key.Key_Enter or pressed_key == data.Qt.Key.Key_Return:
-            if self.state is None:
-                self.state = data.DialogResult.Cancel.value
-            self.done(self.state)
+
+class RestoreSessionDialog(BaseDialog):
+    def create_button_list(self):
+        return (
+            {
+                "name": "save-and-restore",
+                "text": "Save \n&& Restore",
+                "icon": None,
+                "size": (int(data.standard_button_size*1.5), data.standard_button_size),
+                "tooltip": "Save all documents and restore session",
+                "state": data.DialogResult.SaveAndRestore.value,
+                "click-func": lambda *args: self.done(data.DialogResult.SaveAndRestore.value),
+            },
+            {
+                "name": "close",
+                "text": "Close",
+                "icon": None,
+                "size": (data.standard_button_size, data.standard_button_size),
+                "tooltip": "Restore the session without saving",
+                "state": data.DialogResult.Restore.value,
+                "click-func": lambda *args: self.done(data.DialogResult.Close.value),
+            },
+            {
+                "name": "cancel",
+                "text": "Cancel",
+                "icon": None,
+                "size": (data.standard_button_size, data.standard_button_size),
+                "tooltip": "Cancel restoring of the session",
+                "state": data.DialogResult.Cancel.value,
+                "click-func": lambda *args: self.done(data.DialogResult.Cancel.value),
+            },
+        )

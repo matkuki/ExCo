@@ -187,8 +187,10 @@ class DialogResult(enum.Enum):
     No = 3
     Quit = 4
     Close = 5
-    SaveAllAndQuit = 6
-    SaveAndClose = 7
+    Restore = 6
+    SaveAllAndQuit = 7
+    SaveAndClose = 8
+    SaveAndRestore = 9
 
 
 """

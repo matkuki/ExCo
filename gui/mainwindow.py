@@ -2508,9 +2508,11 @@ class MainWindow(data.QMainWindow):
         """Clear all documents from the main and upper window"""
         # Check if there are any modified documents
         if self.check_document_states() == True:
-            message = "You have modified documents!\nClose all tabs?"
-            reply = YesNoDialog.question(message)
-            if reply == data.DialogResult.No.value:
+            message = "You have modified documents!\nWhat do you wish to do?"
+            reply = CloseEditorDialog.question(message)
+            if reply == data.DialogResult.SaveAndClose.value:
+                self.file_save_all()
+            elif reply == data.DialogResult.Cancel.value:
                 return
         # Close all tabs and remove all bookmarks from them
         for window in self.get_all_windows():
@@ -2526,11 +2528,13 @@ class MainWindow(data.QMainWindow):
         Clear all other documents except the selected one
         in a specified basic widget
         """
-        #Check if there are any modified documents
+        # Check if there are any modified documents
         if self.check_document_states(tab_widget) == True:
-            message = "You have modified documents!\nClose all tabs?"
-            reply = YesNoDialog.question(message)
-            if reply == data.DialogResult.No.value:
+            message = "You have modified documents!\nWhat do you wish to do?"
+            reply = CloseEditorDialog.question(message)
+            if reply == data.DialogResult.SaveAndClose.value:
+                self.file_save_all()
+            elif reply == data.DialogResult.Cancel.value:
                 return
         #Close all tabs and remove all bookmarks from them
         clear_index = 0
@@ -2899,10 +2903,15 @@ class MainWindow(data.QMainWindow):
             """
             # Check if there are any modified documents
             if self._parent.check_document_states() == True:
-                message =  "You have modified documents!\n"
-                message += "Restore session '{}' anyway?".format(session_name)
-                reply = YesNoDialog.question(message)
-                if reply == data.DialogResult.No.value:
+                message = (
+                    "Restoring session: '{}'\n".format(session["name"]) +
+                    "You have modified documents!\n" +
+                    "What do you wish to do?"
+                )
+                reply = RestoreSessionDialog.question(message)
+                if reply == data.DialogResult.SaveAndRestore.value:
+                    self.file_save_all()
+                elif reply == data.DialogResult.Cancel.value:
                     return
             # Check if session was found
             if session is not None:
@@ -2927,10 +2936,15 @@ class MainWindow(data.QMainWindow):
             """
             # Check if there are any modified documents
             if self._parent.check_document_states() == True:
-                message =  "You have modified documents!\n"
-                message += "Restore Ex.Co development session anyway?"
-                reply = YesNoDialog.question(message)
-                if reply == data.DialogResult.No.value:
+                message = (
+                    "Restoring Ex.Co. development session\n" +
+                    "You have modified documents!\n" +
+                    "What do you wish to do?"
+                )
+                reply = RestoreSessionDialog.question(message)
+                if reply == data.DialogResult.SaveAndRestore.value:
+                    self.file_save_all()
+                elif reply == data.DialogResult.Cancel.value:
                     return
             # Clear all documents from the main and upper window
             self._parent.get_largest_window().clear()
