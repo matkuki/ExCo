@@ -277,3 +277,27 @@ default_layout = """
     }
 }
 """
+
+# One-window layout
+one_window_layout = """
+{{
+    "WINDOW-SIZE": [
+        {0},
+        {1}
+    ],
+    "BOXES": {{
+        "0": {{
+            "BOX-V": {{
+                "0": {{
+                    "TABS": {{
+                        "CURRENT-INDEX": -1
+                    }}
+                }}
+            }},
+            "SIZES": [
+                {1}
+            ]
+        }}
+    }}
+}}
+"""

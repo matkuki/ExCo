@@ -24,6 +24,7 @@ import themes
 import functions
 import interpreter
 import settings
+import settings.constants
 import lexers
 import traceback
 import gc
@@ -1893,6 +1894,16 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/view-focus-lower.png',
                 focus_lower_window
             )
+            
+            def toggle_one_window_mode():
+                self.view.toggle_one_window_mode()
+            toggle_one_window_mode_action = create_action(
+                'One window mode toggle',
+                settings.keyboard_shortcuts['general']['toggle_mode'],
+                'Toggle between one-window and stored layout',
+                'tango_icons/view-toggle-window-mode.png',
+                toggle_one_window_mode
+            )
 
             def select_tab_right():
                 try:
@@ -2088,6 +2099,7 @@ class MainWindow(data.QMainWindow):
             view_menu.addAction(main_focus_action)
             view_menu.addAction(upper_focus_action)
             view_menu.addAction(lower_focus_action)
+            view_menu.addAction(toggle_one_window_mode_action)
             view_menu.addAction(maximize_window_action)
             view_menu.addAction(select_tab_right_action)
             view_menu.addAction(select_tab_left_action)
@@ -3063,23 +3075,25 @@ class MainWindow(data.QMainWindow):
         Functions for manipulating the application appearance
         (namespace/nested class to MainWindow)
         """
-        #Class varibles
-        _parent                  = None
+        # Class varibles
+        _parent                     = None
+        __stored_layout_standard    = None
+        __stored_layout_one_window  = None
         #Default widths and heights of the windows
-        vertical_width_1        = 2/3
-        vertical_width_2        = 1/3
-        horizontal_width_1      = 2/3
-        horizontal_width_2      = 1/3
-        main_relation           = 55
+        vertical_width_1            = 2/3
+        vertical_width_2            = 1/3
+        horizontal_width_1          = 2/3
+        horizontal_width_2          = 1/3
+        main_relation               = 55
         #Overlay helper widget that will be displayed on top of the main groupbox
-        function_wheel_overlay  = None
+        function_wheel_overlay      = None
         #Last executed functions text on the function wheel
-        last_executed_function_text  = None
+        last_executed_function_text = None
         #Function wheel overlay minimum size
         #Stored REPL single/multi line state
-        repl_state              = None
+        repl_state                  = None
         #Lock used when spinning widgets, so the layout does not get saved mid-spin
-        layout_save_block       = False
+        layout_save_block           = False
 
         def __init__(self, parent):
             """Initialization of the View object instance"""
@@ -3218,6 +3232,28 @@ class MainWindow(data.QMainWindow):
                 self._parent.showNormal()
             else:
                 self._parent.showMaximized()
+        
+        def toggle_one_window_mode(self):
+            """
+            Toggle between one-window mode and a stored layout
+            """
+            windows = self._parent.get_all_windows()
+            if len(windows) > 1:
+                # Store layout and change to one-window
+                self.__stored_layout_standard = self.layout_generate()
+                json_layout = json.loads(self.__stored_layout_standard)
+                window_size = json_layout["WINDOW-SIZE"]
+                # Set one-window layout
+                if self.__stored_layout_one_window is not None:
+                    one_window_layout = self.__stored_layout_one_window
+                else:
+                    one_window_layout = settings.constants.one_window_layout.format(*window_size)
+                self.layout_restore(one_window_layout)
+            else:
+                # Store the one-window_layout
+                self.__stored_layout_one_window = self.layout_generate()
+                # Restore stored layout
+                self.layout_restore(self.__stored_layout_standard)
 
         def toggle_function_wheel(self):
             """
