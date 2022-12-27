@@ -211,3 +211,69 @@ QToolTip {{
 }}
         """
         return style_sheet
+
+class StyleSheetFrame:
+    @staticmethod
+    def standard(background_transparent=False,
+                 no_border=True):
+        background_color = data.theme["fonts"]["default"]["background"]
+        if background_transparent:
+            background_color = "transparent"
+        border = f'1px solid {data.theme["indication"]["passiveborder"]}'
+        if no_border:
+            border = "none"
+        style_sheet = (f"""
+QFrame {{
+    background-color: {background_color};
+    border: {border};
+}}
+        """)
+        return style_sheet
+
+class StyleSheetTable:
+    @staticmethod
+    def standard():
+        border_width = 1
+        padding = 0
+        spacing = 0
+        return f"""
+QTableView {{
+    background-color: {data.theme["fonts"]["default"]["background"]};
+    color: {data.theme["fonts"]["default"]["color"]};
+    selection-background-color: {data.theme["indication"]["activebackground"]};
+    selection-color: {data.theme["fonts"]["default"]["color"]};
+    border: {border_width}px solid {data.theme["indication"]["passiveborder"]};
+    gridline-color: {data.theme["indication"]["passiveborder"]};
+    padding: {padding}px;
+    spacing: {padding}px;
+    font-family: {data.current_editor_font_name};
+    font-size: {data.current_editor_font_size}pt;
+}}
+QTableView QTableCornerButton::section {{
+    background: {data.theme["fonts"]["default"]["background"]};
+    border: none;
+}}
+
+/*
+QTableView::item {{
+    border: {border_width}px solid {data.theme["indication"]["passiveborder"]};
+}}
+*/
+QTableView::item::selected {{
+    background-color: {data.theme["indication"]["activebackground"]};
+}}
+
+QHeaderView {{
+    background-color: {data.theme["table-header"]};
+    color: {data.theme["fonts"]["default"]["color"]};
+}}
+QHeaderView::section {{
+    border-style: none;
+    border-right: 1px solid {data.theme["indication"]["passiveborder"]};
+    border-bottom: 1px solid {data.theme["indication"]["passiveborder"]};
+    background-color: {data.theme["table-header"]};
+    color: {data.theme["fonts"]["default"]["color"]};
+    font-family: {data.current_editor_font_name};
+    font-size: {data.current_editor_font_size}pt;
+}}
+        """

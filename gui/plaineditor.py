@@ -38,16 +38,16 @@ Subclassed QScintilla widget used for displaying REPL messages, Python/C node tr
 """ 
 class PlainEditor(BaseEditor):
     # Class variables
-    name            = None
-    _parent         = None
-    main_form       = None
-    current_icon    = None
-    icon_manipulator= None
-    savable         = data.CanSave.NO
+    name             = None
+    _parent          = None
+    main_form        = None
+    current_icon     = None
+    icon_manipulator = None
+    savable          = data.CanSave.NO
     # Reference to the custom context menu
-    context_menu    = None
+    context_menu     = None
     # Namespace references for grouping functionality
-    hotspots        = None
+    hotspots         = None
 
     
     def clean_up(self):

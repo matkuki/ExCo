@@ -253,7 +253,7 @@ class TreeDisplay(data.QTreeView):
                     except:
                         result = False
                     if result == False:
-                        main_form.display.repl_display_error(
+                        self.main_form.display.repl_display_error(
                             "Error opening path in explorer: {}".format(path)
                         )
                 open_in_explorer_action.setIcon(
@@ -349,12 +349,28 @@ class TreeDisplay(data.QTreeView):
                         else:
                             subprocess.call(["xdg-open", item.full_name])
                     except:
-                        main_form.display.repl_display_error(traceback.format_exc())
+                        self.main_form.display.repl_display_error(traceback.format_exc())
                 action_open = data.QAction("Open with system", self.tree_menu)
                 action_open.triggered.connect(open_system)
                 icon = functions.create_icon('tango_icons/open-with-default-app.png')
                 action_open.setIcon(icon)
                 self.tree_menu.addAction(action_open)
+                # Open in Hex-View
+                def open_hex():
+                    if item.attributes.itype == TreeExplorer.ItemType.FILE:
+                        file_path = item.attributes.path
+                        self.open_file_hex_signal.emit(file_path)
+                    else:
+                        self.main_form.display.repl_display_error(
+                            "Item of type '{}' cannot be opened in the Hex-View!".format(
+                                item.attributes.itype
+                            )
+                        )
+                action_open_hex = data.QAction("Open with Hex-View", self.tree_menu)
+                action_open_hex.triggered.connect(open_hex)
+                icon = functions.create_icon('various/node_template.png')
+                action_open_hex.setIcon(icon)
+                self.tree_menu.addAction(action_open_hex)
                 # Open path in explorer
                 open_in_explorer_action = data.QAction("Open in explorer", self)
                 def open_in_explorer():
@@ -364,7 +380,7 @@ class TreeDisplay(data.QTreeView):
                     except:
                         result = False
                     if result == False:
-                        main_form.display.repl_display_error(
+                        self.main_form.display.repl_display_error(
                             "Error opening path in explorer: {}".format(path)
                         )
                 open_in_explorer_action.setIcon(
@@ -2242,6 +2258,7 @@ class TreeExplorer(TreeDisplayBase):
     
     # Signals
     open_file_signal = data.pyqtSignal(str)
+    open_file_hex_signal = data.pyqtSignal(str)
     open_directory_signal = data.pyqtSignal()
     
     # Attributes
@@ -2517,6 +2534,21 @@ class TreeExplorer(TreeDisplayBase):
                 icon = functions.create_icon('tango_icons/open-with-default-app.png')
                 action_open_system.setIcon(icon)
                 self.tree_menu.addAction(action_open_system)
+                def open_hex():
+                    if item.attributes.itype == TreeExplorer.ItemType.FILE:
+                        file_path = item.attributes.path
+                        self.open_file_hex_signal.emit(file_path)
+                    else:
+                        self.main_form.display.repl_display_error(
+                            "Item of type '{}' cannot be opened in the Hex-View!".format(
+                                item.attributes.itype
+                            )
+                        )
+                action_open_hex = data.QAction("Open with Hex-View", self.tree_menu)
+                action_open_hex.triggered.connect(open_hex)
+                icon = functions.create_icon('various/node_template.png')
+                action_open_hex.setIcon(icon)
+                self.tree_menu.addAction(action_open_hex)
                 # Open path in explorer
                 open_in_explorer_action = data.QAction("Open in explorer", self)
                 def open_in_explorer():

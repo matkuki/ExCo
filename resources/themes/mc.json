@@ -2097,6 +2097,7 @@
     "indicator-unique-1-color": "#50729fcf",
     "indicator-unique-2-color": "#50ad7fa8"
   },
+  "table-header": "#295a88",
   "tooltip": "Midnight Commander",
   "yesnodialog-background": "#ff3b82c4",
   "yesnodialog-edge": "#ffe6e6e6"

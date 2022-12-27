@@ -32,6 +32,7 @@ from .dialogs import *
 from .plaineditor import *
 from .treedisplays import *
 from .menu import *
+from .hexview import *
 from .templates import *
 
 
@@ -252,8 +253,18 @@ class TabWidget(data.QTabWidget):
                         widget
                     )
                     self.addAction(diff_action)
-            # Open path in explorer
+            # Open path in explorer and hex-view
             if self.__check_for_editor(tab_widget):
+                # Open in Hex-View
+                def open_hex():
+                    file_path = widget.save_name
+                    main_form.open_file_hex(file_path)
+                action_open_hex = data.QAction("Open with Hex-View", self)
+                action_open_hex.triggered.connect(open_hex)
+                icon = functions.create_icon('various/node_template.png')
+                action_open_hex.setIcon(icon)
+                self.addAction(action_open_hex)
+                
                 open_in_explorer_action = data.QAction("Open document in explorer", self)
                 def open_in_explorer():
                     path = widget.save_name
@@ -923,6 +934,16 @@ class TabWidget(data.QTabWidget):
             self.setCurrentIndex(new_editor_tab_index)
             # Return the reference to the new added scintilla tab widget
             return self.widget(new_editor_tab_index)
+    
+    def hexview_add(self, file_path):
+        # Initialize the hex-view
+        new_hexview = HexView(file_path, self, self.main_form)
+        tab_text = "{} (Hex)".format(new_hexview.name)
+        new_hexview_tab_index = self.addTab(new_hexview, tab_text)
+        # Make new tab visible
+        self.setCurrentIndex(new_hexview_tab_index)
+        return self.widget(new_hexview_tab_index)
+        
     
     def tree_create_tab(self, tree_tab_name, tree_type=None):
         """Create and initialize a tree display widget"""

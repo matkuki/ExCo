@@ -52,6 +52,7 @@ from .themeindicator import *
 from .stylesheets import *
 from .dockingoverlay import *
 from .thebox import *
+from .hexview import *
 from .templates import *
 
 
@@ -1786,6 +1787,7 @@ class MainWindow(data.QMainWindow):
                 )
                 file_explorer.display_directory(os.getcwd())
                 file_explorer.open_file_signal.connect(self.open_file)
+                file_explorer.open_file_hex_signal.connect(self.open_file_hex)
                 file_explorer.icon_manipulator.set_icon(
                     file_explorer,
                     functions.create_icon(
@@ -2469,9 +2471,7 @@ class MainWindow(data.QMainWindow):
             else:
                 message = "File cannot be read!\n"
                 message += "It's probably not a text file!"
-                self.display.repl_display_message(
-                    message, message_type=data.MessageType.ERROR
-                )
+                self.display.repl_display_error(message)
                 self.display.write_to_statusbar("File cannot be read!", 3000)
             return None
         if isinstance(file, str) == True:
@@ -2494,9 +2494,62 @@ class MainWindow(data.QMainWindow):
                 message_type=data.MessageType.ERROR
             )
             return None
+    
+    def open_file_hex(self,
+                      file_path,
+                      tab_widget=None,
+                      save_layout=False):
+        # Check if file exists
+        if os.path.isfile(file_path) == False:
+            self.display.repl_display_message(
+                "File: {}\ndoesn't exist!".format(file_path),
+                message_type=data.MessageType.ERROR
+            )
+            return
+        # Check the file size
+        file_size = functions.get_file_size_Mb(file_path)
+        if file_size > 50:
+            #Create the warning message
+            warning =   "The file is larger than {0:d} MB! ({0:d} MB)\n".format(int(file_size))
+            warning +=  "A lot of RAM will be needed!\n"
+            warning +=  "Files larger than 300 MB can cause the system to hang!\n"
+            warning +=  "Are you sure you want to open it?"
+            reply = YesNoDialog.warning(warning)
+            if reply == data.DialogResult.No.value:
+                return
+        # Check if file is already open
+        check_tab_widget, check_index = self.check_open_file(
+            file_path, _type=data.FileType.Hex
+        )
+        if check_index is not None and check_tab_widget is not None:
+            check_tab_widget.setCurrentIndex(check_index)
+            return
+        
+        if tab_widget is None:
+            tab_widget = self.get_largest_window()
+        
+        # Add new hexview document
+        new_tab = tab_widget.hexview_add(file_path)
+        # Update the icon
+        new_tab.icon_manipulator.update_icon(new_tab)
 
+        if new_tab is not None:
+            # Update the settings manipulator with the new file
+            self.settings.update_recent_list(file_path)
+            # Update the current working directory
+            path = os.path.dirname(file_path)
+            if path == "":
+                path = data.application_directory
+            self.set_cwd(path)
+            # Set focus to the newly opened document
+            tab_widget.currentWidget().setFocus()
+            return new_tab
+        else:
+            message = "File cannot be read!"
+            self.display.repl_display_error(message)
+            self.display.write_to_statusbar("File cannot be read!", 3000)
 
-    def check_open_file(self, file_with_path):
+    def check_open_file(self, file_with_path, _type=data.FileType.Text):
         """
         Check if a file is already open in one of the windows
         """
@@ -2505,15 +2558,27 @@ class MainWindow(data.QMainWindow):
         # Change the windows style path to the Unix style
         file_with_path = file_with_path.replace("\\", "/")
         for tab_widget in self.get_all_windows():
+            
             # Loop through all of the documents in the tab widget
-            for i in range(tab_widget.count()):
-                # Check the file name and file name with path
-                if (tab_widget.widget(i).name == os.path.basename(file_with_path) and 
-                    tab_widget.widget(i).save_name == file_with_path):
-                    # If the file is already open, get its index in the tab widget
-                    found_tab_widget = tab_widget
-                    found_index = i
-                    break
+            if _type == data.FileType.Text:
+                for i in range(tab_widget.count()):
+                    # Check the file name and file name with path
+                    if (tab_widget.widget(i).name == os.path.basename(file_with_path) and 
+                        tab_widget.widget(i).save_name == file_with_path):
+                        # If the file is already open, get its index in the tab widget
+                        found_tab_widget = tab_widget
+                        found_index = i
+                        break
+            elif _type == data.FileType.Hex:
+                for i in range(tab_widget.count()):
+                    # Check the file name and file name with path
+                    tab = tab_widget.widget(i)
+                    if isinstance(tab, HexView) and tab.save_name == file_with_path:
+                        # If the file is already open, get its index in the tab widget
+                        found_tab_widget = tab_widget
+                        found_index = i
+                        break
+                    
         return found_tab_widget, found_index
 
     def close_all_tabs(self):
@@ -3347,6 +3412,7 @@ QSplitter::handle {{
 {}
 {}
 {}
+{}
             """.format(
                 data.theme["form"],
                 data.theme["form"],
@@ -3355,6 +3421,7 @@ QSplitter::handle {{
                 StyleSheetMenu.standard(),
                 StyleSheetMenuBar.standard(),
                 StyleSheetTooltip.standard(),
+                StyleSheetTable.standard(),
             ))
             return style_sheet
 
@@ -3515,11 +3582,9 @@ TabWidget QToolButton:hover {{
             for window in windows:
                 if window.count() == 0:
                     if window.hasFocus() == True:
-#                        window.setProperty("indicated", True)
                         indication_list[window] = True
                         window_indicated_flag = True
                     else:
-#                        window.setProperty("indicated", False)
                         indication_list[window] = False
                 else:
                     window.indicated = False
@@ -3528,14 +3593,14 @@ TabWidget QToolButton:hover {{
                             if (window.widget(i).hasFocus() == True or
                                 window.widget(i).editor_1.hasFocus() == True or
                                 window.widget(i).editor_2.hasFocus() == True):
-#                                window.setProperty("indicated", True)
                                 indication_list[window] = True
                                 window_indicated_flag = True
                         else:
-                            if window.widget(i).hasFocus() == True:
-#                                window.setProperty("indicated", True)
+                            w = window.widget(i)
+                            if w.hasFocus() == True:
                                 indication_list[window] = True
                                 window_indicated_flag = True
+                            
             if window_indicated_flag:
                 for k,v in indication_list.items():
                     k.setProperty("indicated", v)
@@ -3592,6 +3657,7 @@ TabWidget QToolButton:hover {{
                 data.repl_messages_tab_name: PlainEditor,
                 'TreeDisplay': TreeDisplay,
                 'TreeExplorer': TreeExplorer,
+                'HexView': HexView,
             }
             inverted_classes = {v: k for k, v in classes.items()}
             return classes, inverted_classes
@@ -3765,12 +3831,18 @@ TabWidget QToolButton:hover {{
                                         )
                                         file_explorer.display_directory(directory_path)
                                         file_explorer.open_file_signal.connect(self._parent.open_file)
+                                        file_explorer.open_file_hex_signal.connect(self._parent.open_file_hex)
                                         file_explorer.icon_manipulator.set_icon(
                                             file_explorer,
                                             functions.create_icon(
                                                 'tango_icons/system-show-cwd-tree-blue.png'
                                             )
                                         )
+                                
+                                elif cls == "HexView":
+                                    file_path = widget_data[0]
+                                    if os.path.isfile(file_path):
+                                        new_hexview = new_tabs.hexview_add(file_path)
                                 
                                 elif cls == data.repl_messages_tab_name:
                                     self._parent.repl_messages_tab = new_tabs.plain_add_document(
@@ -5384,15 +5456,6 @@ TabWidget QToolButton:hover {{
                 create_lexer(lexers.YAML, 'YAML'),
                 lexers_menu
             )
-            if data.compatibility_mode == False:
-                CoffeeScript_action = create_action(
-                    'CoffeeScript',
-                    None,
-                    'Change document lexer to: CoffeeScript',
-                    'language_icons/logo_coffeescript.png',
-                    create_lexer(lexers.CoffeeScript, 'CoffeeScript'),
-                    lexers_menu
-                )
             CSharp_action = create_action(
                 'C#',
                 None,
@@ -5474,8 +5537,6 @@ TabWidget QToolButton:hover {{
             lexers_menu.addAction(CMAKE_action)
             lexers_menu.addAction(C_CPP_action)
             lexers_menu.addAction(cicode_action)
-            if data.compatibility_mode == False:
-                lexers_menu.addAction(CoffeeScript_action)
             lexers_menu.addAction(CSharp_action)
             lexers_menu.addAction(CSS_action)
             lexers_menu.addAction(D_action)

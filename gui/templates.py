@@ -123,3 +123,12 @@ def create_frame(parent=None,
     )
     frame.setLayout(layout)
     return frame
+
+def create_scroll_area():
+    scroll_area = data.QScrollArea()
+    scroll_area.setWidgetResizable(True)
+    scroll_area.setHorizontalScrollBarPolicy(data.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+    scroll_area.verticalScrollBar().setContextMenuPolicy(data.Qt.ContextMenuPolicy.NoContextMenu)
+    scroll_area.horizontalScrollBar().setContextMenuPolicy(data.Qt.ContextMenuPolicy.NoContextMenu)
+    scroll_area.setFrameShape(data.QFrame.Shape.NoFrame)
+    return scroll_area

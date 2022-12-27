@@ -77,11 +77,6 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.Bash()
     elif file_type == "lua":
         lexer = lexers.Lua()
-    elif file_type == "coffeescript":
-        if data.compatibility_mode == False:
-            lexer = lexers.CoffeeScript()
-        else:
-            lexer = lexers.Text()
     elif file_type == "c#":
         lexer = lexers.CPP()
     elif file_type == "java":
@@ -158,8 +153,6 @@ def get_comment_style_for_lexer(lexer):
         comment_string = "#"
     elif isinstance(lexer, lexers.Lua):
         comment_string = "--"
-    elif data.compatibility_mode == False and isinstance(lexer, lexers.CoffeeScript):
-        comment_string = "#"
     elif isinstance(lexer, lexers.Java):
         comment_string = "//"
     elif isinstance(lexer, lexers.JavaScript):

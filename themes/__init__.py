@@ -2230,6 +2230,7 @@ def __check(theme_data):
             "indicator-unique-1-color": __check_color,
             "indicator-unique-2-color": __check_color
         },
+        "table-header": __check_color,
         "tooltip": __check_string,
         "yesnodialog-background": __check_color,
         "yesnodialog-edge": __check_color

@@ -15,6 +15,7 @@ from . import plaineditor
 from . import tabwidget
 from . import treedisplays
 from . import stylesheets
+from . import hexview
 
 
 class TheBox(data.QSplitter):
@@ -180,6 +181,15 @@ class TheBox(data.QSplitter):
                             inverted_classes[w.__class__],
                             j,
                             (w.current_viewed_directory, )
+                        )
+                    
+                    elif isinstance(w, hexview.HexView):
+                        # Hex-view
+                        hexview_name = "{}-{}".format(name, j)
+                        tabs[hexview_name] = (
+                            inverted_classes[w.__class__],
+                            j,
+                            (w.save_name, )
                         )
                     else:
                         #tabs[name] = inverted_classes[w.__class__]
