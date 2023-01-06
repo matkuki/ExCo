@@ -172,6 +172,7 @@ class HexView(data.QFrame):
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.main_form.view.indication_check()
+        self.main_form.last_focused_widget = self._parent
     
     def hasFocus(self):
         return self.cache_table["main"].hasFocus()
@@ -288,6 +289,10 @@ class HexTable(data.QTableView):
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.main_form.view.indication_check()
+        parent = self.parent()
+        while not hasattr(parent, "_parent"):
+            parent = parent.parent()
+        self.main_form.last_focused_widget = parent._parent
 
 
 class HexTableModel(data.QAbstractTableModel):
