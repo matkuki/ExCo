@@ -3312,7 +3312,16 @@ class MainWindow(data.QMainWindow):
                 if self.__stored_layout_one_window is not None:
                     one_window_layout = self.__stored_layout_one_window
                 else:
-                    one_window_layout = settings.constants.one_window_layout.format(*window_size)
+                    if isinstance(window_size, tuple) or isinstance(window_size, list):
+                        one_window_layout = settings.constants.one_window_layout.format(
+                            "[{}, {}]".format(*window_size), window_size[1]
+                        )
+                    elif window_size == "MAXIMIZED":
+                        one_window_layout = settings.constants.one_window_layout.format(
+                            '"{}"'.format(window_size), 9999
+                        )
+                    else:
+                        raise Exception("Unknown window size: '{}'".format(window_size))
                 self.layout_restore(one_window_layout)
             else:
                 # Store the one-window_layout

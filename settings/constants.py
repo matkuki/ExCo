@@ -281,10 +281,7 @@ default_layout = """
 # One-window layout
 one_window_layout = """
 {{
-    "WINDOW-SIZE": [
-        {0},
-        {1}
-    ],
+    "WINDOW-SIZE": {0},
     "BOXES": {{
         "0": {{
             "BOX-V": {{
