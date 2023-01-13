@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2022 Matic Kukovec.
+Copyright (c) 2013-2023 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -421,7 +421,7 @@ def replace_text_in_files_enum(search_text,
     # Check if searching over multiple lines
     elif '\n' in search_text:
         return -2
-    #Get the files with the search string in them
+    # Get the files with the search string in them
     found_files = find_files_with_text(
         search_text, 
         search_dir, 
@@ -432,17 +432,17 @@ def replace_text_in_files_enum(search_text,
     )
     if found_files == None:
         return {}
-    #Compile the regex expression according to case sensitivity
+    # Compile the regex expression according to case sensitivity
     if case_sensitive == True:
         compiled_search_re = re.compile(search_text)
     else:
         compiled_search_re = re.compile(search_text, re.IGNORECASE)
-    #Loop through the found list and replace the text
+    # Loop through the found list and replace the text
     return_files = {}
     for file in found_files:
-        #Read the file
+        # Read the file
         file_text_list = read_file_to_list(file)
-        #Cycle through the lines, replacing text and storing the line numbers of replacements
+        # Cycle through the lines, replacing text and storing the line numbers of replacements
         for i in range(len(file_text_list)):
             if case_sensitive == True:
                 line = file_text_list[i]
@@ -455,10 +455,10 @@ def replace_text_in_files_enum(search_text,
                 else:
                     return_files[file] = [i]
                 file_text_list[i] = re.sub(compiled_search_re, replace_text, file_text_list[i])
-        #Write the replaced text back to the file
+        # Write the replaced text back to the file
         replaced_text = "\n".join(file_text_list)
         write_to_file(replaced_text, file)
-    #Return the found files list
+    # Return the found files list
     return return_files
     
 
