@@ -120,3 +120,4 @@ class DialogResult(enum.Enum):
     SaveAllAndQuit = 7
     SaveAndClose = 8
     SaveAndRestore = 9
+    SwitchToLargestWindow = 10

@@ -15,6 +15,7 @@ import gui
 import re
 import math
 import typing
+import sip
 
 
 class IconManipulator:
@@ -135,8 +136,11 @@ class IconManipulator:
     def show_corner_groupbox(self, tab_widget):
         if self.corner_groupbox is None:
             return
-        tab_widget.setCornerWidget(self.corner_groupbox)
-        self.corner_groupbox.show()
-        self.corner_groupbox.setStyleSheet(
-            "QGroupBox {border: 0px;}"
-        )
+        try:
+            tab_widget.setCornerWidget(self.corner_groupbox)
+            self.corner_groupbox.show()
+            self.corner_groupbox.setStyleSheet(
+                "QGroupBox {border: 0px;}"
+            )
+        except:
+            pass

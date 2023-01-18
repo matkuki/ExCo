@@ -1,4 +1,10 @@
 
+Copyright (c) 2013-2018 Matic Kukovec. All rights reserved.
+
+For complete licences of the dependencies, check the 'additional_licenses' directory.
+
+-----------------------------------------------------------
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -673,11 +679,3 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
-
-
------------------------------------------------------------
-
-Copyright (c) 2013-2023 Matic Kukovec. All rights reserved.
-
-For complete licences of the dependencies, check the 'additional_licenses' directory.
-

@@ -314,6 +314,29 @@ class CloseEditorDialog(BaseDialog):
             },
         )
 
+class ToggleOneWindowDialog(BaseDialog):
+    def create_button_list(self):
+        return (
+            {
+                "name": "restore",
+                "text": "Restore",
+                "icon": None,
+                "size": (data.standard_button_size, data.standard_button_size),
+                "tooltip": "Restore the layout to the pre-one-window one",
+                "state": data.DialogResult.Restore.value,
+                "click-func": lambda *args: self.done(data.DialogResult.Restore.value),
+            },
+            {
+                "name": "cancel",
+                "text": "Cancel",
+                "icon": None,
+                "size": (data.standard_button_size, data.standard_button_size),
+                "tooltip": "Cancel closing of the document",
+                "state": data.DialogResult.Cancel.value,
+                "click-func": lambda *args: self.done(data.DialogResult.Cancel.value),
+            },
+        )
+
 
 class QuitDialog(BaseDialog):
     def create_button_list(self):

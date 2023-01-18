@@ -3304,6 +3304,15 @@ class MainWindow(data.QMainWindow):
             """
             windows = self._parent.get_all_windows()
             if len(windows) > 1:
+                windows = self._parent.get_all_windows()
+                widgets = []
+                for w in windows:
+                    for i in reversed(range(w.count())):
+                        widget = w.widget(i)
+                        widgets.append((widget, w.tabText(i)))
+                        w.removeTab(i)
+                        widget.setParent(None)
+                
                 # Store layout and change to one-window
                 self.__stored_layout_standard = self.layout_generate()
                 json_layout = json.loads(self.__stored_layout_standard)
@@ -3323,11 +3332,38 @@ class MainWindow(data.QMainWindow):
                     else:
                         raise Exception("Unknown window size: '{}'".format(window_size))
                 self.layout_restore(one_window_layout)
-            else:
-                # Store the one-window_layout
-                self.__stored_layout_one_window = self.layout_generate()
-                # Restore stored layout
-                self.layout_restore(self.__stored_layout_standard)
+                # Put all widgets back into the one
+                largest_window = self._parent.get_largest_window()
+                for w in widgets:
+                    widget, tab_text = w
+                    if tab_text == "REPL MESSAGES":
+                        continue
+                    largest_window.addTab(widget, tab_text)
+                    if hasattr(widget, "_parent"):
+                        widget._parent = largest_window
+                    elif hasattr(widget, "parent") and not callable(widget.parent):
+                        widget.parent = largest_window
+                # Update the icons of the tabs
+                for i in range(largest_window.count()):
+                    largest_window.update_tab_icon(largest_window.widget(i))
+#            else:
+#                quit_message = "You will now switch to the previously\nstored layout! What do you wish to do?"
+#                reply = ToggleOneWindowDialog.question(quit_message)
+#                if reply == data.DialogResult.Restore.value:
+#                    windows = self._parent.get_all_windows()
+#                    widgets = []
+#                    for w in windows:
+#                        for i in range(w.count()):
+#                            widgets.append(w.widget(i))
+#                elif reply == data.DialogResult.Cancel.value:
+#                    return
+#                else:
+#                    raise Exception("Unknown option: {}".format(reply))
+#                
+#                # Store the one-window_layout
+#                self.__stored_layout_one_window = self.layout_generate()
+#                # Restore stored layout
+#                self.layout_restore(self.__stored_layout_standard)
 
         def toggle_function_wheel(self):
             """
@@ -3780,7 +3816,7 @@ TabWidget QToolButton:hover {{
             main_box = self._parent.main_box
             main_box.clear_all()
 #            self._parent._print_all_boxes_and_windows()
-
+            
             editor_storage = []
             tabs_storage = []
             def create_box(parent, box):

@@ -133,11 +133,9 @@ class TheBox(data.QSplitter):
     
     def clear_all(self):
         for i in reversed(range(self.count())):
-            self.widget(i).hide()
             self.widget(i).setParent(None)
-        for i in self.findChildren(TheBox):
-            i.deleteLater()
-            i.setParent(None)
+        for box in self.findChildren(TheBox):
+            box.setParent(None)
     
     def get_child_boxes(self):
         classes, inverted_classes = self.main_form.view.get_layout_classes()

@@ -37,36 +37,37 @@ from .menu import *
 Object for displaying various results in a tree structure
 ----------------------------------------------------------------------------
 """
+# Class custom objects/types
+class Directory():
+    """
+    Object for holding directory/file information when building directory trees
+    """
+    item        = None
+    directories = None
+    files       = None
+    
+    def __init__(self, input_item):
+        """Initialization"""
+        self.item = input_item
+        self.directories = {}
+        self.files = {}
+    
+    def add_directory(self, dir_name, dir_item):
+        # Create a new instance of Directory class using the __class__ dunder method
+        new_directory = self.__class__(dir_item)
+        # Add the new directory to the dictionary
+        self.directories[dir_name] = new_directory
+        # Add the new directory item to the parent(self)
+        self.item.appendRow(dir_item)
+        # Return the directory object reference
+        return new_directory
+    
+    def add_file(self, file_name, file_item):
+        self.files[file_name] = file_item
+        # Add the new file item to the parent(self)
+        self.item.appendRow(file_item)
+
 class TreeDisplay(data.QTreeView):
-    #Class custom objects/types
-    class Directory():
-        """
-        Object for holding directory/file information when building directory trees
-        """
-        item        = None
-        directories = None
-        files       = None
-        
-        def __init__(self, input_item):
-            """Initialization"""
-            self.item = input_item
-            self.directories = {}
-            self.files = {}
-        
-        def add_directory(self, dir_name, dir_item):
-            # Create a new instance of Directory class using the __class__ dunder method
-            new_directory = self.__class__(dir_item)
-            # Add the new directory to the dictionary
-            self.directories[dir_name] = new_directory
-            # Add the new directory item to the parent(self)
-            self.item.appendRow(dir_item)
-            # Return the directory object reference
-            return new_directory
-        
-        def add_file(self, file_name, file_item):
-            self.files[file_name] = file_item
-            # Add the new file item to the parent(self)
-            self.item.appendRow(file_item)
     
     # Class variables
     parent                  = None
@@ -1549,7 +1550,7 @@ class TreeDisplay(data.QTreeView):
                 item_base_directory.is_base = True
                 item_base_directory.full_name = directory
                 #Create the base directory object that will hold everything else
-                base_directory = self.Directory(item_base_directory)
+                base_directory = Directory(item_base_directory)
                 #Create the files that will be added last directly to the base directory
                 base_files = {}
                 #Sort the the item list so that all of the directories are before the files
@@ -1690,7 +1691,7 @@ class TreeDisplay(data.QTreeView):
             item_base_directory.setFont(label_font)
             item_base_directory.setIcon(self.folder_icon)
             #Create the base directory object that will hold everything else
-            base_directory = self.Directory(item_base_directory)
+            base_directory = Directory(item_base_directory)
             #Create the files that will be added last directly to the base directory
             base_files = {}
             #Sort the the item list so that all of the directories are before the files
@@ -2021,12 +2022,6 @@ class TreeDisplayBase(data.QTreeView):
     icon_manipulator = None
     key_release_lock = None
     
-    
-    def __del__(self):
-        try:
-            self.clean_up()
-        except Exception as ex:
-            print(ex)
     
     def clean_up(self):
         model = self.model()
