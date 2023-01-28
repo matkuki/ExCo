@@ -665,6 +665,9 @@ class TabWidget(data.QTabWidget):
         else:
             # Remove the corner widget if there is no current tab active
             self.setCornerWidget(None)
+        
+        # Update window title
+        data.signal_dispatcher.update_title.emit()
 
     def _signal_editor_tabclose(self, emmited_tab_number, force=False):
         """Event that fires when a tab close"""
@@ -754,6 +757,9 @@ class TabWidget(data.QTabWidget):
             self.set_text_changed(self.currentIndex())
         #Update margin width
         self.editor_update_margin()
+        
+        # Update window title
+        data.signal_dispatcher.update_title.emit()
     
     def set_text_changed(self, index):
         if not "*" in self.tabText(index):

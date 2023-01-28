@@ -131,8 +131,8 @@ class MainWindow(data.QMainWindow):
         self.setObjectName("Form")
         # Set default font
         self.setFont(data.get_current_font())
-        # Initialize the main window
-        self.setWindowTitle("Ex.Co. " + data.application_version)
+        # Initialize the main window title
+        self.reset_title()
         # Initialize statusbar
         self.init_statusbar()
         # Initialize the REPL
@@ -175,6 +175,8 @@ class MainWindow(data.QMainWindow):
         self.installEventFilter(self)
         # Set flag on window to always show tooltips
         self.setAttribute(data.Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
+        # Connect signals
+        data.signal_dispatcher.update_title.connect(self.update_title)
         # Open the file passed as an argument to the QMainWindow initialization
         if file_arguments is not None:
             for file in file_arguments:
@@ -211,7 +213,34 @@ class MainWindow(data.QMainWindow):
             self.display.docking_overlay_hide()
 
         return False
-
+    
+    def get_default_title(self):
+        return "Ex.Co. {}".format(data.application_version)
+    
+    def reset_title(self):
+        self.setWindowTitle(self.get_default_title())
+    
+    @data.pyqtSlot()
+    def update_title(self):
+        window = self.get_window_by_indication()
+        if window is None:
+            return
+        current_widget = window.currentWidget()
+        current_index = window.currentIndex()
+        if current_widget:
+            if window.tabText(current_index).strip() != "":
+                self.setWindowTitle(
+                    "{} ({})".format(
+                        window.tabText(current_index).strip(),
+                        self.get_default_title(),
+                    )
+                )
+            else:
+                self.reset_title()
+        
+        else:
+            self.reset_title()
+    
     def init_statusbar(self):
         self.statusbar = data.QStatusBar(self)
         self.statusbar.setFont(data.get_current_font())
@@ -3597,6 +3626,10 @@ TabWidget QToolButton:hover {{
                 w.style().unpolish(w)
                 w.style().polish(w)
                 w.repaint()
+                
+                if w.property("indicated") == True:
+                    data.signal_dispatcher.update_title.emit()
+                        
 
         def indication_check(self):
             if hasattr(self, "indication_timer"):

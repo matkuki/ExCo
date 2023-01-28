@@ -244,6 +244,9 @@ custom_menu_font = None
 # Function information that is used between modules
 global_function_information = {}
 
+# Global signal dispatcher
+signal_dispatcher = None
+
 # REPL messages tab name
 repl_messages_tab_name = "REPL MESSAGES"
 file_explorer_tab_name = "FILE EXPLORER"

@@ -121,6 +121,8 @@ def main():
         data.current_font_name,
         data.current_font_size,
     )
+    # Global signal dispatcher
+    data.signal_dispatcher = components.GlobalSignalDispatcher()
     # Create the main window, pass the filename that may have been passed as an argument
     main_window = gui.mainwindow.MainWindow(
         new_document = options.new_document, 
