@@ -244,6 +244,24 @@ class SettingsFileManipulator:
             self.context_menu_functions
         )
     
+    def clear_recent_files(self):
+        if self.error_lock == True:
+            return
+        settings_data = functions.load_json_file(
+            self.settings_filename_with_path
+        )
+        # Clear the recent file list
+        self.recent_files = []
+        # Load the sessions
+        stored_sessions = settings_data["stored_sessions"]
+        # Save the updated settings
+        self.write_settings_file(
+            data.theme,
+            self.recent_files,
+            stored_sessions,
+            self.context_menu_functions
+        )
+    
     def load_settings(self):
         """
         Load all setting from the settings file

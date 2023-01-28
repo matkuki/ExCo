@@ -118,7 +118,7 @@ default_config_file_content = '''# -*- coding: utf-8 -*-
 ##      Built-in special function escape sequence: "lit#"
 ##          (prepend it to escape built-ins like: cmain, set_all_text, lines, ...)
 
-"""
+\'\'\'
 # These imports are optional as they are already imported 
 # by the REPL, I added them here for clarity.
 import data
@@ -195,8 +195,7 @@ def delete_files_in_dir(extension=None, directory=None):
             print(" - deleted file: {:s}".format(file))
     print("DONE")
 delete_files_in_dir.autocompletion = "delete_files_in_dir(extension=\"\", directory=None)"
-"""
-
+\'\'\'
 '''
 # Application icon image that will be displayed on all Qt widgets
 application_icon = os.path.join(resources_directory, "exco-icon.png") \

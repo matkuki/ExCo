@@ -818,6 +818,13 @@ class MainWindow(data.QMainWindow):
             reload_functions_action = create_action('Reload User Definitions', None, 'Reload the {} file to refresh user defined definitions and functions'.format(data.config_file), 'tango_icons/file-user-funcs-reload.png', self.import_user_functions)
             #Add recent file list in the file menu
             recent_file_list_menu = self.view.create_recent_file_list_menu()
+            clear_recent_file_list_action = create_action(
+                'Clear recent files',
+                None,
+                'Clear the recent files list',
+                'tango_icons/edit-clear.png',
+                self.view.clear_recent_file_list,
+            )
             #Add the actions to the File menu
             file_menu.addAction(new_file_action)
             file_menu.addAction(open_file_action)
@@ -836,6 +843,7 @@ class MainWindow(data.QMainWindow):
             file_menu.addAction(reload_functions_action)
             file_menu.addSeparator()
             file_menu.addMenu(recent_file_list_menu)
+            file_menu.addAction(clear_recent_file_list_action)
             file_menu.addSeparator()
             file_menu.addAction(exit_action)
         #Edit Menus
@@ -2853,7 +2861,10 @@ class MainWindow(data.QMainWindow):
                 temp_function = functools.partial(new_file_function, recent_file)
                 new_file_action.triggered.connect(temp_function)
                 recent_files_menu.addAction(new_file_action)
-
+        
+        def clear_recent_list(self):
+            self.manipulator.clear_recent_files()
+        
         def restore(self):
             """Restore the previously stored settings"""
             # Load the settings from the initialization file
@@ -3685,6 +3696,18 @@ TabWidget QToolButton:hover {{
         def delete_recent_file_list_menu(self):
             self._parent.recent_files_menu.setParent(None)
             self._parent.recent_files_menu = None
+        
+        def clear_recent_file_list(self):
+            warning = (
+                "Are you sure you wish to delete\n" + 
+                "the recent files list?"
+            )
+            reply = YesNoDialog.warning(warning)
+            if reply == data.DialogResult.No.value:
+                return
+            self._parent.settings.clear_recent_list()
+            self._parent.settings.update_recent_list()
+            self._parent.display.repl_display_success("Recent file list cleared.")
 
 
         """
