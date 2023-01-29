@@ -9,24 +9,9 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import sys
-import itertools
-import inspect
 import functools
-import keyword
-import re
-import collections
-import textwrap
-import importlib
 import data
-import components
-import themes
 import functions
-import interpreter
-import settings
-import lexers
-import traceback
 
 from .custombuttons import *
 from .customeditor import *
@@ -844,7 +829,7 @@ class FunctionWheel(data.QGroupBox):
             ),
         ]
         self.__create_buttons_from_list(button_list)
-    
+
     def __init_special_system_buttons(self):
         # Alias the class references to shorten the names
         form = self.main_form

@@ -9,25 +9,8 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import sys
-import itertools
-import inspect
-import functools
-import keyword
-import re
-import collections
-import textwrap
-import importlib
+
 import data
-import components
-import themes
-import functions
-import interpreter
-import settings
-import lexers
-import traceback
-import gc
 
 from .contextmenu import *
 from .stylesheets import *
@@ -36,9 +19,9 @@ from .stylesheets import *
 -----------------------------
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
 -----------------------------
-""" 
+"""
 class BaseEditor(data.QsciScintilla):
-    
+
     def set_theme(self, theme):
         if theme["name"] == "Air":
             self.resetFoldMarginColors()
@@ -51,23 +34,23 @@ class BaseEditor(data.QsciScintilla):
         self.setMarginsBackgroundColor(data.QColor(theme["linemargin"]["background"]))
         if self.lexer() is not None and hasattr(self.lexer(), "get_default_background_color"):
             self.SendScintilla(
-                data.QsciScintillaBase.SCI_STYLESETBACK, 
-                data.QsciScintillaBase.STYLE_DEFAULT, 
+                data.QsciScintillaBase.SCI_STYLESETBACK,
+                data.QsciScintillaBase.STYLE_DEFAULT,
                 self.lexer().get_default_background_color()
             )
         else:
             self.SendScintilla(
-                data.QsciScintillaBase.SCI_STYLESETBACK, 
-                data.QsciScintillaBase.STYLE_DEFAULT, 
+                data.QsciScintillaBase.SCI_STYLESETBACK,
+                data.QsciScintillaBase.STYLE_DEFAULT,
                 data.QColor(theme["fonts"]["default"]["background"])
             )
         self.SendScintilla(
-            data.QsciScintillaBase.SCI_STYLESETBACK, 
-            data.QsciScintillaBase.STYLE_LINENUMBER, 
+            data.QsciScintillaBase.SCI_STYLESETBACK,
+            data.QsciScintillaBase.STYLE_LINENUMBER,
             data.QColor(theme["linemargin"]["background"])
         )
         self.SendScintilla(
-            data.QsciScintillaBase.SCI_SETCARETFORE, 
+            data.QsciScintillaBase.SCI_SETCARETFORE,
             data.QColor(theme["cursor"])
         )
         self.setCaretLineBackgroundColor(
@@ -104,7 +87,7 @@ QListView::item:selected {{
             theme["fonts"]["default"]["color"],
             StyleSheetScrollbar.full(),
         ))
-    
+
     def delete_context_menu(self):
         # Clean up the context menu
         if self.context_menu is not None:

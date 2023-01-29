@@ -9,24 +9,12 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import sys
-import itertools
-import inspect
-import functools
-import keyword
-import re
-import collections
-import textwrap
-import importlib
 import data
-import components
-import themes
-import functions
-import interpreter
+import components.actionfilter
+import components.hotspots
+import components.iconmanipulator
 import settings
 import lexers
-import traceback
 
 from .contextmenu import *
 from .baseeditor import *
@@ -35,7 +23,7 @@ from .baseeditor import *
 -----------------------------
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
 -----------------------------
-""" 
+"""
 class PlainEditor(BaseEditor):
     # Class variables
     name             = None
@@ -49,7 +37,7 @@ class PlainEditor(BaseEditor):
     # Namespace references for grouping functionality
     hotspots         = None
 
-    
+
     def clean_up(self):
         self.hotspots = None
         try:
@@ -72,12 +60,12 @@ class PlainEditor(BaseEditor):
         # Destroy self
         self.setParent(None)
         self.deleteLater()
-    
+
     def __init__(self, parent, main_form):
         # Initialize the superclass
         super().__init__()
         # Initialize components
-        self.icon_manipulator = components.IconManipulator(self, parent)
+        self.icon_manipulator = components.iconmanipulator.IconManipulator(self, parent)
         self.add_corner_buttons()
         # Store the main form and parent widget references
         self._parent = parent
@@ -91,12 +79,12 @@ class PlainEditor(BaseEditor):
         # Set line endings to be Unix style ("\n")
         self.setEolMode(data.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
         # Initialize the namespace references
-        self.hotspots = components.Hotspots()
+        self.hotspots = components.hotspots.Hotspots()
         # Set the initial zoom factor
         self.zoomTo(settings.editor['zoom_factor'])
         # Set the theme
         self.set_theme(data.theme)
-    
+
     def add_corner_buttons(self):
         def clear():
             self.main_form.display.repl_clear_tab()
@@ -106,7 +94,7 @@ class PlainEditor(BaseEditor):
             "Clear messages",
             clear
         )
-    
+
     def contextMenuEvent(self, event):
         # Built-in context menu
 #        super().contextMenuEvent(event)
@@ -119,7 +107,7 @@ class PlainEditor(BaseEditor):
         self.context_menu.create_plain_buttons()
         self.context_menu.show()
         event.accept()
-    
+
     def mousePressEvent(self, event):
         """Overloaded mouse click event"""
         #Execute the superclass mouse click event
@@ -131,25 +119,25 @@ class PlainEditor(BaseEditor):
         #Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
-        components.ActionFilter.clear_action()
-    
+        components.actionfilter.ActionFilter.clear_action()
+
     def setFocus(self):
         """Overridden focus event"""
         #Execute the supeclass focus function
         super().setFocus()
         #Check indication
         self.main_form.view.indication_check()
-    
+
     def goto_line(self, line_number):
         """Set focus and cursor to the selected line"""
         #Move the cursor to the start of the selected line
         self.setCursorPosition(line_number, 0)
         #Move the first displayed line to the top of the viewving area
         self.SendScintilla(
-            data.QsciScintillaBase.SCI_GOTOLINE, 
+            data.QsciScintillaBase.SCI_GOTOLINE,
             line_number
         )
-    
+
     def convert_case(self, uppercase=False):
         """Convert selected text in the scintilla document into the selected case letters"""
         #Get the start and end point of the selected text
@@ -165,11 +153,9 @@ class PlainEditor(BaseEditor):
         self.replaceSelectedText(selected_text)
         #Reselect the previously selected text
         self.setSelection(start_line, start_index,  end_line, end_index)
-    
+
     def set_theme(self, theme):
         # Set the lexer
         self.setLexer(lexers.Text(self))
         # Run the super-class method
         super().set_theme(theme)
-
-

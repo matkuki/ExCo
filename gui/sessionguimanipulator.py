@@ -2,28 +2,18 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2023 Matic Kukovec. 
+Copyright (c) 2013-2023 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import os.path
-import time
-import difflib
-import inspect
-import textwrap
-import functools
-import traceback
-import collections
 
 import data
-import settings
 import functions
-import components
-import themes
+import components.actionfilter
+import components.iconmanipulator
 
 from .dialogs import *
 
@@ -43,14 +33,14 @@ class SessionGuiManipulator(data.QTreeView):
         my_parent = None
         name      = None
         type      = None
-    
+
     #Class constants
     class ItemType:
         SESSION       = 0
         GROUP         = 1
         EMPTY_SESSION = 2
         EMPTY_GROUP   = 3
-    
+
     #Class variables
     parent                  = None
     main_form               = None
@@ -71,8 +61,8 @@ class SessionGuiManipulator(data.QTreeView):
     icon_session_overwrite  = None
     icon_group_add          = None
     icon_session_edit       = None
-    
-    
+
+
     def clean_up(self):
         # Disconnect signals
         self.doubleClicked.disconnect()
@@ -88,13 +78,13 @@ class SessionGuiManipulator(data.QTreeView):
         # Clean up self
         self.setParent(None)
         self.deleteLater()
-    
+
     def __init__(self, settings_manipulator, parent, main_form):
         """Initialization"""
         # Initialize the superclass
         super().__init__(parent)
         # Initialize components
-        self.icon_manipulator = components.IconManipulator(
+        self.icon_manipulator = components.iconmanipulator.IconManipulator(
             parent=self, tab_widget=parent
         )
         self.add_corner_buttons()
@@ -123,12 +113,12 @@ class SessionGuiManipulator(data.QTreeView):
         # Connect the signals
         self.doubleClicked.connect(self.__item_double_clicked)
         self.itemDelegate().closeEditor.connect(self.__item_editing_closed)
-    
+
     def clean_model(self):
         if self.model() != None:
             self.model().setParent(None)
             self.setModel(None)
-    
+
     def mousePressEvent(self, event):
         """Function connected to the clicked signal of the tree display"""
         super().mousePressEvent(event)
@@ -139,15 +129,15 @@ class SessionGuiManipulator(data.QTreeView):
         #Set Save/SaveAs buttons in the menubar
         self._parent._set_save_status()
         # Reset the click&drag context menu action
-        components.ActionFilter.clear_action()
-    
+        components.actionfilter.ActionFilter.clear_action()
+
     def setFocus(self):
         """Overridden focus event"""
         #Execute the supeclass focus function
         super().setFocus()
         #Check indication
         self.main_form.view.indication_check()
-    
+
     def __item_double_clicked(self, model_index):
         """Callback connected to the treeview's 'clicked' signal"""
         session_item = self.tree_model.itemFromIndex(model_index)
@@ -160,7 +150,7 @@ class SessionGuiManipulator(data.QTreeView):
             self.main_form.sessions.restore(session)
         elif session_item.type == self.ItemType.GROUP:
             pass
-    
+
     def __item_changed(self, item):
         """
         Callback connected to the displays QStandardItemModel 'itemChanged' signal
@@ -175,7 +165,7 @@ class SessionGuiManipulator(data.QTreeView):
                 old_item_name = item.name
                 new_item_name = self.indexWidget(item.index()).text()
                 item_chain = self.__get_node_chain(item)
-                # Rename 
+                # Rename
                 group = self.settings_manipulator.get_group(item_chain)
                 session = group["sessions"].pop(old_item_name)
                 item.name = new_item_name
@@ -189,11 +179,11 @@ class SessionGuiManipulator(data.QTreeView):
                 group_name = "/".join(item_chain)
                 self.main_form.display.repl_display_message(
                     "Session '{}/{}' was renamed to '{}/{}'!".format(
-                       group_name, 
-                       old_item_name,  
-                       group_name, 
-                       new_item_name 
-                    ), 
+                       group_name,
+                       old_item_name,
+                       group_name,
+                       new_item_name
+                    ),
                     message_type=data.MessageType.SUCCESS
                 )
                 # Refresh the session tree
@@ -218,9 +208,9 @@ class SessionGuiManipulator(data.QTreeView):
                 # Display successful group deletion
                 self.main_form.display.repl_display_message(
                     "Group '{}' was renamed to '{}'!".format(
-                        old_group_name, 
+                        old_group_name,
                         new_group_name
-                    ), 
+                    ),
                     message_type=data.MessageType.SUCCESS
                 )
                 # Refresh the session tree
@@ -243,7 +233,7 @@ class SessionGuiManipulator(data.QTreeView):
                     # Display message
                     message = "Session must have at least 3 characters in it's name!"
                     self.main_form.display.repl_display_message(
-                        message, 
+                        message,
                         message_type=data.MessageType.WARNING
                     )
                 else:
@@ -284,7 +274,7 @@ class SessionGuiManipulator(data.QTreeView):
                     )
                 # Update the type
                 changed_item.type = self.ItemType.GROUP
-    
+
     def __item_editing_closed(self, editor, hint):
         """
         Signal that fires when editing was canceled/ended in an empty session or empty group
@@ -308,11 +298,11 @@ class SessionGuiManipulator(data.QTreeView):
                     self.tree_model.removeRow(item.row())
         # Refresh all options
         self.refresh_display()
-    
+
     def reset_locks(self):
         # Reset the all locks/flags
         self.edit_flag = False
-    
+
     def refresh_display(self):
         """
         Refresh the displayed session while keeping the expanded groups
@@ -321,7 +311,7 @@ class SessionGuiManipulator(data.QTreeView):
         self.reset_locks()
         # Update the main window menu
         self.main_form.sessions.update_menu()
-    
+
     def __get_node_chain(self, node):
         parent = node.parent()
         chain = []
@@ -330,7 +320,7 @@ class SessionGuiManipulator(data.QTreeView):
             parent = parent.parent()
         chain.reverse()
         return chain
-    
+
     def __get_current_group(self):
         if self.selectedIndexes() != []:
             selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
@@ -347,7 +337,7 @@ class SessionGuiManipulator(data.QTreeView):
                 return None
         else:
             return None
-    
+
     def add_empty_group(self):
         # Check for various flags
         if self.edit_flag == True:
@@ -372,7 +362,7 @@ class SessionGuiManipulator(data.QTreeView):
 #        delegate.closeEditor.connect(
 #            functools.partial(self.__item_editing_closed, empty_group_node)
 #        )
-    
+
     def add_empty_session(self):
         # Check for various flags
         if self.edit_flag == True:
@@ -398,7 +388,7 @@ class SessionGuiManipulator(data.QTreeView):
 #        delegate.closeEditor.connect(
 #            functools.partial(self.__item_editing_closed, empty_session_node)
 #        )
-    
+
     def remove_item(self):
         # Check for various flags
         if self.edit_flag == True:
@@ -421,7 +411,7 @@ class SessionGuiManipulator(data.QTreeView):
                 message += "because it contains subgroups!"
                 reply = OkDialog.error(message)
                 return
-            
+
             message =  "Are you sure you want to delete group:\n"
             message += "'{}' ?".format(group_name_with_chain)
             reply = YesNoDialog.warning(message)
@@ -432,7 +422,7 @@ class SessionGuiManipulator(data.QTreeView):
             # Display the deletion result
             if result == True:
                 self.main_form.display.repl_display_message(
-                    "Group '{}' was deleted!".format(group_name_with_chain), 
+                    "Group '{}' was deleted!".format(group_name_with_chain),
                     message_type=data.MessageType.SUCCESS
                 )
                 # Remove the item from the tree
@@ -446,7 +436,7 @@ class SessionGuiManipulator(data.QTreeView):
                 message = "An error occured while deleting session "
                 message += "group '{}'!".format(group_name_with_chain)
                 self.main_form.display.repl_display_message(
-                    message, 
+                    message,
                     message_type=data.MessageType.ERROR
                 )
         elif selected_item.type == self.ItemType.SESSION:
@@ -474,7 +464,7 @@ class SessionGuiManipulator(data.QTreeView):
         elif selected_item.type == self.ItemType.EMPTY_SESSION:
             #Display successful group deletion
             self.main_form.display.repl_display_message(
-                "Empty session was deleted!", 
+                "Empty session was deleted!",
                 message_type=data.MessageType.SUCCESS
             )
             # Refresh the tree
@@ -482,12 +472,12 @@ class SessionGuiManipulator(data.QTreeView):
         elif selected_item.type == self.ItemType.EMPTY_GROUP:
             #Display successful group deletion
             self.main_form.display.repl_display_message(
-                "Empty group was deleted!", 
+                "Empty group was deleted!",
                 message_type=data.MessageType.SUCCESS
             )
             #Refresh the tree
             self.refresh_display()
-    
+
     def overwrite_session(self):
         """
         Overwrite the selected session
@@ -503,7 +493,7 @@ class SessionGuiManipulator(data.QTreeView):
         if selected_item.type == self.ItemType.GROUP:
             #Show message that groups cannot be overwritten
             self.main_form.display.repl_display_message(
-                "Groups cannot be overwritten!", 
+                "Groups cannot be overwritten!",
                 message_type=data.MessageType.ERROR
             )
             return
@@ -519,11 +509,11 @@ class SessionGuiManipulator(data.QTreeView):
             )
             # Refresh the tree
             self.refresh_display()
-    
+
     def __start_editing_item(self, item):
         self.edit(item.index())
         self.__edit_item = item
-    
+
     def edit_item(self):
         """
         Edit the selected session or group name
@@ -534,7 +524,7 @@ class SessionGuiManipulator(data.QTreeView):
         if self.selectedIndexes() == []:
             return
         selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
-        
+
         # Check the selected item type
         if (selected_item.type == self.ItemType.GROUP or
             selected_item.type == self.ItemType.SESSION):
@@ -543,7 +533,7 @@ class SessionGuiManipulator(data.QTreeView):
                 self.__start_editing_item(selected_item)
         # Set the editing flag
         self.edit_flag = True
-    
+
     def show_sessions(self):
         """
         Show the current session in a tree structure
@@ -591,7 +581,7 @@ class SessionGuiManipulator(data.QTreeView):
         # Process the groups
         main_session_group = self.settings_manipulator.stored_sessions["main"]
         process_group(main_session_group, self.tree_model, create_menu=False)
-    
+
     def add_corner_buttons(self):
         # Edit session
         self.icon_manipulator.add_corner_button(
@@ -623,6 +613,3 @@ class SessionGuiManipulator(data.QTreeView):
             "Remove the selected session/group",
             self.remove_item
         )
-
-
-

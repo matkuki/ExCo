@@ -23,9 +23,11 @@ import locale
 import timeit
 import operator
 import itertools
+import threading
 import traceback
 import subprocess
 import webbrowser
+
 import data
 
 # REPL message displaying function (that needs to be assigned at runtime!)
@@ -51,6 +53,11 @@ def count_iterator(start=0):
 def create_directory(directory):
     if not os.path.isdir(directory):
         os.mkdir(directory)
+
+def create_thread(func, *args):
+    t = threading.Thread(target=func, args=args)
+    t.daemon = True
+    t.start()
 
 icon_cache = {}
 def create_icon(icon):

@@ -2,19 +2,14 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2023 Matic Kukovec. 
+Copyright (c) 2013-2023 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import data
-import functions
 import re
-import math
-import typing
-
 
 class LineList(list):
     """
@@ -23,7 +18,7 @@ class LineList(list):
     """
     #Class variables
     _parent = None
-    
+
     """
     Class functions/methods
     """
@@ -114,15 +109,15 @@ class LineList(list):
             line_to     = key_max - 1
             #Set the new lines in the custom editor document
             self._parent.set_lines(line_from, line_to, value)
-    
+
     def __iadd__(self, value):
         """Overloaded '+=' operator"""
         raise Exception("'+=' operator not implemented yet!")
-    
+
     def __isub__(self, value):
         """Overloaded '-=' operator"""
         raise Exception("'-=' operator not implemented yet!")
-    
+
     def __imul__(self, value):
         """Overloaded '*=' operator"""
         raise Exception("'*=' operator not implemented yet!")
@@ -146,7 +141,7 @@ class LineList(list):
             super().__setitem__(actual_key, value)
         except:
             self.append(value, update_parent=False)
-    
+
     def _update_list_to_text(self, scroll_to_line=None):
         """Update the list of lines to the parent CustomEditor document"""
         #Merge the list into a single string with the
@@ -159,7 +154,7 @@ class LineList(list):
             scroll_to_line = self._parent.lines()
         #Scroll to the desired line of the document
         self._parent.setCursorPosition(scroll_to_line, 0)
-    
+
     def append(self, value, update_parent=True):
         """
         Overloaded list append method
@@ -185,7 +180,7 @@ class LineList(list):
         #Check if updating the parent document is needed
         if update_parent == True:
             self._update_list_to_text()
-    
+
     def extend(self, value, update_parent=True):
         """
         Overloaded list extend method
@@ -208,7 +203,7 @@ class LineList(list):
         #Check if updating the parent document is needed
         if update_parent == True:
             self._update_list_to_text()
-    
+
     def insert(self, index, value, update_parent=True):
         """Overloaded insert method"""
         #Check the insert index type
@@ -226,7 +221,7 @@ class LineList(list):
         #Check if updating the parent document is needed
         if update_parent == True:
             self._update_list_to_text(index)
-    
+
     def pop(self, index=None, update_parent=True):
         """Overloaded pop method"""
         #Check the insert index type
@@ -243,7 +238,7 @@ class LineList(list):
             self._update_list_to_text(index)
         #Return the poped line
         return return_item
-    
+
     def remove(self, item, update_parent=True):
         """Overloaded remove method"""
         #Check the insert index type
@@ -256,13 +251,13 @@ class LineList(list):
             index = self.index(item) - 1
             #Check the index
             if index < 0:
-                index = 0    
+                index = 0
         #Remove the item
         super().remove(item)
         #Check if updating the parent document is needed
         if update_parent == True:
             self._update_list_to_text(index)
-    
+
     def reverse(self, update_parent=True):
         """Overloaded reverse method"""
         #Reverse the list
@@ -270,7 +265,7 @@ class LineList(list):
         #Check if updating the parent document is needed
         if update_parent == True:
             self._update_list_to_text()
-        
+
     def sort(self, update_parent=True):
         """Overloaded sort method"""
         #Sort the list
@@ -278,7 +273,7 @@ class LineList(list):
         #Check if updating the parent document is needed
         if update_parent == True:
             self._update_list_to_text()
-    
+
     def update_text_to_list(self, update_text):
         """Update the list from a string"""
         #Check if the value is a string
@@ -288,7 +283,7 @@ class LineList(list):
         self._clear()
         #Set the new content
         self.extend(re.split("\n", update_text), update_parent=False)
-    
+
     def get_absolute_cursor_position(self):
         """Get the absolute cursor position"""
         line, index = self._parent.getCursorPosition()
@@ -297,6 +292,6 @@ class LineList(list):
             absolute_position += len(self[i])
         absolute_position += index + 1
         return absolute_position
-    
+
     def _clear(self):
         del self[:]

@@ -2,37 +2,23 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2023 Matic Kukovec. 
+Copyright (c) 2013-2023 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import os.path
-import collections
-import traceback
-import ast
-import inspect
-import math
-import functools
-import textwrap
-import difflib
-import re
+
 import uuid
-import time
-import settings
-import functions
 import data
-import components
 
 from .stylesheets import *
 
 
 class Menu(data.QMenu):
     menu_cache = {}
-    
+
     @staticmethod
     def update_styles():
         delete_list = []
@@ -43,10 +29,10 @@ class Menu(data.QMenu):
                 delete_list.append(v)
         for d in delete_list:
             Menu.menu_cache.pop(d, None)
-    
+
     def __del__(self):
         self.menu_cache.pop(self._id, None)
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._id = uuid.uuid4()
@@ -55,11 +41,11 @@ class Menu(data.QMenu):
         self.setFont(data.get_current_font())
         # Update style
         self.update_style()
-    
+
     def setStyle(self, *args, **kwargs):
         super().setStyle(*args, **kwargs)
         self.update_style()
-    
+
     def update_style(self):
         pass
 
@@ -71,7 +57,7 @@ class MenuBar(data.QMenuBar):
         self.setFont(data.get_current_font())
         # Restyle
         self.update_style()
-    
+
     def update_style(self):
         pass
 

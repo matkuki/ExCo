@@ -9,13 +9,13 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import data
-import functions
-import gui
 import re
 import math
 import typing
-import sip
+import importlib
+
+import data
+import functions
 
 
 class IconManipulator:
@@ -29,6 +29,11 @@ class IconManipulator:
     def __init__(self, parent=None, tab_widget=None):
         self._parent = parent
         self._tab_widget = tab_widget
+        
+        self.__module_customeditor = importlib.import_module("gui.customeditor")
+        self.__module_plaineditor = importlib.import_module("gui.plaineditor")
+        self.__module_tabwidget = importlib.import_module("gui.tabwidget")
+        self.__module_textdiffer = importlib.import_module("gui.textdiffer")
     
     def __del__(self):
         self.remove_corner_groupbox()
@@ -50,14 +55,14 @@ class IconManipulator:
         parent basic widget
         """
         tab_widget = self._tab_widget
-        if isinstance(obj, gui.CustomEditor):
-            if isinstance(tab_widget, gui.TabWidget):
+        if isinstance(obj, self.__module_customeditor.CustomEditor):
+            if isinstance(tab_widget, self.__module_tabwidget.TabWidget):
                 tab_widget.update_tab_icon(obj)
                 self.update_corner_widget(obj)
-            elif isinstance(tab_widget, gui.TextDiffer):
+            elif isinstance(tab_widget, self.__module_textdiffer.TextDiffer):
                 tab_widget._parent.update_tab_icon(obj)
-        elif isinstance(obj, gui.PlainEditor):
-            if isinstance(tab_widget, gui.TabWidget):
+        elif isinstance(obj, self.__module_plaineditor.PlainEditor):
+            if isinstance(tab_widget, self.__module_tabwidget.TabWidget):
                 tab_widget.update_tab_icon(obj)
         elif hasattr(obj, "_parent") and obj.current_icon is not None:
             obj._parent.update_tab_icon(obj)

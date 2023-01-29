@@ -11,10 +11,9 @@ For complete license information of the dependencies, check the 'additional_lice
 import re
 import math
 import typing
+import importlib
+
 import data
-import functions
-import gui.treedisplays
-from .customstyle import *
 
 
 class TheSquid:
@@ -30,6 +29,9 @@ class TheSquid:
         TheSquid.main_form = main_form
         TheSquid.repl = main_form.repl
         TheSquid.repl_helper = main_form.repl_helper
+        
+        TheSquid.__module_customeditor = importlib.import_module("gui.treedisplays")
+        TheSquid.__module_customstyle = importlib.import_module("components.customstyle")
     
     @staticmethod
     def update_objects():
@@ -84,7 +86,7 @@ class TheSquid:
                         )
                 if hasattr(window.widget(i), "icon_manipulator"):
                     window.widget(i).icon_manipulator.restyle_corner_button_icons()
-                if isinstance(window.widget(i), gui.treedisplays.TreeDisplayBase):
+                if isinstance(window.widget(i), TheSquid.__module_customeditor.TreeDisplayBase):
                     window.widget(i).update_styles()
     
     @staticmethod
@@ -93,14 +95,14 @@ class TheSquid:
             # Customize the style
             try:
                 default_style_name = data.QApplication.style().objectName()
-                custom_style = CustomStyle(default_style_name)
+                custom_style = TheSquid.__module_customstyle.CustomStyle(default_style_name)
                 menu.setStyle(custom_style)
             except:
                 if data.platform == "Windows":
-                    custom_style = CustomStyle("Windows")
+                    custom_style = TheSquid.__module_customstyle.CustomStyle("Windows")
                     menu.setStyle(custom_style)
                 else:
-                    custom_style = CustomStyle("GTK")
+                    custom_style = TheSquid.__module_customstyle.CustomStyle("GTK")
                     menu.setStyle(custom_style)
         else:
             # Reset the style

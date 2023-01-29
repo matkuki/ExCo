@@ -19,12 +19,18 @@ import sys
 import os
 import argparse
 import data
-import components
+import components.fonts
+import components.signaldispatcher
+import components.processcontroller
+import components.thesquid
 import gui.mainwindow
+import settings
 
 
 def parse_arguments():
-    """Parse Ex.Co. command line arguments"""
+    """
+    Parse Ex.Co. command line arguments
+    """
     #Nested function for input file parsing
     def parse_file_list(files_string):
         return files_string.split(";")
@@ -95,7 +101,9 @@ def parse_arguments():
     return parsed_options
 
 def main():
-    """Main function of Ex.Co."""
+    """
+    Main function of Ex.Co.
+    """
     # Check arguments
     options = parse_arguments()
     if options.debug_mode == True:
@@ -103,8 +111,8 @@ def main():
     if options.logging_mode == True:
         data.logging_mode = True
     file_arguments = options.files
-    if options.single_file != None:
-        if file_arguments != None:
+    if options.single_file is not None:
+        if file_arguments is not None:
             file_list = file_arguments.split(";")
             file_list.append(options.single_file)
             file_arguments = ";".join(file_list)
@@ -112,24 +120,37 @@ def main():
             file_arguments = [options.single_file]
     if file_arguments == ['']:
         file_arguments = None
+    
     # Create QT application, needed to use QT forms
     app = data.QApplication(sys.argv)
     # Save the Qt application to the global reference
     data.application = app
+    
+    # Process control
+    number_of_instances = components.processcontroller.check_opened_excos()
+    if settings.variables["open-new-files-in-open-instance"]:
+        if number_of_instances > 1 and file_arguments is not None:
+            components.processcontroller.send_raw_command(
+                {"command": "open", "arguments": file_arguments}
+            )
+            return
+    
     # Set default application font
     components.fonts.set_application_font(
         data.current_font_name,
         data.current_font_size,
     )
+    
     # Global signal dispatcher
-    data.signal_dispatcher = components.GlobalSignalDispatcher()
+    data.signal_dispatcher = components.signaldispatcher.GlobalSignalDispatcher()
+    
     # Create the main window, pass the filename that may have been passed as an argument
     main_window = gui.mainwindow.MainWindow(
         new_document = options.new_document, 
         logging=data.logging_mode, 
         file_arguments=file_arguments
     )
-    components.TheSquid.init_objects(main_window)
+    components.thesquid.TheSquid.init_objects(main_window)
     main_window.import_user_functions()
     main_window.show()
     sys.exit(app.exec())

@@ -9,25 +9,7 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import sys
-import itertools
-import inspect
-import functools
-import keyword
-import re
-import collections
-import textwrap
-import importlib
 import data
-import components
-import themes
-import functions
-import interpreter
-import settings
-import lexers
-import traceback
-import gc
 
 from .repllineedit import *
 from .replhelper import *
@@ -37,7 +19,7 @@ class ReplBox(data.QGroupBox):
     _parent = None
     repl = None
     repl_helper = None
-    
+
     def __init__(self, parent, interpreter_references, *args, **kwargs):
         super().__init__("Python Interactive Interpreter (REPL)")
         self.setObjectName("REPL_Box")
@@ -58,7 +40,7 @@ class ReplBox(data.QGroupBox):
         self.indication_reset()
         # Set default font
         self.setFont(data.get_current_font())
-    
+
     def set_repl(self, type):
         #Set which REPL widget will be displayed
         if type == data.ReplType.SINGLE_LINE:
@@ -69,17 +51,17 @@ class ReplBox(data.QGroupBox):
             self.repl.setVisible(False)
             self.repl_helper.setVisible(True)
             self.repl_state = data.ReplType.MULTI_LINE
-    
+
     def indication_set(self):
         self.set_style(True)
         self.repl.update_style()
         self.repl.indication_set()
-    
+
     def indication_reset(self):
         self.set_style(False)
         self.repl.update_style()
         self.repl.indication_reset()
-    
+
     def set_style(self, indicated):
         if indicated:
             background = data.theme["indication"]["activebackground"]
@@ -107,7 +89,7 @@ class ReplBox(data.QGroupBox):
 #REPL_Box::title {{
     color: {};
     subcontrol-position: top left;
-    padding: 0px; 
+    padding: 0px;
     left: 8px;
     top: -6px;
 }}
@@ -117,5 +99,4 @@ class ReplBox(data.QGroupBox):
                  border,
                  data.theme["indication"]["activeborder"],
         ))
-        
-        
+

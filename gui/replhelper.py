@@ -9,25 +9,13 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import sys
-import itertools
-import inspect
 import functools
 import keyword
-import re
-import collections
-import textwrap
-import importlib
 import data
-import components
-import themes
-import functions
-import interpreter
+import components.actionfilter
+import components.linelist
 import settings
 import lexers
-import traceback
-import gc
 
 from .customeditor import *
 from .tabwidget import *
@@ -56,7 +44,7 @@ class ReplHelper(data.QsciScintilla):
     context_menu    = None
     #LineList object copied from the CustomEditor object
     line_list       = None
-    
+
     """
     Built-in and private functions
     """
@@ -97,11 +85,11 @@ class ReplHelper(data.QsciScintilla):
         #Set the initial zoom factor
         self.zoomTo(settings.editor['zoom_factor'])
         """
-        Functionality copied from the CustomEditor to copy some of 
+        Functionality copied from the CustomEditor to copy some of
         the neede editing functionality like commenting, ...
         """
         # Add the attributes needed to implement the line nist
-        self.line_list = components.LineList(self, self.text())
+        self.line_list = components.linelist.LineList(self, self.text())
         # Add the needed functions assigned from the CustomEditor
         self.set_theme = functools.partial(CustomEditor.set_theme, self)
         self.set_line = functools.partial(CustomEditor.set_line, self)
@@ -125,13 +113,13 @@ class ReplHelper(data.QsciScintilla):
         #Set the initial autocompletions
         self.update_autocompletions()
         #Setup the LineList object that will hold the custom editor text as a list of lines
-        self.line_list = components.LineList(self, self.text())
+        self.line_list = components.linelist.LineList(self, self.text())
         self.textChanged.connect(self.text_changed)
-    
+
     def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
         """Signal that fires when cursor position changes"""
         self.main_form.display.update_cursor_position(cursor_line, cursor_column)
-    
+
     def _filter_keypress(self, key_event):
         """Filter keypress for appropriate action"""
         pressed_key = key_event.key()
@@ -145,7 +133,7 @@ class ReplHelper(data.QsciScintilla):
                 self.repl_master.external_eval_request(self.text(), self)
                 accept_keypress = True
         return accept_keypress
-    
+
     def _filter_keyrelease(self, key_event):
         """Filter keyrelease for appropriate action"""
         #Only check indication if the current widget is not indicated
@@ -158,19 +146,19 @@ class ReplHelper(data.QsciScintilla):
     Qt QSciScintilla functions
     """
     def keyPressEvent(self, event):
-        """QScintila keyPressEvent, to catch which key was pressed"""       
+        """QScintila keyPressEvent, to catch which key was pressed"""
         #Filter the event
         if self._filter_keypress(event) == False:
             #Execute the superclass method, if the filter ignored the event
             super().keyPressEvent(event)
-    
+
     def keyReleaseEvent(self, event):
         """QScintila KeyReleaseEvent, to catch which key was released"""
         #Execute the superclass method first, the same trick as in __init__ !
         super().keyReleaseEvent(event)
         #Filter the event
         self._filter_keyrelease(event)
-    
+
     def mousePressEvent(self, event):
         # Execute the superclass mouse click event
         super().mousePressEvent(event)
@@ -184,15 +172,15 @@ class ReplHelper(data.QsciScintilla):
         # don't know why?
         self.setFocus()
         # Reset the click&drag context menu action
-        components.ActionFilter.clear_action()
-    
+        components.actionfilter.ActionFilter.clear_action()
+
     def setFocus(self):
         """Overridden focus event"""
         # Execute the supeclass focus function
         super().setFocus()
         # Check indication
         self.main_form.view.indication_check()
-    
+
     def wheelEvent(self, wheel_event):
         """Overridden mouse wheel rotate event"""
         key_modifiers = data.QApplication.keyboardModifiers()
@@ -215,7 +203,7 @@ class ReplHelper(data.QsciScintilla):
         else:
             #Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
-    
+
     def delete_context_menu(self):
         # Clean up the context menu
         if self.context_menu != None:
@@ -224,7 +212,7 @@ class ReplHelper(data.QsciScintilla):
                 b.setParent(None)
             self.context_menu.setParent(None)
             self.context_menu = None
-    
+
     def contextMenuEvent(self, event):
         # Built-in context menu
         self.delete_context_menu()
@@ -240,7 +228,7 @@ class ReplHelper(data.QsciScintilla):
             self.context_menu.create_multiline_repl_buttons()
         self.context_menu.show()
         event.accept()
-    
+
     def set_lexer(self):
         if self.lexer() != None:
             self.lexer().setParent(None)
@@ -259,18 +247,18 @@ class ReplHelper(data.QsciScintilla):
         #Set the theme
         self.set_theme(data.theme)
         self.lexer().set_theme(data.theme)
-    
+
     def refresh_lexer(self):
         #Set the theme
         self.set_theme(data.theme)
         self.lexer().set_theme(data.theme)
-    
+
     def text_changed(self):
         """Event that fires when the scintilla document text changes"""
         #Update the line list
         self.line_list.update_text_to_list(self.text())
-        
-    
+
+
     """
     ReplHelper autocompletion functions
     """
@@ -292,5 +280,3 @@ class ReplHelper(data.QsciScintilla):
         self.setAutoCompletionSource(data.QsciScintilla.AutoCompletionSource.AcsAll)
         #Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)
-
-

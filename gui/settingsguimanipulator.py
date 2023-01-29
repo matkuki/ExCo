@@ -9,23 +9,7 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import os.path
-import collections
-import traceback
-import ast
-import inspect
-import math
-import functools
-import textwrap
-import difflib
-import re
-import time
-import settings
-import functions
 import data
-import components
-import themes
 
 
 """

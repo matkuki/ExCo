@@ -9,12 +9,12 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import data
-import functions
-import gui
 import re
 import math
 import typing
+
+import data
+import functions
 
 
 class CustomStyle(data.QCommonStyle):

@@ -2,30 +2,18 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2023 Matic Kukovec. 
+Copyright (c) 2013-2023 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import os.path
-import collections
+
 import traceback
-import ast
-import inspect
-import math
-import functools
-import textwrap
-import difflib
-import re
-import time
-import settings
-import functions
 import data
-import components
-import themes
+import functions
+import components.actionfilter
 from .custombuttons import *
 
 
@@ -33,7 +21,7 @@ from .custombuttons import *
 ---------------------------------------------------------
 Custom context menu for the editors and REPL
 ---------------------------------------------------------
-""" 
+"""
 class ContextMenu(data.QGroupBox):
     # Various references
     main_form = None
@@ -43,7 +31,7 @@ class ContextMenu(data.QGroupBox):
     button_list = None
     # Functions dictionary
     function_list = {}
-    # Inner button positions, clockwise from the top, 
+    # Inner button positions, clockwise from the top,
     # last position is in the middle
     inner_button_positions = [
         (-27, -24, 0),
@@ -141,7 +129,7 @@ class ContextMenu(data.QGroupBox):
     total_offset = (0, -48)
     # Current context menu functions type
     functions_type = None
-    
+
     def __init__(self, parent=None, main_form=None, offset=(0, 0)):
         # Initialize the superclass
         super().__init__(parent)
@@ -164,7 +152,7 @@ class ContextMenu(data.QGroupBox):
             functions.create_rect(0, 0, width, height)
         )
         self.update_style()
-    
+
     @staticmethod
     def reset_functions():
         """
@@ -173,7 +161,7 @@ class ContextMenu(data.QGroupBox):
         ContextMenu.standard_buttons = dict(ContextMenu.stored_standard_buttons)
         ContextMenu.special_buttons = dict(ContextMenu.stored_special_buttons)
         ContextMenu.horizontal_buttons = dict(ContextMenu.stored_horizontal_buttons)
-    
+
     @staticmethod
     def get_settings():
         """
@@ -184,9 +172,9 @@ class ContextMenu(data.QGroupBox):
             "special_buttons": ContextMenu.special_buttons,
             "horizontal_buttons": ContextMenu.horizontal_buttons,
         }
-    
-    def check_position_offset(self, 
-                              inner_buttons=True, 
+
+    def check_position_offset(self,
+                              inner_buttons=True,
                               outer_buttons=True,
                               horizontal_buttons=False):
         button_positions = []
@@ -226,16 +214,16 @@ class ContextMenu(data.QGroupBox):
             self.offset = (self.offset[0], self.offset[1]-min_y)
         if max_y != 0:
             self.offset = (self.offset[0], self.offset[1]-max_y)
-    
+
     @staticmethod
     def add_function(name, pixmap, function, function_name):
         ContextMenu.function_list[name] = (pixmap, function, function_name)
-    
+
     def mousePressEvent(self, event):
         button = event.button()
         super().mousePressEvent(event)
         self.parent().delete_context_menu()
-    
+
     def add_buttons(self, buttons):
         """
         Add buttons to the context menu
@@ -246,10 +234,10 @@ class ContextMenu(data.QGroupBox):
             button_position = b[1]
             button_number = button_position[2]
             button = ContextButton(
-                self, 
-                self.main_form, 
-                input_pixmap=function_info[0], 
-                input_function=function_info[1], 
+                self,
+                self.main_form,
+                input_pixmap=function_info[0],
+                input_function=function_info[1],
                 input_function_text=function_info[2],
                 input_tool_tip=function_info[2],
                 input_focus_last_widget=data.HexButtonFocus.TAB,
@@ -258,16 +246,16 @@ class ContextMenu(data.QGroupBox):
             button.number = button_number
             #Set the button size and location
             button.set_offset(
-                (self.offset[0]+ button_position[0]*self.x_scale/0.8 + total_offset[0], 
+                (self.offset[0]+ button_position[0]*self.x_scale/0.8 + total_offset[0],
                     self.offset[1]+ button_position[1]*self.y_scale/0.8 + total_offset[1])
             )
             button.dim()
             self.button_list.append(button)
-    
+
     def create_horizontal_multiline_repl_buttons(self):
         # Check if any of the buttons are out of the window and adjust the offset
         self.check_position_offset(
-            inner_buttons=False, 
+            inner_buttons=False,
             outer_buttons=False,
             horizontal_buttons=True
         )
@@ -276,36 +264,36 @@ class ContextMenu(data.QGroupBox):
         self.button_list = []
         self.add_horizontal_buttons(buttons)
         self.functions_type = "horizontal"
-    
+
     def create_multiline_repl_buttons(self):
         inner_buttons = [ContextMenu.horizontal_buttons[str(x)] for x in range(19, 26)]
         self.create_buttons(inner_buttons)
         self.functions_type = "horizontal"
-    
+
     def create_plain_buttons(self):
         inner_buttons = [ContextMenu.standard_buttons[str(x)] for x in range(7)]
         self.create_buttons(inner_buttons)
         self.functions_type = "plain"
-    
+
     def create_standard_buttons(self):
         inner_buttons = [ContextMenu.standard_buttons[str(x)] for x in range(7)]
         outer_buttons = [ContextMenu.standard_buttons[str(x)] for x in range(7, len(ContextMenu.standard_buttons))]
         self.create_buttons(inner_buttons, outer_buttons)
         self.functions_type = "standard"
-    
+
     def create_special_buttons(self):
         inner_buttons = [ContextMenu.special_buttons[str(x)] for x in range(7)]
         outer_buttons = [ContextMenu.special_buttons[str(x)] for x in range(7, len(ContextMenu.standard_buttons))]
         self.create_buttons(inner_buttons, outer_buttons)
         self.functions_type = "special"
-    
-    def create_buttons(self, 
-                       inner_buttons=[], 
+
+    def create_buttons(self,
+                       inner_buttons=[],
                        outer_buttons=[]):
         # Check if any of the buttons are out of the window and adjust the offset
         if outer_buttons == []:
             self.check_position_offset(
-                inner_buttons=True, 
+                inner_buttons=True,
                 outer_buttons=False,
                 horizontal_buttons=False
             )
@@ -319,16 +307,16 @@ class ContextMenu(data.QGroupBox):
         if outer_buttons != []:
             buttons = outer_buttons
             self.add_outer_buttons(outer_buttons)
-    
+
     def add_inner_buttons(self, in_buttons):
         self.__add_buttons(in_buttons, 7, ContextMenu.inner_button_positions)
-    
+
     def add_outer_buttons(self, in_buttons):
         self.__add_buttons(in_buttons, 12, ContextMenu.outer_button_positions)
-    
+
     def add_horizontal_buttons(self, in_buttons):
         self.__add_buttons(in_buttons, 7, ContextMenu.horizontal_button_positions)
-    
+
     def __add_buttons(self, in_buttons, max_count, positions):
         if len(in_buttons) > max_count:
             raise Exception("Too many inner buttons in context menu!")
@@ -336,7 +324,7 @@ class ContextMenu(data.QGroupBox):
         for i,button in enumerate(in_buttons):
             if (button in self.function_list) == False:
                 self.main_form.display.repl_display_message(
-                    "'{}' context menu function does not exist!".format(button), 
+                    "'{}' context menu function does not exist!".format(button),
                     message_type=data.MessageType.ERROR
                 )
             else:
@@ -344,7 +332,7 @@ class ContextMenu(data.QGroupBox):
                     (ContextMenu.function_list[button], positions[i])
                 )
         self.add_buttons(buttons)
-    
+
     def update_style(self):
         self.setStyleSheet(f"""
             QGroupBox {{
@@ -363,7 +351,7 @@ class ContextMenu(data.QGroupBox):
                 color: {data.theme["fonts"]["default"]["color"]};
             }}
         """)
-    
+
     def show(self):
         super().show()
         # When the context menu is shown it is needed to paint
@@ -379,32 +367,32 @@ class ContextButton(CustomButton):
     """
     # The button's number in the context menu
     number = None
-    
+
     def fill_background_color(self):
         self.setAutoFillBackground(True)
         p = self.palette()
         p.setColor(
-            self.backgroundRole(), 
+            self.backgroundRole(),
             data.QColor(data.theme["context-menu-background"])
         )
         self.setPalette(p)
-    
+
     def set_opacity(self, input_opacity):
         super().set_opacity(input_opacity)
         self.fill_background_color()
-    
+
     def set_opacity_with_hex_edge(self, input_opacity):
         super()._set_opacity_with_hex_edge(input_opacity)
         self.fill_background_color()
-    
+
     def mousePressEvent(self, event):
         """Overloaded widget click event"""
         button = event.button()
         if button == data.Qt.MouseButton.LeftButton:
             # Execute the function if it was initialized
             if self.function is not None:
-                if components.ActionFilter.click_drag_action is not None:
-                    function_name = components.ActionFilter.click_drag_action.function.__name__
+                if components.actionfilter.ActionFilter.click_drag_action is not None:
+                    function_name = components.actionfilter.ActionFilter.click_drag_action.function.__name__
 #                        print(self.number, function_name)
                     if self._parent.functions_type == "standard":
                         ContextMenu.standard_buttons[str(self.number)] = function_name
@@ -416,16 +404,16 @@ class ContextButton(CustomButton):
                         ContextMenu.special_buttons[str(self.number)] = function_name
                     # Show the newly added function
                     message = "Added function '{}' at button number {}".format(
-                        components.ActionFilter.click_drag_action.text(),
+                        components.actionfilter.ActionFilter.click_drag_action.text(),
                         self.number
                     )
                     self.main_form.display.repl_display_message(
-                        message, 
+                        message,
                         message_type=data.MessageType.SUCCESS
                     )
                     # Reset cursor and stored action
                     data.application.restoreOverrideCursor()
-                    components.ActionFilter.click_drag_action = None
+                    components.actionfilter.ActionFilter.click_drag_action = None
                 else:
                     try:
                         # Execute the buttons stored function
@@ -434,7 +422,7 @@ class ContextButton(CustomButton):
                         traceback.print_exc()
                         message = "You need to focus one of the editor windows first!"
                         self.main_form.display.repl_display_message(
-                            message, 
+                            message,
                             message_type=data.MessageType.ERROR
                         )
                 # Close the function wheel
@@ -448,7 +436,7 @@ class ContextButton(CustomButton):
             event.accept()
         else:
             event.ignore()
-    
+
     def dim(self, clear_hex_edge=False):
         """Set the buttons opacity to low and clear the function text"""
         # Set the opacity to low
@@ -456,7 +444,7 @@ class ContextButton(CustomButton):
             self.set_opacity(self.OPACITY_LOW)
         else:
             self.set_opacity_with_hex_edge(self.OPACITY_LOW)
-    
+
     def highlight(self):
         """Set the buttons opacity to high and display the buttons function text"""
         # Set the opacity to full

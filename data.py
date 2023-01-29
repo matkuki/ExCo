@@ -197,6 +197,8 @@ def delete_files_in_dir(extension=None, directory=None):
 delete_files_in_dir.autocompletion = "delete_files_in_dir(extension=\"\", directory=None)"
 \'\'\'
 '''
+# Global signal dispatcher
+signal_dispatcher = None
 # Application icon image that will be displayed on all Qt widgets
 application_icon = os.path.join(resources_directory, "exco-icon.png") \
     .replace('\\', '/')
@@ -243,10 +245,6 @@ Windows Vista Default:
 custom_menu_font = None
 # Function information that is used between modules
 global_function_information = {}
-
-# Global signal dispatcher
-signal_dispatcher = None
-
 # REPL messages tab name
 repl_messages_tab_name = "REPL MESSAGES"
 file_explorer_tab_name = "FILE EXPLORER"

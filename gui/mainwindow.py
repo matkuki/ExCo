@@ -9,27 +9,24 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sys
 import itertools
 import inspect
 import functools
 import keyword
 import re
 import collections
-import textwrap
-import importlib
-import data
-import components
-import themes
 import functions
-import interpreter
 import settings
 import settings.constants
 import lexers
 import traceback
 import gc
-import pprint
 import json
+import data
+import components.actionfilter
+import components.communicator
+import components.processcontroller
+import components.thesquid
 
 from .contextmenu import *
 from .custombuttons import *
@@ -62,7 +59,12 @@ Main window and its supporting objects
 -------------------------------------------------
 """
 class MainWindow(data.QMainWindow):
-    """Main form that holds all Qt objects"""
+    """
+    Main form that holds all Qt objects
+    """
+    # Signals
+    data_send = data.pyqtSignal(object)
+    
     # Define main form control references
     name                    = "Main Window"
     boxes_groupbox          = None
@@ -127,8 +129,16 @@ class MainWindow(data.QMainWindow):
         self.display = self.Display(self)
         self.bookmarks = self.Bookmarks(self)
         # Set the name of the main window
-        self.name = "Main Window"
+        self.name = "{} - PID:{}".format(
+            self.get_default_title(),
+            os.getpid()
+        )
         self.setObjectName("Form")
+        # RPC communicator
+        self.communicator = components.communicator.Communicator(self.name)
+        # Connect signals
+        self.data_send.connect(self.communicator.send)
+        self.communicator.received.connect(self.__data_received)
         # Set default font
         self.setFont(data.get_current_font())
         # Initialize the main window title
@@ -189,7 +199,7 @@ class MainWindow(data.QMainWindow):
         # Show the PyQt / QScintilla version in statusbar
         self.statusbar_label_left.setText(data.LIBRARY_VERSIONS)
         self.display.repl_display_message(
-            "Using: {}".format(data.LIBRARY_VERSIONS),
+            "Using:\n    Python {}\n    {}".format(sys.version, data.LIBRARY_VERSIONS),
         )
         # Show library data
         if lexers.cython_lexers_found:
@@ -202,6 +212,10 @@ class MainWindow(data.QMainWindow):
                 "Nim lexers imported.",
                 message_type=data.MessageType.SUCCESS
             )
+    
+    def __del__(self) -> None:
+        if hasattr(self, "communicator") and self.communicator is not None:
+            del self.communicator
 
     def eventFilter(self, object, event):
         if event.type() == data.QEvent.Type.Enter:
@@ -214,16 +228,40 @@ class MainWindow(data.QMainWindow):
 
         return False
     
+    @data.pyqtSlot(object)
+    def __data_received(self, _data:object) -> None:
+        _from, message = _data
+        
+        def send(*args):
+            self.data_send.emit(*args)
+        
+        if message == "ping":
+            send("pong")
+        
+        elif isinstance(message, dict):
+            if "command" in message.keys() and "arguments" in message.keys():
+                command = message["command"]
+                arguments = message["arguments"]
+                if command == "open":
+                    for arg in arguments:
+                        try:
+                            self.open_file(file=arg)
+                        except:
+                            traceback.print_exc()
+                    self.showNormal()
+                    self.activateWindow()
+
     def get_default_title(self):
         return "Ex.Co. {}".format(data.application_version)
-    
+
     def reset_title(self):
         self.setWindowTitle(self.get_default_title())
-    
+
     @data.pyqtSlot()
     def update_title(self):
         window = self.get_window_by_indication()
         if window is None:
+            self.reset_title()
             return
         current_widget = window.currentWidget()
         current_index = window.currentIndex()
@@ -237,10 +275,10 @@ class MainWindow(data.QMainWindow):
                 )
             else:
                 self.reset_title()
-        
+
         else:
             self.reset_title()
-    
+
     def init_statusbar(self):
         self.statusbar = data.QStatusBar(self)
         self.statusbar.setFont(data.get_current_font())
@@ -517,7 +555,7 @@ class MainWindow(data.QMainWindow):
         if event.button() != data.Qt.MouseButton.RightButton:
             self.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
-        components.ActionFilter.clear_action()
+        components.actionfilter.ActionFilter.clear_action()
 
     def __window_filter_keypress(self, key_event):
         """Filter keypress for appropriate action"""
@@ -675,7 +713,7 @@ class MainWindow(data.QMainWindow):
         """
         self.menubar = MenuBar()
         # Click filter for the menubar menus
-        click_filter = components.ActionFilter(self)
+        click_filter = components.actionfilter.ActionFilter(self)
         # Nested function for creating an action
         def create_action(name, key_combo, status_tip, icon, function, enabled=True):
             action = data.QAction(name, self)
@@ -1933,7 +1971,7 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/view-focus-lower.png',
                 focus_lower_window
             )
-            
+
             def toggle_one_window_mode():
                 self.view.toggle_one_window_mode()
             toggle_one_window_mode_action = create_action(
@@ -2355,7 +2393,7 @@ class MainWindow(data.QMainWindow):
             self.repl.interpreter_add_references(user_function_autocompletions)
 
             # Update the styles of all objects
-            components.TheSquid.update_styles()
+            components.thesquid.TheSquid.update_styles()
 
             # Display the successful import
             self.display.write_to_statusbar("User functions imported successfully!")
@@ -2449,10 +2487,10 @@ class MainWindow(data.QMainWindow):
             if check_index is not None and check_tab_widget is not None:
                 check_tab_widget.setCurrentIndex(check_index)
                 return
-            
+
             if tab_widget is None:
                 tab_widget = self.get_largest_window()
-            
+
             # Add new scintilla document tab to the basic widget
             new_tab = tab_widget.editor_add_document(in_file, "file", bypass_check=False)
             # Set the icon if it was set by the lexer
@@ -2531,7 +2569,7 @@ class MainWindow(data.QMainWindow):
                 message_type=data.MessageType.ERROR
             )
             return None
-    
+
     def open_file_hex(self,
                       file_path,
                       tab_widget=None,
@@ -2561,10 +2599,10 @@ class MainWindow(data.QMainWindow):
         if check_index is not None and check_tab_widget is not None:
             check_tab_widget.setCurrentIndex(check_index)
             return
-        
+
         if tab_widget is None:
             tab_widget = self.get_largest_window()
-        
+
         # Add new hexview document
         new_tab = tab_widget.hexview_add(file_path)
         # Update the icon
@@ -2595,12 +2633,12 @@ class MainWindow(data.QMainWindow):
         # Change the windows style path to the Unix style
         file_with_path = file_with_path.replace("\\", "/")
         for tab_widget in self.get_all_windows():
-            
+
             # Loop through all of the documents in the tab widget
             if _type == data.FileType.Text:
                 for i in range(tab_widget.count()):
                     # Check the file name and file name with path
-                    if (tab_widget.widget(i).name == os.path.basename(file_with_path) and 
+                    if (tab_widget.widget(i).name == os.path.basename(file_with_path) and
                         tab_widget.widget(i).save_name == file_with_path):
                         # If the file is already open, get its index in the tab widget
                         found_tab_widget = tab_widget
@@ -2615,7 +2653,7 @@ class MainWindow(data.QMainWindow):
                         found_tab_widget = tab_widget
                         found_index = i
                         break
-                    
+
         return found_tab_widget, found_index
 
     def close_all_tabs(self):
@@ -2683,7 +2721,7 @@ class MainWindow(data.QMainWindow):
                     return window.widget(i)
         #Tab was not found
         return None
-    
+
     def get_tab_by_save_name(self, in_save_name):
         """
         Find a tab using its save name (file path) in the tab widgets
@@ -2848,14 +2886,18 @@ class MainWindow(data.QMainWindow):
         gui_manipulator = None
 
         def __init__(self, parent):
-            """Initialization of the Settings object instance"""
+            """
+            Initialization of the Settings object instance
+            """
             # Get the reference to the MainWindow parent object instance
             self._parent = parent
             # Initialize the Ex.Co. settings object with the current working directory
             self.manipulator = settings.SettingsFileManipulator()
 
         def update_recent_list(self, new_file=None):
-            """Update the settings manipulator with the new file"""
+            """
+            Update the settings manipulator with the new file
+            """
             # Nested function for opening the recent file
             def new_file_function(file):
                 try:
@@ -2890,10 +2932,10 @@ class MainWindow(data.QMainWindow):
                 temp_function = functools.partial(new_file_function, recent_file)
                 new_file_action.triggered.connect(temp_function)
                 recent_files_menu.addAction(new_file_action)
-        
+
         def clear_recent_list(self):
             self.manipulator.clear_recent_files()
-        
+
         def restore(self):
             """Restore the previously stored settings"""
             # Load the settings from the initialization file
@@ -3234,7 +3276,7 @@ class MainWindow(data.QMainWindow):
                 self._parent
             )
             boxes_groupbox.layout().addWidget(main_box)
-            
+
             # Vertically split edit fields with the REPL
             main_splitter.addWidget(boxes_groupbox)
             main_splitter.addWidget(self._parent.repl_box)
@@ -3337,7 +3379,7 @@ class MainWindow(data.QMainWindow):
                 self._parent.showNormal()
             else:
                 self._parent.showMaximized()
-        
+
         def toggle_one_window_mode(self):
             """
             Toggle between one-window mode and a stored layout
@@ -3352,7 +3394,7 @@ class MainWindow(data.QMainWindow):
                         widgets.append((widget, w.tabText(i)))
                         w.removeTab(i)
                         widget.setParent(None)
-                
+
                 # Store layout and change to one-window
                 self.__stored_layout_standard = self.layout_generate()
                 json_layout = json.loads(self.__stored_layout_standard)
@@ -3399,7 +3441,7 @@ class MainWindow(data.QMainWindow):
 #                    return
 #                else:
 #                    raise Exception("Unknown option: {}".format(reply))
-#                
+#
 #                # Store the one-window_layout
 #                self.__stored_layout_one_window = self.layout_generate()
 #                # Restore stored layout
@@ -3626,10 +3668,9 @@ TabWidget QToolButton:hover {{
                 w.style().unpolish(w)
                 w.style().polish(w)
                 w.repaint()
-                
-                if w.property("indicated") == True:
-                    data.signal_dispatcher.update_title.emit()
-                        
+
+            data.signal_dispatcher.update_title.emit()
+
 
         def indication_check(self):
             if hasattr(self, "indication_timer"):
@@ -3689,7 +3730,7 @@ TabWidget QToolButton:hover {{
                             if w.hasFocus() == True:
                                 indication_list[window] = True
                                 window_indicated_flag = True
-                            
+
             if window_indicated_flag:
                 for k,v in indication_list.items():
                     k.setProperty("indicated", v)
@@ -3729,10 +3770,10 @@ TabWidget QToolButton:hover {{
         def delete_recent_file_list_menu(self):
             self._parent.recent_files_menu.setParent(None)
             self._parent.recent_files_menu = None
-        
+
         def clear_recent_file_list(self):
             warning = (
-                "Are you sure you wish to delete\n" + 
+                "Are you sure you wish to delete\n" +
                 "the recent files list?"
             )
             reply = YesNoDialog.warning(warning)
@@ -3872,7 +3913,7 @@ TabWidget QToolButton:hover {{
             main_box = self._parent.main_box
             main_box.clear_all()
 #            self._parent._print_all_boxes_and_windows()
-            
+
             editor_storage = []
             tabs_storage = []
             def create_box(parent, box):
@@ -3909,7 +3950,7 @@ TabWidget QToolButton:hover {{
                                 continue
 
                             if cls in classes.keys():
-                                
+
                                 if cls == "CustomEditor":
                                     file = key
                                     if isinstance(class_string, tuple) or isinstance(class_string, list):
@@ -3920,10 +3961,10 @@ TabWidget QToolButton:hover {{
                                         if widget is not None:
                                             widget.setCursorPosition(line, index)
                                             widget.setFirstVisibleLine(first_visible_line)
-                                
+
 #                                elif cls == "Console":
 #                                    new_tabs.console_add(key)
-                                
+
                                 elif cls == "TreeExplorer":
                                     directory_path = widget_data[0]
                                     if os.path.isdir(directory_path):
@@ -3939,12 +3980,12 @@ TabWidget QToolButton:hover {{
                                                 'tango_icons/system-show-cwd-tree-blue.png'
                                             )
                                         )
-                                
+
                                 elif cls == "HexView":
                                     file_path = widget_data[0]
                                     if os.path.isfile(file_path):
                                         new_hexview = new_tabs.hexview_add(file_path)
-                                
+
                                 elif cls == data.repl_messages_tab_name:
                                     self._parent.repl_messages_tab = new_tabs.plain_add_document(
                                         data.repl_messages_tab_name

@@ -15,7 +15,6 @@ For complete license information of the dependencies, check the 'additional_lice
 import os
 import os.path
 import json
-import pprint
 import traceback
 import data
 import themes
@@ -33,7 +32,11 @@ import functions
 editor = settings.constants.editor["default"].copy()
 # Keyboard shortcuts
 keyboard_shortcuts = settings.constants.keyboard_shortcuts["default"].copy()
-
+# Variables
+variables = {
+    "open-new-files-in-open-instance": True,
+    "max-number-of-recent-files": 100,
+}
 
 """
 -------------------------------------------
@@ -49,7 +52,6 @@ class SettingsFileManipulator:
         "application": None,
         "resources": None,
     }
-    max_number_of_recent_files = 100
     recent_files = []
     stored_sessions = {}
     context_menu_functions = {}
@@ -485,13 +487,13 @@ class SettingsFileManipulator:
         if data.platform == "Windows":
             new_file = new_file.replace("\\", "/")
         # Check recent files list length
-        while len(self.recent_files) > self.max_number_of_recent_files:
+        while len(self.recent_files) > variables["max-number-of-recent-files"]:
             # The recent files list is to long
             self.recent_files.pop(0)
         # Check if he new file is already in the list
         if new_file in self.recent_files:
             # Check if the file is already at the top
-            if self.recent_files.index(new_file) == (self.max_number_of_recent_files-1):
+            if self.recent_files.index(new_file) == (variables["max-number-of-recent-files"]-1):
                 return
             # Remove the old file with the same name as the new file from the list
             self.recent_files.pop(self.recent_files.index(new_file))

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2023 Matic Kukovec. 
+Copyright (c) 2013-2023 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -11,21 +11,8 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import os.path
-import collections
-import traceback
-import ast
-import inspect
-import math
-import functools
-import textwrap
-import difflib
-import re
-import time
-import settings
 import functions
 import data
-import components
-import themes
 
 
 """
@@ -37,7 +24,7 @@ class ExCoInfo(data.QDialog):
     #Class variables
     name    = "Ex.Co. Info"
     savable = data.CanSave.NO
-    
+
     #Class functions(methods)
     def __init__(self, parent, app_dir=""):
         """Initialization routine"""
@@ -90,7 +77,7 @@ class ExCoInfo(data.QDialog):
 #        self.setStyleSheet("background-color:transparent;")
 #        self.setWindowFlags(data.Qt.WindowType.WindowStaysOnTopHint | data.Qt.Dialog | data.Qt.WindowType.FramelessWindowHint)
 #        self.setAttribute(data.Qt.WidgetAttribute.WA_TranslucentBackground)
-    
+
     def _close(self, event):
         """Close the widget"""
         self.picture.setParent(None)

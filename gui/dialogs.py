@@ -2,22 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2023 Matic Kukovec. 
+Copyright (c) 2013-2023 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import traceback
-import inspect
-
 import data
-import settings
 import functions
-import components
-import themes
 
 from .custombuttons import *
 from .stylesheets import *
@@ -28,8 +21,8 @@ from .templates import *
 ---------------------------------------------------------
 Custom Yes/No dialog window
 ---------------------------------------------------------
-""" 
-class BaseDialog(data.QDialog):    
+"""
+class BaseDialog(data.QDialog):
     def __init__(self, text, dialog_type=None, parent=None):
         super().__init__(parent)
         # Set the internal state
@@ -44,13 +37,13 @@ class BaseDialog(data.QDialog):
         self.setFont(data.get_current_font())
         # Update style
         self.update_style()
-    
+
     def create_button_list(self):
         raise Exception("[BaseDialog] This method needs to be overridden!")
-    
+
     def init_layout(self, text, dialog_type):
         self.button_cache = []
-        
+
         # Create the main layout
         main_layout = create_layout(
             layout=LayoutType.Vertical,
@@ -58,14 +51,14 @@ class BaseDialog(data.QDialog):
             spacing=4
         )
         self.setLayout(main_layout)
-        
+
         # Add the label
         label = data.QLabel(self)
         label.setWordWrap(True)
         label.setAlignment(data.Qt.AlignmentFlag.AlignCenter)
         label.setText(text)
         main_layout.addWidget(label)
-        
+
         # Add the button groupbox
         button_frame = create_frame(
             layout=LayoutType.Horizontal,
@@ -74,7 +67,7 @@ class BaseDialog(data.QDialog):
         )
         button_layout = button_frame.layout()
         main_layout.addWidget(button_frame)
-        
+
         button_list = self.create_button_list()
         # Create all of the buttons from the list
         for button in button_list:
@@ -111,18 +104,18 @@ class BaseDialog(data.QDialog):
                         int(button["size"][1])
                     )
                 )
-            
+
             button_layout.addWidget(new_button)
             self.button_cache.append(new_button)
-        
+
         self.set_state(len(self.button_cache) - 1)
-        
+
         self.setWindowFlags(data.Qt.WindowType.FramelessWindowHint)
-    
+
     def showEvent(self, event):
         super().showEvent(event)
         self.center()
-    
+
     def __set_button_states(self, button_states):
         if len(button_states) != len(self.button_cache):
             raise Exception(
@@ -132,13 +125,13 @@ class BaseDialog(data.QDialog):
             )
         for i,item in enumerate(self.button_cache):
             item.set_focused(button_states[i])
-    
+
     def __state_cycle(self, none_index, _reversed):
         if self.state is None:
             button = self.button_cache[none_index]
             button.set_focused(True)
             self.state = button.state
-        
+
         next_state = -1
         button_list = self.button_cache
         if _reversed:
@@ -151,13 +144,13 @@ class BaseDialog(data.QDialog):
                 self.state = button.state
             else:
                 button.set_focused(False)
-    
+
     def state_cycle_right(self):
         self.__state_cycle(0, False)
-    
+
     def state_cycle_left(self):
         self.__state_cycle(len(self.button_cache) - 1, True)
-    
+
     def set_state(self, index):
         for i,button in enumerate(self.button_cache):
             if index == i:
@@ -165,7 +158,7 @@ class BaseDialog(data.QDialog):
                 self.state = button.state
             else:
                 button.set_focused(False)
-    
+
     def center(self):
         if self.parent() is not None:
             qr = self.frameGeometry()
@@ -180,7 +173,7 @@ class BaseDialog(data.QDialog):
             cp = self.screen().geometry().center()
             qr.moveCenter(cp)
             self.move(qr.topLeft())
-    
+
     def keyPressEvent(self, key_event):
         pressed_key = key_event.key()
         #Check for escape keypress
@@ -198,7 +191,7 @@ class BaseDialog(data.QDialog):
             if self.state is None:
                 self.state = self.button_cache[len(self.button_cache)-1].state
             self.done(self.state)
-    
+
     def update_style(self):
         self.setStyleSheet(f"""
 QDialog {{
@@ -228,24 +221,24 @@ QLabel {{
         """)
         for button in self.button_cache:
             button.update_style()
-    
+
     @classmethod
     def blank(cls, text):
         return cls(text).exec()
-    
+
     @classmethod
     def question(cls, text):
         return cls(text, "question").exec()
-    
+
     @classmethod
     def warning(cls, text):
         return cls(text, "warning").exec()
-    
+
     @classmethod
     def error(cls, text):
         return cls(text, "error").exec()
 
-class YesNoDialog(BaseDialog):    
+class YesNoDialog(BaseDialog):
     def create_button_list(self):
         return (
             {

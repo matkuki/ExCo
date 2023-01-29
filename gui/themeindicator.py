@@ -11,11 +11,10 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import os.path
-import traceback
 import functools
-import functions
+
 import data
-import components
+import functions
 import themes
 
 from .menu import *
@@ -93,7 +92,3 @@ QLabel {
     padding-right: 4px;
 }
         """)
-
-
-
-

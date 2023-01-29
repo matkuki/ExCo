@@ -10,24 +10,12 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sys
-import itertools
-import inspect
-import functools
-import keyword
 import re
-import collections
-import textwrap
-import importlib
+import itertools
 import data
-import components
-import themes
-import functions
+import components.actionfilter
 import interpreter
 import settings
-import lexers
-import traceback
-import gc
 
 
 """
@@ -40,7 +28,7 @@ class ReplLineEdit(data.QLineEdit):
     #Class variables  (class variables >> this means that these variables are shared accross instances of this class, until you assign a new value to them, then they become instance variables)
     _parent                         = None          #Main window reference
     interpreter                     = None          #Custom interpreter used with the REPL
-    #List of characters to use for splitting the compare string for sequences. Minus (-) was taken out because it can appear in path names 
+    #List of characters to use for splitting the compare string for sequences. Minus (-) was taken out because it can appear in path names
     _comparison_list                = [".", "(", " ", "+", "-", "*", "%", ",", "\"", "'"]
     _reduced_comparison_list        = ["(", " ", "+", "-", "*", "%", ",", "\"", "'"]
     #Lists of autocompletions grouped by levels
@@ -52,7 +40,7 @@ class ReplLineEdit(data.QLineEdit):
     _input_buffer                   = {"count": 0,  "list": [], "current_input": ""}
     #Flag that when set, make the next REPL evaluation not focus back on the REPL
     _repl_focus_flag                = False
-    
+
     """
     Built-in and private functions
     """
@@ -72,14 +60,14 @@ class ReplLineEdit(data.QLineEdit):
         self.setFont(font)
         # Initialize the interpreter
         self.interpreter = interpreter.CustomInterpreter(
-            interpreter_references, 
+            interpreter_references,
             main_form.display.repl_display_message
         )
         # Initialize interpreter reference list that will be used for autocompletions
         self._list_repl_references  = [str_ref for str_ref in interpreter_references]
         # Initialize style
         self.update_style()
-    
+
     def update_style(self):
         # REPL and REPL helper have to be set directly
         self.setStyleSheet("""
@@ -97,12 +85,12 @@ QLineEdit[indicated=true] {{
                  data.theme["fonts"]["default"]["color"],
                  data.theme["indication"]["activebackground"],
         ))
-    
+
     def indication_set(self):
         self.setProperty("indicated", True)
         self.style().unpolish(self)
         self.style().polish(self)
-    
+
     def indication_reset(self):
         self.setProperty("indicated", False)
         self.style().unpolish(self)
@@ -223,7 +211,7 @@ QLineEdit[indicated=true] {{
             end_pos = self.cursorPosition()
             #Select the added autocompletion text
             self.setSelection(start_pos, end_pos)
-    
+
     def _create_ac_cycler(self,  autocompletion_list):
         """Create a autocompletion cycler to cycle through all of the autocompletions"""
         if len(autocompletion_list) > 0:
@@ -232,7 +220,7 @@ QLineEdit[indicated=true] {{
             next(self._ac_cycler)
         else:
             self._ac_cycler = None
-    
+
     def _cycle_autocompletion(self):
         """Cycle through autocompletion list"""
         #Return if there are no autocompletions
@@ -272,7 +260,7 @@ QLineEdit[indicated=true] {{
                 #Show currently saved input text (the text that the user typed before pressing up)
                 self._input_buffer["count"] = 0
                 self.setText(self._input_buffer["current_input"])
-    
+
     def _input_buffer_add(self,  entry):
         """Add a single value to the input buffer"""
         #Check if there is any input text
@@ -330,7 +318,7 @@ QLineEdit[indicated=true] {{
             #None of the separator characters were found in current text
             current_sequence = self.text()
         return [current_sequence, previous_sequence]
-    
+
     def _find_autocompletions(self, current_sequences_list):
         """Check and display the current autocompletions, if there are any"""
         current_sequence    = current_sequences_list[0]
@@ -389,12 +377,12 @@ QLineEdit[indicated=true] {{
         """QScintila keyPressEvent, to catch which key was pressed"""
         #Return the key event
         return data.QLineEdit.keyPressEvent(self, event)
-    
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         # Reset the click&drag context menu action
-        components.ActionFilter.clear_action()
-    
+        components.actionfilter.ActionFilter.clear_action()
+
     def contextMenuEvent(self, event):
         event.accept()
 
@@ -415,7 +403,7 @@ QLineEdit[indicated=true] {{
         event.ignore()
         # Return the focus event
         return data.QLineEdit.focusInEvent(self, event)
-    
+
     def setFocus(self):
         """Overridden focus event"""
         #Execute the supeclass focus function
@@ -430,7 +418,7 @@ QLineEdit[indicated=true] {{
         event.ignore()
         #Return the focus event
         return data.QLineEdit.focusOutEvent(self, event)
-    
+
     def wheelEvent(self, wheel_event):
         """Overridden mouse wheel rotate event"""
         key_modifiers = data.QApplication.keyboardModifiers()
@@ -453,7 +441,7 @@ QLineEdit[indicated=true] {{
         else:
             #Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
-    
+
     def increase_text_size(self):
         """Increase size of the REPL text"""
         new_font = self.font()
@@ -464,7 +452,7 @@ QLineEdit[indicated=true] {{
         new_font_metric = data.QFontMetrics(new_font)
         self.main_form.view.main_relation = new_font_metric.height() + 48
         self.main_form.view.refresh_main_splitter()
-    
+
     def decrease_text_size(self):
         """Decrease size of the REPL text"""
         new_font = self.font()
@@ -475,7 +463,7 @@ QLineEdit[indicated=true] {{
         new_font_metric = data.QFontMetrics(new_font)
         self.main_form.view.main_relation = new_font_metric.height() + 48
         self.main_form.view.refresh_main_splitter()
-    
+
 
     """
     REPL interactive interpreter functions
@@ -499,7 +487,7 @@ QLineEdit[indicated=true] {{
         #Sort the new lists alphabetically
         self._list_first_level_completions.sort()
         self._list_second_level_completions.sort()
-    
+
     def interpreter_add_references(self, new_references):
         """Append new references to the existing REPL interpreter references"""
         self._list_first_level_completions = list(self._list_first_level_completions)
@@ -509,14 +497,14 @@ QLineEdit[indicated=true] {{
         self._list_first_level_completions = list(set(self._list_first_level_completions))
         #Sort the new lists alphabetically
         self._list_first_level_completions.sort()
-    
+
     def interpreter_reset_references(self, new_references, first_level_list, second_level_list):
         """Clear all of the interpreter references and update them with the new ones"""
         #Clear the references
         self.interpreter.reset_locals
         #Update the references
         self.interpreter_update_references(new_references, first_level_list, second_level_list)
-    
+
     def interpreter_update_windows(self, main, upper, lower):
         """Update the Main, Upper and Lower window references of the interpreter"""
         self.interpreter.locals["main"]     = main
@@ -534,14 +522,14 @@ QLineEdit[indicated=true] {{
         """
         #Set the skip focus flag
         self._repl_focus_flag = True
-    
+
     def get_repl_references(self):
         """Create and return a dictionary that holds all the REPL references that will be used in the interpreter module"""
         return  dict(
             repl=self,
-            interpreter=self.interpreter, 
-        )   
-    
+            interpreter=self.interpreter,
+        )
+
     def repeat_last_repl_eval(self):
         """Repeat the last command that was evaluated by the REPL if any"""
         #Check the input buffer
@@ -559,4 +547,3 @@ QLineEdit[indicated=true] {{
         self._repl_eval(eval_string)
         #Set focus back to the calling widget
         calling_widget.setFocus()
-

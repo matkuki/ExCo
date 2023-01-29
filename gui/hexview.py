@@ -9,13 +9,10 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-import sys
-import enum
-import pprint
 import data
 import data as mydata
 import functions
-import components
+import components.iconmanipulator
 
 from .templates import *
 from .stylesheets import *
@@ -31,41 +28,41 @@ class HexView(data.QFrame):
     save_name        = None
     # Reference to the custom context menu
     context_menu     = None
-    
+
     def __init__(self, file_path, parent, main_form):
         super().__init__(parent)
         self.name = os.path.basename(file_path)
         self.save_name = file_path
         self._parent = parent
         self.main_form = main_form
-        
+
         self.current_icon = functions.create_icon('various/node_template.png')
-        self.icon_manipulator = components.IconManipulator(
+        self.icon_manipulator = components.iconmanipulator.IconManipulator(
             parent=self, tab_widget=parent
         )
         self.icon_manipulator.update_icon(self)
-        
+
         # Initialize widgets
         self.__initialize_view()
-        
+
         # Update style
         self.update_style()
-        
+
         # Show the file data
         self.reload_file()
-    
+
     def __initialize_view(self):
         # Initialize view element caches
         self.__cache_views = {}
         self.__cache_labels = {}
         self.__cache_buttons = {}
         self.__cache_comboboxes = {}
-        
+
         # Layout
         layout = create_layout(layout=LayoutType.Vertical)
         layout.setSizeConstraint(data.QLayout.SizeConstraint.SetNoConstraint)
         self.setLayout(layout)
-        
+
         # Scroll area
         scroll_area = create_scroll_area()
         layout.addWidget(scroll_area)
@@ -79,7 +76,7 @@ class HexView(data.QFrame):
         scroll_area.setWidget(main_view)
         self.__cache_views["main"] = main_view
         main_layout = main_view.layout()
-        
+
         # Function for adding items
 #        def add_items(button_groups, parent, in_layout):
 #            for g,d in button_groups.items():
@@ -96,7 +93,7 @@ class HexView(data.QFrame):
 #                )
 #                in_layout.addWidget(new_group)
 #                self.__cache_views[g] = new_group
-#                
+#
 #                # Add the comboboxes, if any
 #                if "comboboxes" in d.keys():
 #                    for k,v in d["comboboxes"].items():
@@ -117,7 +114,7 @@ class HexView(data.QFrame):
 #                            new_combobox,
 #                            data.Qt.AlignmentFlag.AlignLeft | data.Qt.AlignmentFlag.AlignVCenter
 #                        )
-#                    
+#
 #                # Add buttons to group
 #                for k,v in d["buttons"].items():
 #                    if "icon-path" in v.keys() or "icon" in v.keys():
@@ -148,10 +145,10 @@ class HexView(data.QFrame):
 #                        new_button,
 #                        data.Qt.AlignmentFlag.AlignLeft | data.Qt.AlignmentFlag.AlignVCenter
 #                    )
-        
+
         # Table cache
         self.cache_table = {}
-        
+
         ## Main table
         new_table = HexTable(self, self.main_form)
         new_table.setObjectName("MainTable")
@@ -160,36 +157,36 @@ class HexView(data.QFrame):
         new_table.setStatusTip(tooltip)
         main_layout.addWidget(new_table)
         self.cache_table["main"] = new_table
-    
-    
+
+
     """
     Events
     """
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         self.main_form.view.indication_check()
-    
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.main_form.view.indication_check()
         self.main_form.last_focused_widget = self._parent
-    
+
     def hasFocus(self):
         return self.cache_table["main"].hasFocus()
-    
-    
+
+
     """
     General
     """
     def show_file_hex_data(self, byte_data):
         table = self.cache_table["main"]
-        
+
         # Clean the model
         model = table.model()
         if model is not None:
             table.setModel(None)
             model.deleteLater()
-        
+
         # Table Settings
         table.verticalHeader().hide()
         table.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
@@ -197,21 +194,21 @@ class HexView(data.QFrame):
         table.setSelectionMode(data.QAbstractItemView.SelectionMode.SingleSelection)
 #        table.itemSelectionChanged.connect(self._table_selection_changed)
 #        table.itemClicked.connect(self._table_item_clicked)
-        
+
         table.setSortingEnabled(False)
         table.setUpdatesEnabled(False)
-        
+
         verticalHeader = table.verticalHeader()
         verticalHeader.setSectionResizeMode(mydata.QHeaderView.ResizeMode.Fixed)
         horizontalHeader = table.horizontalHeader()
         horizontalHeader.setSectionResizeMode(mydata.QHeaderView.ResizeMode.Fixed)
-        
+
         # Size of a row (usually 16)
         size = 16
-        
+
         # Parse the data into lists of 'size'
         chunks = [byte_data[x:x+size] for x in range(0, len(byte_data), size)]
-        
+
         # Add the data
         address = 0
         address_offset = 0
@@ -238,10 +235,10 @@ class HexView(data.QFrame):
             # Create row
             row = [ address_string ] + chunk_list + [ ascii_string ]
             rows.append(row)
-        
+
         model = HexTableModel(rows, table)
         table.setModel(model)
-        
+
         # Column widths
         widths = [
             100,
@@ -250,24 +247,24 @@ class HexView(data.QFrame):
         ]
         for i,w in enumerate(widths):
             table.setColumnWidth(i, w)
-        
+
         table.setUpdatesEnabled(True)
-    
+
     def reload_file(self):
         with open(self.save_name, "rb") as f:
             content = f.read()
         self.show_file_hex_data(content)
-    
+
     def update_style(self):
         # Frame
         self.setStyleSheet(StyleSheetFrame.standard())
-        
+
         # Table style
         for k, v in self.cache_table.items():
             v.horizontalHeader().setSectionResizeMode(data.QHeaderView.ResizeMode.ResizeToContents)
             v.verticalScrollBar().setContextMenuPolicy(data.Qt.ContextMenuPolicy.NoContextMenu)
             v.horizontalScrollBar().setContextMenuPolicy(data.Qt.ContextMenuPolicy.NoContextMenu)
-        
+
         # Rest
         for k,v in self.__cache_buttons.items():
             v.update_style()
@@ -281,11 +278,11 @@ class HexTable(data.QTableView):
     def __init__(self, parent, main_form):
         super().__init__(parent)
         self.main_form = main_form
-    
+
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         self.main_form.view.indication_check()
-    
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.main_form.view.indication_check()
@@ -306,7 +303,7 @@ class HexTableModel(data.QAbstractTableModel):
         }
         for i in range(len(row_data[0]) - 2):
             self.__headers[i+1] = "{:02x}".format(i)
-    
+
     def rowCount(self, parent=None):
         return len(self.__row_data)
 
@@ -316,14 +313,14 @@ class HexTableModel(data.QAbstractTableModel):
     def data(self, index, role=mydata.Qt.ItemDataRole.DisplayRole):
         if role == mydata.Qt.ItemDataRole.DisplayRole:
             return self.__row_data[index.row()][index.column()]
-        
+
         elif role == mydata.Qt.ItemDataRole.TextAlignmentRole:
             column = index.column()
             if column == self.__last_index:
                 return mydata.Qt.AlignmentFlag.AlignLeft | mydata.Qt.AlignmentFlag.AlignVCenter
             else:
                 return mydata.Qt.AlignmentFlag.AlignHCenter | mydata.Qt.AlignmentFlag.AlignVCenter
-    
+
     def headerData(self, section, orientation, role=mydata.Qt.ItemDataRole.DisplayRole):
         if orientation == mydata.Qt.Orientation.Horizontal and role == mydata.Qt.ItemDataRole.DisplayRole:
             return self.__headers[section]
