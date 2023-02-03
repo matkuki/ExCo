@@ -14,18 +14,15 @@ __Optional dependencies:__
 ### Installation notes: ###
 - __Windows__:<br>
   Method 1 - using the official PyQt installer:<br>
-    Install the latest [PyQt4 or PyQt5](https://www.riverbankcomputing.com/software/pyqt/download) library for
+    Install the latest [PyQt4 or PyQt5 or PyQt6](https://www.riverbankcomputing.com/software/pyqt/download) library for
     your version of Python3 (QScintilla2 is bundled with the installer). Run Ex.Co. using the command described below in the 'Starting Ex&#46;Co&#46;' section.
 
   Method 2 - using __pip__:<br>
   If you have pip installed with your Python 3 installation (needs to be Python 3.5 or higher), you can install PyQt5 and QScintilla with the following commands (You will need to run the commands as administrator!):<br>
 ```sh 
 $ pip install PyQt5
-```
-```sh
 $ pip install Qscintilla
-```
-```sh
+$ pip install psutil
 $ pip install pywin32
 ```
 - __GNU/Linux__:<br>
@@ -41,9 +38,8 @@ $ pip install pywin32
   If you have pip installed with your Python 3 installation (needs to be Python 3.5 or higher) , you can install PyQt5 and QScintilla with the following commands (You will need to run the commands as sudo!):<br>
 ```sh 
 $ pip install PyQt5
-```
-```sh
 $ pip install Qscintilla
+$ pip install psutil
 ```
 
   Otherwise you can install PyQt4/PyQt5 and QScintilla (you'll also need the SIP library) from source from their official [website](https://www.riverbankcomputing.com/software/pyqt/download). Download the source code and follow the instructions in the readme/install files. You'll also need the [Qt C++ source code](https://wiki.qt.io/Get_the_Source#Qt_4.x).
@@ -57,11 +53,11 @@ $ pip install Qscintilla
 ### Starting Ex&#46;Co&#46;: ###
 On Windows and GNU/Linux where Python 3 is the default interpreter, use the shell/command-line command:
 ```sh
-$ python main.py
+$ python exco.py
 ```
 On GNU/Linux with Python 3 as the non-default interpreter, use the shell/command-line command:
 ```sh
-$ python3 main.py
+$ python3 exco.py
 ```
 
 For more startup options add the ```--help``` or ```-h``` flag.
