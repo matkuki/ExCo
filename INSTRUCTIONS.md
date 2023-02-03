@@ -1,7 +1,8 @@
 ### Dependencies: ###
 - Python 3
-- PyQt5 version 6.3.1 (or higher) or PyQt5 version 5.7 (or higher) or PyQt4 version 4.10 (or higher)
+- PyQt6 version 6.3.1 (or higher) or PyQt5 version 5.7 (or higher) or PyQt4 version 4.10 (or higher)
 - QScintilla 2.9 or higher (is bundled in the PyQt installer on Windows)
+- psutil (required for the new process monitor)
 - pywin32 (required on Windows only)
 
 __Optional dependencies:__
