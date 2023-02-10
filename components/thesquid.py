@@ -84,8 +84,8 @@ class TheSquid:
                         window.widget(i).corner_widget.setIconSize(
                             data.QSize(16, 16)
                         )
-                if hasattr(window.widget(i), "icon_manipulator"):
-                    window.widget(i).icon_manipulator.restyle_corner_button_icons()
+                if hasattr(window.widget(i), "internals"):
+                    window.widget(i).internals.restyle_corner_button_icons()
                 if isinstance(window.widget(i), TheSquid.__module_customeditor.TreeDisplayBase):
                     window.widget(i).update_styles()
     

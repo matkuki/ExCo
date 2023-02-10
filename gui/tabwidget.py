@@ -654,8 +654,8 @@ class TabWidget(data.QTabWidget):
         # Check close button
         self.check_close_button()
         # Update the corner widgets
-        if current_tab != None and hasattr(current_tab, "icon_manipulator"):
-            if current_tab.icon_manipulator.update_corner_widget(current_tab) == False:
+        if current_tab != None and hasattr(current_tab, "internals"):
+            if current_tab.internals.update_corner_widget(current_tab) == False:
                 # Remove the corner widget if the current widget is of an unknown type
                 self.setCornerWidget(None)
         else:
@@ -704,8 +704,8 @@ class TabWidget(data.QTabWidget):
             #The document cannot be saved, close it
             self.removeTab(emmited_tab_number)
         # Delete the tab from memory
-        if hasattr(tab, "clean_up"):
-            tab.clean_up()
+        if hasattr(tab, "__del__"):
+            tab.__del__()
         # Just in case, decrement the refcount of the tab (that's what del does)
         del tab
 
@@ -1087,7 +1087,7 @@ class TabWidget(data.QTabWidget):
         self.setCurrentIndex(new_index)
         # Change the custom editor parent
         self.widget(new_index)._parent = self
-        self.widget(new_index).icon_manipulator.update_tab_widget(self)
+        self.widget(new_index).internals.update_tab_widget(self)
         # Set Focus to the copied widget parent
         self.main_form.view.set_window_focus(source_tab_widget)
         # Update corner widget
@@ -1129,8 +1129,8 @@ class TabWidget(data.QTabWidget):
         def update_source(*args):
             source_tab = source_tab_widget.currentWidget()
             if hasattr(source_tab, "add_corner_buttons"):
-                source_tab.icon_manipulator.update_corner_widget(source_tab)
-                source_tab.icon_manipulator.remove_corner_groupbox()
+                source_tab.internals.update_corner_widget(source_tab)
+                source_tab.internals.remove_corner_groupbox()
                 source_tab.add_corner_buttons()
         data.QTimer.singleShot(5, update_source)
         # Set focus to the copied widget
@@ -1139,10 +1139,10 @@ class TabWidget(data.QTabWidget):
         tab = self.widget(new_index)
         tab._parent = self
         def update_new(*args):
-            tab.icon_manipulator.update_tab_widget(self)
+            tab.internals.update_tab_widget(self)
             if hasattr(tab, "add_corner_buttons"):
-                tab.icon_manipulator.update_corner_widget(tab)
-                tab.icon_manipulator.remove_corner_groupbox()
+                tab.internals.update_corner_widget(tab)
+                tab.internals.remove_corner_groupbox()
                 tab.add_corner_buttons()
         data.QTimer.singleShot(10, update_new)
 

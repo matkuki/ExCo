@@ -134,10 +134,12 @@ class MainWindow(data.QMainWindow):
             os.getpid()
         )
         self.setObjectName("Form")
-        # RPC communicator
-        self.communicator = components.communicator.Communicator(self.name)
-        # Connect signals
-        self.data_send.connect(self.communicator.send)
+        # IPC communicator
+#        self.communicator = components.communicator.IpcCommunicator(self.name)
+#        self.data_send.connect(self.communicator.send)
+#        self.communicator.received.connect(self.__data_received)
+        # Filc communicator
+        self.communicator = components.communicator.FileCommunicator(self.name)
         self.communicator.received.connect(self.__data_received)
         # Set default font
         self.setFont(data.get_current_font())
@@ -248,6 +250,10 @@ class MainWindow(data.QMainWindow):
                             self.open_file(file=arg)
                         except:
                             traceback.print_exc()
+                    self.showNormal()
+                    self.activateWindow()
+                
+                elif command == "show":
                     self.showNormal()
                     self.activateWindow()
 
@@ -637,7 +643,7 @@ class MainWindow(data.QMainWindow):
                 elif encoding == "ascii":
                     self.display.repl_display_success("Saved file {} in ASCII encoding.".format(focused_tab.save_name))
                 # Set the icon if it was set by the lexer
-                focused_tab.icon_manipulator.update_icon(focused_tab)
+                focused_tab.internals.update_icon(focused_tab)
                 # Reimport the user configuration file and update the menubar
                 if functions.is_config_file(focused_tab.save_name) == True:
                     self.update_menubar()
@@ -652,7 +658,7 @@ class MainWindow(data.QMainWindow):
                 encoding=encoding
             )
             #Set the icon if it was set by the lexer
-            focused_tab.icon_manipulator.update_icon(focused_tab)
+            focused_tab.internals.update_icon(focused_tab)
             #Reimport the user configuration file and update the menubar
             if functions.is_config_file(focused_tab.save_name) == True:
                 self.update_menubar()
@@ -678,7 +684,7 @@ class MainWindow(data.QMainWindow):
                     # Save the file
                     result = tab.save_document(saveas=False, encoding=encoding)
                     # Set the icon if it was set by the lexer
-                    tab.icon_manipulator.update_icon(tab)
+                    tab.internals.update_icon(tab)
                     # Set the saved something flag
                     saved_something = True
                     if result == False:
@@ -1863,7 +1869,7 @@ class MainWindow(data.QMainWindow):
                 file_explorer.display_directory(os.getcwd())
                 file_explorer.open_file_signal.connect(self.open_file)
                 file_explorer.open_file_hex_signal.connect(self.open_file_hex)
-                file_explorer.icon_manipulator.set_icon(
+                file_explorer.internals.set_icon(
                     file_explorer,
                     functions.create_icon(
                         'tango_icons/system-show-cwd-tree-blue.png'
@@ -2494,7 +2500,7 @@ class MainWindow(data.QMainWindow):
             # Add new scintilla document tab to the basic widget
             new_tab = tab_widget.editor_add_document(in_file, "file", bypass_check=False)
             # Set the icon if it was set by the lexer
-            new_tab.icon_manipulator.update_icon(new_tab)
+            new_tab.internals.update_icon(new_tab)
 
             if new_tab is not None:
                 try:
@@ -2606,7 +2612,7 @@ class MainWindow(data.QMainWindow):
         # Add new hexview document
         new_tab = tab_widget.hexview_add(file_path)
         # Update the icon
-        new_tab.icon_manipulator.update_icon(new_tab)
+        new_tab.internals.update_icon(new_tab)
 
         if new_tab is not None:
             # Update the settings manipulator with the new file
@@ -3310,7 +3316,7 @@ class MainWindow(data.QMainWindow):
                 self.function_wheel_overlay.hide()
             # Settings GUI Manipulator
             if self._parent.settings.gui_manipulator is not None:
-                self._parent.settings.gui_manipulator.clean_up()
+                self._parent.settings.gui_manipulator.__del__()
                 self._parent.settings.gui_manipulator = None
 
             self.layout_restore(settings.constants.default_layout)
@@ -3386,6 +3392,14 @@ class MainWindow(data.QMainWindow):
             """
             windows = self._parent.get_all_windows()
             if len(windows) > 1:
+                # Store layout and change to one-window
+                self.__stored_layout_standard = self.layout_generate()
+                json_layout = json.loads(self.__stored_layout_standard)
+                window_size = json_layout["WINDOW-SIZE"]
+                
+#                print(json.dumps(json_layout, indent=4))
+                
+                # Remove the widget from current layout
                 windows = self._parent.get_all_windows()
                 widgets = []
                 for w in windows:
@@ -3394,11 +3408,7 @@ class MainWindow(data.QMainWindow):
                         widgets.append((widget, w.tabText(i)))
                         w.removeTab(i)
                         widget.setParent(None)
-
-                # Store layout and change to one-window
-                self.__stored_layout_standard = self.layout_generate()
-                json_layout = json.loads(self.__stored_layout_standard)
-                window_size = json_layout["WINDOW-SIZE"]
+                
                 # Set one-window layout
                 if self.__stored_layout_one_window is not None:
                     one_window_layout = self.__stored_layout_one_window
@@ -3416,7 +3426,8 @@ class MainWindow(data.QMainWindow):
                 self.layout_restore(one_window_layout)
                 # Put all widgets back into the one
                 largest_window = self._parent.get_largest_window()
-                for w in widgets:
+                widgets.sort(key=lambda x: isinstance(x, CustomEditor) or isinstance(x, PlainEditor))
+                for w in reversed(widgets):
                     widget, tab_text = w
                     if tab_text == "REPL MESSAGES":
                         continue
@@ -3428,24 +3439,23 @@ class MainWindow(data.QMainWindow):
                 # Update the icons of the tabs
                 for i in range(largest_window.count()):
                     largest_window.update_tab_icon(largest_window.widget(i))
-#            else:
-#                quit_message = "You will now switch to the previously\nstored layout! What do you wish to do?"
-#                reply = ToggleOneWindowDialog.question(quit_message)
-#                if reply == data.DialogResult.Restore.value:
-#                    windows = self._parent.get_all_windows()
-#                    widgets = []
-#                    for w in windows:
-#                        for i in range(w.count()):
-#                            widgets.append(w.widget(i))
-#                elif reply == data.DialogResult.Cancel.value:
-#                    return
-#                else:
-#                    raise Exception("Unknown option: {}".format(reply))
-#
-#                # Store the one-window_layout
-#                self.__stored_layout_one_window = self.layout_generate()
-#                # Restore stored layout
-#                self.layout_restore(self.__stored_layout_standard)
+            
+            else:                
+                # Remove the widget from current layout
+                windows = self._parent.get_all_windows()
+                widgets = {}
+                for w in windows:
+                    for i in reversed(range(w.count())):
+                        widget = w.widget(i)
+                        widgets[widget.internals.get_id()] = {
+                            "widget": widget,
+                            "tab-text": w.tabText(i),
+                        }
+                        w.removeTab(i)
+                        widget.setParent(None)
+                
+                # Restore stored layout
+                self.layout_restore(self.__stored_layout_standard, pre_stored_widgets=widgets)
 
         def toggle_function_wheel(self):
             """
@@ -3883,7 +3893,7 @@ TabWidget QToolButton:hover {{
             json_layout = json.dumps(layout, ensure_ascii=False)
             return json_layout
 
-        def layout_restore(self, json_layout):
+        def layout_restore(self, json_layout, pre_stored_widgets=None):
             main_form = self._parent
             main_groupbox = self._parent.main_groupbox
             main_form.display.repl_suppress()
@@ -3913,9 +3923,7 @@ TabWidget QToolButton:hover {{
             main_box = self._parent.main_box
             main_box.clear_all()
 #            self._parent._print_all_boxes_and_windows()
-
-            editor_storage = []
-            tabs_storage = []
+            
             def create_box(parent, box):
                 for k,v in sorted(box.items()):
                     if k.startswith("BOX"):
@@ -3930,8 +3938,21 @@ TabWidget QToolButton:hover {{
                         new_box.setSizes(v)
                     elif k.startswith("TABS"):
                         new_tabs = parent.add_tabs()
-                        tabs_storage.append(new_tabs)
                         new_tabs.check_close_button()
+                        
+                        if pre_stored_widgets:
+                            for key, class_string in v.items():
+                                if isinstance(class_string, tuple) or isinstance(class_string, list):
+                                    cls, tab_index, widget_data = class_string
+                                    number = widget_data[-1]
+                                    if number in pre_stored_widgets.keys():
+                                        wd = pre_stored_widgets[number]
+                                        w = wd["widget"]
+                                        new_tabs.addTab(w, wd["tab-text"])
+                                        w.internals.update_tab_widget(new_tabs)
+                                        w.internals.update_icon(w)
+                            continue
+                        
                         current_index = None
                         tab_index = None
                         widget_data = None
@@ -3954,7 +3975,7 @@ TabWidget QToolButton:hover {{
                                 if cls == "CustomEditor":
                                     file = key
                                     if isinstance(class_string, tuple) or isinstance(class_string, list):
-                                        line, index, first_visible_line = widget_data
+                                        line, index, first_visible_line = widget_data[:3]
                                     widget = self._parent.open_file(file, new_tabs, False)
                                     if tab_index is not None:
                                         widget = new_tabs.widget(tab_index)
@@ -3974,12 +3995,7 @@ TabWidget QToolButton:hover {{
                                         file_explorer.display_directory(directory_path)
                                         file_explorer.open_file_signal.connect(self._parent.open_file)
                                         file_explorer.open_file_hex_signal.connect(self._parent.open_file_hex)
-                                        file_explorer.icon_manipulator.set_icon(
-                                            file_explorer,
-                                            functions.create_icon(
-                                                'tango_icons/system-show-cwd-tree-blue.png'
-                                            )
-                                        )
+                                        file_explorer.internals.update_icon(file_explorer)
 
                                 elif cls == "HexView":
                                     file_path = widget_data[0]
@@ -3991,7 +4007,7 @@ TabWidget QToolButton:hover {{
                                         data.repl_messages_tab_name
                                     )
                                     rmt = self._parent.repl_messages_tab
-                                    rmt.icon_manipulator.set_icon(rmt, self._parent.display.repl_messages_icon)
+                                    rmt.internals.set_icon(rmt, self._parent.display.repl_messages_icon)
                             else:
                                 self._parent.display.repl_display_error(f"Unknown tab type: {v}")
                         if current_index is not None:
@@ -4700,7 +4716,7 @@ TabWidget QToolButton:hover {{
                     data.repl_messages_tab_name
                 )
                 rmt = parent.repl_messages_tab
-                rmt.icon_manipulator.set_icon(rmt, self.repl_messages_icon)
+                rmt.internals.set_icon(rmt, self.repl_messages_icon)
             # Parse the message arguments
             if len(message) > 1:
                 message = " ".join(message)
@@ -5138,7 +5154,7 @@ TabWidget QToolButton:hover {{
                 parent.found_files_tab._parent.close_tab(found_files_tab_name)
             #Create a new FOUND FILES tab in the upper basic widget
             found_files_tab = parent.get_helper_window().tree_add_tab(found_files_tab_name)
-            found_files_tab.icon_manipulator.set_icon(
+            found_files_tab.internals.set_icon(
                 found_files_tab, self.system_show_cwd_tree_icon
             )
             #Focus the node tree tab
@@ -5162,7 +5178,7 @@ TabWidget QToolButton:hover {{
             found_files_tab = parent.found_files_tab
             #Create a new FOUND FILES tab in the upper basic widget
             found_files_tab = parent.get_helper_window().tree_add_tab(found_files_tab_name)
-            found_files_tab.icon_manipulator.set_icon(
+            found_files_tab.internals.set_icon(
                 found_files_tab, self.system_found_files_icon
             )
             #Focus the node tree tab
@@ -5197,7 +5213,7 @@ TabWidget QToolButton:hover {{
             found_files_tab = parent.found_files_tab
             # Create a new FOUND FILES tab in the upper basic widget
             found_files_tab = parent.get_helper_window().tree_add_tab(found_files_tab_name)
-            found_files_tab.icon_manipulator.set_icon(
+            found_files_tab.internals.set_icon(
                 found_files_tab, self.system_found_files_icon
             )
             # Focus the node tree tab
@@ -5232,7 +5248,7 @@ TabWidget QToolButton:hover {{
                 parent.found_files_tab._parent.close_tab(found_files_tab_name)
             #Create a new FOUND FILES tab in the upper basic widget
             parent.found_files_tab = parent.get_helper_window().tree_add_tab(found_files_tab_name)
-            parent.found_files_tab.icon_manipulator.set_icon(
+            parent.found_files_tab.internals.set_icon(
                 parent.found_files_tab, self.system_replace_in_files_icon
             )
             #Focus the node tree tab

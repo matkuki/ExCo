@@ -22,6 +22,7 @@ import data
 import components.fonts
 import components.signaldispatcher
 import components.processcontroller
+import components.communicator
 import components.thesquid
 import gui.mainwindow
 import settings
@@ -130,10 +131,22 @@ def main():
     number_of_instances = components.processcontroller.check_opened_excos()
     if settings.variables["open-new-files-in-open-instance"]:
         if number_of_instances > 1 and file_arguments is not None:
-            components.processcontroller.send_raw_command(
-                {"command": "open", "arguments": file_arguments}
-            )
-            return
+            try:
+                _data = {"command": "open", "arguments": file_arguments}
+#                components.processcontroller.send_raw_command(_data)
+                fc = components.communicator.FileCommunicator("OPEN-IN-EXISTING-INSTANCE")
+                fc.send_data(_data)
+                return
+            except:
+                pass
+        elif number_of_instances > 1:
+            try:
+                _data = {"command": "show", "arguments": None}
+                fc = components.communicator.FileCommunicator("SHOW-OPEN-INSTANCE")
+                fc.send_data(_data)
+                return
+            except:
+                pass
     
     # Set default application font
     components.fonts.set_application_font(

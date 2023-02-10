@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 """
@@ -13,7 +12,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import data
 import functions
 import components.actionfilter
-import components.iconmanipulator
+import components.internals
 
 from .dialogs import *
 
@@ -46,7 +45,7 @@ class SessionGuiManipulator(data.QTreeView):
     main_form               = None
     settings_manipulator    = None
     current_icon            = None
-    icon_manipulator        = None
+    internals        = None
     name                    = ""
     savable                 = data.CanSave.NO
     last_clicked_session    = None
@@ -63,28 +62,31 @@ class SessionGuiManipulator(data.QTreeView):
     icon_session_edit       = None
 
 
-    def clean_up(self):
-        # Disconnect signals
-        self.doubleClicked.disconnect()
-        # Clean up main references
-        self._parent = None
-        self.main_form = None
-        self.settings_manipulator = None
-        self.icon_manipulator = None
-        if self.session_groupbox != None:
-            self.session_groupbox.setParent(None)
-            self.session_groupbox.deleteLater()
-            self.session_groupbox = None
-        # Clean up self
-        self.setParent(None)
-        self.deleteLater()
+    def __del__(self):
+        try:
+            # Disconnect signals
+            self.doubleClicked.disconnect()
+            # Clean up main references
+            self._parent = None
+            self.main_form = None
+            self.settings_manipulator = None
+            self.internals = None
+            if self.session_groupbox != None:
+                self.session_groupbox.setParent(None)
+                self.session_groupbox.deleteLater()
+                self.session_groupbox = None
+            # Clean up self
+            self.setParent(None)
+            self.deleteLater()
+        except:
+            pass
 
     def __init__(self, settings_manipulator, parent, main_form):
         """Initialization"""
         # Initialize the superclass
         super().__init__(parent)
         # Initialize components
-        self.icon_manipulator = components.iconmanipulator.IconManipulator(
+        self.internals = components.internals.Internals(
             parent=self, tab_widget=parent
         )
         self.add_corner_buttons()
@@ -584,31 +586,31 @@ class SessionGuiManipulator(data.QTreeView):
 
     def add_corner_buttons(self):
         # Edit session
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             "tango_icons/session-edit.png",
             "Edit the selected item",
             self.edit_item
         )
         # Overwrite session
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             "tango_icons/session-overwrite.png",
             "Overwrite the selected session",
             self.overwrite_session
         )
         # Add group
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             "tango_icons/folder-add.png",
             "Add a new group",
             self.add_empty_group
         )
         # Add session
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             "tango_icons/session-add.png",
             "Add a new session",
             self.add_empty_session
         )
         # Remove session/group
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             "tango_icons/session-remove.png",
             "Remove the selected session/group",
             self.remove_item

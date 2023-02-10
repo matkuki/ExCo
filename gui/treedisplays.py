@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 """
@@ -23,7 +22,7 @@ import subprocess
 import data
 import functions
 import components.actionfilter
-import components.iconmanipulator
+import components.internals
 import components.thesquid
 
 from .dialogs import *
@@ -71,7 +70,7 @@ class TreeDisplay(data.QTreeView):
     name                    = ""
     savable                 = data.CanSave.NO
     current_icon            = None
-    icon_manipulator        = None
+    internals               = None
     tree_display_type       = None
     tree_menu               = None
     bound_tab               = None
@@ -88,29 +87,38 @@ class TreeDisplay(data.QTreeView):
     cpp_icon                = None
 
 
-    def clean_up(self):
-        # Clean up the tree model
-        self.clean_model()
-        # Disconnect signals
-        self.doubleClicked.disconnect()
-        self.expanded.disconnect()
-        # Clean up main references
-        self.main_form.node_tree_tab = None
-        self._parent = None
-        self.main_form = None
-        self.icon_manipulator = None
-        self.bound_tab = None
-        if self.tree_menu is not None:
-            self.tree_menu.setParent(None)
-            self.tree_menu = None
-        if self.worker_thread is not None:
-            self.worker_thread.stop()
-            self.worker_thread.wait()
-            self.worker_thread.quit()
-            self.worker_thread = None
-        # Clean up self
-        self.setParent(None)
-        self.deleteLater()
+    def __del__(self):
+        try:
+            # Clean up the tree model
+            try:
+                self.clean_model()
+            except:
+                pass
+            # Disconnect signals
+            try:
+                self.doubleClicked.disconnect()
+                self.expanded.disconnect()
+            except:
+                pass
+            # Clean up main references
+            self.main_form.node_tree_tab = None
+            self._parent = None
+            self.main_form = None
+            self.internals = None
+            self.bound_tab = None
+            if self.tree_menu is not None:
+                self.tree_menu.setParent(None)
+                self.tree_menu = None
+            if self.worker_thread is not None:
+                self.worker_thread.stop()
+                self.worker_thread.wait()
+                self.worker_thread.quit()
+                self.worker_thread = None
+            # Clean up self
+            self.setParent(None)
+            self.deleteLater()
+        except:
+            pass
 
     def parent_destroyed(self, event):
         # Connect the bound tab 'destroy' signal to this function
@@ -125,7 +133,9 @@ class TreeDisplay(data.QTreeView):
         # Set default font
         self.setFont(data.get_current_font())
         # Initialize components
-        self.icon_manipulator = components.iconmanipulator.IconManipulator()
+        self.internals = components.internals.Internals(
+            parent=parent, tab_widget=parent
+        )
         # Store the reference to the parent
         self._parent = parent
         # Store the reference to the main form
@@ -2006,45 +2016,49 @@ class TreeDisplayBase(data.QTreeView):
     name = ""
     savable = data.CanSave.NO
     tree_menu = None
-    icon_manipulator = None
+    internals = None
     key_release_lock = None
 
 
-    def clean_up(self):
-        model = self.model()
-        if model:
-            root = model.invisibleRootItem()
-            for item in self.iterate_items(root):
-                if item == None:
-                    continue
-                item.setData(None)
-                for row in range(item.rowCount()):
-                    item.removeRow(row)
-                for col in range(item.columnCount()):
-                    item.removeRow(col)
-
-        # Clean up the tree model
-        self._clean_model()
-        # Disconnect signals
+    def __del__(self):
         try:
-            self.doubleClicked.disconnect()
+            try:
+                model = self.model()
+                if model:
+                    root = model.invisibleRootItem()
+                    for item in self.iterate_items(root):
+                        if item == None:
+                            continue
+                        item.setData(None)
+                        for row in range(item.rowCount()):
+                            item.removeRow(row)
+                        for col in range(item.columnCount()):
+                            item.removeRow(col)
+            except:
+                pass
+            # Clean up the tree model
+            try:
+                self._clean_model()
+            except:
+                pass
+            # Disconnect signals
+            try:
+                self.doubleClicked.disconnect()
+                self.expanded.disconnect()
+            except:
+                pass
+            self._parent = None
+            self.main_form = None
+            self.internals = None
+            if self.tree_menu is not None:
+                self.tree_menu.setParent(None)
+                self.tree_menu = None
+            # Clean up self
+            self.setParent(None)
+            self.deleteLater()
         except:
             pass
-        try:
-            self.expanded.disconnect()
-        except:
-            pass
-        self._parent = None
-        self.main_form = None
-        self.icon_manipulator = None
-        if self.tree_menu is not None:
-            self.tree_menu.setParent(None)
-            self.tree_menu = None
-        # Clean up self
-        self.setParent(None)
-        self.deleteLater()
-
-
+    
     def __init__(self, parent, main_form, name):
         # Initialize the superclass
         super().__init__(parent)
@@ -2054,7 +2068,9 @@ class TreeDisplayBase(data.QTreeView):
         self._parent = parent
         self.main_form = main_form
         self.name = name
-        self.icon_manipulator = components.iconmanipulator.IconManipulator()
+        self.internals = components.internals.Internals(
+            parent=parent, tab_widget=parent
+        )
         self.key_release_lock = False
         # Set the icon size for every node
         self.update_icon_size()
@@ -2268,6 +2284,13 @@ class TreeExplorer(TreeDisplayBase):
         # Connect signals
         self.doubleClicked.connect(self._item_double_click)
         self.key_release_signal.connect(self.__keyrelease_slot)
+        # Internals
+        self.internals.set_icon(
+            self,
+            functions.create_icon(
+                'tango_icons/system-show-cwd-tree-blue.png'
+            )
+        )
 
     @data.pyqtSlot(str, dict)
     def __keyrelease_slot(self, key, modifiers):

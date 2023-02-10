@@ -12,7 +12,7 @@ import os
 import data
 import data as mydata
 import functions
-import components.iconmanipulator
+import components.internals
 
 from .templates import *
 from .stylesheets import *
@@ -23,7 +23,7 @@ class HexView(data.QFrame):
     _parent          = None
     main_form        = None
     current_icon     = None
-    icon_manipulator = None
+    internals = None
     savable          = data.CanSave.NO
     save_name        = None
     # Reference to the custom context menu
@@ -37,10 +37,10 @@ class HexView(data.QFrame):
         self.main_form = main_form
 
         self.current_icon = functions.create_icon('various/node_template.png')
-        self.icon_manipulator = components.iconmanipulator.IconManipulator(
+        self.internals = components.internals.Internals(
             parent=self, tab_widget=parent
         )
-        self.icon_manipulator.update_icon(self)
+        self.internals.update_icon(self)
 
         # Initialize widgets
         self.__initialize_view()

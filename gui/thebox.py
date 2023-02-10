@@ -157,12 +157,14 @@ class TheBox(data.QSplitter):
                     # Custom editor
                     if isinstance(w, customeditor.CustomEditor):
                         name = w.save_name
+                        if name.strip() == '':
+                            name = tab_text
                         line, index = w.getCursorPosition()
                         first_visible_line = w.firstVisibleLine()
                         tabs[name] = (
                             inverted_classes[w.__class__],
                             j,
-                            (line, index, first_visible_line)
+                            (line, index, first_visible_line, w.internals.get_id(), )
                         )
                     elif isinstance(w, plaineditor.PlainEditor):
                         # REPL messages
@@ -170,7 +172,7 @@ class TheBox(data.QSplitter):
                             tabs[name] = (
                                 data.repl_messages_tab_name,
                                 j,
-                                None
+                                (w.internals.get_id(), )
                             )
                     elif isinstance(w, treedisplays.TreeExplorer):
                         # Tree explorer
@@ -178,7 +180,7 @@ class TheBox(data.QSplitter):
                         tabs[tree_name] = (
                             inverted_classes[w.__class__],
                             j,
-                            (w.current_viewed_directory, )
+                            (w.current_viewed_directory, w.internals.get_id(), )
                         )
                     
                     elif isinstance(w, hexview.HexView):
@@ -187,7 +189,7 @@ class TheBox(data.QSplitter):
                         tabs[hexview_name] = (
                             inverted_classes[w.__class__],
                             j,
-                            (w.save_name, )
+                            (w.save_name, w.internals.get_id(), )
                         )
                     else:
                         #tabs[name] = inverted_classes[w.__class__]

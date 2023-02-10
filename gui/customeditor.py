@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 """
@@ -13,7 +12,7 @@ import os
 import re
 import data
 import components.actionfilter
-import components.iconmanipulator
+import components.internals
 import components.hotspots
 import components.linelist
 import components.thesquid
@@ -52,7 +51,7 @@ class CustomEditor(BaseEditor):
     current_file_type       = "TEXT"
     # Current tab icon
     current_icon            = None
-    icon_manipulator        = None
+    internals               = None
     # Comment character/s that will be used in comment/uncomment functions
     comment_string          = None
     # Oberon/Modula-2/CP have the begin('(*')/end('*)') commenting style,
@@ -83,37 +82,43 @@ class CustomEditor(BaseEditor):
     """
     Built-in and private functions
     """
-    def clean_up(self):
-        # Clean up references
-        self.line_list.parent = None
-        self.line_list._clear()
-        self._parent = None
-        self.main_form = None
-        # Disconnect signals
-        self.cursorPositionChanged.disconnect()
-        self.marginClicked.disconnect()
-        self.linesChanged.disconnect()
-        # Clean up namespaces
-        self.hotspots = None
-        self.bookmarks.parent = None
-        self.bookmarks = None
-        self.keyboard.parent = None
-        self.keyboard = None
-        # Clean up special functions
-        self.find = None
-        self.save = None
-        self.clear = None
-        self.highlight = None
-        # Clean up the corner widget
-        self.current_icon = None
-        self.icon_manipulator = None
-        # Clear the lexer
-        self.clear_lexer()
-        # Clean up the context menu if necessary
-        self.delete_context_menu()
-        # Disengage self from the parent and clean up self
-        self.setParent(None)
-        self.deleteLater()
+    def __del__(self):
+        try:
+            # Clean up references
+            self.line_list.parent = None
+            self.line_list._clear()
+            self._parent = None
+            self.main_form = None
+            # Disconnect signals
+            try:
+                self.cursorPositionChanged.disconnect()
+                self.marginClicked.disconnect()
+                self.linesChanged.disconnect()
+            except:
+                pass
+            # Clean up namespaces
+            self.hotspots = None
+            self.bookmarks.parent = None
+            self.bookmarks = None
+            self.keyboard.parent = None
+            self.keyboard = None
+            # Clean up special functions
+            self.find = None
+            self.save = None
+            self.clear = None
+            self.highlight = None
+            # Clean up the corner widget
+            self.current_icon = None
+            self.internals = None
+            # Clear the lexer
+            self.clear_lexer()
+            # Clean up the context menu if necessary
+            self.delete_context_menu()
+            # Disengage self from the parent and clean up self
+            self.setParent(None)
+            self.deleteLater()
+        except:
+            pass
 
     def __init__(self, parent, main_form, file_with_path=None):
         """Initialize the scintilla widget"""
@@ -197,7 +202,7 @@ class CustomEditor(BaseEditor):
             self.SC_MOD_INSERTTEXT | self.SC_MOD_DELETETEXT,
         )
         # Initialize components
-        self.icon_manipulator = components.iconmanipulator.IconManipulator(
+        self.internals = components.internals.Internals(
             parent=self, tab_widget=parent
         )
         # Set the lexer to the default Plain Text
@@ -359,10 +364,10 @@ class CustomEditor(BaseEditor):
                     lexer_instance = lexer()
                     self.set_lexer(lexer_instance, lexer_name)
                     # Change the corner widget (button) icon
-                    self.icon_manipulator.update_corner_button_icon(
+                    self.internals.update_corner_button_icon(
                         self.current_icon
                     )
-                    self.icon_manipulator.update_icon(self)
+                    self.internals.update_icon(self)
                     # Display the lexer change
                     message = "Lexer changed to: {}".format(lexer_name)
                     self.main_form.display.repl_display_message(message)
@@ -383,7 +388,7 @@ class CustomEditor(BaseEditor):
             if data.custom_menu_scale != None:
                 components.thesquid.TheSquid.customize_menu_style(lexers_menu)
         # Edit session
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             self.current_icon,
             "Change the current lexer",
             show_lexer_menu
@@ -1963,12 +1968,12 @@ class CustomEditor(BaseEditor):
         # Get the icon according to the file type
         self.current_icon = functions.get_language_file_icon(file_type)
         # Update the icon on the parent basic widget
-        self.icon_manipulator.update_icon(self)
+        self.internals.update_icon(self)
         # Set the theme
         self.set_theme(data.theme)
         # Update corner icons
-        self.icon_manipulator.update_corner_button_icon(self.current_icon)
-        self.icon_manipulator.update_icon(self)
+        self.internals.update_corner_button_icon(self.current_icon)
+        self.internals.update_icon(self)
 
     def reset_brace_matching(self):
         # Reset the brace matching color

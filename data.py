@@ -76,7 +76,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "7.2"
+application_version = "7.3"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -106,97 +106,6 @@ if os.name == "posix":
 # User configuration file
 config_file = os.path.join(settings_directory,  "userfunctions.cfg") \
     .replace('\\', '/')
-# Default user configuration file content
-default_config_file_content = '''# -*- coding: utf-8 -*-
-
-##  FILE DESCRIPTION:
-##      Normal module with a special name that holds custom user functions/variables.
-##      To manipulate the editors/windows, take a look at the QScintilla details at:
-##      http://pyqt.sourceforge.net/Docs/QScintilla2
-##
-##  NOTES:
-##      Built-in special function escape sequence: "lit#"
-##          (prepend it to escape built-ins like: cmain, set_all_text, lines, ...)
-
-\'\'\'
-# These imports are optional as they are already imported 
-# by the REPL, I added them here for clarity.
-import data
-import functions
-import settings
-
-# Imported for less typing
-from gui import *
-
-
-# Initialization function that gets executed only ONCE at startup
-def first_scan():
-    pass
-
-# Example of got to customize the menu font and menu font scaling
-#data.custom_menu_scale = 25
-#data.custom_menu_font = ("Segoe UI", 10, data.QFont.Weight.Bold)
-#data.custom_menu_scale = None
-#data.custom_menu_font = None
-
-def trim_whitespace():
-    """
-    Remove whitespace from back of every line in the main document
-    """
-    ll = []
-    tab = form.get_tab_by_indication()
-    for line in tab.line_list:
-        ll.append(line.rstrip())
-    tab.line_list = ll
-trim_whitespace.autocompletion = "trim_whitespace()"
-
-def align_assignments():
-    """
-    Align any assignments in the selected lines
-    """
-    tab = form.get_tab_by_indication()
-    new_lines = []
-    selected_text = tab.selectedText()
-    max_left_size = 0
-    for line in selected_text.split('\n'):
-        if '=' in line and line.count('=') == 1:
-            split_line = line.split('=')
-            left_size = len(split_line[0].rstrip())
-            if left_size > max_left_size:
-                max_left_size = left_size
-            new_lines.append(split_line)
-        else:
-            new_lines.append(line)
-    for i in range(len(new_lines)):
-        if isinstance(new_lines[i], list):
-            new_lines[i] = "{} = {}".format(
-                new_lines[i][0].rstrip().ljust(max_left_size, ' '),
-                new_lines[i][1].strip()
-            )
-    tab.replaceSelectedText('\n'.join(new_lines))
-align_assignments.autocompletion = "align_assignments()"
-
-# Example function definition with defined autocompletion string
-def delete_files_in_dir(extension=None, directory=None):
-    # Delete all files with the selected file extension from the directory
-    if isinstance(extension, str) == False:
-        print("File extension argument must be a string!")
-        return
-    if directory == None:
-        directory = os.getcwd()
-    elif os.path.isdir(directory) == False:
-        return
-    print("Deleting '{:s}' files in:".format(extension))
-    print(directory)
-    for file in os.listdir(directory):
-        file_extension = os.path.splitext(file)[1].lower()
-        if file_extension == extension or file_extension == "." + extension:
-            os.remove(os.path.join(directory, file))
-            print(" - deleted file: {:s}".format(file))
-    print("DONE")
-delete_files_in_dir.autocompletion = "delete_files_in_dir(extension=\"\", directory=None)"
-\'\'\'
-'''
 # Global signal dispatcher
 signal_dispatcher = None
 # Application icon image that will be displayed on all Qt widgets

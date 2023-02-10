@@ -8,9 +8,13 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import os
+import json
 import time
+import queue
 import socket
 import functools
+import traceback
 import multiprocessing
 import multiprocessing.connection
 from typing import *
@@ -22,6 +26,10 @@ import functions
 DEBUG_MODE = False
 STATUS_MODE = False
 
+
+"""
+IPC-based communicator
+"""
 ADDRESS = 'localhost'
 PORT = 19991
 PASSWORD = "ExCo"
@@ -170,12 +178,13 @@ class CommListener:
             co.close()
 
 
-class Communicator(data.QObject):
+class IpcCommunicator(data.QObject):
     """
     Object for passing messages between processes/applications
     """
     # Signals
     received: data.pyqtSignal = data.pyqtSignal(object)
+    
     # Attributes
     name = None
     client = None
@@ -222,3 +231,74 @@ class Communicator(data.QObject):
             self.multisend(message)
         else:
             self.send_to_server(message)
+
+
+"""
+File-based communicator
+"""
+class FileCommunicator(data.QObject):
+    """
+    Object for communicating between processes using files
+    """
+    # Constants
+    COMM_FILE = "exco_comm.json"
+    
+    # Signals
+    received: data.pyqtSignal = data.pyqtSignal(object)
+    __process_directory_queue: data.pyqtSignal = data.pyqtSignal()
+    
+    # Attributes
+    __name = ""
+    __comm_file_path = None
+    __file_watcher = None
+    __processing_lock = multiprocessing.Lock()
+    __processing_queue = multiprocessing.Queue()
+    
+    def __init__(self, name):
+        super().__init__()
+        
+        self.__name = name
+        self.__comm_file_path = os.path.join(
+            data.settings_directory,
+            self.COMM_FILE
+        )
+        
+        self.__file_watcher = data.QFileSystemWatcher(self)
+        self.__file_watcher.directoryChanged.connect(self.__directory_changed)
+        self.__file_watcher.fileChanged.connect(self.__file_changed)
+        self.__file_watcher.addPath(data.settings_directory)
+        
+        self.__process_directory_queue.connect(self.__process_change)
+    
+    def __directory_changed(self, path):
+        self.__processing_queue.put(path)
+        self.__process_directory_queue.emit()
+    
+    def __file_changed(self, path):
+        self.__processing_queue.put(path)
+        self.__process_directory_queue.emit()
+    
+    def __process_change(self):
+        acquired = self.__processing_lock.acquire(block=False)
+        if not acquired:
+            return
+        
+        try:
+            while True:
+                path = self.__processing_queue.get_nowait()
+                if os.path.isfile(self.__comm_file_path):
+                    with open(self.__comm_file_path, "r", encoding="utf-8") as f:
+                        text = f.read()
+                        _data = json.loads(text)
+                        self.received.emit(("FileCommunicator", _data))
+                    os.remove(self.__comm_file_path)
+        except queue.Empty:
+            pass
+        except:
+            traceback.print_exc()
+        finally:
+            self.__processing_lock.release()
+    
+    def send_data(self, _data):
+        with open(self.__comm_file_path, "w+", encoding="utf-8") as f:
+            f.write(json.dumps(_data, indent=4, ensure_ascii=False))

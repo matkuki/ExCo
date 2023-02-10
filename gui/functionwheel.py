@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 """
@@ -34,27 +33,30 @@ class FunctionWheel(data.QGroupBox):
     cursor_show_position = None
     theme_name = None
 
-    def clean_up(self):
-        self._parent = None
-        self.main_form = None
-        # Function for deleting an attribute
-        def delete_attribute(att_name):
-            attr = getattr(self, att_name)
-            attr.setParent(None)
-            attr.deleteLater()
-            delattr(self, att_name)
-        # List of attributes for clean up
-        clean_up_list = [
-            "picture",
-            "display_label",
-        ]
-        for att in clean_up_list:
-            delete_attribute(att)
-        for child_widget in self.children():
-            child_widget.deleteLater()
-        # Clean up self
-        self.setParent(None)
-        self.deleteLater()
+    def __del__(self):
+        try:
+            self._parent = None
+            self.main_form = None
+            # Function for deleting an attribute
+            def delete_attribute(att_name):
+                attr = getattr(self, att_name)
+                attr.setParent(None)
+                attr.deleteLater()
+                delattr(self, att_name)
+            # List of attributes for clean up
+            clean_up_list = [
+                "picture",
+                "display_label",
+            ]
+            for att in clean_up_list:
+                delete_attribute(att)
+            for child_widget in self.children():
+                child_widget.deleteLater()
+            # Clean up self
+            self.setParent(None)
+            self.deleteLater()
+        except:
+            pass
 
     def __init__(self, parent=None, main_form=None):
         #Initialize the superclass

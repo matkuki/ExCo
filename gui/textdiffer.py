@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 """
@@ -16,7 +15,7 @@ import settings
 import functions
 import data
 import components.actionfilter
-import components.iconmanipulator
+import components.internals
 
 from .customeditor import *
 
@@ -33,7 +32,7 @@ class TextDiffer(data.QWidget):
     name                    = ""
     savable                 = data.CanSave.NO
     current_icon            = None
-    icon_manipulator        = None
+    internals        = None
     focused_editor          = None
     text_1                  = None
     text_2                  = None
@@ -72,32 +71,35 @@ class TextDiffer(data.QWidget):
     layout      = None
 
 
-    def clean_up(self):
-        self.editor_1.mousePressEvent = None
-        self.editor_1.wheelEvent = None
-        self.editor_2.mousePressEvent = None
-        self.editor_2.wheelEvent = None
-        self.editor_1.actual_parent = None
-        self.editor_2.actual_parent = None
-        self.editor_1.clean_up()
-        self.editor_2.clean_up()
-        self.editor_1 = None
-        self.editor_2 = None
-        self.focused_editor = None
-        self.splitter.setParent(None)
-        self.splitter = None
-        self.layout = None
-        self._parent = None
-        self.main_form = None
-        self.icon_manipulator = None
-        # Clean up self
-        self.setParent(None)
-        self.deleteLater()
-        """
-        The actual clean up will occur when the next garbage collection
-        cycle is executed, probably because of the nested functions and
-        the focus decorator.
-        """
+    def __del__(self):
+        try:
+            self.editor_1.mousePressEvent = None
+            self.editor_1.wheelEvent = None
+            self.editor_2.mousePressEvent = None
+            self.editor_2.wheelEvent = None
+            self.editor_1.actual_parent = None
+            self.editor_2.actual_parent = None
+            self.editor_1.__del__()
+            self.editor_2.__del__()
+            self.editor_1 = None
+            self.editor_2 = None
+            self.focused_editor = None
+            self.splitter.setParent(None)
+            self.splitter = None
+            self.layout = None
+            self._parent = None
+            self.main_form = None
+            self.internals = None
+            # Clean up self
+            self.setParent(None)
+            self.deleteLater()
+            """
+            The actual clean up will occur when the next garbage collection
+            cycle is executed, probably because of the nested functions and
+            the focus decorator.
+            """
+        except:
+            pass
 
     def __init__(self,
                  parent,
@@ -110,7 +112,7 @@ class TextDiffer(data.QWidget):
         # Initialize the superclass
         super().__init__(parent)
         # Initialize components
-        self.icon_manipulator = components.IconManipulator(self, parent)
+        self.internals = components.internals.Internals(self, parent)
         # Initialize colors according to theme
         self.Indicator_Unique_1_Color = data.QColor(data.theme["textdiffercolors"]["indicator-unique-1-color"])
         self.Indicator_Unique_2_Color = data.QColor(data.theme["textdiffercolors"]["indicator-unique-2-color"])
@@ -292,7 +294,7 @@ class TextDiffer(data.QWidget):
         )
         skip_functions = [
             "set_theme",
-            "clean_up",
+            "__del__",
         ]
         enabled_functions = [
             "find_text",
@@ -732,7 +734,7 @@ class TextDiffer(data.QWidget):
 
     def add_corner_buttons(self):
         # Unique 1 button
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             functions.create_icon("tango_icons/diff-unique-1.png"),
             "Scroll to next unique line\nin document: '{:s}'".format(
                 self.text_1_name
@@ -740,7 +742,7 @@ class TextDiffer(data.QWidget):
             self.find_next_unique_1
         )
         # Unique 2 button
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             functions.create_icon("tango_icons/diff-unique-2.png"),
             "Scroll to next unique line\nin document: '{:s}'".format(
                 self.text_2_name
@@ -748,7 +750,7 @@ class TextDiffer(data.QWidget):
             self.find_next_unique_2
         )
         # Similar button
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             functions.create_icon("tango_icons/diff-similar.png"),
             "Scroll to next similar line\nin both documents",
             self.find_next_similar

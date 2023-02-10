@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 """
@@ -12,7 +11,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import data
 import components.actionfilter
 import components.hotspots
-import components.iconmanipulator
+import components.internals
 import settings
 import lexers
 
@@ -30,7 +29,7 @@ class PlainEditor(BaseEditor):
     _parent          = None
     main_form        = None
     current_icon     = None
-    icon_manipulator = None
+    internals = None
     savable          = data.CanSave.NO
     # Reference to the custom context menu
     context_menu     = None
@@ -38,34 +37,37 @@ class PlainEditor(BaseEditor):
     hotspots         = None
 
 
-    def clean_up(self):
-        self.hotspots = None
+    def __del__(self):
         try:
-            # Clean up the lexer
-            self.lexer().setParent(None)
-            self.setLexer(None)
+            self.hotspots = None
+            try:
+                # Clean up the lexer
+                self.lexer().setParent(None)
+                self.setLexer(None)
+            except:
+                pass
+            try:
+                # REPL MESSAGES only clean up
+                self.main_form.repl_messages_tab = None
+            except:
+                pass
+            # Clean up the decorated mouse press event
+            self.mousePressEvent = None
+            # Clean up references
+            self._parent = None
+            self.main_form = None
+            self.internals = None
+            # Destroy self
+            self.setParent(None)
+            self.deleteLater()
         except:
             pass
-        try:
-            # REPL MESSAGES only clean up
-            self.main_form.repl_messages_tab = None
-        except:
-            pass
-        # Clean up the decorated mouse press event
-        self.mousePressEvent = None
-        # Clean up references
-        self._parent = None
-        self.main_form = None
-        self.icon_manipulator = None
-        # Destroy self
-        self.setParent(None)
-        self.deleteLater()
 
     def __init__(self, parent, main_form):
         # Initialize the superclass
         super().__init__()
         # Initialize components
-        self.icon_manipulator = components.iconmanipulator.IconManipulator(self, parent)
+        self.internals = components.internals.Internals(self, parent)
         self.add_corner_buttons()
         # Store the main form and parent widget references
         self._parent = parent
@@ -89,7 +91,7 @@ class PlainEditor(BaseEditor):
         def clear():
             self.main_form.display.repl_clear_tab()
         # Clear messages
-        self.icon_manipulator.add_corner_button(
+        self.internals.add_corner_button(
             "tango_icons/edit-clear.png",
             "Clear messages",
             clear
