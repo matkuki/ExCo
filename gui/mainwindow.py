@@ -3400,7 +3400,6 @@ class MainWindow(data.QMainWindow):
 #                print(json.dumps(json_layout, indent=4))
                 
                 # Remove the widget from current layout
-                windows = self._parent.get_all_windows()
                 widgets = []
                 for w in windows:
                     for i in reversed(range(w.count())):
@@ -3408,6 +3407,8 @@ class MainWindow(data.QMainWindow):
                         widgets.append((widget, w.tabText(i)))
                         w.removeTab(i)
                         widget.setParent(None)
+                    w.setParent(None)
+                    w.deleteLater()
                 
                 # Set one-window layout
                 if self.__stored_layout_one_window is not None:
@@ -3436,13 +3437,15 @@ class MainWindow(data.QMainWindow):
                         widget._parent = largest_window
                     elif hasattr(widget, "parent") and not callable(widget.parent):
                         widget.parent = largest_window
+                    widget.internals.update_tab_widget(largest_window)
+                    widget.internals.update_icon(widget)
+                    widget.internals.update_corner_widget(widget)
                 # Update the icons of the tabs
                 for i in range(largest_window.count()):
                     largest_window.update_tab_icon(largest_window.widget(i))
             
             else:                
                 # Remove the widget from current layout
-                windows = self._parent.get_all_windows()
                 widgets = {}
                 for w in windows:
                     for i in reversed(range(w.count())):
@@ -3453,6 +3456,8 @@ class MainWindow(data.QMainWindow):
                         }
                         w.removeTab(i)
                         widget.setParent(None)
+                    w.setParent(None)
+                    w.deleteLater()
                 
                 # Restore stored layout
                 self.layout_restore(self.__stored_layout_standard, pre_stored_widgets=widgets)
@@ -3949,8 +3954,13 @@ TabWidget QToolButton:hover {{
                                         wd = pre_stored_widgets[number]
                                         w = wd["widget"]
                                         new_tabs.addTab(w, wd["tab-text"])
+                                        if hasattr(w, "_parent"):
+                                            w._parent = new_tabs
+                                        elif hasattr(w, "parent") and not callable(w.parent):
+                                            w.parent = new_tabs
                                         w.internals.update_tab_widget(new_tabs)
                                         w.internals.update_icon(w)
+                                        w.internals.update_corner_widget(w)
                             continue
                         
                         current_index = None

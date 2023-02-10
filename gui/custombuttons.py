@@ -26,7 +26,6 @@ class CustomButton(data.QLabel):
     Custom button used for displaying and executing Ex.Co. functions
     """
     #Class variables
-    parent              = None
     group_box_parent    = None
     main_form           = None
     stored_pixmap       = None

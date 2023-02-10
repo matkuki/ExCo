@@ -119,7 +119,12 @@ class Internals:
             self.__del__()
             return
         # Create the group box for buttons if needed
-        if self.corner_groupbox is None:
+        reinit = False
+        try:
+            layout = self.corner_groupbox.layout()
+        except:
+            reinit = True
+        if self.corner_groupbox is None or reinit == True:
             self.corner_groupbox = data.QGroupBox(self.__tab_widget)
             corner_layout = data.QHBoxLayout()
             corner_layout.setSpacing(0)
