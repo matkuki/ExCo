@@ -4228,8 +4228,10 @@ TabWidget QToolButton:hover {{
         def show_explorer(self):
             if data.platform == "Windows":
                 command = "explorer ."
+            elif data.platform == "Linux":
+                command = "xdg-open {}".format(os.getcwd())
             else:
-                self._parent.display.display_warning("Unimplemented yet!")
+                self._parent.display.repl_display_warning("Unimplemented yet!")
                 return
             self._parent.repl.interpreter.run_cmd_process(command, show_console=False)
 
