@@ -359,7 +359,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
                         'print(output)'
                     ]
                 else:
-                    options = 'stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False'
+                    options = 'stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True'
                     sub_call = 'subprocess.Popen("{:s}", {:s})'.format(command, options)
                     process_commands =  [
                         'result = ' + sub_call,
