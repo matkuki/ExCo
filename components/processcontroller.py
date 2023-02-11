@@ -38,28 +38,31 @@ def is_pid_running(pid):
         return False
 
 def check_opened_excos():
-    if os.path.isfile(PID_FILE):
-        with open(PID_FILE, "r+", encoding="utf-8") as f:
-            lines = f.readlines()
-    else:
+    try:
+        if os.path.isfile(PID_FILE):
+            with open(PID_FILE, "r+", encoding="utf-8") as f:
+                lines = f.readlines()
+        else:
+            with open(PID_FILE, "w+", encoding="utf-8") as f:
+                lines = []
+            
+        filtered_list = [ str(os.getpid()) ]
+        
+        for l in lines:
+            pid = l.strip()
+            if not pid.isdigit():
+                continue
+            
+            pid = int(pid)
+            if is_pid_running(pid):
+                filtered_list.append(str(pid))
+        
         with open(PID_FILE, "w+", encoding="utf-8") as f:
-            lines = []
+            f.write('\n'.join(filtered_list))
         
-    filtered_list = [ str(os.getpid()) ]
-    
-    for l in lines:
-        pid = l.strip()
-        if not pid.isdigit():
-            continue
-        
-        pid = int(pid)
-        if is_pid_running(pid):
-            filtered_list.append(str(pid))
-    
-    with open(PID_FILE, "w+", encoding="utf-8") as f:
-        f.write('\n'.join(filtered_list))
-    
-    return len(filtered_list)
+        return len(filtered_list)
+    except:
+        return -1
 
 def send_raw_command(command):
     connection = multiprocessing.connection.Client(

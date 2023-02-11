@@ -472,7 +472,21 @@ class TabWidget(data.QTabWidget):
                 data.QPoint(int(self.tabRect.width()/2), int(self.tabRect.height()/2))
             )
             drag.exec(data.Qt.DropAction.CopyAction | data.Qt.DropAction.MoveAction)
-
+            drag.destroyed.connect(self.__drag_destroyed)
+    
+    def __drag_destroyed(self, *args):
+        for i in (10, 0):
+            mouse_event = data.QMouseEvent(
+                data.QEvent.Type.MouseButtonRelease,
+                data.QPointF(i,i),
+                data.QPointF(i,i),
+                data.QPointF(i,i),
+                data.Qt.MouseButton.LeftButton,
+                data.Qt.MouseButton.LeftButton,
+                data.Qt.KeyboardModifier.NoModifier
+            )
+            data.application.sendEvent(self.tabBar(), mouse_event)
+    
     def _setmove_range(self):
         tabRect = self.tabBar().tabRect(self.currentIndex())
         pos = self.tabBar().mapFromGlobal(data.QCursor.pos())

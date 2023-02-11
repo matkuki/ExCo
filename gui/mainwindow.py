@@ -2347,21 +2347,26 @@ class MainWindow(data.QMainWindow):
         user_file_path = os.path.join(data.application_directory, data.config_file)
         # Test if userfunctions file exists
         if os.path.isfile(user_file_path) == False:
-            message = "User functions file does not exist!\n"
-            message += "Create an empty file named '{}' ".format(data.config_file)
-            message += "in the application directory\n"
-            message += "to make this error dissappear."
-            self.display.repl_display_message(
-                message,
-                message_type=data.MessageType.ERROR
-            )
-            message = "Do you wish to generate the default user definition and function file?"
-            reply = YesNoDialog.question(message)
-            if reply == data.DialogResult.Yes.value:
-                functions.create_default_config_file()
-                self.display.repl_display_success(
-                    "Default user definitions file generated!"
-                )
+#            message = "User functions file does not exist!\n"
+#            message += "Create an empty file named '{}' ".format(data.config_file)
+#            message += "in the application directory\n"
+#            message += "to make this error dissappear."
+#            self.display.repl_display_message(
+#                message,
+#                message_type=data.MessageType.ERROR
+#            )
+            # Ask to create the user definitions
+#            message = "Do you wish to generate the default user definition and function file?"
+#            reply = YesNoDialog.question(message)
+#            if reply == data.DialogResult.Yes.value:
+#                functions.create_default_config_file()
+#                self.display.repl_display_success(
+#                    "Default user definitions file generated!"
+#                )
+            # Just create the user definitions
+            functions.create_default_config_file()
+            message = "User functions file does not exist, creating the default one."
+            self.display.repl_display_warning(message)
             return
         user_file = open(user_file_path, "r", encoding="utf-8")
         user_code = user_file.read()
