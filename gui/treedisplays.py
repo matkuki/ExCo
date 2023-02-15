@@ -145,7 +145,7 @@ class TreeDisplay(data.QTreeView):
         # Disable node expansion on double click
         self.setExpandsOnDoubleClick(False)
         # Connect the click and doubleclick signal
-        self.doubleClicked.connect(self._item_double_click)
+        self.doubleClicked.connect(self.__item_double_click)
 #        self.clicked.connect(self._item_click)
         # Connect the doubleclick signal
         self.expanded.connect(self._check_contents)
@@ -486,7 +486,7 @@ class TreeDisplay(data.QTreeView):
             if show_menu:
                 self.tree_menu.popup(cursor)
 
-    def _item_double_click(self, model_index):
+    def __item_double_click(self, model_index):
         """
         Function connected to the doubleClicked signal of the tree display
         """
@@ -2107,7 +2107,7 @@ class TreeDisplayBase(data.QTreeView):
     """
     Private/Internal functions
     """
-    def _create_standard_item(self, text, bold=False, icon=None):
+    def create_standard_item(self, text, bold=False, icon=None):
         # Font
 #        brush = data.QBrush(data.QColor(data.theme["fonts"]["keyword"]["color"]))
         font = data.get_current_font()
@@ -2282,7 +2282,7 @@ class TreeExplorer(TreeDisplayBase):
         self.computer = functions.create_icon("tango_icons/computer.png")
         self.goto_icon = functions.create_icon('tango_icons/edit-goto.png')
         # Connect signals
-        self.doubleClicked.connect(self._item_double_click)
+        self.doubleClicked.connect(self.__item_double_click)
         self.key_release_signal.connect(self.__keyrelease_slot)
         # Internals
         self.internals.set_icon(
@@ -2291,7 +2291,19 @@ class TreeExplorer(TreeDisplayBase):
                 'tango_icons/system-show-cwd-tree-blue.png'
             )
         )
-
+        # File watcher: to watch for displayed directory modifications
+        self.__file_watcher = data.QFileSystemWatcher(self)
+        self.__file_watcher.directoryChanged.connect(self.__directory_changed)
+        self.__file_watcher.fileChanged.connect(self.__file_changed)
+    
+    @data.pyqtSlot(str)
+    def __directory_changed(self, path):
+        self.display_directory(path, scroll_restore=True)
+    
+    @data.pyqtSlot(str)
+    def __file_changed(self, path):
+        pass
+    
     @data.pyqtSlot(str, dict)
     def __keyrelease_slot(self, key, modifiers):
 #        print(key, modifiers)
@@ -2311,7 +2323,7 @@ class TreeExplorer(TreeDisplayBase):
         if key == "Key_Delete":
             self.__delete_items()
 
-    def _init_tree_model(self):
+    def __init_tree_model(self):
         self.horizontalScrollbarAction(1)
         self.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
         tree_model = data.QStandardItemModel()
@@ -2322,7 +2334,7 @@ class TreeExplorer(TreeDisplayBase):
         self.setUniformRowHeights(True)
         return tree_model
 
-    def _create_item_attribute(self,
+    def __create_item_attribute(self,
                                itype,
                                path,
                                hidden=False,
@@ -2336,7 +2348,7 @@ class TreeExplorer(TreeDisplayBase):
             hide_menu=hide_menu
         )
 
-    def _is_hidden_item(self, item):
+    def __is_hidden_item(self, item):
         try:
             if data.platform == "Windows":
                 # Windows
@@ -2381,8 +2393,6 @@ class TreeExplorer(TreeDisplayBase):
         """
         Signal that fires when editing was canceled/ended
         """
-#        print(widget.text())
-#        self.display_directory(self.current_viewed_directory)
         # Check if the directory name is valid
         if self.added_item is not None and self.added_item.text() == "":
             self.base_item.removeRow(self.added_item.row())
@@ -2392,7 +2402,7 @@ class TreeExplorer(TreeDisplayBase):
             self.renamed_item = None
         self._unlock_key_release()
 
-    def _item_changed(self, item):
+    def __item_changed(self, item):
         """
         Callback connected to the displays
         QStandardItemModel 'itemChanged' signal
@@ -2428,7 +2438,10 @@ class TreeExplorer(TreeDisplayBase):
                     "{} '{}' already exits!".format(item_text, new_name),
                     message_type=data.MessageType.ERROR
                 )
-                self.display_directory(self.current_viewed_directory)
+                self.display_directory(
+                    self.current_viewed_directory,
+                    scroll_restore=False
+                )
                 return
             # Rename the item
             try:
@@ -2445,11 +2458,13 @@ class TreeExplorer(TreeDisplayBase):
                         item_text.lower(), item.attributes.path),
                     message_type=data.MessageType.ERROR
                 )
-                self.display_directory(self.current_viewed_directory)
+                self.display_directory(
+                    self.current_viewed_directory,
+                    scroll_restore=False
+                )
                 return
             # Finish editing and reset the view
             self.renamed_item = None
-            self.display_directory(self.current_viewed_directory)
 
         elif (item.attributes.itype == TreeExplorer.ItemType.NEW_DIRECTORY or
               item.attributes.itype == TreeExplorer.ItemType.NEW_FILE):
@@ -2491,9 +2506,14 @@ class TreeExplorer(TreeDisplayBase):
             # Finish editing and reset the view
             item.setEditable(False)
             self.added_item = None
-            self.display_directory(self.current_viewed_directory)
+    
+    def refresh(self):
+        self.display_directory(
+            self.current_viewed_directory,
+            scroll_restore=False
+        )
 
-    def _item_right_click(self, model_index):
+    def __item_right_click(self, model_index):
         item = self.model().itemFromIndex(model_index)
         cursor = data.QCursor.pos()
         # Clean up the menu if needed
@@ -2510,7 +2530,7 @@ class TreeExplorer(TreeDisplayBase):
         if item is not None:
             # Open the current item
             def open_item():
-                self._open_item(item)
+                self.open_item(item)
             title = "Open directory"
             icon = 'tango_icons/document-open.png'
             if hasattr(item, "attributes") == False:
@@ -2722,12 +2742,10 @@ class TreeExplorer(TreeDisplayBase):
         # Separator
         self.tree_menu.addSeparator()
         # New file
-        def refresh():
-            self.display_directory(self.current_viewed_directory)
         refresh_action = data.QAction(
             "Refresh view", self.tree_menu
         )
-        refresh_action.triggered.connect(refresh)
+        refresh_action.triggered.connect(self.refresh)
         icon = functions.create_icon('tango_icons/view-refresh.png')
         refresh_action.setIcon(icon)
         self.tree_menu.addAction(refresh_action)
@@ -2736,10 +2754,10 @@ class TreeExplorer(TreeDisplayBase):
             # Get the path
             path = self.current_viewed_directory
             # Create a new file item for editing
-            create_file_item = self._create_standard_item(
+            create_file_item = self.create_standard_item(
                     "", bold=False, icon=self.file_icon
             )
-            create_file_item.attributes = self._create_item_attribute(
+            create_file_item.attributes = self.__create_item_attribute(
                 TreeExplorer.ItemType.NEW_FILE,
                 path
             )
@@ -2762,10 +2780,10 @@ class TreeExplorer(TreeDisplayBase):
             # Get the path
             path = self.current_viewed_directory
             # Create a new directory item for editing
-            create_directory_item = self._create_standard_item(
+            create_directory_item = self.create_standard_item(
                     "", bold=False, icon=self.folder_icon
             )
-            create_directory_item.attributes = self._create_item_attribute(
+            create_directory_item.attributes = self.__create_item_attribute(
                 TreeExplorer.ItemType.NEW_DIRECTORY,
                 path
             )
@@ -2833,7 +2851,6 @@ class TreeExplorer(TreeDisplayBase):
         if TreeExplorer.cut_items is not None:
             TreeExplorer.cut_items = None
             TreeExplorer.copy_items = None
-        self.display_directory(self.current_viewed_directory)
 
     def __copy_items(self):
         items = []
@@ -2897,7 +2914,6 @@ class TreeExplorer(TreeDisplayBase):
                         shutil.rmtree(path)
                     else:
                         os.remove(path)
-                    self.display_directory(self.current_viewed_directory)
                 else:
                     self.main_form.display.repl_display_message(
                         "Item '{}'\n does not seem to exist!!".format(
@@ -2918,16 +2934,16 @@ class TreeExplorer(TreeDisplayBase):
                 indexes = self.selectedIndexes()
             for i in indexes:
                 item = self.model().itemFromIndex(i)
-                self._open_item(item)
+                self.open_item(item)
         except:
             self.main_form.display.repl_display_error(
                 traceback.format_exc()
             )
 
-    def _item_double_click(self, model_index):
+    def __item_double_click(self, model_index):
         self.__open_items(model_index)
 
-    def _open_item(self, item):
+    def open_item(self, item):
         if hasattr(item, "attributes") == False:
             index = item.index()
             if self.isExpanded(index):
@@ -2963,11 +2979,11 @@ class TreeExplorer(TreeDisplayBase):
 
     def display_windows_disks(self):
         self._clean_model()
-        tree_model = self._init_tree_model()
-        base_item = self._create_standard_item(
+        tree_model = self.__init_tree_model()
+        base_item = self.create_standard_item(
             "Computer", bold=False, icon=self.computer
         )
-        base_item.attributes = self._create_item_attribute(
+        base_item.attributes = self.__create_item_attribute(
             TreeExplorer.ItemType.COMPUTER,
             None
         )
@@ -2976,10 +2992,10 @@ class TreeExplorer(TreeDisplayBase):
         drives = drives.split('\000')[:-1]
         for d in drives:
             d = functions.unixify_path(d)
-            item = self._create_standard_item(
+            item = self.create_standard_item(
                 d, bold=False, icon=self.disk_icon
             )
-            item.attributes = self._create_item_attribute(
+            item.attributes = self.__create_item_attribute(
                 TreeExplorer.ItemType.DIRECTORY,
                 d,
                 disk=True
@@ -2989,26 +3005,26 @@ class TreeExplorer(TreeDisplayBase):
         # Set the tree model
         self.setModel(tree_model)
         # Connect the signals
-        tree_model.itemChanged.connect(self._item_changed)
+        tree_model.itemChanged.connect(self.__item_changed)
         # Expand the base item
         self.expand(base_item.index())
 
-    def _create_directory_list(self, directory):
+    def create_directory_list(self, directory):
         dir_items = []
         file_items = []
         dir_list = os.listdir(directory)
         for i in dir_list:
             full_path = os.path.join(directory, i)
             full_path = functions.unixify_path(full_path)
-            hidden = self._is_hidden_item(full_path)
+            hidden = self.__is_hidden_item(full_path)
             if os.path.isdir(full_path):
                 icon = self.folder_icon
                 if hidden:
                     icon = functions.change_icon_opacity(icon, 0.3)
-                item = self._create_standard_item(
+                item = self.create_standard_item(
                     i, bold=False, icon=icon
                 )
-                item.attributes = self._create_item_attribute(
+                item.attributes = self.__create_item_attribute(
                     TreeExplorer.ItemType.DIRECTORY,
                     full_path,
                     hidden
@@ -3020,10 +3036,10 @@ class TreeExplorer(TreeDisplayBase):
                 )
                 if hidden:
                     icon = functions.change_icon_opacity(icon, 0.3)
-                item = self._create_standard_item(
+                item = self.create_standard_item(
                     i, bold=False, icon=icon
                 )
-                item.attributes = self._create_item_attribute(
+                item.attributes = self.__create_item_attribute(
                     TreeExplorer.ItemType.FILE,
                     full_path,
                     hidden
@@ -3042,7 +3058,7 @@ class TreeExplorer(TreeDisplayBase):
         # First execute any special routine ...
         if event.button() == data.Qt.MouseButton.RightButton:
             index = self.indexAt(event.pos())
-            self._item_right_click(index)
+            self.__item_right_click(index)
         # ... then call the super-class event
         super().mousePressEvent(event)
 
@@ -3050,17 +3066,28 @@ class TreeExplorer(TreeDisplayBase):
     """
     Public functions
     """
-    def display_directory(self, directory, disk=False):
+    def display_directory(self, directory, disk=False, scroll_restore=False):
+        watched_directories = self.__file_watcher.directories()
+        if len(watched_directories) > 0:
+            self.__file_watcher.removePaths(watched_directories)
+        if os.path.isdir(directory):
+            self.__file_watcher.addPath(directory)
+        
+        scroll_position = (
+            self.horizontalScrollBar().value(),
+            self.verticalScrollBar().value()
+        )
+        
         # Store the directory
         self.current_viewed_directory = directory
         # Create the directory list
-        tree_model = self._init_tree_model()
+        tree_model = self.__init_tree_model()
         sd = os.path.splitdrive(directory)
         if disk == True:
-            base_item = self._create_standard_item(
+            base_item = self.create_standard_item(
                 directory, bold=False, icon=self.disk_icon
             )
-            base_item.attributes = self._create_item_attribute(
+            base_item.attributes = self.__create_item_attribute(
                 TreeExplorer.ItemType.DISK,
                 directory
             )
@@ -3069,19 +3096,19 @@ class TreeExplorer(TreeDisplayBase):
             parent_dir = os.path.abspath(
                 os.path.join(directory, os.pardir)
             )
-            base_item = self._create_standard_item(
+            base_item = self.create_standard_item(
                 functions.unixify_path(directory),
                 bold=False,
                 icon=self.folder_icon
             )
-            base_item.attributes = self._create_item_attribute(
+            base_item.attributes = self.__create_item_attribute(
                 TreeExplorer.ItemType.BASE_DIRECTORY,
                 directory
             )
-            up_item = self._create_standard_item(
+            up_item = self.create_standard_item(
                 "..", bold=False, icon=self.folder_icon
             )
-            up_item.attributes = self._create_item_attribute(
+            up_item.attributes = self.__create_item_attribute(
                 TreeExplorer.ItemType.ONE_UP_DIRECTORY,
                 parent_dir,
                 hide_menu=True
@@ -3089,16 +3116,16 @@ class TreeExplorer(TreeDisplayBase):
             base_item.appendRow(up_item)
             tree_model.appendRow(base_item)
         else:
-            base_item = self._create_standard_item(
+            base_item = self.create_standard_item(
                 sd[0], bold=False, icon=self.disk_icon
             )
-            base_item.attributes = self._create_item_attribute(
+            base_item.attributes = self.__create_item_attribute(
                 TreeExplorer.ItemType.DISK,
                 directory
             )
             tree_model.appendRow(base_item)
         try:
-            lst = self._create_directory_list(directory)
+            lst = self.create_directory_list(directory)
             for i in lst:
                 base_item.appendRow(i)
         except:
@@ -3115,9 +3142,17 @@ class TreeExplorer(TreeDisplayBase):
         # Set the tree model
         self.setModel(tree_model)
         # Connect the signals
-        tree_model.itemChanged.connect(self._item_changed)
+        tree_model.itemChanged.connect(self.__item_changed)
         # Expand the base item
         self.expand(base_item.index())
+        
+        # Restore scroll position
+        if scroll_restore is not None:
+            def __scroll_restore():
+                x, y = scroll_position
+                self.horizontalScrollBar().setValue(x)
+                self.verticalScrollBar().setValue(y)
+            data.QTimer.singleShot(0, __scroll_restore)
 
     def customize_context_menu(self):
         self._customize_context_menu(

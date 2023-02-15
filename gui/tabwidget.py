@@ -399,7 +399,7 @@ class TabWidget(data.QTabWidget):
         # Add signal for coling a tab to the EVT_tabCloseRequested function
         self.tabCloseRequested.connect(self._signal_editor_tabclose)
         # Connect signal that fires when the tab index changes
-        self.currentChanged.connect(self._signal_editor_tabindex_change)
+        self.currentChanged.connect(self.__signal_editor_tabindex_change)
         # Store the default settings
         self.default_tab_font = self.tabBar().font()
         self.default_icon_size = self.tabBar().iconSize()
@@ -656,7 +656,7 @@ class TabWidget(data.QTabWidget):
         # Update window title
         data.signal_dispatcher.update_title.emit()
 
-    def _signal_editor_tabindex_change(self, change_event):
+    def __signal_editor_tabindex_change(self, change_event):
         """Signal when the tab index changes"""
         # Set Save/SaveAs buttons in the menubar
         self._set_save_status()
@@ -668,7 +668,8 @@ class TabWidget(data.QTabWidget):
         # Check close button
         self.check_close_button()
         # Update the corner widgets
-        if current_tab != None and hasattr(current_tab, "internals"):
+        if current_tab is not None and hasattr(current_tab, "internals"):
+            current_tab.internals.update_tab_widget(self)
             if current_tab.internals.update_corner_widget(current_tab) == False:
                 # Remove the corner widget if the current widget is of an unknown type
                 self.setCornerWidget(None)
@@ -1110,8 +1111,8 @@ class TabWidget(data.QTabWidget):
         Don't know why yet, maybe the PyQt parent transfer happens in the background???
         """
         for i in range(2):
-            self._signal_editor_tabindex_change(None)
-            source_tab_widget._signal_editor_tabindex_change(None)
+            self.__signal_editor_tabindex_change(None)
+            source_tab_widget.__signal_editor_tabindex_change(None)
 
     def drag_tab_in(self, source_tab_widget, source_index):
         """

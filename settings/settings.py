@@ -176,6 +176,9 @@ class SettingsFileManipulator:
         """
         return functions.test_text_file(self.settings_filename_with_path)
     
+    def get_settings_file(self):
+        return self.settings_filename_with_path
+    
     def create_settings_file(self, settings_data):
         """
         Create the settings file
