@@ -5597,6 +5597,14 @@ TabWidget QToolButton:hover {{
                 create_lexer(lexers.RouterOS, 'RouterOS'),
                 lexers_menu
             )
+            Spice_action = create_action(
+                'Spice',
+                None,
+                'Change document lexer to: Spice',
+                'language_icons/logo_spice.png',
+                create_lexer(lexers.Spice, 'Spice'),
+                lexers_menu
+            )
             SQL_action = create_action(
                 'SQL',
                 None,
@@ -5761,6 +5769,7 @@ TabWidget QToolButton:hover {{
             lexers_menu.addAction(PYTHON_action)
             lexers_menu.addAction(RUBY_action)
             lexers_menu.addAction(ROUTEROS_action)
+            lexers_menu.addAction(Spice_action)
             lexers_menu.addAction(SQL_action)
             lexers_menu.addAction(TCL_action)
             lexers_menu.addAction(TEX_action)

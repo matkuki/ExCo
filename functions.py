@@ -219,6 +219,8 @@ def get_language_file_icon(language_name):
         return create_icon('language_icons/logo_postscript.png')
     elif language_name  == "routeros":
         return create_icon('language_icons/logo_routeros.png')
+    elif language_name  == "spice":
+        return create_icon('language_icons/logo_spice.png')
     elif language_name  == "sql":
         return create_icon('language_icons/logo_sql.png')
     elif language_name  == "verilog":
