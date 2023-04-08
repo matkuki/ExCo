@@ -2298,7 +2298,18 @@ class TreeExplorer(TreeDisplayBase):
     
     @data.pyqtSlot(str)
     def __directory_changed(self, path):
-        self.display_directory(path, scroll_restore=True)
+        self.__last_changed_path = path
+        if hasattr(self, "directory_changed_timer"):
+            self.directory_changed_timer.stop()
+        else:
+            self.directory_changed_timer = data.QTimer(self._parent)
+            self.directory_changed_timer.setInterval(50)
+            self.directory_changed_timer.setSingleShot(True)
+            self.directory_changed_timer.timeout.connect(self.__directory_process)
+        self.directory_changed_timer.start(100)
+    
+    def __directory_process(self):
+        self.display_directory(self.__last_changed_path, scroll_restore=True)
     
     @data.pyqtSlot(str)
     def __file_changed(self, path):
