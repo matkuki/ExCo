@@ -131,10 +131,9 @@ keyboard_shortcuts = {
             'toggle_wrap': 'Ctrl+P',
             'upper_focus': 'Ctrl+2',
             'function_wheel_toggle': 'F1',
+            'settings_manipulator_toggle': 'F2',
             'select_tab_left': 'Ctrl+,',
             'select_tab_right': 'Ctrl+.',
-            'toggle_main_window_side': 'F6',
-    
         },
         "editor": {
             'cancel': 'Escape',

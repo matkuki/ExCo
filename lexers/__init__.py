@@ -35,6 +35,7 @@ from lexers.oberon import *
 from lexers.php import *
 from lexers.python import *
 from lexers.routeros import *
+from lexers.spice import *
 from lexers.text import *
 
 from lexers.builtin import *

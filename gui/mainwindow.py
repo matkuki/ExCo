@@ -567,18 +567,22 @@ class MainWindow(data.QMainWindow):
         """Filter keypress for appropriate action"""
         pressed_key = key_event.key()
         accept_keypress = False
-        #Check for escape keypress
+        # Check for escape keypress
         if pressed_key == data.Qt.Key.Key_Escape:
-            #Check if the function wheel overlay is shown
-            if self.view.function_wheel_overlay.isVisible() == True:
-                self.view.toggle_function_wheel()
+            # Check if the function wheel overlay is shown
+            if self.view.function_wheel_overlay is not None:
+                if self.view.function_wheel_overlay.isVisible():
+                    self.view.hide_function_wheel()
+            if self.settings.gui_manipulator is not None:
+                if self.settings.gui_manipulator.isVisible():
+                    self.view.hide_settings_manipulator()
         return accept_keypress
 
     def __window_filter_keyrelease(self, key_event):
-            """Filter keyrelease for appropriate action"""
-            #released_key = key_event.key()
-            accept_keyrelease = False
-            return accept_keyrelease
+        """Filter keyrelease for appropriate action"""
+        #released_key = key_event.key()
+        accept_keyrelease = False
+        return accept_keyrelease
 
     def key_events_lock(self):
         """
@@ -1930,7 +1934,7 @@ class MainWindow(data.QMainWindow):
             view_menu = Menu("&View", self.menubar)
             self.menubar.addMenu(view_menu)
             view_menu.installEventFilter(click_filter)
-            #Show/hide the function wheel
+            # Show/hide the function wheel
             function_wheel_toggle_action = create_action(
                 'Show/Hide Function Wheel',
                 settings.keyboard_shortcuts['general']['function_wheel_toggle'],
@@ -1938,7 +1942,15 @@ class MainWindow(data.QMainWindow):
                 data.application_icon,
                 self.view.toggle_function_wheel
             )
-            #Maximize/minimize entire Ex.Co. window
+            # Show/hide the settings manipulator
+            settings_manipulator_toggle_action = create_action(
+                'Show/Hide Settings Manipulator',
+                settings.keyboard_shortcuts['general']['settings_manipulator_toggle'],
+                'Show/hide the Ex.Co. settings manipulator',
+                data.application_icon,
+                self.view.toggle_settings_manipulator
+            )
+            # Maximize/minimize entire Ex.Co. window
             maximize_window_action = create_action(
                 'Maximize/Normalize',
                 settings.keyboard_shortcuts['general']['maximize_window'],
@@ -2174,6 +2186,7 @@ class MainWindow(data.QMainWindow):
             )
             #Add all actions and menus
             view_menu.addAction(function_wheel_toggle_action)
+            view_menu.addAction(settings_manipulator_toggle_action)
             view_menu.addSeparator()
             view_menu.addMenu(bookmark_menu)
             view_menu.addSeparator()
@@ -2271,7 +2284,7 @@ class MainWindow(data.QMainWindow):
             self.menubar.addMenu(settings_menu)
             settings_menu.installEventFilter(click_filter)
             def show_settings():
-                self.view.show_settings_gui_manipulator()
+                self.view.show_settings_manipulator()
             show_gui_action = create_action(
                 'Graphical Settings Editor',
                 None,
@@ -2305,7 +2318,7 @@ class MainWindow(data.QMainWindow):
         construct_sessions_menu()
 #        construct_settings_menu()
         construct_help_menu()
-        #Connect the triggered signal for hiding the function wheel on menubar clicks
+        # Connect the triggered signal for hiding the function wheel on menubar clicks
         def hide_fw(action):
             #Hide the function wheel only when the clicked action is not "Show/Hide Function Wheel"
             if isinstance(action, data.QAction):
@@ -3316,9 +3329,9 @@ class MainWindow(data.QMainWindow):
             )
             self.function_wheel_overlay.setObjectName("Function_Wheel")
             if show_overlay == True:
-                self.function_wheel_overlay.show()
+                self._parent.view.show_function_wheel()
             else:
-                self.function_wheel_overlay.hide()
+                self._parent.view.hide_function_wheel()
             # Settings GUI Manipulator
             if self._parent.settings.gui_manipulator is not None:
                 self._parent.settings.gui_manipulator.__del__()
@@ -3466,7 +3479,14 @@ class MainWindow(data.QMainWindow):
                 
                 # Restore stored layout
                 self.layout_restore(self.__stored_layout_standard, pre_stored_widgets=widgets)
-
+        
+        def hide_all_overlay_widgets(self):
+            """
+            Hide every overlay widget: function wheel, settings gui manipulator, ...
+            """
+            self.hide_function_wheel()
+            self.hide_settings_manipulator()
+        
         def toggle_function_wheel(self):
             """
             Show/hide the function wheel overlay
@@ -3475,17 +3495,20 @@ class MainWindow(data.QMainWindow):
                 self.hide_function_wheel()
             else:
                 self.show_function_wheel()
-
-        def hide_all_overlay_widgets(self):
+        
+        def hide_function_wheel(self):
             """
-            Hide every overlay widget: function wheel, settings gui manipulator, ...
+            Hide the function wheel overlay
             """
-            self.hide_function_wheel()
-            self.hide_settings_gui_manipulator()
+            if self.function_wheel_overlay is not None:
+                self.function_wheel_overlay.hide()
 
         def show_function_wheel(self):
-            """Show the function wheel overlay"""
-            self.hide_settings_gui_manipulator()
+            """
+            Show the function wheel overlay
+            """
+            self.hide_all_overlay_widgets()
+            self.hide_settings_manipulator()
             # Check the windows size before displaying the overlay
             if (self._parent.width() < self.function_wheel_overlay.width() or
                 self._parent.height() < self.function_wheel_overlay.height()):
@@ -3505,15 +3528,19 @@ class MainWindow(data.QMainWindow):
                 self._parent.last_focused_widget = focused_widget
                 # Show the function wheel overlay
                 self.function_wheel_overlay.show()
-
-        def hide_function_wheel(self):
+        
+        def toggle_settings_manipulator(self):
             """
-            Hide the function wheel overlay
+            Show/hide the settings manipulator
             """
-            if self.function_wheel_overlay is not None:
-                self.function_wheel_overlay.hide()
+            if self._parent.settings.gui_manipulator is not None and \
+               self._parent.settings.gui_manipulator.isVisible() == True:
+                self.hide_settings_manipulator()
+            else:
+                self.show_settings_manipulator()
 
-        def show_settings_gui_manipulator(self):
+        def show_settings_manipulator(self):
+            self.hide_all_overlay_widgets()
             # Initialize the settings GUI manipulator if needed
             if self._parent.settings.gui_manipulator is None:
                 compare_size = SettingsGuiManipulator.DEFAULT_SIZE
@@ -3528,12 +3555,12 @@ class MainWindow(data.QMainWindow):
                     parent=self._parent.main_groupbox,
                     main_form=self._parent,
                 )
-            elif self._parent.settings.gui_manipulator.shown == True:
+            elif self._parent.settings.gui_manipulator.isVisible():
                 return
             # Show the gui manipulator
             self._parent.settings.gui_manipulator.show()
 
-        def hide_settings_gui_manipulator(self):
+        def hide_settings_manipulator(self):
             if self._parent.settings.gui_manipulator is not None:
                 self._parent.settings.gui_manipulator.hide()
 

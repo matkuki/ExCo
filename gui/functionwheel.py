@@ -23,7 +23,7 @@ from .textdiffer import *
 Overlay helper widget for visually selecting an Ex.Co. function
 ----------------------------------------------------------------
 """
-class FunctionWheel(data.QGroupBox):
+class FunctionWheel(data.QFrame):
     SIZE = (640, 560)
     # Class variables
     _parent = None
@@ -1070,7 +1070,7 @@ class FunctionWheel(data.QGroupBox):
 
     def update_style(self):
         self.setStyleSheet(f"""
-QGroupBox {{
+QFrame {{
     background-color: {data.theme["fonts"]["default"]["background"]};
     color: {data.theme["fonts"]["default"]["color"]};
     border: 1px solid {data.theme["indication"]["passiveborder"]};

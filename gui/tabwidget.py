@@ -141,11 +141,8 @@ class TabWidget(data.QTabWidget):
             super().mousePressEvent(event)
             event_button    = event.button()
             key_modifiers   = data.QApplication.keyboardModifiers()
-            # Store drag information
-            TabWidget.drag_event_data = {
-                "name": self.tabText(self.currentIndex()),
-                "index": self.currentIndex(),
-            }
+            
+            self._parent.store_drag_data()
 
         def contextMenuEvent(self, event):
             # Clean up the old menu
@@ -444,7 +441,7 @@ class TabWidget(data.QTabWidget):
             except:
                 return
 
-    def _store_drag_data(self, e):
+    def __init_drag_data(self, e):
         self.indexTab = self.currentIndex()
         self.tabRect = self.tabBar().tabRect(self.indexTab)
         self.pixmap = data.QPixmap(self.tabRect.size())
@@ -457,7 +454,7 @@ class TabWidget(data.QTabWidget):
         painter.fillRect(self.pixmap.rect(), data.QColor(0, 0, 0, 64))
         painter.end()
 
-    def _start_tab_drag(self):
+    def __start_tab_drag(self):
         index = self.currentIndex()
         if index != -1:
             mime_data = data.QMimeData()
@@ -473,6 +470,13 @@ class TabWidget(data.QTabWidget):
             )
             drag.exec(data.Qt.DropAction.CopyAction | data.Qt.DropAction.MoveAction)
             drag.destroyed.connect(self.__drag_destroyed)
+    
+    def store_drag_data(self):
+        # Store drag information
+        TabWidget.drag_event_data = {
+            "name": self.tabText(self.currentIndex()),
+            "index": self.currentIndex(),
+        }
     
     def __drag_destroyed(self, *args):
         for i in (10, 0):
@@ -516,8 +520,8 @@ class TabWidget(data.QTabWidget):
                                 if hasattr(self.main_form.display, "docking_overlay_show"):
                                     self.drag_lock = True
                                     self.main_form.display.docking_overlay_show()
-                                    self._store_drag_data(event)
-                                    self._start_tab_drag()
+                                    self.__init_drag_data(event)
+                                    self.__start_tab_drag()
                         else:
                             self.drag_lock = False
 
@@ -676,6 +680,8 @@ class TabWidget(data.QTabWidget):
         else:
             # Remove the corner widget if there is no current tab active
             self.setCornerWidget(None)
+        
+        self.store_drag_data()
 
         # Update window title
         data.signal_dispatcher.update_title.emit()

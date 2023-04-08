@@ -108,6 +108,8 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.AWK()
     elif file_type == "cicode":
         lexer = lexers.CiCode()
+    elif file_type == "spice":
+        lexer = lexers.Spice()
     else:
         #No lexer was chosen, set file type to text and lexer to plain text
         current_file_type = "TEXT"
@@ -162,6 +164,8 @@ def get_comment_style_for_lexer(lexer):
         comment_string = "#"
     elif isinstance(lexer, lexers.SQL):
         comment_string = "#"
+    elif isinstance(lexer, lexers.Spice):
+        comment_string = "*"
     elif isinstance(lexer, lexers.PostScript):
         comment_string = "%"
     elif isinstance(lexer, lexers.Fortran):

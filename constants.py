@@ -44,6 +44,7 @@ supported_file_extentions = {
     "python": [".py", ".pyw", ".pyi", ".scons"],
     "routeros": [".rsc"],
     "ruby": [".rb", ".rbw"],
+    "spice": [".cir", ".inp"],
     "sql": [".sql"],
     "text": [".txt", ".text"],
     "xml": [".xml", ".tpy"],

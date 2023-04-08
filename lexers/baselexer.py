@@ -47,8 +47,6 @@ class BaseLexer(data.QsciLexerCustom):
         weight = data.QFont.Weight.Normal
         if style_options["bold"]:
             weight = data.QFont.Weight.Bold
-    #    elif bold == 2:
-    #        weight = data.QFont.Weight.Black
         self.setFont(
             data.QFont(
                 data.current_editor_font_name,

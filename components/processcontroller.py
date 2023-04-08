@@ -9,16 +9,9 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
+import traceback
 import multiprocessing.connection
-try:
-    import psutil
-except:
-    raise Exception(
-        "You are missing the 'psutil' module!\n" +
-        "Install it with:\n" +
-        "   Windows: 'pip install psutil' or 'python -m pip install psutil'\n" +
-        "   Linux:   'pip3 install psutil' or 'python3 -m pip install psutil'\n"
-    )
+import psutil
 
 import data
 import functions
@@ -32,9 +25,20 @@ PID_FILE = functions.unixify_join(
 
 def is_pid_running(pid):
     try:
+        if not psutil.pid_exists(pid):
+            return False
+        
         process = psutil.Process(pid)
-        return process.is_running()
+        if not process.is_running():
+            return False
+        
+        name = process.name().lower()
+        if "python" in name or "exco":
+            return True
+        
+        return False
     except Exception:
+#        traceback.print_exc()
         return False
 
 def check_opened_excos():

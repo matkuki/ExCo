@@ -34,8 +34,9 @@ editor = settings.constants.editor["default"].copy()
 keyboard_shortcuts = settings.constants.keyboard_shortcuts["default"].copy()
 # Variables
 variables = {
-    "open-new-files-in-open-instance": True,
+    "open-new-files-in-open-instance": False,
     "max-number-of-recent-files": 100,
+    
 }
 
 """
@@ -204,6 +205,7 @@ class SettingsFileManipulator:
             "context_menu_functions": context_menu_functions,
             "editor": editor,
             "keyboard_shortcuts": keyboard_shortcuts,
+            "variables": variables
         }
         for dv in self.data_variables:
             settings_data[dv] = getattr(data, dv)
@@ -271,6 +273,7 @@ class SettingsFileManipulator:
         """
         Load all setting from the settings file
         """
+        global variables
         try:
             settings_data = functions.load_json_file(
                 self.settings_filename_with_path
@@ -287,6 +290,9 @@ class SettingsFileManipulator:
                 self.context_menu_functions = settings_data["context_menu_functions"]
             else:
                 self.context_menu_functions = {}
+            # Variables
+            if "variables" in settings_data.keys():
+                variables = settings_data["variables"]
             # Check if old-style session file
             if self.check_old_style_sessions():
                 self.write_settings_file(
