@@ -22,6 +22,7 @@ import lexers
 import traceback
 import gc
 import json
+
 import data
 import components.actionfilter
 import components.communicator
@@ -51,7 +52,10 @@ from .dockingoverlay import *
 from .thebox import *
 from .hexview import *
 from .templates import *
+from .externalprogram import *
 
+if data.platform == "Windows":
+    import win32gui
 
 """
 -------------------------------------------------
@@ -106,7 +110,8 @@ class MainWindow(data.QMainWindow):
     menubar_functions       = {}
     # Last focused widget and tab needed by the function wheel overlay
     last_focused_widget     = None
-    """Namespace references for grouping functionality"""
+    
+    # Namespace references for grouping functionality
     settings                = None
     sessions                = None
     view                    = None
@@ -114,6 +119,9 @@ class MainWindow(data.QMainWindow):
     editing                 = None
     display                 = None
     bookmarks               = None
+    
+    # External program reference
+    external_program = None
 
 
     def __init__(self, new_document=False, logging=False, file_arguments=None):
@@ -227,6 +235,21 @@ class MainWindow(data.QMainWindow):
             pass
         elif event.type()== data.QEvent.Type.WindowDeactivate:
             self.display.docking_overlay_hide()
+        
+#        print("Object:", object, "Event-Type:", event.type())
+        if event.type() in (data.QEvent.Type.Enter, data.QEvent.Type.MouseButtonPress, data.QEvent.Type.KeyPress):
+#            print("ENTER")
+            if data.platform == "Windows":
+                win32gui.SetFocus(self.winId())
+        elif event.type() == data.QEvent.Type.Leave:
+#            print("LEAVE")
+            if data.platform == "Windows":
+                def set_external_focus():
+#                    print(win32gui.GetWindowText(win32gui.GetForegroundWindow()))
+                    handle = win32gui.WindowFromPoint(win32gui.GetCursorPos())
+                    if handle in ExternalWidget.handle_cache:
+                        win32gui.SetFocus(handle)
+                data.QTimer.singleShot(50, set_external_focus)
 
         return False
     
@@ -1898,6 +1921,38 @@ class MainWindow(data.QMainWindow):
             system_menu.addSeparator()
             system_menu.addAction(run_command_action)
             system_menu.addAction(show_terminal_action)
+            
+            # Terminals
+            if data.platform == "Windows":
+                # CMD
+                def add_cmd_terminal_emulator():
+                    terminal = self.get_helper_window().terminal_emulator_add(
+                        "Terminal - CMD", "cmd.exe"
+                    )
+                    self.get_helper_window().setCurrentWidget(terminal)
+                add_cmd_terminal_emulator_action = create_action(
+                    "Add CMD Terminal",
+                    None,
+                    "Add a Windows CMD terminal emulator to the layout",
+                    'tango_icons/utilities-terminal.png',
+                    add_cmd_terminal_emulator
+                )
+                system_menu.addAction(add_cmd_terminal_emulator_action)
+                
+                # PowerShell
+                def add_powershell_terminal_emulator():
+                    terminal = self.get_helper_window().terminal_emulator_add(
+                        "Terminal - PowerShell", "powershell.exe"
+                    )
+                    self.get_helper_window().setCurrentWidget(terminal)
+                add_powershell_terminal_emulator_action = create_action(
+                    "Add PowerShell Terminal",
+                    None,
+                    "Add a Windows PowerShell terminal emulator to the layout",
+                    'tango_icons/utilities-terminal.png',
+                    add_powershell_terminal_emulator
+                )
+                system_menu.addAction(add_powershell_terminal_emulator_action)
         #Lexers menu
         def construct_lexers_menu(parent):
             def set_lexer(lexer, lexer_name):
@@ -5541,14 +5596,14 @@ TabWidget QToolButton:hover {{
                 create_lexer(lexers.Matlab, 'Matlab'),
                 lexers_menu
             )
-#            NIM_action = create_action(
-#                'Nim',
-#                None,
-#                'Change document lexer to: Nim',
-#                'language_icons/logo_nim.png',
-#                create_lexer(lexers.Nim, 'Nim'),
-#                lexers_menu
-#            )
+            NIM_action = create_action(
+                'Nim',
+                None,
+                'Change document lexer to: Nim',
+                'language_icons/logo_nim.png',
+                create_lexer(lexers.Nim, 'Nim'),
+                lexers_menu
+            )
             OBERON_action = create_action(
                 'Oberon / Modula',
                 None,
@@ -5760,7 +5815,7 @@ TabWidget QToolButton:hover {{
             lexers_menu.addAction(LUA_action)
             lexers_menu.addAction(MAKEFILE_action)
             lexers_menu.addAction(MATLAB_action)
-#            lexers_menu.addAction(NIM_action)
+            lexers_menu.addAction(NIM_action)
             lexers_menu.addAction(OBERON_action)
             lexers_menu.addAction(Octave_action)
             lexers_menu.addAction(PASCAL_action)

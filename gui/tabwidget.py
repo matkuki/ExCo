@@ -26,6 +26,7 @@ from .templates import *
 from .dialogs import *
 from .menu import *
 from .treedisplays import *
+from .externalprogram import *
 
 """
 -----------------------------
@@ -607,6 +608,10 @@ class TabWidget(data.QTabWidget):
             self.main_form.display.update_cursor_position()
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
+        
+        widget = self.currentWidget()
+        if widget and isinstance(widget, ExternalWidget):
+            widget.window_reference.raise_()
 
     def wheelEvent(self, wheel_event):
         """
@@ -687,7 +692,9 @@ class TabWidget(data.QTabWidget):
         data.signal_dispatcher.update_title.emit()
 
     def _signal_editor_tabclose(self, emmited_tab_number, force=False):
-        """Event that fires when a tab close"""
+        """
+        Event that fires when a tab close
+        """
         #Nested function for clearing all bookmarks in the document
         def clear_document_bookmarks():
             #Check if bookmarks need to be cleared
@@ -986,15 +993,24 @@ class TabWidget(data.QTabWidget):
         new_tree_tab_index = self.addTab(new_tree_tab, tree_tab_name)
         # Return the reference to the new added tree tab widget
         return self.widget(new_tree_tab_index)
+    
+    def terminal_emulator_add(self, tab_name, program):
+        new_external_tab = create_external_widget(self, self.main_form, program)
+        # Add the tree tab to the tab widget
+        new_tree_tab_index = self.addTab(new_external_tab, tab_name)
 
     def editor_update_margin(self):
-        """Update margin width according to the number of lines in the current document"""
+        """
+        Update margin width according to the number of lines in the current document
+        """
         #Check is the widget is a scintilla custom editor
         if isinstance(self.currentWidget(), CustomEditor):
             self.currentWidget().update_margin()
 
     def set_tab_name(self, tab, new_text):
-        """Set the name of a tab by passing a reference to it"""
+        """
+        Set the name of a tab by passing a reference to it
+        """
         #Cycle through all of the tabs
         for i in range(self.count()):
             if self.widget(i) == tab:

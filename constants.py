@@ -34,7 +34,7 @@ supported_file_extentions = {
     "javascript": [".js", ".jsx", ".ts", ".tsx"],
     "json": [".json"],
     "lua": [".lua"],
-    "nim": [".nim", ".nims"],
+    "nim": [".nim", ".nims", ".nimble"],
     "oberon/modula": [".mod", ".ob", ".ob2", ".cp"],
     "octave": [".m"],
     "pascal": [".pas", ".pp", ".lpr", ".cyp"],
