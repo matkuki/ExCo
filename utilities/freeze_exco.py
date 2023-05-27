@@ -9,13 +9,20 @@ import cx_Freeze
 
 
 def main():
-    file_directory = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    file_directory = os.path.join(
+        os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+        "..",
+    )
     output_directory = "frozen_exco_{}_{}".format(
         platform.system().lower(),
         platform.architecture()[0],
     )
     
-    builtin_modules = []
+    builtin_modules = [
+        "PyQt6",
+        "PyQt6.Qsci",
+        "PyQt6.QtTest",
+    ]
     local_modules = []
     # List all local modules
     exclude_dirs = [
@@ -48,6 +55,7 @@ def main():
                     continue
                 local_modules.append(new_module)
     pprint.pprint(local_modules)
+    
     modules = local_modules + builtin_modules
     
     search_path = sys.path
@@ -60,30 +68,39 @@ def main():
     executable_name = "ExCo"
     if platform.system().lower() == "windows":
         base = "Win32GUI"
+        
+        builtin_modules.extend([
+            "win32api",
+            "win32con",
+            "win32gui",
+            "win32file",
+        ])
+        
         excludes = [
             "tkinter",
-#            "PyQt5",
-#            "PyQt5.QtCore",
-#            "PyQt5.QtWidgets",
-#            "PyQt5.QtGui",
-#            "PyQt5.Qsci",
-#            "PyQt5.QtTest",
-            "PyQt6",
-            "PyQt6.QtCore",
-            "PyQt6.QtWidgets",
-            "PyQt6.QtGui",
-            "PyQt6.Qsci",
-            "PyQt6.QtTest",
+            "PyQt5",
+            "PyQt5.QtCore",
+            "PyQt5.QtWidgets",
+            "PyQt5.QtGui",
+            "PyQt5.Qsci",
+            "PyQt5.QtTest",
+#            "PyQt6",
+#            "PyQt6.QtCore",
+#            "PyQt6.QtWidgets",
+#            "PyQt6.QtGui",
+#            "PyQt6.Qsci",
+#            "PyQt6.QtTest",
         ]
+        
         executable_name = "ExCo.exe"
     
     executables = [
         cx_Freeze.Executable(
             'exco.py',
-            initScript = None,
+            init_script = None,
             base = base,
             icon = "resources/exco-icon-win.ico",
-            targetName = executable_name,
+            target_name = executable_name,
         )
     ]
     
@@ -91,16 +108,17 @@ def main():
         executables,
         includes = modules,
         excludes = excludes,
-        replacePaths = [],
+        replace_paths = [],
         compress = True,
-        optimizeFlag = True,
+        optimize = True,
+        include_msvcr = True,
         path = search_path,
-        targetDir = output_directory,
-        includeFiles = [],
-        zipIncludes = [],
+        target_dir = output_directory,
+        include_files = [],
+        zip_includes = [],
         silent = False,
     )
-    freezer.Freeze()
+    freezer.freeze()
     
     shutil.copytree("resources", output_directory + "/resources")
 
