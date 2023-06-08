@@ -56,7 +56,7 @@ var
         "hash","help", "SyntaxError", "divmod", "PendingDeprecationWarning", "ConnectionError", "ord", "super", "class", "FileExistsError", 
         "exec","__debug__", "range", "not", "elif", "copyright", "IndentationError", "print", "license", "as", 
         "GeneratorExit","def", "__package__", "hex", "import", "UnicodeTranslateError", "enumerate", "float", "InterruptedError", "and", 
-        "ValueError","KeyError", "locals", "__spec__", "__loader__", "ArithmeticError", "raise", "map", "pass", "UnicodeEncodeError", 
+        "ValueError","KeyError", "locals", "__spec__", "__loader__", "ArithmeticError", "raise", "defer", "map", "pass", "UnicodeEncodeError", 
         "EnvironmentError","from", "max", "__name__", "EOFError", "SystemError", "for", "IOError", "dir", "next", 
         "all","ConnectionResetError", "any", "staticmethod", "Exception", "eval", "iter", "UserWarning", "UnicodeDecodeError", "break", 
         "ProcessLookupError","StopAsyncIteration", "if", "BrokenPipeError", "None", "slice", "bin", "MemoryError", "finally", "callable", 

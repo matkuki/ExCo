@@ -44,7 +44,7 @@ class Nim(data.QsciLexerCustom):
     
     # Basic keywords and built-in procedures and templates
     basic_keyword_list  = [
-        "as", "atomic", "bind", "sizeof", 
+        "as", "atomic", "bind", "sizeof", "defer",
         "break", "case", "continue", "converter",
         "discard", "distinct", "do", "echo", "elif", "else", "end",
         "except", "finally", "for", "from", "defined", 
