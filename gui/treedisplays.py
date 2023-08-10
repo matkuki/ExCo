@@ -13,6 +13,7 @@ import os.path
 import re
 import ast
 import enum
+import stat
 import time
 import types
 import shutil
@@ -27,6 +28,10 @@ import components.thesquid
 
 from .dialogs import *
 from .menu import *
+
+def remove_readonly(func, path, excinfo):
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
 
 """
 ----------------------------------------------------------------------------
@@ -2817,48 +2822,53 @@ class TreeExplorer(TreeDisplayBase):
         self.tree_menu.popup(cursor)
 
     def __paste_items(self):
-        if TreeExplorer.cut_items is not None:
-            items = TreeExplorer.cut_items
-        elif TreeExplorer.copy_items is not None:
-            items = TreeExplorer.copy_items
-        else:
-            self.main_form.display.display_error(
-                "Copy AND Cut items list is empty!\n" +
-                "Cannot perform this action!"
-            )
-            return
-        for it in items:
-            path = it.path
-            itype = it.itype
-            # Setup the directory
-            base_name = os.path.basename(path)
-            new_path = os.path.join(
-                self.current_viewed_directory,
-                base_name
-            )
-            if itype == TreeExplorer.ItemType.DIRECTORY:
-                if os.path.exists(new_path):
-                    message = "The PASTE directory already exists! "
-                    message += "Do you wish to overwrite it?"
-                    reply = YesNoDialog.question(message)
-                    if reply != data.DialogResult.Yes.value:
-                        return
-                if os.path.isdir(new_path):
-                    shutil.rmtree(new_path)
-                    time.sleep(0.1)
-                shutil.copytree(path, new_path)
-                if TreeExplorer.cut_items is not None:
-                    shutil.rmtree(path)
+        try:
+            if TreeExplorer.cut_items is not None:
+                items = TreeExplorer.cut_items
+            elif TreeExplorer.copy_items is not None:
+                items = TreeExplorer.copy_items
             else:
-                if os.path.exists(new_path):
-                    message = "The PASTE file already exists! "
-                    message += "Do you wish to overwrite it?"
-                    reply = YesNoDialog.question(message)
-                    if reply != data.DialogResult.Yes.value:
-                        return
-                shutil.copy(path, new_path)
-                if TreeExplorer.cut_items is not None:
-                    os.remove(path)
+                self.main_form.display.display_error(
+                    "Copy AND Cut items list is empty!\n" +
+                    "Cannot perform this action!"
+                )
+                return
+            for it in items:
+                path = it.path
+                itype = it.itype
+                # Setup the directory
+                base_name = os.path.basename(path)
+                new_path = os.path.join(
+                    self.current_viewed_directory,
+                    base_name
+                )
+                if itype == TreeExplorer.ItemType.DIRECTORY:
+                    if os.path.exists(new_path):
+                        message = "The PASTE directory already exists! "
+                        message += "Do you wish to overwrite it?"
+                        reply = YesNoDialog.question(message)
+                        if reply != data.DialogResult.Yes.value:
+                            return
+                    if os.path.isdir(new_path):
+                        shutil.rmtree(new_path, onerror=remove_readonly)
+                        time.sleep(0.1)
+                    shutil.copytree(path, new_path)
+                    if TreeExplorer.cut_items is not None:
+                        shutil.rmtree(path, onerror=remove_readonly)
+                else:
+                    if os.path.exists(new_path):
+                        message = "The PASTE file already exists! "
+                        message += "Do you wish to overwrite it?"
+                        reply = YesNoDialog.question(message)
+                        if reply != data.DialogResult.Yes.value:
+                            return
+                    shutil.copy(path, new_path)
+                    if TreeExplorer.cut_items is not None:
+                        os.remove(path)
+        except:
+            self.main_form.display.repl_display_error(
+                traceback.format_exc()
+            )
         if TreeExplorer.cut_items is not None:
             TreeExplorer.cut_items = None
             TreeExplorer.copy_items = None
@@ -2922,7 +2932,7 @@ class TreeExplorer(TreeDisplayBase):
             try:
                 if os.path.exists(path):
                     if os.path.isdir(path):
-                        shutil.rmtree(path)
+                        shutil.rmtree(path, onerror=remove_readonly)
                     else:
                         os.remove(path)
                 else:

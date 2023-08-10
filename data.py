@@ -76,7 +76,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "7.4"
+application_version = "7.5"
 # Global variable that holds state of logging mode
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
@@ -100,6 +100,8 @@ settings_directory = os.path.join(home_directory, ".exco") \
 # Global string variable for the current platform name ("Windows", "Linux", ...),
 # and a flag if running on the Raspberry PI
 platform = platform.system()
+on_windows = (platform == "Windows")
+on_linux = (platform == "Linux")
 on_rpi = False
 if os.name == "posix":
     on_rpi = (os.uname()[1] == "raspberrypi")

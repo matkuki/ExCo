@@ -1,0 +1,443 @@
+# -*- coding: utf-8 -*-
+
+"""
+Copyright (c) 2013-2023 Matic Kukovec.
+Released under the GNU GPL3 license.
+
+For more information check the 'LICENSE.txt' file.
+For complete license information of the dependencies, check the 'additional_licenses' directory.
+"""
+
+import os
+import sys
+import math
+import time
+import threading
+import traceback
+
+import data
+import functions
+
+try:
+    import pyte
+    if data.on_windows:
+        import winpty
+    else:
+        import ptyprocess
+except:
+    msg = """
+The terminal emulator needs the following packages 'pip install'-ed.
+    On Windows:
+        - pip install pyte
+        - pip install pywinpty
+    
+    On Linux:
+        - pip3 install pyte
+        - pip3 install ptyprocess
+"""
+    raise Exception(msg)
+
+PYTE_FOREGROUND_COLOR_MAP = {
+    "black": data.QColor(data.Qt.GlobalColor.black),
+    "red": data.QColor(data.Qt.GlobalColor.red),
+    "green": data.QColor(data.Qt.GlobalColor.green),
+    "brown": data.QColor(data.Qt.GlobalColor.yellow),
+    "blue": data.QColor(data.Qt.GlobalColor.blue),
+    "magenta": data.QColor(data.Qt.GlobalColor.magenta),
+    "cyan": data.QColor(data.Qt.GlobalColor.cyan),
+    "white": data.QColor(data.Qt.GlobalColor.lightGray),
+    "default": data.QColor(data.Qt.GlobalColor.white),
+    
+    "brightblack": data.QColor(data.Qt.GlobalColor.darkGray),
+    "brightred": data.QColor(data.Qt.GlobalColor.red),
+    "brightgreen": data.QColor(data.Qt.GlobalColor.green),
+    "brightbrown": data.QColor(data.Qt.GlobalColor.yellow),
+    "brightblue": data.QColor(data.Qt.GlobalColor.blue),
+    "brightmagenta": data.QColor(data.Qt.GlobalColor.magenta),
+    "brightcyan": data.QColor(data.Qt.GlobalColor.cyan),
+    "brightwhite": data.QColor(data.Qt.GlobalColor.white),
+}
+PYTE_BACKGROUND_COLOR_MAP = {
+    "black": data.QColor(data.Qt.GlobalColor.black),
+    "red": data.QColor(data.Qt.GlobalColor.red),
+    "green": data.QColor(data.Qt.GlobalColor.green),
+    "brown": data.QColor(data.Qt.GlobalColor.yellow),
+    "blue": data.QColor(data.Qt.GlobalColor.blue),
+    "magenta": data.QColor(data.Qt.GlobalColor.magenta),
+    "cyan": data.QColor(data.Qt.GlobalColor.cyan),
+    "white": data.QColor(data.Qt.GlobalColor.lightGray),
+    "default": data.QColor(data.Qt.GlobalColor.black),
+    
+    "brightblack": data.QColor(data.Qt.GlobalColor.darkGray),
+    "brightred": data.QColor(data.Qt.GlobalColor.red),
+    "brightgreen": data.QColor(data.Qt.GlobalColor.green),
+    "brightbrown": data.QColor(data.Qt.GlobalColor.yellow),
+    "brightblue": data.QColor(data.Qt.GlobalColor.blue),
+    "bfightmagenta": data.QColor(data.Qt.GlobalColor.magenta),
+    "brightcyan": data.QColor(data.Qt.GlobalColor.cyan),
+    "brightwhite": data.QColor(data.Qt.GlobalColor.white),
+}
+
+class CustomTextEdit(data.QPlainTextEdit):
+    input_event = data.pyqtSignal(int, str, object)
+    resize_event = data.pyqtSignal(int, int)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__cache_width = None
+        self.__cache_height = None
+        self.update_style()
+    
+    def update_style(self):
+        self.setStyleSheet(f"""
+QPlainTextEdit {{
+    background-color: {PYTE_BACKGROUND_COLOR_MAP["default"].name()};
+    color: {PYTE_FOREGROUND_COLOR_MAP["default"].name()};
+    selection-background-color: {PYTE_FOREGROUND_COLOR_MAP["default"].name()};
+    selection-color: {PYTE_BACKGROUND_COLOR_MAP["default"].name()};
+}}
+        """)
+    
+    def keyPressEvent(self, event):
+        modifiers = data.QApplication.keyboardModifiers()
+        key = event.key()
+        text = event.text()
+        self.input_event.emit(key, text, modifiers)
+#        super().keyPressEvent(event)
+    
+    def resizeEvent(self, event):
+        w = self.viewport().size().width()
+        h = self.viewport().size().height()
+        font = self.document().defaultFont()
+        font_metrics = data.QFontMetricsF(font)
+        char_size = font_metrics.size(0, "X")
+        width_in_chars = math.ceil(w / char_size.width())
+        height_in_chars = math.floor(h / char_size.height())
+        if self.__cache_width != width_in_chars or self.__cache_height != height_in_chars:
+            self.__cache_width = width_in_chars
+            self.__cache_height = height_in_chars
+            self.resize_event.emit(width_in_chars, height_in_chars)
+        return super().resizeEvent(event)
+
+
+class Terminal(data.QWidget):
+    pty_data_received = data.pyqtSignal(object)
+    pty_add_to_buffer = data.pyqtSignal(object)
+    
+    # Class variables
+    name         = None
+    _parent      = None
+    main_form    = None
+    current_icon = None
+    savable      = data.CanSave.NO
+    save_name    = None
+    # Reference to the custom context menu
+    context_menu = None
+    
+    def __init__(self, parent, main_form, name):
+        super().__init__(parent)
+        self.name = name
+        self._parent = parent
+        self.main_form = main_form
+        self.current_icon = functions.create_icon('tango_icons/utilities-terminal.png')
+        
+        CONSOLE_WIDTH = 120
+        CONSOLE_HEIGHT = 26
+        
+        self.screen = pyte.HistoryScreen(
+            CONSOLE_WIDTH,
+            CONSOLE_HEIGHT,
+            history=1000,
+            ratio=0.1,
+        )
+        self.stream = pyte.Stream(self.screen)
+        
+        if data.on_windows:
+            self.pty_process = winpty.PtyProcess.spawn(
+                "cmd",
+                dimensions=(CONSOLE_HEIGHT, CONSOLE_WIDTH),
+                backend=1,
+            )
+            
+            self.pty_data_received.connect(self.__stdout_received)
+            self.pty_add_to_buffer.connect(self.__add_to_buffer)
+            # Reading
+            self.__thread_pty_read = threading.Thread(
+                target=self.__pty_read_loop_windows,
+                args=[],
+                daemon=True,
+            )
+            self.__thread_pty_read.start()
+        else:
+            self.pty_process = ptyprocess.PtyProcessUnicode.spawn(["/bin/bash"])
+            
+            self.pty_data_received.connect(self.__stdout_received)
+            self.pty_add_to_buffer.connect(self.__add_to_buffer)
+            
+            # Reading
+            self.__thread_pty_read = threading.Thread(
+                target=self.__pty_read_loop_linux,
+                args=[],
+                daemon=True,
+            )
+            self.__thread_pty_read.start()
+        
+        # Create the console output widget
+        self.output_widget = CustomTextEdit(self)
+#        self.output_widget.setReadOnly(True)
+        self.output_widget.setOverwriteMode(True)
+        self.output_widget.setFont(data.get_editor_font())
+        self.output_widget.setWordWrapMode(data.QTextOption.WrapMode.NoWrap)
+#        self.output_widget.setWordWrapMode(data.QTextOption.WrapMode.WrapAnywhere)
+        self.output_widget.input_event.connect(self.__input_event)
+        self.output_widget.resize_event.connect(self.__resize_event)
+        
+        # Add the widgets to a vertical layout
+        layout = data.QVBoxLayout(self)
+        layout.addWidget(self.output_widget)
+        
+        self.update_style()
+    
+    def __del__(self):
+        self.pty_process = None
+        self.output_widget.setParent(None)
+        self.output_widget = None
+        self.__thread_pty_read = None
+    
+    def update_style(self):
+        pass
+    
+    def __pty_read_loop_windows(self):
+        while self.pty_process.isalive():
+#            data = self.pty_process.read(1)
+            data = self.pty_process.read()
+#            print("RAW-READ:", data)
+#            print("RAW-DECODED-READ:", data.decode('utf-8'))
+            if data is not None and data != b'':
+                self.pty_add_to_buffer.emit(data)
+            else:
+                time.sleep(0.001)
+    
+    def __pty_read_loop_linux(self):
+        while self.pty_process.isalive():
+            data = self.pty_process.read().encode("utf-8")
+            if data is not None and data != b'':
+                self.pty_add_to_buffer.emit(data)
+            else:
+                time.sleep(0.001)
+            
+    buffer = []
+    def __add_to_buffer(self, new_data):
+#        if not hasattr(self, "timer_buffer"):
+#            self.timer_buffer = QTimer(self)
+#            self.timer_buffer.setInterval(10)
+#            self.timer_buffer.setSingleShot(True)
+#            self.timer_buffer.timeout.connect(self.__send_buffer)
+#        if self.timer_buffer.isActive():
+#            self.timer_buffer.stop()
+#        
+#        self.buffer.append(new_data)
+#        self.timer_buffer.start()
+        self.buffer.append(new_data)
+        self.__send_buffer()
+    
+    def __send_buffer(self):
+#        joined_buffer = b''.join(self.buffer).replace(b'\r', b'')
+        if len(self.buffer) > 0:
+            first_item = self.buffer[0]
+            if isinstance(first_item, bytes):
+                joined_buffer = b''.join(self.buffer)
+            elif isinstance(first_item, str):
+                joined_buffer = ''.join(self.buffer)
+                joined_buffer.encode("utf-8")
+            else:
+                raise Exception("Unknown type: '{}'".format(first_item.__class__))
+        else:
+            joined_buffer = b''
+        self.pty_data_received.emit(joined_buffer)
+        self.buffer = []
+    
+    @data.pyqtSlot()
+    def __update_display(self):
+        # Timing initialization
+        time_start = time.perf_counter()
+        
+        # Cursor
+#        document = self.output_widget.document()
+        cursor = self.output_widget.textCursor()
+        
+        if not hasattr(self, "cache_top"):
+            self.cache_top = 0
+#        print("--cache_top:", self.cache_top)
+        cursor.setPosition(0)
+        top = len(self.screen.history.top)
+        if self.cache_top > 0:
+            cursor.movePosition(
+                data.QTextCursor.MoveOperation.Down,
+                data.QTextCursor.MoveMode.MoveAnchor,
+                self.cache_top
+            )
+            cursor.movePosition(
+                data.QTextCursor.MoveOperation.StartOfLine,
+                data.QTextCursor.MoveMode.MoveAnchor,
+                1
+            )
+
+        clear_range = self.screen.lines * len(self.screen.buffer[0])
+        cursor.movePosition(
+            data.QTextCursor.MoveOperation.Down,
+            data.QTextCursor.MoveMode.KeepAnchor,
+            clear_range
+        )
+        cursor.removeSelectedText()
+        
+        # Format the text
+        bg = "default"
+        fg = "default"
+        new_formatting = data.QTextCharFormat()
+        new_formatting.setBackground(PYTE_BACKGROUND_COLOR_MAP[bg])
+        new_formatting.setForeground(PYTE_FOREGROUND_COLOR_MAP[fg])
+        cursor.setCharFormat(new_formatting)
+        current_char_list = []
+        entire_height_in_lines = self.screen.lines + top
+        for y in range(self.screen.lines + top):
+            if y < top:
+                line = self.screen.history.top[y]
+            else:
+                line = self.screen.buffer[y - top]
+            for x in range(self.screen.columns):
+                character = line[x]
+                if character.bg != bg or character.fg != fg:
+                    text = ''.join(current_char_list)
+                    cursor.insertText(text)
+                    current_char_list = []
+                    bg = character.bg
+                    fg = character.fg
+                    new_formatting = data.QTextCharFormat()
+                    # Byckground
+                    if bg in PYTE_BACKGROUND_COLOR_MAP.keys():
+                        new_formatting.setBackground(PYTE_BACKGROUND_COLOR_MAP[bg])
+                    else:
+                        new_color = data.QColor("#{}".format(bg))
+                        new_formatting.setBackground(new_color)
+                    # Foreground
+                    if fg in PYTE_FOREGROUND_COLOR_MAP.keys():
+                        new_formatting.setForeground(PYTE_FOREGROUND_COLOR_MAP[fg])
+                    else:
+                        new_color = data.QColor("#{}".format(fg))
+                        new_formatting.setForeground(new_color)
+                        
+                    cursor.setCharFormat(new_formatting)
+                
+                current_char_list.append(character.data)
+            current_char_list.append('\n')
+        else:
+            if len(current_char_list) > 0:
+                text = ''.join(current_char_list)
+                cursor.insertText(text)
+        
+        self.output_widget.setTextCursor(cursor)
+        
+        # Position the cursor
+        left = cursor.columnNumber()
+        cursor.setPosition(0)
+        cursor.movePosition(
+            data.QTextCursor.MoveOperation.Down,
+            data.QTextCursor.MoveMode.MoveAnchor,
+            self.cache_top + top + self.screen.cursor.y
+        )
+        cursor.movePosition(
+            data.QTextCursor.MoveOperation.Right,
+            data.QTextCursor.MoveMode.MoveAnchor,
+            self.screen.cursor.x
+        )
+        
+        # Activate cursor
+        self.output_widget.setTextCursor(cursor)
+        self.output_widget.ensureCursorVisible()
+        
+        # Store cursor position
+#        self.cache_top = self.output_widget.firstVisibleBlock().firstLineNumber() - 1
+        self.cache_top = self.output_widget.firstVisibleBlock().firstLineNumber()
+        if self.cache_top < 0:
+            self.cache_top = 0
+
+        # Reset history
+        self.screen.history.top.clear()
+        
+        # Loop timing
+        end_count = time.perf_counter() - time_start
+    
+    @data.pyqtSlot(bytes)
+    def __stdout_received(self, raw_text):
+        if isinstance(raw_text, bytes):
+            self.stream.feed(raw_text.decode("utf-8"))
+        else:
+            self.stream.feed(raw_text)
+        # Display output and error streams in console
+        self.__update_display()
+        
+    
+    def __input_event(self, key, text, modifiers):
+#        print(modifiers, key, text, bytes(text, "utf-8"))
+
+        update = False
+        if modifiers == data.Qt.KeyboardModifier.ControlModifier:
+            if key == data.Qt.Key.Key_Up:
+#                self.screen.cursor_up()
+                self.screen.prev_page()
+                update = True
+            elif key == data.Qt.Key.Key_Down:
+                self.screen.next_page()
+                update = True
+                
+        else:
+            if key == data.Qt.Key.Key_Up:
+                text = "\u001b[A"
+                update = True
+            elif key == data.Qt.Key.Key_Down:
+                text = "\u001b[B"
+                update = True
+            elif key == data.Qt.Key.Key_Left:
+                text = "\u001b[D"
+                update = True
+            elif key == data.Qt.Key.Key_Right:
+                text = "\u001b[C"
+                update = True
+        if update:
+            self.__update_display()
+        
+        try:
+            self.pty_process.write(text)
+        except Exception as ex:
+            self.main_form.display.repl_display_error(
+                "Terminal has probably already been closed," +
+                "the process returned: '{}'".format(ex)
+            )
+        
+    stored_width = -1
+    def __resize_event(self, width, height):
+#        print("resize:", width, "x", height)
+        if data.on_windows:
+            width -= 2
+            height -= 1
+        else:
+            width -= 4
+            height -= 5
+        if width < 0:
+            width = 0
+        if height < 0:
+            height = 0
+        self.screen.resize(height, width)
+        self.__update_display()
+        self.pty_process.setwinsize(height, width)
+    
+    def execute_command(self, command: str):
+        self.pty_process.write(command + "\r\n")
+
+def test():
+    app = data.QApplication(sys.argv)
+    console = Terminal(None, None)
+    console.resize(640, 480)
+    console.show()
+    sys.exit(app.exec())

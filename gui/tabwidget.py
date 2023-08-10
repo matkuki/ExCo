@@ -22,6 +22,7 @@ from .custombuttons import *
 from .customeditor import *
 from .plaineditor import *
 from .hexview import *
+from .terminal import *
 from .templates import *
 from .dialogs import *
 from .menu import *
@@ -970,7 +971,18 @@ class TabWidget(data.QTabWidget):
         # Make new tab visible
         self.setCurrentIndex(new_hexview_tab_index)
         return self.widget(new_hexview_tab_index)
-
+    
+    terminal_count = 0
+    def terminal_add(self):
+        name = "TERMINAL-{}".format(self.terminal_count)
+        self.terminal_count += 1
+        # Initialize the hex-view
+        new_terminal = Terminal(self, self.main_form, name)
+        tab_text = name
+        new_terminal_tab_index = self.addTab(new_terminal, tab_text)
+        # Make new tab visible
+        self.setCurrentIndex(new_terminal_tab_index)
+        return self.widget(new_terminal_tab_index)
 
     def tree_create_tab(self, tree_tab_name, tree_type=None):
         """Create and initialize a tree display widget"""

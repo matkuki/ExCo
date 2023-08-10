@@ -1879,15 +1879,15 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/system-show-cwd.png',
                 show_explorer
             )
-            def show_terminal():
+            def show_external_terminal():
                 self.repl.interpreter.create_terminal()
-            show_terminal_action = create_action(
-                'Show Console/Terminal window',
+            show_external_terminal_action = create_action(
+                'Show external Console/Terminal window',
                 None,
-                'Show a Console(Windows) / Terminal(Linux) ' +
+                'Show an external OS\'s Console(Windows) / Terminal(Linux) ' +
                     'window at the current working directory',
                 'tango_icons/utilities-terminal.png',
-                show_terminal
+                show_external_terminal
             )
             def open_general_explorer():
                 file_explorer = self.get_helper_window().tree_add_tab(
@@ -1910,6 +1910,18 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/system-show-cwd-tree-blue.png',
                 open_general_explorer
             )
+            def show_terminal():
+                window = self.get_window_by_indication()
+                if window is None:
+                    window = self.get_largest_window()
+                window.terminal_add()
+            show_terminal_action = create_action(
+                'Show Terminal Emulator',
+                None,
+                'Show an integrater Terminal Emulator',
+                'tango_icons/utilities-terminal.png',
+                show_terminal
+            )
             # Add the menu items
             system_menu.addAction(find_files_action)
             system_menu.addAction(find_in_files_action)
@@ -1921,6 +1933,7 @@ class MainWindow(data.QMainWindow):
             system_menu.addSeparator()
             system_menu.addAction(run_command_action)
             system_menu.addAction(show_terminal_action)
+            system_menu.addAction(show_external_terminal_action)
             
             # Terminals
             if data.platform == "Windows":
