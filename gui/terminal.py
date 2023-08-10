@@ -160,7 +160,7 @@ class Terminal(data.QWidget):
             )
             
             self.pty_data_received.connect(self.__stdout_received)
-            self.pty_add_to_buffer.connect(self.__add_to_buffer)
+            self.pty_add_to_buffer.connect(self.__send_buffer)
             # Reading
             self.__thread_pty_read = threading.Thread(
                 target=self.__pty_read_loop_windows,
@@ -172,7 +172,7 @@ class Terminal(data.QWidget):
             self.pty_process = ptyprocess.PtyProcessUnicode.spawn(["/bin/bash"])
             
             self.pty_data_received.connect(self.__stdout_received)
-            self.pty_add_to_buffer.connect(self.__add_to_buffer)
+            self.pty_add_to_buffer.connect(self.__send_buffer)
             
             # Reading
             self.__thread_pty_read = threading.Thread(
@@ -225,33 +225,17 @@ class Terminal(data.QWidget):
                 self.pty_add_to_buffer.emit(data)
             else:
                 time.sleep(0.001)
-            
-    buffer = []
-    def __add_to_buffer(self, new_data):
-#        if not hasattr(self, "timer_buffer"):
-#            self.timer_buffer = QTimer(self)
-#            self.timer_buffer.setInterval(10)
-#            self.timer_buffer.setSingleShot(True)
-#            self.timer_buffer.timeout.connect(self.__send_buffer)
-#        if self.timer_buffer.isActive():
-#            self.timer_buffer.stop()
-#        
-#        self.buffer.append(new_data)
-#        self.timer_buffer.start()
-        self.buffer.append(new_data)
-        self.__send_buffer()
     
-    def __send_buffer(self):
+    def __send_buffer(self, new_data):
 #        joined_buffer = b''.join(self.buffer).replace(b'\r', b'')
-        if len(self.buffer) > 0:
-            first_item = self.buffer[0]
-            if isinstance(first_item, bytes):
-                joined_buffer = b''.join(self.buffer)
-            elif isinstance(first_item, str):
-                joined_buffer = ''.join(self.buffer)
+        if len(new_data) > 0:
+            if isinstance(new_data, bytes):
+                joined_buffer = new_data
+            elif isinstance(new_data, str):
+                joined_buffer = new_data
                 joined_buffer.encode("utf-8")
             else:
-                raise Exception("Unknown type: '{}'".format(first_item.__class__))
+                raise Exception("Unknown type: '{}'".format(new_data.__class__))
         else:
             joined_buffer = b''
         self.pty_data_received.emit(joined_buffer)
