@@ -110,6 +110,8 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.CiCode()
     elif file_type == "spice":
         lexer = lexers.Spice()
+    elif file_type == "yaml":
+        lexer = lexers.YAML()
     else:
         #No lexer was chosen, set file type to text and lexer to plain text
         current_file_type = "TEXT"

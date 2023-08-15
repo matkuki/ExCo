@@ -48,6 +48,7 @@ supported_file_extentions = {
     "sql": [".sql"],
     "text": [".txt", ".text"],
     "xml": [".xml", ".tpy"],
+    "yaml": [".yml", ".yaml"],
 }
 
 # Global enumerations

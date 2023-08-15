@@ -77,7 +77,6 @@ class CustomStyle(data.QCommonStyle):
         self._style.drawPrimitive(pe, opt, p, widget)
     
     def drawItemPixmap(self, painter, rect, alignment, pixmap):
-        print("TU")
         scaled_pixmap = pixmap.scaled(
             self.scale_constant, 
             self.scale_constant
