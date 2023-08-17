@@ -22,6 +22,7 @@ def main():
         "PyQt6",
         "PyQt6.Qsci",
         "PyQt6.QtTest",
+        "pyte",
     ]
     local_modules = []
     # List all local modules
@@ -74,6 +75,7 @@ def main():
             "win32con",
             "win32gui",
             "win32file",
+            "winpty"
         ])
         
         excludes = [
@@ -93,6 +95,11 @@ def main():
         ]
         
         executable_name = "ExCo.exe"
+    
+    elif platform.system().lower() == "linux":
+        builtin_modules.extend([
+            "ptyprocess",
+        ])
     
     executables = [
         cx_Freeze.Executable(
