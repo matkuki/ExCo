@@ -58,6 +58,8 @@ class Python(data.QsciLexerPython):
     def init_kwrds(self, additional_keywords=[]):
         #Initialize list with keywords
         built_ins = keyword.kwlist
+        if hasattr(keyword, "softkwlist"):
+            built_ins.extend(keyword.softkwlist)
         for i in builtins.__dict__.keys():
             if not(i in built_ins):
                 built_ins.append(i)

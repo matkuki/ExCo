@@ -40,57 +40,6 @@ class TreeSitterBaseLexer(BaseLexer):
         self.parser = tree_sitter.Parser()
         self.parser.set_language(tree_sitter_language)
         self.tree = None
-
-    def generate_tree(self, tree):
-        cursor = tree.walk()
-        node_list = []
-        node_dict = {}
-        stack = [ node_list ]
-        came_up = False
-        current_list = node_list
-        level = 0
-        while True:
-            if not came_up:
-                new_node = {
-                    "type": cursor.node.type,
-                    "start": cursor.node.start_byte,
-                    "end": cursor.node.end_byte,
-                    "level": level,
-                    "children": []
-                }
-#                current_list.append(new_node)
-                node_dict[new_node["start"]] = new_node
-                if (cursor.goto_first_child()):
-#                    stack.append(new_node["children"])
-                    came_up = False
-#                    current_list = stack[-1]
-                    level += 1
-                    continue
-                elif (cursor.goto_next_sibling()):
-                    came_up = False
-                    current_list = stack[-1]
-                    continue
-                elif (cursor.goto_parent()):
-#                    stack.pop()
-                    came_up = True
-#                    current_list = stack[-1]
-                    level -= 1
-                    continue
-            else:
-                if (cursor.goto_next_sibling()):
-                    came_up = False
-#                    current_list = stack[-1]
-                    continue
-                elif (cursor.goto_parent()):
-#                    stack.pop()
-                    came_up = True
-#                    current_list = stack[-1]
-                    level -= 1
-                    continue
-            
-            break
-        
-        return node_list, node_dict
     
     def text_modified_callback(self,
                                position,
@@ -109,41 +58,92 @@ class TreeSitterBaseLexer(BaseLexer):
         functions.performance_timer_start()
         # Tree-sitter works with bytes, so we have to adjust the start and end boundaries
         text_bytes = editor.text().encode("utf-8")
-        if modificationType == editor.SC_MOD_DELETETEXT:
-            positions = (
-                position,
-                position+length,
-                position,
-                position,
-                position+length,
-                position,
-            )
-        else:
-            positions = (
-                position,
-                position,
-                position+length,
-                position,
-                position,
-                position+length,
-            )
-        if self.tree is not None:
-            self.tree.edit(
-                start_byte=positions[0],
-                old_end_byte=positions[1],
-                new_end_byte=positions[2],
-                start_point=(0, positions[3]),
-                old_end_point=(0, positions[4]),
-                new_end_point=(0, positions[5]),
-            )
-            self.tree = self.parser.parse(text_bytes, self.tree)
-        else:
-            self.tree = self.parser.parse(text_bytes)
 #        self.tree = self.parser.parse(text_bytes)
-        node_list, node_dict = self.generate_tree(self.tree)
-        self.node_list = node_list
-        self.node_dict = node_dict
+#        if modificationType == editor.SC_MOD_DELETETEXT:
+#            positions = (
+#                position,
+#                position+length,
+#                position,
+#                position,
+#                position+length,
+#                position,
+#            )
+#        else:
+#            positions = (
+#                position,
+#                position,
+#                position+length,
+#                position,
+#                position,
+#                position+length,
+#            )
+#        if self.tree is not None:
+#            self.tree.edit(
+#                start_byte=positions[0],
+#                old_end_byte=positions[1],
+#                new_end_byte=positions[2],
+#                start_point=(0, positions[3]),
+#                old_end_point=(0, positions[4]),
+#                new_end_point=(0, positions[5]),
+#            )
+#            new_tree = self.parser.parse(text_bytes, self.tree)
+#            old_tree = self.tree
+#            self.tree = new_tree
+##            print(len(self.tree.get_changed_ranges(old_tree)))
+#        else:
+#            self.tree = self.parser.parse(text_bytes)
+        
         functions.performance_timer_show("CHANGE")
+    
+    def generate_tree(self, tree, start_byte, end_byte):
+        functions.performance_timer_start()
+        
+        cursor = tree.walk()
+        node_list = []
+        came_up = False
+        level = 0
+        while True:
+            if not came_up:
+                if cursor.node.start_byte > (start_byte - 50) and \
+                   cursor.node.start_byte < (end_byte + 50):
+                    new_node = {
+                        "type": cursor.node.type,
+                        "start": cursor.node.start_byte,
+                        "end": cursor.node.end_byte,
+                        "level": level,
+                    }
+    #                print(
+    #                    " " * level,
+    #                    new_node["type"],
+    #                    "{}:{}".format(new_node["start"],
+    #                    new_node["end"]),
+    #                )
+                    node_list.append(new_node)
+                if cursor.goto_first_child():
+                    came_up = False
+                    level += 1
+                    continue
+                elif cursor.goto_next_sibling():
+                    came_up = False
+                    continue
+                elif cursor.goto_parent():
+                    came_up = True
+                    level -= 1
+                    continue
+            else:
+                if cursor.goto_next_sibling():
+                    came_up = False
+                    continue
+                elif cursor.goto_parent():
+                    came_up = True
+                    level -= 1
+                    continue
+            
+            break
+        
+        functions.performance_timer_show("TREE-GENERATE")
+        
+        return node_list
     
     def styleText(self, start, end):
         """
@@ -152,31 +152,58 @@ class TreeSitterBaseLexer(BaseLexer):
         editor = self.editor()
         if editor is None:
             return
+            
+        node_list = self.generate_tree(self.tree, start, end)
+        
         functions.performance_timer_start()
         
-        # Initialize the styling
-        self.startStyling(start)
-        end_position = 0
         # Loop optimizations
         setStyling = self.setStyling
         
+        spanning = None
+        spanning_end_index = None
+        previous_item = None
         last_item = None
-        for k,v in self.node_dict.items():
-#            if v["start"] < start:
-#               continue
-#            elif v["start"] > end:
-#                break
+        for node in node_list:
+#            print(node)
+            if node["start"] < (start - 50):
+                continue
+            elif node["start"] > (end + 50):
+                continue
             
-            self.startStyling(v["start"])
-            length = v["end"] - v["start"]
-            _type = v["type"]
-            last_item = v
-            for k,v in self.symbols.items():
-                if _type in v["items"]:
-                    setStyling(length, v["index"])
-                    break
+            self.startStyling(node["start"])
+            length = node["end"] - node["start"]
+            _type = node["type"].lower()
+            last_item = node
+            
+            if spanning_end_index is not None and node["start"] > spanning_end_index:
+                spanning = None
+                spanning_end_index = None
+#                print("spanning-end", node["start"])
+            if spanning is None:
+                for kk,vv in self.symbols.items():
+                    if _type in vv["items"]:
+                        if "previous-special" in vv.keys() and previous_item is not None:
+                            for ps in vv["previous-special"]:
+                                if ps[0] == previous_item["type"]:
+                                    setStyling(length, self.symbols[ps[1]]["index"])
+                                    break
+                            else:
+                                setStyling(length, vv["index"])
+                        else:
+                            setStyling(length, vv["index"])
+                        if vv["is-span"]:
+                            spanning = kk
+                            spanning_end_index = node["end"]
+#                            print("spanning", kk, node["start"])
+                        break
+                else:
+#                    print("NOT FOUND:", f"'{_type}'", bytes(editor.text(), 'utf-8')[node["start"]:node["end"]].decode('utf-8'))
+                    setStyling(length, self.styles["default"])
             else:
-                setStyling(length, self.styles["default"])
+                setStyling(length, self.styles[spanning])
+            
+            previous_item = node
         else:
             if last_item:
                 length = end - last_item["end"]

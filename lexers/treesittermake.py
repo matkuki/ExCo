@@ -10,10 +10,10 @@ import time
 
 # Relative imports
 from typing import *
-from .treesitterbase import *
+from .treesitter import *
 
 
-class TreeSitterMakefile(TreeSitterBaseLexer):
+class TreeSitterMakefile(TreeSitterLexer):
     """
     Custom tree-sitter lexer for the Makefile language
     """
@@ -34,11 +34,19 @@ class TreeSitterMakefile(TreeSitterBaseLexer):
     }
     
     symbols = {
+        "default": {
+            "index": styles["default"],
+            "items": (
+                "word",
+            ),
+            "is-span": False,
+        },
         "comment": {
             "index": styles["comment"],
             "items": (
                 "comment",
             ),
+            "is-span": False,
         },
         "error": {
             "index": styles["error"],
@@ -52,7 +60,10 @@ class TreeSitterMakefile(TreeSitterBaseLexer):
                 "raw_text",
                 "realpath",
                 "text",
+                '"',
+                "'",
             ),
+            "is-span": False,
         },
         "basickeyword": {
             "index": styles["basickeyword"],
@@ -66,6 +77,7 @@ class TreeSitterMakefile(TreeSitterBaseLexer):
                 "ifneq",
                 "include",
             ),
+            "is-span": False,
         },
         "keyword": {
             "index": styles["keyword"],
@@ -86,12 +98,18 @@ class TreeSitterMakefile(TreeSitterBaseLexer):
                 "warning",
                 "wildcard",
             ),
+            "is-span": False,
         },
         "topkeyword": {
             "index": styles["topkeyword"],
             "items": (
                 "$",
+                "filter",
+                "shell_text",
+                "eval",
+                "recipe",
             ),
+            "is-span": False,
         },
         "operator": {
             "index": styles["operator"],
@@ -102,7 +120,10 @@ class TreeSitterMakefile(TreeSitterBaseLexer):
                 "+", "-",
                 "*", "/",
                 ":", "!", "?", "|",
+                "=", ":=", ",", ";", 
+                "^", "<", ">", "@",
             ),
+            "is-span": False,
         },
     }
     

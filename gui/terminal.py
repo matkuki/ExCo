@@ -402,12 +402,8 @@ class Terminal(data.QWidget):
     stored_width = -1
     def __resize_event(self, width, height):
 #        print("resize:", width, "x", height)
-        if data.on_windows:
-            width -= 2
-            height -= 1
-        else:
-            width -= 4
-            height -= 5
+        width -= 2
+        height -= 1
         if width < 0:
             width = 0
         if height < 0:

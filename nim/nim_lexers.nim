@@ -47,27 +47,28 @@ var styles = {
 }.toTable()
 
 var 
-    base_keywords = [
-        "del", "open", "ascii", "bool", "DeprecationWarning", "ReferenceError", "Warning", "yield", "KeyboardInterrupt", "NotADirectoryError", 
-        "str","FileNotFoundError", "OverflowError", "is", "FloatingPointError", "with", "repr", "sorted", "WindowsError", "property", 
-        "set","FutureWarning", "TimeoutError", "ConnectionAbortedError", "BufferError", "LookupError", "ImportError", "assert", "vars", "complex", 
-        "False","memoryview", "UnicodeWarning", "Ellipsis", "global", "zip", "hasattr", "setattr", "AssertionError", "sum", 
-        "delattr","frozenset", "True", "TabError", "min", "reversed", "oct", "type", "IndexError", "RecursionError", 
-        "hash","help", "SyntaxError", "divmod", "PendingDeprecationWarning", "ConnectionError", "ord", "super", "class", "FileExistsError", 
-        "exec","__debug__", "range", "not", "elif", "copyright", "IndentationError", "print", "license", "as", 
-        "GeneratorExit","def", "__package__", "hex", "import", "UnicodeTranslateError", "enumerate", "float", "InterruptedError", "and", 
-        "ValueError","KeyError", "locals", "__spec__", "__loader__", "ArithmeticError", "raise", "defer", "map", "pass", "UnicodeEncodeError", 
-        "EnvironmentError","from", "max", "__name__", "EOFError", "SystemError", "for", "IOError", "dir", "next", 
-        "all","ConnectionResetError", "any", "staticmethod", "Exception", "eval", "iter", "UserWarning", "UnicodeDecodeError", "break", 
-        "ProcessLookupError","StopAsyncIteration", "if", "BrokenPipeError", "None", "slice", "bin", "MemoryError", "finally", "callable", 
-        "classmethod","input", "IsADirectoryError", "NameError", "credits", "BaseException", "quit", "getattr", "while", "compile", 
-        "bytearray","SyntaxWarning", "TypeError", "or", "abs", "int", "continue", "BytesWarning", "return", "ChildProcessError", 
-        "in","StopIteration", "tuple", "PermissionError", "format", "len", "object", "UnicodeError", "__doc__", "pow", 
-        "isinstance","RuntimeWarning", "__build_class__", "AttributeError", "OSError", "exit", "globals", "issubclass", "filter", "chr", 
-        "round","UnboundLocalError", "ResourceWarning", "id", "bytes", "BlockingIOError", "ImportWarning", "except", "nonlocal", "try", 
-        "lambda","__import__", "NotImplemented", "ConnectionRefusedError", "ZeroDivisionError", "list", "SystemExit", "RuntimeError", "NotImplementedError", "dict", 
-        "else"
-    ]
+#    base_keywords = [
+#        "del", "open", "ascii", "bool", "DeprecationWarning", "ReferenceError", "Warning", "yield", "KeyboardInterrupt", "NotADirectoryError", 
+#        "str","FileNotFoundError", "OverflowError", "is", "FloatingPointError", "with", "repr", "sorted", "WindowsError", "property", 
+#        "set","FutureWarning", "TimeoutError", "ConnectionAbortedError", "BufferError", "LookupError", "ImportError", "assert", "vars", "complex", 
+#        "False","memoryview", "UnicodeWarning", "Ellipsis", "global", "zip", "hasattr", "setattr", "AssertionError", "sum", 
+#        "delattr","frozenset", "True", "TabError", "min", "reversed", "oct", "type", "IndexError", "RecursionError", 
+#        "hash","help", "SyntaxError", "divmod", "PendingDeprecationWarning", "ConnectionError", "ord", "super", "class", "FileExistsError", 
+#        "exec","__debug__", "range", "not", "elif", "copyright", "IndentationError", "print", "license", "as", 
+#        "GeneratorExit","def", "__package__", "hex", "import", "UnicodeTranslateError", "enumerate", "float", "InterruptedError", "and", 
+#        "ValueError","KeyError", "locals", "__spec__", "__loader__", "ArithmeticError", "raise", "defer", "map", "pass", "UnicodeEncodeError", 
+#        "EnvironmentError","from", "max", "__name__", "EOFError", "SystemError", "for", "IOError", "dir", "next", 
+#        "all","ConnectionResetError", "any", "staticmethod", "Exception", "eval", "iter", "UserWarning", "UnicodeDecodeError", "break", 
+#        "ProcessLookupError","StopAsyncIteration", "if", "BrokenPipeError", "None", "slice", "bin", "MemoryError", "finally", "callable", 
+#        "classmethod","input", "IsADirectoryError", "NameError", "credits", "BaseException", "quit", "getattr", "while", "compile", 
+#        "bytearray","SyntaxWarning", "TypeError", "or", "abs", "int", "continue", "BytesWarning", "return", "ChildProcessError", 
+#        "in","StopIteration", "tuple", "PermissionError", "format", "len", "object", "UnicodeError", "__doc__", "pow", 
+#        "isinstance","RuntimeWarning", "__build_class__", "AttributeError", "OSError", "exit", "globals", "issubclass", "filter", "chr", 
+#        "round","UnboundLocalError", "ResourceWarning", "id", "bytes", "BlockingIOError", "ImportWarning", "except", "nonlocal", "try", 
+#        "lambda","__import__", "NotImplemented", "ConnectionRefusedError", "ZeroDivisionError", "list", "SystemExit", "RuntimeError", "NotImplementedError", "dict", 
+#        "else", "match", "case", "_",
+#    ]
+    base_keywords = ["ArithmeticError", "AssertionError", "AttributeError", "BaseException", "BlockingIOError", "BrokenPipeError", "BufferError", "BytesWarning", "ChildProcessError", "ConnectionAbortedError", "ConnectionError", "ConnectionRefusedError", "ConnectionResetError", "DeprecationWarning", "EOFError", "Ellipsis", "EncodingWarning", "EnvironmentError", "Exception", "False", "FileExistsError", "FileNotFoundError", "FloatingPointError", "FutureWarning", "GeneratorExit", "IOError", "ImportError", "ImportWarning", "IndentationError", "IndexError", "InterruptedError", "IsADirectoryError", "KeyError", "KeyboardInterrupt", "LookupError", "MemoryError", "ModuleNotFoundError", "NameError", "None", "NotADirectoryError", "NotImplemented", "NotImplementedError", "OSError", "OverflowError", "PendingDeprecationWarning", "PermissionError", "ProcessLookupError", "RecursionError", "ReferenceError", "ResourceWarning", "RuntimeError", "RuntimeWarning", "StopAsyncIteration", "StopIteration", "SyntaxError", "SyntaxWarning", "SystemError", "SystemExit", "TabError", "TimeoutError", "True", "TypeError", "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError", "UnicodeWarning", "UserWarning", "ValueError", "Warning", "WindowsError", "ZeroDivisionError", "_", "__build_class__", "__debug__", "__doc__", "__import__", "__loader__", "__name__", "__package__", "__spec__", "abs", "aiter", "all", "and", "anext", "any", "as", "ascii", "assert", "async", "await", "bin", "bool", "break", "breakpoint", "bytearray", "bytes", "callable", "case", "chr", "class", "classmethod", "compile", "complex", "continue", "copyright", "credits", "def", "del", "delattr", "dict", "dir", "divmod", "elif", "else", "enumerate", "eval", "except", "exec", "exit", "filter", "finally", "float", "for", "format", "from", "frozenset", "getattr", "global", "globals", "hasattr", "hash", "help", "hex", "id", "if", "import", "in", "input", "int", "is", "isinstance", "issubclass", "iter", "lambda", "len", "license", "list", "locals", "map", "match", "max", "memoryview", "min", "next", "nonlocal", "not", "object", "oct", "open", "or", "ord", "pass", "pow", "print", "property", "quit", "raise", "range", "repr", "return", "reversed", "round", "set", "setattr", "slice", "sorted", "staticmethod", "str", "sum", "super", "try", "tuple", "type", "vars", "while", "with", "yield", "zip"]
     keywords = base_keywords
     base_custom_keywords = @["self"]
     custom_keywords = tables.initTable[int, seq[string]]()

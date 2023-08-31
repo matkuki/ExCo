@@ -19,6 +19,8 @@ import functions
 import data
 import time
 import lexers
+import lexers.treesittermake
+import lexers.treesitterpython
 
 def set_font(lexer, style_name, style_options):
     style_index = lexer.styles[style_name]
@@ -48,6 +50,7 @@ def get_lexer_from_file_type(file_type):
             lexer = lexers.CustomPython()
         else:
             lexer = lexers.Python()
+#        lexer = lexers.treesitterpython.TreeSitterPython("Python", "python")
     elif file_type == "cython":
         lexer = lexers.Cython()
     elif file_type == "c":
@@ -68,6 +71,7 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.Nim()
     elif file_type == "makefile":
         lexer = lexers.Makefile()
+#        lexer = lexers.treesittermake.TreeSitterMakefile("Make", "make")
     elif file_type == "xml":
         lexer = lexers.XML()
     elif file_type == "batch":
