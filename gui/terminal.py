@@ -86,15 +86,26 @@ class CustomTextEdit(data.QPlainTextEdit):
         super().__init__(*args, **kwargs)
         self.__cache_width = None
         self.__cache_height = None
+        self.document().setDocumentMargin(0)
+        self.document().rootFrame().frameFormat().setBottomMargin(0)
+        
+        self.setHorizontalScrollBarPolicy(data.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(data.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        
         self.update_style()
     
     def update_style(self):
         self.setStyleSheet(f"""
 QPlainTextEdit {{
     background-color: {PYTE_BACKGROUND_COLOR_MAP["default"].name()};
+    background-color: red;
     color: {PYTE_FOREGROUND_COLOR_MAP["default"].name()};
     selection-background-color: {PYTE_FOREGROUND_COLOR_MAP["default"].name()};
     selection-color: {PYTE_BACKGROUND_COLOR_MAP["default"].name()};
+    border: none;
+    margin: 0px;
+    spacing: 0px;
+    padding: 0px;
 }}
         """)
     
@@ -104,6 +115,9 @@ QPlainTextEdit {{
         text = event.text()
         self.input_event.emit(key, text, modifiers)
 #        super().keyPressEvent(event)
+
+    def wheelEvent(self, event):
+        event.ignore()
     
     def resizeEvent(self, event):
         w = self.viewport().size().width()
@@ -194,6 +208,8 @@ class Terminal(data.QWidget):
         
         # Add the widgets to a vertical layout
         layout = data.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         layout.addWidget(self.output_widget)
         
         self.update_style()
@@ -205,7 +221,16 @@ class Terminal(data.QWidget):
         self.__thread_pty_read = None
     
     def update_style(self):
-        pass
+        self.setStyleSheet(f"""
+QWidget {{
+    background: transparent;
+    border: none;
+    margin: 0px;
+    spacing: 0px;
+    padding: 0px;
+}}
+        """)
+        self.output_widget.update_style()
     
     def __pty_read_loop_windows(self):
         while self.pty_process.isalive():
@@ -247,33 +272,11 @@ class Terminal(data.QWidget):
         time_start = time.perf_counter()
         
         # Cursor
-#        document = self.output_widget.document()
         cursor = self.output_widget.textCursor()
-        
-        if not hasattr(self, "cache_top"):
-            self.cache_top = 0
-#        print("--cache_top:", self.cache_top)
         cursor.setPosition(0)
-        top = len(self.screen.history.top)
-        if self.cache_top > 0:
-            cursor.movePosition(
-                data.QTextCursor.MoveOperation.Down,
-                data.QTextCursor.MoveMode.MoveAnchor,
-                self.cache_top
-            )
-            cursor.movePosition(
-                data.QTextCursor.MoveOperation.StartOfLine,
-                data.QTextCursor.MoveMode.MoveAnchor,
-                1
-            )
-
-        clear_range = self.screen.lines * len(self.screen.buffer[0])
-        cursor.movePosition(
-            data.QTextCursor.MoveOperation.Down,
-            data.QTextCursor.MoveMode.KeepAnchor,
-            clear_range
-        )
-        cursor.removeSelectedText()
+        
+        # Clear all text
+        self.output_widget.clear()
         
         # Format the text
         bg = "default"
@@ -283,12 +286,9 @@ class Terminal(data.QWidget):
         new_formatting.setForeground(PYTE_FOREGROUND_COLOR_MAP[fg])
         cursor.setCharFormat(new_formatting)
         current_char_list = []
-        entire_height_in_lines = self.screen.lines + top
-        for y in range(self.screen.lines + top):
-            if y < top:
-                line = self.screen.history.top[y]
-            else:
-                line = self.screen.buffer[y - top]
+        entire_height_in_lines = self.screen.lines
+        for y in range(self.screen.lines):
+            line = self.screen.buffer[y]
             for x in range(self.screen.columns):
                 character = line[x]
                 if character.bg != bg or character.fg != fg:
@@ -328,7 +328,7 @@ class Terminal(data.QWidget):
         cursor.movePosition(
             data.QTextCursor.MoveOperation.Down,
             data.QTextCursor.MoveMode.MoveAnchor,
-            self.cache_top + top + self.screen.cursor.y
+            self.screen.cursor.y
         )
         cursor.movePosition(
             data.QTextCursor.MoveOperation.Right,
@@ -336,18 +336,12 @@ class Terminal(data.QWidget):
             self.screen.cursor.x
         )
         
+        # Reset scrolling to top
+        self.output_widget.verticalScrollBar().setValue(0)
+        
         # Activate cursor
         self.output_widget.setTextCursor(cursor)
         self.output_widget.ensureCursorVisible()
-        
-        # Store cursor position
-#        self.cache_top = self.output_widget.firstVisibleBlock().firstLineNumber() - 1
-        self.cache_top = self.output_widget.firstVisibleBlock().firstLineNumber()
-        if self.cache_top < 0:
-            self.cache_top = 0
-
-        # Reset history
-        self.screen.history.top.clear()
         
         # Loop timing
         end_count = time.perf_counter() - time_start
@@ -402,8 +396,8 @@ class Terminal(data.QWidget):
     stored_width = -1
     def __resize_event(self, width, height):
 #        print("resize:", width, "x", height)
-        width -= 2
-        height -= 1
+        width -= 1
+#        height -= 1
         if width < 0:
             width = 0
         if height < 0:

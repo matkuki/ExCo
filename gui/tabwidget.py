@@ -74,51 +74,51 @@ class TabWidget(data.QTabWidget):
             left_arrow_image = functions.get_resource_file(data.theme["left-arrow-image"])
             left_arrow_hover_image = functions.get_resource_file(data.theme["left-arrow-hover-image"])
             style = """
-                QTabBar::close-button {{
-                    image: url({})
-                }}
-                QTabBar::close-button:hover {{
-                    image: url({})
-                }}
+QTabBar::close-button {{
+    image: url({})
+}}
+QTabBar::close-button:hover {{
+    image: url({})
+}}
 
-                QTabBar QToolButton {{
-                    margin-bottom: 1px;
-                    margin-left: 1px;
-                }}
+QTabBar QToolButton {{
+    margin-bottom: 1px;
+    margin-left: 1px;
+}}
 
-                QTabBar QToolButton::right-arrow {{
-                    image: url({});
-                }}
-                QTabBar QToolButton::right-arrow:hover {{
-                    image: url({});
-                }}
+QTabBar QToolButton::right-arrow {{
+    image: url({});
+}}
+QTabBar QToolButton::right-arrow:hover {{
+    image: url({});
+}}
 
-                QTabBar QToolButton::left-arrow {{
-                    image: url({});
-                }}
-                QTabBar QToolButton::left-arrow:hover {{
-                    image: url({});
-                }}
+QTabBar QToolButton::left-arrow {{
+    image: url({});
+}}
+QTabBar QToolButton::left-arrow:hover {{
+    image: url({});
+}}
 
-                QTabBar::tab {{
-                    background: {};
-                    border: 1px solid {};
-                    border-bottom-color: {};
-                    padding-top: 2px;
-                    padding-bottom: 2px;
-                    padding-left: 4px;
-                    padding-right: 4px;
-                    color: {};
-                }}
-                QTabBar::tab:hover {{
-                    background: {};
-                    border-bottom-color: {};
-                }}
-                QTabBar::tab:selected {{
-                    background: {};
-                    border: 1px solid {};
-                    border-bottom-color: {};
-                }}
+QTabBar::tab {{
+    background: {};
+    border: 1px solid {};
+    border-bottom-color: {};
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: {};
+}}
+QTabBar::tab:hover {{
+    background: {};
+    border-bottom-color: {};
+}}
+QTabBar::tab:selected {{
+    background: {};
+    border: 1px solid {};
+    border-bottom-color: {};
+}}
             """.format(
                 close_image,
                 close_hover_image,

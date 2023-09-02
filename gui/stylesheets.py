@@ -225,6 +225,7 @@ class StyleSheetFrame:
 QFrame {{
     background-color: {background_color};
     border: {border};
+    spacing: 0px;
 }}
         """)
         return style_sheet
