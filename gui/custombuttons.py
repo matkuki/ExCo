@@ -18,7 +18,7 @@ import components.hexbuilder
 
 """
 -----------------------------------------------------------------------------------
-Custom buttons used by the FunctionWheel and ContextMenu in the forms module
+Custom buttons used by the FunctionWheel and ContextMenuHex in the forms module
 -----------------------------------------------------------------------------------
 """
 class CustomButton(data.QLabel):

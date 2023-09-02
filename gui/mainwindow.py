@@ -29,7 +29,7 @@ import components.communicator
 import components.processcontroller
 import components.thesquid
 
-from .contextmenu import *
+import gui.contextmenu
 from .custombuttons import *
 from .dialogs import *
 from .excoinfo import *
@@ -791,7 +791,7 @@ class MainWindow(data.QMainWindow):
                 name = name[:name.find('\t')]
             # Add the action to the context menu
             # function list in the helper forms module
-            ContextMenu.add_function(
+            gui.contextmenu.add_function(
                 function.__name__, action.pixmap, function, name
             )
             # Enable/disable action according to passed
@@ -1728,7 +1728,7 @@ class MainWindow(data.QMainWindow):
                 None,
                 'Reset functions of ALL context menus (right-click menus)',
                 'tango_icons/reset-context-menu.png',
-                ContextMenu.reset_functions
+                gui.contextmenu.ContextMenuHex.reset_functions
             )
             # Open in browser
             def open_in_browser(*args):
@@ -3045,7 +3045,7 @@ class MainWindow(data.QMainWindow):
             for func_type in self.manipulator.context_menu_functions.keys():
                 funcs = self.manipulator.context_menu_functions[func_type]
                 for func_key in funcs.keys():
-                    getattr(ContextMenu, func_type)[func_key] = funcs[func_key]
+                    getattr(gui.contextmenu.ContextMenuHex, func_type)[func_key] = funcs[func_key]
             # Display the settings load error AFTER the theme has been set
             # Otherwise the error text color will not be styled correctly
             if result == False:
@@ -3058,7 +3058,7 @@ class MainWindow(data.QMainWindow):
             """Save the current settings"""
             self.manipulator.save_settings(
                 data.theme,
-                ContextMenu.get_settings()
+                gui.contextmenu.ContextMenuHex.get_settings()
             )
             #Display message in statusbar
             self._parent.display.write_to_statusbar("Saved settings", 1000)
@@ -5480,7 +5480,7 @@ TabWidget QToolButton:hover {{
                     name = name[:name.find('\t')]
                 # Add the action to the context menu
                 # function list in the helper forms module
-                ContextMenu.add_function(
+                gui.contextmenu.add_function(
                     function.__name__, action.pixmap, function, name
                 )
                 # Enable/disable action according to passed

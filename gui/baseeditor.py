@@ -11,7 +11,6 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import data
 
-from .contextmenu import *
 from .stylesheets import *
 
 """
@@ -91,9 +90,7 @@ QListView::item:selected {{
         # Clean up the context menu
         if self.context_menu is not None:
             self.context_menu.hide()
-        if self.context_menu is not None:
-            for b in self.context_menu.button_list:
-                b.setParent(None)
-        if self.context_menu is not None:
+            self.context_menu.clear_items()
+            self.context_menu.deleteLater()
             self.context_menu.setParent(None)
         self.context_menu = None

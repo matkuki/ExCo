@@ -15,6 +15,7 @@ import components.actionfilter
 import components.linelist
 import settings
 import lexers
+import gui.contextmenu
 
 from .customeditor import *
 from .tabwidget import *
@@ -217,15 +218,15 @@ class ReplHelper(data.QsciScintilla):
         self.delete_context_menu()
         # Show a context menu according to the current lexer
         offset = (event.x(), event.y())
-        self.context_menu = ContextMenu(
-            self, self.main_form, offset
-        )
         height = self.size().height()
         if height < 100:
-            self.context_menu.create_horizontal_multiline_repl_buttons()
+            _type = "multiline-repl-horizontal"
         else:
-            self.context_menu.create_multiline_repl_buttons()
-        self.context_menu.show()
+            _type = "multiline-repl-normal"
+        self.context_menu = gui.contextmenu.create(
+            self, self.main_form, offset=offset, _type=_type
+        )
+        self.context_menu.popup_at_cursor()
         event.accept()
 
     def set_lexer(self):

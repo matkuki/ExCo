@@ -36,6 +36,8 @@ class Menu(data.QMenu):
         super().__init__(*args, **kwargs)
         self._id = uuid.uuid4()
         Menu.menu_cache[self._id] = self
+        # Set options
+        self.setToolTipsVisible(True)
         # Set default font
         self.setFont(data.get_current_font())
         # Update style

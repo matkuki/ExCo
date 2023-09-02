@@ -15,7 +15,7 @@ import components.internals
 import settings
 import lexers
 
-from .contextmenu import *
+import gui.contextmenu
 from .baseeditor import *
 
 """
@@ -103,11 +103,10 @@ class PlainEditor(BaseEditor):
         self.delete_context_menu()
         # Show a context menu according to the current lexer
         offset = (event.x(), event.y())
-        self.context_menu = ContextMenu(
-            self, self.main_form, offset
+        self.context_menu = gui.contextmenu.create(
+            self, self.main_form, offset=offset, _type="plain"
         )
-        self.context_menu.create_plain_buttons()
-        self.context_menu.show()
+        self.context_menu.popup_at_cursor()
         event.accept()
 
     def mousePressEvent(self, event):
