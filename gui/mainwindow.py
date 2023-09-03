@@ -3812,7 +3812,6 @@ TabWidget QToolButton:hover {{
             # Check the REPL focus
             if (self._parent.repl.hasFocus() == True or
                 self._parent.repl_helper.hasFocus() == True):
-#                self.__indication_state = "repl-indicated"
                 self._parent.repl_box.indication_set()
                 return
             else:

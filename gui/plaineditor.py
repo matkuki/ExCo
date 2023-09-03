@@ -16,14 +16,14 @@ import settings
 import lexers
 
 import gui.contextmenu
-from .baseeditor import *
+import gui.baseeditor
 
 """
 -----------------------------
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
 -----------------------------
 """
-class PlainEditor(BaseEditor):
+class PlainEditor(gui.baseeditor.BaseEditor):
     # Class variables
     name             = None
     _parent          = None
@@ -110,23 +110,27 @@ class PlainEditor(BaseEditor):
         event.accept()
 
     def mousePressEvent(self, event):
-        """Overloaded mouse click event"""
-        #Execute the superclass mouse click event
+        """
+        Overloaded mouse click event
+        """
+        # Execute the superclass mouse click event
         super().mousePressEvent(event)
-        #Set focus to the clicked editor
+        # Set focus to the clicked editor
         self.setFocus()
-        #Set the last focused widget to the parent basic widget
+        # Set the last focused widget to the parent basic widget
         self.main_form.last_focused_widget = self._parent
-        #Hide the function wheel if it is shown
+        # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
 
     def setFocus(self):
-        """Overridden focus event"""
-        #Execute the supeclass focus function
+        """
+        Overridden focus event
+        """
+        # Execute the supeclass focus function
         super().setFocus()
-        #Check indication
+        # Check indication
         self.main_form.view.indication_check()
 
     def goto_line(self, line_number):

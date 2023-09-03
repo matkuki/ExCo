@@ -95,23 +95,18 @@ class CustomTextEdit(data.QPlainTextEdit):
         self.setHorizontalScrollBarPolicy(data.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(data.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
+        self.setFocusPolicy(data.Qt.FocusPolicy.StrongFocus)
+        
         self.update_style()
     
-    def update_style(self):
-        self.setStyleSheet(f"""
-QPlainTextEdit {{
-    background-color: {PYTE_BACKGROUND_COLOR_MAP["default"].name()};
-    color: {PYTE_FOREGROUND_COLOR_MAP["default"].name()};
-    selection-background-color: {PYTE_FOREGROUND_COLOR_MAP["default"].name()};
-    selection-color: {PYTE_BACKGROUND_COLOR_MAP["default"].name()};
-    border: none;
-    margin: 0px;
-    spacing: 0px;
-    padding: 0px;
-}}
-
-{gui.stylesheets.StyleSheetMenu.standard()}
-        """)
+    def setFocus(self):
+        """
+        Overridden focus event
+        """
+        # Execute the supeclass focus function
+        super().setFocus()
+        # Check indication
+        self.parent().main_form.view.indication_check()
     
     def keyPressEvent(self, event):
         modifiers = data.QApplication.keyboardModifiers()
@@ -119,6 +114,15 @@ QPlainTextEdit {{
         text = event.text()
         self.input_event.emit(key, text, modifiers)
 #        super().keyPressEvent(event)
+
+    def mousePressEvent(self, event):
+        """
+        Overloaded mouse click event
+        """
+        # Execute the superclass mouse click event
+        super().mousePressEvent(event)
+        # Set focus to the clicked editor
+        self.setFocus()
 
     def wheelEvent(self, event):
         event.ignore()
@@ -136,10 +140,6 @@ QPlainTextEdit {{
             self.__cache_height = height_in_chars
             self.resize_event.emit(width_in_chars, height_in_chars)
         return super().resizeEvent(event)
-    
-    def paste(self):
-        paste_text = data.application.clipboard().text()
-        self.paste_event.emit(paste_text)
     
     def contextMenuEvent(self, event):
         # Show a context menu
@@ -190,6 +190,26 @@ QPlainTextEdit {{
         context_menu.popup(cursor)
         # Accept event
         event.accept()
+    
+    def paste(self):
+        paste_text = data.application.clipboard().text()
+        self.paste_event.emit(paste_text)
+    
+    def update_style(self):
+        self.setStyleSheet(f"""
+QPlainTextEdit {{
+    background-color: {PYTE_BACKGROUND_COLOR_MAP["default"].name()};
+    color: {PYTE_FOREGROUND_COLOR_MAP["default"].name()};
+    selection-background-color: {PYTE_FOREGROUND_COLOR_MAP["default"].name()};
+    selection-color: {PYTE_BACKGROUND_COLOR_MAP["default"].name()};
+    border: none;
+    margin: 0px;
+    spacing: 0px;
+    padding: 0px;
+}}
+
+{gui.stylesheets.StyleSheetMenu.standard()}
+        """)
 
 
 class Terminal(data.QWidget):
@@ -278,18 +298,6 @@ class Terminal(data.QWidget):
         self.output_widget.setParent(None)
         self.output_widget = None
         self.__thread_pty_read = None
-    
-    def update_style(self):
-        self.setStyleSheet(f"""
-QWidget {{
-    background: transparent;
-    border: none;
-    margin: 0px;
-    spacing: 0px;
-    padding: 0px;
-}}
-        """)
-        self.output_widget.update_style()
     
     def __pty_read_loop_windows(self):
         while self.pty_process.isalive():
@@ -475,6 +483,27 @@ QWidget {{
     
     def execute_command(self, command: str):
         self.pty_process.write(command + "\r\n")
+    
+    def setFocus(self):
+        """
+        Overridden focus event
+        """
+        self.output_widget.setFocus()
+    
+    def hasFocus(self):
+        return self.output_widget.hasFocus()
+    
+    def update_style(self):
+        self.setStyleSheet(f"""
+QWidget {{
+    background: transparent;
+    border: none;
+    margin: 0px;
+    spacing: 0px;
+    padding: 0px;
+}}
+        """)
+        self.output_widget.update_style()
 
 
 def test():
