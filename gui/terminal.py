@@ -17,6 +17,7 @@ import traceback
 
 import data
 import functions
+import components.internals
 import gui.menu
 import gui.stylesheets
 
@@ -240,6 +241,11 @@ class Terminal(data.QWidget):
         self._parent = parent
         self.main_form = main_form
         self.current_icon = functions.create_icon('tango_icons/utilities-terminal.png')
+        
+        # Initialize components
+        self.internals = components.internals.Internals(
+            parent=self, tab_widget=parent
+        )
         
         CONSOLE_WIDTH = 120
         CONSOLE_HEIGHT = 26
@@ -475,8 +481,7 @@ class Terminal(data.QWidget):
                 "Terminal has probably already been closed," +
                 "the process returned: '{}'".format(ex)
             )
-        
-    stored_width = -1
+    
     def __resize_event(self, width, height):
 #        print("resize:", width, "x", height)
         if data.on_windows:
