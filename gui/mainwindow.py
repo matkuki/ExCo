@@ -1915,6 +1915,7 @@ class MainWindow(data.QMainWindow):
                 if window is None:
                     window = self.get_largest_window()
                 window.terminal_add()
+                window.currentWidget().setFocus()
             show_terminal_action = create_action(
                 'Show Terminal Emulator',
                 None,

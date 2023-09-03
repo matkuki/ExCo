@@ -84,6 +84,8 @@ class CustomTextEdit(data.QPlainTextEdit):
     input_event = data.pyqtSignal(int, str, object)
     resize_event = data.pyqtSignal(int, int)
     paste_event = data.pyqtSignal(str)
+    scroll_up_event = data.pyqtSignal(int)
+    scroll_down_event = data.pyqtSignal(int)
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -125,7 +127,13 @@ class CustomTextEdit(data.QPlainTextEdit):
         self.setFocus()
 
     def wheelEvent(self, event):
-        event.ignore()
+        if event.angleDelta().y() > 0:
+            # Up
+            self.scroll_up_event.emit(event.angleDelta().y())
+        else:
+            # Down
+            self.scroll_down_event.emit(event.angleDelta().y())
+        event.accept()
     
     def resizeEvent(self, event):
         w = self.viewport().size().width()
@@ -284,6 +292,8 @@ class Terminal(data.QWidget):
         self.output_widget.input_event.connect(self.__input_event)
         self.output_widget.resize_event.connect(self.__resize_event)
         self.output_widget.paste_event.connect(self.__paste_event)
+        self.output_widget.scroll_up_event.connect(self.__scroll_up_event)
+        self.output_widget.scroll_down_event.connect(self.__scroll_down_event)
         
         # Add the widgets to a vertical layout
         layout = data.QVBoxLayout(self)
@@ -449,6 +459,12 @@ class Terminal(data.QWidget):
             elif key == data.Qt.Key.Key_Right:
                 text = "\u001b[C"
                 update = True
+            elif key == data.Qt.Key.Key_PageUp:
+                self.screen.prev_page()
+                update = True
+            elif key == data.Qt.Key.Key_PageDown:
+                self.screen.next_page()
+                update = True
         if update:
             self.__update_display()
         
@@ -480,6 +496,18 @@ class Terminal(data.QWidget):
         self.pty_process.write(paste_text)
         self.__update_display()
         self.output_widget.setFocus()
+    
+    def __scroll_up_event(self, value):
+        value = int(value / 120)
+        for i in range(value):
+            self.screen.prev_page()
+        self.__update_display()
+    
+    def __scroll_down_event(self, value):
+        value = int(abs(value / 120))
+        for i in range(value):
+            self.screen.next_page()
+        self.__update_display()
     
     def execute_command(self, command: str):
         self.pty_process.write(command + "\r\n")

@@ -37,5 +37,5 @@ All additional licenses are specified at the beginning of every source code file
 
 ### Supported platforms: ###
 - __Windows__ ([precompiled binaries available](https://github.com/matkuki/ExCo/releases))
-- __Linux__ (tested on Ubuntu, Lubuntu, Mint, Fedora, Raspbian (Raspberry pi, pi2 and pi3))
+- __Linux__ (tested on Ubuntu, Lubuntu, Mint, Fedora, Raspbian (Raspberry pi, pi2, pi3 and pi4))
 - __Mac OS__ (Many thanks to __zenlc2000__ for testing this on Mac OS 10.11)

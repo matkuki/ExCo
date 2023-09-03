@@ -114,6 +114,8 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.CiCode()
     elif file_type == "spice":
         lexer = lexers.Spice()
+    elif file_type == "skill":
+        lexer = lexers.SKILL()
     elif file_type == "yaml":
         lexer = lexers.YAML()
     else:
@@ -172,6 +174,8 @@ def get_comment_style_for_lexer(lexer):
         comment_string = "#"
     elif isinstance(lexer, lexers.Spice):
         comment_string = "*"
+    elif isinstance(lexer, lexers.SKILL):
+        comment_string = ";"
     elif isinstance(lexer, lexers.PostScript):
         comment_string = "%"
     elif isinstance(lexer, lexers.Fortran):

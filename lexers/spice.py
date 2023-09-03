@@ -11,8 +11,13 @@ import functions
 import lexers
 
 
-class Spice(data.QsciLexerCustom):
+class CustomSpice(data.QsciLexerCustom):
     """
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !! This lexer is not needed as there is a built-in !!
+    !! one for the Spice programming language          !!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
     Custom lexer for the Spice programming languages
     """
     styles = {
@@ -49,6 +54,7 @@ class Spice(data.QsciLexerCustom):
         """
         # Initialize superclass
         super().__init__()
+        print("INIT")
         # Set the default style values
         self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
         self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
@@ -141,12 +147,16 @@ class Spice(data.QsciLexerCustom):
                 setStyling(token[1], STRING)
                 stringing = True
             elif token[0] in operator_list:
+                print("TU0")
                 setStyling(token[1], OPERATOR)
             elif token[0] in keyword_dictionary["Instruction0"]:
+                print("TU1")
                 setStyling(token[1], INSTRUCTION0)
             elif token[0] in keyword_dictionary["Instruction1"]:
+                print("TU2")
                 setStyling(token[1], INSTRUCTION1)
             elif token[0] in keyword_dictionary["Type"]:
+                print("TU3")
                 setStyling(token[1], TYPE)
             else:
                 setStyling(token[1], DEFAULT)
