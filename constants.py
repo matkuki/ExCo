@@ -45,6 +45,7 @@ supported_file_extentions = {
     "routeros": [".rsc"],
     "ruby": [".rb", ".rbw"],
     "spice": [".cir", ".inp"],
+    "smallbasic": [".bas", ],
     "skill": [".il", ".ils"],
     "sql": [".sql"],
     "text": [".txt", ".text"],

@@ -36,6 +36,7 @@ from lexers.php import *
 from lexers.python import *
 from lexers.routeros import *
 from lexers.spice import *
+from lexers.smallbasic import *
 from lexers.skill import *
 from lexers.text import *
 
