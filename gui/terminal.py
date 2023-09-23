@@ -234,6 +234,7 @@ class Terminal(data.QWidget):
     save_name    = None
     # Reference to the custom context menu
     context_menu = None
+    current_working_directory = None
     
     def __init__(self, parent, main_form, name):
         super().__init__(parent)
@@ -256,6 +257,7 @@ class Terminal(data.QWidget):
             history=1000,
             ratio=0.1,
         )
+        self.screen.set_mode(pyte.modes.DECAWM)
         self.stream = pyte.Stream(self.screen)
         
         if data.on_windows:
@@ -370,6 +372,7 @@ class Terminal(data.QWidget):
         cursor.setCharFormat(new_formatting)
         current_char_list = []
         entire_height_in_lines = self.screen.lines
+        current_visible_buffer = []
         for y in range(self.screen.lines):
             line = self.screen.buffer[y]
             for x in range(self.screen.columns):
@@ -377,6 +380,7 @@ class Terminal(data.QWidget):
                 if character.bg != bg or character.fg != fg:
                     text = ''.join(current_char_list)
                     cursor.insertText(text)
+                    current_visible_buffer.append(text)
                     current_char_list = []
                     bg = character.bg
                     fg = character.fg
@@ -395,13 +399,13 @@ class Terminal(data.QWidget):
                         new_formatting.setForeground(new_color)
                         
                     cursor.setCharFormat(new_formatting)
-                
                 current_char_list.append(character.data)
             current_char_list.append('\n')
         else:
             if len(current_char_list) > 0:
                 text = ''.join(current_char_list)
                 cursor.insertText(text)
+                current_visible_buffer.append(text)
         
         self.output_widget.setTextCursor(cursor)
         
@@ -425,6 +429,27 @@ class Terminal(data.QWidget):
         # Activate cursor
         self.output_widget.setTextCursor(cursor)
         self.output_widget.ensureCursorVisible()
+        
+        # Parse directory if applicable
+        for text in current_visible_buffer:
+            for line in text.split('\n'):
+                try:
+                    stripped_line = line.strip()
+                    if stripped_line.endswith('>'):
+                        # Windows Console
+                        if stripped_line.startswith("PS "):
+                            stripped_line = stripped_line[:3]
+                        directory = stripped_line.replace('>', '')
+                        if os.path.isdir(directory):
+                            self.current_working_directory = directory
+                    elif line.strip().endswith("$"):
+                        # Bash
+                        user, directory = stripped_line[:-1].split(':')
+                        directory = directory.strip()
+                        if os.path.isdir(directory):
+                            self.current_working_directory = directory
+                except:
+                    traceback.print_exc()
         
         # Loop timing
         end_count = time.perf_counter() - time_start
@@ -484,18 +509,21 @@ class Terminal(data.QWidget):
     
     def __resize_event(self, width, height):
 #        print("resize:", width, "x", height)
-        if data.on_windows:
-            width -= 1
-        else:
-            width -= 1
-            height -= 1
-        if width < 0:
-            width = 0
-        if height < 0:
-            height = 0
-        self.screen.resize(height, width)
-        self.__update_display()
-        self.pty_process.setwinsize(height, width)
+        try:
+            if data.on_windows:
+                width -= 1
+            else:
+                width -= 1
+                height -= 1
+            if width < 0:
+                width = 0
+            if height < 0:
+                height = 0
+            self.screen.resize(height, width)
+            self.__update_display()
+            self.pty_process.setwinsize(height, width)
+        except:
+            pass
     
     def __paste_event(self, paste_text):
         self.pty_process.write(paste_text)
@@ -514,8 +542,14 @@ class Terminal(data.QWidget):
             self.screen.next_page()
         self.__update_display()
     
-    def execute_command(self, command: str):
+    def execute_command(self, command: str) -> None:
         self.pty_process.write(command + "\r\n")
+    
+    def get_cwd(self) -> str:
+        return self.current_working_directory
+    
+    def set_cwd(self, directory: str) -> None:
+        self.execute_command(f"cd {directory}")
     
     def setFocus(self):
         """

@@ -52,6 +52,7 @@ from .dockingoverlay import *
 from .thebox import *
 from .hexview import *
 from .templates import *
+from .terminal import *
 from .externalprogram import *
 
 if data.platform == "Windows":
@@ -3915,6 +3916,7 @@ TabWidget QToolButton:hover {{
                 'TreeDisplay': TreeDisplay,
                 'TreeExplorer': TreeExplorer,
                 'HexView': HexView,
+                'Terminal': Terminal,
             }
             inverted_classes = {v: k for k, v in classes.items()}
             return classes, inverted_classes
@@ -4111,6 +4113,12 @@ TabWidget QToolButton:hover {{
                                     file_path = widget_data[0]
                                     if os.path.isfile(file_path):
                                         new_hexview = new_tabs.hexview_add(file_path)
+                                
+                                elif cls == "Terminal":
+                                    new_terminal = new_tabs.terminal_add()
+                                    working_path = widget_data[0]
+                                    if os.path.isdir(working_path):
+                                        new_terminal.set_cwd(working_path)
 
                                 elif cls == data.repl_messages_tab_name:
                                     self._parent.repl_messages_tab = new_tabs.plain_add_document(

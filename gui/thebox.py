@@ -16,6 +16,7 @@ from . import tabwidget
 from . import treedisplays
 from . import stylesheets
 from . import hexview
+from . import terminal
 
 
 class TheBox(data.QSplitter):
@@ -190,6 +191,14 @@ class TheBox(data.QSplitter):
                             inverted_classes[w.__class__],
                             j,
                             (w.save_name, w.internals.get_id(), )
+                        )
+                    elif isinstance(w, terminal.Terminal):
+                        # Terminal
+                        terminal_name = "{}-{}".format(name, j)
+                        tabs[terminal_name] = (
+                            inverted_classes[w.__class__],
+                            j,
+                            (w.current_working_directory, w.internals.get_id(), )
                         )
                     else:
                         #tabs[name] = inverted_classes[w.__class__]

@@ -59,39 +59,40 @@ class TreeSitterBaseLexer(BaseLexer):
         # Tree-sitter works with bytes, so we have to adjust the start and end boundaries
         text_bytes = editor.text().encode("utf-8")
 #        self.tree = self.parser.parse(text_bytes)
-#        if modificationType == editor.SC_MOD_DELETETEXT:
-#            positions = (
-#                position,
-#                position+length,
-#                position,
-#                position,
-#                position+length,
-#                position,
-#            )
-#        else:
-#            positions = (
-#                position,
-#                position,
-#                position+length,
-#                position,
-#                position,
-#                position+length,
-#            )
-#        if self.tree is not None:
-#            self.tree.edit(
-#                start_byte=positions[0],
-#                old_end_byte=positions[1],
-#                new_end_byte=positions[2],
-#                start_point=(0, positions[3]),
-#                old_end_point=(0, positions[4]),
-#                new_end_point=(0, positions[5]),
-#            )
+        if modificationType == editor.SC_MOD_DELETETEXT:
+            positions = (
+                position,
+                position+length,
+                position,
+                position,
+                position+length,
+                position,
+            )
+        else:
+            positions = (
+                position,
+                position,
+                position+length,
+                position,
+                position,
+                position+length,
+            )
+        if self.tree is not None:
+            self.tree.edit(
+                start_byte=positions[0],
+                old_end_byte=positions[1],
+                new_end_byte=positions[2],
+                start_point=(0, positions[3]),
+                old_end_point=(0, positions[4]),
+                new_end_point=(0, positions[5]),
+            )
 #            new_tree = self.parser.parse(text_bytes, self.tree)
 #            old_tree = self.tree
 #            self.tree = new_tree
-##            print(len(self.tree.get_changed_ranges(old_tree)))
-#        else:
-#            self.tree = self.parser.parse(text_bytes)
+#            print(len(self.tree.get_changed_ranges(old_tree)))
+            self.tree = self.parser.parse(text_bytes, self.tree)
+        else:
+            self.tree = self.parser.parse(text_bytes)
         
         functions.performance_timer_show("CHANGE")
     
@@ -152,7 +153,7 @@ class TreeSitterBaseLexer(BaseLexer):
         editor = self.editor()
         if editor is None:
             return
-            
+        
         node_list = self.generate_tree(self.tree, start, end)
         
         functions.performance_timer_start()
