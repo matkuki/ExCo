@@ -13,7 +13,9 @@ import os
 import functools
 import traceback
 
+import qt
 import data
+import constants
 import functions
 import components.actionfilter
 import components.thesquid
@@ -34,11 +36,11 @@ from .externalprogram import *
 Subclassed QTabWidget that can hold all custom editor and other widgets
 -----------------------------
 """
-class TabWidget(data.QTabWidget):
+class TabWidget(qt.QTabWidget):
     """
     Basic widget used for holding QScintilla/QTextEdit objects
     """
-    class CustomTabBar(data.QTabBar):
+    class CustomTabBar(qt.QTabBar):
         """
         Custom tab bar used to capture tab clicks, ...
         """
@@ -142,7 +144,7 @@ QTabBar::tab:selected {{
             # Execute the superclass event method
             super().mousePressEvent(event)
             event_button    = event.button()
-            key_modifiers   = data.QApplication.keyboardModifiers()
+            key_modifiers   = qt.QApplication.keyboardModifiers()
             
             self._parent.store_drag_data()
 
@@ -161,7 +163,7 @@ QTabBar::tab:selected {{
             )
             self.tab_menu = menu
             # Show the tab context menu
-            cursor = data.QCursor.pos()
+            cursor = qt.QCursor.pos()
             menu.popup(cursor)
             event.accept()
 
@@ -184,7 +186,7 @@ QTabBar::tab:selected {{
                     message = "Document path is not valid!"
                     main_form.display.repl_display_message(
                         message,
-                        message_type=data.MessageType.WARNING
+                        message_type=constants.MessageType.WARNING
                     )
                     return
                 main_form.set_cwd(path)
@@ -193,12 +195,12 @@ QTabBar::tab:selected {{
             # Change the basic widget name to lowercase
             tab_widget_name = tab_widget.name.lower()
             # Clear REPL MESSAGES tab action
-            clear_repl_action = data.QAction("Clear messages", self)
+            clear_repl_action = qt.QAction("Clear messages", self)
             clear_repl_action.setIcon(functions.create_icon('tango_icons/edit-clear.png'))
             clear_repl_action.triggered.connect(main_form.display.repl_clear_tab)
 
             if hasattr(widget, "save_name") == True:
-                update_cwd_action = data.QAction("Update CWD", self)
+                update_cwd_action = qt.QAction("Update CWD", self)
                 update_cwd_action.setIcon(
                     functions.create_icon('tango_icons/update-cwd.png')
                 )
@@ -206,7 +208,7 @@ QTabBar::tab:selected {{
                 self.addAction(update_cwd_action)
                 self.addSeparator()
             # Add the 'copy file name to clipboard' action
-            clipboard_copy_action = data.QAction("Copy tab name to clipboard", self)
+            clipboard_copy_action = qt.QAction("Copy tab name to clipboard", self)
             def clipboard_copy():
                 cb = data.application.clipboard()
                 cb.clear(mode=cb.Mode.Clipboard)
@@ -218,7 +220,7 @@ QTabBar::tab:selected {{
             self.addAction(clipboard_copy_action)
             # Copy path
             if self.__check_for_editor(tab_widget):
-                clipboard_copy_path_action = data.QAction("Copy document path to clipboard", self)
+                clipboard_copy_path_action = qt.QAction("Copy document path to clipboard", self)
                 def clipboard_path_copy():
                     cb = data.application.clipboard()
                     cb.clear(mode=cb.Mode.Clipboard)
@@ -249,13 +251,13 @@ QTabBar::tab:selected {{
                 def open_hex():
                     file_path = widget.save_name
                     main_form.open_file_hex(file_path)
-                action_open_hex = data.QAction("Open with Hex-View", self)
+                action_open_hex = qt.QAction("Open with Hex-View", self)
                 action_open_hex.triggered.connect(open_hex)
                 icon = functions.create_icon('various/node_template.png')
                 action_open_hex.setIcon(icon)
                 self.addAction(action_open_hex)
 
-                open_in_explorer_action = data.QAction("Open document in explorer", self)
+                open_in_explorer_action = qt.QAction("Open document in explorer", self)
                 def open_in_explorer():
                     path = widget.save_name
                     try:
@@ -274,7 +276,7 @@ QTabBar::tab:selected {{
 
             # Closing
             self.addSeparator()
-            close_other_action = data.QAction(
+            close_other_action = qt.QAction(
                 "Close all other tabs in this window", self
             )
             close_other_action.setIcon(
@@ -312,14 +314,14 @@ QTabBar::tab:selected {{
                         isinstance(compare_tab_1, PlainEditor) == False):
                     main_form.display.repl_display_message(
                         "First tab is not a text document!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                     )
                     return
                 elif (isinstance(compare_tab_2, CustomEditor) == False and
                         isinstance(compare_tab_2, PlainEditor) == False):
                     main_form.display.repl_display_message(
                         "Second tab is not a text document!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                     )
                     return
                 # Initialize the compare parameters
@@ -334,7 +336,7 @@ QTabBar::tab:selected {{
                     text_1_name,
                     text_2_name
                 )
-            diff_action = data.QAction(action_name, self)
+            diff_action = qt.QAction(action_name, self)
             diff_action.setIcon(
                 functions.create_icon('tango_icons/compare-text-main.png')
             )
@@ -363,7 +365,7 @@ QTabBar::tab:selected {{
     # Custom tab bar
     custom_tab_bar          = None
     # Default font for textboxes
-    default_editor_font     = data.QFont(data.current_font_name, data.current_font_size)
+    default_editor_font     = qt.QFont(data.current_font_name, data.current_font_size)
     # Default font and icon size for the tab bar
     default_tab_font        = None
     default_icon_size       = None
@@ -408,7 +410,7 @@ QTabBar::tab:selected {{
     def customize_tab_bar(self):
         if data.custom_menu_scale != None and data.custom_menu_font != None:
             components.thesquid.TheSquid.customize_menu_style(self.tabBar())
-            self.tabBar().setFont(data.QFont(*data.custom_menu_font))
+            self.tabBar().setFont(qt.QFont(*data.custom_menu_font))
             new_icon_size = functions.create_size(
                 data.custom_menu_scale,
                 data.custom_menu_scale
@@ -446,31 +448,31 @@ QTabBar::tab:selected {{
     def __init_drag_data(self, e):
         self.indexTab = self.currentIndex()
         self.tabRect = self.tabBar().tabRect(self.indexTab)
-        self.pixmap = data.QPixmap(self.tabRect.size())
+        self.pixmap = qt.QPixmap(self.tabRect.size())
         self.tabBar().render(
-            self.pixmap,data.QPoint(),
-            data.QRegion(self.tabRect)
+            self.pixmap,qt.QPoint(),
+            qt.QRegion(self.tabRect)
         )
-        painter = data.QPainter(self.pixmap)
+        painter = qt.QPainter(self.pixmap)
         painter.setCompositionMode(painter.CompositionMode.CompositionMode_DestinationIn)
-        painter.fillRect(self.pixmap.rect(), data.QColor(0, 0, 0, 64))
+        painter.fillRect(self.pixmap.rect(), qt.QColor(0, 0, 0, 64))
         painter.end()
 
     def __start_tab_drag(self):
         index = self.currentIndex()
         if index != -1:
-            mime_data = data.QMimeData()
+            mime_data = qt.QMimeData()
 #            mime_data.setText("{:s} {:d}".format(
 #                    self.name, index
 #                )
 #            )
-            drag = data.QDrag(self)
+            drag = qt.QDrag(self)
             drag.setMimeData(mime_data)
             drag.setPixmap(self.pixmap)
             drag.setHotSpot(
-                data.QPoint(int(self.tabRect.width()/2), int(self.tabRect.height()/2))
+                qt.QPoint(int(self.tabRect.width()/2), int(self.tabRect.height()/2))
             )
-            drag.exec(data.Qt.DropAction.CopyAction | data.Qt.DropAction.MoveAction)
+            drag.exec(qt.Qt.DropAction.CopyAction | qt.Qt.DropAction.MoveAction)
             drag.destroyed.connect(self.__drag_destroyed)
     
     def store_drag_data(self):
@@ -482,42 +484,42 @@ QTabBar::tab:selected {{
     
     def __drag_destroyed(self, *args):
         for i in (10, 0):
-            mouse_event = data.QMouseEvent(
-                data.QEvent.Type.MouseButtonRelease,
-                data.QPointF(i,i),
-                data.QPointF(i,i),
-                data.QPointF(i,i),
-                data.Qt.MouseButton.LeftButton,
-                data.Qt.MouseButton.LeftButton,
-                data.Qt.KeyboardModifier.NoModifier
+            mouse_event = qt.QMouseEvent(
+                qt.QEvent.Type.MouseButtonRelease,
+                qt.QPointF(i,i),
+                qt.QPointF(i,i),
+                qt.QPointF(i,i),
+                qt.Qt.MouseButton.LeftButton,
+                qt.Qt.MouseButton.LeftButton,
+                qt.Qt.KeyboardModifier.NoModifier
             )
             data.application.sendEvent(self.tabBar(), mouse_event)
     
     def _setmove_range(self):
         tabRect = self.tabBar().tabRect(self.currentIndex())
-        pos = self.tabBar().mapFromGlobal(data.QCursor.pos())
+        pos = self.tabBar().mapFromGlobal(qt.QCursor.pos())
         self.move_range = pos.x() - tabRect.left(), tabRect.right() - pos.x()
 
     def eventFilter(self, source, event):
-        if (event.type() == data.QEvent.Type.KeyPress or
-            event.type() == data.QEvent.Type.KeyRelease):
+        if (event.type() == qt.QEvent.Type.KeyPress or
+            event.type() == qt.QEvent.Type.KeyRelease):
             # Check indication
             self.main_form.view.indication_check()
 
         if source == self.tabBar():
-            if event.type() == data.QEvent.Type.MouseButtonPress and \
-               event.buttons() == data.Qt.MouseButton.LeftButton:
-                    data.QTimer.singleShot(0, self._setmove_range)
-            elif event.type() == data.QEvent.Type.MouseButtonRelease:
+            if event.type() == qt.QEvent.Type.MouseButtonPress and \
+               event.buttons() == qt.Qt.MouseButton.LeftButton:
+                    qt.QTimer.singleShot(0, self._setmove_range)
+            elif event.type() == qt.QEvent.Type.MouseButtonRelease:
                 self.move_range = None
-            elif event.type() == data.QEvent.Type.MouseMove and \
+            elif event.type() == qt.QEvent.Type.MouseMove and \
                  self.move_range is not None:
                     pos = event.pos()
                     if self.tabBar().rect().contains(pos):
                         self.drag_lock = False
                     else:
                         buttons = data.application.mouseButtons()
-                        if buttons == data.Qt.MouseButton.LeftButton:
+                        if buttons == qt.Qt.MouseButton.LeftButton:
                             if self.drag_lock == False:
                                 if hasattr(self.main_form.display, "docking_overlay_show"):
                                     self.drag_lock = True
@@ -531,7 +533,7 @@ QTabBar::tab:selected {{
                         return True
                     elif pos.x() > self.tabBar().width() - self.move_range[1]:
                         return True
-        return data.QTabWidget.eventFilter(self, source, event)
+        return qt.QTabWidget.eventFilter(self, source, event)
 
     def dragEnterEvent(self, event):
         """
@@ -597,7 +599,7 @@ QTabBar::tab:selected {{
         self.main_form.last_focused_widget = self
         # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
-        if (event.button() == data.Qt.MouseButton.RightButton and
+        if (event.button() == qt.Qt.MouseButton.RightButton and
             self.count() == 0):
             # Show the function wheel if right clicked
             self.main_form.view.show_function_wheel()
@@ -618,21 +620,21 @@ QTabBar::tab:selected {{
         """
         QScintilla mouse wheel rotate event
         """
-        key_modifiers = data.QApplication.keyboardModifiers()
-        if data.PYQT_MODE == 4:
+        key_modifiers = qt.QApplication.keyboardModifiers()
+        if qt.PYQT_MODE == 4:
             delta = wheel_event.delta()
         else:
             delta = wheel_event.angleDelta().y()
         if delta < 0:
-            if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
+            if key_modifiers == qt.Qt.KeyboardModifier.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.zoom_out()
         else:
-            if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
+            if key_modifiers == qt.Qt.KeyboardModifier.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.zoom_in()
         #Handle the event
-        if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
+        if key_modifiers == qt.Qt.KeyboardModifier.ControlModifier:
             #Accept the event, the event will not be propageted(sent forward) to the parent
             wheel_event.accept()
         else:
@@ -704,20 +706,20 @@ QTabBar::tab:selected {{
         # Store the tab reference
         tab = self.widget(emmited_tab_number)
         #Check if the document is modified
-        if tab.savable == data.CanSave.YES:
-            if tab.save_status == data.FileStatus.MODIFIED and force == False:
+        if tab.savable == constants.CanSave.YES:
+            if tab.save_status == constants.FileStatus.MODIFIED and force == False:
                 #Display the close notification
                 close_message = "Document '" + self.tabText(emmited_tab_number)
                 close_message += "' has been modified!\nWhat do you wish to do?"
                 reply = CloseEditorDialog.question(close_message)
-                if reply == data.DialogResult.SaveAndClose.value:
+                if reply == constants.DialogResult.SaveAndClose.value:
                     result = tab.save_document()
                     if result == False:
                         return
                     clear_document_bookmarks()
                     # Close tab anyway
                     self.removeTab(emmited_tab_number)
-                elif reply == data.DialogResult.Close.value:
+                elif reply == constants.DialogResult.Close.value:
                     clear_document_bookmarks()
                     # Close tab anyway
                     self.removeTab(emmited_tab_number)
@@ -762,7 +764,7 @@ QTabBar::tab:selected {{
                 #Display only the QTextEdit name
                 self.main_form.display.write_to_statusbar(cw.name)
             #Set the Save/SaveAs status of the menubar
-            if cw.savable == data.CanSave.YES:
+            if cw.savable == constants.CanSave.YES:
                 self.main_form.set_save_file_state(True)
             else:
                 self.main_form.set_save_file_state(False)
@@ -775,9 +777,9 @@ QTabBar::tab:selected {{
         if self.currentWidget() == None:
             return
         #Update the save status of the current widget
-        if self.currentWidget().savable == data.CanSave.YES:
+        if self.currentWidget().savable == constants.CanSave.YES:
             #Set document as modified
-            self.currentWidget().save_status = data.FileStatus.MODIFIED
+            self.currentWidget().save_status = constants.FileStatus.MODIFIED
             #Check if special character is already in the name of the tab
             self.set_text_changed(self.currentIndex())
         #Update margin width
@@ -792,22 +794,22 @@ QTabBar::tab:selected {{
         # Update the save status of the current widget
         if index is None:
             index = self.currentIndex()
-        if self.widget(index).savable == data.CanSave.YES:
-            self.widget(index).save_status = data.FileStatus.OK
+        if self.widget(index).savable == constants.CanSave.YES:
+            self.widget(index).save_status = constants.FileStatus.OK
             self.setTabText(index, self.tabText(index).strip("*"))
 
     def _set_wait_animation(self, index, show):
         tabBar = self.tabBar()
         if show:
-            lbl = data.QLabel(self)
-            movie = data.QMovie(
+            lbl = qt.QLabel(self)
+            movie = qt.QMovie(
                 os.path.join(
                     data.resources_directory,
                     "animations/wait.gif"
                 ),
                 parent=lbl
             )
-            movie.setCacheMode(data.QMovie.CacheMode.CacheAll)
+            movie.setCacheMode(qt.QMovie.CacheMode.CacheAll)
             if data.custom_menu_scale != None:
                 size = tuple([(x * data.custom_menu_scale / 16) for x in (16, 16)])
             else:
@@ -815,9 +817,9 @@ QTabBar::tab:selected {{
             movie.setScaledSize(functions.create_size(*size))
             lbl.setMovie(movie)
             movie.start()
-            tabBar.setTabButton(index, data.QTabBar.ButtonPosition.LeftSide, lbl)
+            tabBar.setTabButton(index, qt.QTabBar.ButtonPosition.LeftSide, lbl)
         else:
-            tabBar.setTabButton(index, data.QTabBar.ButtonPosition.LeftSide, None)
+            tabBar.setTabButton(index, qt.QTabBar.ButtonPosition.LeftSide, None)
 
     def close_tab(self, tab=None, force=False):
         """Close a tab in the basic widget"""
@@ -873,7 +875,7 @@ QTabBar::tab:selected {{
             self.currentWidget().zoomTo(0)
             #Update the margin width
             self.editor_update_margin()
-        elif isinstance(self.currentWidget(), data.QTextEdit):
+        elif isinstance(self.currentWidget(), qt.QTextEdit):
             #Reset zoom
             self.currentWidget().setFont(self.default_editor_font)
 
@@ -884,8 +886,8 @@ QTabBar::tab:selected {{
         # Add attributes for status of the document (!!you can add attributes to objects that have the __dict__ attribute!!)
         new_scintilla_tab.name = name
         # Initialize the scrollbars
-        new_scintilla_tab.SendScintilla(data.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
-        new_scintilla_tab.SendScintilla(data.QsciScintillaBase.SCI_SETHSCROLLBAR, True)
+        new_scintilla_tab.SendScintilla(qt.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
+        new_scintilla_tab.SendScintilla(qt.QsciScintillaBase.SCI_SETHSCROLLBAR, True)
         # Hide the margin
         new_scintilla_tab.setMarginWidth(1, 0)
         # Disable drops
@@ -935,7 +937,7 @@ QTabBar::tab:selected {{
                 if functions.test_text_file(document_name) == None:
                     self.main_form.display.repl_display_message(
                         "Testing for TEXT file failed!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                     )
                     # File cannot be read
                     return None
@@ -993,7 +995,7 @@ QTabBar::tab:selected {{
             new_tree_tab = TreeDisplay(self, self.main_form)
         # Add attributes for status of the document
         new_tree_tab.name = tree_tab_name
-        new_tree_tab.savable = data.CanSave.NO
+        new_tree_tab.savable = constants.CanSave.NO
         # Return the reference to the new added tree tab widget
         return new_tree_tab
 
@@ -1030,12 +1032,12 @@ QTabBar::tab:selected {{
                 self.setTabText(i, new_text)
                 break
 
-    def select_tab(self, direction=data.Direction.RIGHT):
+    def select_tab(self, direction=constants.Direction.RIGHT):
         """
         Select tab left/right of the currently selected tab
         """
         current_index = self.currentIndex()
-        if direction == data.Direction.RIGHT:
+        if direction == constants.Direction.RIGHT:
             # Check if the widget is already at the far right
             if current_index < self.tabBar().count()-1:
                 new_index = current_index + 1
@@ -1046,7 +1048,7 @@ QTabBar::tab:selected {{
                 new_index = current_index - 1
                 self.setCurrentIndex(new_index)
 
-    def move_tab(self, direction=data.Direction.RIGHT):
+    def move_tab(self, direction=constants.Direction.RIGHT):
         """
         Change the position of the current tab in the basic widget,
         according to the selected direction
@@ -1054,7 +1056,7 @@ QTabBar::tab:selected {{
         #Store the current index and widget
         current_index = self.currentIndex()
         #Check the move direction
-        if direction == data.Direction.RIGHT:
+        if direction == constants.Direction.RIGHT:
             #Check if the widget is already at the far right
             if current_index < self.tabBar().count()-1:
                 new_index = current_index + 1
@@ -1086,7 +1088,7 @@ QTabBar::tab:selected {{
         if isinstance(source_widget, CustomEditor) == False:
             self.main_form.display.repl_display_message(
                 "Only custom editor tabs can be copied!",
-                message_type=data.MessageType.ERROR
+                message_type=constants.MessageType.ERROR
             )
             return
         # Check if the source file already exists in the target basic widget
@@ -1181,7 +1183,7 @@ QTabBar::tab:selected {{
                 source_tab.internals.update_corner_widget(source_tab)
                 source_tab.internals.remove_corner_groupbox()
                 source_tab.add_corner_buttons()
-        data.QTimer.singleShot(5, update_source)
+        qt.QTimer.singleShot(5, update_source)
         # Set focus to the copied widget
         self.setCurrentIndex(new_index)
         # Change the custom editor parent
@@ -1193,7 +1195,7 @@ QTabBar::tab:selected {{
                 tab.internals.update_corner_widget(tab)
                 tab.internals.remove_corner_groupbox()
                 tab.add_corner_buttons()
-        data.QTimer.singleShot(10, update_new)
+        qt.QTimer.singleShot(10, update_new)
 
     def tabs(self):
         for i in range(self.count()):
@@ -1223,7 +1225,7 @@ QTabBar::tab:selected {{
             )
             close_button.setIcon(functions.create_icon("various/close.png"))
             close_button.setIconSize(
-                data.QSize(
+                qt.QSize(
                     int(data.tree_display_icon_size*2),
                     int(data.tree_display_icon_size*2)
                 )
@@ -1235,12 +1237,12 @@ QTabBar::tab:selected {{
 
             self.close_overlay = create_groupbox_borderless(self)
             self.close_overlay.setAlignment(
-                data.Qt.AlignmentFlag.AlignRight | data.Qt.AlignmentFlag.AlignVCenter
+                qt.Qt.AlignmentFlag.AlignRight | qt.Qt.AlignmentFlag.AlignVCenter
             )
-            self.close_overlay.setLayout(data.QHBoxLayout())
+            self.close_overlay.setLayout(qt.QHBoxLayout())
             self.close_overlay.layout().addWidget(close_button)
             self.close_overlay.layout().setAlignment(
-                data.Qt.AlignmentFlag.AlignRight | data.Qt.AlignmentFlag.AlignTop
+                qt.Qt.AlignmentFlag.AlignRight | qt.Qt.AlignmentFlag.AlignTop
             )
             self.close_overlay.setParent(self)
         self.close_overlay.show()

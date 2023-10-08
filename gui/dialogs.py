@@ -8,7 +8,9 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import qt
 import data
+import constants
 import functions
 
 from .custombuttons import *
@@ -21,15 +23,15 @@ from .templates import *
 Custom Yes/No dialog window
 ---------------------------------------------------------
 """
-class BaseDialog(data.QDialog):
+class BaseDialog(qt.QDialog):
     def __init__(self, text, dialog_type=None, parent=None):
         super().__init__(parent)
         # Set the internal state
         self.state = None
         # Make the dialog stay on top
-        self.setWindowFlags(data.Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(qt.Qt.WindowType.WindowStaysOnTopHint)
         # Set the dialog icon and title
-        self.setWindowIcon(data.QIcon(data.application_icon))
+        self.setWindowIcon(qt.QIcon(data.application_icon))
         self.setWindowTitle(dialog_type.title())
         self.init_layout(text, dialog_type)
         # Set default font
@@ -52,9 +54,9 @@ class BaseDialog(data.QDialog):
         self.setLayout(main_layout)
 
         # Add the label
-        label = data.QLabel(self)
+        label = qt.QLabel(self)
         label.setWordWrap(True)
-        label.setAlignment(data.Qt.AlignmentFlag.AlignCenter)
+        label.setAlignment(qt.Qt.AlignmentFlag.AlignCenter)
         label.setText(text)
         main_layout.addWidget(label)
 
@@ -81,7 +83,7 @@ class BaseDialog(data.QDialog):
                 new_button.setIcon(button)
                 if button["size"] is not None:
                     new_button.setIconSize(
-                        data.QSize(
+                        qt.QSize(
                             int(button["size"][0] * 0.8),
                             int(button["size"][1] * 0.8)
                         )
@@ -98,7 +100,7 @@ class BaseDialog(data.QDialog):
 #            )
             if button["size"] is not None:
                 new_button.setFixedSize(
-                    data.QSize(
+                    qt.QSize(
                         int(button["size"][0]),
                         int(button["size"][1])
                     )
@@ -109,7 +111,7 @@ class BaseDialog(data.QDialog):
 
         self.set_state(len(self.button_cache) - 1)
 
-        self.setWindowFlags(data.Qt.WindowType.FramelessWindowHint)
+        self.setWindowFlags(qt.Qt.WindowType.FramelessWindowHint)
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -176,17 +178,17 @@ class BaseDialog(data.QDialog):
     def keyPressEvent(self, key_event):
         pressed_key = key_event.key()
         #Check for escape keypress
-        if pressed_key == data.Qt.Key.Key_Escape:
+        if pressed_key == qt.Qt.Key.Key_Escape:
             rightmost_button = self.button_cache[len(self.button_cache)-1]
             rightmost_button.set_focused(True)
             self.repaint()
             time.sleep(0.1)
             self.done(rightmost_button.state)
-        elif pressed_key == data.Qt.Key.Key_Right:
+        elif pressed_key == qt.Qt.Key.Key_Right:
             self.state_cycle_right()
-        elif pressed_key == data.Qt.Key.Key_Left:
+        elif pressed_key == qt.Qt.Key.Key_Left:
             self.state_cycle_left()
-        elif pressed_key == data.Qt.Key.Key_Enter or pressed_key == data.Qt.Key.Key_Return:
+        elif pressed_key == qt.Qt.Key.Key_Enter or pressed_key == qt.Qt.Key.Key_Return:
             if self.state is None:
                 self.state = self.button_cache[len(self.button_cache)-1].state
             self.done(self.state)
@@ -246,8 +248,8 @@ class YesNoDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Confirm the action",
-                "state": data.DialogResult.Yes.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Yes.value),
+                "state": constants.DialogResult.Yes.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Yes.value),
             },
             {
                 "name": "no",
@@ -255,8 +257,8 @@ class YesNoDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Decline the action",
-                "state": data.DialogResult.No.value,
-                "click-func": lambda *args: self.done(data.DialogResult.No.value),
+                "state": constants.DialogResult.No.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.No.value),
             },
         )
 
@@ -269,8 +271,8 @@ class OkDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Close the dialog window",
-                "state": data.DialogResult.No.value,
-                "click-func": lambda *args: self.done(data.DialogResult.No.value),
+                "state": constants.DialogResult.No.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.No.value),
             },
         )
 
@@ -283,8 +285,8 @@ class CloseEditorDialog(BaseDialog):
                 "icon": None,
                 "size": (int(data.standard_button_size*1.5), data.standard_button_size),
                 "tooltip": "Save document and close it",
-                "state": data.DialogResult.SaveAndClose.value,
-                "click-func": lambda *args: self.done(data.DialogResult.SaveAndClose.value),
+                "state": constants.DialogResult.SaveAndClose.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.SaveAndClose.value),
             },
             {
                 "name": "close",
@@ -292,8 +294,8 @@ class CloseEditorDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Close the document without saving",
-                "state": data.DialogResult.Close.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Close.value),
+                "state": constants.DialogResult.Close.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Close.value),
             },
             {
                 "name": "cancel",
@@ -301,8 +303,8 @@ class CloseEditorDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Cancel closing of the document",
-                "state": data.DialogResult.Cancel.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Cancel.value),
+                "state": constants.DialogResult.Cancel.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Cancel.value),
             },
         )
 
@@ -315,8 +317,8 @@ class ToggleOneWindowDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Restore the layout to the pre-one-window one",
-                "state": data.DialogResult.Restore.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Restore.value),
+                "state": constants.DialogResult.Restore.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Restore.value),
             },
             {
                 "name": "cancel",
@@ -324,8 +326,8 @@ class ToggleOneWindowDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Cancel closing of the document",
-                "state": data.DialogResult.Cancel.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Cancel.value),
+                "state": constants.DialogResult.Cancel.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Cancel.value),
             },
         )
 
@@ -339,8 +341,8 @@ class QuitDialog(BaseDialog):
                 "icon": None,
                 "size": (int(data.standard_button_size*1.5), data.standard_button_size),
                 "tooltip": "Save all unsaved documents and quit ExCo",
-                "state": data.DialogResult.SaveAllAndQuit.value,
-                "click-func": lambda *args: self.done(data.DialogResult.SaveAllAndQuit.value),
+                "state": constants.DialogResult.SaveAllAndQuit.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.SaveAllAndQuit.value),
             },
             {
                 "name": "quit",
@@ -348,8 +350,8 @@ class QuitDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Quit ExCo without saving",
-                "state": data.DialogResult.Quit.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Quit.value),
+                "state": constants.DialogResult.Quit.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Quit.value),
             },
             {
                 "name": "cancel",
@@ -357,8 +359,8 @@ class QuitDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Cancel quitting ExCo",
-                "state": data.DialogResult.Cancel.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Cancel.value),
+                "state": constants.DialogResult.Cancel.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Cancel.value),
             },
         )
 
@@ -371,8 +373,8 @@ class RestoreSessionDialog(BaseDialog):
                 "icon": None,
                 "size": (int(data.standard_button_size*1.5), data.standard_button_size),
                 "tooltip": "Save all documents and restore session",
-                "state": data.DialogResult.SaveAndRestore.value,
-                "click-func": lambda *args: self.done(data.DialogResult.SaveAndRestore.value),
+                "state": constants.DialogResult.SaveAndRestore.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.SaveAndRestore.value),
             },
             {
                 "name": "close",
@@ -380,8 +382,8 @@ class RestoreSessionDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Restore the session without saving",
-                "state": data.DialogResult.Restore.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Close.value),
+                "state": constants.DialogResult.Restore.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Close.value),
             },
             {
                 "name": "cancel",
@@ -389,7 +391,7 @@ class RestoreSessionDialog(BaseDialog):
                 "icon": None,
                 "size": (data.standard_button_size, data.standard_button_size),
                 "tooltip": "Cancel restoring of the session",
-                "state": data.DialogResult.Cancel.value,
-                "click-func": lambda *args: self.done(data.DialogResult.Cancel.value),
+                "state": constants.DialogResult.Cancel.value,
+                "click-func": lambda *args: self.done(constants.DialogResult.Cancel.value),
             },
         )

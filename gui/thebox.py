@@ -8,6 +8,7 @@ import os
 import functools
 import traceback
 
+import qt
 import data
 import functions
 from . import customeditor
@@ -19,7 +20,7 @@ from . import hexview
 from . import terminal
 
 
-class TheBox(data.QSplitter):
+class TheBox(qt.QSplitter):
     name = None
     parent_name = None
     generated_name = None
@@ -56,13 +57,13 @@ class TheBox(data.QSplitter):
         return (self.count() == 0)
     
     def get_orientation_letter(self):
-        if self.orientation() == data.Qt.Orientation.Vertical:
+        if self.orientation() == qt.Qt.Orientation.Vertical:
             return 'V'
         else:
             return 'H'
     
     def update_orientations(self):
-        if self.orientation() == data.Qt.Orientation.Vertical:
+        if self.orientation() == qt.Qt.Orientation.Vertical:
             name = functions.right_replace(
                 self.objectName(),
                 'H', 'V', 1
@@ -79,7 +80,7 @@ class TheBox(data.QSplitter):
             parent.update_orientations()
     
     def add_box(self, orientation, index=None, add_tabs=True):
-        if orientation == data.Qt.Orientation.Vertical:
+        if orientation == qt.Qt.Orientation.Vertical:
             name_symbol = 'V'
         else:
             name_symbol = 'H'
@@ -217,10 +218,10 @@ class TheBox(data.QSplitter):
     def resizeEvent(self, e):
         super().resizeEvent(e)
         mouse_buttons = data.application.mouseButtons()
-        if mouse_buttons == data.Qt.MouseButton.LeftButton:
+        if mouse_buttons == qt.Qt.MouseButton.LeftButton:
             self.main_form.view.layout_save()
     
     def splitterMoveEvent(self, index, pos):
         mouse_buttons = data.application.mouseButtons()
-        if mouse_buttons == data.Qt.MouseButton.LeftButton:
+        if mouse_buttons == qt.Qt.MouseButton.LeftButton:
             self.main_form.view.layout_save()

@@ -8,6 +8,7 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import qt
 import data
 import functions
 import re
@@ -16,7 +17,7 @@ import typing
 import gui.menu
 
 
-class ActionFilter(data.QObject):
+class ActionFilter(qt.QObject):
     """
     Object for connecting to the menubar events and filtering
     the click&drag event for the context menu
@@ -28,8 +29,8 @@ class ActionFilter(data.QObject):
     
     # Overridden filter method
     def eventFilter(self, receiver, event):
-        if(event.type() == data.QEvent.Type.MouseButtonPress):
-            cursor = data.QCursor.pos()
+        if(event.type() == qt.QEvent.Type.MouseButtonPress):
+            cursor = qt.QCursor.pos()
             cursor = cursor - receiver.pos()
             if receiver.actionAt(cursor) != None:
                 action = receiver.actionAt(cursor)
@@ -45,17 +46,17 @@ class ActionFilter(data.QObject):
                     hide_parents(receiver)
                     ActionFilter.click_timer = None
                     if hasattr(action, "pixmap"):
-                        cursor = data.QCursor(
+                        cursor = qt.QCursor(
                             action.pixmap
                         )
                         data.application.setOverrideCursor(cursor)
                         ActionFilter.click_drag_action = action
-                ActionFilter.click_timer = data.QTimer(self)
+                ActionFilter.click_timer = qt.QTimer(self)
                 ActionFilter.click_timer.setInterval(400)
                 ActionFilter.click_timer.setSingleShot(True)
                 ActionFilter.click_timer.timeout.connect(click_and_drag)
                 ActionFilter.click_timer.start()
-        elif(event.type() == data.QEvent.Type.MouseButtonRelease):
+        elif(event.type() == qt.QEvent.Type.MouseButtonRelease):
             ActionFilter.clear_action()
         return super().eventFilter(receiver, event)
 

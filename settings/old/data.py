@@ -30,7 +30,7 @@ else:
 PyQt4 / PyQt5 selection
 
 NOTE:
-    Objects are imported so that they can be used either directly with data.QSize,
+    Objects are imported so that they can be used either directly with qt.QSize,
     or by specifiying the full namespace with data.PyQt.QtCore.QSize!
 """
 try:
@@ -237,7 +237,7 @@ def first_scan():
 
 # Example of got to customize the menu font and menu font scaling
 #data.custom_menu_scale = 25
-#data.custom_menu_font = ("Segoe UI", 10, data.QFont.Bold)
+#data.custom_menu_font = ("Segoe UI", 10, qt.QFont.Bold)
 #data.custom_menu_scale = None
 #data.custom_menu_font = None
 

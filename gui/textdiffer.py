@@ -13,7 +13,9 @@ import functools
 import difflib
 import settings
 import functions
+import qt
 import data
+import constants
 import components.actionfilter
 import components.internals
 
@@ -24,13 +26,13 @@ from .customeditor import *
 Object for displaying text difference between two files
 ----------------------------------------------------------------------------
 """
-class TextDiffer(data.QWidget):
+class TextDiffer(qt.QWidget):
     """A widget that holds two PlainEditors for displaying text difference"""
     #Class variables
     _parent                 = None
     main_form               = None
     name                    = ""
-    savable                 = data.CanSave.NO
+    savable                 = constants.CanSave.NO
     current_icon            = None
     internals        = None
     focused_editor          = None
@@ -39,18 +41,18 @@ class TextDiffer(data.QWidget):
     text_1_name             = None
     text_2_name             = None
     #Class constants
-    DEFAULT_FONT            = data.QFont(data.current_font_name, data.current_font_size)
-    MARGIN_STYLE            = data.QsciScintilla.STYLE_LINENUMBER
+    DEFAULT_FONT            = qt.QFont(data.current_font_name, data.current_font_size)
+    MARGIN_STYLE            = qt.QsciScintilla.STYLE_LINENUMBER
     INDICATOR_UNIQUE_1          = 1
-    Indicator_Unique_1_Color    = data.QColor(0x72, 0x9f, 0xcf, 80)
+    Indicator_Unique_1_Color    = qt.QColor(0x72, 0x9f, 0xcf, 80)
     INDICATOR_UNIQUE_2          = 2
-    Indicator_Unique_2_Color    = data.QColor(0xad, 0x7f, 0xa8, 80)
+    Indicator_Unique_2_Color    = qt.QColor(0xad, 0x7f, 0xa8, 80)
     INDICATOR_SIMILAR           = 3
-    Indicator_Similar_Color     = data.QColor(0x8a, 0xe2, 0x34, 80)
-    GET_X_OFFSET    = data.QsciScintillaBase.SCI_GETXOFFSET
-    SET_X_OFFSET    = data.QsciScintillaBase.SCI_SETXOFFSET
-    UPDATE_H_SCROLL = data.QsciScintillaBase.SC_UPDATE_H_SCROLL
-    UPDATE_V_SCROLL = data.QsciScintillaBase.SC_UPDATE_V_SCROLL
+    Indicator_Similar_Color     = qt.QColor(0x8a, 0xe2, 0x34, 80)
+    GET_X_OFFSET    = qt.QsciScintillaBase.SCI_GETXOFFSET
+    SET_X_OFFSET    = qt.QsciScintillaBase.SCI_SETXOFFSET
+    UPDATE_H_SCROLL = qt.QsciScintillaBase.SC_UPDATE_H_SCROLL
+    UPDATE_V_SCROLL = qt.QsciScintillaBase.SC_UPDATE_V_SCROLL
     #Diff icons
     icon_unique_1   = None
     icon_unique_2   = None
@@ -114,9 +116,9 @@ class TextDiffer(data.QWidget):
         # Initialize components
         self.internals = components.internals.Internals(self, parent)
         # Initialize colors according to theme
-        self.Indicator_Unique_1_Color = data.QColor(data.theme["textdiffercolors"]["indicator-unique-1-color"])
-        self.Indicator_Unique_2_Color = data.QColor(data.theme["textdiffercolors"]["indicator-unique-2-color"])
-        self.Indicator_Similar_Color = data.QColor(data.theme["textdiffercolors"]["indicator-similar-color"])
+        self.Indicator_Unique_1_Color = qt.QColor(data.theme["textdiffercolors"]["indicator-unique-1-color"])
+        self.Indicator_Unique_2_Color = qt.QColor(data.theme["textdiffercolors"]["indicator-unique-2-color"])
+        self.Indicator_Similar_Color = qt.QColor(data.theme["textdiffercolors"]["indicator-similar-color"])
         # Store the reference to the parent
         self._parent = parent
         # Store the reference to the main form
@@ -137,7 +139,7 @@ class TextDiffer(data.QWidget):
         self.icon_unique_2  = functions.create_icon("tango_icons/diff-unique-2.png")
         self.icon_similar   = functions.create_icon("tango_icons/diff-similar.png")
         # Create the horizontal splitter and two editor widgets
-        self.splitter = data.QSplitter(data.Qt.Orientation.Horizontal, self)
+        self.splitter = qt.QSplitter(qt.Qt.Orientation.Horizontal, self)
         self.editor_1 = CustomEditor(self, main_form)
         self.init_editor(self.editor_1)
         self.editor_2 = CustomEditor(self, main_form)
@@ -146,7 +148,7 @@ class TextDiffer(data.QWidget):
         self.editor_2.choose_lexer("text")
         self.splitter.addWidget(self.editor_1)
         self.splitter.addWidget(self.editor_2)
-        self.layout = data.QVBoxLayout()
+        self.layout = qt.QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addWidget(self.splitter)
         # Set the layout
@@ -286,7 +288,7 @@ class TextDiffer(data.QWidget):
         def uniplemented_function(*args, **kwargs):
             self.main_form.display.repl_display_message(
                 "Function '{:s}' is not implemented by the TextDiffer!".format(args[0]),
-                message_type=data.MessageType.ERROR
+                message_type=constants.MessageType.ERROR
             )
         all_editor_functions = inspect.getmembers(
             CustomEditor,
@@ -371,15 +373,15 @@ class TextDiffer(data.QWidget):
         #to the marker background color
         editor.setMarginWidth(1, "00")
         editor.setMarginWidth(2, 0)
-        editor.setMarginType(0, data.QsciScintilla.MarginType.TextMargin)
-        editor.setMarginType(1, data.QsciScintilla.MarginType.SymbolMargin)
-        editor.setMarginType(2, data.QsciScintilla.MarginType.SymbolMargin)
+        editor.setMarginType(0, qt.QsciScintilla.MarginType.TextMargin)
+        editor.setMarginType(1, qt.QsciScintilla.MarginType.SymbolMargin)
+        editor.setMarginType(2, qt.QsciScintilla.MarginType.SymbolMargin)
         #I DON'T KNOW THE ENTIRE LOGIC BEHIND MARKERS AND MARGINS! If you set
         #something wrong in the margin mask, the markers on a different margin don't appear!
         #http://www.scintilla.org/ScintillaDoc.html#SCI_SETMARGINMASKN
         editor.setMarginMarkerMask(
             1,
-            ~data.QsciScintillaBase.SC_MASK_FOLDERS
+            ~qt.QsciScintillaBase.SC_MASK_FOLDERS
         )
         editor.setMarginMarkerMask(
             2,
@@ -398,9 +400,9 @@ class TextDiffer(data.QWidget):
         image_unique_2  = image_unique_2.scaled(image_scale_size)
         image_similar   = image_similar.scaled(image_scale_size)
         #Markers for editor 1
-        self.marker_unique_1            = self.editor_1.markerDefine(data.QsciScintilla.MarkerSymbol.Background, 0)
+        self.marker_unique_1            = self.editor_1.markerDefine(qt.QsciScintilla.MarkerSymbol.Background, 0)
         self.marker_unique_symbol_1     = self.editor_1.markerDefine(image_unique_1, 1)
-        self.marker_similar_1           = self.editor_1.markerDefine(data.QsciScintilla.MarkerSymbol.Background, 2)
+        self.marker_similar_1           = self.editor_1.markerDefine(qt.QsciScintilla.MarkerSymbol.Background, 2)
         self.marker_similar_symbol_1    = self.editor_1.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
         self.editor_1.setMarkerBackgroundColor(self.Indicator_Unique_1_Color, self.marker_unique_1)
@@ -414,9 +416,9 @@ class TextDiffer(data.QWidget):
             self.marker_similar_symbol_1
         )
         #Markers for editor 2
-        self.marker_unique_2            = self.editor_2.markerDefine(data.QsciScintilla.MarkerSymbol.Background, 0)
+        self.marker_unique_2            = self.editor_2.markerDefine(qt.QsciScintilla.MarkerSymbol.Background, 0)
         self.marker_unique_symbol_2     = self.editor_2.markerDefine(image_unique_2, 1)
-        self.marker_similar_2           = self.editor_2.markerDefine(data.QsciScintilla.MarkerSymbol.Background, 2)
+        self.marker_similar_2           = self.editor_2.markerDefine(qt.QsciScintilla.MarkerSymbol.Background, 2)
         self.marker_similar_symbol_2    = self.editor_2.markerDefine(image_similar, 3)
         #Set background colors only for the background markers
         self.editor_2.setMarkerBackgroundColor(self.Indicator_Unique_2_Color, self.marker_unique_2)
@@ -438,7 +440,7 @@ class TextDiffer(data.QWidget):
         Set the indicator settings
         """
         editor.indicatorDefine(
-            data.QsciScintillaBase.INDIC_ROUNDBOX,
+            qt.QsciScintillaBase.INDIC_ROUNDBOX,
             indicator
         )
         editor.setIndicatorForegroundColor(
@@ -446,7 +448,7 @@ class TextDiffer(data.QWidget):
             indicator
         )
         editor.SendScintilla(
-            data.QsciScintillaBase.SCI_SETINDICATORCURRENT,
+            qt.QsciScintillaBase.SCI_SETINDICATORCURRENT,
             indicator
         )
 
@@ -456,12 +458,12 @@ class TextDiffer(data.QWidget):
         editor.setUtf8(True)
         editor.setIndentationsUseTabs(False)
         editor.setFont(self.DEFAULT_FONT)
-        editor.setBraceMatching(data.QsciScintilla.BraceMatch.SloppyBraceMatch)
-        editor.setMatchedBraceBackgroundColor(data.QColor(255, 153, 0))
+        editor.setBraceMatching(qt.QsciScintilla.BraceMatch.SloppyBraceMatch)
+        editor.setMatchedBraceBackgroundColor(qt.QColor(255, 153, 0))
         editor.setAcceptDrops(False)
-        editor.setEolMode(data.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
+        editor.setEolMode(qt.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
         editor.setReadOnly(True)
-        editor.savable = data.CanSave.NO
+        editor.savable = constants.CanSave.NO
 
     def set_margin_text(self, editor, line, text):
         """Set the editor's margin text at the selected line"""
@@ -489,7 +491,7 @@ class TextDiffer(data.QWidget):
                 self.Indicator_Similar_Color
             )
         #Color the line background
-        scintilla_command = data.QsciScintillaBase.SCI_INDICATORFILLRANGE
+        scintilla_command = qt.QsciScintillaBase.SCI_INDICATORFILLRANGE
         start   = editor.positionFromLineIndex(line, 0)
         length  = editor.lineLength(line)
         editor.SendScintilla(
@@ -639,7 +641,7 @@ class TextDiffer(data.QWidget):
         if (any(line_styling_1) == False and any(line_styling_2) == False):
             self.main_form.display.repl_display_message(
                 "No differences between texts.",
-                message_type=data.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS
             )
         else:
             #Count the number of differences
@@ -663,15 +665,15 @@ class TextDiffer(data.QWidget):
             #Display the differences/similarities messages
             self.main_form.display.repl_display_message(
                 "{:d} differences found in '{:s}'!".format(difference_counter_1, self.text_1_name),
-                message_type=data.MessageType.DIFF_UNIQUE_1
+                message_type=constants.MessageType.DIFF_UNIQUE_1
             )
             self.main_form.display.repl_display_message(
                 "{:d} differences found in '{:s}'!".format(difference_counter_2, self.text_2_name),
-                message_type=data.MessageType.DIFF_UNIQUE_2
+                message_type=constants.MessageType.DIFF_UNIQUE_2
             )
             self.main_form.display.repl_display_message(
                 "{:d} similarities found between documents!".format(similarity_counter, self.text_2_name),
-                message_type=data.MessageType.DIFF_SIMILAR
+                message_type=constants.MessageType.DIFF_SIMILAR
             )
         self._update_margins()
 
@@ -688,7 +690,7 @@ class TextDiffer(data.QWidget):
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
                 "Scrolled back to the start of the document!",
-                message_type=data.MessageType.DIFF_UNIQUE_1
+                message_type=constants.MessageType.DIFF_UNIQUE_1
             )
             self.main_form.display.write_to_statusbar(
                 "Scrolled back to the start of the document!"
@@ -707,7 +709,7 @@ class TextDiffer(data.QWidget):
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
                 "Scrolled back to the start of the document!",
-                message_type=data.MessageType.DIFF_UNIQUE_2
+                message_type=constants.MessageType.DIFF_UNIQUE_2
             )
             self.main_form.display.write_to_statusbar(
                 "Scrolled back to the start of the document!"
@@ -726,7 +728,7 @@ class TextDiffer(data.QWidget):
         if next_unique_diff_line == 0:
             self.main_form.display.repl_display_message(
                 "Scrolled back to the start of the document!",
-                message_type=data.MessageType.DIFF_SIMILAR
+                message_type=constants.MessageType.DIFF_SIMILAR
             )
             self.main_form.display.write_to_statusbar(
                 "Scrolled back to the start of the document!"
@@ -762,24 +764,24 @@ class TextDiffer(data.QWidget):
                 editor.resetFoldMarginColors()
             elif theme["name"] == "Earth":
                 editor.setFoldMarginColors(
-                    data.QColor(theme["foldmargin"]["foreground"]),
-                    data.QColor(theme["foldmargin"]["background"])
+                    qt.QColor(theme["foldmargin"]["foreground"]),
+                    qt.QColor(theme["foldmargin"]["background"])
                 )
-            editor.setMarginsForegroundColor(data.QColor(theme["linemargin"]["foreground"]))
-            editor.setMarginsBackgroundColor(data.QColor(theme["linemargin"]["background"]))
+            editor.setMarginsForegroundColor(qt.QColor(theme["linemargin"]["foreground"]))
+            editor.setMarginsBackgroundColor(qt.QColor(theme["linemargin"]["background"]))
             editor.SendScintilla(
-                data.QsciScintillaBase.SCI_STYLESETBACK,
-                data.QsciScintillaBase.STYLE_DEFAULT,
-                data.QColor(theme["fonts"]["default"]["color"])
+                qt.QsciScintillaBase.SCI_STYLESETBACK,
+                qt.QsciScintillaBase.STYLE_DEFAULT,
+                qt.QColor(theme["fonts"]["default"]["color"])
             )
             editor.SendScintilla(
-                data.QsciScintillaBase.SCI_STYLESETBACK,
-                data.QsciScintillaBase.STYLE_LINENUMBER,
-                data.QColor(theme["linemargin"]["background"])
+                qt.QsciScintillaBase.SCI_STYLESETBACK,
+                qt.QsciScintillaBase.STYLE_LINENUMBER,
+                qt.QColor(theme["linemargin"]["background"])
             )
             editor.SendScintilla(
-                data.QsciScintillaBase.SCI_SETCARETFORE,
-                data.QColor(theme["cursor"])
+                qt.QsciScintillaBase.SCI_SETCARETFORE,
+                qt.QColor(theme["cursor"])
             )
             editor.choose_lexer("text")
         set_editor_theme(self.editor_1)

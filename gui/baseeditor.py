@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 
+import qt
 import data
 
 from .stylesheets import *
@@ -18,41 +19,41 @@ from .stylesheets import *
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
 -----------------------------
 """
-class BaseEditor(data.QsciScintilla):
+class BaseEditor(qt.QsciScintilla):
 
     def set_theme(self, theme):
         if theme["name"] == "Air":
             self.resetFoldMarginColors()
         else:
             self.setFoldMarginColors(
-                data.QColor(theme["foldmargin"]["foreground"]),
-                data.QColor(theme["foldmargin"]["background"])
+                qt.QColor(theme["foldmargin"]["foreground"]),
+                qt.QColor(theme["foldmargin"]["background"])
             )
-        self.setMarginsForegroundColor(data.QColor(theme["linemargin"]["foreground"]))
-        self.setMarginsBackgroundColor(data.QColor(theme["linemargin"]["background"]))
+        self.setMarginsForegroundColor(qt.QColor(theme["linemargin"]["foreground"]))
+        self.setMarginsBackgroundColor(qt.QColor(theme["linemargin"]["background"]))
         if self.lexer() is not None and hasattr(self.lexer(), "get_default_background_color"):
             self.SendScintilla(
-                data.QsciScintillaBase.SCI_STYLESETBACK,
-                data.QsciScintillaBase.STYLE_DEFAULT,
+                qt.QsciScintillaBase.SCI_STYLESETBACK,
+                qt.QsciScintillaBase.STYLE_DEFAULT,
                 self.lexer().get_default_background_color()
             )
         else:
             self.SendScintilla(
-                data.QsciScintillaBase.SCI_STYLESETBACK,
-                data.QsciScintillaBase.STYLE_DEFAULT,
-                data.QColor(theme["fonts"]["default"]["background"])
+                qt.QsciScintillaBase.SCI_STYLESETBACK,
+                qt.QsciScintillaBase.STYLE_DEFAULT,
+                qt.QColor(theme["fonts"]["default"]["background"])
             )
         self.SendScintilla(
-            data.QsciScintillaBase.SCI_STYLESETBACK,
-            data.QsciScintillaBase.STYLE_LINENUMBER,
-            data.QColor(theme["linemargin"]["background"])
+            qt.QsciScintillaBase.SCI_STYLESETBACK,
+            qt.QsciScintillaBase.STYLE_LINENUMBER,
+            qt.QColor(theme["linemargin"]["background"])
         )
         self.SendScintilla(
-            data.QsciScintillaBase.SCI_SETCARETFORE,
-            data.QColor(theme["cursor"])
+            qt.QsciScintillaBase.SCI_SETCARETFORE,
+            qt.QColor(theme["cursor"])
         )
         self.setCaretLineBackgroundColor(
-            data.QColor(theme["cursor-line-background"])
+            qt.QColor(theme["cursor-line-background"])
         )
         self.setStyleSheet("""
 BaseEditor {{

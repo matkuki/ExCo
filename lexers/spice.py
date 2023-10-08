@@ -6,12 +6,13 @@ Copyright (c) 2023 Matic Kukovec.
 
 import re
 
+import qt
 import data
 import functions
 import lexers
 
 
-class CustomSpice(data.QsciLexerCustom):
+class CustomSpice(qt.QsciLexerCustom):
     """
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !! This lexer is not needed as there is a built-in !!
@@ -56,8 +57,8 @@ class CustomSpice(data.QsciLexerCustom):
         super().__init__()
         print("INIT")
         # Set the default style values
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
@@ -81,13 +82,13 @@ class CustomSpice(data.QsciLexerCustom):
         return self.styles["Default"]
     
     def defaultFont(self, style):
-        return data.QFont(data.current_font_name, data.current_font_size)
+        return qt.QFont(data.current_font_name, data.current_font_size)
     
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
             self.setPaper(
-                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
+                qt.QColor(data.theme["fonts"][style.lower()]["background"]), 
                 self.styles[style]
             )
             # Fonts

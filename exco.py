@@ -18,6 +18,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import sys
 import os
 import argparse
+import qt
 import data
 import components.fonts
 import components.signaldispatcher
@@ -123,7 +124,7 @@ def main():
         file_arguments = None
     
     # Create QT application, needed to use QT forms
-    app = data.QApplication(sys.argv)
+    app = qt.QApplication(sys.argv)
     # Save the Qt application to the global reference
     data.application = app
     

@@ -13,6 +13,7 @@ import math
 import typing
 import importlib
 
+import qt
 import data
 
 
@@ -48,7 +49,7 @@ class TheSquid:
         TheSquid.customize_menu_style(TheSquid.main_form.menubar)
         if data.custom_menu_font != None:
             for action in TheSquid.main_form.menubar.stored_actions:
-                action.setFont(data.QFont(*data.custom_menu_font))
+                action.setFont(qt.QFont(*data.custom_menu_font))
         TheSquid.customize_menu_style(TheSquid.main_form.sessions_menu)
         TheSquid.customize_menu_style(TheSquid.main_form.recent_files_menu)
         TheSquid.customize_menu_style(TheSquid.main_form.save_in_encoding)
@@ -57,7 +58,7 @@ class TheSquid:
         def set_style(menu):
             if hasattr(menu, "actions"):
                 TheSquid.customize_menu_style(menu)
-                if data.PYQT_MODE < 6:
+                if qt.PYQT_MODE < 6:
                     for item in menu.actions():
                         if item.menu() != None:
                             TheSquid.customize_menu_style(item.menu())
@@ -76,13 +77,13 @@ class TheSquid:
                     )
                     if data.custom_menu_scale != None:
                         window.widget(i).corner_widget.setIconSize(
-                            data.QSize(
+                            qt.QSize(
                                 data.custom_menu_scale, data.custom_menu_scale
                             )
                         )
                     else:
                         window.widget(i).corner_widget.setIconSize(
-                            data.QSize(16, 16)
+                            qt.QSize(16, 16)
                         )
                 if hasattr(window.widget(i), "internals"):
                     window.widget(i).internals.restyle_corner_button_icons()
@@ -94,7 +95,7 @@ class TheSquid:
         if data.custom_menu_scale is not None and data.custom_menu_font is not None:
             # Customize the style
             try:
-                default_style_name = data.QApplication.style().objectName()
+                default_style_name = qt.QApplication.style().objectName()
                 custom_style = TheSquid.__module_customstyle.CustomStyle(default_style_name)
                 menu.setStyle(custom_style)
             except:
@@ -106,4 +107,4 @@ class TheSquid:
                     menu.setStyle(custom_style)
         else:
             # Reset the style
-            menu.setStyle(data.QApplication.style())
+            menu.setStyle(qt.QApplication.style())

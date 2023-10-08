@@ -15,7 +15,9 @@ import time
 import threading
 import traceback
 
+import qt
 import data
+import constants
 import functions
 import components.internals
 import gui.menu
@@ -41,52 +43,52 @@ The terminal emulator needs the following packages 'pip install'-ed.
     raise Exception(msg)
 
 PYTE_FOREGROUND_COLOR_MAP = {
-    "black": data.QColor(data.Qt.GlobalColor.black),
-    "red": data.QColor(data.Qt.GlobalColor.red),
-    "green": data.QColor(data.Qt.GlobalColor.green),
-    "brown": data.QColor(data.Qt.GlobalColor.yellow),
-    "blue": data.QColor(data.Qt.GlobalColor.blue),
-    "magenta": data.QColor(data.Qt.GlobalColor.magenta),
-    "cyan": data.QColor(data.Qt.GlobalColor.cyan),
-    "white": data.QColor(data.Qt.GlobalColor.lightGray),
-    "default": data.QColor(data.Qt.GlobalColor.white),
+    "black": qt.QColor(qt.Qt.GlobalColor.black),
+    "red": qt.QColor(qt.Qt.GlobalColor.red),
+    "green": qt.QColor(qt.Qt.GlobalColor.green),
+    "brown": qt.QColor(qt.Qt.GlobalColor.yellow),
+    "blue": qt.QColor(qt.Qt.GlobalColor.blue),
+    "magenta": qt.QColor(qt.Qt.GlobalColor.magenta),
+    "cyan": qt.QColor(qt.Qt.GlobalColor.cyan),
+    "white": qt.QColor(qt.Qt.GlobalColor.lightGray),
+    "default": qt.QColor(qt.Qt.GlobalColor.white),
     
-    "brightblack": data.QColor(data.Qt.GlobalColor.darkGray),
-    "brightred": data.QColor(data.Qt.GlobalColor.red),
-    "brightgreen": data.QColor(data.Qt.GlobalColor.green),
-    "brightbrown": data.QColor(data.Qt.GlobalColor.yellow),
-    "brightblue": data.QColor(data.Qt.GlobalColor.blue),
-    "brightmagenta": data.QColor(data.Qt.GlobalColor.magenta),
-    "brightcyan": data.QColor(data.Qt.GlobalColor.cyan),
-    "brightwhite": data.QColor(data.Qt.GlobalColor.white),
+    "brightblack": qt.QColor(qt.Qt.GlobalColor.darkGray),
+    "brightred": qt.QColor(qt.Qt.GlobalColor.red),
+    "brightgreen": qt.QColor(qt.Qt.GlobalColor.green),
+    "brightbrown": qt.QColor(qt.Qt.GlobalColor.yellow),
+    "brightblue": qt.QColor(qt.Qt.GlobalColor.blue),
+    "brightmagenta": qt.QColor(qt.Qt.GlobalColor.magenta),
+    "brightcyan": qt.QColor(qt.Qt.GlobalColor.cyan),
+    "brightwhite": qt.QColor(qt.Qt.GlobalColor.white),
 }
 PYTE_BACKGROUND_COLOR_MAP = {
-    "black": data.QColor(data.Qt.GlobalColor.black),
-    "red": data.QColor(data.Qt.GlobalColor.red),
-    "green": data.QColor(data.Qt.GlobalColor.green),
-    "brown": data.QColor(data.Qt.GlobalColor.yellow),
-    "blue": data.QColor(data.Qt.GlobalColor.blue),
-    "magenta": data.QColor(data.Qt.GlobalColor.magenta),
-    "cyan": data.QColor(data.Qt.GlobalColor.cyan),
-    "white": data.QColor(data.Qt.GlobalColor.lightGray),
-    "default": data.QColor(data.Qt.GlobalColor.black),
+    "black": qt.QColor(qt.Qt.GlobalColor.black),
+    "red": qt.QColor(qt.Qt.GlobalColor.red),
+    "green": qt.QColor(qt.Qt.GlobalColor.green),
+    "brown": qt.QColor(qt.Qt.GlobalColor.yellow),
+    "blue": qt.QColor(qt.Qt.GlobalColor.blue),
+    "magenta": qt.QColor(qt.Qt.GlobalColor.magenta),
+    "cyan": qt.QColor(qt.Qt.GlobalColor.cyan),
+    "white": qt.QColor(qt.Qt.GlobalColor.lightGray),
+    "default": qt.QColor(qt.Qt.GlobalColor.black),
     
-    "brightblack": data.QColor(data.Qt.GlobalColor.darkGray),
-    "brightred": data.QColor(data.Qt.GlobalColor.red),
-    "brightgreen": data.QColor(data.Qt.GlobalColor.green),
-    "brightbrown": data.QColor(data.Qt.GlobalColor.yellow),
-    "brightblue": data.QColor(data.Qt.GlobalColor.blue),
-    "bfightmagenta": data.QColor(data.Qt.GlobalColor.magenta),
-    "brightcyan": data.QColor(data.Qt.GlobalColor.cyan),
-    "brightwhite": data.QColor(data.Qt.GlobalColor.white),
+    "brightblack": qt.QColor(qt.Qt.GlobalColor.darkGray),
+    "brightred": qt.QColor(qt.Qt.GlobalColor.red),
+    "brightgreen": qt.QColor(qt.Qt.GlobalColor.green),
+    "brightbrown": qt.QColor(qt.Qt.GlobalColor.yellow),
+    "brightblue": qt.QColor(qt.Qt.GlobalColor.blue),
+    "bfightmagenta": qt.QColor(qt.Qt.GlobalColor.magenta),
+    "brightcyan": qt.QColor(qt.Qt.GlobalColor.cyan),
+    "brightwhite": qt.QColor(qt.Qt.GlobalColor.white),
 }
 
-class CustomTextEdit(data.QPlainTextEdit):
-    input_event = data.pyqtSignal(int, str, object)
-    resize_event = data.pyqtSignal(int, int)
-    paste_event = data.pyqtSignal(str)
-    scroll_up_event = data.pyqtSignal(int)
-    scroll_down_event = data.pyqtSignal(int)
+class CustomTextEdit(qt.QPlainTextEdit):
+    input_event = qt.pyqtSignal(int, str, object)
+    resize_event = qt.pyqtSignal(int, int)
+    paste_event = qt.pyqtSignal(str)
+    scroll_up_event = qt.pyqtSignal(int)
+    scroll_down_event = qt.pyqtSignal(int)
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,10 +97,10 @@ class CustomTextEdit(data.QPlainTextEdit):
         self.document().setDocumentMargin(0)
         self.document().rootFrame().frameFormat().setBottomMargin(0)
         
-        self.setHorizontalScrollBarPolicy(data.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(data.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(qt.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
-        self.setFocusPolicy(data.Qt.FocusPolicy.StrongFocus)
+        self.setFocusPolicy(qt.Qt.FocusPolicy.StrongFocus)
         
         self.update_style()
     
@@ -112,7 +114,7 @@ class CustomTextEdit(data.QPlainTextEdit):
         self.parent().main_form.view.indication_check()
     
     def keyPressEvent(self, event):
-        modifiers = data.QApplication.keyboardModifiers()
+        modifiers = qt.QApplication.keyboardModifiers()
         key = event.key()
         text = event.text()
         self.input_event.emit(key, text, modifiers)
@@ -140,7 +142,7 @@ class CustomTextEdit(data.QPlainTextEdit):
         w = self.viewport().size().width()
         h = self.viewport().size().height()
         font = self.document().defaultFont()
-        font_metrics = data.QFontMetricsF(font)
+        font_metrics = qt.QFontMetricsF(font)
         char_size = font_metrics.size(0, "X")
         width_in_chars = math.ceil(w / char_size.width())
         height_in_chars = math.floor(h / char_size.height())
@@ -186,7 +188,7 @@ class CustomTextEdit(data.QPlainTextEdit):
             },
         }
         for k,v in actions.items():
-            action = data.QAction(v["name"], self)
+            action = qt.QAction(v["name"], self)
             action.setToolTip(v["tooltip"])
             action.setStatusTip(v["tooltip"])
             action.setIcon(functions.create_icon(v["icon"]))
@@ -195,7 +197,7 @@ class CustomTextEdit(data.QPlainTextEdit):
             action.setEnabled(True)
             context_menu.addAction(action)
         # Show menu
-        cursor = data.QCursor.pos()
+        cursor = qt.QCursor.pos()
         context_menu.popup(cursor)
         # Accept event
         event.accept()
@@ -221,16 +223,16 @@ QPlainTextEdit {{
         """)
 
 
-class Terminal(data.QWidget):
-    pty_data_received = data.pyqtSignal(object)
-    pty_add_to_buffer = data.pyqtSignal(object)
+class Terminal(qt.QWidget):
+    pty_data_received = qt.pyqtSignal(object)
+    pty_add_to_buffer = qt.pyqtSignal(object)
     
     # Class variables
     name         = None
     _parent      = None
     main_form    = None
     current_icon = None
-    savable      = data.CanSave.NO
+    savable      = constants.CanSave.NO
     save_name    = None
     # Reference to the custom context menu
     context_menu = None
@@ -295,8 +297,8 @@ class Terminal(data.QWidget):
 #        self.output_widget.setReadOnly(True)
         self.output_widget.setOverwriteMode(True)
         self.output_widget.setFont(data.get_editor_font())
-        self.output_widget.setWordWrapMode(data.QTextOption.WrapMode.NoWrap)
-#        self.output_widget.setWordWrapMode(data.QTextOption.WrapMode.WrapAnywhere)
+        self.output_widget.setWordWrapMode(qt.QTextOption.WrapMode.NoWrap)
+#        self.output_widget.setWordWrapMode(qt.QTextOption.WrapMode.WrapAnywhere)
         self.output_widget.input_event.connect(self.__input_event)
         self.output_widget.resize_event.connect(self.__resize_event)
         self.output_widget.paste_event.connect(self.__paste_event)
@@ -304,7 +306,7 @@ class Terminal(data.QWidget):
         self.output_widget.scroll_down_event.connect(self.__scroll_down_event)
         
         # Add the widgets to a vertical layout
-        layout = data.QVBoxLayout(self)
+        layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(self.output_widget)
@@ -351,7 +353,7 @@ class Terminal(data.QWidget):
         self.pty_data_received.emit(joined_buffer)
         self.buffer = []
     
-    @data.pyqtSlot()
+    @qt.pyqtSlot()
     def __update_display(self):
         # Timing initialization
         time_start = time.perf_counter()
@@ -366,7 +368,7 @@ class Terminal(data.QWidget):
         # Format the text
         bg = "default"
         fg = "default"
-        new_formatting = data.QTextCharFormat()
+        new_formatting = qt.QTextCharFormat()
         new_formatting.setBackground(PYTE_BACKGROUND_COLOR_MAP[bg])
         new_formatting.setForeground(PYTE_FOREGROUND_COLOR_MAP[fg])
         cursor.setCharFormat(new_formatting)
@@ -384,18 +386,18 @@ class Terminal(data.QWidget):
                     current_char_list = []
                     bg = character.bg
                     fg = character.fg
-                    new_formatting = data.QTextCharFormat()
+                    new_formatting = qt.QTextCharFormat()
                     # Byckground
                     if bg in PYTE_BACKGROUND_COLOR_MAP.keys():
                         new_formatting.setBackground(PYTE_BACKGROUND_COLOR_MAP[bg])
                     else:
-                        new_color = data.QColor("#{}".format(bg))
+                        new_color = qt.QColor("#{}".format(bg))
                         new_formatting.setBackground(new_color)
                     # Foreground
                     if fg in PYTE_FOREGROUND_COLOR_MAP.keys():
                         new_formatting.setForeground(PYTE_FOREGROUND_COLOR_MAP[fg])
                     else:
-                        new_color = data.QColor("#{}".format(fg))
+                        new_color = qt.QColor("#{}".format(fg))
                         new_formatting.setForeground(new_color)
                         
                     cursor.setCharFormat(new_formatting)
@@ -413,13 +415,13 @@ class Terminal(data.QWidget):
         left = cursor.columnNumber()
         cursor.setPosition(0)
         cursor.movePosition(
-            data.QTextCursor.MoveOperation.Down,
-            data.QTextCursor.MoveMode.MoveAnchor,
+            qt.QTextCursor.MoveOperation.Down,
+            qt.QTextCursor.MoveMode.MoveAnchor,
             self.screen.cursor.y
         )
         cursor.movePosition(
-            data.QTextCursor.MoveOperation.Right,
-            data.QTextCursor.MoveMode.MoveAnchor,
+            qt.QTextCursor.MoveOperation.Right,
+            qt.QTextCursor.MoveMode.MoveAnchor,
             self.screen.cursor.x
         )
         
@@ -454,7 +456,7 @@ class Terminal(data.QWidget):
         # Loop timing
         end_count = time.perf_counter() - time_start
     
-    @data.pyqtSlot(bytes)
+    @qt.pyqtSlot(bytes)
     def __stdout_received(self, raw_text):
         if isinstance(raw_text, bytes):
             self.stream.feed(raw_text.decode("utf-8"))
@@ -468,32 +470,32 @@ class Terminal(data.QWidget):
 #        print(modifiers, key, text, bytes(text, "utf-8"))
 
         update = False
-        if modifiers == data.Qt.KeyboardModifier.ControlModifier:
-            if key == data.Qt.Key.Key_Up:
+        if modifiers == qt.Qt.KeyboardModifier.ControlModifier:
+            if key == qt.Qt.Key.Key_Up:
 #                self.screen.cursor_up()
                 self.screen.prev_page()
                 update = True
-            elif key == data.Qt.Key.Key_Down:
+            elif key == qt.Qt.Key.Key_Down:
                 self.screen.next_page()
                 update = True
                 
         else:
-            if key == data.Qt.Key.Key_Up:
+            if key == qt.Qt.Key.Key_Up:
                 text = "\u001b[A"
                 update = True
-            elif key == data.Qt.Key.Key_Down:
+            elif key == qt.Qt.Key.Key_Down:
                 text = "\u001b[B"
                 update = True
-            elif key == data.Qt.Key.Key_Left:
+            elif key == qt.Qt.Key.Key_Left:
                 text = "\u001b[D"
                 update = True
-            elif key == data.Qt.Key.Key_Right:
+            elif key == qt.Qt.Key.Key_Right:
                 text = "\u001b[C"
                 update = True
-            elif key == data.Qt.Key.Key_PageUp:
+            elif key == qt.Qt.Key.Key_PageUp:
                 self.screen.prev_page()
                 update = True
-            elif key == data.Qt.Key.Key_PageDown:
+            elif key == qt.Qt.Key.Key_PageDown:
                 self.screen.next_page()
                 update = True
         if update:
@@ -574,7 +576,7 @@ QWidget {{
 
 
 def test():
-    app = data.QApplication(sys.argv)
+    app = qt.QApplication(sys.argv)
     console = Terminal(None, None)
     console.resize(640, 480)
     console.show()

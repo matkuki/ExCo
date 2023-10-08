@@ -14,6 +14,36 @@ import data
 import functions
 
 
+class StyleSheetStatusbar:
+    @staticmethod
+    def standard():
+        style_sheet = """
+QStatusBar {{
+    background-color: {};
+    color: {};
+    font-family: {};
+    font-size: {}pt;
+}}
+QStatusBar::item {{
+    border: none;
+}}
+QLabel {{
+    background-color: transparent;
+    color: {};
+    font-family: {};
+    font-size: {}pt;
+}}
+        """.format(
+            data.theme["form"],
+            data.theme["indication"]["font"],
+            data.current_font_name,
+            data.current_font_size,
+            data.theme["indication"]["font"],
+            data.current_font_name,
+            data.current_font_size,
+        )
+        return style_sheet
+    
 class StyleSheetScrollbar:
     @staticmethod
     def horizontal():

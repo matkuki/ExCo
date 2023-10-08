@@ -13,7 +13,9 @@ import time
 import subprocess
 import psutil
 
+import qt
 import data
+import constants
 import functions
 import components
 
@@ -23,7 +25,7 @@ if data.platform == "Windows":
     import win32gui
     import win32process
     
-    class ExternalWidget(data.QWidget):
+    class ExternalWidget(qt.QWidget):
         handle_cache     = []
         
         name             = None
@@ -31,7 +33,7 @@ if data.platform == "Windows":
         main_form        = None
         current_icon     = None
         internals        = None
-        savable          = data.CanSave.NO
+        savable          = constants.CanSave.NO
         save_name        = None
         process_reference= None
         window_reference = None
@@ -88,11 +90,11 @@ if data.platform == "Windows":
         
         def eventFilter(self, object, event):
             print("Object:", object, "Event-Type:", event.type())
-            if event.type() in (data.QEvent.Type.Enter, data.QEvent.Type.MouseButtonPress, data.QEvent.Type.KeyPress):
+            if event.type() in (qt.QEvent.Type.Enter, qt.QEvent.Type.MouseButtonPress, qt.QEvent.Type.KeyPress):
                 print("ENTER")
     #            if self.my_hwnd:
     #                win32gui.SetFocus(self.my_hwnd)
-            elif event.type() == data.QEvent.Type.Leave:
+            elif event.type() == qt.QEvent.Type.Leave:
                 print("LEAVE")
     #            if self.external_hwnd:
     #                win32gui.SetFocus(self.external_hwnd)
@@ -106,27 +108,27 @@ if data.platform == "Windows":
         main_widget.set_external_hwnd(hwnd)
         main_widget.set_process_reference(proc)
         
-        layout = data.QStackedLayout(main_widget)
-        layout.setStackingMode(data.QStackedLayout.StackingMode.StackAll)
+        layout = qt.QStackedLayout(main_widget)
+        layout.setStackingMode(qt.QStackedLayout.StackingMode.StackAll)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         main_widget.setLayout(layout)
         
-        window = data.QWindow.fromWinId(hwnd)
+        window = qt.QWindow.fromWinId(hwnd)
         window.installEventFilter(main_form)
         main_widget.installEventFilter(main_form)
         main_widget.set_window_reference(window)
-        external_widget = data.QWidget.createWindowContainer(
+        external_widget = qt.QWidget.createWindowContainer(
             window,
             parent=main_widget,
-            flags=data.Qt.WindowType.FramelessWindowHint
+            flags=qt.Qt.WindowType.FramelessWindowHint
         )
         main_widget.layout().addWidget(external_widget)
         def _initialize(*args):
             external_widget.hide()
             external_widget.show()
             external_widget.update()
-        data.QTimer.singleShot(100, _initialize)
+        qt.QTimer.singleShot(100, _initialize)
         
         return main_widget
         
@@ -198,7 +200,7 @@ if data.platform == "Windows":
 
 else:
     
-    class ExternalWidget(data.QWidget):
+    class ExternalWidget(qt.QWidget):
         handle_cache     = []
         
         name             = None
@@ -206,7 +208,7 @@ else:
         main_form        = None
         current_icon     = None
         internals        = None
-        savable          = data.CanSave.NO
+        savable          = constants.CanSave.NO
         save_name        = None
         process_reference= None
         window_reference = None

@@ -23,7 +23,9 @@ import traceback
 import gc
 import json
 
+import qt
 import data
+import constants
 import components.actionfilter
 import components.communicator
 import components.processcontroller
@@ -47,6 +49,7 @@ from .textdiffer import *
 from .treedisplays import *
 from .menu import *
 from .themeindicator import *
+from .replindicator import *
 from .stylesheets import *
 from .dockingoverlay import *
 from .thebox import *
@@ -63,12 +66,12 @@ if data.platform == "Windows":
 Main window and its supporting objects
 -------------------------------------------------
 """
-class MainWindow(data.QMainWindow):
+class MainWindow(qt.QMainWindow):
     """
     Main form that holds all Qt objects
     """
     # Signals
-    data_send = data.pyqtSignal(object)
+    data_send = qt.pyqtSignal(object)
     
     # Define main form control references
     name                    = "Main Window"
@@ -170,7 +173,7 @@ class MainWindow(data.QMainWindow):
                 message = ["REPL PRINT:\n"] + [str(x) for x in message]
             self.display.repl_display_message(
                 *message,
-                message_type=data.MessageType.WARNING
+                message_type=constants.MessageType.WARNING
             )
         functions.repl_print = repl_print
         # Initialize layout
@@ -182,20 +185,23 @@ class MainWindow(data.QMainWindow):
         self.resize(int(initial_width), int(initial_height))
         # Load the settings
         self.settings.restore()
+        # Initialize REPL type indicator
+        self.display.init_repl_indicator()
+        self.display.repl_indicator.set_language(constants.ReplLanguage.Python)
         # Initialize the theme indicator
         self.display.init_theme_indicator()
         # Initialize repl interpreter
         self.init_interpreter()
         # Set the main window icon if it exists
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(data.QIcon(data.application_icon))
+            self.setWindowIcon(qt.QIcon(data.application_icon))
         # Set the repl type to a single line
-        self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+        self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
         self.view.reset_entire_style_sheet()
         # Add a custom event filter
         self.installEventFilter(self)
         # Set flag on window to always show tooltips
-        self.setAttribute(data.Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
+        self.setAttribute(qt.Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
         # Connect signals
         data.signal_dispatcher.update_title.connect(self.update_title)
         # Open the file passed as an argument to the QMainWindow initialization
@@ -216,12 +222,12 @@ class MainWindow(data.QMainWindow):
         if lexers.cython_lexers_found:
             self.display.repl_display_message(
                 "Cython lexers imported.",
-                message_type=data.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS
             )
         if lexers.nim_lexers_found:
             self.display.repl_display_message(
                 "Nim lexers imported.",
-                message_type=data.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS
             )
     
     def __del__(self) -> None:
@@ -229,20 +235,20 @@ class MainWindow(data.QMainWindow):
             del self.communicator
 
     def eventFilter(self, object, event):
-        if event.type() == data.QEvent.Type.Enter:
+        if event.type() == qt.QEvent.Type.Enter:
             self.display.docking_overlay_hide()
 
-        if event.type() == data.QEvent.Type.WindowActivate:
+        if event.type() == qt.QEvent.Type.WindowActivate:
             pass
-        elif event.type()== data.QEvent.Type.WindowDeactivate:
+        elif event.type()== qt.QEvent.Type.WindowDeactivate:
             self.display.docking_overlay_hide()
         
 #        print("Object:", object, "Event-Type:", event.type())
-        if event.type() in (data.QEvent.Type.Enter, data.QEvent.Type.MouseButtonPress, data.QEvent.Type.KeyPress):
+        if event.type() in (qt.QEvent.Type.Enter, qt.QEvent.Type.MouseButtonPress, qt.QEvent.Type.KeyPress):
 #            print("ENTER")
             if data.platform == "Windows":
                 win32gui.SetFocus(self.winId())
-        elif event.type() == data.QEvent.Type.Leave:
+        elif event.type() == qt.QEvent.Type.Leave:
 #            print("LEAVE")
             if data.platform == "Windows":
                 def set_external_focus():
@@ -250,11 +256,11 @@ class MainWindow(data.QMainWindow):
                     handle = win32gui.WindowFromPoint(win32gui.GetCursorPos())
                     if handle in ExternalWidget.handle_cache:
                         win32gui.SetFocus(handle)
-                data.QTimer.singleShot(50, set_external_focus)
+                qt.QTimer.singleShot(50, set_external_focus)
 
         return False
     
-    @data.pyqtSlot(object)
+    @qt.pyqtSlot(object)
     def __data_received(self, _data:object) -> None:
         _from, message = _data
         
@@ -287,7 +293,7 @@ class MainWindow(data.QMainWindow):
     def reset_title(self):
         self.setWindowTitle(self.get_default_title())
 
-    @data.pyqtSlot()
+    @qt.pyqtSlot()
     def update_title(self):
         window = self.get_window_by_indication()
         if window is None:
@@ -310,11 +316,11 @@ class MainWindow(data.QMainWindow):
             self.reset_title()
 
     def init_statusbar(self):
-        self.statusbar = data.QStatusBar(self)
+        self.statusbar = qt.QStatusBar(self)
         self.statusbar.setFont(data.get_current_font())
         self.display.write_to_statusbar("Status Bar")
         #Add label for showing the cursor position in a basic widget
-        self.statusbar_label_left = data.QLabel(self)
+        self.statusbar_label_left = qt.QLabel(self)
         self.statusbar_label_left.setText("")
         self.statusbar.addPermanentWidget(self.statusbar_label_left)
         #Add the statusbar to the MainWindow
@@ -327,7 +333,7 @@ class MainWindow(data.QMainWindow):
         return self.findChildren(TabWidget)
 
     def get_all_tree_widgets(self):
-        return self.findChildren(data.QTreeView)
+        return self.findChildren(qt.QTreeView)
 
     def get_all_editors(self):
         windows = self.get_all_windows()
@@ -391,7 +397,7 @@ class MainWindow(data.QMainWindow):
         Create and return a dictionary that holds all the main form references
         that will be used by the REPL interpreter
         """
-        return  dict(
+        return dict(
             form        = self,
             quit        = self.exit,
             exit        = self.exit,
@@ -450,14 +456,14 @@ class MainWindow(data.QMainWindow):
 
     def get_references_autocompletions(self):
         """Get the form references and autocompletions"""
-        new_references  =   dict(
+        new_references = dict(
             itertools.chain(
                 self.get_form_references().items(),
                 self.repl.get_repl_references().items()
             )
         )
         #Create auto completion list for the REPL
-        ac_list_prim    = [x for x in new_references]
+        ac_list_prim = [x for x in new_references]
         #Add Python/custom keywords to the primary level autocompletions
         ac_list_prim.extend(keyword.kwlist)
         ac_list_prim.extend(["range"])
@@ -465,8 +471,8 @@ class MainWindow(data.QMainWindow):
         ac_list_prim.extend(os.listdir(os.getcwd()))
         #Create the secondary autocompletion list
         #(methods and attributes of the primary list references)
-        ac_list_sec     = []
-        keywords        = new_references
+        ac_list_sec = []
+        keywords    = new_references
         #Get all keyword methods and variables
         for key in keywords:
             ac_list_sec.append(key)
@@ -524,7 +530,7 @@ class MainWindow(data.QMainWindow):
         def display(message):
             self.display.repl_display_message(
                 message,
-                message_type=data.MessageType.WARNING
+                message_type=constants.MessageType.WARNING
             )
             self.display.write_to_statusbar(message)
         #Get the document path
@@ -543,9 +549,9 @@ class MainWindow(data.QMainWindow):
         if self.check_document_states() == True:
             quit_message = "You have modified documents!\nWhat do you wish to do?"
             reply = QuitDialog.question(quit_message)
-            if reply == data.DialogResult.Quit.value:
+            if reply == constants.DialogResult.Quit.value:
                 pass
-            elif reply == data.DialogResult.SaveAllAndQuit.value:
+            elif reply == constants.DialogResult.SaveAllAndQuit.value:
                 result = self.file_save_all()
                 if result == False:
                     event.ignore()
@@ -582,7 +588,7 @@ class MainWindow(data.QMainWindow):
         # Execute the superclass mouse press event
         super().mousePressEvent(event)
         # Hide the function wheel if it is shown
-        if event.button() != data.Qt.MouseButton.RightButton:
+        if event.button() != qt.Qt.MouseButton.RightButton:
             self.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
@@ -592,7 +598,7 @@ class MainWindow(data.QMainWindow):
         pressed_key = key_event.key()
         accept_keypress = False
         # Check for escape keypress
-        if pressed_key == data.Qt.Key.Key_Escape:
+        if pressed_key == qt.Qt.Key.Key_Escape:
             # Check if the function wheel overlay is shown
             if self.view.function_wheel_overlay is not None:
                 if self.view.function_wheel_overlay.isVisible():
@@ -631,7 +637,7 @@ class MainWindow(data.QMainWindow):
         Function for using a QFileDialog window for retreiving
         a directory name as a string
         """
-        directory = data.QFileDialog.getExistingDirectory(
+        directory = qt.QFileDialog.getExistingDirectory(
             self, # QWidget parent = None
             None, # QString caption = ''
             os.getcwd(), # QString directory = ''
@@ -645,7 +651,7 @@ class MainWindow(data.QMainWindow):
         """
         self.display.repl_display_message("Executing CMD command: \"" + command + "\"")
         #Run the command and display the result
-        result  = self.repl.interpreter.run_cmd_process(command, show_console, output_to_repl)
+        result  = self.repl.get_interpreter().run_cmd_process(command, show_console, output_to_repl)
         self.display.repl_display_message(result)
 
     def file_create_new(self):
@@ -660,7 +666,7 @@ class MainWindow(data.QMainWindow):
         """The function name says it all"""
         focused_tab = self.get_tab_by_focus()
         if isinstance(focused_tab, CustomEditor) == True:
-            if focused_tab is not None and focused_tab.savable == data.CanSave.YES:
+            if focused_tab is not None and focused_tab.savable == constants.CanSave.YES:
                 focused_tab.save_document(
                     saveas=False,
                     encoding=encoding,
@@ -707,8 +713,8 @@ class MainWindow(data.QMainWindow):
                 if isinstance(tab, CustomEditor) == False:
                     continue
                 # Test if the tab is modified and savable
-                if (tab.savable == data.CanSave.YES and
-                    tab.save_status == data.FileStatus.MODIFIED):
+                if (tab.savable == constants.CanSave.YES and
+                    tab.save_status == constants.FileStatus.MODIFIED):
                     # Save the file
                     result = tab.save_document(saveas=False, encoding=encoding)
                     # Set the icon if it was set by the lexer
@@ -721,12 +727,12 @@ class MainWindow(data.QMainWindow):
         if saved_something == False:
             self.display.repl_display_message(
                 "No modified documents to save",
-                message_type=data.MessageType.WARNING
+                message_type=constants.MessageType.WARNING
             )
         else:
             self.display.repl_display_message(
                 "'Save all' executed successfully",
-                message_type=data.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS
             )
         return True
 
@@ -750,7 +756,7 @@ class MainWindow(data.QMainWindow):
         click_filter = components.actionfilter.ActionFilter(self)
         # Nested function for creating an action
         def create_action(name, key_combo, status_tip, icon, function, enabled=True):
-            action = data.QAction(name, self)
+            action = qt.QAction(name, self)
             # Key combination
             keys = None
             if key_combo is not None and key_combo != "":
@@ -901,15 +907,15 @@ class MainWindow(data.QMainWindow):
                 if os.path.isfile(user_definitions_file) == False:
                     self.display.repl_display_message(
                         "User definitions file does not exist!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                     )
                     message = "Do you wish to generate the default user definition and function file?"
                     reply = YesNoDialog.question(message)
-                    if reply == data.DialogResult.Yes.value:
+                    if reply == constants.DialogResult.Yes.value:
                         functions.create_default_config_file()
                         self.display.repl_display_message(
                             "Default user definitions file generated!",
-                            message_type=data.MessageType.SUCCESS
+                            message_type=constants.MessageType.SUCCESS
                         )
                     else:
                         return
@@ -1054,7 +1060,7 @@ class MainWindow(data.QMainWindow):
             def delete_start_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_DELWORDLEFT)
+                    send_sci_message(qt.QsciScintillaBase.SCI_DELWORDLEFT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             del_start_word_action = create_action(
@@ -1067,7 +1073,7 @@ class MainWindow(data.QMainWindow):
             def delete_end_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_DELWORDRIGHT)
+                    send_sci_message(qt.QsciScintillaBase.SCI_DELWORDRIGHT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             del_end_word_action = create_action(
@@ -1080,7 +1086,7 @@ class MainWindow(data.QMainWindow):
             def delete_start_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_DELLINELEFT)
+                    send_sci_message(qt.QsciScintillaBase.SCI_DELLINELEFT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             del_start_line_action = create_action(
@@ -1093,7 +1099,7 @@ class MainWindow(data.QMainWindow):
             def delete_end_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_DELLINERIGHT)
+                    send_sci_message(qt.QsciScintillaBase.SCI_DELLINERIGHT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             del_end_line_action = create_action(
@@ -1106,7 +1112,7 @@ class MainWindow(data.QMainWindow):
             def goto_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_DOCUMENTSTART)
+                    send_sci_message(qt.QsciScintillaBase.SCI_DOCUMENTSTART)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             go_to_start_action = create_action(
@@ -1119,7 +1125,7 @@ class MainWindow(data.QMainWindow):
             def goto_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_DOCUMENTEND)
+                    send_sci_message(qt.QsciScintillaBase.SCI_DOCUMENTEND)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             go_to_end_action = create_action(
@@ -1132,7 +1138,7 @@ class MainWindow(data.QMainWindow):
             def select_page_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_PAGEUPEXTEND)
+                    send_sci_message(qt.QsciScintillaBase.SCI_PAGEUPEXTEND)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             select_page_up_action = create_action(
@@ -1145,7 +1151,7 @@ class MainWindow(data.QMainWindow):
             def select_page_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_PAGEDOWN)
+                    send_sci_message(qt.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             select_page_down_action = create_action(
@@ -1158,7 +1164,7 @@ class MainWindow(data.QMainWindow):
             def select_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND)
+                    send_sci_message(qt.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             select_to_start_action = create_action(
@@ -1171,7 +1177,7 @@ class MainWindow(data.QMainWindow):
             def select_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_DOCUMENTENDEXTEND)
+                    send_sci_message(qt.QsciScintillaBase.SCI_DOCUMENTENDEXTEND)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             select_to_end_action = create_action(
@@ -1184,7 +1190,7 @@ class MainWindow(data.QMainWindow):
             def scroll_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_PAGEUP)
+                    send_sci_message(qt.QsciScintillaBase.SCI_PAGEUP)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             scroll_up_action = create_action(
@@ -1197,7 +1203,7 @@ class MainWindow(data.QMainWindow):
             def scroll_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_PAGEDOWN)
+                    send_sci_message(qt.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             scroll_down_action = create_action(
@@ -1210,7 +1216,7 @@ class MainWindow(data.QMainWindow):
             def line_cut():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_LINECUT)
+                    send_sci_message(qt.QsciScintillaBase.SCI_LINECUT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             line_cut_action = create_action(
@@ -1223,7 +1229,7 @@ class MainWindow(data.QMainWindow):
             def line_copy():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_LINECOPY)
+                    send_sci_message(qt.QsciScintillaBase.SCI_LINECOPY)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             line_copy_action = create_action(
@@ -1236,7 +1242,7 @@ class MainWindow(data.QMainWindow):
             def line_delete():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_LINEDELETE)
+                    send_sci_message(qt.QsciScintillaBase.SCI_LINEDELETE)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             line_delete_action = create_action(
@@ -1249,7 +1255,7 @@ class MainWindow(data.QMainWindow):
             def line_transpose():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    send_sci_message(data.QsciScintillaBase.SCI_LINETRANSPOSE)
+                    send_sci_message(qt.QsciScintillaBase.SCI_LINETRANSPOSE)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             line_transpose_action = create_action(
@@ -1262,8 +1268,8 @@ class MainWindow(data.QMainWindow):
             def line_duplicate():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    #send_sci_message(data.QsciScintillaBase.SCI_LINEDUPLICATE)
-                    send_sci_message(data.QsciScintillaBase.SCI_SELECTIONDUPLICATE)
+                    #send_sci_message(qt.QsciScintillaBase.SCI_LINEDUPLICATE)
+                    send_sci_message(qt.QsciScintillaBase.SCI_SELECTIONDUPLICATE)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             line_duplicate_action = create_action(
@@ -1275,7 +1281,7 @@ class MainWindow(data.QMainWindow):
             )
             #Rectangular block selection
             action_text = 'Rectangular block selection\tAlt+Mouse'
-            rect_block_action = data.QAction(
+            rect_block_action = qt.QAction(
                 functions.create_icon('tango_icons/Input-keyboard.svg'),
                 action_text,
                 self
@@ -1326,7 +1332,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('find("",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             find_action = create_action(
@@ -1349,7 +1355,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_find(r"",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             regex_find_action = create_action(
@@ -1371,7 +1377,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('find_and_replace("","",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             find_and_replace_action = create_action(
@@ -1394,7 +1400,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_find_and_replace(r"",r"",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             regex_find_and_replace_action = create_action(
@@ -1414,7 +1420,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('highlight("",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             highlight_action = create_action(
@@ -1434,7 +1440,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_highlight(r"",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             regex_highlight_action = create_action(
@@ -1450,7 +1456,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText('clear_highlights(window_name="{}")'.format(focused_tab._parent.name))
                 except:
                     self.repl.setText('clear_highlights()')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(len(self.repl.text()))
             clear_highlights_action = create_action(
@@ -1468,7 +1474,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('replace_in_selection("","",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('","",case_sensitive'))
             replace_selection_action = create_action(
@@ -1486,7 +1492,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_replace_in_selection(r"",r"",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",r"",case_sensitive'))
             temp_string = 'Replace all instances of text in the '
@@ -1511,7 +1517,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('replace_all("","",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             replace_all_action = create_action(
@@ -1533,7 +1539,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(temp_string)
                 except:
                     self.repl.setText('regex_replace_all(r"",r"",case_sensitive=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             regex_replace_all_action = create_action(
@@ -1601,7 +1607,7 @@ class MainWindow(data.QMainWindow):
                     message += "the document is not an editor!"
                     self.display.repl_display_message(
                         message,
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                     )
             node_tree_action = create_action(
                 'Create/reload node tree (C / Nim / Python3)',
@@ -1614,7 +1620,7 @@ class MainWindow(data.QMainWindow):
                 try:
                     focused_tab = self.get_used_tab()
                     self.repl.setText('goto_line(,window_name="{}")'.format(focused_tab._parent.name))
-                    self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                    self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                     self.repl.setCursorPosition(self.repl.text().find(',window_name'))
                 except:
                     self.repl.setText('goto_line()')
@@ -1672,7 +1678,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('find_in_open_documents("",case_sensitive=False,regular_expression=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             find_in_documents_action = create_action(
@@ -1693,7 +1699,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('find_replace_in_open_documents("","",case_sensitive=False,regular_expression=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             find_replace_in_documents_action = create_action(
@@ -1714,7 +1720,7 @@ class MainWindow(data.QMainWindow):
                     self.repl.setText(repl_text)
                 except:
                     self.repl.setText('replace_all_in_open_documents("","",case_sensitive=False,regular_expression=False)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
             replace_all_in_documents_action = create_action(
@@ -1782,13 +1788,13 @@ class MainWindow(data.QMainWindow):
             def special_find_in():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_in_files("",r"directory",case_sensitive=False,search_subdirs=True,break_on_find=False,file_filter=None)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
             def special_find_in_with_dialog():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_in_files("",case_sensitive=False,search_subdirs=True,break_on_find=False,file_filter=None)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_in_with_dialog"] = special_find_in_with_dialog
@@ -1804,13 +1810,13 @@ class MainWindow(data.QMainWindow):
             def special_find_file():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_files("",r"directory",case_sensitive=False,search_subdirs=True)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
             def special_find_file_with_dialog():
                 #The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText('find_files("",case_sensitive=False,search_subdirs=True)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_find_file_with_dialog"] = special_find_file_with_dialog
@@ -1828,7 +1834,7 @@ class MainWindow(data.QMainWindow):
                 temp_string = 'replace_in_files("search_text","replace_text",'
                 temp_string += 'r"directory",case_sensitive=False,search_subdirs=True,file_filter=None)'
                 self.repl.setText(temp_string)
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
             def special_replace_in_files_with_dialog():
@@ -1836,7 +1842,7 @@ class MainWindow(data.QMainWindow):
                 temp_string = 'replace_in_files("search_text","replace_text",'
                 temp_string += 'case_sensitive=False,search_subdirs=True,file_filter=None)'
                 self.repl.setText(temp_string)
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
             self.menubar_functions["special_replace_in_files_with_dialog"] = special_replace_in_files_with_dialog
@@ -1852,7 +1858,7 @@ class MainWindow(data.QMainWindow):
             )
             def special_run_command():
                 self.repl.setText('run("",show_console=True)')
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",show_'))
             run_command_action = create_action(
@@ -1881,7 +1887,7 @@ class MainWindow(data.QMainWindow):
                 show_explorer
             )
             def show_external_terminal():
-                self.repl.interpreter.create_terminal()
+                self.repl.get_interpreter().create_terminal()
             show_external_terminal_action = create_action(
                 'Show external Console/Terminal window',
                 None,
@@ -1986,7 +1992,7 @@ class MainWindow(data.QMainWindow):
                     message += "Select a window widget with an opened document first."
                     self.display.repl_display_message(
                         message,
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                     )
                     self.display.write_to_statusbar(message)
             lexers_menu = self.display.create_lexers_menu(
@@ -2072,7 +2078,7 @@ class MainWindow(data.QMainWindow):
 
             def select_tab_right():
                 try:
-                    self.get_window_by_child_tab().select_tab(data.Direction.RIGHT)
+                    self.get_window_by_child_tab().select_tab(constants.Direction.RIGHT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             select_tab_right_action = create_action(
@@ -2084,7 +2090,7 @@ class MainWindow(data.QMainWindow):
             )
             def select_tab_left():
                 try:
-                    self.get_window_by_child_tab().select_tab(data.Direction.LEFT)
+                    self.get_window_by_child_tab().select_tab(constants.Direction.LEFT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             select_tab_left_action = create_action(
@@ -2096,7 +2102,7 @@ class MainWindow(data.QMainWindow):
             )
             def move_tab_right():
                 try:
-                    self.get_window_by_child_tab().move_tab(data.Direction.RIGHT)
+                    self.get_window_by_child_tab().move_tab(constants.Direction.RIGHT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             move_tab_right_action = create_action(
@@ -2108,7 +2114,7 @@ class MainWindow(data.QMainWindow):
             )
             def move_tab_left():
                 try:
-                    self.get_window_by_child_tab().move_tab(data.Direction.LEFT)
+                    self.get_window_by_child_tab().move_tab(constants.Direction.LEFT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             move_tab_left_action = create_action(
@@ -2287,8 +2293,15 @@ class MainWindow(data.QMainWindow):
                 'tango_icons/repl-repeat-command.png',
                 self.repl.repeat_last_repl_eval
             )
+            repeat_cycle_lang_action = create_action(
+                'REPL Cycle Language',
+                settings.keyboard_shortcuts['general']['repl_cycle_language'],
+                'Cycle the language used by the REPL',
+                'tango_icons/repl-repeat-command.png',
+                self.repl_box.cycle_language
+            )
             def repl_single_focus():
-                self.view.set_repl_type(data.ReplType.SINGLE_LINE)
+                self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
             repl_focus_action = create_action(
                 'Focus REPL(Single)',
@@ -2298,7 +2311,7 @@ class MainWindow(data.QMainWindow):
                 repl_single_focus
             )
             def repl_multi_focus():
-                self.view.set_repl_type(data.ReplType.MULTI_LINE)
+                self.view.set_repl_type(constants.ReplType.MULTI_LINE)
                 self.repl_helper.setFocus()
             repl_focus_multi_action = create_action(
                 'Focus REPL(Multi)',
@@ -2308,6 +2321,7 @@ class MainWindow(data.QMainWindow):
                 repl_multi_focus
             )
             repl_menu.addAction(repeat_eval_action)
+            repl_menu.addAction(repeat_cycle_lang_action)
             repl_menu.addAction(repl_focus_action)
             repl_menu.addAction(repl_focus_multi_action)
         #Sessions menu
@@ -2391,7 +2405,7 @@ class MainWindow(data.QMainWindow):
         # Connect the triggered signal for hiding the function wheel on menubar clicks
         def hide_fw(action):
             #Hide the function wheel only when the clicked action is not "Show/Hide Function Wheel"
-            if isinstance(action, data.QAction):
+            if isinstance(action, qt.QAction):
                 if action.text() != "Show/Hide Function Wheel":
                     #Hide the function wheel if it is shown
                     self.view.hide_function_wheel()
@@ -2436,12 +2450,12 @@ class MainWindow(data.QMainWindow):
 #            message += "to make this error dissappear."
 #            self.display.repl_display_message(
 #                message,
-#                message_type=data.MessageType.ERROR
+#                message_type=constants.MessageType.ERROR
 #            )
             # Ask to create the user definitions
 #            message = "Do you wish to generate the default user definition and function file?"
 #            reply = YesNoDialog.question(message)
-#            if reply == data.DialogResult.Yes.value:
+#            if reply == constants.DialogResult.Yes.value:
 #                functions.create_default_config_file()
 #                self.display.repl_display_success(
 #                    "Default user definitions file generated!"
@@ -2478,7 +2492,7 @@ class MainWindow(data.QMainWindow):
             user_function_autocompletions = []
             for func_name in user_function_names:
                 """User functions are stored in the REPL's intepreter 'locals' dictionary"""
-                function = self.repl.interpreter.__dict__['locals'][func_name]
+                function = self.repl.get_interpreter().__dict__['locals'][func_name]
                 # Check for the "autocompletions" attribute
                 if hasattr(function, "autocompletion"):
                     user_function_autocompletions.append(function.autocompletion)
@@ -2526,14 +2540,14 @@ class MainWindow(data.QMainWindow):
     def open_file_with_dialog(self, tab_widget=None):
         """Open a file for editing using a file dialog"""
         #Create and show a file dialog window, restore last browsed directory and set the file filter
-        file_dialog = data.QFileDialog
+        file_dialog = qt.QFileDialog
         files = file_dialog.getOpenFileNames(
             self,
             "Open File",
             os.getcwd(),
             "All Files (*);;Ex.Co. Files({})".format(' '.join(self.exco_file_exts))
         )
-        if data.PYQT_MODE == 5:
+        if qt.PYQT_MODE == 5:
             # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
             # so pass only the files to the function
             files = files[0]
@@ -2562,7 +2576,7 @@ class MainWindow(data.QMainWindow):
             if os.path.isfile(in_file) == False:
                 self.display.repl_display_message(
                     "File: {}\ndoesn't exist!".format(in_file),
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
                 return
             # Check the file size
@@ -2574,7 +2588,7 @@ class MainWindow(data.QMainWindow):
                 warning +=  "Files larger than 300 MB can cause the system to hang!\n"
                 warning +=  "Are you sure you want to open it?"
                 reply = YesNoDialog.warning(warning)
-                if reply == data.DialogResult.No.value:
+                if reply == constants.DialogResult.No.value:
                     return
             # Check if file is already open
             check_tab_widget, check_index = self.check_open_file(in_file)
@@ -2601,7 +2615,7 @@ class MainWindow(data.QMainWindow):
                         # Display a warning that the text has NULL characters
                         message = "CAUTION: NULL ('\\0') characters in file:\n'{}'".format(in_file)
                         self.display.repl_display_message(
-                            message, message_type=data.MessageType.WARNING
+                            message, message_type=constants.MessageType.WARNING
                         )
                     else:
                         new_tab.setText(file_text)
@@ -2610,14 +2624,14 @@ class MainWindow(data.QMainWindow):
                         self.view.layout_save()
                 except MemoryError:
                     message = "Insufficient memory to open the file!"
-                    self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
+                    self.display.repl_display_message(message, message_type=constants.MessageType.ERROR)
                     self.display.write_to_statusbar(message)
                     tab_widget.widget(tab_widget.currentIndex()).setParent(None)
                     tab_widget.removeTab(tab_widget.currentIndex())
                     return None
                 except:
                     message = "Unexpected error occured while opening file!"
-                    self.display.repl_display_message(message, message_type=data.MessageType.ERROR)
+                    self.display.repl_display_message(message, message_type=constants.MessageType.ERROR)
                     self.display.write_to_statusbar(message)
                     tab_widget.widget(tab_widget.currentIndex()).setParent(None)
                     tab_widget.removeTab(tab_widget.currentIndex())
@@ -2647,7 +2661,7 @@ class MainWindow(data.QMainWindow):
             if file != "":
                 new_tab = open_file_function(file, tab_widget)
                 self.repaint()
-                data.QCoreApplication.processEvents()
+                qt.QCoreApplication.processEvents()
                 return new_tab
         elif isinstance(file, list) == True:
             tabs = []
@@ -2655,12 +2669,12 @@ class MainWindow(data.QMainWindow):
                 new_tab = open_file_function(f, tab_widget)
                 tabs.append(new_tab)
                 self.repaint()
-                data.QCoreApplication.processEvents()
+                qt.QCoreApplication.processEvents()
             return tabs
         else:
             self.display.repl_display_message(
                 "Unknown parameter type to 'open file' function!",
-                message_type=data.MessageType.ERROR
+                message_type=constants.MessageType.ERROR
             )
             return None
 
@@ -2672,7 +2686,7 @@ class MainWindow(data.QMainWindow):
         if os.path.isfile(file_path) == False:
             self.display.repl_display_message(
                 "File: {}\ndoesn't exist!".format(file_path),
-                message_type=data.MessageType.ERROR
+                message_type=constants.MessageType.ERROR
             )
             return
         # Check the file size
@@ -2684,11 +2698,11 @@ class MainWindow(data.QMainWindow):
             warning +=  "Files larger than 300 MB can cause the system to hang!\n"
             warning +=  "Are you sure you want to open it?"
             reply = YesNoDialog.warning(warning)
-            if reply == data.DialogResult.No.value:
+            if reply == constants.DialogResult.No.value:
                 return
         # Check if file is already open
         check_tab_widget, check_index = self.check_open_file(
-            file_path, _type=data.FileType.Hex
+            file_path, _type=constants.FileType.Hex
         )
         if check_index is not None and check_tab_widget is not None:
             check_tab_widget.setCurrentIndex(check_index)
@@ -2718,7 +2732,7 @@ class MainWindow(data.QMainWindow):
             self.display.repl_display_error(message)
             self.display.write_to_statusbar("File cannot be read!", 3000)
 
-    def check_open_file(self, file_with_path, _type=data.FileType.Text):
+    def check_open_file(self, file_with_path, _type=constants.FileType.Text):
         """
         Check if a file is already open in one of the windows
         """
@@ -2729,7 +2743,7 @@ class MainWindow(data.QMainWindow):
         for tab_widget in self.get_all_windows():
 
             # Loop through all of the documents in the tab widget
-            if _type == data.FileType.Text:
+            if _type == constants.FileType.Text:
                 for i in range(tab_widget.count()):
                     # Check the file name and file name with path
                     if (tab_widget.widget(i).name == os.path.basename(file_with_path) and
@@ -2738,7 +2752,7 @@ class MainWindow(data.QMainWindow):
                         found_tab_widget = tab_widget
                         found_index = i
                         break
-            elif _type == data.FileType.Hex:
+            elif _type == constants.FileType.Hex:
                 for i in range(tab_widget.count()):
                     # Check the file name and file name with path
                     tab = tab_widget.widget(i)
@@ -2756,9 +2770,9 @@ class MainWindow(data.QMainWindow):
         if self.check_document_states() == True:
             message = "You have modified documents!\nWhat do you wish to do?"
             reply = CloseEditorDialog.question(message)
-            if reply == data.DialogResult.SaveAndClose.value:
+            if reply == constants.DialogResult.SaveAndClose.value:
                 self.file_save_all()
-            elif reply == data.DialogResult.Cancel.value:
+            elif reply == constants.DialogResult.Cancel.value:
                 return
         # Close all tabs and remove all bookmarks from them
         for window in self.get_all_windows():
@@ -2778,9 +2792,9 @@ class MainWindow(data.QMainWindow):
         if self.check_document_states(tab_widget) == True:
             message = "You have modified documents!\nWhat do you wish to do?"
             reply = CloseEditorDialog.question(message)
-            if reply == data.DialogResult.SaveAndClose.value:
+            if reply == constants.DialogResult.SaveAndClose.value:
                 self.file_save_all()
-            elif reply == data.DialogResult.Cancel.value:
+            elif reply == constants.DialogResult.Cancel.value:
                 return
         #Close all tabs and remove all bookmarks from them
         clear_index = 0
@@ -2945,8 +2959,8 @@ class MainWindow(data.QMainWindow):
         def check_documents_in_window(window):
             if window.count() > 0:
                 for i in range(0, window.count()):
-                    if window.widget(i).savable == data.CanSave.YES:
-                        if window.widget(i).save_status == data.FileStatus.MODIFIED:
+                    if window.widget(i).savable == constants.CanSave.YES:
+                        if window.widget(i).save_status == constants.FileStatus.MODIFIED:
                             return True
             return False
         if tab_widget is None:
@@ -3020,7 +3034,7 @@ class MainWindow(data.QMainWindow):
                 if len(recent_file_name) > 30:
                     # Shorten the name that will appear in the menubar
                     recent_file_name = "...{}".format(os.path.splitdrive(recent_file)[1][-30:])
-                new_file_action = data.QAction(recent_file_name, recent_files_menu)
+                new_file_action = qt.QAction(recent_file_name, recent_files_menu)
                 new_file_action.setStatusTip("Open: {}".format(recent_file))
                 # Create a function reference for opening the recent file
                 temp_function = functools.partial(new_file_function, recent_file)
@@ -3053,7 +3067,7 @@ class MainWindow(data.QMainWindow):
             if result == False:
                 self._parent.display.repl_display_message(
                     "Error loading the settings file, using the default settings values!\nTHE SETTINGS FILE WILL NOT BE UPDATED!",
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
 
         def save(self):
@@ -3084,7 +3098,7 @@ class MainWindow(data.QMainWindow):
             if len(session_name) < 3:
                 self._parent.display.repl_display_message(
                     "Session name is too short!",
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
                 return
             if session_group_chain is not None:
@@ -3092,7 +3106,7 @@ class MainWindow(data.QMainWindow):
                     isinstance(session_group_chain, list) == False):
                     self._parent.display.repl_display_message(
                         "Group name must be a tuple/list of strings!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                     )
                     return
             # Create lists of files in each window
@@ -3125,7 +3139,7 @@ class MainWindow(data.QMainWindow):
                         )
                     self._parent.display.repl_display_message(
                         message,
-                        message_type=data.MessageType.SUCCESS
+                        message_type=constants.MessageType.SUCCESS
                     )
                     # Refresh the sessions menu in the menubar
                     self.update_menu()
@@ -3134,7 +3148,7 @@ class MainWindow(data.QMainWindow):
                 else:
                     self._parent.display.repl_display_message(
                         "No documents to store!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                     )
                     self._parent.display.write_to_statusbar("No documents to store!", 1500)
                     # Return error
@@ -3144,7 +3158,7 @@ class MainWindow(data.QMainWindow):
                 message = "Invalid document types in the main or upper window!"
                 self._parent.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
                 self._parent.display.write_to_statusbar(message, 1500)
                 # Return error
@@ -3162,9 +3176,9 @@ class MainWindow(data.QMainWindow):
                     "What do you wish to do?"
                 )
                 reply = RestoreSessionDialog.question(message)
-                if reply == data.DialogResult.SaveAndRestore.value:
+                if reply == constants.DialogResult.SaveAndRestore.value:
                     self.file_save_all()
-                elif reply == data.DialogResult.Cancel.value:
+                elif reply == constants.DialogResult.Cancel.value:
                     return
             # Check if session was found
             if session is not None:
@@ -3179,7 +3193,7 @@ class MainWindow(data.QMainWindow):
                 )
                 self._parent.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
                 self._parent.display.write_to_statusbar(message, 1500)
 
@@ -3195,9 +3209,9 @@ class MainWindow(data.QMainWindow):
                     "What do you wish to do?"
                 )
                 reply = RestoreSessionDialog.question(message)
-                if reply == data.DialogResult.SaveAndRestore.value:
+                if reply == constants.DialogResult.SaveAndRestore.value:
                     self.file_save_all()
-                elif reply == data.DialogResult.Cancel.value:
+                elif reply == constants.DialogResult.Cancel.value:
                     return
             # Clear all documents from the main and upper window
             self._parent.get_largest_window().clear()
@@ -3240,7 +3254,7 @@ class MainWindow(data.QMainWindow):
                 )
                 self._parent.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
                 self._parent.display.write_to_statusbar(message, 1500)
             else:
@@ -3250,7 +3264,7 @@ class MainWindow(data.QMainWindow):
                 )
                 self._parent.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.WARNING
+                    message_type=constants.MessageType.WARNING
                 )
             # Refresh the sessions menu in the menubar
             self.update_menu()
@@ -3265,7 +3279,7 @@ class MainWindow(data.QMainWindow):
             self._parent.sessions_menu.clear()
             # First add the Ex.Co. session (all Ex.Co. source files)
             session_name = "Ex.Co. source files"
-            exco_session_action = data.QAction(session_name, self._parent)
+            exco_session_action = qt.QAction(session_name, self._parent)
             exco_session_action.setStatusTip("Open all Ex.Co. source files")
             exco_session_method = self.exco_restore
             exco_session_action.setIcon(functions.create_icon('exco-icon.png'))
@@ -3289,7 +3303,7 @@ class MainWindow(data.QMainWindow):
                 # Add the sessions
                 for s,v in sorted(in_group["sessions"].items(), key=lambda x: x[0].lower()):
                     session_name = s.replace('&', "&&")
-                    new_session_action = data.QAction(session_name, new_group_menu)
+                    new_session_action = qt.QAction(session_name, new_group_menu)
                     new_session_action.setStatusTip("Restore Session: {}".format(s))
                     new_session_method = functools.partial(self.restore, v)
                     new_session_action.setIcon(functions.create_icon('tango_icons/sessions.png'))
@@ -3307,7 +3321,7 @@ class MainWindow(data.QMainWindow):
             window = self._parent.get_window_by_indication()
             documents = [window.widget(i).save_name
                             for i in range(window.count())
-                                if  window.widget(i).savable == data.CanSave.YES and
+                                if  window.widget(i).savable == constants.CanSave.YES and
                                     window.widget(i).save_name != ""]
             return documents
 
@@ -3355,7 +3369,7 @@ class MainWindow(data.QMainWindow):
             Create the basic layout
             """
             # Create QSplitters
-            main_splitter = data.QSplitter(data.Qt.Orientation.Vertical)
+            main_splitter = qt.QSplitter(qt.Qt.Orientation.Vertical)
             main_splitter.setObjectName("MainSplitter")
             # Create the boxes
             boxes_groupbox = create_groupbox_with_layout(
@@ -3365,7 +3379,7 @@ class MainWindow(data.QMainWindow):
             main_box = TheBox(
                 "",
                 "Main",
-                data.Qt.Orientation.Horizontal,
+                qt.Qt.Orientation.Horizontal,
                 self._parent,
                 self._parent
             )
@@ -3377,8 +3391,8 @@ class MainWindow(data.QMainWindow):
             # Set the sizes for the main splitter
             main_splitter.setStretchFactor(0, 1)
             #Initialize the main groupbox
-            main_groupbox = data.QGroupBox(self._parent)
-            main_groupbox_layout = data.QVBoxLayout(main_groupbox)
+            main_groupbox = qt.QGroupBox(self._parent)
+            main_groupbox_layout = qt.QVBoxLayout(main_groupbox)
             main_groupbox_layout.addWidget(main_splitter)
             main_groupbox_layout.setContentsMargins(2, 2, 2, 2)
             main_groupbox_layout.setSpacing(0)
@@ -3448,21 +3462,21 @@ class MainWindow(data.QMainWindow):
                 # Store the last focused widget
                 self._parent.last_focused_widget = window
 
-        def set_repl_type(self, type=data.ReplType.SINGLE_LINE):
+        def set_repl_type(self, _type: constants.ReplType.SINGLE_LINE):
             """
             Set REPL input as a one line ReplLineEdit or a multiline ReplHelper
             """
             # Check if the REPL type needs to be updated
-            if (type == data.ReplType.SINGLE_LINE and
-                self.repl_state == data.ReplType.SINGLE_LINE):
+            if (_type == constants.ReplType.SINGLE_LINE and
+                self.repl_state == constants.ReplType.SINGLE_LINE):
                 self._parent.main_splitter.setSizes([10, 1])
                 return
-            elif (type == data.ReplType.MULTI_LINE and
-                self.repl_state == data.ReplType.MULTI_LINE):
+            elif (_type == constants.ReplType.MULTI_LINE and
+                self.repl_state == constants.ReplType.MULTI_LINE):
                 return
-            self.repl_state = type
+            self.repl_state = _type
             # Reinitialize the groupbox that holds the REPL
-            self._parent.repl_box.set_repl(type)
+            self._parent.repl_box.set_repl(_type, self._parent.repl.get_language())
             self._parent.main_splitter.setSizes([10, 1])
 
         def toggle_window_size(self):
@@ -3793,7 +3807,7 @@ TabWidget QToolButton:hover {{
             if hasattr(self, "indication_timer"):
                 self.indication_timer.stop()
             else:
-                self.indication_timer = data.QTimer(self._parent)
+                self.indication_timer = qt.QTimer(self._parent)
                 self.indication_timer.setInterval(50)
                 self.indication_timer.setSingleShot(True)
                 self.indication_timer.timeout.connect(self.__indication_check)
@@ -3866,7 +3880,7 @@ TabWidget QToolButton:hover {{
             self._parent.repl_helper.refresh_lexer()
             self.reset_entire_style_sheet()
             self._parent.statusbar.setStyleSheet(
-                "color: {};".format(data.theme["indication"]["font"])
+                gui.stylesheets.StyleSheetStatusbar.standard()
             )
             # Update the taskbar menu
             self._parent.display.update_theme_taskbar_icon()
@@ -3893,7 +3907,7 @@ TabWidget QToolButton:hover {{
                 "the recent files list?"
             )
             reply = YesNoDialog.warning(warning)
-            if reply == data.DialogResult.No.value:
+            if reply == constants.DialogResult.No.value:
                 return
             self._parent.settings.clear_recent_list()
             self._parent.settings.update_recent_list()
@@ -3965,7 +3979,7 @@ TabWidget QToolButton:hover {{
                 for i in range(box.count()):
                     widget = box.widget(i)
                     if isinstance(widget, TheBox):
-                        if widget.orientation() == data.Qt.Orientation.Vertical:
+                        if widget.orientation() == qt.Qt.Orientation.Vertical:
                             widget.setObjectName(box.objectName() + f".V{i}")
                         else:
                             widget.setObjectName(box.objectName() + f".H{i}")
@@ -3981,7 +3995,7 @@ TabWidget QToolButton:hover {{
             self.check_all_close_buttons()
 
             # Save the layout
-            data.QTimer.singleShot(
+            qt.QTimer.singleShot(
                 10, self._parent.view.layout_save
             )
 
@@ -4024,7 +4038,7 @@ TabWidget QToolButton:hover {{
                 if w > screen_size[0] or h > screen_size[1]:
                     self._parent.showMaximized()
                 else:
-                    self._parent.resize(data.QSize(int(w), int(h)))
+                    self._parent.resize(qt.QSize(int(w), int(h)))
                     functions.center_to_current_screen(self._parent)
 
             main_box = self._parent.main_box
@@ -4034,9 +4048,9 @@ TabWidget QToolButton:hover {{
             def create_box(parent, box):
                 for k,v in sorted(box.items()):
                     if k.startswith("BOX"):
-                        orientation = data.Qt.Orientation.Horizontal
+                        orientation = qt.Qt.Orientation.Horizontal
                         if k[-1] == 'V':
-                            orientation = data.Qt.Orientation.Vertical
+                            orientation = qt.Qt.Orientation.Vertical
                         new_box = parent.add_box(orientation, add_tabs=False)
                         new_box.show()
                         for _k, _v in v.items():
@@ -4151,7 +4165,7 @@ TabWidget QToolButton:hover {{
             if _async:
                 if not hasattr(self, "layout_save_timer"):
                     # Create the layout save timer if it doesn't exist yet
-                    self.layout_save_timer = data.QTimer(self._parent)
+                    self.layout_save_timer = qt.QTimer(self._parent)
                     self.layout_save_timer.setInterval(500)
                     self.layout_save_timer.setSingleShot(True)
                     self.layout_save_timer.timeout.connect(save)
@@ -4208,7 +4222,7 @@ TabWidget QToolButton:hover {{
                 #Check if directory is valid
                 self._parent.display.repl_display_message(
                     "Invalid search directory!",
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
                 self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
                 return
@@ -4216,7 +4230,7 @@ TabWidget QToolButton:hover {{
                 #Check if any files were found
                 self._parent.display.repl_display_message(
                     "No files found!",
-                    message_type=data.MessageType.WARNING
+                    message_type=constants.MessageType.WARNING
                 )
                 self._parent.display.write_to_statusbar("No files found!", 2000)
                 return
@@ -4256,7 +4270,7 @@ TabWidget QToolButton:hover {{
             except Exception as ex:
                 self._parent.display.repl_display_message(
                     str(ex),
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
 
         def replace_in_files(self,
@@ -4277,7 +4291,7 @@ TabWidget QToolButton:hover {{
             warning += "because this action CANNOT be undone!\n"
             warning += "Do you want to continue?"
             reply = YesNoDialog.warning(warning)
-            if reply == data.DialogResult.No.value:
+            if reply == constants.DialogResult.No.value:
                 return
             #Check if the search directory is none, then use a dialog window
             #to select the real search directory
@@ -4298,14 +4312,14 @@ TabWidget QToolButton:hover {{
             if result == -1:
                 self._parent.display.repl_display_message(
                     "Invalid search&replace in files directory!",
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
                 self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
                 return
             elif result == -2:
                 self._parent.display.repl_display_message(
                     "Cannot search&replace in files over multiple lines!",
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
                 self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
                 return
@@ -4313,7 +4327,7 @@ TabWidget QToolButton:hover {{
             if len(result) == 0:
                 self._parent.display.repl_display_message(
                     "No files with '{}' in its text were found!".format(search_text),
-                    message_type=data.MessageType.WARNING
+                    message_type=constants.MessageType.WARNING
                 )
             elif isinstance(result, dict):
                 self._parent.display.show_replaced_text_in_files_in_tree(
@@ -4325,7 +4339,7 @@ TabWidget QToolButton:hover {{
             else:
                 self._parent.display.repl_display_message(
                     "Unknown error!",
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
 
         def show_explorer(self):
@@ -4336,7 +4350,7 @@ TabWidget QToolButton:hover {{
             else:
                 self._parent.display.repl_display_warning("Unimplemented yet!")
                 return
-            self._parent.repl.interpreter.run_cmd_process(command, show_console=False)
+            self._parent.repl.get_interpreter().run_cmd_process(command, show_console=False)
 
     class Editing:
         """
@@ -4372,7 +4386,7 @@ TabWidget QToolButton:hover {{
                 message += " editing window"
                 self._parent.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.WARNING
+                    message_type=constants.MessageType.WARNING
                 )
                 return
             # Save the current index to reset focus to it if no
@@ -4405,9 +4419,9 @@ TabWidget QToolButton:hover {{
                 )
                 # If a replace was done, return success
 # I can't remember why CYCLED was added here???
-#                if (result == data.SearchResult.FOUND or
-#                    result == data.SearchResult.CYCLED):
-                if result == data.SearchResult.FOUND:
+#                if (result == constants.SearchResult.FOUND or
+#                    result == constants.SearchResult.CYCLED):
+                if result == constants.SearchResult.FOUND:
                     return True
             # Nothing found
             tab_widget.setCurrentIndex(saved_index)
@@ -4415,7 +4429,7 @@ TabWidget QToolButton:hover {{
             message += tab_widget.name.lower() + " editing window"
             self._parent.display.repl_display_message(
                 message,
-                message_type=data.MessageType.WARNING
+                message_type=constants.MessageType.WARNING
             )
             return False
 
@@ -4440,7 +4454,7 @@ TabWidget QToolButton:hover {{
                 message += " editing window"
                 self._parent.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.WARNING
+                    message_type=constants.MessageType.WARNING
                 )
                 return
             #Save the current index to reset focus to it if no instances of search string are found
@@ -4471,7 +4485,7 @@ TabWidget QToolButton:hover {{
             message += tab_widget.name.lower() + " editing window"
             self._parent.display.repl_display_message(
                 message,
-                message_type=data.MessageType.WARNING
+                message_type=constants.MessageType.WARNING
             )
             return False
 
@@ -4500,7 +4514,7 @@ TabWidget QToolButton:hover {{
             message = "Replacing all in open documents completed"
             self._parent.display.repl_display_message(
                 message,
-                message_type=data.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS
             )
 
         """
@@ -4524,7 +4538,7 @@ TabWidget QToolButton:hover {{
                 message = "No document in focused window!"
                 self._parent.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.WARNING
+                    message_type=constants.MessageType.WARNING
                 )
 
         def find(self, search_text, case_sensitive=False, search_forward=True, window_name=None):
@@ -4647,9 +4661,10 @@ TabWidget QToolButton:hover {{
         # Class varibles
         _parent             = None
         # Attribute for storing which type of tab is used for dispaying node trees
-        node_view_type      = data.NodeDisplayType.TREE
+        node_view_type      = constants.NodeDisplayType.TREE
         # Theme indicator label
-        theme_indicatore    = None
+        theme_indicator    = None
+        repl_indicator    = None
         # Theme actions
         action_air          = None
         action_earth        = None
@@ -4683,25 +4698,37 @@ TabWidget QToolButton:hover {{
             """
             Initialization of the theme indicator in the statusbar
             """
-            self.theme_indicatore = ThemeIndicator(self._parent.statusbar, self._parent)
-            self.theme_indicatore.set_image(data.theme["image-file"])
-            self.theme_indicatore.setToolTip(data.theme["tooltip"])
-            self.theme_indicatore.restyle()
-            self._parent.statusbar.addPermanentWidget(self.theme_indicatore)
+            self.theme_indicator = ThemeIndicator(self._parent.statusbar, self._parent)
+            self.theme_indicator.set_image(data.theme["image-file"])
+            self.theme_indicator.setToolTip(data.theme["tooltip"])
+            self.theme_indicator.restyle()
+            self._parent.statusbar.addPermanentWidget(self.theme_indicator)
 
         def update_theme_taskbar_icon(self):
             # Check if the indicator is initialized
-            if self.theme_indicatore is None:
+            if self.theme_indicator is None:
                 return
             # Set the theme icon and tooltip
-            self.theme_indicatore.set_image(data.theme["image-file"])
-            self.theme_indicatore.setToolTip(data.theme["tooltip"])
-            self.theme_indicatore.restyle()
+            self.theme_indicator.set_image(data.theme["image-file"])
+            self.theme_indicator.setToolTip(data.theme["tooltip"])
+            self.theme_indicator.restyle()
+        
+        def init_repl_indicator(self):
+            """
+            Initialization of the REPL indicator in the statusbar
+            """
+            self.repl_indicator = ReplIndicator(
+                self._parent.statusbar,
+                self._parent,
+                self._parent.repl_box,
+            )
+            self.repl_indicator.restyle()
+            self._parent.statusbar.addPermanentWidget(self.repl_indicator)
 
         def write_to_statusbar(self, message, msec=0):
             """Write a message to the statusbar"""
             self._parent.statusbar.setStyleSheet(
-                "color: {};".format(data.theme["indication"]["font"])
+                gui.stylesheets.StyleSheetStatusbar.standard()
             )
             self._parent.statusbar.showMessage(message, msec)
 
@@ -4723,19 +4750,19 @@ TabWidget QToolButton:hover {{
         def repl_display_success(self, *message):
             self.repl_display_message(
                 *message,
-                message_type=data.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS
             )
 
         def repl_display_error(self, *message):
             self.repl_display_message(
                 *message,
-                message_type=data.MessageType.ERROR
+                message_type=constants.MessageType.ERROR
             )
 
         def repl_display_warning(self, *message):
             self.repl_display_message(
                 *message,
-                message_type=data.MessageType.WARNING
+                message_type=constants.MessageType.WARNING
             )
 
         __repl_suppressed = False
@@ -4763,7 +4790,6 @@ TabWidget QToolButton:hover {{
             Display the REPL return message in a scintilla tab
             named "REPL Messages" in one of the basic widgets
             """
-
             if self.__repl_suppressed:
                 self.__repl_cache.append(
                     (
@@ -4787,42 +4813,42 @@ TabWidget QToolButton:hover {{
                       number for custom styling
                 """
                 parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_STYLESETFONT,
+                    qt.QsciScintillaBase.SCI_STYLESETFONT,
                     lexer_number,
                     data.current_editor_font_name.encode("utf-8")
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_STYLESETSIZE,
+                    qt.QsciScintillaBase.SCI_STYLESETSIZE,
                     lexer_number,
                     data.current_editor_font_size
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_STYLESETBOLD,
+                    qt.QsciScintillaBase.SCI_STYLESETBOLD,
                     lexer_number,
                     True
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_STYLESETUNDERLINE,
+                    qt.QsciScintillaBase.SCI_STYLESETUNDERLINE,
                     lexer_number,
                     False
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_STYLESETFORE,
+                    qt.QsciScintillaBase.SCI_STYLESETFORE,
                     lexer_number,
-                    data.QColor(color)
+                    qt.QColor(color)
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_STYLESETBACK,
+                    qt.QsciScintillaBase.SCI_STYLESETBACK,
                     lexer_number,
-                    data.QColor(data.theme["fonts"]["default"]["background"])
+                    qt.QColor(data.theme["fonts"]["default"]["background"])
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_STARTSTYLING,
+                    qt.QsciScintillaBase.SCI_STARTSTYLING,
                     start,
                     lexer_number
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_SETSTYLING,
+                    qt.QsciScintillaBase.SCI_SETSTYLING,
                     end - start,
                     lexer_number
                 )
@@ -4839,7 +4865,7 @@ TabWidget QToolButton:hover {{
                 rmt.internals.set_icon(rmt, self.repl_messages_icon)
             # Parse the message arguments
             if len(message) > 1:
-                message = " ".join(message)
+                message = " ".join([str(x) for x in message])
             else:
                 message = message[0]
             #Check if message is a string class, if not then make it a string
@@ -4871,17 +4897,17 @@ TabWidget QToolButton:hover {{
                 elif end < start:
                     end = start
                 #THE MESSAGE COLORS ARE: 0xBBGGRR (BB-blue,GG-green,RR-red)
-                if message_type == data.MessageType.ERROR:
+                if message_type == constants.MessageType.ERROR:
                     style_repl_text(start, end, data.theme["fonts"]["error"]["color"], 1)
-                elif message_type == data.MessageType.WARNING:
+                elif message_type == constants.MessageType.WARNING:
                     style_repl_text(start, end, data.theme["fonts"]["warning"]["color"], 2)
-                elif message_type == data.MessageType.SUCCESS:
+                elif message_type == constants.MessageType.SUCCESS:
                     style_repl_text(start, end, data.theme["fonts"]["success"]["color"], 3)
-                elif message_type == data.MessageType.DIFF_UNIQUE_1:
+                elif message_type == constants.MessageType.DIFF_UNIQUE_1:
                     style_repl_text(start, end, data.theme["fonts"]["diff-unique-1"]["color"], 4)
-                elif message_type == data.MessageType.DIFF_UNIQUE_2:
+                elif message_type == constants.MessageType.DIFF_UNIQUE_2:
                     style_repl_text(start, end, data.theme["fonts"]["diff-unique-2"]["color"], 5)
-                elif message_type == data.MessageType.DIFF_SIMILAR:
+                elif message_type == constants.MessageType.DIFF_SIMILAR:
                     style_repl_text(start, end, data.theme["fonts"]["diff-similar"]["color"], 6)
             else:
                 #Add REPL message to the REPL message tab
@@ -4917,7 +4943,7 @@ TabWidget QToolButton:hover {{
             if self._parent.repl_messages_tab is not None:
                 self._parent.repl_messages_tab.setText("")
                 self._parent.repl_messages_tab.SendScintilla(
-                    data.QsciScintillaBase.SCI_STYLECLEARALL
+                    qt.QsciScintillaBase.SCI_STYLECLEARALL
                 )
                 self._parent.repl_messages_tab.set_theme(data.theme)
                 #Bring the REPL tab to the front
@@ -4935,9 +4961,9 @@ TabWidget QToolButton:hover {{
             """
             Function for selecting which type of node tree will be displayed
             """
-            if self.node_view_type == data.NodeDisplayType.DOCUMENT:
+            if self.node_view_type == constants.NodeDisplayType.DOCUMENT:
                 self.show_nodes_in_document(custom_editor, parser)
-            elif self.node_view_type == data.NodeDisplayType.TREE:
+            elif self.node_view_type == constants.NodeDisplayType.TREE:
                 self.show_nodes_in_tree(custom_editor, parser)
 
         def show_nodes_in_tree(self, custom_editor, parser):
@@ -4951,7 +4977,7 @@ TabWidget QToolButton:hover {{
             if custom_editor is None:
                 parent.display.repl_display_message(
                         "No document selected for node tree creation!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
                 return
@@ -4975,7 +5001,7 @@ TabWidget QToolButton:hover {{
                 message = "Document type is not in ({}),\nbut is of type '{}'!".format(parsers, parser)
                 parent.display.repl_display_message(
                         message,
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar(message, 5000)
                 return
@@ -5079,7 +5105,7 @@ TabWidget QToolButton:hover {{
             if custom_editor is None:
                 parent.display.repl_display_message(
                         "No document selected for node tree creation!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
                 return
@@ -5087,7 +5113,7 @@ TabWidget QToolButton:hover {{
             if parser != "PYTHON" and parser != "C":
                 parent.display.repl_display_message(
                         "Document is not Python or C!",
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar("Document is not Python or C", 5000)
                 return
@@ -5134,14 +5160,14 @@ TabWidget QToolButton:hover {{
             #Set the NODE document to be ReadOnly
             parent.node_tree_tab.setReadOnly(True)
             parent.node_tree_tab.setText("")
-            parent.node_tree_tab.SendScintilla(data.QsciScintillaBase.SCI_STYLECLEARALL)
+            parent.node_tree_tab.SendScintilla(qt.QsciScintillaBase.SCI_STYLECLEARALL)
             parent.node_tree_tab.parentWidget().setCurrentWidget(parent.node_tree_tab)
             #Check if the custom editor is valid
             if isinstance(custom_editor, CustomEditor) == False:
                 message = "The editor is not valid!"
                 parent.display.repl_display_message(
                         message,
-                        message_type=data.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar(message,  2000)
                 return
@@ -5213,9 +5239,9 @@ TabWidget QToolButton:hover {{
             """
             Function for selecting which type of node tree will be displayed
             """
-            if self.node_view_type == data.NodeDisplayType.DOCUMENT:
+            if self.node_view_type == constants.NodeDisplayType.DOCUMENT:
                 self.show_found_files_in_document(file_list, directory)
-            elif self.node_view_type == data.NodeDisplayType.TREE:
+            elif self.node_view_type == constants.NodeDisplayType.TREE:
                 self.show_found_files_in_tree(search_text, file_list, directory)
 
         def show_found_files_in_document(self, file_list, directory):
@@ -5464,7 +5490,7 @@ TabWidget QToolButton:hover {{
                               icon,
                               function,
                               menu_parent):
-                action = data.QAction(name, menu_parent)
+                action = qt.QAction(name, menu_parent)
                 # Key combination
                 if key_combo is not None and key_combo != "" and key_combo != []:
                     if isinstance(key_combo, list):
@@ -5689,7 +5715,7 @@ TabWidget QToolButton:hover {{
                 create_lexer(lexers.SQL, 'SQL'),
                 lexers_menu
             )
-            TCL_action = data.QAction('TCL', lexers_menu)
+            TCL_action = qt.QAction('TCL', lexers_menu)
             TCL_action.setIcon(functions.create_icon('language_icons/logo_tcl.png'))
             TCL_action.triggered.connect(
                 functools.partial(set_lexer, lexers.TCL, 'TCL')

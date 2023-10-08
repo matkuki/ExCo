@@ -9,22 +9,23 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
+import qt
 import data
-import data as mydata
+import constants
 import functions
 import components.internals
 
 from .templates import *
 from .stylesheets import *
 
-class HexView(data.QFrame):
+class HexView(qt.QFrame):
     # Class variables
     name             = None
     _parent          = None
     main_form        = None
     current_icon     = None
     internals = None
-    savable          = data.CanSave.NO
+    savable          = constants.CanSave.NO
     save_name        = None
     # Reference to the custom context menu
     context_menu     = None
@@ -60,7 +61,7 @@ class HexView(data.QFrame):
 
         # Layout
         layout = create_layout(layout=LayoutType.Vertical)
-        layout.setSizeConstraint(data.QLayout.SizeConstraint.SetNoConstraint)
+        layout.setSizeConstraint(qt.QLayout.SizeConstraint.SetNoConstraint)
         self.setLayout(layout)
 
         # Scroll area
@@ -88,8 +89,8 @@ class HexView(data.QFrame):
 #                    vertical=False,
 #                    margins=(2,2,2,2),
 #                    spacing=2,
-#                    h_size_policy=data.QSizePolicy.Policy.Fixed,
-#                    v_size_policy=data.QSizePolicy.Policy.Fixed,
+#                    h_size_policy=qt.QSizePolicy.Policy.Fixed,
+#                    v_size_policy=qt.QSizePolicy.Policy.Fixed,
 #                )
 #                in_layout.addWidget(new_group)
 #                self.__cache_views[g] = new_group
@@ -112,7 +113,7 @@ class HexView(data.QFrame):
 #                        new_group.layout().addWidget(new_combobox)
 #                        new_group.layout().setAlignment(
 #                            new_combobox,
-#                            data.Qt.AlignmentFlag.AlignLeft | data.Qt.AlignmentFlag.AlignVCenter
+#                            qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter
 #                        )
 #
 #                # Add buttons to group
@@ -143,7 +144,7 @@ class HexView(data.QFrame):
 #                    new_group.layout().addWidget(new_button)
 #                    new_group.layout().setAlignment(
 #                        new_button,
-#                        data.Qt.AlignmentFlag.AlignLeft | data.Qt.AlignmentFlag.AlignVCenter
+#                        qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter
 #                    )
 
         # Table cache
@@ -189,9 +190,9 @@ class HexView(data.QFrame):
 
         # Table Settings
         table.verticalHeader().hide()
-        table.setSelectionBehavior(data.QAbstractItemView.SelectionBehavior.SelectRows)
-        table.setEditTriggers(data.QAbstractItemView.EditTrigger.NoEditTriggers)
-        table.setSelectionMode(data.QAbstractItemView.SelectionMode.SingleSelection)
+        table.setSelectionBehavior(qt.QAbstractItemView.SelectionBehavior.SelectRows)
+        table.setEditTriggers(qt.QAbstractItemView.EditTrigger.NoEditTriggers)
+        table.setSelectionMode(qt.QAbstractItemView.SelectionMode.SingleSelection)
 #        table.itemSelectionChanged.connect(self._table_selection_changed)
 #        table.itemClicked.connect(self._table_item_clicked)
 
@@ -199,9 +200,9 @@ class HexView(data.QFrame):
         table.setUpdatesEnabled(False)
 
         verticalHeader = table.verticalHeader()
-        verticalHeader.setSectionResizeMode(mydata.QHeaderView.ResizeMode.Fixed)
+        verticalHeader.setSectionResizeMode(qt.QHeaderView.ResizeMode.Fixed)
         horizontalHeader = table.horizontalHeader()
-        horizontalHeader.setSectionResizeMode(mydata.QHeaderView.ResizeMode.Fixed)
+        horizontalHeader.setSectionResizeMode(qt.QHeaderView.ResizeMode.Fixed)
 
         # Size of a row (usually 16)
         size = 16
@@ -261,9 +262,9 @@ class HexView(data.QFrame):
 
         # Table style
         for k, v in self.cache_table.items():
-            v.horizontalHeader().setSectionResizeMode(data.QHeaderView.ResizeMode.ResizeToContents)
-            v.verticalScrollBar().setContextMenuPolicy(data.Qt.ContextMenuPolicy.NoContextMenu)
-            v.horizontalScrollBar().setContextMenuPolicy(data.Qt.ContextMenuPolicy.NoContextMenu)
+            v.horizontalHeader().setSectionResizeMode(qt.QHeaderView.ResizeMode.ResizeToContents)
+            v.verticalScrollBar().setContextMenuPolicy(qt.Qt.ContextMenuPolicy.NoContextMenu)
+            v.horizontalScrollBar().setContextMenuPolicy(qt.Qt.ContextMenuPolicy.NoContextMenu)
 
         # Rest
         for k,v in self.__cache_buttons.items():
@@ -274,7 +275,7 @@ class HexView(data.QFrame):
             v.update_style()
 
 
-class HexTable(data.QTableView):
+class HexTable(qt.QTableView):
     def __init__(self, parent, main_form):
         super().__init__(parent)
         self.main_form = main_form
@@ -292,7 +293,7 @@ class HexTable(data.QTableView):
         self.main_form.last_focused_widget = parent._parent
 
 
-class HexTableModel(data.QAbstractTableModel):
+class HexTableModel(qt.QAbstractTableModel):
     def __init__(self, row_data, parent=None):
         super().__init__(parent)
         self.__row_data = row_data
@@ -310,18 +311,18 @@ class HexTableModel(data.QAbstractTableModel):
     def columnCount(self, parent=None):
         return len(self.__row_data[0]) if self.rowCount() else 0
 
-    def data(self, index, role=mydata.Qt.ItemDataRole.DisplayRole):
-        if role == mydata.Qt.ItemDataRole.DisplayRole:
+    def data(self, index, role=qt.Qt.ItemDataRole.DisplayRole):
+        if role == qt.Qt.ItemDataRole.DisplayRole:
             return self.__row_data[index.row()][index.column()]
 
-        elif role == mydata.Qt.ItemDataRole.TextAlignmentRole:
+        elif role == qt.Qt.ItemDataRole.TextAlignmentRole:
             column = index.column()
             if column == self.__last_index:
-                return mydata.Qt.AlignmentFlag.AlignLeft | mydata.Qt.AlignmentFlag.AlignVCenter
+                return qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter
             else:
-                return mydata.Qt.AlignmentFlag.AlignHCenter | mydata.Qt.AlignmentFlag.AlignVCenter
+                return qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
 
-    def headerData(self, section, orientation, role=mydata.Qt.ItemDataRole.DisplayRole):
-        if orientation == mydata.Qt.Orientation.Horizontal and role == mydata.Qt.ItemDataRole.DisplayRole:
+    def headerData(self, section, orientation, role=qt.Qt.ItemDataRole.DisplayRole):
+        if orientation == qt.Qt.Orientation.Horizontal and role == qt.Qt.ItemDataRole.DisplayRole:
             return self.__headers[section]
         return super().headerData(section, orientation, role)

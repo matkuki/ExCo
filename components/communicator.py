@@ -19,6 +19,7 @@ import multiprocessing
 import multiprocessing.connection
 from typing import *
 
+import qt
 import data
 import functions
 
@@ -178,12 +179,12 @@ class CommListener:
             co.close()
 
 
-class IpcCommunicator(data.QObject):
+class IpcCommunicator(qt.QObject):
     """
     Object for passing messages between processes/applications
     """
     # Signals
-    received: data.pyqtSignal = data.pyqtSignal(object)
+    received: qt.pyqtSignal = qt.pyqtSignal(object)
     
     # Attributes
     name = None
@@ -194,7 +195,7 @@ class IpcCommunicator(data.QObject):
     def __init__(self, name):
         super().__init__()
 
-        self.comm_thread = data.QThread()
+        self.comm_thread = qt.QThread()
         self.moveToThread(self.comm_thread)
         # Connect the startup function of communicator
         self.comm_thread.started.connect(
@@ -225,7 +226,7 @@ class IpcCommunicator(data.QObject):
     def multisend(self, message):
         self.listener.send((self.name, message))
 
-    @data.pyqtSlot(object)
+    @qt.pyqtSlot(object)
     def send(self, message):
         if self.listener.running == True:
             self.multisend(message)
@@ -236,7 +237,7 @@ class IpcCommunicator(data.QObject):
 """
 File-based communicator
 """
-class FileCommunicator(data.QObject):
+class FileCommunicator(qt.QObject):
     """
     Object for communicating between processes using files
     """
@@ -244,8 +245,8 @@ class FileCommunicator(data.QObject):
     COMM_FILE = "exco_comm.json"
     
     # Signals
-    received: data.pyqtSignal = data.pyqtSignal(object)
-    __process_directory_queue: data.pyqtSignal = data.pyqtSignal()
+    received: qt.pyqtSignal = qt.pyqtSignal(object)
+    __process_directory_queue: qt.pyqtSignal = qt.pyqtSignal()
     
     # Attributes
     __name = ""
@@ -263,7 +264,7 @@ class FileCommunicator(data.QObject):
             self.COMM_FILE
         )
         
-        self.__file_watcher = data.QFileSystemWatcher(self)
+        self.__file_watcher = qt.QFileSystemWatcher(self)
         self.__file_watcher.directoryChanged.connect(self.__directory_changed)
         self.__file_watcher.fileChanged.connect(self.__file_changed)
         self.__file_watcher.addPath(data.settings_directory)

@@ -8,48 +8,72 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import qt
 import data
+import constants
 
 from .repllineedit import *
 from .replhelper import *
 
 
-class ReplBox(data.QGroupBox):
-    _parent = None
+class ReplBox(qt.QGroupBox):
+    main_form = None
     repl = None
     repl_helper = None
 
     def __init__(self, parent, interpreter_references, *args, **kwargs):
-        super().__init__("Python Interactive Interpreter (REPL)")
+        super().__init__(parent)
         self.setObjectName("REPL_Box")
-        self._parent = parent
+        self.main_form = parent
         self.repl = ReplLineEdit(self, parent, interpreter_references=interpreter_references)
         self.repl.setObjectName("REPL_line")
         self.repl_helper = ReplHelper(self, parent, self.repl)
         self.repl_helper.setObjectName("REPL_multiline")
         # Create layout and children
-        repl_layout = data.QVBoxLayout()
+        repl_layout = qt.QVBoxLayout()
         repl_layout.setContentsMargins(4,4,4,4)
         repl_layout.setSpacing(0)
         repl_layout.addWidget(self.repl)
         repl_layout.addWidget(self.repl_helper)
         self.setLayout(repl_layout)
         # Set the defaults
-        self.set_repl(data.ReplType.SINGLE_LINE)
+        self.set_repl(constants.ReplType.SINGLE_LINE, constants.ReplLanguage.Python)
         self.indication_reset()
         # Set default font
         self.setFont(data.get_current_font())
 
-    def set_repl(self, type):
-        #Set which REPL widget will be displayed
-        if type == data.ReplType.SINGLE_LINE:
+    def set_repl(self,
+                 _type: constants.ReplType,
+                 language: constants.ReplLanguage) -> None:
+        if language == constants.ReplLanguage.Python:
+            self.setTitle("Python Interactive Interpreter (REPL)")
+        elif language == constants.ReplLanguage.Hy:
+            self.setTitle("Hy Interactive Interpreter (REPL)")
+        else:
+            raise Exception("Unsupported REPL language: {}".format(language))
+        # Set the interpreter language
+        self.repl.set_language(language)
+        # Set which REPL widget will be displayed
+        if _type == constants.ReplType.SINGLE_LINE:
             self.repl.setVisible(True)
             self.repl_helper.setVisible(False)
-            self.repl_state = data.ReplType.SINGLE_LINE
+            self.repl_state = constants.ReplType.SINGLE_LINE
         else:
             self.repl.setVisible(False)
             self.repl_helper.setVisible(True)
-            self.repl_state = data.ReplType.MULTI_LINE
+            self.repl_state = constants.ReplType.MULTI_LINE
+    
+    def cycle_language(self) -> constants.ReplLanguage:
+        for i,lang in enumerate(constants.ReplLanguage):
+            print(lang, self.repl.get_language())
+            if lang == self.repl.get_language():
+                if i == (len(constants.ReplLanguage) - 1):
+                    new_lang = constants.ReplLanguage(0)
+                else:
+                    new_lang = constants.ReplLanguage(i + 1)
+                self.set_repl(self.repl_state, new_lang)
+                self.main_form.display.repl_indicator.set_language(new_lang)
+                return
 
     def indication_set(self):
         self.set_style(True)

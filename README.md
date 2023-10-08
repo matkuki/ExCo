@@ -43,6 +43,7 @@ All additional licenses are specified at the beginning of every source code file
 ### Requirements: ###
 - __Python__ 3.6 or higher
 - __Packages__ ( install them with: `pip install -r requirements.txt` ):
+  - hy
   - psutil
   - pyte
   - tree_sitter

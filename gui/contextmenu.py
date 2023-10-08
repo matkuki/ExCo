@@ -10,7 +10,10 @@ For complete license information of the dependencies, check the 'additional_lice
 
 
 import traceback
+
+import qt
 import data
+import constants
 import functions
 import components.actionfilter
 import gui.custombuttons
@@ -109,7 +112,7 @@ class ContextMenu(gui.menu.Menu):
     def __create_actions(self, action_names):
         for an in action_names:
             name, function, icon, keys, status_tip = data.global_function_information[an]
-            action = data.QAction(name, self)
+            action = qt.QAction(name, self)
             action.setToolTip(status_tip)
             action.setStatusTip(status_tip)
             action.setIcon(functions.create_icon(icon))
@@ -124,7 +127,7 @@ class ContextMenu(gui.menu.Menu):
             a.setParent(None)
     
     def popup_at_cursor(self):
-        click_global_position = data.QCursor.pos()
+        click_global_position = qt.QCursor.pos()
         self.popup(click_global_position)
 
 
@@ -133,7 +136,7 @@ class ContextMenu(gui.menu.Menu):
 Custom context menu for the editors and REPL with HEX buttons
 --------------------------------------------------------------
 """
-class ContextMenuHex(data.QGroupBox):
+class ContextMenuHex(qt.QGroupBox):
     # Various references
     main_form = None
     # Painting offset
@@ -347,7 +350,7 @@ class ContextMenuHex(data.QGroupBox):
                 input_function=function_info[1],
                 input_function_text=function_info[2],
                 input_tool_tip=function_info[2],
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_scale=(self.x_scale, self.y_scale),
             )
             button.number = button_number
@@ -432,7 +435,7 @@ class ContextMenuHex(data.QGroupBox):
             if (button in function_list) == False:
                 self.main_form.display.repl_display_message(
                     "'{}' context menu function does not exist!".format(button),
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
             else:
                 buttons.append(
@@ -480,7 +483,7 @@ class ContextButton(gui.custombuttons.CustomButton):
         p = self.palette()
         p.setColor(
             self.backgroundRole(),
-            data.QColor(data.theme["context-menu-background"])
+            qt.QColor(data.theme["context-menu-background"])
         )
         self.setPalette(p)
 
@@ -497,7 +500,7 @@ class ContextButton(gui.custombuttons.CustomButton):
         Overloaded widget click event
         """
         button = event.button()
-        if button == data.Qt.MouseButton.LeftButton:
+        if button == qt.Qt.MouseButton.LeftButton:
             # Execute the function if it was initialized
             if self.function is not None:
                 if components.actionfilter.ActionFilter.click_drag_action is not None:
@@ -518,7 +521,7 @@ class ContextButton(gui.custombuttons.CustomButton):
                     )
                     self.main_form.display.repl_display_message(
                         message,
-                        message_type=data.MessageType.SUCCESS
+                        message_type=constants.MessageType.SUCCESS
                     )
                     # Reset cursor and stored action
                     data.application.restoreOverrideCursor()
@@ -532,14 +535,14 @@ class ContextButton(gui.custombuttons.CustomButton):
                         message = "You need to focus one of the editor windows first!"
                         self.main_form.display.repl_display_message(
                             message,
-                            message_type=data.MessageType.ERROR
+                            message_type=constants.MessageType.ERROR
                         )
                 # Close the function wheel
                 self._parent.hide()
                 event.accept()
             else:
                 event.ignore()
-        elif button == data.Qt.MouseButton.RightButton:
+        elif button == qt.Qt.MouseButton.RightButton:
             # Close the function wheel
             self._parent.hide()
             event.accept()

@@ -10,7 +10,9 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import functools
 import keyword
+import qt
 import data
+import constants
 import components.actionfilter
 import components.linelist
 import settings
@@ -26,24 +28,24 @@ from .tabwidget import *
 Scintilla class for inputting more than one line into the REPL
 -----------------------------------------------------
 """
-class ReplHelper(data.QsciScintilla):
+class ReplHelper(qt.QsciScintilla):
     """
     REPL scintilla box for inputting multiple lines into the REPL.
     MUST BE PAIRED WITH A ReplLineEdit OBJECT!
     """
-    #Class variables
-    _parent         = None
-    main_form         = None
+    # Class variables
+    main_form       = None
     repl_master     = None
-    #The scintilla api object(data.QsciAPIs) must be an instace variable, or the underlying c++
-    #mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
+    # The scintilla api object(qt.QsciAPIs) must be an instace variable, or the underlying c++
+    # mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
     api             = None
-    #Attribute for indicating if the REPL helper is indicated
+    # Attribute for indicating if the REPL helper is indicated
     indicated       = False
     # Reference to the custom context menu
     context_menu    = None
-    #LineList object copied from the CustomEditor object
+    # LineList object copied from the CustomEditor object
     line_list       = None
+    # Interpreter language
 
     """
     Built-in and private functions
@@ -53,36 +55,34 @@ class ReplHelper(data.QsciScintilla):
         super().__init__(parent)
         # Set default font
         self.setFont(data.get_editor_font())
-        #Save the reference to the parent(main window)
-        self._parent = parent
         self.main_form = main_form
-        #Save the reference to the REPL object
+        # Save the reference to the REPL object
         self.repl_master = repl_master
-        #Hide the horizontal and show the vertical scrollbar
-        self.SendScintilla(data.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
-        self.SendScintilla(data.QsciScintillaBase.SCI_SETHSCROLLBAR, False)
-        #Hide the margin
+        # Hide the horizontal and show the vertical scrollbar
+        self.SendScintilla(qt.QsciScintillaBase.SCI_SETVSCROLLBAR, True)
+        self.SendScintilla(qt.QsciScintillaBase.SCI_SETHSCROLLBAR, False)
+        #H ide the margin
         self.setMarginWidth(1, 0)
-        #Autoindentation enabled when using "Enter" to indent to the same level as the previous line
+        # Autoindentation enabled when using "Enter" to indent to the same level as the previous line
         self.setAutoIndent(True)
-        #Tabs are spaces by default
+        # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
-        #Set tab space indentation width
+        # Set tab space indentation width
         self.setTabWidth(settings.editor['tab_width'])
-        #Set encoding format to UTF-8 (Unicode)
+        # Set encoding format to UTF-8 (Unicode)
         self.setUtf8(True)
-        #Set brace matching
-        self.setBraceMatching(data.QsciScintilla.BraceMatch.SloppyBraceMatch)
-        self.setMatchedBraceBackgroundColor(data.QColor(255, 153, 0))
-        #Tabs are spaces by default
+        # Set brace matching
+        self.setBraceMatching(qt.QsciScintilla.BraceMatch.SloppyBraceMatch)
+        self.setMatchedBraceBackgroundColor(qt.QColor(255, 153, 0))
+        # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
-        #Set backspace to delete by tab widths
+        # Set backspace to delete by tab widths
         self.setBackspaceUnindents(True)
-        #Disable drops
+        # Disable drops
         self.setAcceptDrops(False)
-        #Set line endings to be Unix style ("\n")
-        self.setEolMode(data.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
-        #Set the initial zoom factor
+        # Set line endings to be Unix style ("\n")
+        self.setEolMode(qt.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
+        # Set the initial zoom factor
         self.zoomTo(settings.editor['zoom_factor'])
         """
         Functionality copied from the CustomEditor to copy some of
@@ -108,11 +108,11 @@ class ReplHelper(data.QsciScintilla):
         self.list_to_text = functools.partial(CustomEditor.list_to_text, self)
         # Add the function and connect the signal to update the line/column positions
         self.cursorPositionChanged.connect(self._signal_editor_cursor_change)
-        #Set the lexer to python
+        # Set the lexer to python
         self.set_lexer()
-        #Set the initial autocompletions
+        # Set the initial autocompletions
         self.update_autocompletions()
-        #Setup the LineList object that will hold the custom editor text as a list of lines
+        # Setup the LineList object that will hold the custom editor text as a list of lines
         self.line_list = components.linelist.LineList(self, self.text())
         self.textChanged.connect(self.text_changed)
 
@@ -125,11 +125,11 @@ class ReplHelper(data.QsciScintilla):
         pressed_key = key_event.key()
         accept_keypress = False
         #Get key modifiers and check if the Ctrl+Enter was pressed
-        key_modifiers = data.QApplication.keyboardModifiers()
-        if ((key_modifiers == data.Qt.KeyboardModifier.ControlModifier and pressed_key == data.Qt.Key.Key_Return) or
-            pressed_key == data.Qt.Key.Key_Enter):
-                #ON MY KEYBOARD Ctrl+Enter CANNOT BE DETECTED!
-                #Qt.ControlModifier  MODIFIER SHOWS FALSE WHEN USING data.QApplication.keyboardModifiers() + Enter
+        key_modifiers = qt.QApplication.keyboardModifiers()
+        if ((key_modifiers == qt.Qt.KeyboardModifier.ControlModifier and pressed_key == qt.Qt.Key.Key_Return) or
+            pressed_key == qt.Qt.Key.Key_Enter):
+                # ON MY KEYBOARD Ctrl+Enter CANNOT BE DETECTED!
+                # Qt.ControlModifier MODIFIER SHOWS FALSE WHEN USING qt.QApplication.keyboardModifiers() + Enter
                 self.repl_master.external_eval_request(self.text(), self)
                 accept_keypress = True
         return accept_keypress
@@ -183,21 +183,21 @@ class ReplHelper(data.QsciScintilla):
 
     def wheelEvent(self, wheel_event):
         """Overridden mouse wheel rotate event"""
-        key_modifiers = data.QApplication.keyboardModifiers()
-        if data.PYQT_MODE == 4:
+        key_modifiers = qt.QApplication.keyboardModifiers()
+        if qt.PYQT_MODE == 4:
             delta = wheel_event.delta()
         else:
             delta = wheel_event.angleDelta().y()
         if delta < 0:
-            if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
+            if key_modifiers == qt.Qt.KeyboardModifier.ControlModifier:
                 #Zoom out the scintilla tab view
                 self.zoomOut()
         else:
-            if key_modifiers == data.Qt.KeyboardModifier.ControlModifier:
+            if key_modifiers == qt.Qt.KeyboardModifier.ControlModifier:
                 #Zoom in the scintilla tab view
                 self.zoomIn()
         #Handle the event
-        if key_modifiers != data.Qt.KeyboardModifier.ControlModifier:
+        if key_modifiers != qt.Qt.KeyboardModifier.ControlModifier:
             #Execute the superclass method
             super().wheelEvent(wheel_event)
         else:
@@ -267,7 +267,7 @@ class ReplHelper(data.QsciScintilla):
         #Set the lexer
         self.refresh_lexer()
         #Set the scintilla api for the autocompletions (MUST BE AN INSTANCE VARIABLE)
-        self.api = data.QsciAPIs(self.lexer())
+        self.api = qt.QsciAPIs(self.lexer())
         #Populate the api with all of the python keywords
         for kw in keyword.kwlist:
             self.api.add(kw)
@@ -277,6 +277,6 @@ class ReplHelper(data.QsciScintilla):
         #Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
         #Set the source from where the autocompletions will be fetched
-        self.setAutoCompletionSource(data.QsciScintilla.AutoCompletionSource.AcsAll)
+        self.setAutoCompletionSource(qt.QsciScintilla.AutoCompletionSource.AcsAll)
         #Set autocompletion case sensitivity
         self.setAutoCompletionCaseSensitivity(False)

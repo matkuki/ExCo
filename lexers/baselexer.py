@@ -4,12 +4,13 @@
 Copyright (c) 2022 Matic Kukovec. 
 """
 
+import qt
 import data
 import functions
 import lexers
 
 
-class BaseLexer(data.QsciLexerCustom):
+class BaseLexer(qt.QsciLexerCustom):
     """
     Lexer for styling normal text documents
     """
@@ -28,8 +29,8 @@ class BaseLexer(data.QsciLexerCustom):
         # Initialize superclass
         super().__init__(parent)
         # Set the default style values
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         # Set the font colors
         self.setFont(data.get_current_font(), 0)
@@ -41,14 +42,14 @@ class BaseLexer(data.QsciLexerCustom):
     def set_font(self, style_name, style_options):
         style_index = self.styles[style_name]
         self.setColor(
-            data.QColor(style_options["color"]),
+            qt.QColor(style_options["color"]),
             style_index
         )
-        weight = data.QFont.Weight.Normal
+        weight = qt.QFont.Weight.Normal
         if style_options["bold"]:
-            weight = data.QFont.Weight.Bold
+            weight = qt.QFont.Weight.Bold
         self.setFont(
-            data.QFont(
+            qt.QFont(
                 data.current_editor_font_name,
                 data.current_editor_font_size,
                 weight=weight
@@ -60,7 +61,7 @@ class BaseLexer(data.QsciLexerCustom):
         for style in self.styles:
             # Papers
             self.setPaper(
-                data.QColor(data.theme["fonts"][style]["background"]), 
+                qt.QColor(data.theme["fonts"][style]["background"]), 
                 self.styles[style]
             )
             # Fonts
@@ -83,7 +84,7 @@ class BaseLexer(data.QsciLexerCustom):
         return self.styles["default"]
     
     def defaultFont(self, style):
-        return data.QFont(data.current_font_name, data.current_font_size)
+        return qt.QFont(data.current_font_name, data.current_font_size)
     
     def styleText(self, start, end):
         raise Exception("[BaseLexer] Styling function needs to be overriden!")

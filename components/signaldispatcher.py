@@ -8,14 +8,15 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import qt
 import data
 
 
-class GlobalSignalDispatcher(data.QObject):
+class GlobalSignalDispatcher(qt.QObject):
     '''
     Global signal dispatcher
     '''
-    update_title = data.pyqtSignal()
+    update_title = qt.pyqtSignal()
 
     
     def __init__(self, *args, **kwargs) -> None:

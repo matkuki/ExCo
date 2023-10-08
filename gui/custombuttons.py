@@ -11,7 +11,9 @@ For complete license information of the dependencies, check the 'additional_lice
 import math
 import traceback
 
+import qt
 import data
+import constants
 import functions
 import components.hexbuilder
 
@@ -21,7 +23,7 @@ import components.hexbuilder
 Custom buttons used by the FunctionWheel and ContextMenuHex in the forms module
 -----------------------------------------------------------------------------------
 """
-class CustomButton(data.QLabel):
+class CustomButton(qt.QLabel):
     """
     Custom button used for displaying and executing Ex.Co. functions
     """
@@ -60,10 +62,10 @@ class CustomButton(data.QLabel):
                  input_pixmap,
                  input_function=None,
                  input_function_text="",
-                 input_font=data.QFont(
-                 'Courier', 14, weight=data.QFont.Weight.Bold
+                 input_font=qt.QFont(
+                 'Courier', 14, weight=qt.QFont.Weight.Bold
                  ),
-                 input_focus_last_widget=data.HexButtonFocus.NONE,
+                 input_focus_last_widget=constants.HexButtonFocus.NONE,
                  input_no_tab_focus_disable=False,
                  input_no_document_focus_disable=True,
                  input_check_last_tab_type=False,
@@ -119,12 +121,12 @@ class CustomButton(data.QLabel):
             hex_image_size = CustomButton.HEX_IMAGE_SIZE
             hex_edge_length = 29
             hex_edge_width = 4
-            image = data.QImage(
+            image = qt.QImage(
                 *hex_image_size,
-                data.QImage.Format.Format_ARGB32_Premultiplied
+                qt.QImage.Format.Format_ARGB32_Premultiplied
             )
-            image.fill(data.Qt.GlobalColor.transparent)
-            painter = data.QPainter()
+            image.fill(qt.Qt.GlobalColor.transparent)
+            painter = qt.QPainter()
             painter.begin(image)
 
             hex_builder = components.hexbuilder.HexBuilder(
@@ -134,12 +136,12 @@ class CustomButton(data.QLabel):
             )
             hex_builder.draw_full_hexagon(
                 (int(hex_image_size[0]/2)+1, int(hex_image_size[1]/2)),
-                data.QColor(data.theme["indication"]["passivebackground"]),
+                qt.QColor(data.theme["indication"]["passivebackground"]),
                 hex_edge_width,
-                data.QColor(data.theme["context-menu-hex-edge"]),
+                qt.QColor(data.theme["context-menu-hex-edge"]),
             )
             painter.end()
-            CustomButton.stored_hex = data.QPixmap.fromImage(image)
+            CustomButton.stored_hex = qt.QPixmap.fromImage(image)
 
     def _set_opacity(self, input_opacity):
         """Set the opacity of the stored QPixmap image and display it"""
@@ -153,7 +155,7 @@ class CustomButton(data.QLabel):
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.Qt.TransformationMode.SmoothTransformation
+            transformMode=qt.Qt.TransformationMode.SmoothTransformation
         )
         # Scale the hex image
         hex_image = self.stored_hex
@@ -161,13 +163,13 @@ class CustomButton(data.QLabel):
             math.ceil(hex_image.size().width() * self.scale[0]),
             math.ceil(hex_image.size().height() * self.scale[1]),
         )
-        image = data.QImage(
+        image = qt.QImage(
             scaled_size, #hex_image.size(),
-            data.QImage.Format.Format_ARGB32_Premultiplied
+            qt.QImage.Format.Format_ARGB32_Premultiplied
         )
-        image.fill(data.Qt.GlobalColor.transparent)
+        image.fill(qt.Qt.GlobalColor.transparent)
         # Create and initialize the QPainter that will manipulate the QImage
-        button_painter = data.QPainter(image)
+        button_painter = qt.QPainter(image)
         button_painter.setOpacity(input_opacity)
         # Adjust inner button positioning according to the scale
         x_scaled = math.ceil(self.scale[0] * self.INNER_IMAGE_OFFSET[0])
@@ -175,7 +177,7 @@ class CustomButton(data.QLabel):
         button_painter.drawPixmap(x_scaled, y_scaled, button_image)
         button_painter.end()
         # Display the manipulated image
-        self.setPixmap(data.QPixmap.fromImage(image))
+        self.setPixmap(qt.QPixmap.fromImage(image))
         # Set the button mask, which sets the button area to the shape of
         # the button image instead of a rectangle
         self.setMask(hex_image.mask())
@@ -194,7 +196,7 @@ class CustomButton(data.QLabel):
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.Qt.TransformationMode.SmoothTransformation
+            transformMode=qt.Qt.TransformationMode.SmoothTransformation
         )
         # Scale the hex image
         hex_image = self.stored_hex
@@ -202,16 +204,16 @@ class CustomButton(data.QLabel):
             math.ceil(hex_image.size().width() * self.scale[0]),
             math.ceil(hex_image.size().height() * self.scale[1]),
         )
-        image = data.QImage(
+        image = qt.QImage(
             scaled_size,
-            data.QImage.Format.Format_ARGB32_Premultiplied,
+            qt.QImage.Format.Format_ARGB32_Premultiplied,
         )
-        image.fill(data.Qt.GlobalColor.transparent)
+        image.fill(qt.Qt.GlobalColor.transparent)
 #        image.fill(data.theme["context-menu-background"])
         # Create and initialize the QPainter that will manipulate the QImage
-        button_painter = data.QPainter(image)
+        button_painter = qt.QPainter(image)
         button_painter.setCompositionMode(
-            data.QPainter.CompositionMode.CompositionMode_SourceOver
+            qt.QPainter.CompositionMode.CompositionMode_SourceOver
         )
         button_painter.setOpacity(input_opacity)
         # Resize the hex image to scale
@@ -220,7 +222,7 @@ class CustomButton(data.QLabel):
                 math.ceil(hex_image.size().width() * self.scale[0]),
                 math.ceil(hex_image.size().height() * self.scale[1]),
             ),
-            transformMode=data.Qt.TransformationMode.SmoothTransformation
+            transformMode=qt.Qt.TransformationMode.SmoothTransformation
         )
         # Adjust inner button positioning according to the scale
         button_painter.drawPixmap(0, 0, hex_image)
@@ -229,7 +231,7 @@ class CustomButton(data.QLabel):
         button_painter.drawPixmap(x_scaled, y_scaled, button_image)
         button_painter.end()
         # Display the manipulated image
-        self.setPixmap(data.QPixmap.fromImage(image))
+        self.setPixmap(qt.QPixmap.fromImage(image))
         # Set the button mask, which sets the button area to the shape of
         # the button image instead of a rectangle
         self.setMask(hex_image.mask())
@@ -250,9 +252,9 @@ class CustomButton(data.QLabel):
         if self.function != None:
             try:
                 #Set focus to the last focused widget stored on the main form
-                if self.focus_last_widget == data.HexButtonFocus.TAB:
+                if self.focus_last_widget == constants.HexButtonFocus.TAB:
                     self.main_form.last_focused_widget.currentWidget().setFocus()
-                elif self.focus_last_widget == data.HexButtonFocus.WINDOW:
+                elif self.focus_last_widget == constants.HexButtonFocus.WINDOW:
                     self.main_form.last_focused_widget.setFocus()
                 #Store the executed function for next cursor placement
                 self.main_form.view.last_executed_function_text = self.function_text
@@ -263,7 +265,7 @@ class CustomButton(data.QLabel):
                 message = "You need to focus one of the editor windows first!"
                 self.main_form.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
             #Close the function wheel
             self._parent.hide()
@@ -338,7 +340,7 @@ class DoubleButton(CustomButton):
         self._parent     = parent
         self.main_form  = main_form
         #Initialize the extra button
-        self.extra_button = data.QLabel(self)
+        self.extra_button = qt.QLabel(self)
         width   = int(self.geometry().width() * self.extra_button_size_factor)
         height  = int(self.geometry().height() * self.extra_button_size_factor)
         self.extra_button_position = functions.create_point(
@@ -369,9 +371,9 @@ class DoubleButton(CustomButton):
         if self.extra_button_function != None:
             try:
                 #Set focus to the last focused widget stored on the main form
-                if self.focus_last_widget == data.HexButtonFocus.TAB:
+                if self.focus_last_widget == constants.HexButtonFocus.TAB:
                     self.main_form.last_focused_widget.currentWidget().setFocus()
-                elif self.focus_last_widget == data.HexButtonFocus.WINDOW:
+                elif self.focus_last_widget == constants.HexButtonFocus.WINDOW:
                     self.main_form.last_focused_widget.setFocus()
                 #Store the executed function for next cursor placement
                 self.main_form.view.last_executed_function_text = self.function_text
@@ -382,7 +384,7 @@ class DoubleButton(CustomButton):
                 message = "You need to focus one of the editor windows first!"
                 self.main_form.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
             #Close the function wheel
             self._parent.hide()
@@ -393,10 +395,10 @@ class DoubleButton(CustomButton):
         if self.isEnabled() == True:
             self._set_extra_button_opacity(self.OPACITY_HIGH)
             #Display the stored extra buttons function text
-            extra_button_font = data.QFont(
+            extra_button_font = qt.QFont(
                 data.current_font_name,
                 self.stored_font.pointSize()-2,
-                weight=data.QFont.Weight.Bold
+                weight=qt.QFont.Weight.Bold
             )
             self._parent.display(
                 self.extra_button_function_text,
@@ -409,10 +411,10 @@ class DoubleButton(CustomButton):
         if self.isEnabled() == True:
             self._set_extra_button_opacity(self.OPACITY_LOW)
             #Clear the function text
-            extra_button_font = data.QFont(
+            extra_button_font = qt.QFont(
                 'Courier',
                 self.stored_font.pointSize()-2,
-                weight=data.QFont.Weight.Bold
+                weight=qt.QFont.Weight.Bold
             )
             self._parent.display(
                 "",
@@ -449,27 +451,27 @@ class DoubleButton(CustomButton):
         self.extra_button_stored_opacity = input_opacity
         #Create and initialize the QImage from the stored QPixmap
         button_image = self.extra_button_stored_pixmap
-        image = data.QImage(
+        image = qt.QImage(
             button_image.size(),
-            data.QImage.Format.Format_ARGB32_Premultiplied
+            qt.QImage.Format.Format_ARGB32_Premultiplied
         )
-        image.fill(data.Qt.GlobalColor.transparent)
+        image.fill(qt.Qt.GlobalColor.transparent)
         #Create and initialize the QPainter that will manipulate the QImage
-        button_painter = data.QPainter(image)
+        button_painter = qt.QPainter(image)
         button_painter.setOpacity(input_opacity)
         button_painter.drawPixmap(0, 0, button_image)
         button_painter.end()
         #Display the manipulated image
-        self.extra_button.setPixmap(data.QPixmap.fromImage(image))
+        self.extra_button.setPixmap(qt.QPixmap.fromImage(image))
 
 
-class PushButtonBase(data.QPushButton):
+class PushButtonBase(qt.QPushButton):
     function = None
     enter_function = None
     leave_function = None
     # Signals
-    right_clicked = data.pyqtSignal()
-    text_changed = data.pyqtSignal(str)
+    right_clicked = qt.pyqtSignal()
+    text_changed = qt.pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -501,11 +503,11 @@ class PushButtonBase(data.QPushButton):
 
     def keyPressEvent(self, e):
         super().keyReleaseEvent(e)
-        if e.key() == data.Qt.Key.Key_Enter or e.key() == data.Qt.Key.Key_Return:
+        if e.key() == qt.Qt.Key.Key_Enter or e.key() == qt.Qt.Key.Key_Return:
             self.animateClick()
 
     def mousePressEvent(self, event):
-        if event.button() == data.Qt.MouseButton.RightButton:
+        if event.button() == qt.Qt.MouseButton.RightButton:
             self.right_clicked.emit()
         else:
             super().mousePressEvent(event)

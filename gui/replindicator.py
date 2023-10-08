@@ -20,17 +20,23 @@ import themes
 
 from .menu import *
 
-class ThemeIndicator(qt.QLabel):
-    theme_menu = None
+class ReplIndicator(qt.QLabel):
+    ICONS = {
+        constants.ReplLanguage.Python: "language_icons/logo_python.png",
+        constants.ReplLanguage.Hy: "language_icons/logo_hy_cuddles.png",
+    }
     
-    def __init__(self, parent, main_form):
+    selection_menu = None
+    
+    def __init__(self, parent, main_form, repl_box):
         # Initialize superclass
         super().__init__(parent)
         # Store the reference to the parent
         self._parent = parent
         self.main_form = main_form
+        self.repl_box = repl_box
         # Initialize the menu
-        self.init_theme_menu()
+        self.init_selection_menu()
         # Set default font
         self.setFont(data.get_current_font())
     
@@ -38,49 +44,44 @@ class ThemeIndicator(qt.QLabel):
         # Execute the superclass event method
         super().mouseReleaseEvent(event)
         cursor = qt.QCursor.pos()
-        self.theme_menu.popup(cursor)
+        self.selection_menu.popup(cursor)
     
-    def init_theme_menu(self):
+    def init_selection_menu(self):
         """
-        Initialization of the theme menu used by the theme indicator
+        Initialization of the REPL type menu used by the REPL indicator
         """
-        def choose_theme(theme):
-            data.theme = themes.get(theme["name"])
-            self.main_form.view.refresh_theme()
-            self.main_form.display.update_theme_taskbar_icon()
-            current_theme = data.theme["name"]
-            self.main_form.display.repl_display_message(
-                "Changed theme to: {}".format(current_theme), 
-                message_type=constants.MessageType.SUCCESS
-            )
         
-        if self.theme_menu is not None:
+        if self.selection_menu is not None:
             # Clear the menu actions from memory
-            self.theme_menu.clear()
-            for action in self.theme_menu.actions():
-                self.theme_menu.removeAction(action)
+            self.selection_menu.clear()
+            for action in self.selection_menu.actions():
+                self.selection_menu.removeAction(action)
                 action.setParent(None)
                 action.deleteLater()
                 action = None
-        self.theme_menu = Menu(self)
-        # Add the theme actions
-        for theme in themes.get_all():
-            action_theme = qt.QAction(theme["name"], self.theme_menu)
+        self.selection_menu = Menu(self)
+        # Add the type actions
+        for lang in constants.ReplLanguage:
+            action_theme = qt.QAction(lang.name, self.selection_menu)
             action_theme.triggered.connect(
-                functools.partial(choose_theme, theme)
+                functools.partial(self.choose_repl_type, lang)
             )
-            icon = functions.create_icon(theme["image-file"])
+            icon = functions.create_icon(self.ICONS[lang])
             action_theme.setIcon(icon)
-            self.theme_menu.addAction(action_theme)
+            self.selection_menu.addAction(action_theme)
     
     def set_image(self, image):
-        raw_picture = qt.QPixmap(
-            os.path.join(
-                data.resources_directory, image
-            )
-        )
+        raw_picture = qt.QPixmap(os.path.join(data.resources_directory, image))
         picture = raw_picture.scaled(16, 16, qt.Qt.AspectRatioMode.KeepAspectRatio)
         self.setPixmap(picture)
+    
+    def set_language(self, lang):
+        self.set_image(self.ICONS[lang])
+        self.setToolTip(lang.name)
+    
+    def choose_repl_type(self, lang):
+        self.repl_box.set_repl(self.repl_box.repl_state, lang)
+        self.set_language(lang)
     
     def restyle(self):
         self.setStyleSheet("""

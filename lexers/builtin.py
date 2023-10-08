@@ -8,13 +8,14 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import qt
 import data
 import lexers
 
 
 missing_themes = {}
 
-class AVS(data.QsciLexerAVS):
+class AVS(qt.QsciLexerAVS):
     styles = {
         "BlockComment" : 1,
         "ClipProperty" : 13,
@@ -38,14 +39,14 @@ class AVS(data.QsciLexerAVS):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['AVS'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -60,7 +61,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -75,7 +76,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -90,7 +91,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -105,7 +106,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -120,7 +121,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -135,7 +136,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -150,7 +151,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -165,7 +166,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -180,7 +181,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -195,7 +196,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -210,7 +211,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -225,7 +226,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -240,7 +241,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -255,7 +256,7 @@ class AVS(data.QsciLexerAVS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -268,7 +269,7 @@ class AVS(data.QsciLexerAVS):
                 print('    - ' + mt)
             raise Exception("Lexer 'AVS' has missing themes!")
 
-class Bash(data.QsciLexerBash):
+class Bash(qt.QsciLexerBash):
     styles = {
         "Backticks" : 11,
         "Comment" : 2,
@@ -291,14 +292,14 @@ class Bash(data.QsciLexerBash):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Bash'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -313,7 +314,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -328,7 +329,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -343,7 +344,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -358,7 +359,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -373,7 +374,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -388,7 +389,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -403,7 +404,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -418,7 +419,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -433,7 +434,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -448,7 +449,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -463,7 +464,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -478,7 +479,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -493,7 +494,7 @@ class Bash(data.QsciLexerBash):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -506,7 +507,7 @@ class Bash(data.QsciLexerBash):
                 print('    - ' + mt)
             raise Exception("Lexer 'Bash' has missing themes!")
 
-class Batch(data.QsciLexerBatch):
+class Batch(qt.QsciLexerBatch):
     styles = {
         "Comment" : 1,
         "Default" : 0,
@@ -523,14 +524,14 @@ class Batch(data.QsciLexerBatch):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Batch'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -545,7 +546,7 @@ class Batch(data.QsciLexerBatch):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -560,7 +561,7 @@ class Batch(data.QsciLexerBatch):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -575,7 +576,7 @@ class Batch(data.QsciLexerBatch):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -590,7 +591,7 @@ class Batch(data.QsciLexerBatch):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -605,7 +606,7 @@ class Batch(data.QsciLexerBatch):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -620,7 +621,7 @@ class Batch(data.QsciLexerBatch):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -635,7 +636,7 @@ class Batch(data.QsciLexerBatch):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -648,7 +649,7 @@ class Batch(data.QsciLexerBatch):
                 print('    - ' + mt)
             raise Exception("Lexer 'Batch' has missing themes!")
 
-class CMake(data.QsciLexerCMake):
+class CMake(qt.QsciLexerCMake):
     styles = {
         "BlockForeach" : 10,
         "BlockIf" : 11,
@@ -672,14 +673,14 @@ class CMake(data.QsciLexerCMake):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['CMake'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -694,7 +695,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -709,7 +710,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -724,7 +725,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -739,7 +740,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -754,7 +755,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -769,7 +770,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -784,7 +785,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -799,7 +800,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -814,7 +815,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -829,7 +830,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -844,7 +845,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -859,7 +860,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -874,7 +875,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -889,7 +890,7 @@ class CMake(data.QsciLexerCMake):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -902,7 +903,7 @@ class CMake(data.QsciLexerCMake):
                 print('    - ' + mt)
             raise Exception("Lexer 'CMake' has missing themes!")
 
-class CPP(data.QsciLexerCPP):
+class CPP(qt.QsciLexerCPP):
     styles = {
         "Comment" : 1,
         "CommentDoc" : 3,
@@ -967,14 +968,14 @@ class CPP(data.QsciLexerCPP):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['CPP'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -989,7 +990,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1004,7 +1005,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1019,7 +1020,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1034,7 +1035,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1049,7 +1050,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1064,7 +1065,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1079,7 +1080,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1094,7 +1095,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1109,7 +1110,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1124,7 +1125,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1139,7 +1140,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1154,7 +1155,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1169,7 +1170,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1184,7 +1185,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1199,7 +1200,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1214,7 +1215,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1229,7 +1230,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1244,7 +1245,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1259,7 +1260,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1274,7 +1275,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1289,7 +1290,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1304,7 +1305,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1319,7 +1320,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1334,7 +1335,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1349,7 +1350,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1364,7 +1365,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1379,7 +1380,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1394,7 +1395,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1409,7 +1410,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1424,7 +1425,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1439,7 +1440,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1454,7 +1455,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1469,7 +1470,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1484,7 +1485,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1499,7 +1500,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1514,7 +1515,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1529,7 +1530,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1544,7 +1545,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1559,7 +1560,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1574,7 +1575,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1589,7 +1590,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1604,7 +1605,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1619,7 +1620,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1634,7 +1635,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1649,7 +1650,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1664,7 +1665,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1679,7 +1680,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1694,7 +1695,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1709,7 +1710,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1724,7 +1725,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1739,7 +1740,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1754,7 +1755,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1769,7 +1770,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1784,7 +1785,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1799,7 +1800,7 @@ class CPP(data.QsciLexerCPP):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1812,7 +1813,7 @@ class CPP(data.QsciLexerCPP):
                 print('    - ' + mt)
             raise Exception("Lexer 'CPP' has missing themes!")
 
-class CSS(data.QsciLexerCSS):
+class CSS(qt.QsciLexerCSS):
     styles = {
         "AtRule" : 12,
         "Attribute" : 16,
@@ -1845,14 +1846,14 @@ class CSS(data.QsciLexerCSS):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['CSS'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1867,7 +1868,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1882,7 +1883,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1897,7 +1898,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1912,7 +1913,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1927,7 +1928,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1942,7 +1943,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1957,7 +1958,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1972,7 +1973,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -1987,7 +1988,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2002,7 +2003,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2017,7 +2018,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2032,7 +2033,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2047,7 +2048,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2062,7 +2063,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2077,7 +2078,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2092,7 +2093,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2107,7 +2108,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2122,7 +2123,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2137,7 +2138,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2152,7 +2153,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2167,7 +2168,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2182,7 +2183,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2197,7 +2198,7 @@ class CSS(data.QsciLexerCSS):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2210,7 +2211,7 @@ class CSS(data.QsciLexerCSS):
                 print('    - ' + mt)
             raise Exception("Lexer 'CSS' has missing themes!")
 
-class CSharp(data.QsciLexerCSharp):
+class CSharp(qt.QsciLexerCSharp):
     styles = {
         "Comment" : 1,
         "CommentDoc" : 3,
@@ -2275,14 +2276,14 @@ class CSharp(data.QsciLexerCSharp):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['CSharp'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2297,7 +2298,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2312,7 +2313,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2327,7 +2328,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2342,7 +2343,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2357,7 +2358,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2372,7 +2373,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2387,7 +2388,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2402,7 +2403,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2417,7 +2418,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2432,7 +2433,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2447,7 +2448,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2462,7 +2463,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2477,7 +2478,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2492,7 +2493,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2507,7 +2508,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2522,7 +2523,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2537,7 +2538,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2552,7 +2553,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2567,7 +2568,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2582,7 +2583,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2597,7 +2598,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2612,7 +2613,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2627,7 +2628,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2642,7 +2643,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2657,7 +2658,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2672,7 +2673,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2687,7 +2688,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2702,7 +2703,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2717,7 +2718,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2732,7 +2733,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2747,7 +2748,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2762,7 +2763,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2777,7 +2778,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2792,7 +2793,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2807,7 +2808,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2822,7 +2823,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2837,7 +2838,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2852,7 +2853,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2867,7 +2868,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2882,7 +2883,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2897,7 +2898,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2912,7 +2913,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2927,7 +2928,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2942,7 +2943,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2957,7 +2958,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2972,7 +2973,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -2987,7 +2988,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3002,7 +3003,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3017,7 +3018,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3032,7 +3033,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3047,7 +3048,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3062,7 +3063,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3077,7 +3078,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3092,7 +3093,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3107,7 +3108,7 @@ class CSharp(data.QsciLexerCSharp):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3120,7 +3121,7 @@ class CSharp(data.QsciLexerCSharp):
                 print('    - ' + mt)
             raise Exception("Lexer 'CSharp' has missing themes!")
 
-class CoffeeScript(data.QsciLexerCoffeeScript):
+class CoffeeScript(qt.QsciLexerCoffeeScript):
     styles = {
         "BlockRegex" : 23,
         "BlockRegexComment" : 24,
@@ -3153,14 +3154,14 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['CoffeeScript'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3175,7 +3176,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3190,7 +3191,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3205,7 +3206,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3220,7 +3221,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3235,7 +3236,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3250,7 +3251,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3265,7 +3266,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3280,7 +3281,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3295,7 +3296,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3310,7 +3311,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3325,7 +3326,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3340,7 +3341,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3355,7 +3356,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3370,7 +3371,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3385,7 +3386,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3400,7 +3401,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3415,7 +3416,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3430,7 +3431,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3445,7 +3446,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3460,7 +3461,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3475,7 +3476,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3490,7 +3491,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3505,7 +3506,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3518,7 +3519,7 @@ class CoffeeScript(data.QsciLexerCoffeeScript):
                 print('    - ' + mt)
             raise Exception("Lexer 'CoffeeScript' has missing themes!")
 
-class Custom(data.QsciLexerCustom):
+class Custom(qt.QsciLexerCustom):
     styles = {
     }
     
@@ -3527,12 +3528,12 @@ class Custom(data.QsciLexerCustom):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Custom'] = []
 
-class D(data.QsciLexerD):
+class D(qt.QsciLexerD):
     styles = {
         "BackquoteString" : 18,
         "Character" : 12,
@@ -3564,14 +3565,14 @@ class D(data.QsciLexerD):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['D'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3586,7 +3587,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3601,7 +3602,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3616,7 +3617,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3631,7 +3632,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3646,7 +3647,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3661,7 +3662,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3676,7 +3677,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3691,7 +3692,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3706,7 +3707,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3721,7 +3722,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3736,7 +3737,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3751,7 +3752,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3766,7 +3767,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3781,7 +3782,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3796,7 +3797,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3811,7 +3812,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3826,7 +3827,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3841,7 +3842,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3856,7 +3857,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3871,7 +3872,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3886,7 +3887,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3901,7 +3902,7 @@ class D(data.QsciLexerD):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3914,7 +3915,7 @@ class D(data.QsciLexerD):
                 print('    - ' + mt)
             raise Exception("Lexer 'D' has missing themes!")
 
-class Diff(data.QsciLexerDiff):
+class Diff(qt.QsciLexerDiff):
     styles = {
         "AddingPatchAdded" : 8,
         "AddingPatchRemoved" : 10,
@@ -3935,14 +3936,14 @@ class Diff(data.QsciLexerDiff):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Diff'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3957,7 +3958,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3972,7 +3973,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -3987,7 +3988,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4002,7 +4003,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4017,7 +4018,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4032,7 +4033,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4047,7 +4048,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4062,7 +4063,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4077,7 +4078,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4092,7 +4093,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4107,7 +4108,7 @@ class Diff(data.QsciLexerDiff):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4120,7 +4121,7 @@ class Diff(data.QsciLexerDiff):
                 print('    - ' + mt)
             raise Exception("Lexer 'Diff' has missing themes!")
 
-class Fortran77(data.QsciLexerFortran77):
+class Fortran77(qt.QsciLexerFortran77):
     styles = {
         "Comment" : 1,
         "Continuation" : 14,
@@ -4144,14 +4145,14 @@ class Fortran77(data.QsciLexerFortran77):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Fortran77'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4166,7 +4167,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4181,7 +4182,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4196,7 +4197,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4211,7 +4212,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4226,7 +4227,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4241,7 +4242,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4256,7 +4257,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4271,7 +4272,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4286,7 +4287,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4301,7 +4302,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4316,7 +4317,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4331,7 +4332,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4346,7 +4347,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4361,7 +4362,7 @@ class Fortran77(data.QsciLexerFortran77):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4374,7 +4375,7 @@ class Fortran77(data.QsciLexerFortran77):
                 print('    - ' + mt)
             raise Exception("Lexer 'Fortran77' has missing themes!")
 
-class Fortran(data.QsciLexerFortran):
+class Fortran(qt.QsciLexerFortran):
     styles = {
         "Comment" : 1,
         "Continuation" : 14,
@@ -4398,14 +4399,14 @@ class Fortran(data.QsciLexerFortran):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Fortran'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4420,7 +4421,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4435,7 +4436,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4450,7 +4451,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4465,7 +4466,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4480,7 +4481,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4495,7 +4496,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4510,7 +4511,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4525,7 +4526,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4540,7 +4541,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4555,7 +4556,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4570,7 +4571,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4585,7 +4586,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4600,7 +4601,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4615,7 +4616,7 @@ class Fortran(data.QsciLexerFortran):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4628,7 +4629,7 @@ class Fortran(data.QsciLexerFortran):
                 print('    - ' + mt)
             raise Exception("Lexer 'Fortran' has missing themes!")
 
-class HTML(data.QsciLexerHTML):
+class HTML(qt.QsciLexerHTML):
     styles = {
         "ASPAtStart" : 15,
         "ASPJavaScriptComment" : 57,
@@ -4747,14 +4748,14 @@ class HTML(data.QsciLexerHTML):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['HTML'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4769,7 +4770,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4784,7 +4785,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4799,7 +4800,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4814,7 +4815,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4829,7 +4830,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4844,7 +4845,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4859,7 +4860,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4874,7 +4875,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4889,7 +4890,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4904,7 +4905,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4919,7 +4920,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4934,7 +4935,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4949,7 +4950,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4964,7 +4965,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4979,7 +4980,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -4994,7 +4995,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5009,7 +5010,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5024,7 +5025,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5039,7 +5040,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5054,7 +5055,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5069,7 +5070,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5084,7 +5085,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5099,7 +5100,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5114,7 +5115,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5129,7 +5130,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5144,7 +5145,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5159,7 +5160,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5174,7 +5175,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5189,7 +5190,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5204,7 +5205,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5219,7 +5220,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5234,7 +5235,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5249,7 +5250,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5264,7 +5265,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5279,7 +5280,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5294,7 +5295,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5309,7 +5310,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5324,7 +5325,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5339,7 +5340,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5354,7 +5355,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5369,7 +5370,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5384,7 +5385,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5399,7 +5400,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5414,7 +5415,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5429,7 +5430,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5444,7 +5445,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5459,7 +5460,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5474,7 +5475,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5489,7 +5490,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5504,7 +5505,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5519,7 +5520,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5534,7 +5535,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5549,7 +5550,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5564,7 +5565,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5579,7 +5580,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5594,7 +5595,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5609,7 +5610,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5624,7 +5625,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5639,7 +5640,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5654,7 +5655,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5669,7 +5670,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5684,7 +5685,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5699,7 +5700,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5714,7 +5715,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5729,7 +5730,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5744,7 +5745,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5759,7 +5760,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5774,7 +5775,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5789,7 +5790,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5804,7 +5805,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5819,7 +5820,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5834,7 +5835,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5849,7 +5850,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5864,7 +5865,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5879,7 +5880,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5894,7 +5895,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5909,7 +5910,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5924,7 +5925,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5939,7 +5940,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5954,7 +5955,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5969,7 +5970,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5984,7 +5985,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -5999,7 +6000,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6014,7 +6015,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6029,7 +6030,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6044,7 +6045,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6059,7 +6060,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6074,7 +6075,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6089,7 +6090,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6104,7 +6105,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6119,7 +6120,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6134,7 +6135,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6149,7 +6150,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6164,7 +6165,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6179,7 +6180,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6194,7 +6195,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6209,7 +6210,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6224,7 +6225,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6239,7 +6240,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6254,7 +6255,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6269,7 +6270,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6284,7 +6285,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6299,7 +6300,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6314,7 +6315,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6329,7 +6330,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6344,7 +6345,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6359,7 +6360,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6374,7 +6375,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6389,7 +6390,7 @@ class HTML(data.QsciLexerHTML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6402,7 +6403,7 @@ class HTML(data.QsciLexerHTML):
                 print('    - ' + mt)
             raise Exception("Lexer 'HTML' has missing themes!")
 
-class IDL(data.QsciLexerIDL):
+class IDL(qt.QsciLexerIDL):
     styles = {
         "Comment" : 1,
         "CommentDoc" : 3,
@@ -6467,14 +6468,14 @@ class IDL(data.QsciLexerIDL):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['IDL'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6489,7 +6490,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6504,7 +6505,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6519,7 +6520,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6534,7 +6535,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6549,7 +6550,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6564,7 +6565,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6579,7 +6580,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6594,7 +6595,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6609,7 +6610,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6624,7 +6625,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6639,7 +6640,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6654,7 +6655,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6669,7 +6670,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6684,7 +6685,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6699,7 +6700,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6714,7 +6715,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6729,7 +6730,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6744,7 +6745,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6759,7 +6760,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6774,7 +6775,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6789,7 +6790,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6804,7 +6805,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6819,7 +6820,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6834,7 +6835,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6849,7 +6850,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6864,7 +6865,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6879,7 +6880,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6894,7 +6895,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6909,7 +6910,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6924,7 +6925,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6939,7 +6940,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6954,7 +6955,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6969,7 +6970,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6984,7 +6985,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -6999,7 +7000,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7014,7 +7015,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7029,7 +7030,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7044,7 +7045,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7059,7 +7060,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7074,7 +7075,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7089,7 +7090,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7104,7 +7105,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7119,7 +7120,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7134,7 +7135,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7149,7 +7150,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7164,7 +7165,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7179,7 +7180,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7194,7 +7195,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7209,7 +7210,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7224,7 +7225,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7239,7 +7240,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7254,7 +7255,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7269,7 +7270,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7284,7 +7285,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7299,7 +7300,7 @@ class IDL(data.QsciLexerIDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7312,7 +7313,7 @@ class IDL(data.QsciLexerIDL):
                 print('    - ' + mt)
             raise Exception("Lexer 'IDL' has missing themes!")
 
-class JSON(data.QsciLexerJSON):
+class JSON(qt.QsciLexerJSON):
     styles = {
         "CommentBlock" : 7,
         "CommentLine" : 6,
@@ -7335,14 +7336,14 @@ class JSON(data.QsciLexerJSON):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['JSON'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7357,7 +7358,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7372,7 +7373,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7387,7 +7388,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7402,7 +7403,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7417,7 +7418,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7432,7 +7433,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7447,7 +7448,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7462,7 +7463,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7477,7 +7478,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7492,7 +7493,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7507,7 +7508,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7522,7 +7523,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7537,7 +7538,7 @@ class JSON(data.QsciLexerJSON):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7550,7 +7551,7 @@ class JSON(data.QsciLexerJSON):
                 print('    - ' + mt)
             raise Exception("Lexer 'JSON' has missing themes!")
 
-class Java(data.QsciLexerJava):
+class Java(qt.QsciLexerJava):
     styles = {
         "Comment" : 1,
         "CommentDoc" : 3,
@@ -7615,14 +7616,14 @@ class Java(data.QsciLexerJava):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Java'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7637,7 +7638,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7652,7 +7653,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7667,7 +7668,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7682,7 +7683,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7697,7 +7698,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7712,7 +7713,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7727,7 +7728,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7742,7 +7743,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7757,7 +7758,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7772,7 +7773,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7787,7 +7788,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7802,7 +7803,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7817,7 +7818,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7832,7 +7833,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7847,7 +7848,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7862,7 +7863,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7877,7 +7878,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7892,7 +7893,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7907,7 +7908,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7922,7 +7923,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7937,7 +7938,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7952,7 +7953,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7967,7 +7968,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7982,7 +7983,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -7997,7 +7998,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8012,7 +8013,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8027,7 +8028,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8042,7 +8043,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8057,7 +8058,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8072,7 +8073,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8087,7 +8088,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8102,7 +8103,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8117,7 +8118,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8132,7 +8133,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8147,7 +8148,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8162,7 +8163,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8177,7 +8178,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8192,7 +8193,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8207,7 +8208,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8222,7 +8223,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8237,7 +8238,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8252,7 +8253,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8267,7 +8268,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8282,7 +8283,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8297,7 +8298,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8312,7 +8313,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8327,7 +8328,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8342,7 +8343,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8357,7 +8358,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8372,7 +8373,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8387,7 +8388,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8402,7 +8403,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8417,7 +8418,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8432,7 +8433,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8447,7 +8448,7 @@ class Java(data.QsciLexerJava):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8460,7 +8461,7 @@ class Java(data.QsciLexerJava):
                 print('    - ' + mt)
             raise Exception("Lexer 'Java' has missing themes!")
 
-class JavaScript(data.QsciLexerJavaScript):
+class JavaScript(qt.QsciLexerJavaScript):
     styles = {
         "Comment" : 1,
         "CommentDoc" : 3,
@@ -8525,14 +8526,14 @@ class JavaScript(data.QsciLexerJavaScript):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['JavaScript'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8547,7 +8548,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8562,7 +8563,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8577,7 +8578,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8592,7 +8593,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8607,7 +8608,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8622,7 +8623,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8637,7 +8638,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8652,7 +8653,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8667,7 +8668,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8682,7 +8683,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8697,7 +8698,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8712,7 +8713,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8727,7 +8728,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8742,7 +8743,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8757,7 +8758,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8772,7 +8773,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8787,7 +8788,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8802,7 +8803,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8817,7 +8818,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8832,7 +8833,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8847,7 +8848,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8862,7 +8863,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8877,7 +8878,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8892,7 +8893,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8907,7 +8908,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8922,7 +8923,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8937,7 +8938,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8952,7 +8953,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8967,7 +8968,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8982,7 +8983,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -8997,7 +8998,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9012,7 +9013,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9027,7 +9028,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9042,7 +9043,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9057,7 +9058,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9072,7 +9073,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9087,7 +9088,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9102,7 +9103,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9117,7 +9118,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9132,7 +9133,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9147,7 +9148,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9162,7 +9163,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9177,7 +9178,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9192,7 +9193,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9207,7 +9208,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9222,7 +9223,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9237,7 +9238,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9252,7 +9253,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9267,7 +9268,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9282,7 +9283,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9297,7 +9298,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9312,7 +9313,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9327,7 +9328,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9342,7 +9343,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9357,7 +9358,7 @@ class JavaScript(data.QsciLexerJavaScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9370,7 +9371,7 @@ class JavaScript(data.QsciLexerJavaScript):
                 print('    - ' + mt)
             raise Exception("Lexer 'JavaScript' has missing themes!")
 
-class Lua(data.QsciLexerLua):
+class Lua(qt.QsciLexerLua):
     styles = {
         "BasicFunctions" : 13,
         "Character" : 7,
@@ -9399,14 +9400,14 @@ class Lua(data.QsciLexerLua):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Lua'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9421,7 +9422,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9436,7 +9437,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9451,7 +9452,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9466,7 +9467,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9481,7 +9482,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9496,7 +9497,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9511,7 +9512,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9526,7 +9527,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9541,7 +9542,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9556,7 +9557,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9571,7 +9572,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9586,7 +9587,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9601,7 +9602,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9616,7 +9617,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9631,7 +9632,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9646,7 +9647,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9661,7 +9662,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9676,7 +9677,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9691,7 +9692,7 @@ class Lua(data.QsciLexerLua):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9704,7 +9705,7 @@ class Lua(data.QsciLexerLua):
                 print('    - ' + mt)
             raise Exception("Lexer 'Lua' has missing themes!")
 
-class Makefile(data.QsciLexerMakefile):
+class Makefile(qt.QsciLexerMakefile):
     styles = {
         "Comment" : 1,
         "Default" : 0,
@@ -9720,14 +9721,14 @@ class Makefile(data.QsciLexerMakefile):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Makefile'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9742,7 +9743,7 @@ class Makefile(data.QsciLexerMakefile):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9757,7 +9758,7 @@ class Makefile(data.QsciLexerMakefile):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9772,7 +9773,7 @@ class Makefile(data.QsciLexerMakefile):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9787,7 +9788,7 @@ class Makefile(data.QsciLexerMakefile):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9802,7 +9803,7 @@ class Makefile(data.QsciLexerMakefile):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9817,7 +9818,7 @@ class Makefile(data.QsciLexerMakefile):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9830,7 +9831,7 @@ class Makefile(data.QsciLexerMakefile):
                 print('    - ' + mt)
             raise Exception("Lexer 'Makefile' has missing themes!")
 
-class Markdown(data.QsciLexerMarkdown):
+class Markdown(qt.QsciLexerMarkdown):
     styles = {
         "BlockQuote" : 15,
         "CodeBackticks" : 19,
@@ -9861,14 +9862,14 @@ class Markdown(data.QsciLexerMarkdown):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Markdown'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9883,7 +9884,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9898,7 +9899,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9913,7 +9914,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9928,7 +9929,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9943,7 +9944,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9958,7 +9959,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9973,7 +9974,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -9988,7 +9989,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10003,7 +10004,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10018,7 +10019,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10033,7 +10034,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10048,7 +10049,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10063,7 +10064,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10078,7 +10079,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10093,7 +10094,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10108,7 +10109,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10123,7 +10124,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10138,7 +10139,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10153,7 +10154,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10168,7 +10169,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10183,7 +10184,7 @@ class Markdown(data.QsciLexerMarkdown):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10196,7 +10197,7 @@ class Markdown(data.QsciLexerMarkdown):
                 print('    - ' + mt)
             raise Exception("Lexer 'Markdown' has missing themes!")
 
-class Matlab(data.QsciLexerMatlab):
+class Matlab(qt.QsciLexerMatlab):
     styles = {
         "Command" : 2,
         "Comment" : 1,
@@ -10214,14 +10215,14 @@ class Matlab(data.QsciLexerMatlab):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Matlab'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10236,7 +10237,7 @@ class Matlab(data.QsciLexerMatlab):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10251,7 +10252,7 @@ class Matlab(data.QsciLexerMatlab):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10266,7 +10267,7 @@ class Matlab(data.QsciLexerMatlab):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10281,7 +10282,7 @@ class Matlab(data.QsciLexerMatlab):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10296,7 +10297,7 @@ class Matlab(data.QsciLexerMatlab):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10311,7 +10312,7 @@ class Matlab(data.QsciLexerMatlab):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10326,7 +10327,7 @@ class Matlab(data.QsciLexerMatlab):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10341,7 +10342,7 @@ class Matlab(data.QsciLexerMatlab):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10354,7 +10355,7 @@ class Matlab(data.QsciLexerMatlab):
                 print('    - ' + mt)
             raise Exception("Lexer 'Matlab' has missing themes!")
 
-class Octave(data.QsciLexerOctave):
+class Octave(qt.QsciLexerOctave):
     styles = {
         "Command" : 2,
         "Comment" : 1,
@@ -10372,14 +10373,14 @@ class Octave(data.QsciLexerOctave):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Octave'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10394,7 +10395,7 @@ class Octave(data.QsciLexerOctave):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10409,7 +10410,7 @@ class Octave(data.QsciLexerOctave):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10424,7 +10425,7 @@ class Octave(data.QsciLexerOctave):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10439,7 +10440,7 @@ class Octave(data.QsciLexerOctave):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10454,7 +10455,7 @@ class Octave(data.QsciLexerOctave):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10469,7 +10470,7 @@ class Octave(data.QsciLexerOctave):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10484,7 +10485,7 @@ class Octave(data.QsciLexerOctave):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10499,7 +10500,7 @@ class Octave(data.QsciLexerOctave):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10512,7 +10513,7 @@ class Octave(data.QsciLexerOctave):
                 print('    - ' + mt)
             raise Exception("Lexer 'Octave' has missing themes!")
 
-class PO(data.QsciLexerPO):
+class PO(qt.QsciLexerPO):
     styles = {
         "Comment" : 1,
         "Default" : 0,
@@ -10536,14 +10537,14 @@ class PO(data.QsciLexerPO):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['PO'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10558,7 +10559,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10573,7 +10574,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10588,7 +10589,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10603,7 +10604,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10618,7 +10619,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10633,7 +10634,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10648,7 +10649,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10663,7 +10664,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10678,7 +10679,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10693,7 +10694,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10708,7 +10709,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10723,7 +10724,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10738,7 +10739,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10753,7 +10754,7 @@ class PO(data.QsciLexerPO):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10766,7 +10767,7 @@ class PO(data.QsciLexerPO):
                 print('    - ' + mt)
             raise Exception("Lexer 'PO' has missing themes!")
 
-class POV(data.QsciLexerPOV):
+class POV(qt.QsciLexerPOV):
     styles = {
         "BadDirective" : 9,
         "Comment" : 1,
@@ -10792,14 +10793,14 @@ class POV(data.QsciLexerPOV):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['POV'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10814,7 +10815,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10829,7 +10830,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10844,7 +10845,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10859,7 +10860,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10874,7 +10875,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10889,7 +10890,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10904,7 +10905,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10919,7 +10920,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10934,7 +10935,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10949,7 +10950,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10964,7 +10965,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10979,7 +10980,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -10994,7 +10995,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11009,7 +11010,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11024,7 +11025,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11039,7 +11040,7 @@ class POV(data.QsciLexerPOV):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11052,7 +11053,7 @@ class POV(data.QsciLexerPOV):
                 print('    - ' + mt)
             raise Exception("Lexer 'POV' has missing themes!")
 
-class Pascal(data.QsciLexerPascal):
+class Pascal(qt.QsciLexerPascal):
     styles = {
         "Asm" : 14,
         "Character" : 12,
@@ -11076,14 +11077,14 @@ class Pascal(data.QsciLexerPascal):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Pascal'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11098,7 +11099,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11113,7 +11114,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11128,7 +11129,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11143,7 +11144,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11158,7 +11159,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11173,7 +11174,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11188,7 +11189,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11203,7 +11204,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11218,7 +11219,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11233,7 +11234,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11248,7 +11249,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11263,7 +11264,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11278,7 +11279,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11293,7 +11294,7 @@ class Pascal(data.QsciLexerPascal):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11306,7 +11307,7 @@ class Pascal(data.QsciLexerPascal):
                 print('    - ' + mt)
             raise Exception("Lexer 'Pascal' has missing themes!")
 
-class Perl(data.QsciLexerPerl):
+class Perl(qt.QsciLexerPerl):
     styles = {
         "Array" : 13,
         "BacktickHereDocument" : 25,
@@ -11356,14 +11357,14 @@ class Perl(data.QsciLexerPerl):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Perl'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11378,7 +11379,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11393,7 +11394,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11408,7 +11409,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11423,7 +11424,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11438,7 +11439,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11453,7 +11454,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11468,7 +11469,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11483,7 +11484,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11498,7 +11499,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11513,7 +11514,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11528,7 +11529,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11543,7 +11544,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11558,7 +11559,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11573,7 +11574,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11588,7 +11589,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11603,7 +11604,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11618,7 +11619,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11633,7 +11634,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11648,7 +11649,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11663,7 +11664,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11678,7 +11679,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11693,7 +11694,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11708,7 +11709,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11723,7 +11724,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11738,7 +11739,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11753,7 +11754,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11768,7 +11769,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11783,7 +11784,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11798,7 +11799,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11813,7 +11814,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11828,7 +11829,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11843,7 +11844,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11858,7 +11859,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11873,7 +11874,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11888,7 +11889,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11903,7 +11904,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11918,7 +11919,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11933,7 +11934,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11948,7 +11949,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11963,7 +11964,7 @@ class Perl(data.QsciLexerPerl):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -11976,7 +11977,7 @@ class Perl(data.QsciLexerPerl):
                 print('    - ' + mt)
             raise Exception("Lexer 'Perl' has missing themes!")
 
-class PostScript(data.QsciLexerPostScript):
+class PostScript(qt.QsciLexerPostScript):
     styles = {
         "ArrayParenthesis" : 9,
         "BadStringCharacter" : 15,
@@ -12001,14 +12002,14 @@ class PostScript(data.QsciLexerPostScript):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['PostScript'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12023,7 +12024,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12038,7 +12039,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12053,7 +12054,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12068,7 +12069,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12083,7 +12084,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12098,7 +12099,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12113,7 +12114,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12128,7 +12129,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12143,7 +12144,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12158,7 +12159,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12173,7 +12174,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12188,7 +12189,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12203,7 +12204,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12218,7 +12219,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12233,7 +12234,7 @@ class PostScript(data.QsciLexerPostScript):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12246,7 +12247,7 @@ class PostScript(data.QsciLexerPostScript):
                 print('    - ' + mt)
             raise Exception("Lexer 'PostScript' has missing themes!")
 
-class Properties(data.QsciLexerProperties):
+class Properties(qt.QsciLexerProperties):
     styles = {
         "Assignment" : 3,
         "Comment" : 1,
@@ -12261,14 +12262,14 @@ class Properties(data.QsciLexerProperties):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Properties'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12283,7 +12284,7 @@ class Properties(data.QsciLexerProperties):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12298,7 +12299,7 @@ class Properties(data.QsciLexerProperties):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12313,7 +12314,7 @@ class Properties(data.QsciLexerProperties):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12328,7 +12329,7 @@ class Properties(data.QsciLexerProperties):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12343,7 +12344,7 @@ class Properties(data.QsciLexerProperties):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12356,7 +12357,7 @@ class Properties(data.QsciLexerProperties):
                 print('    - ' + mt)
             raise Exception("Lexer 'Properties' has missing themes!")
 
-class Ruby(data.QsciLexerRuby):
+class Ruby(qt.QsciLexerRuby):
     styles = {
         "Backticks" : 18,
         "ClassName" : 8,
@@ -12396,14 +12397,14 @@ class Ruby(data.QsciLexerRuby):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Ruby'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12418,7 +12419,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12433,7 +12434,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12448,7 +12449,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12463,7 +12464,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12478,7 +12479,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12493,7 +12494,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12508,7 +12509,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12523,7 +12524,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12538,7 +12539,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12553,7 +12554,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12568,7 +12569,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12583,7 +12584,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12598,7 +12599,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12613,7 +12614,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12628,7 +12629,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12643,7 +12644,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12658,7 +12659,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12673,7 +12674,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12688,7 +12689,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12703,7 +12704,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12718,7 +12719,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12733,7 +12734,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12748,7 +12749,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12763,7 +12764,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12778,7 +12779,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12793,7 +12794,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12808,7 +12809,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12823,7 +12824,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12838,7 +12839,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12853,7 +12854,7 @@ class Ruby(data.QsciLexerRuby):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12866,7 +12867,7 @@ class Ruby(data.QsciLexerRuby):
                 print('    - ' + mt)
             raise Exception("Lexer 'Ruby' has missing themes!")
 
-class SQL(data.QsciLexerSQL):
+class SQL(qt.QsciLexerSQL):
     styles = {
         "Comment" : 1,
         "CommentDoc" : 3,
@@ -12897,14 +12898,14 @@ class SQL(data.QsciLexerSQL):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['SQL'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12919,7 +12920,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12934,7 +12935,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12949,7 +12950,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12964,7 +12965,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12979,7 +12980,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -12994,7 +12995,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13009,7 +13010,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13024,7 +13025,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13039,7 +13040,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13054,7 +13055,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13069,7 +13070,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13084,7 +13085,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13099,7 +13100,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13114,7 +13115,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13129,7 +13130,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13144,7 +13145,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13159,7 +13160,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13174,7 +13175,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13189,7 +13190,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13204,7 +13205,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13219,7 +13220,7 @@ class SQL(data.QsciLexerSQL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13232,7 +13233,7 @@ class SQL(data.QsciLexerSQL):
                 print('    - ' + mt)
             raise Exception("Lexer 'SQL' has missing themes!")
 
-class Spice(data.QsciLexerSpice):
+class Spice(qt.QsciLexerSpice):
     styles = {
         "Command" : 2,
         "Comment" : 8,
@@ -13250,14 +13251,14 @@ class Spice(data.QsciLexerSpice):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Spice'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13272,7 +13273,7 @@ class Spice(data.QsciLexerSpice):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13287,7 +13288,7 @@ class Spice(data.QsciLexerSpice):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13302,7 +13303,7 @@ class Spice(data.QsciLexerSpice):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13317,7 +13318,7 @@ class Spice(data.QsciLexerSpice):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13332,7 +13333,7 @@ class Spice(data.QsciLexerSpice):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13347,7 +13348,7 @@ class Spice(data.QsciLexerSpice):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13362,7 +13363,7 @@ class Spice(data.QsciLexerSpice):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13377,7 +13378,7 @@ class Spice(data.QsciLexerSpice):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13390,7 +13391,7 @@ class Spice(data.QsciLexerSpice):
                 print('    - ' + mt)
             raise Exception("Lexer 'Spice' has missing themes!")
 
-class TCL(data.QsciLexerTCL):
+class TCL(qt.QsciLexerTCL):
     styles = {
         "Comment" : 1,
         "CommentBlock" : 21,
@@ -13421,14 +13422,14 @@ class TCL(data.QsciLexerTCL):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['TCL'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13443,7 +13444,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13458,7 +13459,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13473,7 +13474,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13488,7 +13489,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13503,7 +13504,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13518,7 +13519,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13533,7 +13534,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13548,7 +13549,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13563,7 +13564,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13578,7 +13579,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13593,7 +13594,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13608,7 +13609,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13623,7 +13624,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13638,7 +13639,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13653,7 +13654,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13668,7 +13669,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13683,7 +13684,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13698,7 +13699,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13713,7 +13714,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13728,7 +13729,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13743,7 +13744,7 @@ class TCL(data.QsciLexerTCL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13756,7 +13757,7 @@ class TCL(data.QsciLexerTCL):
                 print('    - ' + mt)
             raise Exception("Lexer 'TCL' has missing themes!")
 
-class TeX(data.QsciLexerTeX):
+class TeX(qt.QsciLexerTeX):
     styles = {
         "Command" : 4,
         "Default" : 0,
@@ -13771,14 +13772,14 @@ class TeX(data.QsciLexerTeX):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['TeX'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13793,7 +13794,7 @@ class TeX(data.QsciLexerTeX):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13808,7 +13809,7 @@ class TeX(data.QsciLexerTeX):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13823,7 +13824,7 @@ class TeX(data.QsciLexerTeX):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13838,7 +13839,7 @@ class TeX(data.QsciLexerTeX):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13853,7 +13854,7 @@ class TeX(data.QsciLexerTeX):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13866,7 +13867,7 @@ class TeX(data.QsciLexerTeX):
                 print('    - ' + mt)
             raise Exception("Lexer 'TeX' has missing themes!")
 
-class VHDL(data.QsciLexerVHDL):
+class VHDL(qt.QsciLexerVHDL):
     styles = {
         "Attribute" : 10,
         "Comment" : 1,
@@ -13891,14 +13892,14 @@ class VHDL(data.QsciLexerVHDL):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['VHDL'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13913,7 +13914,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13928,7 +13929,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13943,7 +13944,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13958,7 +13959,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13973,7 +13974,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -13988,7 +13989,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14003,7 +14004,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14018,7 +14019,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14033,7 +14034,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14048,7 +14049,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14063,7 +14064,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14078,7 +14079,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14093,7 +14094,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14108,7 +14109,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14123,7 +14124,7 @@ class VHDL(data.QsciLexerVHDL):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14136,7 +14137,7 @@ class VHDL(data.QsciLexerVHDL):
                 print('    - ' + mt)
             raise Exception("Lexer 'VHDL' has missing themes!")
 
-class Verilog(data.QsciLexerVerilog):
+class Verilog(qt.QsciLexerVerilog):
     styles = {
         "Comment" : 1,
         "CommentBang" : 3,
@@ -14183,14 +14184,14 @@ class Verilog(data.QsciLexerVerilog):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['Verilog'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14205,7 +14206,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14220,7 +14221,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14235,7 +14236,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14250,7 +14251,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14265,7 +14266,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14280,7 +14281,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14295,7 +14296,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14310,7 +14311,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14325,7 +14326,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14340,7 +14341,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14355,7 +14356,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14370,7 +14371,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14385,7 +14386,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14400,7 +14401,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14415,7 +14416,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14430,7 +14431,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14445,7 +14446,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14460,7 +14461,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14475,7 +14476,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14490,7 +14491,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14505,7 +14506,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14520,7 +14521,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14535,7 +14536,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14550,7 +14551,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14565,7 +14566,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14580,7 +14581,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14595,7 +14596,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14610,7 +14611,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14625,7 +14626,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14640,7 +14641,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14655,7 +14656,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14670,7 +14671,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14685,7 +14686,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14700,7 +14701,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14715,7 +14716,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14730,7 +14731,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14745,7 +14746,7 @@ class Verilog(data.QsciLexerVerilog):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14758,7 +14759,7 @@ class Verilog(data.QsciLexerVerilog):
                 print('    - ' + mt)
             raise Exception("Lexer 'Verilog' has missing themes!")
 
-class XML(data.QsciLexerXML):
+class XML(qt.QsciLexerXML):
     styles = {
         "ASPAtStart" : 15,
         "ASPJavaScriptComment" : 57,
@@ -14877,14 +14878,14 @@ class XML(data.QsciLexerXML):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['XML'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14899,7 +14900,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14914,7 +14915,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14929,7 +14930,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14944,7 +14945,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14959,7 +14960,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14974,7 +14975,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -14989,7 +14990,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15004,7 +15005,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15019,7 +15020,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15034,7 +15035,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15049,7 +15050,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15064,7 +15065,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15079,7 +15080,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15094,7 +15095,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15109,7 +15110,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15124,7 +15125,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15139,7 +15140,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15154,7 +15155,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15169,7 +15170,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15184,7 +15185,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15199,7 +15200,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15214,7 +15215,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15229,7 +15230,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15244,7 +15245,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15259,7 +15260,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15274,7 +15275,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15289,7 +15290,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15304,7 +15305,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15319,7 +15320,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15334,7 +15335,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15349,7 +15350,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15364,7 +15365,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15379,7 +15380,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15394,7 +15395,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15409,7 +15410,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15424,7 +15425,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15439,7 +15440,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15454,7 +15455,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15469,7 +15470,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15484,7 +15485,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15499,7 +15500,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15514,7 +15515,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15529,7 +15530,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15544,7 +15545,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15559,7 +15560,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15574,7 +15575,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15589,7 +15590,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15604,7 +15605,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15619,7 +15620,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15634,7 +15635,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15649,7 +15650,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15664,7 +15665,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15679,7 +15680,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15694,7 +15695,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15709,7 +15710,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15724,7 +15725,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15739,7 +15740,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15754,7 +15755,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15769,7 +15770,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15784,7 +15785,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15799,7 +15800,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15814,7 +15815,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15829,7 +15830,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15844,7 +15845,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15859,7 +15860,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15874,7 +15875,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15889,7 +15890,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15904,7 +15905,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15919,7 +15920,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15934,7 +15935,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15949,7 +15950,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15964,7 +15965,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15979,7 +15980,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -15994,7 +15995,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16009,7 +16010,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16024,7 +16025,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16039,7 +16040,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16054,7 +16055,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16069,7 +16070,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16084,7 +16085,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16099,7 +16100,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16114,7 +16115,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16129,7 +16130,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16144,7 +16145,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16159,7 +16160,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16174,7 +16175,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16189,7 +16190,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16204,7 +16205,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16219,7 +16220,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16234,7 +16235,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16249,7 +16250,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16264,7 +16265,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16279,7 +16280,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16294,7 +16295,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16309,7 +16310,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16324,7 +16325,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16339,7 +16340,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16354,7 +16355,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16369,7 +16370,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16384,7 +16385,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16399,7 +16400,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16414,7 +16415,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16429,7 +16430,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16444,7 +16445,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16459,7 +16460,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16474,7 +16475,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16489,7 +16490,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16504,7 +16505,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16519,7 +16520,7 @@ class XML(data.QsciLexerXML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16532,7 +16533,7 @@ class XML(data.QsciLexerXML):
                 print('    - ' + mt)
             raise Exception("Lexer 'XML' has missing themes!")
 
-class YAML(data.QsciLexerYAML):
+class YAML(qt.QsciLexerYAML):
     styles = {
         "Comment" : 1,
         "Default" : 0,
@@ -16551,14 +16552,14 @@ class YAML(data.QsciLexerYAML):
         self.set_theme(data.theme)
     
     def set_theme(self, theme):
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         missing_themes['YAML'] = []
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16573,7 +16574,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16588,7 +16589,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16603,7 +16604,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16618,7 +16619,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16633,7 +16634,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16648,7 +16649,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16663,7 +16664,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16678,7 +16679,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])
@@ -16693,7 +16694,7 @@ class YAML(data.QsciLexerYAML):
         for style in self.styles.keys():
             try:
                 self.setPaper(
-                    data.QColor(data.theme["fonts"][style.lower()]["background"]),
+                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),
                     self.styles[style]
                 )
                 lexers.set_font(self, style, theme["fonts"][style.lower()])

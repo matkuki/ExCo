@@ -110,6 +110,7 @@ keyboard_shortcuts = {
             'repl_focus_multi': 'Ctrl+5',
             'repl_focus_single_1': 'Ctrl+R',
             'repl_focus_single_2': 'Ctrl+4',
+            'repl_cycle_language': 'F4',
             'replace_all': 'Ctrl+Shift+H',
             'replace_all_in_documents': 'Ctrl+F6',
             'replace_in_files': 'Ctrl+F3',

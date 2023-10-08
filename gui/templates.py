@@ -10,6 +10,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import enum
 
+import qt
 import data
 import functions
 
@@ -24,16 +25,16 @@ def create_layout(layout=LayoutType.Horizontal,
                   margins=(0,0,0,0),
                   parent=None,):
     if layout == LayoutType.Horizontal:
-        new_layout = data.QHBoxLayout(parent)
+        new_layout = qt.QHBoxLayout(parent)
     
     elif layout == LayoutType.Vertical:
-        new_layout = data.QVBoxLayout(parent)
+        new_layout = qt.QVBoxLayout(parent)
 
     elif layout == LayoutType.Grid:
-        new_layout = data.QGridLayout(parent)
+        new_layout = qt.QGridLayout(parent)
 
     elif layout == LayoutType.Stack:
-        new_layout = data.QStackedLayout(parent)
+        new_layout = qt.QStackedLayout(parent)
 
     else:
         raise Exception("Unknown layout type: '{}'".format(layout))
@@ -45,7 +46,7 @@ def create_layout(layout=LayoutType.Horizontal,
 def create_groupbox_borderless(name=None,
                                parent=None,
                                ):
-    group_box = data.QGroupBox(parent)
+    group_box = qt.QGroupBox(parent)
     if parent:
         group_box.setParent(parent)
     if name:
@@ -68,8 +69,8 @@ def create_groupbox_with_layout(name=None,
                                 background_color=None,
                                 spacing=None,
                                 margins=None,
-                                h_size_policy=data.QSizePolicy.Policy.Expanding,
-                                v_size_policy=data.QSizePolicy.Policy.Minimum,
+                                h_size_policy=qt.QSizePolicy.Policy.Expanding,
+                                v_size_policy=qt.QSizePolicy.Policy.Minimum,
                                 adjust_margins_to_text=False,
                                 parent=None,
                                 override_margin_top=None,
@@ -92,14 +93,14 @@ def create_groupbox_with_layout(name=None,
             background: {background_color};
         """)
     groupbox.setSizePolicy(
-        data.QSizePolicy(h_size_policy, v_size_policy)
+        qt.QSizePolicy(h_size_policy, v_size_policy)
     )
     if spacing is not None:
         groupbox.layout().setSpacing(spacing)
     if margins is not None:
         groupbox.layout().setContentsMargins(*margins)
     if adjust_margins_to_text != False:
-        fm = data.QFontMetrics(data.get_general_font())
+        fm = qt.QFontMetrics(data.get_general_font())
         font_height = fm.height() / 2
         margins = groupbox.layout().contentsMargins()
         groupbox.layout().setContentsMargins(
@@ -114,7 +115,7 @@ def create_frame(parent=None,
                  layout=LayoutType.Horizontal,
                  spacing=0,
                  margins=(0,0,0,0),):
-    frame = data.QFrame(parent)
+    frame = qt.QFrame(parent)
     layout = create_layout(
         layout=layout,
         spacing=spacing,
@@ -125,10 +126,10 @@ def create_frame(parent=None,
     return frame
 
 def create_scroll_area():
-    scroll_area = data.QScrollArea()
+    scroll_area = qt.QScrollArea()
     scroll_area.setWidgetResizable(True)
-    scroll_area.setHorizontalScrollBarPolicy(data.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-    scroll_area.verticalScrollBar().setContextMenuPolicy(data.Qt.ContextMenuPolicy.NoContextMenu)
-    scroll_area.horizontalScrollBar().setContextMenuPolicy(data.Qt.ContextMenuPolicy.NoContextMenu)
-    scroll_area.setFrameShape(data.QFrame.Shape.NoFrame)
+    scroll_area.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+    scroll_area.verticalScrollBar().setContextMenuPolicy(qt.Qt.ContextMenuPolicy.NoContextMenu)
+    scroll_area.horizontalScrollBar().setContextMenuPolicy(qt.Qt.ContextMenuPolicy.NoContextMenu)
+    scroll_area.setFrameShape(qt.QFrame.Shape.NoFrame)
     return scroll_area

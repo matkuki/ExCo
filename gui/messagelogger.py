@@ -10,6 +10,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import os.path
+import qt
 import data
 import components.actionfilter
 
@@ -19,9 +20,9 @@ import components.actionfilter
 Object for showing log messages across all widgets, mostly for debug purposes
 ----------------------------------------------------------------------------
 """
-class MessageLogger(data.QWidget):
+class MessageLogger(qt.QWidget):
     """Simple subclass for displaying log messages"""
-    class MessageTextBox(data.QTextEdit):
+    class MessageTextBox(qt.QTextEdit):
         def contextMenuEvent(self, event):
             event.accept()
 
@@ -38,7 +39,7 @@ class MessageLogger(data.QWidget):
         #Initialize the log window
         self.setWindowTitle("LOGGING WINDOW")
         self.resize(500, 300)
-        self.setWindowFlags(data.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(qt.Qt.WindowStaysOnTopHint)
         # Set default font
         self.setFont(data.get_current_font())
 
@@ -51,7 +52,7 @@ class MessageLogger(data.QWidget):
         self.keyPressEvent                      = self._keypress
 
         #Initialize layout
-        self.layout = data.QGridLayout()
+        self.layout = qt.QGridLayout()
         self.layout.addWidget(self.displaybox)
         self.setLayout(self.layout)
 
@@ -61,7 +62,7 @@ class MessageLogger(data.QWidget):
 
         #Set the log window icon
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(data.QIcon(data.application_icon))
+            self.setWindowIcon(qt.QIcon(data.application_icon))
 
     def _event_mouse_doubleclick(self, mouse_event):
         """Rereferenced/overloaded displaybox doubleclick event"""
@@ -75,7 +76,7 @@ class MessageLogger(data.QWidget):
     def _keypress(self, key_event):
         """Rereferenced/overloaded MessageLogger keypress event"""
         pressed_key = key_event.key()
-        if pressed_key == data.Qt.Key_Escape:
+        if pressed_key == qt.Qt.Key_Escape:
             self.close()
 
     def clear_log(self):
@@ -96,8 +97,8 @@ class MessageLogger(data.QWidget):
             self.displaybox.append(message)
         #Bring cursor to the current message (this is in a QTextEdit not QScintilla)
         cursor = self.displaybox.textCursor()
-        cursor.movePosition(data.QTextCursor.End)
-        cursor.movePosition(data.QTextCursor.StartOfLine)
+        cursor.movePosition(qt.QTextCursor.End)
+        cursor.movePosition(qt.QTextCursor.StartOfLine)
         self.displaybox.setTextCursor(cursor)
 
 

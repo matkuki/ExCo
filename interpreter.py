@@ -14,19 +14,24 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      Python Interactive Interpreter (Read-Eval-Print-Loop) functionality
 
 import os
+import re
 import sys
 import code
-import re
-import subprocess
 import threading
 import traceback
+import subprocess
+
+import hy
 import data
+import constants
 
 
 class CustomInterpreter(code.InteractiveInterpreter):
-    """SubClassed InteractiveInterpreter object"""
-    #Class variables (class variables >> this means that these variables are shared accross instances of this class)
-    #Modules that will be used by default by the interactive interpreter
+    """
+    SubClassed InteractiveInterpreter object
+    """
+    # Class variables (class variables >> this means that these variables are shared accross instances of this class)
+    # Modules that will be used by default by the interactive interpreter
     modules =   [
         "sys", 
         "os", 
@@ -47,19 +52,19 @@ class CustomInterpreter(code.InteractiveInterpreter):
     eval_error      = None
     #Dictionary of constants
     dict_const_references = dict(
-        OK          = data.FileStatus.OK, 
-        MODIFIED    = data.FileStatus.MODIFIED, 
-        FOUND       = data.SearchResult.FOUND, 
-        NOT_FOUND   = data.SearchResult.NOT_FOUND, 
-        CYCLED      = data.SearchResult.CYCLED, 
-        ONE         = data.WindowMode.ONE, 
-        THREE       = data.WindowMode.THREE, 
-        LEFT        = data.MainWindowSide.LEFT, 
-        RIGHT       = data.MainWindowSide.RIGHT, 
+        OK          = constants.FileStatus.OK, 
+        MODIFIED    = constants.FileStatus.MODIFIED, 
+        FOUND       = constants.SearchResult.FOUND, 
+        NOT_FOUND   = constants.SearchResult.NOT_FOUND, 
+        CYCLED      = constants.SearchResult.CYCLED, 
+        ONE         = constants.WindowMode.ONE, 
+        THREE       = constants.WindowMode.THREE, 
+        LEFT        = constants.MainWindowSide.LEFT, 
+        RIGHT       = constants.MainWindowSide.RIGHT, 
     )
     #The escape sequence for built in functions
     re_escape_sequence = "lit#"
-    #Dictionary of regular expression sequences for replacing internal keywords with python objects,
+    # Dictionary of regular expression sequences for replacing internal keywords with python objects,
     #mostly done for my personal desire to learn and play with regular expressions
     dict_re_references = dict(
         quit                        = (r"^quit$" , r"quit()"),
@@ -146,19 +151,21 @@ class CustomInterpreter(code.InteractiveInterpreter):
     
     
     def __init__(self, initial_references, repl_print):
-        """Initialize the interactive interpreter"""
-        #Get the default references and add them to the initial_references list
+        """
+        Initialize the interactive interpreter
+        """
+        # Get the default references and add them to the initial_references list
         initial_references.update(self.get_default_references())
         """
         Initialize parent, from which the current class is inherited, 
         THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         """
-        #the InteractiveInterpreter object takes references as the first argument
+        # the InteractiveInterpreter object takes references as the first argument
         super().__init__(initial_references)
-        #Import all the default modules
+        # Import all the default modules
         for mod in self.modules:
             self.eval_command("import " + mod)
-        #Save the REPL print function as a reference
+        # Save the REPL print function as a reference
         self.repl_print = repl_print
     
     def eval_command(self, command, display_action=True):
@@ -167,28 +174,37 @@ class CustomInterpreter(code.InteractiveInterpreter):
         (inputted by the REPL ReplLineEdit and pressing enter)
         """
         try:
-            #Reset the error message
+            # Reset the error message
             self.eval_error = None
-            #Replace certain strings with methods
+            # Replace certain strings with methods
             filtered_command = self.replace_references(self.dict_re_references, command)
             filtered_command = self.replace_keywords(self.dict_keywords, filtered_command)
-            #Remove the literal sequences from the command
+            # Remove the literal sequences from the command
             filtered_command = filtered_command.replace(self.re_escape_sequence, "")
-            #Execute the filtered command string with the custom InteractiveInterpreter
-            #First try to evaluate the command string, to see if it's an expression
+            # Execute the filtered command string with the custom InteractiveInterpreter
+            # First try to evaluate the command string, to see if it's an expression
             try:
-                #Try to EVALUATE the command
+                # Try to EVALUATE the command
                 eval_return = eval(filtered_command, self.locals)
                 if display_action == True:
                     self.repl_print(eval_return)
                 return None
             except:
-                #EXECUTE
+                # EXECUTE
                 self.eval_error = None
-                #Execute and return the error message
+                # Execute and return the error message
                 return self._custom_runcode(filtered_command)
         except Exception as ex:
             return "REPL evaluation error!"
+    
+    def eval_command_hy(self, command, display_action=True):
+        try:
+            eval_return = hy.eval(hy.read_many(command), self.locals)
+            if display_action == True and eval_return is not None:
+                self.repl_print(eval_return)
+            return None
+        except:
+            return self._custom_showtraceback()
     
     def _custom_runcode(self, code):
         """
@@ -251,19 +267,25 @@ class CustomInterpreter(code.InteractiveInterpreter):
         return command
         
     def update_locals(self, new_locals):
-        """Add new locals to the existing ones"""
+        """
+        Add new locals to the existing ones
+        """
         for new_local in new_locals:
-            #Check if the local is already in the current list of locals
+            # Check if the local is already in the current list of locals
             if new_local not in self.locals:
-                #Update the locals dictionary with the new item
+                # Update the locals dictionary with the new item
                 self.locals.update({new_local:new_locals[new_local]})
     
     def reset_locals(self):
-        """Clear all custom interpreter references in the locals dictionary"""
+        """
+        Clear all custom interpreter references in the locals dictionary
+        """
         self.locals = {}
     
     def run_cmd_process(self, command, show_console=True, output_to_repl=False):
-        """Function for running a command line process and return the result"""
+        """
+        Function for running a command line process and return the result
+        """
         #Check what is the current OS
         if data.platform == "Windows":
             if show_console == True:
@@ -396,7 +418,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
                 self.repl_print(
                     "Error creating a '{}' terminal!".format(data.terminal) +
                     "To change the terminal application, edit the user settings.",
-                    data.MessageType.ERROR
+                    constants.MessageType.ERROR
                 )
     
     def get_default_references(self):

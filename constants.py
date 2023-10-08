@@ -83,6 +83,10 @@ class ReplType(enum.Enum):
     SINGLE_LINE = 0
     MULTI_LINE  = 1
 
+class ReplLanguage(enum.Enum):
+    Python = 0
+    Hy = 1
+
 class Direction(enum.Enum):
     LEFT  = 0
     RIGHT = 1
@@ -155,7 +159,7 @@ def first_scan():
 
 # Example of got to customize the menu font and menu font scaling
 #data.custom_menu_scale = 25
-#data.custom_menu_font = ("Segoe UI", 10, data.QFont.Weight.Bold)
+#data.custom_menu_font = ("Segoe UI", 10, qt.QFont.Weight.Bold)
 #data.custom_menu_scale = None
 #data.custom_menu_font = None
 

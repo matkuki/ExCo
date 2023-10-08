@@ -8,12 +8,13 @@ import keyword
 import builtins
 import re
 import functions
+import qt
 import data
 import time
 import lexers
 
 
-class CiCode(data.QsciLexerCustom):
+class CiCode(qt.QsciLexerCustom):
     """
     Custom lexer for the Citect CiCode programming language
     """
@@ -229,8 +230,8 @@ class CiCode(data.QsciLexerCustom):
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))
+        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
         self.setDefaultFont(data.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
@@ -254,13 +255,13 @@ class CiCode(data.QsciLexerCustom):
         return self.styles["Default"]
     
     def defaultFont(self, style):
-        return data.QFont(data.current_font_name, data.current_font_size)
+        return qt.QFont(data.current_font_name, data.current_font_size)
     
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
             self.setPaper(
-                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
+                qt.QColor(data.theme["fonts"][style.lower()]["background"]), 
                 self.styles[style]
             )
             # Fonts

@@ -28,7 +28,9 @@ import traceback
 import subprocess
 import webbrowser
 
+import qt
 import data
+import constants
 
 # REPL message displaying function (that needs to be assigned at runtime!)
 repl_print = None
@@ -66,17 +68,17 @@ def create_icon(icon):
     """
     global icon_cache
     # Pixmap
-    if isinstance(icon, data.QPixmap):
-        new_icon = data.QIcon(icon)
+    if isinstance(icon, qt.QPixmap):
+        new_icon = qt.QIcon(icon)
     # Path
     elif isinstance(icon, str):
         full_icon_path = unixify_join(data.resources_directory, icon)
         if full_icon_path in icon_cache.keys():
             cached_icon = icon_cache[full_icon_path]
-            return data.QIcon(cached_icon)
+            return qt.QIcon(cached_icon)
         if not os.path.isfile(full_icon_path):
             raise Exception("Icon file doesn't exist: {}".format(full_icon_path))
-        new_icon = data.QIcon(full_icon_path)
+        new_icon = qt.QIcon(full_icon_path)
         icon_cache[full_icon_path] = new_icon
     # Unknown
     else:
@@ -100,10 +102,10 @@ def create_pixmap(pixmap_name, directory=None):
     pixmap_path = unixify_join(directory, pixmap_name)
     if pixmap_path in pixmap_cache.keys():
         cached_pixmap = pixmap_cache[pixmap_path]
-        return data.QPixmap(cached_pixmap)
+        return qt.QPixmap(cached_pixmap)
     if not os.path.isfile(pixmap_path):
         raise Exception("Pixmap file doesn't exist: {}".format(pixmap_path))
-    new_pixmap = data.QPixmap(pixmap_path)
+    new_pixmap = qt.QPixmap(pixmap_path)
     pixmap_cache[pixmap_path] = new_pixmap
     return new_pixmap
 
@@ -114,11 +116,11 @@ def create_pixmap_with_size(pixmap_name, width=None, height=None):
     pixmap = create_pixmap(pixmap_name)
     if width:
         pixmap = pixmap.scaledToWidth(
-            int(width), data.Qt.TransformationMode.SmoothTransformation
+            int(width), qt.Qt.TransformationMode.SmoothTransformation
         )
     if height:
         pixmap = pixmap.scaledToHeight(
-            int(height), data.Qt.TransformationMode.SmoothTransformation
+            int(height), qt.Qt.TransformationMode.SmoothTransformation
         )
     return pixmap
 
@@ -133,9 +135,9 @@ def ovarlay_images(base_path, overlay_path):
         raise Exception(f"Cannot create base pixmap: {overlay_path}")
     
     if overlay_pixmap.size().width() > base_pixmap.size().width() or overlay_pixmap.size().height() > base_pixmap.size().height():
-        overlay_pixmap = overlay_pixmap.scaled(base_pixmap.size(), data.Qt.AspectRatioMode.KeepAspectRatio)
+        overlay_pixmap = overlay_pixmap.scaled(base_pixmap.size(), qt.Qt.AspectRatioMode.KeepAspectRatio)
     
-    painter = data.QPainter()
+    painter = qt.QPainter()
     painter.begin(base_pixmap)
     painter.drawPixmap(0, 0, overlay_pixmap)
     painter.end()
@@ -2638,7 +2640,7 @@ def create_default_config_file():
         data.application_directory, data.config_file
     )
     with open(user_definitions_file, "w") as f:
-        f.write(data.default_config_file_content)
+        f.write(constants.default_config_file_content)
         f.close()
 
 def right_replace(string, search_str, replace_str, occurrence=1):
@@ -2671,23 +2673,23 @@ def unixify_remove(whole_path, path_to_remove):
 def change_icon_opacity(qicon, opacity):
     pixmap = qicon.pixmap(qicon.actualSize(create_size(256, 256)))
     pixmap = change_opacity(pixmap, opacity)
-    return data.QIcon(pixmap)
+    return qt.QIcon(pixmap)
 
 def change_opacity(pixmap_or_file, opacity):
     """
     Changes the opacity of a pixmap or image from a file
     """
-    base_image = data.QImage(pixmap_or_file)
-    image = data.QImage(
+    base_image = qt.QImage(pixmap_or_file)
+    image = qt.QImage(
         base_image.size(),
-        data.QImage.Format.Format_ARGB32_Premultiplied
+        qt.QImage.Format.Format_ARGB32_Premultiplied
     )
-    image.fill(data.Qt.GlobalColor.transparent)    
-    painter = data.QPainter(image)
+    image.fill(qt.Qt.GlobalColor.transparent)    
+    painter = qt.QPainter(image)
     painter.setRenderHints(
-        data.QPainter.RenderHint.Antialiasing | 
-        data.QPainter.RenderHint.TextAntialiasing | 
-        data.QPainter.RenderHint.SmoothPixmapTransform
+        qt.QPainter.RenderHint.Antialiasing | 
+        qt.QPainter.RenderHint.TextAntialiasing | 
+        qt.QPainter.RenderHint.SmoothPixmapTransform
     )
     painter.setOpacity(opacity)
     painter.drawImage(
@@ -2695,7 +2697,7 @@ def change_opacity(pixmap_or_file, opacity):
         base_image
     )
     painter.end()
-    pixmap = data.QPixmap.fromImage(image)
+    pixmap = qt.QPixmap.fromImage(image)
     return pixmap
 
 def get_index(start):
@@ -2710,10 +2712,10 @@ Constructor helper functions
 def create_rect(*args):
     if len(args) == 4:
         x, y, width, height = args
-        return data.QRect(int(x), int(y), int(width), int(height))
+        return qt.QRect(int(x), int(y), int(width), int(height))
     elif len(args) == 2:
         point, size = args
-        return data.QRect(point, size)
+        return qt.QRect(point, size)
     else:
         raise Exception(
             "[functions.create_rect] Unknown arguments: {}".format(args)
@@ -2722,9 +2724,9 @@ def create_rect(*args):
 def create_point(*args):
     if len(args) == 2:
         x, y = args
-        return data.QPoint(int(x), int(y))
+        return qt.QPoint(int(x), int(y))
     elif len(args) == 0:
-        return data.QPoint()
+        return qt.QPoint()
     else:
         raise Exception(
             "[functions.create_point] Unknown arguments: {}".format(args)
@@ -2733,7 +2735,7 @@ def create_point(*args):
 def create_size(*args):
     if len(args) == 2:
         width, height = args
-        return data.QSize(int(width), int(height))
+        return qt.QSize(int(width), int(height))
     else:
         raise Exception(
             "[functions.create_point] Unknown arguments: {}".format(args)
@@ -2826,7 +2828,7 @@ def get_edges_to_widget(widget, widget_window, size, offset=(0, 0)):
     return (center, left, right, top, bottom)
 
 def get_screen_size():
-    if data.PYQT_MODE < 6:
+    if qt.PYQT_MODE < 6:
         size = data.application.desktop().screen().rect().size()
     else:
         size = data.application.primaryScreen().size()
@@ -2843,13 +2845,13 @@ def center_to_current_screen(widget):
             top = geometry.top()
             offset_width = (geometry.width() / 2) - (widget.width() / 2)
             offset_height = (geometry.height() / 2) - (widget.height() / 2)
-            center = data.QPoint(int(left + offset_width), int(top + offset_height))
+            center = qt.QPoint(int(left + offset_width), int(top + offset_height))
             def move(*args):
                 widget.move(
                     center -
-                    data.QPoint(0, 50) # Manual offset
+                    qt.QPoint(0, 50) # Manual offset
                 )
-            data.QTimer.singleShot(0, move)
+            qt.QTimer.singleShot(0, move)
 
 """
 Docking system helpers

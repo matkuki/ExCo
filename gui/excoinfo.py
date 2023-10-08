@@ -11,7 +11,9 @@ For complete license information of the dependencies, check the 'additional_lice
 import os
 import os.path
 import functions
+import qt
 import data
+import constants
 
 
 """
@@ -19,10 +21,10 @@ import data
 ExCo Information Widget for displaying the license, used languages and libraries, ...
 -----------------------------------------------------------------------------------
 """
-class ExCoInfo(data.QDialog):
+class ExCoInfo(qt.QDialog):
     #Class variables
     name    = "Ex.Co. Info"
-    savable = data.CanSave.NO
+    savable = constants.CanSave.NO
 
     #Class functions(methods)
     def __init__(self, parent, app_dir=""):
@@ -32,10 +34,10 @@ class ExCoInfo(data.QDialog):
         super().__init__()
         #Setup the window
         self.setWindowTitle("About Ex.Co.")
-        self.setWindowFlags(data.Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(qt.Qt.WindowType.WindowStaysOnTopHint)
         #Setup the picture
-        exco_picture = data.QPixmap(data.about_image)
-        self.picture = data.QLabel(self)
+        exco_picture = qt.QPixmap(data.about_image)
+        self.picture = qt.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())
         self.picture.setScaledContents(True)
@@ -43,16 +45,16 @@ class ExCoInfo(data.QDialog):
         self.picture.mousePressEvent        = self._close
         self.picture.mouseDoubleClickEvent  = self._close
         #Initialize layout
-        self.layout = data.QGridLayout()
+        self.layout = qt.QGridLayout()
         self.layout.addWidget(self.picture)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(
-            data.QMargins(0,0,0,0)
+            qt.QMargins(0,0,0,0)
         )
         self.setLayout(self.layout)
         #Set the log window icon
         if os.path.isfile(data.application_icon) == True:
-            self.setWindowIcon(data.QIcon(data.application_icon))
+            self.setWindowIcon(qt.QIcon(data.application_icon))
         #Save the info window geometry, the values were gotten by showing a dialog with the label containing
         #the ExCo info image with the size set to (50, 50), so it would automatically resize to the label image size
         my_width    = 610
@@ -74,8 +76,8 @@ class ExCoInfo(data.QDialog):
         )
         self.setFixedSize(my_width, my_height)
 #        self.setStyleSheet("background-color:transparent;")
-#        self.setWindowFlags(data.Qt.WindowType.WindowStaysOnTopHint | data.Qt.Dialog | data.Qt.WindowType.FramelessWindowHint)
-#        self.setAttribute(data.Qt.WidgetAttribute.WA_TranslucentBackground)
+#        self.setWindowFlags(qt.Qt.WindowType.WindowStaysOnTopHint | qt.Qt.Dialog | qt.Qt.WindowType.FramelessWindowHint)
+#        self.setAttribute(qt.Qt.WidgetAttribute.WA_TranslucentBackground)
 
     def _close(self, event):
         """Close the widget"""

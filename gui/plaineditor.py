@@ -8,7 +8,9 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import qt
 import data
+import constants
 import components.actionfilter
 import components.hotspots
 import components.internals
@@ -30,7 +32,7 @@ class PlainEditor(gui.baseeditor.BaseEditor):
     main_form        = None
     current_icon     = None
     internals = None
-    savable          = data.CanSave.NO
+    savable          = constants.CanSave.NO
     # Reference to the custom context menu
     context_menu     = None
     # Namespace references for grouping functionality
@@ -79,7 +81,7 @@ class PlainEditor(gui.baseeditor.BaseEditor):
         # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(data.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
+        self.setEolMode(qt.QsciScintilla.EolMode(settings.editor['end_of_line_mode']))
         # Initialize the namespace references
         self.hotspots = components.hotspots.Hotspots()
         # Set the initial zoom factor
@@ -139,7 +141,7 @@ class PlainEditor(gui.baseeditor.BaseEditor):
         self.setCursorPosition(line_number, 0)
         #Move the first displayed line to the top of the viewving area
         self.SendScintilla(
-            data.QsciScintillaBase.SCI_GOTOLINE,
+            qt.QsciScintillaBase.SCI_GOTOLINE,
             line_number
         )
 

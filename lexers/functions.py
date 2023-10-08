@@ -16,6 +16,7 @@ import keyword
 import builtins
 import re
 import functions
+import qt
 import data
 import time
 import lexers
@@ -25,16 +26,16 @@ import lexers.treesitterpython
 def set_font(lexer, style_name, style_options):
     style_index = lexer.styles[style_name]
     lexer.setColor(
-        data.QColor(style_options["color"]),
+        qt.QColor(style_options["color"]),
         style_index
     )
-    weight = data.QFont.Weight.Normal
+    weight = qt.QFont.Weight.Normal
     if style_options["bold"]:
-        weight = data.QFont.Weight.Bold
+        weight = qt.QFont.Weight.Bold
 #    elif bold == 2:
-#        weight = data.QFont.Weight.Black
+#        weight = qt.QFont.Weight.Black
     lexer.setFont(
-        data.QFont(
+        qt.QFont(
             data.current_editor_font_name,
             data.current_editor_font_size,
             weight=weight

@@ -10,12 +10,13 @@ For complete license information of the dependencies, check the 'additional_lice
 
 
 import uuid
+import qt
 import data
 
 from .stylesheets import *
 
 
-class Menu(data.QMenu):
+class Menu(qt.QMenu):
     menu_cache = {}
 
     @staticmethod
@@ -51,7 +52,7 @@ class Menu(data.QMenu):
         pass
 
 
-class MenuBar(data.QMenuBar):
+class MenuBar(qt.QMenuBar):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Set the default font

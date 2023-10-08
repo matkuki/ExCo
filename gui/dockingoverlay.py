@@ -11,6 +11,7 @@ import inspect
 import textwrap
 import traceback
 
+import qt
 import data
 import functions
 
@@ -21,7 +22,7 @@ class DockingOverlay():
     overlay_label = None
     storage = []
     
-    class BaseDockLabel(data.QLabel):
+    class BaseDockLabel(qt.QLabel):
         name = None
         widget = None
         initial_position = None
@@ -43,7 +44,7 @@ class DockingOverlay():
             self.widget = widget
             self.setAcceptDrops(True)
             self.setScaledContents(False)
-            self.setAlignment(data.Qt.AlignmentFlag.AlignHCenter | data.Qt.AlignmentFlag.AlignVCenter)
+            self.setAlignment(qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter)
             self.setStyleSheet(f"""
 QLabel {{
     border-color: {data.theme["indication"]["passiveborder"]};
@@ -90,8 +91,8 @@ QLabel:hover {{
                 int(self.expanded_size[0]),
                 int(self.expanded_size[1]),
             )
-            if data.PYQT_MODE < 6:
-                self.stored_drag_enter_event = data.QDragEnterEvent(
+            if qt.PYQT_MODE < 6:
+                self.stored_drag_enter_event = qt.QDragEnterEvent(
                     event.pos(),
                     event.dropAction(),
                     event.mimeData(),
@@ -127,7 +128,7 @@ QLabel:hover {{
             main_form.display.docking_overlay_hide()
             box = self.widget.parent()
             if self.name == "top" or self.name == "bottom":
-                if box.orientation() == data.Qt.Orientation.Vertical:
+                if box.orientation() == qt.Qt.Orientation.Vertical:
                     tabs_index = box.indexOf(self.widget)
                     if self.name == "bottom":
                         insert_index = tabs_index + 1
@@ -138,7 +139,7 @@ QLabel:hover {{
                     tabs.dropEvent(event)
                 else:
                     if box.count() == 1:
-                        box.setOrientation(data.Qt.Orientation.Vertical)
+                        box.setOrientation(qt.Qt.Orientation.Vertical)
                         box.update_orientations()
                         if self.name == "top":
                             box.rename(box.objectName())
@@ -152,7 +153,7 @@ QLabel:hover {{
                         old_tabs = box.widget(tabs_index)
                         old_tabs.hide()
                         new_box = box.add_box(
-                            data.Qt.Orientation.Vertical,
+                            qt.Qt.Orientation.Vertical,
                             index=tabs_index,
                             add_tabs=False
                         )
@@ -170,7 +171,7 @@ QLabel:hover {{
                         new_box.setSizes([split_size] * new_box.count())
             
             elif self.name == "right" or self.name == "left":
-                if box.orientation() == data.Qt.Orientation.Horizontal:
+                if box.orientation() == qt.Qt.Orientation.Horizontal:
                     tabs_index = box.indexOf(self.widget)
                     if self.name == "right":
                         insert_index = tabs_index + 1
@@ -181,7 +182,7 @@ QLabel:hover {{
                     tabs.dropEvent(event)
                 else:
                     if box.count() == 1:
-                        box.setOrientation(data.Qt.Orientation.Horizontal)
+                        box.setOrientation(qt.Qt.Orientation.Horizontal)
                         box.update_orientations()
                         if self.name == "right":
                             tabs = box.add_tabs()
@@ -194,7 +195,7 @@ QLabel:hover {{
                         old_tabs = box.widget(tabs_index)
                         old_tabs.hide()
                         new_box = box.add_box(
-                            data.Qt.Orientation.Horizontal,
+                            qt.Qt.Orientation.Horizontal,
                             index=tabs_index,
                             add_tabs=False
                         )
@@ -211,7 +212,7 @@ QLabel:hover {{
             main_form.view.reindex_all_windows()
             
             # Split windows equally
-            if box.orientation() == data.Qt.Orientation.Horizontal:
+            if box.orientation() == qt.Qt.Orientation.Horizontal:
                 split_size = int(box.width() / box.count())
             else:
                 split_size = int(box.height() / box.count())

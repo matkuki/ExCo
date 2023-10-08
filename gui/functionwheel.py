@@ -9,7 +9,9 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import functools
+import qt
 import data
+import constants
 import functions
 
 from .custombuttons import *
@@ -23,7 +25,7 @@ from .textdiffer import *
 Overlay helper widget for visually selecting an Ex.Co. function
 ----------------------------------------------------------------
 """
-class FunctionWheel(data.QFrame):
+class FunctionWheel(qt.QFrame):
     SIZE = (640, 560)
     # Class variables
     _parent = None
@@ -68,26 +70,26 @@ class FunctionWheel(data.QFrame):
         # Set default font
         self.setFont(data.get_current_font())
         # Set the layout
-#        self.__layout = data.QGridLayout()
+#        self.__layout = qt.QGridLayout()
 #        self.__layout.setSpacing(10)
 #        self.__layout.setContentsMargins(
-#            data.QMargins(0,0,0,0)
+#            qt.QMargins(0,0,0,0)
 #        )
 #        self.setLayout(self.__layout)
         #Initialize the display label that will display the function names
         #when the mouse cursor is over a function button
-        self.display_label = data.QLabel(self)
+        self.display_label = qt.QLabel(self)
         self.display_label.setGeometry(8, 450, 200, 100)
-        font = data.QFont(data.current_font_name, 14)
+        font = qt.QFont(data.current_font_name, 14)
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            data.Qt.AlignmentFlag.AlignHCenter | data.Qt.AlignmentFlag.AlignVCenter
+            qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
         )
         #Initialize all of the hex function buttons
         self.__init_all_buttons()
         #Position the overlay to the center of the screen
-        self.center(data.QSize(*self.SIZE))
+        self.center(qt.QSize(*self.SIZE))
         #Scale the function wheel size if needed
         self.scale(1, 1)
         self.update_style()
@@ -138,7 +140,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-line-cut.png",
                 menubar_functions["line_cut"],
                 "Line Cut",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_1",
@@ -146,7 +148,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-line-copy.png",
                 menubar_functions["line_copy"],
                 "Line Copy",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_2",
@@ -154,7 +156,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-line-delete.png",
                 menubar_functions["line_delete"],
                 "Line Delete",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_3",
@@ -162,7 +164,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-line-transpose.png",
                 menubar_functions["line_transpose"],
                 "Line\nTranspose",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_4",
@@ -170,7 +172,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-line-duplicate.png",
                 menubar_functions["line_duplicate"],
                 "Line\nDuplicate",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_5",
@@ -178,7 +180,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-redo.png",
                 menubar_functions["redo"],
                 "Redo",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_6",
@@ -186,7 +188,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-undo.png",
                 menubar_functions["undo"],
                 "Undo",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_7",
@@ -194,7 +196,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/delete-end-line.png",
                 menubar_functions["delete_end_of_line"],
                 "Delete line\nending",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_8",
@@ -202,7 +204,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/delete-start-line.png",
                 menubar_functions["delete_start_of_line"],
                 "Delete line\nbeginning",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_goto_start",
@@ -210,7 +212,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/goto-start.png",
                 menubar_functions["goto_to_start"],
                 "Goto Start",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_goto_end",
@@ -218,7 +220,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/goto-end.png",
                 menubar_functions["goto_to_end"],
                 "Goto End",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_select_all",
@@ -226,7 +228,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-select-all.png",
                 menubar_functions["select_all"],
                 "Select All",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
         ]
         self.__create_buttons_from_list(button_list)
@@ -261,7 +263,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-find.png",
                 menubar_functions["special_find"],
                 "Find",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_check_text_differ=True,
             ),
             ButtonInfo(
@@ -270,7 +272,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-find-re.png",
                 menubar_functions["special_regex_find"],
                 "Regex Find",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_check_text_differ=True,
             ),
             ButtonInfo(
@@ -279,7 +281,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-find-replace.png",
                 menubar_functions["special_find_and_replace"],
                 "Find and\nReplace",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_14",
@@ -287,7 +289,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-find-replace-re.png",
                 menubar_functions["special_regex_find_and_replace"],
                 "Regex Find\nand Replace",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_goto_line",
@@ -295,7 +297,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-goto.png",
                 menubar_functions["special_goto_line"],
                 "Goto Line",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_check_text_differ=True,
             ),
             ButtonInfo(
@@ -304,7 +306,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-indent-to-cursor.png",
                 menubar_functions["special_indent_to_cursor"],
                 "Indent to\ncursor",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_17",
@@ -312,7 +314,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-highlight.png",
                 menubar_functions["special_highlight"],
                 "Highlight",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_18",
@@ -320,7 +322,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-highlight-re.png",
                 menubar_functions["special_regex_highlight"],
                 "Regex\nHighlight",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_19",
@@ -328,7 +330,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-clear-highlights.png",
                 menubar_functions["special_clear_highlights"],
                 "Clear\nHighlights",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_20",
@@ -336,7 +338,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-replace-in-selection.png",
                 menubar_functions["special_replace_in_selection"],
                 "Replace in\nselection",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_21",
@@ -344,7 +346,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-replace-in-selection-re.png",
                 menubar_functions["special_regex_replace_in_selection"],
                 "Regex Replace\nin selection",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_22",
@@ -352,7 +354,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-comment-uncomment.png",
                 menubar_functions["comment_uncomment"],
                 "Comment\nUncomment",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_23",
@@ -360,7 +362,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-replace-all.png",
                 menubar_functions["special_replace_all"],
                 "Replace All",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_24",
@@ -368,7 +370,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-replace-all-re.png",
                 menubar_functions["special_regex_replace_all"],
                 "Regex\nReplace All",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_25",
@@ -376,7 +378,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-autocompletion.png",
                 menubar_functions["toggle_autocompletions"],
                 "Toggle\nAutocompletions",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_26",
@@ -384,7 +386,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-case-to-upper.png",
                 menubar_functions["special_to_uppercase"],
                 "Selection to\nUPPERCASE",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_27",
@@ -392,7 +394,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-case-to-lower.png",
                 menubar_functions["special_to_lowercase"],
                 "Selection to\nlowercase",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_node_tree",
@@ -400,7 +402,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-node-tree.png",
                 menubar_functions["create_node_tree"],
                 "Create/Reload\n Node Tree",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_tool_tip=("Create a node tree from the currently\n" +
                                 "selected document and display it in the\n" +
                                 "upper window.\nSupported programming languages:\n" +
@@ -412,7 +414,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/view-refresh.png",
                 menubar_functions["reload_file"],
                 "Reload File",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_30",
@@ -420,7 +422,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-find-in-open-documents.png",
                 menubar_functions["special_find_in_open_documents"],
                 "Find in open\ndocuments",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_31",
@@ -428,7 +430,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-replace-in-open-documents.png",
                 menubar_functions["special_find_replace_in_open_documents"],
                 "Find and Replace\nin open documents",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_replace_all_in_open_documents",
@@ -436,7 +438,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-replace-all-in-open-documents.png",
                 menubar_functions["special_replace_all_in_open_documents"],
                 "Replace all in\nopen documents",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_bookmark_toggle",
@@ -444,7 +446,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/bookmark.png",
                 menubar_functions["bookmark_toggle"],
                 "Toggle\nBookmark",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_toggle_wordwrap",
@@ -452,7 +454,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/wordwrap.png",
                 menubar_functions["toggle_wordwrap"],
                 "Toggle\nWord Wrap",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_toggle_lineendings",
@@ -460,7 +462,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/view-line-end.png",
                 menubar_functions["toggle_line_endings"],
                 "Toggle\nLine Ending\nVisibility",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_toggle_cursor_line_highlighting",
@@ -468,7 +470,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/edit-show-cursor-line.png",
                 menubar_functions["toggle_cursor_line_highlighting"],
                 "Toggle\nCursor Line\nHighlighting",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
         ]
         self.__create_buttons_from_list(button_list)
@@ -503,7 +505,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/document-new.png",
                 form.file_create_new,
                 "Create new\ndocument",
-                input_focus_last_widget=data.HexButtonFocus.WINDOW,
+                input_focus_last_widget=constants.HexButtonFocus.WINDOW,
                 input_no_document_focus_disable=False,
             ),
             ButtonInfo(
@@ -512,7 +514,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/document-open.png",
                 form.file_open,
                 "Open\ndocument",
-                input_focus_last_widget=data.HexButtonFocus.WINDOW,
+                input_focus_last_widget=constants.HexButtonFocus.WINDOW,
                 input_no_document_focus_disable=False,
             ),
             ButtonInfo(
@@ -537,7 +539,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/document-save.png",
                 form.file_save,
                 "Save",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_no_document_focus_disable=True,
                 input_check_last_tab_type=True,
             ),
@@ -547,7 +549,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/document-save-as.png",
                 form.file_saveas,
                 "Save As",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_no_document_focus_disable=True,
                 input_check_last_tab_type=True,
             ),
@@ -557,7 +559,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/file-save-all.png",
                 form.file_save_all,
                 "Save All",
-                input_focus_last_widget=data.HexButtonFocus.WINDOW,
+                input_focus_last_widget=constants.HexButtonFocus.WINDOW,
                 input_no_document_focus_disable=True,
                 input_check_last_tab_type=True,
             ),
@@ -644,7 +646,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/view-move-tab-left.png",
                 menubar_functions["move_tab_left"],
                 "Move Tab\nLeft",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_no_tab_focus_disable=True,
                 input_no_document_focus_disable=False,
             ),
@@ -654,7 +656,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/view-move-tab-right.png",
                 menubar_functions["move_tab_right"],
                 "Move Tab\nRight",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_no_tab_focus_disable=True,
                 input_no_document_focus_disable=False,
             ),
@@ -664,7 +666,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/close-tab.png",
                 menubar_functions["close_tab"],
                 "Close Current\nTab",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
                 input_no_tab_focus_disable=True,
                 input_no_document_focus_disable=False,
             ),
@@ -674,7 +676,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/view-edge-marker.png",
                 menubar_functions["show_edge"],
                 "Show/Hide\nEdge Marker",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_zoom_reset",
@@ -682,7 +684,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/view-zoom-reset.png",
                 menubar_functions["reset_zoom"],
                 "Zoom Reset",
-                input_focus_last_widget=data.HexButtonFocus.TAB,
+                input_focus_last_widget=constants.HexButtonFocus.TAB,
             ),
             ButtonInfo(
                 "button_find_files",
@@ -761,7 +763,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/system-show-cwd-tree.png",
                 menubar_functions["create_cwd_tree"],
                 "Show CWD\nFile/Directory\nTree",
-                input_focus_last_widget=data.HexButtonFocus.NONE,
+                input_focus_last_widget=constants.HexButtonFocus.NONE,
                 input_tool_tip=("Create a file/directory tree for the " +
                                 "current working directory (CWD)"),
                 input_no_document_focus_disable=False,
@@ -772,7 +774,7 @@ class FunctionWheel(data.QFrame):
                 "tango_icons/bookmarks-clear.png",
                 menubar_functions["bookmarks_clear"],
                 "Clear All\nBookmarks",
-                input_focus_last_widget=data.HexButtonFocus.NONE,
+                input_focus_last_widget=constants.HexButtonFocus.NONE,
                 input_no_document_focus_disable=False,
             ),
         ]
@@ -901,14 +903,14 @@ class FunctionWheel(data.QFrame):
             )
             for att in attributes:
                 setattr(init_button, att, getattr(button, att))
-            if isinstance(button.pixmap, data.QIcon):
+            if isinstance(button.pixmap, qt.QIcon):
                 init_button.setIcon(button.pixmap)
             elif isinstance(button.pixmap, str):
                 init_button.setIcon(functions.create_icon(button.pixmap))
             else:
                 raise Exception("[FunctionWheel] Unknown pixmap type: {}".format(button.pixmap))
             init_button.setIconSize(
-                data.QSize(
+                qt.QSize(
                     int(button.geometry[2]),
                     int(button.geometry[3])
                 )
@@ -996,7 +998,7 @@ class FunctionWheel(data.QFrame):
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            data.Qt.AlignmentFlag.AlignHCenter | data.Qt.AlignmentFlag.AlignVCenter
+            qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
         )
         # Display the string
         self.display_label.setText(string)
@@ -1100,10 +1102,10 @@ class ButtonInfo:
                 input_pixmap,
                 input_function,
                 input_function_text,
-                input_font=data.QFont(
-                    data.current_font_name, 14, weight=data.QFont.Weight.Bold
+                input_font=qt.QFont(
+                    data.current_font_name, 14, weight=qt.QFont.Weight.Bold
                 ),
-                input_focus_last_widget=data.HexButtonFocus.NONE,
+                input_focus_last_widget=constants.HexButtonFocus.NONE,
                 input_no_tab_focus_disable=False,
                 input_no_document_focus_disable=True,
                 input_check_last_tab_type=False,

@@ -7,13 +7,14 @@ Copyright (c) 2018 Matic Kukovec.
 import keyword
 import builtins
 import re
-import functions
+import qt
 import data
+import functions
 import time
 import lexers
 
 
-class Text(data.QsciLexerCustom):
+class Text(qt.QsciLexerCustom):
     """Lexer for styling normal text documents"""
     # Class variables
     styles = {
@@ -34,7 +35,7 @@ class Text(data.QsciLexerCustom):
     def set_theme(self, theme):
         # Papers
         self.setPaper(
-            data.QColor(data.theme["fonts"]["default"]["background"]), 
+            qt.QColor(data.theme["fonts"]["default"]["background"]), 
             self.styles["Default"]
         )
         # Fonts
@@ -57,7 +58,7 @@ class Text(data.QsciLexerCustom):
         return self.styles["Default"]
     
     def defaultFont(self, style):
-        return data.QFont(data.current_font_name, data.current_font_size)
+        return qt.QFont(data.current_font_name, data.current_font_size)
     
     def styleText(self, start, end):
         self.startStyling(start)

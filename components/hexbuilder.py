@@ -8,11 +8,13 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import data
-import functions
 import re
 import math
 import typing
+
+import qt
+import data
+import functions
 from .gridgenerator import *
 
 
@@ -56,9 +58,9 @@ class HexBuilder:
                  first_position,
                  edge_length, 
                  scale=1.0,
-                 fill_color=data.QColor(255,255,255),
+                 fill_color=qt.QColor(255,255,255),
                  line_width=1,
-                 line_color=data.QColor(255,255,255),):
+                 line_color=qt.QColor(255,255,255),):
         self.set_first_position(first_position)
         self.painter = painter
         self.scale = scale
@@ -158,9 +160,9 @@ class HexBuilder:
         if line_width == 0:
             return
         
-        pen = data.QPen(data.Qt.PenStyle.SolidLine)
-        pen.setCapStyle(data.Qt.PenCapStyle.RoundCap)
-        pen.setJoinStyle(data.Qt.PenJoinStyle.RoundJoin)
+        pen = qt.QPen(qt.Qt.PenStyle.SolidLine)
+        pen.setCapStyle(qt.Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(qt.Qt.PenJoinStyle.RoundJoin)
         pen.setWidth(int(line_width))
         pen.setColor(line_color)
         qpainter.setPen(pen)
@@ -212,16 +214,16 @@ class HexBuilder:
                 n = 0
             if line_test((hex_points[i], hex_points[n])) == True:
                 hex_lines.append(
-                    data.QLine(
+                    qt.QLine(
                         functions.create_point(*hex_points[i]), 
                         functions.create_point(*hex_points[n])
                     )
                 )
         if hex_lines:
             if shadow == True:
-                shadow_0_color = data.QColor(line_color)
+                shadow_0_color = qt.QColor(line_color)
                 shadow_0_color.setAlpha(64)
-                shadow_1_color = data.QColor(line_color)
+                shadow_1_color = qt.QColor(line_color)
                 shadow_1_color.setAlpha(128)
                 
                 pen.setWidth(int(line_width*2.0))
@@ -250,9 +252,9 @@ class HexBuilder:
         if line_width == 0:
             return
         
-        pen = data.QPen(data.Qt.PenStyle.SolidLine)
-        pen.setCapStyle(data.Qt.PenCapStyle.RoundCap)
-        pen.setJoinStyle(data.Qt.PenJoinStyle.RoundJoin)
+        pen = qt.QPen(qt.Qt.PenStyle.SolidLine)
+        pen.setCapStyle(qt.Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(qt.Qt.PenJoinStyle.RoundJoin)
         pen.setWidth(int(line_width))
         pen.setColor(line_color)
         qpainter.setPen(pen)
@@ -271,16 +273,16 @@ class HexBuilder:
             if n > (len(hex_points)-1):
                 n = 0
             hex_lines.append(
-                data.QLine(
+                qt.QLine(
                     functions.create_point(*hex_points[i]), 
                     functions.create_point(*hex_points[n])
                 )
             )
         if hex_lines:
             if shadow == True:
-                shadow_0_color = data.QColor(line_color)
+                shadow_0_color = qt.QColor(line_color)
                 shadow_0_color.setAlpha(64)
-                shadow_1_color = data.QColor(line_color)
+                shadow_1_color = qt.QColor(line_color)
                 shadow_1_color.setAlpha(128)
                 
                 pen.setWidth(int(line_width*2.0))
@@ -301,9 +303,9 @@ class HexBuilder:
     def draw_filled_hexagon(self, position, fill_color, number=None):
         qpainter = self.painter
         
-        pen = data.QPen(data.Qt.PenStyle.SolidLine)
+        pen = qt.QPen(qt.Qt.PenStyle.SolidLine)
         pen.setColor(fill_color)
-        brush = data.QBrush(data.Qt.BrushStyle.SolidPattern)
+        brush = qt.QBrush(qt.Qt.BrushStyle.SolidPattern)
         brush.setColor(fill_color)
         qpainter.setBrush(brush)
         qpainter.setPen(pen)
@@ -315,14 +317,14 @@ class HexBuilder:
         qpainter.drawPolygon(*hex_qpoints)
         
         if (self.SHOW_FIELD_NUMBERS == True) and (number != None):
-            font = data.QFont('Courier', 8)
+            font = qt.QFont('Courier', 8)
             font.setBold(True)
             qpainter.setFont(font)
-            pen = data.QPen(data.Qt.PenStyle.SolidLine)
-            pen.setColor(data.QColor(0,0,0))
+            pen = qt.QPen(qt.Qt.PenStyle.SolidLine)
+            pen.setColor(qt.QColor(0,0,0))
             qpainter.setPen(pen)
             
-            font_metric = data.QFontMetrics(font)
+            font_metric = qt.QFontMetrics(font)
             x = int(position[0] - font_metric.width(str(number)) / 2)
             y = int(position[1] + font_metric.height() / 4)
             qpainter.drawText(functions.create_point(x, y), str(number))
@@ -334,11 +336,11 @@ class HexBuilder:
                           line_color):
         qpainter = self.painter
         
-        pen = data.QPen(data.Qt.PenStyle.SolidLine)
+        pen = qt.QPen(qt.Qt.PenStyle.SolidLine)
         pen.setColor(line_color)
-        pen.setCapStyle(data.Qt.PenCapStyle.RoundCap)
+        pen.setCapStyle(qt.Qt.PenCapStyle.RoundCap)
         pen.setWidth(int(line_width))
-        brush = data.QBrush(data.Qt.BrushStyle.SolidPattern)
+        brush = qt.QBrush(qt.Qt.BrushStyle.SolidPattern)
         brush.setColor(fill_color)
         qpainter.setBrush(brush)
         qpainter.setPen(pen)
@@ -357,9 +359,9 @@ class HexBuilder:
         qpainter = self.painter
         
         self.draw_filled_hexagon(position, fill_color)
-        shadow_0_color = data.QColor(line_color)
+        shadow_0_color = qt.QColor(line_color)
         shadow_0_color.setAlpha(64)
-        shadow_1_color = data.QColor(line_color)
+        shadow_1_color = qt.QColor(line_color)
         shadow_1_color.setAlpha(128)
         self.draw_line_hexagon(position, line_width*2.0, shadow_0_color)
         self.draw_line_hexagon(position, line_width*1.5, shadow_1_color)

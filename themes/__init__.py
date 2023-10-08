@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
+import qt
 import data
 import time
 import functools
@@ -55,7 +56,7 @@ def __get_theme_directory():
 
 def __check_color(field, color_string, prior_keys):
     try:
-        data.QColor(color_string)
+        qt.QColor(color_string)
     except Exception as ex:
         print(
             "[Themes] Color error: {} / '{}'!".format(
@@ -67,7 +68,7 @@ def __check_color(field, color_string, prior_keys):
 def __check_color_list(field, color_list, prior_keys):
     try:
         for color_string in color_list:
-            data.QColor(color_string)
+            qt.QColor(color_string)
     except Exception as ex:
         print(
             "[Themes] Color list error: {}!".format(

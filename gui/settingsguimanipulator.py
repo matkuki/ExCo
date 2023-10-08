@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import functools
+import qt
 import data
 import functions
 import settings
@@ -21,7 +22,7 @@ from .custombuttons import *
 Overlay helper widget for visually selecting an Ex.Co. function
 ----------------------------------------------------------------
 """
-class SettingsGuiManipulator(data.QFrame):
+class SettingsGuiManipulator(qt.QFrame):
     DEFAULT_SIZE = (640, 560)
     # Class variables
     _parent = None
@@ -53,26 +54,26 @@ class SettingsGuiManipulator(data.QFrame):
         # Set default font
         self.setFont(data.get_current_font())
         # Set the layout
-#        self.__layout = data.QGridLayout()
+#        self.__layout = qt.QGridLayout()
 #        self.__layout.setSpacing(10)
 #        self.__layout.setContentsMargins(
-#            data.QMargins(0,0,0,0)
+#            qt.QMargins(0,0,0,0)
 #        )
 #        self.setLayout(self.__layout)
         # Initialize the display label that will display the function names
         # when the mouse cursor is over a function button
-        self.display_label = data.QLabel(self)
+        self.display_label = qt.QLabel(self)
         self.display_label.setGeometry(8, 450, 200, 100)
-        font = data.QFont(data.current_font_name, 14)
+        font = qt.QFont(data.current_font_name, 14)
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            data.Qt.AlignmentFlag.AlignHCenter | data.Qt.AlignmentFlag.AlignVCenter
+            qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
         )
         # Initialize all of the hex function buttons
         self.__init_options()
         # Position the overlay to the center of the screen
-        self.center(data.QSize(*self.DEFAULT_SIZE))
+        self.center(qt.QSize(*self.DEFAULT_SIZE))
         # Scale the function wheel size if needed
         self.scale(1, 1)
         self.update_style()
@@ -98,7 +99,7 @@ class SettingsGuiManipulator(data.QFrame):
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
-            data.Qt.AlignmentFlag.AlignHCenter | data.Qt.AlignmentFlag.AlignVCenter
+            qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
         )
         # Display the string
         self.display_label.setText(string)

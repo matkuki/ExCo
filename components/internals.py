@@ -14,6 +14,7 @@ import typing
 import importlib
 import traceback
 
+import qt
 import data
 import functions
 
@@ -102,12 +103,12 @@ class Internals:
         self.corner_groupbox = None
     
     def create_corner_button(self, icon, tooltip, function):
-        button = data.QToolButton()
-        if isinstance(icon, data.QIcon):
+        button = qt.QToolButton()
+        if isinstance(icon, qt.QIcon):
             button.setIcon(icon)
         else:
             button.setIcon(functions.create_icon(icon))
-        button.setPopupMode(data.QToolButton.ToolButtonPopupMode.InstantPopup)
+        button.setPopupMode(qt.QToolButton.ToolButtonPopupMode.InstantPopup)
         button.setToolTip(tooltip)
         button.clicked.connect(function)
         return button
@@ -125,8 +126,8 @@ class Internals:
         except:
             reinit = True
         if self.corner_groupbox is None or reinit == True:
-            self.corner_groupbox = data.QGroupBox(self.__tab_widget)
-            corner_layout = data.QHBoxLayout()
+            self.corner_groupbox = qt.QGroupBox(self.__tab_widget)
+            corner_layout = qt.QHBoxLayout()
             corner_layout.setSpacing(0)
             corner_layout.setContentsMargins(0, 0, 0, 0)
             self.corner_groupbox.setLayout(corner_layout)
@@ -139,7 +140,7 @@ class Internals:
         for i in range(layout.count()):
             if data.custom_menu_scale is not None:
                 layout.itemAt(i).widget().setIconSize(
-                    data.QSize(
+                    qt.QSize(
                         data.custom_menu_scale, 
                         data.custom_menu_scale
                     )
@@ -152,7 +153,7 @@ class Internals:
         for i in range(layout.count()):
             if data.custom_menu_scale is not None:
                 layout.itemAt(i).widget().setIconSize(
-                    data.QSize(
+                    qt.QSize(
                         data.custom_menu_scale, 
                         data.custom_menu_scale
                     )
@@ -162,7 +163,7 @@ class Internals:
         if self.corner_groupbox is None:
             return
         layout = self.corner_groupbox.layout()
-        if isinstance(icon, data.QIcon):
+        if isinstance(icon, qt.QIcon):
             layout.itemAt(index).widget().setIcon(icon)
         else:
             layout.itemAt(index).widget().setIcon(

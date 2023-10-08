@@ -77,15 +77,15 @@ def generate_builtin_lexers():
                 cls_text += "        self.set_theme(data.theme)\n"
                 cls_text += "    \n"
                 cls_text += "    def set_theme(self, theme):\n"
-                cls_text += '        self.setDefaultColor(data.QColor(data.theme["fonts"]["default"]["color"]))\n'
-                cls_text += '        self.setDefaultPaper(data.QColor(data.theme["fonts"]["default"]["background"]))\n'
+                cls_text += '        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))\n'
+                cls_text += '        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))\n'
                 cls_text += '        self.setDefaultFont(data.get_editor_font())\n'
                 cls_text += "        missing_themes['{}'] = []\n".format(lexer_name)
                 for style in styles:
                     cls_text += "        for style in self.styles.keys():\n"
                     cls_text += "            try:\n"
                     cls_text += "                self.setPaper(\n"
-                    cls_text += '                    data.QColor(data.theme["fonts"][style.lower()]["background"]),\n'
+                    cls_text += '                    qt.QColor(data.theme["fonts"][style.lower()]["background"]),\n'
                     cls_text += "                    self.styles[style]\n"
                     cls_text += "                )\n"
                     cls_text += '                lexers.set_font(self, style, theme["fonts"][style.lower()])\n'

@@ -9,7 +9,9 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 
+import qt
 import data
+import constants
 import functions
 import components.actionfilter
 import components.internals
@@ -22,11 +24,11 @@ from .dialogs import *
 GUI Session manipulation object
 -------------------------------------------------
 """
-class SessionGuiManipulator(data.QTreeView):
+class SessionGuiManipulator(qt.QTreeView):
     """
     GUI object for easier user editing of sessions
     """
-    class SessionItem(data.QStandardItem):
+    class SessionItem(qt.QStandardItem):
         """QStandarItem with overridden methods"""
         #The session that the standard item will store
         my_parent = None
@@ -47,7 +49,7 @@ class SessionGuiManipulator(data.QTreeView):
     current_icon            = None
     internals        = None
     name                    = ""
-    savable                 = data.CanSave.NO
+    savable                 = constants.CanSave.NO
     last_clicked_session    = None
     tree_model              = None
     edit_flag               = False
@@ -186,7 +188,7 @@ class SessionGuiManipulator(data.QTreeView):
                        group_name,
                        new_item_name
                     ),
-                    message_type=data.MessageType.SUCCESS
+                    message_type=constants.MessageType.SUCCESS
                 )
                 # Refresh the session tree
                 self.refresh_display()
@@ -213,7 +215,7 @@ class SessionGuiManipulator(data.QTreeView):
                         old_group_name,
                         new_group_name
                     ),
-                    message_type=data.MessageType.SUCCESS
+                    message_type=constants.MessageType.SUCCESS
                 )
                 # Refresh the session tree
                 self.refresh_display()
@@ -236,7 +238,7 @@ class SessionGuiManipulator(data.QTreeView):
                     message = "Session must have at least 3 characters in it's name!"
                     self.main_form.display.repl_display_message(
                         message,
-                        message_type=data.MessageType.WARNING
+                        message_type=constants.MessageType.WARNING
                     )
                 else:
                     # Update item
@@ -417,7 +419,7 @@ class SessionGuiManipulator(data.QTreeView):
             message =  "Are you sure you want to delete group:\n"
             message += "'{}' ?".format(group_name_with_chain)
             reply = YesNoDialog.warning(message)
-            if reply == data.DialogResult.No.value:
+            if reply == constants.DialogResult.No.value:
                 return
             # Delete the group
             result = self.settings_manipulator.remove_group(remove_group)
@@ -425,7 +427,7 @@ class SessionGuiManipulator(data.QTreeView):
             if result == True:
                 self.main_form.display.repl_display_message(
                     "Group '{}' was deleted!".format(group_name_with_chain),
-                    message_type=data.MessageType.SUCCESS
+                    message_type=constants.MessageType.SUCCESS
                 )
                 # Remove the item from the tree
                 if selected_item.parent() is not None:
@@ -439,7 +441,7 @@ class SessionGuiManipulator(data.QTreeView):
                 message += "group '{}'!".format(group_name_with_chain)
                 self.main_form.display.repl_display_message(
                     message,
-                    message_type=data.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR
                 )
         elif selected_item.type == self.ItemType.SESSION:
             remove_session = self.settings_manipulator.get_session(
@@ -452,7 +454,7 @@ class SessionGuiManipulator(data.QTreeView):
             message =  "Are you sure you want to delete session:\n"
             message += "'{}' ?".format(session_name_with_chain)
             reply = YesNoDialog.warning(message)
-            if reply == data.DialogResult.No.value:
+            if reply == constants.DialogResult.No.value:
                 return
             # Delete the session
             self.settings_manipulator.remove_session(remove_session)
@@ -467,7 +469,7 @@ class SessionGuiManipulator(data.QTreeView):
             #Display successful group deletion
             self.main_form.display.repl_display_message(
                 "Empty session was deleted!",
-                message_type=data.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS
             )
             # Refresh the tree
             self.refresh_display()
@@ -475,7 +477,7 @@ class SessionGuiManipulator(data.QTreeView):
             #Display successful group deletion
             self.main_form.display.repl_display_message(
                 "Empty group was deleted!",
-                message_type=data.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS
             )
             #Refresh the tree
             self.refresh_display()
@@ -496,7 +498,7 @@ class SessionGuiManipulator(data.QTreeView):
             #Show message that groups cannot be overwritten
             self.main_form.display.repl_display_message(
                 "Groups cannot be overwritten!",
-                message_type=data.MessageType.ERROR
+                message_type=constants.MessageType.ERROR
             )
             return
         elif selected_item.type == self.ItemType.SESSION:
@@ -543,7 +545,7 @@ class SessionGuiManipulator(data.QTreeView):
         if self.tree_model is not None:
             self.tree_model.itemChanged.disconnect()
         # Initialize the display
-        self.tree_model = data.QStandardItemModel()
+        self.tree_model = qt.QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["SESSIONS"])
         self.header().hide()
 #        self.clean_model()
@@ -551,8 +553,8 @@ class SessionGuiManipulator(data.QTreeView):
         self.setUniformRowHeights(True)
         # Connect the tree model signals
         self.tree_model.itemChanged.connect(self.__item_changed)
-#        font = data.QFont(data.current_font_name, data.current_font_size, data.QFont.Bold)
-        font = data.QFont(data.current_font_name, data.current_font_size)
+#        font = qt.QFont(data.current_font_name, data.current_font_size, qt.QFont.Bold)
+        font = qt.QFont(data.current_font_name, data.current_font_size)
         ## Create the Sessions menu
         # Group processing function
         def process_group(in_group, in_menu, create_menu=True):

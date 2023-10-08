@@ -8,12 +8,13 @@ import keyword
 import builtins
 import re
 import functions
+import qt
 import data
 import time
 import lexers
 
 
-class Php(data.QsciLexerCustom):
+class Php(qt.QsciLexerCustom):
     """Lexer for styling Php documents"""
     # Class variables
     styles = {
@@ -35,7 +36,7 @@ class Php(data.QsciLexerCustom):
         for style in self.styles:
             # Papers
             self.setPaper(
-                data.QColor(data.theme["fonts"][style.lower()]["background"]), 
+                qt.QColor(data.theme["fonts"][style.lower()]["background"]), 
                 self.styles[style]
             )
             # Fonts
@@ -58,7 +59,7 @@ class Php(data.QsciLexerCustom):
         return self.styles["Default"]
     
     def defaultFont(self, style):
-        return data.QFont(data.current_font_name, data.current_font_size)
+        return qt.QFont(data.current_font_name, data.current_font_size)
     
     def styleText(self, start, end):
         self.startStyling(start)
