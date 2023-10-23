@@ -20,8 +20,8 @@ import qt
 import data
 import time
 import lexers
-import lexers.treesittermake
-import lexers.treesitterpython
+#import lexers.treesittermake
+#import lexers.treesitterpython
 
 def set_font(lexer, style_name, style_options):
     style_index = lexer.styles[style_name]

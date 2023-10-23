@@ -366,6 +366,7 @@ class Terminal(qt.QWidget):
         self.output_widget.clear()
         
         # Format the text
+        reverse = False
         bg = "default"
         fg = "default"
         new_formatting = qt.QTextCharFormat()
@@ -379,23 +380,31 @@ class Terminal(qt.QWidget):
             line = self.screen.buffer[y]
             for x in range(self.screen.columns):
                 character = line[x]
-                if character.bg != bg or character.fg != fg:
+                if character.bg != bg or character.fg != fg or character.reverse != reverse:
                     text = ''.join(current_char_list)
                     cursor.insertText(text)
                     current_visible_buffer.append(text)
                     current_char_list = []
+                    reverse = character.reverse
                     bg = character.bg
                     fg = character.fg
                     new_formatting = qt.QTextCharFormat()
-                    # Byckground
-                    if bg in PYTE_BACKGROUND_COLOR_MAP.keys():
-                        new_formatting.setBackground(PYTE_BACKGROUND_COLOR_MAP[bg])
+                    # Check reverse colors
+                    if reverse:
+                        bg_color_map = PYTE_FOREGROUND_COLOR_MAP
+                        fg_color_map = PYTE_BACKGROUND_COLOR_MAP
+                    else:
+                        bg_color_map = PYTE_BACKGROUND_COLOR_MAP
+                        fg_color_map = PYTE_FOREGROUND_COLOR_MAP
+                    # Background
+                    if bg in bg_color_map.keys():
+                        new_formatting.setBackground(bg_color_map[bg])
                     else:
                         new_color = qt.QColor("#{}".format(bg))
                         new_formatting.setBackground(new_color)
                     # Foreground
-                    if fg in PYTE_FOREGROUND_COLOR_MAP.keys():
-                        new_formatting.setForeground(PYTE_FOREGROUND_COLOR_MAP[fg])
+                    if fg in fg_color_map.keys():
+                        new_formatting.setForeground(fg_color_map[fg])
                     else:
                         new_color = qt.QColor("#{}".format(fg))
                         new_formatting.setForeground(new_color)

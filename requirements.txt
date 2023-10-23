@@ -1,8 +1,8 @@
 psutil==5.9.4
 pyte==0.8.1
-tree_sitter==0.20.1
 #PyQt5>=5.15.0
 PyQt6>=6.5.2
+PyQt6.QScintilla>=2.14.0
 hy>=0.25.0
 
 # Linux
@@ -11,3 +11,6 @@ ptyprocess>=0.7.0; platform_system == "Linux"
 # Windows
 pywin32>=306; platform_system == "Windows"
 pywinpty>=2.0.11; platform_system == "Windows"
+
+# Testing only
+#tree_sitter==0.20.1
