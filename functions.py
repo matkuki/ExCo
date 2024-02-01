@@ -16,11 +16,14 @@ import os
 import os.path
 import re
 import ast
+import sys
 import json
 import time
 import codecs
 import locale
+import shutil
 import timeit
+import datetime
 import operator
 import itertools
 import threading
@@ -2297,12 +2300,24 @@ def read_file_to_string(file_with_path):
     else:
         #File is not binary, loop through encodings to find the correct one.
         #Try the default Ex.Co. encoding UTF-8 first
-        test_encodings = ["utf-8", "cp1250", "ascii", "utf-16", "utf-32", "iso-8859-1", "latin-1"]
+        test_encodings = [
+            "utf-8",
+            "cp1250",
+            "ascii",
+            "utf-16",
+            "utf-32",
+            "iso-8859-1",
+            "latin-1",
+            "gb2312",
+        ]
         for current_encoding in test_encodings:
             try:
                 #If opening the file in the default Ex.Co. encoding fails,
                 #open it using the prefered system encoding!
-                with open(file_with_path, "r", encoding=current_encoding, errors="strict") as file:
+                with open(file_with_path,
+                          "r",
+                          encoding=current_encoding,
+                          errors="surrogateescape") as file:
                     #Read the whole file with "read()"
                     text = file.read()
                     #Close the file handle
@@ -2664,10 +2679,10 @@ def get_line_indentation(line):
 def unixify_path(path):
     return os.path.realpath(path).replace("\\", "/")
 
-def unixify_join(*paths):
+def unixify_join(*paths) -> str:
     return unixify_path(os.path.join(*paths))
 
-def unixify_remove(whole_path, path_to_remove):
+def unixify_remove(whole_path, path_to_remove) -> str:
     return unixify_path(os.path.relpath(whole_path, path_to_remove))
 
 def change_icon_opacity(qicon, opacity):
@@ -2705,6 +2720,12 @@ def get_index(start):
     while True:
         yield counter
         counter += 1
+
+def process_events(cycles: int=1, delay: float=None) -> None:
+    for i in range(cycles):
+        qt.QCoreApplication.processEvents()
+    if delay is not None:
+        time.sleep(delay)
 
 """
 Constructor helper functions
@@ -2870,3 +2891,84 @@ def remove_tabs_from_name(name):
 def remove_tab_number_from_name(name):
     tabs_string = ".Tabs"
     return name[ : (name.index(tabs_string)+len(tabs_string))]
+
+
+"""
+Output redirect
+"""
+OUTPUT_FILENAME = "output.txt"
+def output_get_backup_directory() -> str:
+    # Output backup directory check
+    output_backup_directory: str = unixify_join(data.settings_directory, "output")
+    if not os.path.isdir(output_backup_directory):
+        os.makedirs(output_backup_directory)
+    return output_backup_directory
+
+def output_get_file() -> str:
+    return unixify_join(
+        output_get_backup_directory(),
+        OUTPUT_FILENAME,
+    )
+
+def output_get_file_with_timestamp() -> str:
+    sf = os.path.splitext(OUTPUT_FILENAME)
+    return os.path.join(
+        output_get_backup_directory(),
+        OUTPUT_FILENAME.replace(
+            sf[1],
+            datetime.datetime.now().strftime(".%Y%m%d_%H%M%S.txt")
+        )
+    )
+
+def output_redirect() -> None:
+    # Store original values
+    global original_output_stream
+    original_output_stream = sys.stdout
+    global original_error_stream
+    original_error_stream = sys.stderr
+    global original_except_hook
+    original_except_hook = sys.excepthook
+
+    # Output file
+    output_file: str = output_get_file()
+
+    # Open file and redirect output
+    f = open(output_file, 'w+', encoding='utf-8', newline='\n', errors='replace')
+    sys.stdout = f
+    sys.stderr = f
+
+    # Adapt exception hook for all threads
+    def exception_hook(exctype, value, trace) -> None:
+        print('-' * 80)
+        print(
+            ''.join(traceback.format_exception(exctype, value, trace)),
+            end='',
+        )
+        print('-' * 80)
+        qt.QApplication.quit()
+        f.close()
+        # Create backup with timestamp
+        output_file_with_date: str = output_get_file_with_timestamp()
+        shutil.copy(output_file, output_file_with_date)
+
+    sys.excepthook = exception_hook
+    init_original:Callable = threading.Thread.__init__
+
+    def init(self, *args, **kwargs) -> None:
+        init_original(self, *args, **kwargs)
+        run_original = self.run
+        def run_with_except_hook(*args2, **kwargs2):
+            try:
+                run_original(*args2, **kwargs2)
+            except Exception:
+                sys.excepthook(*sys.exc_info())
+        self.run = run_with_except_hook
+
+    threading.Thread.__init__ = init # type: ignore
+
+def output_backup() -> None:
+    # Output file
+    output_file: str = output_get_file()
+    # Create backup with timestamp
+    output_file_with_date: str = output_get_file_with_timestamp()
+    shutil.copy(output_file, output_file_with_date)

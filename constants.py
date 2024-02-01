@@ -31,7 +31,7 @@ supported_file_extentions = {
     "idl": [".idl"],
     "ini": [".ini"],
     "java": [".java"],
-    "javascript": [".js", ".jsx", ".ts", ".tsx"],
+    "javascript": [".js", ".jsx", ".mjs", ".ts", ".tsx",],
     "json": [".json"],
     "lua": [".lua"],
     "nim": [".nim", ".nims", ".nimble"],

@@ -23,6 +23,9 @@ def main():
         "PyQt6.Qsci",
         "PyQt6.QtTest",
         "pyte",
+        "hy",
+        "hy.core",
+        "hy.core.result_macros",
     ]
     local_modules = []
     # List all local modules

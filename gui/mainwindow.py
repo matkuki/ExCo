@@ -243,16 +243,12 @@ class MainWindow(qt.QMainWindow):
         elif event.type()== qt.QEvent.Type.WindowDeactivate:
             self.display.docking_overlay_hide()
         
-#        print("Object:", object, "Event-Type:", event.type())
         if event.type() in (qt.QEvent.Type.Enter, qt.QEvent.Type.MouseButtonPress, qt.QEvent.Type.KeyPress):
-#            print("ENTER")
             if data.platform == "Windows":
                 win32gui.SetFocus(self.winId())
         elif event.type() == qt.QEvent.Type.Leave:
-#            print("LEAVE")
             if data.platform == "Windows":
                 def set_external_focus():
-#                    print(win32gui.GetWindowText(win32gui.GetForegroundWindow()))
                     handle = win32gui.WindowFromPoint(win32gui.GetCursorPos())
                     if handle in ExternalWidget.handle_cache:
                         win32gui.SetFocus(handle)
@@ -279,7 +275,7 @@ class MainWindow(qt.QMainWindow):
                         try:
                             self.open_file(file=arg)
                         except:
-                            traceback.print_exc()
+                            self.display.repl_display_error(traceback.format_exc())
                     self.showNormal()
                     self.activateWindow()
                 
@@ -791,7 +787,6 @@ class MainWindow(qt.QMainWindow):
             data.global_function_information[function.__name__] = (
                 name, function, icon, keys, status_tip
             )
-            #print(function.__name__)
             # Check if there is a tab character in the function
             # name and remove the part of the string after it
             if '\t' in name:
@@ -1554,7 +1549,7 @@ class MainWindow(qt.QMainWindow):
                 try:
                     self.get_tab_by_focus().toggle_comment_uncomment()
                 except:
-                    traceback.print_exc()
+                    self.display.repl_display_error(traceback.format_exc())
             toggle_comment_action = create_action(
                 'Comment/Uncomment',
                 settings.keyboard_shortcuts['general']['toggle_comment'],
@@ -1566,7 +1561,7 @@ class MainWindow(qt.QMainWindow):
                 try:
                     self.get_tab_by_focus().toggle_autocompletions()
                 except:
-                    traceback.print_exc()
+                    self.display.repl_display_error(traceback.format_exc())
             toggle_autocompletion_action = create_action(
                 'Enable/Disable Autocompletion',
                 settings.keyboard_shortcuts['general']['toggle_autocompletion'],
@@ -1578,7 +1573,7 @@ class MainWindow(qt.QMainWindow):
                 try:
                     self.get_tab_by_focus().toggle_wordwrap()
                 except:
-                    traceback.print_exc()
+                    self.display.repl_display_error(traceback.format_exc())
             toggle_wrap_action = create_action(
                 'Enable/Disable Line Wrapping',
                 settings.keyboard_shortcuts['general']['toggle_wrap'],
@@ -1590,7 +1585,7 @@ class MainWindow(qt.QMainWindow):
                 try:
                     self.get_tab_by_focus().reload_file()
                 except:
-                    traceback.print_exc()
+                    self.display.repl_display_error(traceback.format_exc())
             reload_file_action = create_action(
                 'Reload file',
                 settings.keyboard_shortcuts['general']['reload_file'],
@@ -2249,7 +2244,6 @@ class MainWindow(qt.QMainWindow):
                 try:
                     self.get_tab_by_focus().toggle_cursor_line_highlighting()
                 except:
-                    traceback.print_exc()
                     self.display.repl_display_error(traceback.format_exc())
             temp_string = 'Toggle the visibility of the line that the cursor is'
             temp_string += ' on for the currently selected document'
@@ -3154,12 +3148,9 @@ class MainWindow(qt.QMainWindow):
                     # Return error
                     return False
             except Exception as ex:
-                traceback.print_exc()
+                self._parent.display.repl_display_error(traceback.format_exc())
                 message = "Invalid document types in the main or upper window!"
-                self._parent.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.ERROR
-                )
+                self._parent.display.repl_display_error(message)
                 self._parent.display.write_to_statusbar(message, 1500)
                 # Return error
                 return False
@@ -3498,8 +3489,6 @@ class MainWindow(qt.QMainWindow):
                 self.__stored_layout_standard = self.layout_generate()
                 json_layout = json.loads(self.__stored_layout_standard)
                 window_size = json_layout["WINDOW-SIZE"]
-                
-#                print(json.dumps(json_layout, indent=4))
                 
                 # Remove the widget from current layout
                 widgets = []
@@ -3964,10 +3953,7 @@ TabWidget QToolButton:hover {{
                         # Remove the unnecessary box (OLD)
 #                        b.parent().addWidget(b.widget(0))
                         # Remove the unnecessary box
-#                        print("parent:", b.parent().objectName(), "count:", b.parent().count())
-#                        print("current:", b.objectName())
                         index = b.parent().indexOf(b)
-#                        print("index:", index)
                         b.parent().insertWidget(index, b.widget(0))
 
                         b.setParent(None)
@@ -4091,7 +4077,7 @@ TabWidget QToolButton:hover {{
                             elif isinstance(class_string, tuple) or isinstance(class_string, list):
                                 cls, tab_index, widget_data = class_string
                             else:
-                                self._parent.display.display_error(
+                                self._parent.display.repl_display_error(
                                     f"[LAYOUT] Unknown item 'class_string': {class_string.__class__}"
                                 )
                                 continue
@@ -4131,7 +4117,7 @@ TabWidget QToolButton:hover {{
                                 elif cls == "Terminal":
                                     new_terminal = new_tabs.terminal_add()
                                     working_path = widget_data[0]
-                                    if os.path.isdir(working_path):
+                                    if working_path is not None and os.path.isdir(working_path):
                                         new_terminal.set_cwd(working_path)
 
                                 elif cls == data.repl_messages_tab_name:
@@ -4145,7 +4131,7 @@ TabWidget QToolButton:hover {{
                         if current_index is not None:
                             new_tabs.setCurrentIndex(current_index)
                     else:
-                        self._parent.display.display_error("Unknown box child type: {}".format(k))
+                        self._parent.display.repl_display_error("Unknown box child type: {}".format(k))
             # Open the permanent items
             for k, v in sorted(layout["BOXES"].items()):
                 create_box(main_box, v)
@@ -4161,7 +4147,7 @@ TabWidget QToolButton:hover {{
 #                    file_path = "unknown"
 #                    functions.write_to_file(layout, file_path)
                 except:
-                    traceback.print_exc()
+                    self._parent.display.repl_display_error(traceback.format_exc())
             if _async:
                 if not hasattr(self, "layout_save_timer"):
                     # Create the layout save timer if it doesn't exist yet
@@ -5135,8 +5121,8 @@ TabWidget QToolButton:hover {{
                 # Get the line and index at where the hotspot was clicked
                 line, index = parent.node_tree_tab.lineIndexFromPosition(position)
                 # Get the document name and focus on the tab with the document
-                document_name       = re.search("DOCUMENT\:\s*(.*)\n", parent.node_tree_tab.text(0)).group(1)
-                goto_line_number    = int(re.search(".*\(line\:(\d+)\).*", parent.node_tree_tab.text(line)).group(1))
+                document_name       = re.search(r"DOCUMENT\:\s*(.*)\n", parent.node_tree_tab.text(0)).group(1)
+                goto_line_number    = int(re.search(r".*\(line\:(\d+)\).*", parent.node_tree_tab.text(line)).group(1))
                 # Find the document, set focus to it and go to the line the hotspot points to
                 document_tab = parent.get_tab_by_name(document_name)
                 # Check if the document was modified
@@ -5261,7 +5247,7 @@ TabWidget QToolButton:hover {{
                 #Get the line and index at where the hotspot was clicked
                 line, index = self._parent.repl_messages_tab.lineIndexFromPosition(position)
                 file =  re.search(
-                    ".*\((.*)\)",
+                    r".*\((.*)\)",
                     self._parent.repl_messages_tab.text(line)
                 ).group(1).replace("\n", "")
                 #Open the files
@@ -5901,6 +5887,7 @@ TabWidget QToolButton:hover {{
         Docking overlay
         """
         def docking_overlay_show(self):
+            functions.process_events(1, delay=0.01)
             parent = self._parent
             docking_overlay = parent.docking_overlay
             if docking_overlay is not None:
@@ -5908,6 +5895,7 @@ TabWidget QToolButton:hover {{
                 docking_overlay.show_on_parent(window_list)
 
         def docking_overlay_hide(self):
+            functions.process_events(1, delay=0.01)
             parent = self._parent
             if parent.docking_overlay is not None:
                 parent.docking_overlay.hide()

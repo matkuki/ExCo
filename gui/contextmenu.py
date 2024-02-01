@@ -505,7 +505,6 @@ class ContextButton(gui.custombuttons.CustomButton):
             if self.function is not None:
                 if components.actionfilter.ActionFilter.click_drag_action is not None:
                     function_name = components.actionfilter.ActionFilter.click_drag_action.function.__name__
-#                        print(self.number, function_name)
                     if self._parent.functions_type == "standard":
                         ContextMenuHex.standard_buttons[str(self.number)] = function_name
                     elif self._parent.functions_type == "plain":

@@ -380,12 +380,8 @@ class DoubleButton(CustomButton):
                 #Execute the buttons stored function
                 self.extra_button_function()
             except Exception as ex:
-                print(ex)
                 message = "You need to focus one of the editor windows first!"
-                self.main_form.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.ERROR
-                )
+                self.main_form.display.repl_display_error(message)
             #Close the function wheel
             self._parent.hide()
 

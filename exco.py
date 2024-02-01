@@ -15,11 +15,13 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      Execute this file to start Ex.Co.
 
 
-import sys
 import os
+import sys
 import argparse
+import traceback
 import qt
 import data
+import functions
 import components.fonts
 import components.signaldispatcher
 import components.processcontroller
@@ -106,10 +108,17 @@ def main():
     """
     Main function of Ex.Co.
     """
+    
     # Check arguments
     options = parse_arguments()
     if options.debug_mode == True:
         data.debug_mode = True
+    else:
+        # Redirect output to a file
+        try:
+            functions.output_redirect()
+        except:
+            traceback.print_exc()
     if options.logging_mode == True:
         data.logging_mode = True
     file_arguments = options.files
@@ -167,7 +176,9 @@ def main():
     components.thesquid.TheSquid.init_objects(main_window)
     main_window.import_user_functions()
     main_window.show()
-    sys.exit(app.exec())
+    result = app.exec()
+    functions.output_backup()
+    sys.exit(result)
     
 # Check if this is the main executing script
 if __name__ == '__main__':

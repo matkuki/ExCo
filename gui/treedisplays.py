@@ -2324,7 +2324,6 @@ class TreeExplorer(TreeDisplayBase):
     
     @qt.pyqtSlot(str, dict)
     def __keyrelease_slot(self, key, modifiers):
-#        print(key, modifiers)
         # Copy
         if key == "Key_C" and modifiers["control"] == True:
             self.__copy_items()
@@ -2425,7 +2424,6 @@ class TreeExplorer(TreeDisplayBase):
         Callback connected to the displays
         QStandardItemModel 'itemChanged' signal
         """
-#        print("Changed item:\n    ", str(item))
         if not hasattr(item, "attributes"):
             return
         if (item.attributes.itype == TreeExplorer.ItemType.RENAME_FILE or

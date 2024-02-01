@@ -124,7 +124,9 @@ class CustomEditor(BaseEditor):
             pass
 
     def __init__(self, parent, main_form, file_with_path=None):
-        """Initialize the scintilla widget"""
+        """
+        Initialize the scintilla widget
+        """
         # Initialize superclass, from which the current class is inherited,
         # THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
@@ -375,13 +377,9 @@ class CustomEditor(BaseEditor):
                     message = "Lexer changed to: {}".format(lexer_name)
                     self.main_form.display.repl_display_message(message)
                 except Exception as ex:
-                    print(ex)
                     message = "Error with lexer selection!\n"
                     message += "Select a window widget with an opened document first."
-                    self.main_form.display.repl_display_message(
-                        message,
-                        message_type=constants.MessageType.ERROR
-                    )
+                    self.main_form.display.repl_display_error(message)
                     self.main_form.display.write_to_statusbar(message)
             lexers_menu = self.main_form.display.create_lexers_menu(
                 "Change lexer", set_lexer
@@ -933,7 +931,6 @@ class CustomEditor(BaseEditor):
             self.setTabWidth(tab_width)
         # Indent according to selection
         selection = self.getSelection()
-        print(selection)
         if selection == (-1, -1, -1, -1) or (selection[0] == selection[2] and selection[1] == selection[3]):
             line_number, position = self.getCursorPosition()
             # Adjust index to the line list indexing
@@ -1932,14 +1929,18 @@ class CustomEditor(BaseEditor):
             )
 
     def clear_lexer(self):
-        """Remove the lexer from the editor"""
+        """
+        Remove the lexer from the editor
+        """
         if self.lexer() != None:
             self.lexer().deleteLater()
             self.lexer().setParent(None)
             self.setLexer(None)
 
     def set_lexer(self, lexer, file_type):
-        """Function that actually sets the lexer"""
+        """
+        Function that actually sets the lexer
+        """
         # First clear the lexer
         self.clear_lexer()
         # Save the current file type to a string
@@ -1976,7 +1977,13 @@ class CustomEditor(BaseEditor):
         # Update corner icons
         self.internals.update_corner_button_icon(self.current_icon)
         self.internals.update_icon(self)
-
+        # Check for special lexer functionality
+        qt.QTimer.singleShot(10, self.__check_special_lexer_functionality)
+    
+    def __check_special_lexer_functionality(self):
+        if isinstance(self.lexer(), lexers.nim.Nim):
+            pass
+    
     def reset_brace_matching(self):
         # Reset the brace matching color
         self.setBraceMatching(qt.QsciScintilla.BraceMatch.SloppyBraceMatch)

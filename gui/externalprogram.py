@@ -89,15 +89,12 @@ if data.platform == "Windows":
             """)
         
         def eventFilter(self, object, event):
-            print("Object:", object, "Event-Type:", event.type())
-            if event.type() in (qt.QEvent.Type.Enter, qt.QEvent.Type.MouseButtonPress, qt.QEvent.Type.KeyPress):
-                print("ENTER")
-    #            if self.my_hwnd:
-    #                win32gui.SetFocus(self.my_hwnd)
-            elif event.type() == qt.QEvent.Type.Leave:
-                print("LEAVE")
-    #            if self.external_hwnd:
-    #                win32gui.SetFocus(self.external_hwnd)
+#            if event.type() in (qt.QEvent.Type.Enter, qt.QEvent.Type.MouseButtonPress, qt.QEvent.Type.KeyPress):
+#                if self.my_hwnd:
+#                    win32gui.SetFocus(self.my_hwnd)
+#            elif event.type() == qt.QEvent.Type.Leave:
+#                if self.external_hwnd:
+#                    win32gui.SetFocus(self.external_hwnd)
             
             return super().eventFilter(object, event)
     
@@ -143,7 +140,6 @@ if data.platform == "Windows":
                     pyhandle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION | win32con.PROCESS_VM_READ, False, cpid)
                     proc_name = win32process.GetModuleFileNameEx(pyhandle, 0)
                     window_text = win32gui.GetWindowText(hwnd)
-    #                print(pid, cpid, proc_name)
                     if int(cpid) == int(pid):
                         result = hwnd
                         return False

@@ -65,7 +65,6 @@ class ReplBox(qt.QGroupBox):
     
     def cycle_language(self) -> constants.ReplLanguage:
         for i,lang in enumerate(constants.ReplLanguage):
-            print(lang, self.repl.get_language())
             if lang == self.repl.get_language():
                 if i == (len(constants.ReplLanguage) - 1):
                     new_lang = constants.ReplLanguage(0)

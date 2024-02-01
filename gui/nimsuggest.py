@@ -321,6 +321,7 @@ class Terminal(qt.QWidget):
     
     def __pty_read_loop_windows(self):
         while self.pty_process.isalive():
+#            data = self.pty_process.read(1)
             data = self.pty_process.read()
             if data is not None and data != b'':
                 self.pty_add_to_buffer.emit(data)
@@ -354,9 +355,6 @@ class Terminal(qt.QWidget):
     def __update_display(self):
         # Timing initialization
         time_start = time.perf_counter()
-        
-        if self.output_widget is None:
-            return
         
         # Cursor
         cursor = self.output_widget.textCursor()
@@ -517,21 +515,7 @@ class Terminal(qt.QWidget):
             )
     
     def __resize_event(self, width, height):
-        try:
-            if data.on_windows:
-                width -= 1
-            else:
-                width -= 1
-                height -= 1
-            if width < 0:
-                width = 0
-            if height < 0:
-                height = 0
-            self.screen.resize(height, width)
-            self.__update_display()
-            self.pty_process.setwinsize(height, width)
-        except:
-            pass
+        pass
     
     def __paste_event(self, paste_text):
         self.pty_process.write(paste_text)

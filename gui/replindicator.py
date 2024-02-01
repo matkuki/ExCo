@@ -25,6 +25,10 @@ class ReplIndicator(qt.QLabel):
         constants.ReplLanguage.Python: "language_icons/logo_python.png",
         constants.ReplLanguage.Hy: "language_icons/logo_hy_cuddles.png",
     }
+    TOOLTIPS = {
+        constants.ReplLanguage.Python: "Python programming language",
+        constants.ReplLanguage.Hy: "Hy programming language, a LISP dialect",
+    }
     
     selection_menu = None
     
@@ -68,6 +72,7 @@ class ReplIndicator(qt.QLabel):
             )
             icon = functions.create_icon(self.ICONS[lang])
             action_theme.setIcon(icon)
+            action_theme.setToolTip(self.TOOLTIPS[lang])
             self.selection_menu.addAction(action_theme)
     
     def set_image(self, image):

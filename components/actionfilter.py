@@ -36,7 +36,6 @@ class ActionFilter(qt.QObject):
                 action = receiver.actionAt(cursor)
                 if hasattr(action, "pixmap") and action.pixmap is None:
                     return super().eventFilter(receiver, event)
-#                print(action.text())
                 # Create the click&drag detect timer
                 def click_and_drag():
                     def hide_parents(obj):
