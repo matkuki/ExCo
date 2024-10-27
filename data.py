@@ -36,8 +36,10 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "7.7"
-# Global variable that holds state of logging mode
+application_version = "7.8"
+# Global variables
+command_line_options = None
+debug_mode = False
 logging_mode = False
 # Global referenc to the log display window, so it can be used anywhere
 log_window = None
@@ -56,6 +58,9 @@ resources_directory = os.path.join(application_directory,  "resources") \
     .replace('\\', '/')
 # Global settings directory
 settings_directory = os.path.join(home_directory, ".exco") \
+    .replace('\\', '/')
+# Fonts directory
+fonts_directory = os.path.join(resources_directory, "fonts/") \
     .replace('\\', '/')
 # Global string variable for the current platform name ("Windows", "Linux", ...),
 # and a flag if running on the Raspberry PI
@@ -138,3 +143,6 @@ for k in dir(keys_namespace):
     if k.startswith("Key_"):
         value = getattr(keys_namespace, k)
         keys[value] = k
+
+# Various settings
+restore_last_session = True

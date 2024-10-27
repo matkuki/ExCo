@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2023 Matic Kukovec.
+Copyright (c) 2013-2024 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -10,6 +10,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 ##  FILE DESCRIPTION:
 ##      Module that holds functions for various uses
+##      that uses only the PyQt and standard libraries.
 
 
 import os
@@ -2972,3 +2973,30 @@ def output_backup() -> None:
     # Create backup with timestamp
     output_file_with_date: str = output_get_file_with_timestamp()
     shutil.copy(output_file, output_file_with_date)
+
+def reorganize_imports(import_code: str) -> str:
+    # Split the code into individual lines
+    lines = import_code.strip().split('\n')
+    
+    # Initialize lists to separate 'import' and 'from ... import' lines
+    import_lines = []
+    from_import_lines = []
+    
+    for line in lines:
+        line = line.strip()
+        
+        # Process 'import x, y, z' lines
+        if line.startswith('import'):
+            imports = line.replace('import', '').split(',')
+            for imp in imports:
+                import_lines.append(f'import {imp.strip()}')
+        
+        # Keep 'from x import y' lines intact
+        elif line.startswith('from'):
+            from_import_lines.append(line)
+    
+    # Sort import statements: first by length, then alphabetically
+    import_lines.sort(key=lambda x: (len(x), x))
+    
+    # Combine import statements followed by from ... import statements
+    return '\n'.join(import_lines + from_import_lines)

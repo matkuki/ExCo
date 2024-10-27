@@ -8,28 +8,28 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import itertools
-import inspect
-import functools
-import keyword
-import re
-import collections
-import functions
-import settings
-import settings.constants
-import lexers
-import traceback
 import gc
-import json
-
+import os
 import qt
+import re
 import data
+import json
+import lexers
+import inspect
+import keyword
+import settings
 import constants
+import functions
+import functools
+import itertools
+import traceback
+import collections
+import libraryfunctions
+import settings.constants
+import components.thesquid
 import components.actionfilter
 import components.communicator
 import components.processcontroller
-import components.thesquid
 
 import gui.contextmenu
 from .custombuttons import *
@@ -540,8 +540,10 @@ class MainWindow(qt.QMainWindow):
         self.set_cwd(path)
 
     def closeEvent(self, event):
-        """Event that fires when the main window is closed"""
-        #Check if there are any modified documents
+        """
+        Event that fires when the main window is closed
+        """
+        # Check if there are any modified documents
         if self.check_document_states() == True:
             quit_message = "You have modified documents!\nWhat do you wish to do?"
             reply = QuitDialog.question(quit_message)
@@ -553,19 +555,27 @@ class MainWindow(qt.QMainWindow):
                     event.ignore()
             else:
                 event.ignore()
+        # Store current session if needed
+        if data.restore_last_session:
+            layout = self.view.layout_generate()
+            self.settings.manipulator.save_last_layout(layout)
 
     def resizeEvent(self, event):
-        """Resize QMainWindow event"""
-        #Save the size relations between basic widgets
+        """
+        Resize QMainWindow event
+        """
+        # Save the size relations between basic widgets
         self.view.save_layout()
-        #Hide the function whell if it is displayed
+        # Hide the function whell if it is displayed
         self.view.hide_all_overlay_widgets()
-        #Accept the event
+        # Accept the event
         event.setAccepted(False)
 
     def keyPressEvent(self, event):
-        """QMainWindow keyPressEvent, to catch which key was pressed"""
-        #Check if the lock is released
+        """
+        QMainWindow keyPressEvent, to catch which key was pressed
+        """
+        # Check if the lock is released
         if self.key_lock == False:
             #Check for active keys
             if self.__window_filter_keypress(event) == True:
@@ -2386,6 +2396,34 @@ class MainWindow(qt.QMainWindow):
                 self.view.show_about
             )
             help_menu.addAction(about_action)
+        
+        def construct_tools_menu():
+            tools_menu = Menu("&Tools", self.menubar)
+            self.menubar.addMenu(tools_menu)
+            tools_menu.installEventFilter(click_filter)
+            # Print indicated editor to PDF
+            def special_print_pdf():
+                try:
+                    text = self.get_tab_by_indication().text()
+                    filepath = functions.unixify_join(
+                        data.settings_directory,
+                        "print_document.pdf",
+                    )
+                    libraryfunctions.create_pdf_from_text(
+                        filepath, text
+                    )
+                    libraryfunctions.open_pdf(filepath)
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            print_pdf_action = create_action(
+                'Print to PDF',
+                None,
+                'Print indicated editor to PDF',
+                'tango_icons/document-print.png',
+                special_print_pdf
+            )
+            tools_menu.addAction(print_pdf_action)
+        
         #Execute the nested construction functions
         construct_file_menu()
         construct_edit_basic_menu()
@@ -2393,6 +2431,7 @@ class MainWindow(qt.QMainWindow):
         construct_system_menu()
         construct_view_menu()
         construct_repl_menu()
+        construct_tools_menu()
         construct_sessions_menu()
 #        construct_settings_menu()
         construct_help_menu()
@@ -2759,7 +2798,9 @@ class MainWindow(qt.QMainWindow):
         return found_tab_widget, found_index
 
     def close_all_tabs(self):
-        """Clear all documents from the main and upper window"""
+        """
+        Clear all documents from the main and upper window
+        """
         # Check if there are any modified documents
         if self.check_document_states() == True:
             message = "You have modified documents!\nWhat do you wish to do?"

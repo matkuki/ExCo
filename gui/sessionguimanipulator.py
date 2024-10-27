@@ -35,33 +35,33 @@ class SessionGuiManipulator(qt.QTreeView):
         name      = None
         type      = None
 
-    #Class constants
+    # Class constants
     class ItemType:
         SESSION       = 0
         GROUP         = 1
         EMPTY_SESSION = 2
         EMPTY_GROUP   = 3
 
-    #Class variables
-    parent                  = None
-    main_form               = None
-    settings_manipulator    = None
-    current_icon            = None
-    internals        = None
-    name                    = ""
-    savable                 = constants.CanSave.NO
-    last_clicked_session    = None
-    tree_model              = None
-    edit_flag               = False
-    session_groupbox        = None
+    # Class variables
+    parent                 = None
+    main_form              = None
+    settings_manipulator   = None
+    current_icon           = None
+    internals              = None
+    name                   = ""
+    savable                = constants.CanSave.NO
+    last_clicked_session   = None
+    tree_model             = None
+    edit_flag              = False
+    session_groupbox       = None
     #Icons
-    node_icon_group         = None
-    node_icon_session       = None
-    icon_session_add        = None
-    icon_session_remove     = None
-    icon_session_overwrite  = None
-    icon_group_add          = None
-    icon_session_edit       = None
+    node_icon_group        = None
+    node_icon_session      = None
+    icon_session_add       = None
+    icon_session_remove    = None
+    icon_session_overwrite = None
+    icon_group_add         = None
+    icon_session_edit      = None
 
 
     def __del__(self):
@@ -361,11 +361,6 @@ class SessionGuiManipulator(qt.QTreeView):
         self.scrollTo(empty_group_node.index())
         # Start editing the new empty group
         self.__start_editing_item(empty_group_node)
-        # Add the session signal when editing is canceled
-#        delegate = self.itemDelegate(empty_group_node.index())
-#        delegate.closeEditor.connect(
-#            functools.partial(self.__item_editing_closed, empty_group_node)
-#        )
 
     def add_empty_session(self):
         # Check for various flags

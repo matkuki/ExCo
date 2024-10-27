@@ -102,7 +102,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
         clear_highlights            = (r"^clear_highlights$", r"clear_highlights()"),   
         undo                        = (r"^undo\(\)$|^undo$", r"form.get_tab_by_indication().undo()"),
         redo                        = (r"^redo\(\)$|^redo$", r"form.get_tab_by_indication().redo()"),
-        terminal                    = (r"^terminal$", r"terminal()"),
+        terminal                    = (r"^show_terminal$", r"show_terminal()"),
         get_cwd                     = (r"^get_cwd\(\)$|^get_cwd$", r"get_cwd()"),
         set_cwd                     = (r"^set_cwd\(\)$|^set_cwd$", r"set_cwd()"),
         update_cwd                  = (r"^update_cwd\(\)$|^update_cwd$", r"update_cwd()"),
@@ -403,7 +403,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
                 os.chdir(dir)
             except:
                 #Return an evaluation error if exception occured (it's horribly side-effect-y but simple)
-                self.eval_error = "Invalid directory supplied to \"terminal()\""
+                self.eval_error = "Invalid directory supplied to \"show_terminal()\""
         #Check OS and spawn a terminal accordingly
         if data.platform == "Windows":
             #Remove the PYTHONHOME environment variable that Nuitka creates. It causes problems
@@ -426,7 +426,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
         #Create the initial references dictionary
         reference_list = dict(
             interpreter_run = self.run_cmd_process, 
-            terminal        = self.create_terminal, 
+            show_terminal   = self.create_terminal, 
         )
         #Extend the dictionary with the constants dictionary
         reference_list.update(self.dict_const_references)

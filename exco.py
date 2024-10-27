@@ -111,6 +111,7 @@ def main():
     
     # Check arguments
     options = parse_arguments()
+    data.command_line_options = options
     if options.debug_mode == True:
         data.debug_mode = True
     else:

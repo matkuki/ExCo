@@ -36,7 +36,6 @@ keyboard_shortcuts = settings.constants.keyboard_shortcuts["default"].copy()
 variables = {
     "open-new-files-in-open-instance": False,
     "max-number-of-recent-files": 100,
-    
 }
 
 """
@@ -48,6 +47,8 @@ class SettingsFileManipulator:
     """
     Object that will be used for saving, loading, ... all of the Ex.Co. settings
     """
+    LAST_LAYOUT_FILENAME = "last_layout.json"
+    
     settings_filename_with_path = None
     directories = {
         "application": None,
@@ -67,6 +68,7 @@ class SettingsFileManipulator:
         "current_editor_font_name",
         "current_editor_font_size",
         "toplevel_menu_scale",
+        "restore_last_session",
     )
     
     def __init__(self):
@@ -315,7 +317,6 @@ class SettingsFileManipulator:
             self.error_lock = True
             # Return error
             return False
-        
     
     def check_old_style_sessions(self):
         if "main" not in self.stored_sessions.keys():
@@ -386,6 +387,9 @@ class SettingsFileManipulator:
         """
         Add a new session to the stored session list
         """
+        # Update sessions
+        self.load_settings()
+        
         # Create the new session object
         new_session = self.create_empty_session(
             name=session_name,
@@ -404,6 +408,9 @@ class SettingsFileManipulator:
         """
         Add a new group to the stored session list
         """
+        # Update sessions
+        self.load_settings()
+        
         # Create the new group object
         new_group = self.create_empty_session_group(
             name=group_name,
@@ -423,6 +430,9 @@ class SettingsFileManipulator:
         """
         Remove a session from the stored session list
         """
+        # Update sessions
+        self.load_settings()
+        
         group = self.stored_sessions["main"]
         for c in session_to_remove["chain"]:
             group = group["groups"][c]
@@ -439,6 +449,9 @@ class SettingsFileManipulator:
         """
         Remove an entire group from the stored session list
         """
+        # Update sessions
+        self.load_settings()
+        
         group = self.stored_sessions["main"]
         if len(remove_group["chain"]) > 0:
             for c in remove_group["chain"]:
@@ -456,6 +469,9 @@ class SettingsFileManipulator:
         """
         Sort the stored sessions alphabetically by name
         """
+        # Update sessions
+        self.load_settings()
+        
         # Create a new empty dict
         sorted_sessions = {}
         # Add sorted keys
@@ -465,6 +481,9 @@ class SettingsFileManipulator:
         self.stored_sessions = sorted_sessions
     
     def get_session(self, name, chain):
+        # Update sessions
+        self.load_settings()
+        
         session = None
         group = self.stored_sessions["main"]
         for c in chain:
@@ -474,12 +493,18 @@ class SettingsFileManipulator:
         return session
     
     def get_group(self, chain):
+        # Update sessions
+        self.load_settings()
+        
         group = self.stored_sessions["main"]
         for c in chain:
             group = group["groups"][c]
         return group
     
     def rename_group(self, group, new_group_name):
+        # Update sessions
+        self.load_settings()
+        
         def rename_first_group(grp, new_name, in_level):
             grp["chain"][in_level] = new_name
             for k,v in grp["groups"].items():
@@ -513,3 +538,9 @@ class SettingsFileManipulator:
             self.recent_files.append(new_file)
         # Save the new settings
         self.update_recent_files()
+    
+    def save_last_layout(self, layout):
+        filepath = os.path.join(data.settings_directory, self.LAST_LAYOUT_FILENAME)
+        with open(filepath, "w+", encoding="utf-8") as f:
+            f.write(json.dumps(layout, indent=2, ensure_ascii=False))
+    

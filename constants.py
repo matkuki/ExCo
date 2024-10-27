@@ -18,7 +18,7 @@ supported_file_extentions = {
     "bash": [".sh"],
     "batch": [".bat",  ".batch"],
     "c": [".c", ".h"],
-    "c++": [".c++", ".h++", ".cc", ".hh", ".cpp", ".hpp", ".cxx", ".hxx"],
+    "c++": [".c++", ".h++", ".cc", ".hh", ".cpp", ".hpp", ".cxx", ".hxx", ".cpp2"],
     "cicode": [".ci"],
     "coffeescript": [".coffee"],
     "csharp": [".cs"],

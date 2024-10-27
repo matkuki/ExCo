@@ -16,7 +16,7 @@ import data
 import functions
 
 def __get_fonts_from_resources():
-    directory = functions.unixify_join(data.resources_directory, "fonts/")
+    directory = data.fonts_directory
     font_file_list = []
     for root, dirs, files in os.walk(directory):
         for file in files:
