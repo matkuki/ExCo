@@ -46,8 +46,9 @@ All additional licenses are specified at the beginning of every source code file
   - hy
   - psutil
   - pyte
-  - tree_sitter
   - PyQt6 (or PyQt5)
+  - QScintilla
+  - fpdf2
   - ptyprocess (Linux only)
   - pywin32 (Windows only)
   - pywinpty (Windows only)
