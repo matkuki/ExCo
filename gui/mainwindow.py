@@ -4939,19 +4939,26 @@ TabWidget QToolButton:hover {{
             else:
                 #Add REPL message to the REPL message tab
                 parent.repl_messages_tab.append("{}\n".format(message))
-            #Bring the REPL tab to the front
+            
+            rmt = parent.repl_messages_tab
+            # Bring the REPL tab to the front
             if focus_repl_messages == True:
-                parent.repl_messages_tab._parent.setCurrentWidget(
-                    parent.repl_messages_tab
-                )
-            #Bring cursor to the current message
+                def focus_repl():
+                    rmt._parent.setCurrentWidget(
+                        parent.repl_messages_tab
+                    )
+                qt.QTimer.singleShot(0, focus_repl)
+                    
+            # Bring cursor to the current message
             if scroll_to_end == True:
-                parent.repl_messages_tab.setCursorPosition(
-                    parent.repl_messages_tab.lines(), 0
-                )
-                parent.repl_messages_tab.setFirstVisibleLine(
-                    parent.repl_messages_tab.lines()
-                )
+                def scroll_to_end():
+                    rmt.setCursorPosition(
+                        parent.repl_messages_tab.lines(), 0
+                    )
+                    rmt.setFirstVisibleLine(
+                        parent.repl_messages_tab.lines()
+                    )
+                qt.QTimer.singleShot(1, scroll_to_end)
 
         def repl_scroll_to_bottom(self):
             """Scroll the REPL MESSAGES tab to the bottom"""
