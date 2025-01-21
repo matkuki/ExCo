@@ -2132,7 +2132,6 @@ class TreeDisplayBase(qt.QTreeView):
     def _create_menu(self):
         self.tree_menu = Menu(self)
         self.default_menu_font = self.tree_menu.font()
-        self.customize_context_menu()
         return self.tree_menu
 
     def _clean_model(self):
@@ -2200,36 +2199,6 @@ class TreeDisplayBase(qt.QTreeView):
                 data.tree_display_icon_size
             )
         )
-
-    def _customize_context_menu(self, menu, default_menu_font):
-        """
-        This needs to be called in a subclass as needed
-        """
-        if data.custom_menu_scale is not None and data.custom_menu_font is not None:
-            components.thesquid.TheSquid.customize_menu_style(menu)
-            font = data.get_current_font()
-            if menu is not None:
-                menu.setFont(font)
-            # Recursively change the fonts of all items
-            root = self.model().invisibleRootItem()
-            for item in self.iterate_items(root):
-                if item == None:
-                    continue
-                font.setBold(item.font().bold())
-                item.setFont(font)
-        else:
-            if default_menu_font == None:
-                return
-            components.thesquid.TheSquid.customize_menu_style(menu)
-            if menu is not None:
-                menu.setFont(default_menu_font)
-            # Recursively change the fonts of all items
-            root = self.model().invisibleRootItem()
-            for item in self.iterate_items(root):
-                if item == None:
-                    continue
-                default_menu_font.setBold(item.font().bold())
-                item.setFont(default_menu_font)
 
     def iterate_items(self, root):
         """
@@ -2539,7 +2508,6 @@ class TreeExplorer(TreeDisplayBase):
         # Initialize the menu
         self.tree_menu = Menu(self)
         self.default_menu_font = self.tree_menu.font()
-        self.customize_context_menu()
 
         # First check if the click was in an empty space
         # and create item actions accordingly
@@ -3174,8 +3142,3 @@ class TreeExplorer(TreeDisplayBase):
                 self.horizontalScrollBar().setValue(x)
                 self.verticalScrollBar().setValue(y)
             qt.QTimer.singleShot(0, __scroll_restore)
-
-    def customize_context_menu(self):
-        self._customize_context_menu(
-            self.tree_menu, self.default_menu_font
-        )

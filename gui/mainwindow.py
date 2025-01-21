@@ -14,7 +14,6 @@ import qt
 import re
 import data
 import json
-import black
 import lexers
 import inspect
 import keyword
@@ -31,6 +30,9 @@ import components.thesquid
 import components.actionfilter
 import components.communicator
 import components.processcontroller
+import black
+import autopep8
+import yapf
 
 import gui.contextmenu
 from .custombuttons import *
@@ -2427,62 +2429,96 @@ class MainWindow(qt.QMainWindow):
                 special_print_pdf
             )
             tools_menu.addAction(print_pdf_action)
-            # Format Python code
-            def format_python_code():
+            
+            tools_menu.addSeparator()
+            
+            # Format Python code - black
+            def format_python_code_black():
                 try:
-                    self.tools.format_python()
+                    self.tools.format_python("black")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            format_python_action = create_action(
-                'Format Python code',
+            format_python_black_action = create_action(
+                'Format Python code - black',
                 None,
                 'Format Python code in the selected document using the black library',
                 'language_icons/logo_python.png',
-                format_python_code
+                format_python_code_black
             )
-            tools_menu.addAction(format_python_action)
-            # Prettyfy JSON
-            def prettyfy_json():
+            tools_menu.addAction(format_python_black_action)
+            # Format Python code - autopep8
+            def format_python_code_autopep8():
                 try:
-                    self.tools.prettyfy_text("json")
+                    self.tools.format_python("autopep8")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            prettyfy_json_action = create_action(
-                'Prettyfy JSON text',
+            format_python_autopep8_action = create_action(
+                'Format Python code - autopep8',
                 None,
-                'Prettyfy JSON text in the selected document',
+                'Format Python code in the selected document using the autopep8 library',
+                'language_icons/logo_python.png',
+                format_python_code_autopep8
+            )
+            tools_menu.addAction(format_python_autopep8_action)
+            # Format Python code - yapf
+            def format_python_code_yapf():
+                try:
+                    self.tools.format_python("yapf")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            format_python_yapf_action = create_action(
+                'Format Python code - yapf',
+                None,
+                'Format Python code in the selected document using the yapf library',
+                'language_icons/logo_python.png',
+                format_python_code_yapf
+            )
+            tools_menu.addAction(format_python_yapf_action)
+            
+            tools_menu.addSeparator()
+            
+            # Pretty print JSON
+            def pretty_print_json():
+                try:
+                    self.tools.pretty_print_text("json")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            pretty_print_json_action = create_action(
+                'Pretty print JSON text',
+                None,
+                'Pretty print JSON text in the selected document',
                 'language_icons/logo_json.png',
-                prettyfy_json
+                pretty_print_json
             )
-            tools_menu.addAction(prettyfy_json_action)
-            # Prettyfy XML
-            def prettyfy_xml():
+            tools_menu.addAction(pretty_print_json_action)
+            # Pretty print XML
+            def pretty_print_xml():
                 try:
-                    self.tools.prettyfy_text("xml")
+                    self.tools.pretty_print_text("xml")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            prettyfy_xml_action = create_action(
-                'Prettyfy XML text',
+            pretty_print_xml_action = create_action(
+                'Pretty print XML text',
                 None,
-                'Prettyfy XML text in the selected document',
+                'Pretty print XML text in the selected document',
                 'language_icons/logo_xml.png',
-                prettyfy_xml
+                pretty_print_xml
             )
-            tools_menu.addAction(prettyfy_xml_action)
-            # Prettyfy HTML
-            def prettyfy_html():
+            tools_menu.addAction(pretty_print_xml_action)
+            # Pretty print HTML
+            def pretty_print_html():
                 try:
-                    self.tools.prettyfy_text("html")
+                    self.tools.pretty_print_text("html")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            prettyfy_html_action = create_action(
-                'Prettyfy HTML text',
+            pretty_print_html_action = create_action(
+                'Pretty print HTML text',
                 None,
-                'Prettyfy HTML text in the selected document',
+                'Pretty print HTML text in the selected document',
                 'language_icons/logo_html.png',
-                prettyfy_html,
+                pretty_print_html,
             )
-            tools_menu.addAction(prettyfy_html_action)
+            tools_menu.addAction(pretty_print_html_action)
         
         #Execute the nested construction functions
         construct_file_menu()
@@ -6179,7 +6215,7 @@ TabWidget QToolButton:hover {{
             # Get the reference to the MainWindow parent object instance
             self._parent = parent
         
-        def prettyfy_text(self, _type: str) -> None:
+        def pretty_print_text(self, _type: str) -> None:
             tab = self._parent.get_tab_by_indication()
             
             if not hasattr(tab, "text"):
@@ -6196,13 +6232,13 @@ TabWidget QToolButton:hover {{
                 prettyfied_string = functions.pretty_print_html(tab.text())
             else:
                 self._parent.display.repl_show_error(
-                    f"Unknown prettyfy type: '{_type}'"
+                    f"Unknown pretty_print type: '{_type}'"
                 )
                 return
             
             tab.set_all_text(prettyfied_string)
         
-        def format_python(self) -> None:
+        def format_python(self, library: str) -> None:
             tab = self._parent.get_tab_by_indication()
             
             if not hasattr(tab, "text"):
@@ -6211,6 +6247,15 @@ TabWidget QToolButton:hover {{
                 )
                 return
             
-            formatted_code = black.format_str(tab.text(), mode=black.FileMode())
+            code = tab.text()
+            
+            if library == "black":
+                formatted_code = black.format_str(code, mode=black.FileMode())
+            
+            elif library == "autopep8":
+                formatted_code = autopep8.fix_code(code)
+            
+            elif library == "yapf":
+                formatted_code, _ = yapf.yapf_api.FormatCode(code)
             
             tab.set_all_text(formatted_code)
