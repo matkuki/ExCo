@@ -14,6 +14,7 @@ import qt
 import re
 import data
 import json
+import black
 import lexers
 import inspect
 import keyword
@@ -129,7 +130,9 @@ class MainWindow(qt.QMainWindow):
 
 
     def __init__(self, new_document=False, logging=False, file_arguments=None):
-        """Initialization routine for the main form"""
+        """
+        Initialization routine for the main form
+        """
         # Initialize superclass, from which the main form is inherited
         super().__init__()
         # Initialize the namespace references
@@ -140,6 +143,7 @@ class MainWindow(qt.QMainWindow):
         self.editing = self.Editing(self)
         self.display = self.Display(self)
         self.bookmarks = self.Bookmarks(self)
+        self.tools = self.Tools(self)
         # Set the name of the main window
         self.name = "{} - PID:{}".format(
             self.get_default_title(),
@@ -2423,6 +2427,62 @@ class MainWindow(qt.QMainWindow):
                 special_print_pdf
             )
             tools_menu.addAction(print_pdf_action)
+            # Format Python code
+            def format_python_code():
+                try:
+                    self.tools.format_python()
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            format_python_action = create_action(
+                'Format Python code',
+                None,
+                'Format Python code in the selected document using the black library',
+                'language_icons/logo_python.png',
+                format_python_code
+            )
+            tools_menu.addAction(format_python_action)
+            # Prettyfy JSON
+            def prettyfy_json():
+                try:
+                    self.tools.prettyfy_text("json")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            prettyfy_json_action = create_action(
+                'Prettyfy JSON text',
+                None,
+                'Prettyfy JSON text in the selected document',
+                'language_icons/logo_json.png',
+                prettyfy_json
+            )
+            tools_menu.addAction(prettyfy_json_action)
+            # Prettyfy XML
+            def prettyfy_xml():
+                try:
+                    self.tools.prettyfy_text("xml")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            prettyfy_xml_action = create_action(
+                'Prettyfy XML text',
+                None,
+                'Prettyfy XML text in the selected document',
+                'language_icons/logo_xml.png',
+                prettyfy_xml
+            )
+            tools_menu.addAction(prettyfy_xml_action)
+            # Prettyfy HTML
+            def prettyfy_html():
+                try:
+                    self.tools.prettyfy_text("html")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            prettyfy_html_action = create_action(
+                'Prettyfy HTML text',
+                None,
+                'Prettyfy HTML text in the selected document',
+                'language_icons/logo_html.png',
+                prettyfy_html,
+            )
+            tools_menu.addAction(prettyfy_html_action)
         
         #Execute the nested construction functions
         construct_file_menu()
@@ -5953,7 +6013,7 @@ TabWidget QToolButton:hover {{
         All bookmark functionality
         """
         # Class varibles
-        parent = None
+        _parent = None
         # List of all the bookmarks
         marks = None
 
@@ -6104,3 +6164,53 @@ TabWidget QToolButton:hover {{
                 editor._parent.setCurrentWidget(editor)
                 # Go to the stored line
                 editor.goto_line(line)
+
+    class Tools:
+        """
+        Helper functions for everything
+        """
+        # Class varibles
+        _parent = None
+        
+        def __init__(self, parent):
+            """
+            Initialization of the Bookmarks object instance
+            """
+            # Get the reference to the MainWindow parent object instance
+            self._parent = parent
+        
+        def prettyfy_text(self, _type: str) -> None:
+            tab = self._parent.get_tab_by_indication()
+            
+            if not hasattr(tab, "text"):
+                self._parent.display.repl_show_error(
+                    f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
+                )
+                return
+            
+            if _type == "json":
+                prettyfied_string = functions.pretty_print_json(tab.text())
+            elif _type == "xml":
+                prettyfied_string = functions.pretty_print_xml(tab.text())
+            elif _type == "html":
+                prettyfied_string = functions.pretty_print_html(tab.text())
+            else:
+                self._parent.display.repl_show_error(
+                    f"Unknown prettyfy type: '{_type}'"
+                )
+                return
+            
+            tab.set_all_text(prettyfied_string)
+        
+        def format_python(self) -> None:
+            tab = self._parent.get_tab_by_indication()
+            
+            if not hasattr(tab, "text"):
+                self._parent.display.repl_show_error(
+                    f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
+                )
+                return
+            
+            formatted_code = black.format_str(tab.text(), mode=black.FileMode())
+            
+            tab.set_all_text(formatted_code)

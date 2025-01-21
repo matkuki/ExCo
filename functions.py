@@ -31,6 +31,10 @@ import threading
 import traceback
 import subprocess
 import webbrowser
+import xml.etree.ElementTree
+import xml.dom.minidom
+import html
+import html.parser
 
 import qt
 import data
@@ -2677,6 +2681,9 @@ def get_line_indentation(line):
             break
     return indentation
 
+"""
+Unixifying functions
+"""
 def unixify_path(path):
     return os.path.realpath(path).replace("\\", "/")
 
@@ -2685,6 +2692,7 @@ def unixify_join(*paths) -> str:
 
 def unixify_remove(whole_path, path_to_remove) -> str:
     return unixify_path(os.path.relpath(whole_path, path_to_remove))
+
 
 def change_icon_opacity(qicon, opacity):
     pixmap = qicon.pixmap(qicon.actualSize(create_size(256, 256)))
@@ -2727,6 +2735,58 @@ def process_events(cycles: int=1, delay: float=None) -> None:
         qt.QCoreApplication.processEvents()
     if delay is not None:
         time.sleep(delay)
+
+"""
+Prettyfying functions
+"""
+def pretty_print_json(input_string) -> str:
+    try:
+        # Parse the input string to check if it's valid JSON
+        json_object = json.loads(input_string)
+    except json.JSONDecodeError as e:
+        # Raise an exception if the input is not valid JSON
+        raise ValueError("Invalid JSON") from e
+    
+    # Pretty print the JSON with an indentation level of 2
+    pretty_json = json.dumps(json_object, indent=2, ensure_ascii=False)
+    return pretty_json
+
+def pretty_print_xml(input_string) -> str:
+    try:
+        # Parse the input string to check if it's valid XML
+        element = xml.etree.ElementTree.fromstring(input_string)
+    except xml.etree.ElementTree.ParseError as e:
+        # Raise an exception if the input is not valid XML
+        raise ValueError("Invalid XML") from e
+    
+    # Convert the ElementTree element back to a string
+    rough_string = xml.etree.ElementTree.tostring(element, 'utf-8')
+    
+    # Use minidom to pretty-print the XML with an indentation level of 2
+    reparsed = xml.dom.minidom.parseString(rough_string)
+    pretty_xml = reparsed.toprettyxml(indent="  ")
+    
+    return pretty_xml
+
+def pretty_print_html(input_string):
+    # Validate HTML
+    class HTMLValidator(html.parser.HTMLParser):
+        def error(self, message):
+            raise ValueError("Invalid HTML: " + message)
+
+    validator = HTMLValidator()
+    # Unescape HTML entities before validation
+    unescaped_input = html.unescape(input_string)
+    validator.feed(unescaped_input)
+
+    # Pretty-print HTML
+    try:
+        dom = xml.dom.minidom.parseString(unescaped_input)
+        pretty_html = dom.toprettyxml(indent="  ", newl="\n", encoding="UTF-8").decode("UTF-8")
+        return pretty_html
+    except Exception as e:
+        raise ValueError("Error in pretty-printing HTML: " + str(e))
+
 
 """
 Constructor helper functions
