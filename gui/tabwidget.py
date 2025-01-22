@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (c) 2013-2023 Matic Kukovec.
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -409,7 +409,6 @@ QTabBar::tab:selected {{
 
     def customize_tab_bar(self):
         if data.custom_menu_scale != None and data.custom_menu_font != None:
-            components.thesquid.TheSquid.customize_menu_style(self.tabBar())
             self.tabBar().setFont(qt.QFont(*data.custom_menu_font))
             new_icon_size = functions.create_size(
                 data.custom_menu_scale,
@@ -417,7 +416,6 @@ QTabBar::tab:selected {{
             )
             self.setIconSize(new_icon_size)
         else:
-            components.thesquid.TheSquid.customize_menu_style(self.tabBar())
             self.tabBar().setFont(data.get_current_font())
             self.setIconSize(self.default_icon_size)
         self.tabBar().set_style()

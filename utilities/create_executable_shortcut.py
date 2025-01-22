@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+
+"""
+Copyright (c) 2013-present Matic Kukovec. 
+Released under the GNU GPL3 license.
+
+For more information check the 'LICENSE.txt' file.
+For complete license information of the dependencies, check the 'additional_licenses' directory.
+"""
 
 import os
 import sys
@@ -44,7 +53,7 @@ for arg in arguments:
     parameters.add(arg)
 # Run ExCo process
 discard osproc.startProcess(
-    command="C:/Python312/pythonw.exe",
+    command="C:/Program Files/Python313/pythonw.exe",
     workingDir="",
     args=parameters,
     env=nil
