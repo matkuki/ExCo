@@ -20,7 +20,9 @@ try:
     import PyQt6.QtCore
     import PyQt6.QtGui
     import PyQt6.QtWidgets
+    import PyQt6.sip
     PyQt = PyQt6
+    sip = PyQt6.sip
     from PyQt6.Qsci import *
     from PyQt6.QtCore import *
     from PyQt6.QtGui import *

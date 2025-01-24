@@ -5040,6 +5040,10 @@ TabWidget QToolButton:hover {{
             # Bring the REPL tab to the front
             if focus_repl_messages == True:
                 def focus_repl():
+                    if qt.sip.isdeleted(rmt):
+                        return
+                    if qt.sip.isdeleted(rmt._parent):
+                        return
                     rmt._parent.setCurrentWidget(
                         parent.repl_messages_tab
                     )
