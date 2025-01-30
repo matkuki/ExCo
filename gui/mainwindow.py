@@ -5037,6 +5037,10 @@ TabWidget QToolButton:hover {{
                 parent.repl_messages_tab.append("{}\n".format(message))
             
             rmt = parent.repl_messages_tab
+            if qt.sip.isdeleted(rmt):
+                return
+            if qt.sip.isdeleted(rmt._parent):
+                return
             # Bring the REPL tab to the front
             if focus_repl_messages == True:
                 def focus_repl():
@@ -5052,6 +5056,10 @@ TabWidget QToolButton:hover {{
             # Bring cursor to the current message
             if scroll_to_end == True:
                 def scroll_to_end():
+                    if qt.sip.isdeleted(rmt):
+                        return
+                    if qt.sip.isdeleted(rmt._parent):
+                        return
                     rmt.setCursorPosition(
                         parent.repl_messages_tab.lines(), 0
                     )
