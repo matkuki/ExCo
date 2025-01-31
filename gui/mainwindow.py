@@ -2432,48 +2432,98 @@ class MainWindow(qt.QMainWindow):
             
             tools_menu.addSeparator()
             
-            # Format Python code - black
-            def format_python_code_black():
+            # Menu
+            formattine_menu = tools_menu.addMenu("Code formatting")
+            
+            ## Selected text
+            # Format Python code for a file's selected text - black
+            def format_python_selection_black():
                 try:
-                    self.tools.format_python("black")
+                    self.tools.format_python_selected_text("black")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             format_python_black_action = create_action(
-                'Format Python code - black',
+                'Format Python code - selection - black',
                 None,
-                'Format Python code in the selected document using the black library',
+                "Format Python code in the selected document's selected text using the black library",
                 'language_icons/logo_python.png',
-                format_python_code_black
+                format_python_selection_black
             )
-            tools_menu.addAction(format_python_black_action)
-            # Format Python code - autopep8
-            def format_python_code_autopep8():
+            formattine_menu.addAction(format_python_black_action)
+            temp_icon = functions.create_icon('tango_icons/view-edge-marker.png')
+            formattine_menu.setIcon(temp_icon)
+            # Format Python code for a file's selected text - autopep8
+            def format_python_selection_autopep8():
                 try:
-                    self.tools.format_python("autopep8")
+                    self.tools.format_python_selected_text("autopep8")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             format_python_autopep8_action = create_action(
-                'Format Python code - autopep8',
+                'Format Python code - selection - autopep8',
                 None,
-                'Format Python code in the selected document using the autopep8 library',
+                "Format Python code in the selected document's selected text using the autopep8 library",
                 'language_icons/logo_python.png',
-                format_python_code_autopep8
+                format_python_selection_autopep8
             )
-            tools_menu.addAction(format_python_autopep8_action)
-            # Format Python code - yapf
-            def format_python_code_yapf():
+            formattine_menu.addAction(format_python_autopep8_action)
+            # Format Python code for a file's selected text - yapf
+            def format_python_selection_yapf():
                 try:
-                    self.tools.format_python("yapf")
+                    self.tools.format_python_selected_text("yapf")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
             format_python_yapf_action = create_action(
-                'Format Python code - yapf',
+                'Format Python code - selection - yapf',
                 None,
-                'Format Python code in the selected document using the yapf library',
+                "Format Python code in the selected document's selected text using the yapf library",
+                'language_icons/logo_python.png',
+                format_python_selection_yapf
+            )
+            formattine_menu.addAction(format_python_yapf_action)
+            
+            ## Entire file
+            # Format Python code for the entire file - black
+            def format_python_code_black():
+                try:
+                    self.tools.format_python_all_text("black")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            format_python_black_action = create_action(
+                'Format Python code - entire file - black',
+                None,
+                'Format Python code in the entire selected document using the black library',
+                'language_icons/logo_python.png',
+                format_python_code_black
+            )
+            formattine_menu.addAction(format_python_black_action)
+            # Format Python code for the entire file - autopep8
+            def format_python_code_autopep8():
+                try:
+                    self.tools.format_python_all_text("autopep8")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            format_python_autopep8_action = create_action(
+                'Format Python code - entire file - autopep8',
+                None,
+                'Format Python code in the entire selected document using the autopep8 library',
+                'language_icons/logo_python.png',
+                format_python_code_autopep8
+            )
+            formattine_menu.addAction(format_python_autopep8_action)
+            # Format Python code for the entire file - yapf
+            def format_python_code_yapf():
+                try:
+                    self.tools.format_python_all_text("yapf")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+            format_python_yapf_action = create_action(
+                'Format Python code - entire file - yapf',
+                None,
+                'Format Python code in the entire selected document using the yapf library',
                 'language_icons/logo_python.png',
                 format_python_code_yapf
             )
-            tools_menu.addAction(format_python_yapf_action)
+            formattine_menu.addAction(format_python_yapf_action)
             
             tools_menu.addSeparator()
             
@@ -6231,7 +6281,7 @@ TabWidget QToolButton:hover {{
             tab = self._parent.get_tab_by_indication()
             
             if not hasattr(tab, "text"):
-                self._parent.display.repl_show_error(
+                self._parent.display.repl_display_error(
                     f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
                 )
                 return
@@ -6243,18 +6293,18 @@ TabWidget QToolButton:hover {{
             elif _type == "html":
                 prettyfied_string = functions.pretty_print_html(tab.text())
             else:
-                self._parent.display.repl_show_error(
+                self._parent.display.repl_display_error(
                     f"Unknown pretty_print type: '{_type}'"
                 )
                 return
             
             tab.set_all_text(prettyfied_string)
         
-        def format_python(self, library: str) -> None:
+        def format_python_all_text(self, library: str) -> None:
             tab = self._parent.get_tab_by_indication()
             
             if not hasattr(tab, "text"):
-                self._parent.display.repl_show_error(
+                self._parent.display.repl_display_error(
                     f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
                 )
                 return
@@ -6271,3 +6321,30 @@ TabWidget QToolButton:hover {{
                 formatted_code, _ = yapf.yapf_api.FormatCode(code)
             
             tab.set_all_text(formatted_code)
+        
+        def format_python_selected_text(self, library: str) -> None:
+            tab = self._parent.get_tab_by_indication()
+            
+            if not hasattr(tab, "selectedText") or not hasattr(tab, "hasSelectedText"):
+                self._parent.display.repl_display_error(
+                    f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
+                )
+                return
+            elif not tab.hasSelectedText():
+                self._parent.display.repl_display_error(
+                    f"No text selected in the editor!)"
+                )
+                return
+            
+            code = tab.selectedText()
+            
+            if library == "black":
+                formatted_code = black.format_str(code, mode=black.FileMode())
+            
+            elif library == "autopep8":
+                formatted_code = autopep8.fix_code(code)
+            
+            elif library == "yapf":
+                formatted_code, _ = yapf.yapf_api.FormatCode(code)
+            
+            tab.replaceSelectedText(formatted_code)
