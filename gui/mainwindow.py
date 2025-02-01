@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
@@ -3847,6 +3845,8 @@ QSplitter::handle {{
 {}
 {}
 {}
+{}
+{}
             """.format(
                 data.theme["form"],
                 data.theme["form"],
@@ -3856,116 +3856,18 @@ QSplitter::handle {{
                 StyleSheetMenuBar.standard(),
                 StyleSheetTooltip.standard(),
                 StyleSheetTable.standard(),
+                StyleSheetTabWidget.standard(),
+                StyleSheetTreeWidget.standard(),
             ))
-            return style_sheet
-
-        def reset_window_colors(self, in_sheet):
-            style_sheet = in_sheet
-            style_sheet += self.generate_window_colors()
-            style_sheet = self._style_tree_widgets(style_sheet)
             return style_sheet
 
         def reset_entire_style_sheet(self):
             style_sheet = self.init_style_sheet()
-            style_sheet = self.reset_window_colors(style_sheet)
             self._parent.setStyleSheet(style_sheet)
             self._parent.menubar.update_style()
             Menu.update_styles()
 #            self._parent.repl_box.indication_reset()
             self.indication_check()
-
-        def generate_window_colors(self):
-            style_sheet = """
-TabWidget::pane {{
-    border: 2px solid {};
-    background-color: {};
-    margin: 0px;
-    spacing: 0px;
-    padding: 0px;
-}}
-TabWidget[indicated=false]::pane {{
-    border: 2px solid {};
-    background-color: {};
-}}
-TabWidget[indicated=true]::pane {{
-    border: 2px solid {};
-    background-color: {};
-}}
-TabWidget QToolButton {{
-    background: {};
-    border: 1px solid {};
-    margin-top: 0px;
-    margin-bottom: 0px;
-    margin-left: 0px;
-    margin-right: 1px;
-}}
-TabWidget QToolButton:hover {{
-    background: {};
-    border: 1px solid {};
-}}
-            """.format(
-                data.theme["indication"]["passiveborder"],
-                data.theme["indication"]["passivebackground"],
-                data.theme["indication"]["passiveborder"],
-                data.theme["indication"]["passivebackground"],
-                data.theme["indication"]["activeborder"],
-                data.theme["indication"]["activebackground"],
-                data.theme["indication"]["passivebackground"],
-                data.theme["indication"]["passiveborder"],
-                data.theme["indication"]["activebackground"],
-                data.theme["indication"]["activeborder"],
-            )
-            return style_sheet
-
-        def generate_treedisplay_colors(self, type):
-            style_sheet =  type + " {"
-            style_sheet += "color: {};".format(
-                data.theme["fonts"]["default"]["color"],
-            )
-            style_sheet += "background-color: {};".format(
-                data.theme["fonts"]["default"]["background"],
-            )
-            style_sheet += "}"
-            if data.theme["name"] != "Air":
-                shrink_icon = expand_icon = os.path.join(
-                    data.resources_directory,
-                    "feather/air-light-grey/chevron-down.svg"
-                ).replace("\\", "/")
-                expand_icon = os.path.join(
-                    data.resources_directory,
-                    "feather/air-light-grey/chevron-right.svg"
-                ).replace("\\", "/")
-            else:
-                shrink_icon = expand_icon = os.path.join(
-                    data.resources_directory,
-                    "feather/air-grey/chevron-down.svg"
-                ).replace("\\", "/")
-                expand_icon = os.path.join(
-                    data.resources_directory,
-                    "feather/air-grey/chevron-right.svg"
-                ).replace("\\", "/")
-            style_sheet += (
-                type + "::branch:closed:has-children:!has-siblings," +
-                type + "::branch:closed:has-children:has-siblings {" +
-                "    border-image: none;" +
-                "    image: url({0});".format(expand_icon) +
-                "}" +
-                type + "::branch:open:has-children:!has-siblings," +
-                type + "::branch:open:has-children:has-siblings {" +
-                "    border-image: none;" +
-                "    image: url({0});".format(shrink_icon) +
-                "}"
-            )
-
-            return style_sheet
-
-        def _style_tree_widgets(self, style_sheet):
-            tree_widgets = (
-                "QTreeView",
-            )
-            for t in tree_widgets:
-                style_sheet += self.generate_treedisplay_colors(t)
-            return style_sheet
 
         def indicate_window(self):
             style_sheet = self.init_style_sheet()
@@ -3977,7 +3879,6 @@ TabWidget QToolButton:hover {{
                 w.repaint()
 
             data.signal_dispatcher.update_title.emit()
-
 
         def indication_check(self):
             if hasattr(self, "indication_timer"):
