@@ -211,9 +211,14 @@ class StyleSheetMenuBar:
 QMenuBar {{
     background-color: {};
     color: {};
+    spacing: 4px;
 }}
 QMenuBar::item {{
     background-color: transparent;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
 }}
 QMenuBar::item:selected {{
     background-color: {};
@@ -397,4 +402,21 @@ QTreeView::item:selected {{
     background-color: {data.theme["indication"]["selection"]};
 }}
 """
+        return style_sheet
+
+
+class StyleSheetLineEdit:
+    @staticmethod
+    def standard():
+        style_sheet = f"""
+QLineEdit {{
+    text-align: left;
+    background: {data.theme["indication"]["passivebackground"]};
+    color: {data.theme["fonts"]["default"]["color"]};
+    border: 1px solid {data.theme["indication"]["passiveborder"]};
+    font-family: {data.current_font_name};
+    font-size: {data.current_font_size}pt;
+    padding: 0px 5px 0px 5px;
+}}
+    """
         return style_sheet

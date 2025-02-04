@@ -28,6 +28,7 @@ import components.thesquid
 
 from .dialogs import *
 from .menu import *
+from .stylesheets import *
 
 
 def remove_readonly(func, path, excinfo):
@@ -2054,6 +2055,19 @@ if data.platform == "Windows":
     import win32api, win32con
 
 class TreeDisplayBase(qt.QTreeView):
+    # Custom item delegate
+    class CustomItemDelegate(qt.QStyledItemDelegate):
+        def createEditor(self, parent, option, index):
+            editor = qt.QLineEdit(parent)
+            editor.setStyleSheet(StyleSheetLineEdit.standard())
+            return editor
+    
+        def setEditorData(self, editor, index):
+            editor.setText(index.data())
+    
+        def setModelData(self, editor, model, index):
+            model.setData(index, editor.text())
+    
     # Signals
     key_release_signal = qt.pyqtSignal(str, dict)
 
@@ -2126,6 +2140,8 @@ class TreeDisplayBase(qt.QTreeView):
         self.setExpandsOnDoubleClick(False)
         # Install event filter
         self.installEventFilter(self)
+        # Set the item delegate
+        self.setItemDelegate(self.CustomItemDelegate())
 
     def eventFilter(self, object, event):
         if not self.key_release_lock:

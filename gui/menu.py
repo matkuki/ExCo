@@ -55,13 +55,12 @@ class Menu(qt.QMenu):
 class MenuBar(qt.QMenuBar):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Set the default font
-        self.setFont(data.get_current_font())
         # Restyle
         self.update_style()
 
     def update_style(self):
-        pass
+        # Set the default font
+        self.setFont(data.get_current_font())
 
 
 

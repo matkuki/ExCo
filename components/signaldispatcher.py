@@ -17,6 +17,8 @@ class GlobalSignalDispatcher(qt.QObject):
     Global signal dispatcher
     '''
     update_title = qt.pyqtSignal()
+    editor_initialized = qt.pyqtSignal(str)
+    editor_deleted = qt.pyqtSignal(str)
 
     
     def __init__(self, *args, **kwargs) -> None:

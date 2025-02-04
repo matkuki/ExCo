@@ -6170,6 +6170,7 @@ QSplitter::handle {{
         """
         # Class varibles
         _parent = None
+        filesystem_watcher = None
         
         def __init__(self, parent):
             """
@@ -6177,6 +6178,25 @@ QSplitter::handle {{
             """
             # Get the reference to the MainWindow parent object instance
             self._parent = parent
+            
+            # Initialize the file-system watcher
+            self.filesystem_watcher = qt.QFileSystemWatcher(parent)
+            self.filesystem_watcher.fileChanged.connect(self.__file_changed)
+            self.filesystem_watcher.directoryChanged.connect(self.__directory_changed)
+            data.signal_dispatcher.editor_initialized.connect(self.filewatcher_add)
+            data.signal_dispatcher.editor_deleted.connect(self.filewatcher_remove)
+        
+        def __file_changed(self, path: str) -> None:
+            print("__file_changed", path)
+        
+        def __directory_changed(self, path: str) -> None:
+            print("__directory_changed", path)
+        
+        def filewatcher_add(self, path: str) -> bool:
+            return self.filesystem_watcher.addPath(path)
+        
+        def filewatcher_remove(self, path: str) -> bool:
+            return self.filesystem_watcher.removePath(path)
         
         def pretty_print_text(self, _type: str) -> None:
             tab = self._parent.get_tab_by_indication()
