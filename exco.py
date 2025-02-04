@@ -137,6 +137,8 @@ def main():
     app = qt.QApplication(sys.argv)
     # Save the Qt application to the global reference
     data.application = app
+    # Create a proxy style
+    data.application.setStyle("Fusion")
     
     # Process control
     number_of_instances = components.processcontroller.check_opened_excos()
