@@ -527,9 +527,9 @@ QTabBar::tab:selected {{
                         else:
                             self.drag_lock = False
 
-                    if pos.x() < self.move_range[0]:
+                    if (self.move_range is not None) and (pos.x() < self.move_range[0]):
                         return True
-                    elif pos.x() > self.tabBar().width() - self.move_range[1]:
+                    elif (self.move_range is not None) and (pos.x() > self.tabBar().width() - self.move_range[1]):
                         return True
         return qt.QTabWidget.eventFilter(self, source, event)
 

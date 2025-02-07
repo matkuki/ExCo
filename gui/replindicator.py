@@ -64,6 +64,10 @@ class ReplIndicator(qt.QLabel):
                 action.deleteLater()
                 action = None
         self.selection_menu = Menu(self)
+        # Add the menu label
+        action_theme = qt.QAction("Select interpreter:", self.selection_menu)
+        action_theme.setEnabled(False)
+        self.selection_menu.addAction(action_theme)
         # Add the type actions
         for lang in constants.ReplLanguage:
             action_theme = qt.QAction(lang.name, self.selection_menu)

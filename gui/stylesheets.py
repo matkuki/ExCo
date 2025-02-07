@@ -382,6 +382,9 @@ QTreeView {{
     color: {data.theme["fonts"]["default"]["color"]};
     background-color: {data.theme["fonts"]["default"]["background"]};
 }}
+QTreeView::branch {{
+    background-color: {data.theme["fonts"]["default"]["background"]};
+}}
 QTreeView::branch:closed:has-children:!has-siblings,
 QTreeView::branch:closed:has-children:has-siblings {{
     border-image: none;
