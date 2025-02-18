@@ -6230,6 +6230,8 @@ QSplitter::handle {{
                 )
                 return
             
+            first_line = tab.firstVisibleLine()
+            cursor_line, cursor_index = tab.getCursorPosition()
             code = tab.text()
             
             if library == "black":
@@ -6242,6 +6244,9 @@ QSplitter::handle {{
                 formatted_code, _ = yapf.yapf_api.FormatCode(code)
             
             tab.set_all_text(formatted_code)
+            
+            tab.setCursorPosition(cursor_line, cursor_index)
+            tab.setFirstVisibleLine(first_line)
         
         def format_python_selected_text(self, library: str) -> None:
             tab = self._parent.get_tab_by_indication()
