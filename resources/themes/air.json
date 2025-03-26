@@ -2018,45 +2018,44 @@
       "background": "#ffffffff"
     },
     "doublequotedfstring": {
-        "color": "#fff5b0cb",
+        "color": "#ffcc195e",
         "bold": false,
-        "background": "#ff112435"
+        "background": "#fff2f2f2"
     },
     "singlequotedfstring": {
-        "color": "#fff5b0cb",
+        "color": "#ffcc195e",
         "bold": false,
-        "background": "#ff112435"
+        "background": "#fff2f2f2"
     },
     "tripledoublequotedfstring": {
-        "color": "#fff5b0cb",
+        "color": "#ffcc195e",
         "bold": false,
-        "background": "#ff112435"
+        "background": "#fff2f2f2"
     },
     "triplesinglequotedfstring": {
-        "color": "#fff5b0cb",
+        "color": "#ffcc195e",
         "bold": false,
-        "background": "#ff112435"
+        "background": "#fff2f2f2"
     },
-    
     "iri": {
-        "color": "#fff5b0cb",
+        "color": "#ffcc195e",
         "bold": false,
-        "background": "#ff112435"
+        "background": "#fff2f2f2"
     },
     "iricompact": {
-        "color": "#fff5b0cb",
+        "color": "#ffcc195e",
         "bold": false,
-        "background": "#ff112435"
+        "background": "#fff2f2f2"
     },
     "keywordld": {
-        "color": "#fff5b0cb",
+        "color": "#ffcc195e",
         "bold": false,
-        "background": "#ff112435"
+        "background": "#fff2f2f2"
     },
     "property": {
-        "color": "#fff5b0cb",
+        "color": "#ffcc195e",
         "bold": false,
-        "background": "#ff112435"
+        "background": "#fff2f2f2"
     }
   },
   "form": "#f0f0f0",

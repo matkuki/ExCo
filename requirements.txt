@@ -9,6 +9,7 @@ fpdf2>=2.7.8
 black
 autopep8
 yapf
+clang-format
 
 # Linux
 ptyprocess>=0.7.0; platform_system == "Linux"

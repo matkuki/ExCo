@@ -67,67 +67,77 @@ if data.platform == "Windows":
 Main window and its supporting objects
 -------------------------------------------------
 """
+
+
 class MainWindow(qt.QMainWindow):
     """
     Main form that holds all Qt objects
     """
+
     # Signals
     data_send = qt.pyqtSignal(object)
-    
+
     # Define main form control references
-    name                    = "Main Window"
-    boxes_groupbox          = None
-    main_box                = None
-    main_splitter           = None
-    main_groupbox           = None  # QGroupBox that will hold the main splitter, needed for overlaying
-    main_groupbox_layout    = None  # QVBoxLayout used by the main groupbox
-    repl                    = None  # QLineEdit that will be used for the Python REPL
-    repl_helper             = None  # QTextEdit helper for inputting more than one line into the REPL
-    repl_box                = None  # QGroupBox that the REPL will be in
-    repl_messages_tab       = None  # Reference to a tab that displays REPL messages
-    node_tree_tab           = None  # Reference to a tab that displays NODE TREE information
-    menubar                 = None  # Menubar
-    recent_files_menu       = None  # Recent files submenu in the Menubar
-    sessions_menu           = None  # Sessions option on the menubar
-    toolbar                 = None  # Toolbar
-    statusbar               = None  # Statusbar
-    statusbar_label_left    = None  # Left side of the statusbar for showing line and column numbers
-    docking_overlay         = None  # Left side of the statusbar for showing line and column numbers
+    name = "Main Window"
+    boxes_groupbox = None
+    main_box = None
+    main_splitter = None
+    main_groupbox = (
+        None  # QGroupBox that will hold the main splitter, needed for overlaying
+    )
+    main_groupbox_layout = None  # QVBoxLayout used by the main groupbox
+    repl = None  # QLineEdit that will be used for the Python REPL
+    repl_helper = (
+        None  # QTextEdit helper for inputting more than one line into the REPL
+    )
+    repl_box = None  # QGroupBox that the REPL will be in
+    repl_messages_tab = None  # Reference to a tab that displays REPL messages
+    node_tree_tab = None  # Reference to a tab that displays NODE TREE information
+    menubar = None  # Menubar
+    recent_files_menu = None  # Recent files submenu in the Menubar
+    sessions_menu = None  # Sessions option on the menubar
+    toolbar = None  # Toolbar
+    statusbar = None  # Statusbar
+    statusbar_label_left = (
+        None  # Left side of the statusbar for showing line and column numbers
+    )
+    docking_overlay = (
+        None  # Left side of the statusbar for showing line and column numbers
+    )
     # Flag for locking the main window keypress and release
-    key_lock                = False
+    key_lock = False
     # Flag indicating the first time the user config file was imported
-    _first_scan             = True
+    _first_scan = True
     # Generator for supplying the number when a new document is created
-    new_file_count          = itertools.count(0, 1)
+    new_file_count = itertools.count(0, 1)
     # References for enabling/disabling saving of the current document in the menubar
-    save_file_action            = None
-    saveas_file_action          = None
-    save_ascii_file_action      = None
-    save_ansiwin_file_action    = None
-    save_in_encoding            = None
+    save_file_action = None
+    saveas_file_action = None
+    save_ascii_file_action = None
+    save_ansiwin_file_action = None
+    save_in_encoding = None
     # Attribute for signaling the state of the save buttons in the "File" menubar
-    save_state              = False
+    save_state = False
     # Supported Ex.Co. file extension types
-    exco_file_exts =  []
-    for k,v in data.supported_file_extentions.items():
-        exco_file_exts.extend(['*' + x for x in v])
+    exco_file_exts = []
+    for k, v in data.supported_file_extentions.items():
+        exco_file_exts.extend(["*" + x for x in v])
     # Dictionary for storing the menubar special functions
-    menubar_functions       = {}
+    menubar_functions = {}
     # Last focused widget and tab needed by the function wheel overlay
-    last_focused_widget     = None
-    
+    last_focused_widget = None
+
     # Namespace references for grouping functionality
-    settings                = None
-    sessions                = None
-    view                    = None
-    system                  = None
-    editing                 = None
-    display                 = None
-    bookmarks               = None
-    
+    settings = None
+    sessions = None
+    view = None
+    system = None
+    editing = None
+    display = None
+    bookmarks = None
+
     # External program reference
     external_program = None
-
 
     def __init__(self, new_document=False, logging=False, file_arguments=None):
         """
@@ -145,15 +155,12 @@ class MainWindow(qt.QMainWindow):
         self.bookmarks = self.Bookmarks(self)
         self.tools = self.Tools(self)
         # Set the name of the main window
-        self.name = "{} - PID:{}".format(
-            self.get_default_title(),
-            os.getpid()
-        )
+        self.name = "{} - PID:{}".format(self.get_default_title(), os.getpid())
         self.setObjectName("Form")
         # IPC communicator
-#        self.communicator = components.communicator.IpcCommunicator(self.name)
-#        self.data_send.connect(self.communicator.send)
-#        self.communicator.received.connect(self.__data_received)
+        #        self.communicator = components.communicator.IpcCommunicator(self.name)
+        #        self.data_send.connect(self.communicator.send)
+        #        self.communicator.received.connect(self.__data_received)
         # Filc communicator
         self.communicator = components.communicator.FileCommunicator(self.name)
         self.communicator.received.connect(self.__data_received)
@@ -169,6 +176,7 @@ class MainWindow(qt.QMainWindow):
         self.init_menubar()
         # Initialize the docking overlay
         self.docking_overlay = DockingOverlay(self)
+
         # Initialize the debug print function
         def repl_print(*message):
             if len(message) == 1 and isinstance(message, str):
@@ -176,16 +184,16 @@ class MainWindow(qt.QMainWindow):
             else:
                 message = ["REPL PRINT:\n"] + [str(x) for x in message]
             self.display.repl_display_message(
-                *message,
-                message_type=constants.MessageType.WARNING
+                *message, message_type=constants.MessageType.WARNING
             )
+
         functions.repl_print = repl_print
         # Initialize layout
         self.view.layout_init()
         # Set the initial window size according to the system resolution
         initial_size = self.view.function_wheel_overlay.size()
-        initial_width = initial_size.width() * 14/10
-        initial_height = initial_size.height() * 11/10
+        initial_width = initial_size.width() * 14 / 10
+        initial_height = initial_size.height() * 11 / 10
         self.resize(int(initial_width), int(initial_height))
         # Load the settings
         self.settings.restore()
@@ -225,15 +233,13 @@ class MainWindow(qt.QMainWindow):
         # Show library data
         if lexers.cython_lexers_found:
             self.display.repl_display_message(
-                "Cython lexers imported.",
-                message_type=constants.MessageType.SUCCESS
+                "Cython lexers imported.", message_type=constants.MessageType.SUCCESS
             )
         if lexers.nim_lexers_found:
             self.display.repl_display_message(
-                "Nim lexers imported.",
-                message_type=constants.MessageType.SUCCESS
+                "Nim lexers imported.", message_type=constants.MessageType.SUCCESS
             )
-    
+
     def __del__(self) -> None:
         if hasattr(self, "communicator") and self.communicator is not None:
             del self.communicator
@@ -244,32 +250,38 @@ class MainWindow(qt.QMainWindow):
 
         if event.type() == qt.QEvent.Type.WindowActivate:
             pass
-        elif event.type()== qt.QEvent.Type.WindowDeactivate:
+        elif event.type() == qt.QEvent.Type.WindowDeactivate:
             self.display.docking_overlay_hide()
-        
-        if event.type() in (qt.QEvent.Type.Enter, qt.QEvent.Type.MouseButtonPress, qt.QEvent.Type.KeyPress):
+
+        if event.type() in (
+            qt.QEvent.Type.Enter,
+            qt.QEvent.Type.MouseButtonPress,
+            qt.QEvent.Type.KeyPress,
+        ):
             if data.platform == "Windows":
                 win32gui.SetFocus(self.winId())
         elif event.type() == qt.QEvent.Type.Leave:
             if data.platform == "Windows":
+
                 def set_external_focus():
                     handle = win32gui.WindowFromPoint(win32gui.GetCursorPos())
                     if handle in ExternalWidget.handle_cache:
                         win32gui.SetFocus(handle)
+
                 qt.QTimer.singleShot(50, set_external_focus)
 
         return False
-    
+
     @qt.pyqtSlot(object)
-    def __data_received(self, _data:object) -> None:
+    def __data_received(self, _data: object) -> None:
         _from, message = _data
-        
+
         def send(*args):
             self.data_send.emit(*args)
-        
+
         if message == "ping":
             send("pong")
-        
+
         elif isinstance(message, dict):
             if "command" in message.keys() and "arguments" in message.keys():
                 command = message["command"]
@@ -282,7 +294,7 @@ class MainWindow(qt.QMainWindow):
                             self.display.repl_display_error(traceback.format_exc())
                     self.showNormal()
                     self.activateWindow()
-                
+
                 elif command == "show":
                     self.showNormal()
                     self.activateWindow()
@@ -319,11 +331,11 @@ class MainWindow(qt.QMainWindow):
         self.statusbar = qt.QStatusBar(self)
         self.statusbar.setFont(data.get_current_font())
         self.display.write_to_statusbar("Status Bar")
-        #Add label for showing the cursor position in a basic widget
+        # Add label for showing the cursor position in a basic widget
         self.statusbar_label_left = qt.QLabel(self)
         self.statusbar_label_left.setText("")
         self.statusbar.addPermanentWidget(self.statusbar_label_left)
-        #Add the statusbar to the MainWindow
+        # Add the statusbar to the MainWindow
         self.setStatusBar(self.statusbar)
 
     def get_all_boxes(self):
@@ -347,7 +359,7 @@ class MainWindow(qt.QMainWindow):
 
     def get_largest_window(self):
         largest_window = None
-        surface =  0
+        surface = 0
         all_windows = self.get_all_windows()
         for tw in all_windows:
             compare_surface = tw.size().width() * tw.size().height()
@@ -360,7 +372,7 @@ class MainWindow(qt.QMainWindow):
 
     def get_helper_window(self):
         helper_window = None
-        surface =  0
+        surface = 0
         windows = {}
         for tw in self.get_all_windows():
             compare_surface = tw.size().width() * tw.size().height()
@@ -375,7 +387,7 @@ class MainWindow(qt.QMainWindow):
 
     def get_repl_window(self):
         repl_window = None
-        surface =  0
+        surface = 0
         windows = {}
         for tw in self.get_all_windows():
             compare_surface = tw.size().width() * tw.size().height()
@@ -398,60 +410,60 @@ class MainWindow(qt.QMainWindow):
         that will be used by the REPL interpreter
         """
         return dict(
-            form        = self,
-            quit        = self.exit,
-            exit        = self.exit,
-            new         = self.create_new,
-            _open       = self.open_files,
-            _open_d     = self.open_file_with_dialog,
-            save        = functions.write_to_file,
-            version     = data.application_version,
-            run         = self.run_process,
-            set_cwd         = self.set_cwd,
-            get_cwd         = self.get_cwd,
-            update_cwd      = self.update_cwd,
-            open_cwd        = self.open_cwd,
-            close_all       = self.close_all_tabs,
+            form=self,
+            quit=self.exit,
+            exit=self.exit,
+            new=self.create_new,
+            _open=self.open_files,
+            _open_d=self.open_file_with_dialog,
+            save=functions.write_to_file,
+            version=data.application_version,
+            run=self.run_process,
+            set_cwd=self.set_cwd,
+            get_cwd=self.get_cwd,
+            update_cwd=self.update_cwd,
+            open_cwd=self.open_cwd,
+            close_all=self.close_all_tabs,
             # Settings functions
-            settings        = self.settings.manipulator,
-            save_settings   = self.settings.save,
-            load_settings   = self.settings.restore,
+            settings=self.settings.manipulator,
+            save_settings=self.settings.save,
+            load_settings=self.settings.restore,
             # Session functions
-            session_add     = self.sessions.add,
-            session_restore = self.sessions.restore,
-            session_remove  = self.sessions.remove,
+            session_add=self.sessions.add,
+            session_restore=self.sessions.restore,
+            session_remove=self.sessions.remove,
             # System function
-            find_files       = self.system.find_files,
-            find_in_files    = self.system.find_in_files,
-            replace_in_files = self.system.replace_in_files,
+            find_files=self.system.find_files,
+            find_in_files=self.system.find_in_files,
+            replace_in_files=self.system.replace_in_files,
             # Document editing references
-            find                    = self.editing.find,
-            regex_find              = self.editing.regex_find,
-            find_and_replace        = self.editing.find_and_replace,
-            regex_find_and_replace  = self.editing.regex_find_and_replace,
-            goto_line               = self.editing.line.goto,
-            replace_all             = self.editing.replace_all,
-            regex_replace_all       = self.editing.regex_replace_all,
-            replace_in_selection    = self.editing.replace_in_selection,
-            regex_replace_in_selection  = self.editing.regex_replace_in_selection,
-            highlight               = self.editing.highlight,
-            regex_highlight         = self.editing.regex_highlight,
-            clear_highlights        = self.editing.clear_highlights,
-            find_in_open_documents          = self.editing.find_in_open_documents,
-            find_replace_in_open_documents  = self.editing.find_replace_in_open_documents,
-            replace_all_in_open_documents   = self.editing.replace_all_in_open_documents,
-            replace_line            = self.editing.line.replace,
-            remove_line             = self.editing.line.remove,
-            get_line                = self.editing.line.get,
-            set_line                = self.editing.line.set,
+            find=self.editing.find,
+            regex_find=self.editing.regex_find,
+            find_and_replace=self.editing.find_and_replace,
+            regex_find_and_replace=self.editing.regex_find_and_replace,
+            goto_line=self.editing.line.goto,
+            replace_all=self.editing.replace_all,
+            regex_replace_all=self.editing.regex_replace_all,
+            replace_in_selection=self.editing.replace_in_selection,
+            regex_replace_in_selection=self.editing.regex_replace_in_selection,
+            highlight=self.editing.highlight,
+            regex_highlight=self.editing.regex_highlight,
+            clear_highlights=self.editing.clear_highlights,
+            find_in_open_documents=self.editing.find_in_open_documents,
+            find_replace_in_open_documents=self.editing.find_replace_in_open_documents,
+            replace_all_in_open_documents=self.editing.replace_all_in_open_documents,
+            replace_line=self.editing.line.replace,
+            remove_line=self.editing.line.remove,
+            get_line=self.editing.line.get,
+            set_line=self.editing.line.set,
             # Display functions
-            echo            = self.display.repl_display_message,
-            clear_repl_tab  = self.display.repl_clear_tab,
-            show_node_tree  = self.display.show_nodes,
+            echo=self.display.repl_display_message,
+            clear_repl_tab=self.display.repl_clear_tab,
+            show_node_tree=self.display.show_nodes,
             # Other
-            get_all_windows  = self.get_all_windows,
-            get_all_tree_widgets  = self.get_all_tree_widgets,
-            get_all_editors  = self.get_all_editors,
+            get_all_windows=self.get_all_windows,
+            get_all_tree_widgets=self.get_all_tree_widgets,
+            get_all_editors=self.get_all_editors,
         )
 
     def get_references_autocompletions(self):
@@ -459,35 +471,37 @@ class MainWindow(qt.QMainWindow):
         new_references = dict(
             itertools.chain(
                 self.get_form_references().items(),
-                self.repl.get_repl_references().items()
+                self.repl.get_repl_references().items(),
             )
         )
-        #Create auto completion list for the REPL
+        # Create auto completion list for the REPL
         ac_list_prim = [x for x in new_references]
-        #Add Python/custom keywords to the primary level autocompletions
+        # Add Python/custom keywords to the primary level autocompletions
         ac_list_prim.extend(keyword.kwlist)
         ac_list_prim.extend(["range"])
-        #Add current working directory items to the primary autocompletions
+        # Add current working directory items to the primary autocompletions
         ac_list_prim.extend(os.listdir(os.getcwd()))
-        #Create the secondary autocompletion list
-        #(methods and attributes of the primary list references)
+        # Create the secondary autocompletion list
+        # (methods and attributes of the primary list references)
         ac_list_sec = []
-        keywords    = new_references
-        #Get all keyword methods and variables
+        keywords = new_references
+        # Get all keyword methods and variables
         for key in keywords:
             ac_list_sec.append(key)
-            #Add methods to secondary autocompletion list
-            for method in inspect.getmembers(keywords[key], predicate=inspect.isroutine):
-                if str(method[0])[0] != '_':
+            # Add methods to secondary autocompletion list
+            for method in inspect.getmembers(
+                keywords[key], predicate=inspect.isroutine
+            ):
+                if str(method[0])[0] != "_":
                     ac_list_sec.append(str(key) + "." + str(method[0]))
-            #Add variables to secondary autocompletion list
+            # Add variables to secondary autocompletion list
             try:
                 for variable in keywords[key].__dict__:
-                    if str(variable)[0] != '_':
+                    if str(variable)[0] != "_":
                         ac_list_sec.append(str(key) + "." + str(variable))
             except:
                 pass
-        #Return the tuple
+        # Return the tuple
         return (new_references, ac_list_prim, ac_list_sec)
 
     def get_cwd(self):
@@ -502,7 +516,7 @@ class MainWindow(qt.QMainWindow):
         if data.platform == "Windows":
             self.repl._repl_eval("r: explorer .")
         elif data.platform == "Linux":
-            self.repl._repl_eval("r: xdg-open \"{}\"".format(cwd))
+            self.repl._repl_eval('r: xdg-open "{}"'.format(cwd))
         else:
             self.display.repl_display_message(
                 "Not implemented on '{}' platform!".format(data.platform)
@@ -511,14 +525,14 @@ class MainWindow(qt.QMainWindow):
     def set_cwd(self, directory):
         """Set the current working directory and display it"""
         os.chdir(directory)
-        #Store the current REPL text
+        # Store the current REPL text
         repl_text = self.repl.text()
-        #Reset the interpreter and update its references
+        # Reset the interpreter and update its references
         self.reset_interpreter()
-        #Display the selected directory
+        # Display the selected directory
         self.display.repl_display_message("CWD changed to:")
         self.get_cwd()
-        #Restore the previous REPL text
+        # Restore the previous REPL text
         self.repl.setText(repl_text)
 
     def update_cwd(self):
@@ -526,21 +540,22 @@ class MainWindow(qt.QMainWindow):
         Set the current working directory to the path of the currently
         focused scintilla document in the main basic widget
         """
-        #Nested function for displaying multiple messages
+
+        # Nested function for displaying multiple messages
         def display(message):
             self.display.repl_display_message(
-                message,
-                message_type=constants.MessageType.WARNING
+                message, message_type=constants.MessageType.WARNING
             )
             self.display.write_to_statusbar(message)
-        #Get the document path
+
+        # Get the document path
         path = os.path.dirname(current_widget.save_name)
-        #Check if the path is not an empty string
+        # Check if the path is not an empty string
         if path == "":
             message = "Document path is not valid!"
             display(message)
             return
-        #Set the new current working directory
+        # Set the new current working directory
         self.set_cwd(path)
 
     def closeEvent(self, event):
@@ -581,15 +596,15 @@ class MainWindow(qt.QMainWindow):
         """
         # Check if the lock is released
         if self.key_lock == False:
-            #Check for active keys
+            # Check for active keys
             if self.__window_filter_keypress(event) == True:
                 return
 
     def keyReleaseEvent(self, event):
         """QMainWindow keyReleaseEvent, to catch which key was pressed"""
-        #Check if the lock is released
+        # Check if the lock is released
         if self.key_lock == False:
-            #Check for active keys
+            # Check for active keys
             if self.__window_filter_keyrelease(event) == True:
                 return
 
@@ -620,7 +635,7 @@ class MainWindow(qt.QMainWindow):
 
     def __window_filter_keyrelease(self, key_event):
         """Filter keyrelease for appropriate action"""
-        #released_key = key_event.key()
+        # released_key = key_event.key()
         accept_keyrelease = False
         return accept_keyrelease
 
@@ -629,9 +644,9 @@ class MainWindow(qt.QMainWindow):
         Function for disabling/locking the keypress and
         keyrelease events (used by the ReplLineEdit widget)
         """
-        #Disable the key events of the QMainWindow
+        # Disable the key events of the QMainWindow
         self.key_lock = True
-        #Disable the save/saveas buttons in the menubar
+        # Disable the save/saveas buttons in the menubar
         self.set_save_file_state(False)
 
     def key_events_unlock(self):
@@ -639,7 +654,7 @@ class MainWindow(qt.QMainWindow):
         Function for enabling/unlocking the keypress and
         keyrelease events (used by the ReplLineEdit widget)
         """
-        #Reenable the key events of the QMainWindow
+        # Reenable the key events of the QMainWindow
         self.key_lock = False
 
     def get_directory_with_dialog(self):
@@ -648,9 +663,9 @@ class MainWindow(qt.QMainWindow):
         a directory name as a string
         """
         directory = qt.QFileDialog.getExistingDirectory(
-            self, # QWidget parent = None
-            None, # QString caption = ''
-            os.getcwd(), # QString directory = ''
+            self,  # QWidget parent = None
+            None,  # QString caption = ''
+            os.getcwd(),  # QString directory = ''
             # Options options = QFileDialog.ShowDirsOnly
         )
         return directory
@@ -659,9 +674,11 @@ class MainWindow(qt.QMainWindow):
         """
         Run a command line process and display the result
         """
-        self.display.repl_display_message("Executing CMD command: \"" + command + "\"")
-        #Run the command and display the result
-        result  = self.repl.get_interpreter().run_cmd_process(command, show_console, output_to_repl)
+        self.display.repl_display_message('Executing CMD command: "' + command + '"')
+        # Run the command and display the result
+        result = self.repl.get_interpreter().run_cmd_process(
+            command, show_console, output_to_repl
+        )
         self.display.repl_display_message(result)
 
     def file_create_new(self):
@@ -678,14 +695,16 @@ class MainWindow(qt.QMainWindow):
         if isinstance(focused_tab, CustomEditor) == True:
             if focused_tab is not None and focused_tab.savable == constants.CanSave.YES:
                 focused_tab.save_document(
-                    saveas=False,
-                    encoding=encoding,
-                    line_ending=line_ending
+                    saveas=False, encoding=encoding, line_ending=line_ending
                 )
                 if encoding == "cp1250":
-                    self.display.repl_display_success("Saved file {} in ANSI encoding.".format(focused_tab.save_name))
+                    self.display.repl_display_success(
+                        "Saved file {} in ANSI encoding.".format(focused_tab.save_name)
+                    )
                 elif encoding == "ascii":
-                    self.display.repl_display_success("Saved file {} in ASCII encoding.".format(focused_tab.save_name))
+                    self.display.repl_display_success(
+                        "Saved file {} in ASCII encoding.".format(focused_tab.save_name)
+                    )
                 # Set the icon if it was set by the lexer
                 focused_tab.internals.update_icon(focused_tab)
                 # Reimport the user configuration file and update the menubar
@@ -697,13 +716,10 @@ class MainWindow(qt.QMainWindow):
         """The function name says it all"""
         focused_tab = self.get_tab_by_focus()
         if focused_tab is not None:
-            focused_tab.save_document(
-                saveas=True,
-                encoding=encoding
-            )
-            #Set the icon if it was set by the lexer
+            focused_tab.save_document(saveas=True, encoding=encoding)
+            # Set the icon if it was set by the lexer
             focused_tab.internals.update_icon(focused_tab)
-            #Reimport the user configuration file and update the menubar
+            # Reimport the user configuration file and update the menubar
             if functions.is_config_file(focused_tab.save_name) == True:
                 self.update_menubar()
                 self.import_user_functions()
@@ -723,8 +739,10 @@ class MainWindow(qt.QMainWindow):
                 if isinstance(tab, CustomEditor) == False:
                     continue
                 # Test if the tab is modified and savable
-                if (tab.savable == constants.CanSave.YES and
-                    tab.save_status == constants.FileStatus.MODIFIED):
+                if (
+                    tab.savable == constants.CanSave.YES
+                    and tab.save_status == constants.FileStatus.MODIFIED
+                ):
                     # Save the file
                     result = tab.save_document(saveas=False, encoding=encoding)
                     # Set the icon if it was set by the lexer
@@ -737,12 +755,12 @@ class MainWindow(qt.QMainWindow):
         if saved_something == False:
             self.display.repl_display_message(
                 "No modified documents to save",
-                message_type=constants.MessageType.WARNING
+                message_type=constants.MessageType.WARNING,
             )
         else:
             self.display.repl_display_message(
                 "'Save all' executed successfully",
-                message_type=constants.MessageType.SUCCESS
+                message_type=constants.MessageType.SUCCESS,
             )
         return True
 
@@ -764,6 +782,7 @@ class MainWindow(qt.QMainWindow):
         self.menubar = MenuBar()
         # Click filter for the menubar menus
         click_filter = components.actionfilter.ActionFilter(self)
+
         # Nested function for creating an action
         def create_action(name, key_combo, status_tip, icon, function, enabled=True):
             action = qt.QAction(name, self)
@@ -782,7 +801,9 @@ class MainWindow(qt.QMainWindow):
                                 keys.append(k)
                         action.setShortcuts(keys)
                     else:
-                        raise Exception("Key combination list has to contain only strings!")
+                        raise Exception(
+                            "Key combination list has to contain only strings!"
+                        )
                 elif isinstance(key_combo, str):
                     keys = key_combo
                     if keys.startswith("#") == False:
@@ -799,12 +820,16 @@ class MainWindow(qt.QMainWindow):
             action.function = function
             self.menubar_functions[function.__name__] = function
             data.global_function_information[function.__name__] = (
-                name, function, icon, keys, status_tip
+                name,
+                function,
+                icon,
+                keys,
+                status_tip,
             )
             # Check if there is a tab character in the function
             # name and remove the part of the string after it
-            if '\t' in name:
-                name = name[:name.find('\t')]
+            if "\t" in name:
+                name = name[: name.find("\t")]
             # Add the action to the context menu
             # function list in the helper forms module
             gui.contextmenu.add_function(
@@ -818,105 +843,185 @@ class MainWindow(qt.QMainWindow):
                 self.menubar.stored_actions = []
             self.menubar.stored_actions.append(action)
             return action
+
         # Nested function for writing text to the REPL
         def repl_text_input(text, cursor_position):
             self.repl.setText(text)
             self.repl.setFocus()
             self.repl.setCursorPosition(cursor_position)
+
         # File menu
         def construct_file_menu():
-#            file_menu = self.menubar.addMenu("&File")
+            #            file_menu = self.menubar.addMenu("&File")
             file_menu = Menu("&File", self.menubar)
             self.menubar.addMenu(file_menu)
             file_menu.installEventFilter(click_filter)
+
             # New file
             def special_create_new_file():
                 self.file_create_new()
+
             new_file_action = create_action(
-                'New',
-                settings.keyboard_shortcuts['general']['new_file'],
-                'Create new empty file',
-                'tango_icons/document-new.png',
-                special_create_new_file
+                "New",
+                settings.keyboard_shortcuts["general"]["new_file"],
+                "Create new empty file",
+                "tango_icons/document-new.png",
+                special_create_new_file,
             )
+
             # Open file
             def special_open_file():
                 self.file_open()
+
             open_file_action = create_action(
-                'Open',
-                settings.keyboard_shortcuts['general']['open_file'],
-                'Open file',
-                'tango_icons/document-open.png',
-                special_open_file
+                "Open",
+                settings.keyboard_shortcuts["general"]["open_file"],
+                "Open file",
+                "tango_icons/document-open.png",
+                special_open_file,
             )
+
             # Save options need to be saved to a reference for disabling/enabling
             # Save file
             def special_save_file():
                 self.file_save()
-            self.save_file_action = create_action('Save', settings.keyboard_shortcuts['general']['save_file'], 'Save current file in the UTF-8 encoding', 'tango_icons/document-save.png', special_save_file, enabled=False)
+
+            self.save_file_action = create_action(
+                "Save",
+                settings.keyboard_shortcuts["general"]["save_file"],
+                "Save current file in the UTF-8 encoding",
+                "tango_icons/document-save.png",
+                special_save_file,
+                enabled=False,
+            )
+
             # Save file as
             def special_saveas_file():
                 self.file_saveas()
-            self.saveas_file_action = create_action('Save As', settings.keyboard_shortcuts['general']['saveas_file'], 'Save current file as a new file in the UTF-8 encoding', 'tango_icons/document-save-as.png', special_saveas_file, enabled=False)
+
+            self.saveas_file_action = create_action(
+                "Save As",
+                settings.keyboard_shortcuts["general"]["saveas_file"],
+                "Save current file as a new file in the UTF-8 encoding",
+                "tango_icons/document-save-as.png",
+                special_saveas_file,
+                enabled=False,
+            )
+
             # Save all
             def special_save_all():
                 self.file_save_all()
-            self.save_all_action = create_action('Save All', None, 'Save all modified documents in all windows in the UTF-8 encoding', 'tango_icons/file-save-all.png', special_save_all, enabled=False)
+
+            self.save_all_action = create_action(
+                "Save All",
+                None,
+                "Save all modified documents in all windows in the UTF-8 encoding",
+                "tango_icons/file-save-all.png",
+                special_save_all,
+                enabled=False,
+            )
             # Exit
-            exit_action = create_action('Exit\tAlt+F4', None, 'Exit application', 'tango_icons/system-log-out.png', self.exit)
+            exit_action = create_action(
+                "Exit\tAlt+F4",
+                None,
+                "Exit application",
+                "tango_icons/system-log-out.png",
+                self.exit,
+            )
+
             # Additional menu for saving in different encodings
             def add_save_in_different_encoding_submenu():
                 # Add the save in encoding menu
                 self.save_in_encoding = Menu("Save in encoding...", self.menubar)
                 self.save_in_encoding.setEnabled(False)
-                temp_icon = functions.create_icon('tango_icons/document-save-as.png')
+                temp_icon = functions.create_icon("tango_icons/document-save-as.png")
                 self.save_in_encoding.setIcon(temp_icon)
                 self.save_in_encoding.installEventFilter(click_filter)
                 # Save as ASCII encoding
-                temp_string = 'Save current file with the ASCII encoding, '
+                temp_string = "Save current file with the ASCII encoding, "
                 temp_string += 'unknown characters will be replaced with "?"'
+
                 def save_ascii_file():
                     self.file_save(encoding="ascii")
-                self.save_ascii_file_action = create_action('ASCII', None, temp_string, None, save_ascii_file, enabled=False)
+
+                self.save_ascii_file_action = create_action(
+                    "ASCII", None, temp_string, None, save_ascii_file, enabled=False
+                )
                 # Save in ANSI Windows encoding
-                temp_string = 'Save current file with the ANSI Windows (CP-1250) encoding with CR+LF line ending, '
+                temp_string = "Save current file with the ANSI Windows (CP-1250) encoding with CR+LF line ending, "
                 temp_string += 'unknown characters will be replaced with "?"'
+
                 def save_ansi_file():
                     self.file_save(encoding="cp1250", line_ending="\r\n")
-                self.save_ansiwin_file_action = create_action('ANSI (Windows)', None, temp_string, None, save_ansi_file, enabled=False)
+
+                self.save_ansiwin_file_action = create_action(
+                    "ANSI (Windows)",
+                    None,
+                    temp_string,
+                    None,
+                    save_ansi_file,
+                    enabled=False,
+                )
                 # Add the save options to to parent action
                 self.save_in_encoding.addAction(self.save_ascii_file_action)
                 self.save_in_encoding.addAction(self.save_ansiwin_file_action)
                 # Add the parent action to the menu
                 file_menu.addMenu(self.save_in_encoding)
+
             # Add the closing functions
             # Close tab
             def close_tab():
                 try:
-                    current_window  = self.get_window_by_child_tab()
-                    current_index   = current_window.currentIndex()
+                    current_window = self.get_window_by_child_tab()
+                    current_index = current_window.currentIndex()
                     current_window.close_tab(current_index)
-                    #Focus the newly displayed tab
+                    # Focus the newly displayed tab
                     if current_window.count() > 0:
                         current_window.currentWidget().setFocus()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            close_tab_action = create_action('Close Tab', settings.keyboard_shortcuts['general']['close_tab'], 'Close the current tab', 'tango_icons/close-tab.png', close_tab)
+
+            close_tab_action = create_action(
+                "Close Tab",
+                settings.keyboard_shortcuts["general"]["close_tab"],
+                "Close the current tab",
+                "tango_icons/close-tab.png",
+                close_tab,
+            )
             # Close all
-            close_all_action = create_action('Close All Tabs', None, 'Close all tabs in all windows', 'tango_icons/close-all-tabs.png', self.close_all_tabs)
-            #Add load/save settings options
-            save_settings_action = create_action('Save Settings', None, 'Save current settings', 'tango_icons/file-settings-save.png', self.settings.save)
-            load_settings_action = create_action('Load Settings', None, 'Load saved settings', 'tango_icons/file-settings-load.png', self.settings.restore)
-            #Add the editing option for the userfunctions file
+            close_all_action = create_action(
+                "Close All Tabs",
+                None,
+                "Close all tabs in all windows",
+                "tango_icons/close-all-tabs.png",
+                self.close_all_tabs,
+            )
+            # Add load/save settings options
+            save_settings_action = create_action(
+                "Save Settings",
+                None,
+                "Save current settings",
+                "tango_icons/file-settings-save.png",
+                self.settings.save,
+            )
+            load_settings_action = create_action(
+                "Load Settings",
+                None,
+                "Load saved settings",
+                "tango_icons/file-settings-load.png",
+                self.settings.restore,
+            )
+
+            # Add the editing option for the userfunctions file
             def open_user_func_file():
                 user_definitions_file = os.path.join(
                     data.application_directory, data.config_file
                 )
-                #Test if userfunctions file exists
+                # Test if userfunctions file exists
                 if os.path.isfile(user_definitions_file) == False:
                     self.display.repl_display_message(
                         "User definitions file does not exist!",
-                        message_type=constants.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR,
                     )
                     message = "Do you wish to generate the default user definition and function file?"
                     reply = YesNoDialog.question(message)
@@ -924,24 +1029,41 @@ class MainWindow(qt.QMainWindow):
                         functions.create_default_config_file()
                         self.display.repl_display_message(
                             "Default user definitions file generated!",
-                            message_type=constants.MessageType.SUCCESS
+                            message_type=constants.MessageType.SUCCESS,
                         )
                     else:
                         return
                 self.open_file(user_definitions_file)
-            edit_functions_action = create_action('Edit User Definitions', None, 'Open the {} file for editing in the main window'.format(data.config_file), 'tango_icons/file-user-funcs.png', open_user_func_file)
-            #Add the reload option for the userfunctions file
-            reload_functions_action = create_action('Reload User Definitions', None, 'Reload the {} file to refresh user defined definitions and functions'.format(data.config_file), 'tango_icons/file-user-funcs-reload.png', self.import_user_functions)
-            #Add recent file list in the file menu
+
+            edit_functions_action = create_action(
+                "Edit User Definitions",
+                None,
+                "Open the {} file for editing in the main window".format(
+                    data.config_file
+                ),
+                "tango_icons/file-user-funcs.png",
+                open_user_func_file,
+            )
+            # Add the reload option for the userfunctions file
+            reload_functions_action = create_action(
+                "Reload User Definitions",
+                None,
+                "Reload the {} file to refresh user defined definitions and functions".format(
+                    data.config_file
+                ),
+                "tango_icons/file-user-funcs-reload.png",
+                self.import_user_functions,
+            )
+            # Add recent file list in the file menu
             recent_file_list_menu = self.view.create_recent_file_list_menu()
             clear_recent_file_list_action = create_action(
-                'Clear recent files',
+                "Clear recent files",
                 None,
-                'Clear the recent files list',
-                'tango_icons/edit-clear.png',
+                "Clear the recent files list",
+                "tango_icons/edit-clear.png",
                 self.view.clear_recent_file_list,
             )
-            #Add the actions to the File menu
+            # Add the actions to the File menu
             file_menu.addAction(new_file_action)
             file_menu.addAction(open_file_action)
             file_menu.addAction(self.save_file_action)
@@ -962,343 +1084,406 @@ class MainWindow(qt.QMainWindow):
             file_menu.addAction(clear_recent_file_list_action)
             file_menu.addSeparator()
             file_menu.addAction(exit_action)
-        #Edit Menus
-        #Adding the basic options to the menu
+
+        # Edit Menus
+        # Adding the basic options to the menu
         def construct_edit_basic_menu():
             edit_menu = Menu("&Editing", self.menubar)
             self.menubar.addMenu(edit_menu)
             edit_menu.installEventFilter(click_filter)
+
             def copy():
                 try:
                     self.get_tab_by_focus().copy()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            temp_string = 'Copy any selected text in the currently '
-            temp_string += 'selected window to the clipboard'
+
+            temp_string = "Copy any selected text in the currently "
+            temp_string += "selected window to the clipboard"
             copy_action = create_action(
-                'Copy\t' + settings.keyboard_shortcuts['editor']['copy'],
-                "#" + settings.keyboard_shortcuts['editor']['copy'],
+                "Copy\t" + settings.keyboard_shortcuts["editor"]["copy"],
+                "#" + settings.keyboard_shortcuts["editor"]["copy"],
                 temp_string,
-                'tango_icons/edit-copy.png',
-                copy
+                "tango_icons/edit-copy.png",
+                copy,
             )
+
             def cut():
                 try:
                     self.get_tab_by_focus().cut()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             cut_action = create_action(
-                'Cut\t' + settings.keyboard_shortcuts['editor']['cut'],
-                "#" + settings.keyboard_shortcuts['editor']['cut'],
-                'Cut any selected text in the currently selected window to the clipboard',
-                'tango_icons/edit-cut.png',
-                cut
+                "Cut\t" + settings.keyboard_shortcuts["editor"]["cut"],
+                "#" + settings.keyboard_shortcuts["editor"]["cut"],
+                "Cut any selected text in the currently selected window to the clipboard",
+                "tango_icons/edit-cut.png",
+                cut,
             )
+
             def paste():
                 try:
                     self.get_tab_by_focus().paste()
                 except:
                     pass
+
             paste_action = create_action(
-                'Paste\t' + settings.keyboard_shortcuts['editor']['paste'],
-                "#" + settings.keyboard_shortcuts['editor']['paste'],
-                'Paste the text in the clipboard to the currenty selected window',
-                'tango_icons/edit-paste.png',
-                paste
+                "Paste\t" + settings.keyboard_shortcuts["editor"]["paste"],
+                "#" + settings.keyboard_shortcuts["editor"]["paste"],
+                "Paste the text in the clipboard to the currenty selected window",
+                "tango_icons/edit-paste.png",
+                paste,
             )
+
             def undo():
                 try:
                     self.get_tab_by_focus().undo()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             undo_action = create_action(
-                'Undo\t' + settings.keyboard_shortcuts['editor']['undo'],
-                "#" + settings.keyboard_shortcuts['editor']['undo'],
-                'Undo last editor action in the currenty selected window',
-                'tango_icons/edit-undo.png',
-                undo
+                "Undo\t" + settings.keyboard_shortcuts["editor"]["undo"],
+                "#" + settings.keyboard_shortcuts["editor"]["undo"],
+                "Undo last editor action in the currenty selected window",
+                "tango_icons/edit-undo.png",
+                undo,
             )
+
             def redo():
                 try:
                     self.get_tab_by_focus().redo()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             redo_action = create_action(
-                'Redo\t' + settings.keyboard_shortcuts['editor']['redo'],
-                "#" + settings.keyboard_shortcuts['editor']['redo'],
-                'Redo last undone editor action in the currenty selected window',
-                'tango_icons/edit-redo.png',
-                redo
+                "Redo\t" + settings.keyboard_shortcuts["editor"]["redo"],
+                "#" + settings.keyboard_shortcuts["editor"]["redo"],
+                "Redo last undone editor action in the currenty selected window",
+                "tango_icons/edit-redo.png",
+                redo,
             )
+
             def select_all():
                 try:
                     self.get_tab_by_focus().selectAll(True)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             select_all_action = create_action(
-                'Select All\t' + settings.keyboard_shortcuts['editor']['select_all'],
-                "#" + settings.keyboard_shortcuts['editor']['select_all'],
-                'Select all of the text in the currenty selected window',
-                'tango_icons/edit-select-all.png',
-                select_all
+                "Select All\t" + settings.keyboard_shortcuts["editor"]["select_all"],
+                "#" + settings.keyboard_shortcuts["editor"]["select_all"],
+                "Select all of the text in the currenty selected window",
+                "tango_icons/edit-select-all.png",
+                select_all,
             )
+
             def indent():
                 try:
                     self.get_tab_by_focus().custom_indent()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             indent_action = create_action(
-                'Indent\t' + settings.keyboard_shortcuts['editor']['indent'],
-                "#" + settings.keyboard_shortcuts['editor']['indent'],
-                'Indent the selected lines by the default width (4 spaces) in the currenty selected window',
-                'tango_icons/format-indent-more.png',
-                indent
+                "Indent\t" + settings.keyboard_shortcuts["editor"]["indent"],
+                "#" + settings.keyboard_shortcuts["editor"]["indent"],
+                "Indent the selected lines by the default width (4 spaces) in the currenty selected window",
+                "tango_icons/format-indent-more.png",
+                indent,
             )
+
             def unindent():
                 try:
                     self.get_tab_by_focus().custom_unindent()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             unindent_action = create_action(
-                'Unindent\t' + settings.keyboard_shortcuts['editor']['unindent'],
-                "#" + settings.keyboard_shortcuts['editor']['unindent'],
-                'Unindent the selected lines by the default width (4 spaces) in the currenty selected window',
-                'tango_icons/format-indent-less.png',
-                unindent
+                "Unindent\t" + settings.keyboard_shortcuts["editor"]["unindent"],
+                "#" + settings.keyboard_shortcuts["editor"]["unindent"],
+                "Unindent the selected lines by the default width (4 spaces) in the currenty selected window",
+                "tango_icons/format-indent-less.png",
+                unindent,
             )
+
             def delete_start_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_DELWORDLEFT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             del_start_word_action = create_action(
-                'Delete start of word\t' + settings.keyboard_shortcuts['editor']['delete_start_of_word'],
-                "#" + settings.keyboard_shortcuts['editor']['delete_start_of_word'],
-                'Delete the current word from the cursor to the starting index of the word',
-                'tango_icons/delete-start-word.png',
-                delete_start_of_word
+                "Delete start of word\t"
+                + settings.keyboard_shortcuts["editor"]["delete_start_of_word"],
+                "#" + settings.keyboard_shortcuts["editor"]["delete_start_of_word"],
+                "Delete the current word from the cursor to the starting index of the word",
+                "tango_icons/delete-start-word.png",
+                delete_start_of_word,
             )
+
             def delete_end_of_word():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_DELWORDRIGHT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             del_end_word_action = create_action(
-                'Delete end of word\t' + settings.keyboard_shortcuts['editor']['delete_end_of_word'],
-                "#" + settings.keyboard_shortcuts['editor']['delete_end_of_word'],
-                'Delete the current word from the cursor to the ending index of the word',
-                'tango_icons/delete-end-word.png',
-                delete_end_of_word
+                "Delete end of word\t"
+                + settings.keyboard_shortcuts["editor"]["delete_end_of_word"],
+                "#" + settings.keyboard_shortcuts["editor"]["delete_end_of_word"],
+                "Delete the current word from the cursor to the ending index of the word",
+                "tango_icons/delete-end-word.png",
+                delete_end_of_word,
             )
+
             def delete_start_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_DELLINELEFT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             del_start_line_action = create_action(
-                'Delete start of line\t' + settings.keyboard_shortcuts['editor']['delete_start_of_line'],
-                "#" + settings.keyboard_shortcuts['editor']['delete_start_of_line'],
-                'Delete the current line from the cursor to the starting index of the line',
-                'tango_icons/delete-start-line.png',
-                delete_start_of_line
+                "Delete start of line\t"
+                + settings.keyboard_shortcuts["editor"]["delete_start_of_line"],
+                "#" + settings.keyboard_shortcuts["editor"]["delete_start_of_line"],
+                "Delete the current line from the cursor to the starting index of the line",
+                "tango_icons/delete-start-line.png",
+                delete_start_of_line,
             )
+
             def delete_end_of_line():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_DELLINERIGHT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             del_end_line_action = create_action(
-                'Delete end of line\t' + settings.keyboard_shortcuts['editor']['delete_end_of_line'],
-                "#" + settings.keyboard_shortcuts['editor']['delete_end_of_line'],
-                'Delete the current line from the cursor to the ending index of the line',
-                'tango_icons/delete-end-line.png',
-                delete_end_of_line
+                "Delete end of line\t"
+                + settings.keyboard_shortcuts["editor"]["delete_end_of_line"],
+                "#" + settings.keyboard_shortcuts["editor"]["delete_end_of_line"],
+                "Delete the current line from the cursor to the ending index of the line",
+                "tango_icons/delete-end-line.png",
+                delete_end_of_line,
             )
+
             def goto_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_DOCUMENTSTART)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             go_to_start_action = create_action(
-                'Go to start\t' + settings.keyboard_shortcuts['editor']['go_to_start'],
-                "#" + settings.keyboard_shortcuts['editor']['go_to_start'],
-                'Move cursor up to the start of the currently selected document',
-                'tango_icons/goto-start.png',
-                goto_to_start
+                "Go to start\t" + settings.keyboard_shortcuts["editor"]["go_to_start"],
+                "#" + settings.keyboard_shortcuts["editor"]["go_to_start"],
+                "Move cursor up to the start of the currently selected document",
+                "tango_icons/goto-start.png",
+                goto_to_start,
             )
+
             def goto_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_DOCUMENTEND)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             go_to_end_action = create_action(
-                'Go to end\t' + settings.keyboard_shortcuts['editor']['go_to_end'],
-                "#" + settings.keyboard_shortcuts['editor']['go_to_end'],
-                'Move cursor down to the end of the currently selected document',
-                'tango_icons/goto-end.png',
-                goto_to_end
+                "Go to end\t" + settings.keyboard_shortcuts["editor"]["go_to_end"],
+                "#" + settings.keyboard_shortcuts["editor"]["go_to_end"],
+                "Move cursor down to the end of the currently selected document",
+                "tango_icons/goto-end.png",
+                goto_to_end,
             )
+
             def select_page_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_PAGEUPEXTEND)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             select_page_up_action = create_action(
-                'Select page up\t' + settings.keyboard_shortcuts['editor']['select_page_up'],
-                "#" + settings.keyboard_shortcuts['editor']['select_page_up'],
-                'Select text up one page of the currently selected document',
-                'tango_icons/Input-keyboard.svg',
-                select_page_up
+                "Select page up\t"
+                + settings.keyboard_shortcuts["editor"]["select_page_up"],
+                "#" + settings.keyboard_shortcuts["editor"]["select_page_up"],
+                "Select text up one page of the currently selected document",
+                "tango_icons/Input-keyboard.svg",
+                select_page_up,
             )
+
             def select_page_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             select_page_down_action = create_action(
-                'Select page down\t' + settings.keyboard_shortcuts['editor']['select_page_down'],
-                "#" + settings.keyboard_shortcuts['editor']['select_page_down'],
-                'Select text down one page of the currently selected document',
-                'tango_icons/Input-keyboard.svg',
-                select_page_down
+                "Select page down\t"
+                + settings.keyboard_shortcuts["editor"]["select_page_down"],
+                "#" + settings.keyboard_shortcuts["editor"]["select_page_down"],
+                "Select text down one page of the currently selected document",
+                "tango_icons/Input-keyboard.svg",
+                select_page_down,
             )
+
             def select_to_start():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_DOCUMENTSTARTEXTEND)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             select_to_start_action = create_action(
-                'Select to start\t' + settings.keyboard_shortcuts['editor']['select_to_start'],
-                "#" + settings.keyboard_shortcuts['editor']['select_to_start'],
-                'Select all text up to the start of the currently selected document',
-                'tango_icons/Input-keyboard.svg',
-                select_to_start
+                "Select to start\t"
+                + settings.keyboard_shortcuts["editor"]["select_to_start"],
+                "#" + settings.keyboard_shortcuts["editor"]["select_to_start"],
+                "Select all text up to the start of the currently selected document",
+                "tango_icons/Input-keyboard.svg",
+                select_to_start,
             )
+
             def select_to_end():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_DOCUMENTENDEXTEND)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             select_to_end_action = create_action(
-                'Select to end\t' + settings.keyboard_shortcuts['editor']['select_to_end'],
-                "#" + settings.keyboard_shortcuts['editor']['select_to_end'],
-                'Select all text down to the start of the currently selected document',
-                'tango_icons/Input-keyboard.svg',
-                select_to_end
+                "Select to end\t"
+                + settings.keyboard_shortcuts["editor"]["select_to_end"],
+                "#" + settings.keyboard_shortcuts["editor"]["select_to_end"],
+                "Select all text down to the start of the currently selected document",
+                "tango_icons/Input-keyboard.svg",
+                select_to_end,
             )
+
             def scroll_up():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_PAGEUP)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             scroll_up_action = create_action(
-                'Scroll up\t' + settings.keyboard_shortcuts['editor']['scroll_up'],
-                "#" + settings.keyboard_shortcuts['editor']['scroll_up'],
-                'Scroll up one page of the currently selected document',
-                'tango_icons/scroll-up.png',
-                scroll_up
+                "Scroll up\t" + settings.keyboard_shortcuts["editor"]["scroll_up"],
+                "#" + settings.keyboard_shortcuts["editor"]["scroll_up"],
+                "Scroll up one page of the currently selected document",
+                "tango_icons/scroll-up.png",
+                scroll_up,
             )
+
             def scroll_down():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_PAGEDOWN)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             scroll_down_action = create_action(
-                'Scroll down\t' + settings.keyboard_shortcuts['editor']['scroll_down'],
-                "#" + settings.keyboard_shortcuts['editor']['scroll_down'],
-                'Scroll down one page of the currently selected document',
-                'tango_icons/scroll-down.png',
-                scroll_down
+                "Scroll down\t" + settings.keyboard_shortcuts["editor"]["scroll_down"],
+                "#" + settings.keyboard_shortcuts["editor"]["scroll_down"],
+                "Scroll down one page of the currently selected document",
+                "tango_icons/scroll-down.png",
+                scroll_down,
             )
+
             def line_cut():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_LINECUT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             line_cut_action = create_action(
-                'Line Cut\t' + settings.keyboard_shortcuts['editor']['line_cut'],
-                "#" + settings.keyboard_shortcuts['editor']['line_cut'],
-                'Cut out the current line/lines of the currently selected document',
-                'tango_icons/edit-line-cut.png',
-                line_cut
+                "Line Cut\t" + settings.keyboard_shortcuts["editor"]["line_cut"],
+                "#" + settings.keyboard_shortcuts["editor"]["line_cut"],
+                "Cut out the current line/lines of the currently selected document",
+                "tango_icons/edit-line-cut.png",
+                line_cut,
             )
+
             def line_copy():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_LINECOPY)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             line_copy_action = create_action(
-                'Line Copy\t' + settings.keyboard_shortcuts['editor']['line_copy'],
-                "#" + settings.keyboard_shortcuts['editor']['line_copy'],
-                'Copy the current line/lines of the currently selected document',
-                'tango_icons/edit-line-copy.png',
-                line_copy
+                "Line Copy\t" + settings.keyboard_shortcuts["editor"]["line_copy"],
+                "#" + settings.keyboard_shortcuts["editor"]["line_copy"],
+                "Copy the current line/lines of the currently selected document",
+                "tango_icons/edit-line-copy.png",
+                line_copy,
             )
+
             def line_delete():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_LINEDELETE)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             line_delete_action = create_action(
-                'Line Delete\t' + settings.keyboard_shortcuts['editor']['line_delete'],
-                "#" + settings.keyboard_shortcuts['editor']['line_delete'],
-                'Delete the current line of the currently selected document',
-                'tango_icons/edit-line-delete.png',
-                line_delete
+                "Line Delete\t" + settings.keyboard_shortcuts["editor"]["line_delete"],
+                "#" + settings.keyboard_shortcuts["editor"]["line_delete"],
+                "Delete the current line of the currently selected document",
+                "tango_icons/edit-line-delete.png",
+                line_delete,
             )
+
             def line_transpose():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
                     send_sci_message(qt.QsciScintillaBase.SCI_LINETRANSPOSE)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             line_transpose_action = create_action(
-                'Line Transpose\t' + settings.keyboard_shortcuts['editor']['line_transpose'],
-                "#" + settings.keyboard_shortcuts['editor']['line_transpose'],
-                'Switch the current line with the line above it of the currently selected document',
-                'tango_icons/edit-line-transpose.png',
-                line_transpose
+                "Line Transpose\t"
+                + settings.keyboard_shortcuts["editor"]["line_transpose"],
+                "#" + settings.keyboard_shortcuts["editor"]["line_transpose"],
+                "Switch the current line with the line above it of the currently selected document",
+                "tango_icons/edit-line-transpose.png",
+                line_transpose,
             )
+
             def line_duplicate():
                 try:
                     send_sci_message = self.get_tab_by_focus().SendScintilla
-                    #send_sci_message(qt.QsciScintillaBase.SCI_LINEDUPLICATE)
+                    # send_sci_message(qt.QsciScintillaBase.SCI_LINEDUPLICATE)
                     send_sci_message(qt.QsciScintillaBase.SCI_SELECTIONDUPLICATE)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             line_duplicate_action = create_action(
-                'Line/Selection Duplicate\t' + settings.keyboard_shortcuts['editor']['line_selection_duplicate'],
-                "#" + settings.keyboard_shortcuts['editor']['line_selection_duplicate'],
-                'Duplicate the current line/selection of the currently selected document',
-                'tango_icons/edit-line-duplicate.png',
-                line_duplicate
+                "Line/Selection Duplicate\t"
+                + settings.keyboard_shortcuts["editor"]["line_selection_duplicate"],
+                "#" + settings.keyboard_shortcuts["editor"]["line_selection_duplicate"],
+                "Duplicate the current line/selection of the currently selected document",
+                "tango_icons/edit-line-duplicate.png",
+                line_duplicate,
             )
-            #Rectangular block selection
-            action_text = 'Rectangular block selection\tAlt+Mouse'
+            # Rectangular block selection
+            action_text = "Rectangular block selection\tAlt+Mouse"
             rect_block_action = qt.QAction(
-                functions.create_icon('tango_icons/Input-keyboard.svg'),
+                functions.create_icon("tango_icons/Input-keyboard.svg"),
                 action_text,
-                self
+                self,
             )
-            temp_string = 'Select rectangle using the mouse in the currently selected document'
+            temp_string = (
+                "Select rectangle using the mouse in the currently selected document"
+            )
             rect_block_action.setStatusTip(temp_string)
-#            temp_icon = functions.create_icon("")
-#            rect_block_action.setIcon(temp_icon)
+            #            temp_icon = functions.create_icon("")
+            #            rect_block_action.setIcon(temp_icon)
             edit_menu.addAction(cut_action)
             edit_menu.addAction(copy_action)
             edit_menu.addAction(paste_action)
@@ -1325,18 +1510,25 @@ class MainWindow(qt.QMainWindow):
             edit_menu.addAction(select_to_start_action)
             edit_menu.addAction(select_to_end_action)
             edit_menu.addAction(rect_block_action)
+
         def construct_edit_advanced_menu():
             edit_menu = Menu("&Advanced", self.menubar)
             self.menubar.addMenu(edit_menu)
             edit_menu.installEventFilter(click_filter)
-            #Nested special function for finding text in the currentlly focused custom editor
+
+            # Nested special function for finding text in the currentlly focused custom editor
             def special_find():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
                     temp_string = 'find("{}",'.format(selected_text)
-                    temp_string += 'case_sensitive=False,'
-                    temp_string += 'search_forward=True,'
+                    temp_string += "case_sensitive=False,"
+                    temp_string += "search_forward=True,"
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1344,22 +1536,29 @@ class MainWindow(qt.QMainWindow):
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
+
             find_action = create_action(
-                'Find',
-                settings.keyboard_shortcuts['general']['find'],
-                'Find text in the currently selected document',
-                'tango_icons/edit-find.png',
-                special_find
+                "Find",
+                settings.keyboard_shortcuts["general"]["find"],
+                "Find text in the currently selected document",
+                "tango_icons/edit-find.png",
+                special_find,
             )
-            #Nested special function for finding text in the currentlly focused
-            #custom editor using regular expressions
+
+            # Nested special function for finding text in the currentlly focused
+            # custom editor using regular expressions
             def special_regex_find():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
                     temp_string = 'regex_find(r"{}",'.format(selected_text)
-                    temp_string += 'case_sensitive=False,'
-                    temp_string += 'search_forward=True,'
+                    temp_string += "case_sensitive=False,"
+                    temp_string += "search_forward=True,"
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1367,21 +1566,28 @@ class MainWindow(qt.QMainWindow):
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
+
             regex_find_action = create_action(
-                'Regex Find',
-                settings.keyboard_shortcuts['general']['regex_find'],
-                'Find text in currently selected document using Python regular expressions',
-                'tango_icons/edit-find-re.png',
-                special_regex_find
+                "Regex Find",
+                settings.keyboard_shortcuts["general"]["regex_find"],
+                "Find text in currently selected document using Python regular expressions",
+                "tango_icons/edit-find-re.png",
+                special_regex_find,
             )
-            #Nested special function for finding and replacing one instance of text in the current main window custom editor
+
+            # Nested special function for finding and replacing one instance of text in the current main window custom editor
             def special_find_and_replace():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
                     temp_string = 'find_and_replace("{}","",'.format(selected_text)
-                    temp_string += 'case_sensitive=False,'
-                    temp_string += 'search_forward=True,'
+                    temp_string += "case_sensitive=False,"
+                    temp_string += "search_forward=True,"
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1389,42 +1595,60 @@ class MainWindow(qt.QMainWindow):
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
+
             find_and_replace_action = create_action(
-                'Find and Replace',
-                settings.keyboard_shortcuts['general']['find_and_replace'],
-                'Find and replace one instance of text from cursor in currently selected document',
-                'tango_icons/edit-find-replace.png',
-                special_find_and_replace
+                "Find and Replace",
+                settings.keyboard_shortcuts["general"]["find_and_replace"],
+                "Find and replace one instance of text from cursor in currently selected document",
+                "tango_icons/edit-find-replace.png",
+                special_find_and_replace,
             )
-            #Nested special function for finding and replacing one instance of text
-            #in the current main window custom editor using regular expressions
+
+            # Nested special function for finding and replacing one instance of text
+            # in the current main window custom editor using regular expressions
             def special_regex_find_and_replace():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
-                    temp_string = 'regex_find_and_replace(r"{}",r"",'.format(selected_text)
-                    temp_string += 'case_sensitive=False,'
-                    temp_string += 'search_forward=True,'
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
+                    temp_string = 'regex_find_and_replace(r"{}",r"",'.format(
+                        selected_text
+                    )
+                    temp_string += "case_sensitive=False,"
+                    temp_string += "search_forward=True,"
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
-                    self.repl.setText('regex_find_and_replace(r"",r"",case_sensitive=False)')
+                    self.repl.setText(
+                        'regex_find_and_replace(r"",r"",case_sensitive=False)'
+                    )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
+
             regex_find_and_replace_action = create_action(
-                'Regex Find and Replace',
-                settings.keyboard_shortcuts['general']['regex_find_and_replace'],
-                'Find and replace one instance of text from cursor in currently selected document using Python regular expressions',
-                'tango_icons/edit-find-replace-re.png',
-                special_regex_find_and_replace
+                "Regex Find and Replace",
+                settings.keyboard_shortcuts["general"]["regex_find_and_replace"],
+                "Find and replace one instance of text from cursor in currently selected document using Python regular expressions",
+                "tango_icons/edit-find-replace-re.png",
+                special_regex_find_and_replace,
             )
+
             def special_highlight():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
                     temp_string = 'highlight("{}",'.format(selected_text)
-                    temp_string += 'case_sensitive=False,'
+                    temp_string += "case_sensitive=False,"
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1432,19 +1656,26 @@ class MainWindow(qt.QMainWindow):
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
+
             highlight_action = create_action(
-                'Highlight',
-                settings.keyboard_shortcuts['general']['highlight'],
-                'Highlight all instances of text in currently selected document',
-                'tango_icons/edit-highlight.png',
-                special_highlight
+                "Highlight",
+                settings.keyboard_shortcuts["general"]["highlight"],
+                "Highlight all instances of text in currently selected document",
+                "tango_icons/edit-highlight.png",
+                special_highlight,
             )
+
             def special_regex_highlight():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
                     temp_string = 'regex_highlight(r"{}",'.format(selected_text)
-                    temp_string += 'case_sensitive=False,'
+                    temp_string += "case_sensitive=False,"
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1452,29 +1683,37 @@ class MainWindow(qt.QMainWindow):
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
+
             regex_highlight_action = create_action(
-                'Regex Highlight',
-                settings.keyboard_shortcuts['general']['regex_highlight'],
-                'Highlight all instances of text in currently selected document using Python regular expressions',
-                'tango_icons/edit-highlight-re.png',
-                special_regex_highlight
+                "Regex Highlight",
+                settings.keyboard_shortcuts["general"]["regex_highlight"],
+                "Highlight all instances of text in currently selected document using Python regular expressions",
+                "tango_icons/edit-highlight-re.png",
+                special_regex_highlight,
             )
+
             def special_clear_highlights():
                 try:
                     focused_tab = self.get_used_tab()
-                    self.repl.setText('clear_highlights(window_name="{}")'.format(focused_tab._parent.name))
+                    self.repl.setText(
+                        'clear_highlights(window_name="{}")'.format(
+                            focused_tab._parent.name
+                        )
+                    )
                 except:
-                    self.repl.setText('clear_highlights()')
+                    self.repl.setText("clear_highlights()")
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(len(self.repl.text()))
+
             clear_highlights_action = create_action(
-                'Clear Highlights',
-                settings.keyboard_shortcuts['general']['clear_highlights'],
-                'Clear all higlights in currently selected document',
-                'tango_icons/edit-clear-highlights.png',
-                special_clear_highlights
+                "Clear Highlights",
+                settings.keyboard_shortcuts["general"]["clear_highlights"],
+                "Clear all higlights in currently selected document",
+                "tango_icons/edit-clear-highlights.png",
+                special_clear_highlights,
             )
+
             def special_replace_in_selection():
                 try:
                     focused_tab = self.get_used_tab()
@@ -1482,46 +1721,65 @@ class MainWindow(qt.QMainWindow):
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
-                    self.repl.setText('replace_in_selection("","",case_sensitive=False)')
+                    self.repl.setText(
+                        'replace_in_selection("","",case_sensitive=False)'
+                    )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
-                self.repl.setCursorPosition(self.repl.text().find('","",case_sensitive'))
+                self.repl.setCursorPosition(
+                    self.repl.text().find('","",case_sensitive')
+                )
+
             replace_selection_action = create_action(
-                'Replace In Selection',
-                settings.keyboard_shortcuts['general']['replace_selection'],
-                'Replace all instances of text in the selected text of the current selected document',
-                'tango_icons/edit-replace-in-selection.png',
-                special_replace_in_selection
+                "Replace In Selection",
+                settings.keyboard_shortcuts["general"]["replace_selection"],
+                "Replace all instances of text in the selected text of the current selected document",
+                "tango_icons/edit-replace-in-selection.png",
+                special_replace_in_selection,
             )
+
             def special_regex_replace_in_selection():
                 try:
                     focused_tab = self.get_used_tab()
-                    temp_string = 'regex_replace_in_selection(r"",r"",case_sensitive=False,'
+                    temp_string = (
+                        'regex_replace_in_selection(r"",r"",case_sensitive=False,'
+                    )
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
-                    self.repl.setText('regex_replace_in_selection(r"",r"",case_sensitive=False)')
+                    self.repl.setText(
+                        'regex_replace_in_selection(r"",r"",case_sensitive=False)'
+                    )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
-                self.repl.setCursorPosition(self.repl.text().find('",r"",case_sensitive'))
-            temp_string = 'Replace all instances of text in the '
-            temp_string += 'selected text of the current selected document'
-            temp_string += 'using Python regular expressions'
+                self.repl.setCursorPosition(
+                    self.repl.text().find('",r"",case_sensitive')
+                )
+
+            temp_string = "Replace all instances of text in the "
+            temp_string += "selected text of the current selected document"
+            temp_string += "using Python regular expressions"
             regex_replace_selection_action = create_action(
-                'Regex Replace In Selection',
-                settings.keyboard_shortcuts['general']['regex_replace_selection'],
+                "Regex Replace In Selection",
+                settings.keyboard_shortcuts["general"]["regex_replace_selection"],
                 temp_string,
-                'tango_icons/edit-replace-in-selection-re.png',
-                special_regex_replace_in_selection
+                "tango_icons/edit-replace-in-selection-re.png",
+                special_regex_replace_in_selection,
             )
-            #Nested special function for replacing all instances of text in
-            #the selected custom editor
+
+            # Nested special function for replacing all instances of text in
+            # the selected custom editor
             def special_replace_all():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
                     temp_string = 'replace_all("{}","",'.format(selected_text)
-                    temp_string += 'case_sensitive=False,'
+                    temp_string += "case_sensitive=False,"
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1529,21 +1787,28 @@ class MainWindow(qt.QMainWindow):
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
+
             replace_all_action = create_action(
-                'Replace All',
-                settings.keyboard_shortcuts['general']['replace_all'],
-                'Replace all instances of text in currently selected document',
-                'tango_icons/edit-replace-all.png',
-                special_replace_all
+                "Replace All",
+                settings.keyboard_shortcuts["general"]["replace_all"],
+                "Replace all instances of text in currently selected document",
+                "tango_icons/edit-replace-all.png",
+                special_replace_all,
             )
-            #Nested special function for replacing all instances of text in
-            #the selected custom editor using regular expressions
+
+            # Nested special function for replacing all instances of text in
+            # the selected custom editor using regular expressions
             def special_regex_replace_all():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
                     temp_string = 'regex_replace_all(r"{}",r"",'.format(selected_text)
-                    temp_string += 'case_sensitive=False,'
+                    temp_string += "case_sensitive=False,"
                     temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(temp_string)
                 except:
@@ -1551,62 +1816,72 @@ class MainWindow(qt.QMainWindow):
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
+
             regex_replace_all_action = create_action(
-                'Regex Replace All',
-                settings.keyboard_shortcuts['general']['regex_replace_all'],
-                'Replace all instances of text in currently selected document using Python regular expressions',
-                'tango_icons/edit-replace-all-re.png',
-                special_regex_replace_all
+                "Regex Replace All",
+                settings.keyboard_shortcuts["general"]["regex_replace_all"],
+                "Replace all instances of text in currently selected document using Python regular expressions",
+                "tango_icons/edit-replace-all-re.png",
+                special_regex_replace_all,
             )
-            #Nested special function for un/commenting selected lines in the main widget
+
+            # Nested special function for un/commenting selected lines in the main widget
             def comment_uncomment():
                 try:
                     self.get_tab_by_focus().toggle_comment_uncomment()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             toggle_comment_action = create_action(
-                'Comment/Uncomment',
-                settings.keyboard_shortcuts['general']['toggle_comment'],
-                'Toggle comments for the selected lines or single line in the currently selected document',
-                'tango_icons/edit-comment-uncomment.png',
-                comment_uncomment
+                "Comment/Uncomment",
+                settings.keyboard_shortcuts["general"]["toggle_comment"],
+                "Toggle comments for the selected lines or single line in the currently selected document",
+                "tango_icons/edit-comment-uncomment.png",
+                comment_uncomment,
             )
+
             def toggle_autocompletions():
                 try:
                     self.get_tab_by_focus().toggle_autocompletions()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             toggle_autocompletion_action = create_action(
-                'Enable/Disable Autocompletion',
-                settings.keyboard_shortcuts['general']['toggle_autocompletion'],
-                'Enable/Disable autocompletions for the currently selected document',
-                'tango_icons/edit-autocompletion.png',
-                toggle_autocompletions
+                "Enable/Disable Autocompletion",
+                settings.keyboard_shortcuts["general"]["toggle_autocompletion"],
+                "Enable/Disable autocompletions for the currently selected document",
+                "tango_icons/edit-autocompletion.png",
+                toggle_autocompletions,
             )
+
             def toggle_wordwrap():
                 try:
                     self.get_tab_by_focus().toggle_wordwrap()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             toggle_wrap_action = create_action(
-                'Enable/Disable Line Wrapping',
-                settings.keyboard_shortcuts['general']['toggle_wrap'],
-                'Enable/Disable line wrapping for the currently selected document',
-                'tango_icons/wordwrap.png',
-                toggle_wordwrap
+                "Enable/Disable Line Wrapping",
+                settings.keyboard_shortcuts["general"]["toggle_wrap"],
+                "Enable/Disable line wrapping for the currently selected document",
+                "tango_icons/wordwrap.png",
+                toggle_wordwrap,
             )
+
             def reload_file():
                 try:
                     self.get_tab_by_focus().reload_file()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             reload_file_action = create_action(
-                'Reload file',
-                settings.keyboard_shortcuts['general']['reload_file'],
-                'Reload file from disk, will prompt if file contains changes',
-                'tango_icons/view-refresh.png',
-                reload_file
+                "Reload file",
+                settings.keyboard_shortcuts["general"]["reload_file"],
+                "Reload file from disk, will prompt if file contains changes",
+                "tango_icons/view-refresh.png",
+                reload_file,
             )
+
             def create_node_tree():
                 mw = self.get_tab_by_focus()
                 if isinstance(mw, CustomEditor):
@@ -1615,137 +1890,179 @@ class MainWindow(qt.QMainWindow):
                     message = "No document opened in the selected window or\n"
                     message += "the document is not an editor!"
                     self.display.repl_display_message(
-                        message,
-                        message_type=constants.MessageType.ERROR
+                        message, message_type=constants.MessageType.ERROR
                     )
+
             node_tree_action = create_action(
-                'Create/reload node tree (C / Nim / Python3)',
-                settings.keyboard_shortcuts['general']['node_tree'],
-                'Create a node tree for the code for the currently selected document (C / Nim / Python3)',
-                'tango_icons/edit-node-tree.png',
-                create_node_tree
+                "Create/reload node tree (C / Nim / Python3)",
+                settings.keyboard_shortcuts["general"]["node_tree"],
+                "Create a node tree for the code for the currently selected document (C / Nim / Python3)",
+                "tango_icons/edit-node-tree.png",
+                create_node_tree,
             )
+
             def special_goto_line():
                 try:
                     focused_tab = self.get_used_tab()
-                    self.repl.setText('goto_line(,window_name="{}")'.format(focused_tab._parent.name))
+                    self.repl.setText(
+                        'goto_line(,window_name="{}")'.format(focused_tab._parent.name)
+                    )
                     self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
-                    self.repl.setCursorPosition(self.repl.text().find(',window_name'))
+                    self.repl.setCursorPosition(self.repl.text().find(",window_name"))
                 except:
-                    self.repl.setText('goto_line()')
-                    self.repl.setCursorPosition(len(self.repl.text())-1)
+                    self.repl.setText("goto_line()")
+                    self.repl.setCursorPosition(len(self.repl.text()) - 1)
                 self.repl.setFocus()
+
             goto_line_action = create_action(
-                'Goto line',
-                settings.keyboard_shortcuts['general']['goto_line'],
-                'Go to the specified line in the current main window document',
-                'tango_icons/edit-goto.png',
-                special_goto_line
+                "Goto line",
+                settings.keyboard_shortcuts["general"]["goto_line"],
+                "Go to the specified line in the current main window document",
+                "tango_icons/edit-goto.png",
+                special_goto_line,
             )
+
             def special_indent_to_cursor():
                 try:
                     self.get_tab_by_focus().indent_lines_to_cursor()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            temp_string = 'Indent the selected lines to the current cursor position '
-            temp_string += '(SPACE ON THE LEFT SIDE OF LINES IS STRIPPED!)'
+
+            temp_string = "Indent the selected lines to the current cursor position "
+            temp_string += "(SPACE ON THE LEFT SIDE OF LINES IS STRIPPED!)"
             indent_to_cursor_action = create_action(
-                'Indent to cursor',
-                settings.keyboard_shortcuts['general']['indent_to_cursor'],
+                "Indent to cursor",
+                settings.keyboard_shortcuts["general"]["indent_to_cursor"],
                 temp_string,
-                'tango_icons/edit-indent-to-cursor.png',
-                special_indent_to_cursor
+                "tango_icons/edit-indent-to-cursor.png",
+                special_indent_to_cursor,
             )
+
             def special_to_uppercase():
                 focused_tab = self.get_used_tab()
                 self.editing.convert_to_uppercase(focused_tab._parent.name)
+
             to_uppercase_action = create_action(
-                'Selection to UPPERCASE',
-                settings.keyboard_shortcuts['general']['to_uppercase'],
-                'Convert selected text to UPPERCASE',
-                'tango_icons/edit-case-to-upper.png',
-                special_to_uppercase
+                "Selection to UPPERCASE",
+                settings.keyboard_shortcuts["general"]["to_uppercase"],
+                "Convert selected text to UPPERCASE",
+                "tango_icons/edit-case-to-upper.png",
+                special_to_uppercase,
             )
+
             def special_to_lowercase():
                 focused_tab = self.get_used_tab()
                 self.editing.convert_to_lowercase(focused_tab._parent.name)
+
             to_lowercase_action = create_action(
-                'Selection to lowercase',
-                settings.keyboard_shortcuts['general']['to_lowercase'],
-                'Convert selected text to lowercase',
-                'tango_icons/edit-case-to-lower.png',
-                special_to_lowercase
+                "Selection to lowercase",
+                settings.keyboard_shortcuts["general"]["to_lowercase"],
+                "Convert selected text to lowercase",
+                "tango_icons/edit-case-to-lower.png",
+                special_to_lowercase,
             )
-            #Nested function for finding files in open documents
+
+            # Nested function for finding files in open documents
             def special_find_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
                     repl_text = 'find_in_open_documents("{}"'.format(selected_text)
                     repl_text += ",case_sensitive=False,regular_expression=False"
                     repl_text += ',window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(repl_text)
                 except:
-                    self.repl.setText('find_in_open_documents("",case_sensitive=False,regular_expression=False)')
+                    self.repl.setText(
+                        'find_in_open_documents("",case_sensitive=False,regular_expression=False)'
+                    )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
+
             find_in_documents_action = create_action(
-                'Find in open documents',
-                settings.keyboard_shortcuts['general']['find_in_documents'],
+                "Find in open documents",
+                settings.keyboard_shortcuts["general"]["find_in_documents"],
                 temp_string,
-                'tango_icons/edit-find-in-open-documents.png',
-                special_find_in_open_documents
+                "tango_icons/edit-find-in-open-documents.png",
+                special_find_in_open_documents,
             )
-            #Nested function for finding and replacing text in open documents
+
+            # Nested function for finding and replacing text in open documents
             def special_find_replace_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
-                    repl_text = 'find_replace_in_open_documents("{}",""'.format(selected_text)
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
+                    repl_text = 'find_replace_in_open_documents("{}",""'.format(
+                        selected_text
+                    )
                     repl_text += ",case_sensitive=False,regular_expression=False"
                     repl_text += ',window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(repl_text)
                 except:
-                    self.repl.setText('find_replace_in_open_documents("","",case_sensitive=False,regular_expression=False)')
+                    self.repl.setText(
+                        'find_replace_in_open_documents("","",case_sensitive=False,regular_expression=False)'
+                    )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
+
             find_replace_in_documents_action = create_action(
-                'Find and replace in open documents',
-                settings.keyboard_shortcuts['general']['find_replace_in_documents'],
+                "Find and replace in open documents",
+                settings.keyboard_shortcuts["general"]["find_replace_in_documents"],
                 temp_string,
-                'tango_icons/edit-replace-in-open-documents.png',
-                special_find_replace_in_open_documents
+                "tango_icons/edit-replace-in-open-documents.png",
+                special_find_replace_in_open_documents,
             )
-            #Nested function for replacing all string instances in open documents
+
+            # Nested function for replacing all string instances in open documents
             def special_replace_all_in_open_documents():
                 try:
                     focused_tab = self.get_used_tab()
-                    selected_text = focused_tab.selectedText().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
-                    repl_text = 'replace_all_in_open_documents("{}",""'.format(selected_text)
+                    selected_text = (
+                        focused_tab.selectedText()
+                        .replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                    )
+                    repl_text = 'replace_all_in_open_documents("{}",""'.format(
+                        selected_text
+                    )
                     repl_text += ",case_sensitive=False,regular_expression=False"
                     repl_text += ',window_name="{}")'.format(focused_tab._parent.name)
                     self.repl.setText(repl_text)
                 except:
-                    self.repl.setText('replace_all_in_open_documents("","",case_sensitive=False,regular_expression=False)')
+                    self.repl.setText(
+                        'replace_all_in_open_documents("","",case_sensitive=False,regular_expression=False)'
+                    )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
                 self.repl.setFocus()
+
             replace_all_in_documents_action = create_action(
-                'Replace all in open documents',
-                settings.keyboard_shortcuts['general']['replace_all_in_documents'],
-                'Replace all instances of search text across all open documents in the currently selected window',
-                'tango_icons/edit-replace-all-in-open-documents.png',
-                special_replace_all_in_open_documents
+                "Replace all in open documents",
+                settings.keyboard_shortcuts["general"]["replace_all_in_documents"],
+                "Replace all instances of search text across all open documents in the currently selected window",
+                "tango_icons/edit-replace-all-in-open-documents.png",
+                special_replace_all_in_open_documents,
             )
             reset_context_menu_action = create_action(
-                'Reset context menus',
+                "Reset context menus",
                 None,
-                'Reset functions of ALL context menus (right-click menus)',
-                'tango_icons/reset-context-menu.png',
-                gui.contextmenu.ContextMenuHex.reset_functions
+                "Reset functions of ALL context menus (right-click menus)",
+                "tango_icons/reset-context-menu.png",
+                gui.contextmenu.ContextMenuHex.reset_functions,
             )
+
             # Open in browser
             def open_in_browser(*args):
                 try:
@@ -1753,16 +2070,19 @@ class MainWindow(qt.QMainWindow):
                     selected_text = focused_tab.selectedText()
                     functions.open_url(selected_text)
                 except:
-                    message = "Cannot open selected editor text in the system's web-browser!"
+                    message = (
+                        "Cannot open selected editor text in the system's web-browser!"
+                    )
                     self.display.repl_display_error(message)
+
             open_in_browser_action = create_action(
-                'Open in browser',
+                "Open in browser",
                 None,
-                'Open selected editor text in the systems web-browser',
-                'tango_icons/gnome-web-browser.png',
+                "Open selected editor text in the systems web-browser",
+                "tango_icons/gnome-web-browser.png",
                 open_in_browser,
             )
-            #Adding the edit menu and constructing all of the options
+            # Adding the edit menu and constructing all of the options
             edit_menu.addAction(find_action)
             edit_menu.addAction(regex_find_action)
             edit_menu.addAction(find_and_replace_action)
@@ -1789,122 +2109,163 @@ class MainWindow(qt.QMainWindow):
             edit_menu.addAction(find_in_documents_action)
             edit_menu.addAction(find_replace_in_documents_action)
             edit_menu.addAction(replace_all_in_documents_action)
-        #System menu
+
+        # System menu
         def construct_system_menu():
             system_menu = Menu("S&ystem", self.menubar)
             self.menubar.addMenu(system_menu)
             system_menu.installEventFilter(click_filter)
+
             def special_find_in():
-                #The second argument is raw, so that single backslashes work for windows paths
-                self.repl.setText('find_in_files("",r"directory",case_sensitive=False,search_subdirs=True,break_on_find=False,file_filter=None)')
+                # The second argument is raw, so that single backslashes work for windows paths
+                self.repl.setText(
+                    'find_in_files("",r"directory",case_sensitive=False,search_subdirs=True,break_on_find=False,file_filter=None)'
+                )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
-                self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
+                self.repl.setSelection(
+                    self.repl.text().index("directory"), len("directory")
+                )
+
             def special_find_in_with_dialog():
-                #The second argument is raw, so that single backslashes work for windows paths
-                self.repl.setText('find_in_files("",case_sensitive=False,search_subdirs=True,break_on_find=False,file_filter=None)')
+                # The second argument is raw, so that single backslashes work for windows paths
+                self.repl.setText(
+                    'find_in_files("",case_sensitive=False,search_subdirs=True,break_on_find=False,file_filter=None)'
+                )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_find_in_with_dialog"] = special_find_in_with_dialog
-            temp_string = 'Find all the files in a directory/subdirectories '
-            temp_string += 'that contain the search string'
+
+            self.menubar_functions["special_find_in_with_dialog"] = (
+                special_find_in_with_dialog
+            )
+            temp_string = "Find all the files in a directory/subdirectories "
+            temp_string += "that contain the search string"
             find_in_files_action = create_action(
-                'Find in files',
-                settings.keyboard_shortcuts['general']['find_in_files'],
+                "Find in files",
+                settings.keyboard_shortcuts["general"]["find_in_files"],
                 temp_string,
-                'tango_icons/system-find-in-files.png',
-                special_find_in
+                "tango_icons/system-find-in-files.png",
+                special_find_in,
             )
+
             def special_find_file():
-                #The second argument is raw, so that single backslashes work for windows paths
-                self.repl.setText('find_files("",r"directory",case_sensitive=False,search_subdirs=True)')
+                # The second argument is raw, so that single backslashes work for windows paths
+                self.repl.setText(
+                    'find_files("",r"directory",case_sensitive=False,search_subdirs=True)'
+                )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
-                self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
+                self.repl.setSelection(
+                    self.repl.text().index("directory"), len("directory")
+                )
+
             def special_find_file_with_dialog():
-                #The second argument is raw, so that single backslashes work for windows paths
-                self.repl.setText('find_files("",case_sensitive=False,search_subdirs=True)')
+                # The second argument is raw, so that single backslashes work for windows paths
+                self.repl.setText(
+                    'find_files("",case_sensitive=False,search_subdirs=True)'
+                )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_find_file_with_dialog"] = special_find_file_with_dialog
-            temp_string = 'Find all the files in a directory/subdirectories '
-            temp_string += 'that have the search string in them'
-            find_files_action = create_action(
-                'Find files',
-                settings.keyboard_shortcuts['general']['find_files'],
-                temp_string,
-                'tango_icons/system-find-files.png',
-                special_find_file
+
+            self.menubar_functions["special_find_file_with_dialog"] = (
+                special_find_file_with_dialog
             )
+            temp_string = "Find all the files in a directory/subdirectories "
+            temp_string += "that have the search string in them"
+            find_files_action = create_action(
+                "Find files",
+                settings.keyboard_shortcuts["general"]["find_files"],
+                temp_string,
+                "tango_icons/system-find-files.png",
+                special_find_file,
+            )
+
             def special_replace_in_files():
-                #The second argument is raw, so that single backslashes work for windows paths
+                # The second argument is raw, so that single backslashes work for windows paths
                 temp_string = 'replace_in_files("search_text","replace_text",'
                 temp_string += 'r"directory",case_sensitive=False,search_subdirs=True,file_filter=None)'
                 self.repl.setText(temp_string)
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
-                self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
+                self.repl.setSelection(
+                    self.repl.text().index("directory"), len("directory")
+                )
+
             def special_replace_in_files_with_dialog():
-                #The second argument is raw, so that single backslashes work for windows paths
+                # The second argument is raw, so that single backslashes work for windows paths
                 temp_string = 'replace_in_files("search_text","replace_text",'
-                temp_string += 'case_sensitive=False,search_subdirs=True,file_filter=None)'
+                temp_string += (
+                    "case_sensitive=False,search_subdirs=True,file_filter=None)"
+                )
                 self.repl.setText(temp_string)
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
-            self.menubar_functions["special_replace_in_files_with_dialog"] = special_replace_in_files_with_dialog
-            temp_string = 'Find all the files in a directory/subdirectories '
-            temp_string += 'that have the search string in them and replace all '
-            temp_string += 'instances in the file with the replace string'
-            replace_in_files_action = create_action(
-                'Replace in files',
-                settings.keyboard_shortcuts['general']['replace_in_files'],
-                temp_string,
-                'tango_icons/system-replace-in-files.png',
-                special_replace_in_files
+
+            self.menubar_functions["special_replace_in_files_with_dialog"] = (
+                special_replace_in_files_with_dialog
             )
+            temp_string = "Find all the files in a directory/subdirectories "
+            temp_string += "that have the search string in them and replace all "
+            temp_string += "instances in the file with the replace string"
+            replace_in_files_action = create_action(
+                "Replace in files",
+                settings.keyboard_shortcuts["general"]["replace_in_files"],
+                temp_string,
+                "tango_icons/system-replace-in-files.png",
+                special_replace_in_files,
+            )
+
             def special_run_command():
                 self.repl.setText('run("",show_console=True)')
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
                 self.repl.setCursorPosition(self.repl.text().find('",show_'))
+
             run_command_action = create_action(
-                'Run command',
+                "Run command",
                 None,
-                'Run command as a new process (FULLY TESTED ONLY ON WINDOWS!)',
-                'tango_icons/utilities-terminal.png',
-                special_run_command
+                "Run command as a new process (FULLY TESTED ONLY ON WINDOWS!)",
+                "tango_icons/utilities-terminal.png",
+                special_run_command,
             )
+
             def create_cwd_tree():
                 self.display.show_directory_tree(os.getcwd())
+
             cwd_tree_action = create_action(
-                'Show current working directory tree',
-                settings.keyboard_shortcuts['general']['cwd_tree'],
-                'Create a node tree for the current working directory (CWD)',
-                'tango_icons/system-show-cwd-tree.png',
-                create_cwd_tree
+                "Show current working directory tree",
+                settings.keyboard_shortcuts["general"]["cwd_tree"],
+                "Create a node tree for the current working directory (CWD)",
+                "tango_icons/system-show-cwd-tree.png",
+                create_cwd_tree,
             )
+
             def show_explorer():
                 self.system.show_explorer()
+
             show_explorer_action = create_action(
-                'Show current working directory explorer',
-                settings.keyboard_shortcuts['general']['cwd_explorer'],
-                'Show the current working directory in the systems explorer',
-                'tango_icons/system-show-cwd.png',
-                show_explorer
+                "Show current working directory explorer",
+                settings.keyboard_shortcuts["general"]["cwd_explorer"],
+                "Show the current working directory in the systems explorer",
+                "tango_icons/system-show-cwd.png",
+                show_explorer,
             )
+
             def show_external_terminal():
                 self.repl.get_interpreter().create_terminal()
+
             show_external_terminal_action = create_action(
-                'Show external Console/Terminal window',
+                "Show external Console/Terminal window",
                 None,
-                'Show an external OS\'s Console(Windows) / Terminal(Linux) ' +
-                    'window at the current working directory',
-                'tango_icons/utilities-terminal.png',
-                show_external_terminal
+                "Show an external OS's Console(Windows) / Terminal(Linux) "
+                + "window at the current working directory",
+                "tango_icons/utilities-terminal.png",
+                show_external_terminal,
             )
+
             def open_general_explorer():
                 file_explorer = self.get_helper_window().tree_add_tab(
                     data.file_explorer_tab_name, TreeExplorer
@@ -1914,30 +2275,31 @@ class MainWindow(qt.QMainWindow):
                 file_explorer.open_file_hex_signal.connect(self.open_file_hex)
                 file_explorer.internals.set_icon(
                     file_explorer,
-                    functions.create_icon(
-                        'tango_icons/system-show-cwd-tree-blue.png'
-                    )
+                    functions.create_icon("tango_icons/system-show-cwd-tree-blue.png"),
                 )
                 self.get_helper_window().setCurrentWidget(file_explorer)
+
             show_new_explorer_tree_action = create_action(
-                'Show current working directory in tree explorer',
-                settings.keyboard_shortcuts['general']['new_cwd_tree'],
-                'Show the current working directory in the tree explorer',
-                'tango_icons/system-show-cwd-tree-blue.png',
-                open_general_explorer
+                "Show current working directory in tree explorer",
+                settings.keyboard_shortcuts["general"]["new_cwd_tree"],
+                "Show the current working directory in the tree explorer",
+                "tango_icons/system-show-cwd-tree-blue.png",
+                open_general_explorer,
             )
+
             def show_terminal():
                 window = self.get_window_by_indication()
                 if window is None:
                     window = self.get_largest_window()
                 window.terminal_add()
                 window.currentWidget().setFocus()
+
             show_terminal_action = create_action(
-                'Show Terminal Emulator',
+                "Show Terminal Emulator",
                 None,
-                'Show an integrater Terminal Emulator',
-                'tango_icons/utilities-terminal.png',
-                show_terminal
+                "Show an integrater Terminal Emulator",
+                "tango_icons/utilities-terminal.png",
+                show_terminal,
             )
             # Add the menu items
             system_menu.addAction(find_files_action)
@@ -1951,7 +2313,7 @@ class MainWindow(qt.QMainWindow):
             system_menu.addAction(run_command_action)
             system_menu.addAction(show_terminal_action)
             system_menu.addAction(show_external_terminal_action)
-            
+
             # Terminals
             if data.platform == "Windows":
                 # CMD
@@ -1960,129 +2322,139 @@ class MainWindow(qt.QMainWindow):
                         "Terminal - CMD", "cmd.exe"
                     )
                     self.get_helper_window().setCurrentWidget(terminal)
+
                 add_cmd_terminal_emulator_action = create_action(
                     "Add CMD Terminal",
                     None,
                     "Add a Windows CMD terminal emulator to the layout",
-                    'tango_icons/utilities-terminal.png',
-                    add_cmd_terminal_emulator
+                    "tango_icons/utilities-terminal.png",
+                    add_cmd_terminal_emulator,
                 )
                 system_menu.addAction(add_cmd_terminal_emulator_action)
-                
+
                 # PowerShell
                 def add_powershell_terminal_emulator():
                     terminal = self.get_helper_window().terminal_emulator_add(
                         "Terminal - PowerShell", "powershell.exe"
                     )
                     self.get_helper_window().setCurrentWidget(terminal)
+
                 add_powershell_terminal_emulator_action = create_action(
                     "Add PowerShell Terminal",
                     None,
                     "Add a Windows PowerShell terminal emulator to the layout",
-                    'tango_icons/utilities-terminal.png',
-                    add_powershell_terminal_emulator
+                    "tango_icons/utilities-terminal.png",
+                    add_powershell_terminal_emulator,
                 )
                 system_menu.addAction(add_powershell_terminal_emulator_action)
-        #Lexers menu
+
+        # Lexers menu
         def construct_lexers_menu(parent):
             def set_lexer(lexer, lexer_name):
                 try:
-                    #Get the focused tab and reset the lexer
+                    # Get the focused tab and reset the lexer
                     focused_tab = self.get_tab_by_focus()
                     focused_tab.clear_lexer()
-                    #Initialize and set the new lexer
+                    # Initialize and set the new lexer
                     lexer_instance = lexer()
                     focused_tab.set_lexer(lexer_instance, lexer_name)
-                    #Display the lexer change
+                    # Display the lexer change
                     message = "Lexer changed to: {}".format(lexer_name)
                     self.display.repl_display_message(message)
                 except Exception as ex:
                     message = "Error with lexer selection!\n"
                     message += "Select a window widget with an opened document first."
                     self.display.repl_display_message(
-                        message,
-                        message_type=constants.MessageType.ERROR
+                        message, message_type=constants.MessageType.ERROR
                     )
                     self.display.write_to_statusbar(message)
+
             lexers_menu = self.display.create_lexers_menu(
                 "Change lexer",
                 set_lexer,
                 store_menu_to_mainform=False,
-                custom_parent=parent
+                custom_parent=parent,
             )
             lexers_menu.installEventFilter(click_filter)
-            temp_icon = functions.create_icon('tango_icons/lexers.png')
+            temp_icon = functions.create_icon("tango_icons/lexers.png")
             lexers_menu.setIcon(temp_icon)
             parent.addMenu(lexers_menu)
-        #View menu
+
+        # View menu
         def construct_view_menu():
             view_menu = Menu("&View", self.menubar)
             self.menubar.addMenu(view_menu)
             view_menu.installEventFilter(click_filter)
             # Show/hide the function wheel
             function_wheel_toggle_action = create_action(
-                'Show/Hide Function Wheel',
-                settings.keyboard_shortcuts['general']['function_wheel_toggle'],
-                'Show/hide the Ex.Co. function wheel',
+                "Show/Hide Function Wheel",
+                settings.keyboard_shortcuts["general"]["function_wheel_toggle"],
+                "Show/hide the Ex.Co. function wheel",
                 data.application_icon,
-                self.view.toggle_function_wheel
+                self.view.toggle_function_wheel,
             )
             # Show/hide the settings manipulator
             settings_manipulator_toggle_action = create_action(
-                'Show/Hide Settings Manipulator',
-                settings.keyboard_shortcuts['general']['settings_manipulator_toggle'],
-                'Show/hide the Ex.Co. settings manipulator',
+                "Show/Hide Settings Manipulator",
+                settings.keyboard_shortcuts["general"]["settings_manipulator_toggle"],
+                "Show/hide the Ex.Co. settings manipulator",
                 data.application_icon,
-                self.view.toggle_settings_manipulator
+                self.view.toggle_settings_manipulator,
             )
             # Maximize/minimize entire Ex.Co. window
             maximize_window_action = create_action(
-                'Maximize/Normalize',
-                settings.keyboard_shortcuts['general']['maximize_window'],
-                'Maximize/Normalize application window',
-                'tango_icons/view-fullscreen.png',
-                self.view.toggle_window_size
+                "Maximize/Normalize",
+                settings.keyboard_shortcuts["general"]["maximize_window"],
+                "Maximize/Normalize application window",
+                "tango_icons/view-fullscreen.png",
+                self.view.toggle_window_size,
             )
 
             def focus_main_window():
                 window = self.get_largest_window()
                 self.view.set_window_focus(window)
+
             main_focus_action = create_action(
-                'Focus Largest window',
-                settings.keyboard_shortcuts['general']['main_focus'],
-                'Set focus to the largest window',
-                'tango_icons/view-focus-main.png',
-                focus_main_window
+                "Focus Largest window",
+                settings.keyboard_shortcuts["general"]["main_focus"],
+                "Set focus to the largest window",
+                "tango_icons/view-focus-main.png",
+                focus_main_window,
             )
+
             def focus_upper_window():
                 window = self.get_helper_window()
                 self.view.set_window_focus(window)
+
             upper_focus_action = create_action(
-                'Focus helper window',
-                settings.keyboard_shortcuts['general']['upper_focus'],
-                'Set focus to the helper window',
-                'tango_icons/view-focus-upper.png',
-                focus_upper_window
+                "Focus helper window",
+                settings.keyboard_shortcuts["general"]["upper_focus"],
+                "Set focus to the helper window",
+                "tango_icons/view-focus-upper.png",
+                focus_upper_window,
             )
+
             def focus_lower_window():
                 window = self.get_repl_window()
                 self.view.set_window_focus(window)
+
             lower_focus_action = create_action(
-                'Focus messages window',
-                settings.keyboard_shortcuts['general']['lower_focus'],
-                'Set focus to the messages window',
-                'tango_icons/view-focus-lower.png',
-                focus_lower_window
+                "Focus messages window",
+                settings.keyboard_shortcuts["general"]["lower_focus"],
+                "Set focus to the messages window",
+                "tango_icons/view-focus-lower.png",
+                focus_lower_window,
             )
 
             def toggle_one_window_mode():
                 self.view.toggle_one_window_mode()
+
             toggle_one_window_mode_action = create_action(
-                'One window mode toggle',
-                settings.keyboard_shortcuts['general']['toggle_mode'],
-                'Toggle between one-window and stored layout',
-                'tango_icons/view-toggle-window-mode.png',
-                toggle_one_window_mode
+                "One window mode toggle",
+                settings.keyboard_shortcuts["general"]["toggle_mode"],
+                "Toggle between one-window and stored layout",
+                "tango_icons/view-toggle-window-mode.png",
+                toggle_one_window_mode,
             )
 
             def select_tab_right():
@@ -2090,185 +2462,206 @@ class MainWindow(qt.QMainWindow):
                     self.get_window_by_child_tab().select_tab(constants.Direction.RIGHT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             select_tab_right_action = create_action(
-                'Select tab right',
-                settings.keyboard_shortcuts['general']['select_tab_right'],
-                'Select one tab to the right in the currently selected window',
-                'tango_icons/view-select-tab-right.png',
-                select_tab_right
+                "Select tab right",
+                settings.keyboard_shortcuts["general"]["select_tab_right"],
+                "Select one tab to the right in the currently selected window",
+                "tango_icons/view-select-tab-right.png",
+                select_tab_right,
             )
+
             def select_tab_left():
                 try:
                     self.get_window_by_child_tab().select_tab(constants.Direction.LEFT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             select_tab_left_action = create_action(
-                'Select tab left',
-                settings.keyboard_shortcuts['general']['select_tab_left'],
-                'Select one tab to the left in the currently selected window',
-                'tango_icons/view-select-tab-left.png',
-                select_tab_left
+                "Select tab left",
+                settings.keyboard_shortcuts["general"]["select_tab_left"],
+                "Select one tab to the left in the currently selected window",
+                "tango_icons/view-select-tab-left.png",
+                select_tab_left,
             )
+
             def move_tab_right():
                 try:
                     self.get_window_by_child_tab().move_tab(constants.Direction.RIGHT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             move_tab_right_action = create_action(
-                'Move tab right',
-                settings.keyboard_shortcuts['general']['move_tab_right'],
-                'Move the current tab in the currently selected window one position to the right',
-                'tango_icons/view-move-tab-right.png',
-                move_tab_right
+                "Move tab right",
+                settings.keyboard_shortcuts["general"]["move_tab_right"],
+                "Move the current tab in the currently selected window one position to the right",
+                "tango_icons/view-move-tab-right.png",
+                move_tab_right,
             )
+
             def move_tab_left():
                 try:
                     self.get_window_by_child_tab().move_tab(constants.Direction.LEFT)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             move_tab_left_action = create_action(
-                'Move tab left',
-                settings.keyboard_shortcuts['general']['move_tab_left'],
-                'Move the current tab in the currently selected window one position to the left',
-                'tango_icons/view-move-tab-left.png',
-                move_tab_left
+                "Move tab left",
+                settings.keyboard_shortcuts["general"]["move_tab_left"],
+                "Move the current tab in the currently selected window one position to the left",
+                "tango_icons/view-move-tab-left.png",
+                move_tab_left,
             )
+
             def show_edge():
                 try:
                     self.get_tab_by_focus().edge_marker_toggle()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             toggle_edge_action = create_action(
-                'Toggle edge marker',
-                settings.keyboard_shortcuts['general']['toggle_edge'],
-                'Toggle the display of the edge marker that shows the prefered maximum chars in a line',
-                'tango_icons/view-edge-marker.png',
-                show_edge
+                "Toggle edge marker",
+                settings.keyboard_shortcuts["general"]["toggle_edge"],
+                "Toggle the display of the edge marker that shows the prefered maximum chars in a line",
+                "tango_icons/view-edge-marker.png",
+                show_edge,
             )
+
             def reset_zoom():
                 try:
                     self.get_tab_by_focus()._parent.zoom_reset()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             reset_zoom_action = create_action(
-                'Zoom reset',
-                settings.keyboard_shortcuts['general']['reset_zoom'],
-                'Reset the zoom level on the currently focused document',
-                'tango_icons/view-zoom-reset.png',
-                reset_zoom
+                "Zoom reset",
+                settings.keyboard_shortcuts["general"]["reset_zoom"],
+                "Reset the zoom level on the currently focused document",
+                "tango_icons/view-zoom-reset.png",
+                reset_zoom,
             )
-            #Bookmarks
+
+            # Bookmarks
             def bookmark_goto(number):
                 self.bookmarks.goto(number)
+
             self.menubar_functions["bookmark_goto"] = bookmark_goto
+
             def bookmark_store(number):
                 try:
                     current_tab = self.get_tab_by_focus()
                     current_line = current_tab.getCursorPosition()[0] + 1
-                    self.bookmarks.add_mark_by_number(
-                        current_tab,
-                        current_line,
-                        number
-                    )
+                    self.bookmarks.add_mark_by_number(current_tab, current_line, number)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             def bookmark_toggle():
                 try:
                     self.get_tab_by_focus().bookmarks.toggle()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             bookmark_menu = Menu("&Bookmarks", self.menubar)
             view_menu.addMenu(bookmark_menu)
             bookmark_menu.installEventFilter(click_filter)
-            temp_icon = functions.create_icon('tango_icons/bookmarks.png')
+            temp_icon = functions.create_icon("tango_icons/bookmarks.png")
             bookmark_menu.setIcon(temp_icon)
             bookmark_toggle_action = create_action(
-                'Toggle Bookmark',
-                settings.keyboard_shortcuts['general']['bookmark_toggle'],
-                'Toggle a bookmark at the current document line',
-                'tango_icons/bookmark.png',
-                bookmark_toggle
+                "Toggle Bookmark",
+                settings.keyboard_shortcuts["general"]["bookmark_toggle"],
+                "Toggle a bookmark at the current document line",
+                "tango_icons/bookmark.png",
+                bookmark_toggle,
             )
             bookmark_menu.addAction(bookmark_toggle_action)
+
             def bookmarks_clear():
                 self.bookmarks.clear()
+
             bookmark_clear_action = create_action(
-                'Clear Bookmarks',
+                "Clear Bookmarks",
                 None,
-                'Clear Bookmarks',
-                'tango_icons/bookmarks-clear.png',
-                bookmarks_clear
+                "Clear Bookmarks",
+                "tango_icons/bookmarks-clear.png",
+                bookmarks_clear,
             )
             bookmark_menu.addAction(bookmark_clear_action)
             bookmark_menu.addSeparator()
             bookmark_goto_menu = Menu("Go To", self.menubar)
             bookmark_menu.addMenu(bookmark_goto_menu)
             bookmark_goto_menu.installEventFilter(click_filter)
-            temp_icon = functions.create_icon('tango_icons/bookmarks-goto.png')
+            temp_icon = functions.create_icon("tango_icons/bookmarks-goto.png")
             bookmark_goto_menu.setIcon(temp_icon)
             bookmark_store_menu = Menu("Store", self.menubar)
             bookmark_menu.addMenu(bookmark_store_menu)
             bookmark_store_menu.installEventFilter(click_filter)
-            temp_icon = functions.create_icon('tango_icons/bookmarks-store.png')
+            temp_icon = functions.create_icon("tango_icons/bookmarks-store.png")
             bookmark_store_menu.setIcon(temp_icon)
             self.bookmark_menu = bookmark_menu
             for i in range(10):
-                #Go To
+                # Go To
                 def create_goto_bookmark():
                     func = functools.partial(bookmark_goto, i)
                     func.__name__ = "bookmark_goto_{}".format(i)
                     return func
+
                 bookmark_goto_action = create_action(
-                    'Bookmark Goto {:d}'.format(i),
-                    settings.keyboard_shortcuts['general']['bookmark_goto'][i],
+                    "Bookmark Goto {:d}".format(i),
+                    settings.keyboard_shortcuts["general"]["bookmark_goto"][i],
                     "Go to bookmark number:{:d}".format(i),
-                    'tango_icons/bookmarks-goto.png',
-                    create_goto_bookmark()
+                    "tango_icons/bookmarks-goto.png",
+                    create_goto_bookmark(),
                 )
                 bookmark_goto_menu.addAction(bookmark_goto_action)
-                #Store
+
+                # Store
                 def create_store_bookmark():
                     func = functools.partial(bookmark_store, i)
-#                    func.__name__ = "store_bookmark_{}".format(i)
+                    #                    func.__name__ = "store_bookmark_{}".format(i)
                     func.__name__ = "bookmark_store_{}".format(i)
                     return func
+
                 bookmark_store_action = create_action(
-                    'Bookmark Store {:d}'.format(i),
-                    settings.keyboard_shortcuts['general']['bookmark_store'][i],
+                    "Bookmark Store {:d}".format(i),
+                    settings.keyboard_shortcuts["general"]["bookmark_store"][i],
                     "Store bookmark number:{:d}".format(i),
-                    'tango_icons/bookmarks-store.png',
-                    create_store_bookmark()
+                    "tango_icons/bookmarks-store.png",
+                    create_store_bookmark(),
                 )
                 bookmark_store_menu.addAction(bookmark_store_action)
+
             def toggle_line_endings():
                 try:
                     self.get_tab_by_focus().toggle_line_endings()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            temp_string = 'Toggle the visibility of the End-Of-Line characters '
-            temp_string += 'for the currently selected document'
+
+            temp_string = "Toggle the visibility of the End-Of-Line characters "
+            temp_string += "for the currently selected document"
             toggle_lineend_action = create_action(
-                'Toggle EOL visibility',
+                "Toggle EOL visibility",
                 None,
                 temp_string,
-                'tango_icons/view-line-end.png',
-                toggle_line_endings
+                "tango_icons/view-line-end.png",
+                toggle_line_endings,
             )
+
             def toggle_cursor_line_highlighting():
                 try:
                     self.get_tab_by_focus().toggle_cursor_line_highlighting()
                 except:
                     self.display.repl_display_error(traceback.format_exc())
-            temp_string = 'Toggle the visibility of the line that the cursor is'
-            temp_string += ' on for the currently selected document'
+
+            temp_string = "Toggle the visibility of the line that the cursor is"
+            temp_string += " on for the currently selected document"
             toggle_cursor_line_action = create_action(
-                'Toggle cursor line visibility',
+                "Toggle cursor line visibility",
                 None,
                 temp_string,
-                'tango_icons/edit-show-cursor-line.png',
-                toggle_cursor_line_highlighting
+                "tango_icons/edit-show-cursor-line.png",
+                toggle_cursor_line_highlighting,
             )
-            #Add all actions and menus
+            # Add all actions and menus
             view_menu.addAction(function_wheel_toggle_action)
             view_menu.addAction(settings_manipulator_toggle_action)
             view_menu.addSeparator()
@@ -2289,122 +2682,146 @@ class MainWindow(qt.QMainWindow):
             view_menu.addAction(reset_zoom_action)
             view_menu.addAction(toggle_lineend_action)
             view_menu.addAction(toggle_cursor_line_action)
-        #REPL menu
+
+        # REPL menu
         def construct_repl_menu():
             repl_menu = Menu("&REPL", self.menubar)
             self.menubar.addMenu(repl_menu)
             repl_menu.installEventFilter(click_filter)
             repeat_eval_action = create_action(
-                'REPL Repeat Command',
-                settings.keyboard_shortcuts['general']['repeat_eval'],
-                'Repeat the last REPL command',
-                'tango_icons/repl-repeat-command.png',
-                self.repl.repeat_last_repl_eval
+                "REPL Repeat Command",
+                settings.keyboard_shortcuts["general"]["repeat_eval"],
+                "Repeat the last REPL command",
+                "tango_icons/repl-repeat-command.png",
+                self.repl.repeat_last_repl_eval,
             )
             repeat_cycle_lang_action = create_action(
-                'REPL Cycle Language',
-                settings.keyboard_shortcuts['general']['repl_cycle_language'],
-                'Cycle the language used by the REPL',
-                'tango_icons/repl-repeat-command.png',
-                self.repl_box.cycle_language
+                "REPL Cycle Language",
+                settings.keyboard_shortcuts["general"]["repl_cycle_language"],
+                "Cycle the language used by the REPL",
+                "tango_icons/repl-repeat-command.png",
+                self.repl_box.cycle_language,
             )
+
             def repl_single_focus():
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setFocus()
+
             repl_focus_action = create_action(
-                'Focus REPL(Single)',
-                [settings.keyboard_shortcuts['general']['repl_focus_single_1'], settings.keyboard_shortcuts['general']['repl_focus_single_2']],
-                'Set focus to the Python REPL(Single Line)',
-                'tango_icons/repl-focus-single.png',
-                repl_single_focus
+                "Focus REPL(Single)",
+                [
+                    settings.keyboard_shortcuts["general"]["repl_focus_single_1"],
+                    settings.keyboard_shortcuts["general"]["repl_focus_single_2"],
+                ],
+                "Set focus to the Python REPL(Single Line)",
+                "tango_icons/repl-focus-single.png",
+                repl_single_focus,
             )
+
             def repl_multi_focus():
                 self.view.set_repl_type(constants.ReplType.MULTI_LINE)
                 self.repl_helper.setFocus()
+
             repl_focus_multi_action = create_action(
-                'Focus REPL(Multi)',
-                settings.keyboard_shortcuts['general']['repl_focus_multi'],
-                'Set focus to the Python REPL(Multi Line)',
-                'tango_icons/repl-focus-multi.png',
-                repl_multi_focus
+                "Focus REPL(Multi)",
+                settings.keyboard_shortcuts["general"]["repl_focus_multi"],
+                "Set focus to the Python REPL(Multi Line)",
+                "tango_icons/repl-focus-multi.png",
+                repl_multi_focus,
             )
             repl_menu.addAction(repeat_eval_action)
             repl_menu.addAction(repeat_cycle_lang_action)
             repl_menu.addAction(repl_focus_action)
             repl_menu.addAction(repl_focus_multi_action)
-        #Sessions menu
+
+        # Sessions menu
         def construct_sessions_menu():
             sessions_menu = Menu("Sessions", self.menubar)
             self.menubar.addMenu(sessions_menu)
             sessions_menu.installEventFilter(click_filter)
+
             def add_session():
-                repl_text_input(text='session_add("", session_group=None)', cursor_position=13)
+                repl_text_input(
+                    text='session_add("", session_group=None)', cursor_position=13
+                )
+
             add_session_action = create_action(
-                'Add Session',
+                "Add Session",
                 None,
-                'Save the currently opened documents to a session',
-                'tango_icons/session-add.png',
-                add_session
+                "Save the currently opened documents to a session",
+                "tango_icons/session-add.png",
+                add_session,
             )
+
             def remove_session():
-                repl_text_input(text='session_remove("", session_group=None)', cursor_position=13)
+                repl_text_input(
+                    text='session_remove("", session_group=None)', cursor_position=13
+                )
+
             remove_session_action = create_action(
-                'Remove Session',
+                "Remove Session",
                 None,
-                'Remove the session with matching name and group',
-                'tango_icons/session-remove.png',
-                remove_session
+                "Remove the session with matching name and group",
+                "tango_icons/session-remove.png",
+                remove_session,
             )
             session_editor_action = create_action(
-                'Graphical Session Editor',
+                "Graphical Session Editor",
                 None,
-                'Graphical user friendly session editor',
-                'tango_icons/sessions-gui.png',
-                self.display.show_session_editor
+                "Graphical user friendly session editor",
+                "tango_icons/sessions-gui.png",
+                self.display.show_session_editor,
             )
-            #Sessions menu
+            # Sessions menu
             self.sessions_menu = Menu("Sessions", self.menubar)
-            self.sessions_menu.setIcon(functions.create_icon('tango_icons/sessions.png'))
+            self.sessions_menu.setIcon(
+                functions.create_icon("tango_icons/sessions.png")
+            )
             sessions_menu.addAction(add_session_action)
             sessions_menu.addAction(remove_session_action)
             sessions_menu.addAction(session_editor_action)
             sessions_menu.addSeparator()
             sessions_menu.addMenu(self.sessions_menu)
+
         # Settings menu
         def construct_settings_menu():
             settings_menu = Menu("Settings", self.menubar)
             self.menubar.addMenu(settings_menu)
             settings_menu.installEventFilter(click_filter)
+
             def show_settings():
                 self.view.show_settings_manipulator()
+
             show_gui_action = create_action(
-                'Graphical Settings Editor',
+                "Graphical Settings Editor",
                 None,
-                'Graphical user friendly settings editor',
-                'tango_icons/settings-png',
-                show_settings
+                "Graphical user friendly settings editor",
+                "tango_icons/settings-png",
+                show_settings,
             )
             # Add the items
             settings_menu.addAction(show_gui_action)
-        #Help menu
+
+        # Help menu
         def construct_help_menu():
             help_menu = Menu("&Help", self.menubar)
             self.menubar.addMenu(help_menu)
             help_menu.installEventFilter(click_filter)
             self.fm = help_menu
             about_action = create_action(
-                'About Ex.Co.',
+                "About Ex.Co.",
                 None,
-                'Ex.Co. Information',
-                'tango_icons/help-browser.png',
-                self.view.show_about
+                "Ex.Co. Information",
+                "tango_icons/help-browser.png",
+                self.view.show_about,
             )
             help_menu.addAction(about_action)
-        
+
         def construct_tools_menu():
             tools_menu = Menu("&Tools", self.menubar)
             self.menubar.addMenu(tools_menu)
             tools_menu.installEventFilter(click_filter)
+
             # Print indicated editor to PDF
             def special_print_pdf():
                 try:
@@ -2413,26 +2830,25 @@ class MainWindow(qt.QMainWindow):
                         data.settings_directory,
                         "print_document.pdf",
                     )
-                    libraryfunctions.create_pdf_from_text(
-                        filepath, text
-                    )
+                    libraryfunctions.create_pdf_from_text(filepath, text)
                     libraryfunctions.open_pdf(filepath)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             print_pdf_action = create_action(
-                'Print to PDF',
+                "Print to PDF",
                 None,
-                'Print indicated editor to PDF',
-                'tango_icons/document-print.png',
-                special_print_pdf
+                "Print indicated editor to PDF",
+                "tango_icons/document-print.png",
+                special_print_pdf,
             )
             tools_menu.addAction(print_pdf_action)
-            
+
             tools_menu.addSeparator()
-            
+
             # Menu
-            formattine_menu = tools_menu.addMenu("Code formatting")
-            
+            formatting_menu = tools_menu.addMenu("Code formatting")
+
             ## Selected text
             # Format Python code for a file's selected text - black
             def format_python_selection_black():
@@ -2440,45 +2856,50 @@ class MainWindow(qt.QMainWindow):
                     self.tools.format_python_selected_text("black")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             format_python_black_action = create_action(
-                'Format Python code - selection - black',
+                "Format Python code - selection - black",
                 None,
                 "Format Python code in the selected document's selected text using the black library",
-                'language_icons/logo_python.png',
-                format_python_selection_black
+                "language_icons/logo_python.png",
+                format_python_selection_black,
             )
-            formattine_menu.addAction(format_python_black_action)
-            temp_icon = functions.create_icon('tango_icons/view-edge-marker.png')
-            formattine_menu.setIcon(temp_icon)
+            formatting_menu.addAction(format_python_black_action)
+            temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
+            formatting_menu.setIcon(temp_icon)
+
             # Format Python code for a file's selected text - autopep8
             def format_python_selection_autopep8():
                 try:
                     self.tools.format_python_selected_text("autopep8")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             format_python_autopep8_action = create_action(
-                'Format Python code - selection - autopep8',
+                "Format Python code - selection - autopep8",
                 None,
                 "Format Python code in the selected document's selected text using the autopep8 library",
-                'language_icons/logo_python.png',
-                format_python_selection_autopep8
+                "language_icons/logo_python.png",
+                format_python_selection_autopep8,
             )
-            formattine_menu.addAction(format_python_autopep8_action)
+            formatting_menu.addAction(format_python_autopep8_action)
+
             # Format Python code for a file's selected text - yapf
             def format_python_selection_yapf():
                 try:
                     self.tools.format_python_selected_text("yapf")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             format_python_yapf_action = create_action(
-                'Format Python code - selection - yapf',
+                "Format Python code - selection - yapf",
                 None,
                 "Format Python code in the selected document's selected text using the yapf library",
-                'language_icons/logo_python.png',
-                format_python_selection_yapf
+                "language_icons/logo_python.png",
+                format_python_selection_yapf,
             )
-            formattine_menu.addAction(format_python_yapf_action)
-            
+            formatting_menu.addAction(format_python_yapf_action)
+
             ## Entire file
             # Format Python code for the entire file - black
             def format_python_code_black():
@@ -2486,89 +2907,115 @@ class MainWindow(qt.QMainWindow):
                     self.tools.format_python_all_text("black")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             format_python_black_action = create_action(
-                'Format Python code - entire file - black',
+                "Format Python code - entire file - black",
                 None,
-                'Format Python code in the entire selected document using the black library',
-                'language_icons/logo_python.png',
-                format_python_code_black
+                "Format Python code in the entire selected document using the black library",
+                "language_icons/logo_python.png",
+                format_python_code_black,
             )
-            formattine_menu.addAction(format_python_black_action)
+            formatting_menu.addAction(format_python_black_action)
+
             # Format Python code for the entire file - autopep8
             def format_python_code_autopep8():
                 try:
                     self.tools.format_python_all_text("autopep8")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             format_python_autopep8_action = create_action(
-                'Format Python code - entire file - autopep8',
+                "Format Python code - entire file - autopep8",
                 None,
-                'Format Python code in the entire selected document using the autopep8 library',
-                'language_icons/logo_python.png',
-                format_python_code_autopep8
+                "Format Python code in the entire selected document using the autopep8 library",
+                "language_icons/logo_python.png",
+                format_python_code_autopep8,
             )
-            formattine_menu.addAction(format_python_autopep8_action)
+            formatting_menu.addAction(format_python_autopep8_action)
+
             # Format Python code for the entire file - yapf
             def format_python_code_yapf():
                 try:
                     self.tools.format_python_all_text("yapf")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             format_python_yapf_action = create_action(
-                'Format Python code - entire file - yapf',
+                "Format Python code - entire file - yapf",
                 None,
-                'Format Python code in the entire selected document using the yapf library',
-                'language_icons/logo_python.png',
-                format_python_code_yapf
+                "Format Python code in the entire selected document using the yapf library",
+                "language_icons/logo_python.png",
+                format_python_code_yapf,
             )
-            formattine_menu.addAction(format_python_yapf_action)
+            formatting_menu.addAction(format_python_yapf_action)
+
+            formatting_menu.addSeparator()
             
-            tools_menu.addSeparator()
-            
+            # Format C/C++ code for the entire file - clang-format
+            def format_c_cpp_code_clang_format():
+                try:
+                    self.tools.format_c_cpp_all_text("clang-format")
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+
+            format_c_cpp_clang_format_action = create_action(
+                "Format C/C++ code - entire file - clang-format",
+                None,
+                "Format C/C++ code in the entire selected document using the clang-format library",
+                "language_icons/logo_c_cpp.png",
+                format_c_cpp_code_clang_format,
+            )
+            formatting_menu.addAction(format_c_cpp_clang_format_action)
+
             # Pretty print JSON
             def pretty_print_json():
                 try:
                     self.tools.pretty_print_text("json")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             pretty_print_json_action = create_action(
-                'Pretty print JSON text',
+                "Pretty print JSON text",
                 None,
-                'Pretty print JSON text in the selected document',
-                'language_icons/logo_json.png',
-                pretty_print_json
+                "Pretty print JSON text in the selected document",
+                "language_icons/logo_json.png",
+                pretty_print_json,
             )
             tools_menu.addAction(pretty_print_json_action)
+
             # Pretty print XML
             def pretty_print_xml():
                 try:
                     self.tools.pretty_print_text("xml")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             pretty_print_xml_action = create_action(
-                'Pretty print XML text',
+                "Pretty print XML text",
                 None,
-                'Pretty print XML text in the selected document',
-                'language_icons/logo_xml.png',
-                pretty_print_xml
+                "Pretty print XML text in the selected document",
+                "language_icons/logo_xml.png",
+                pretty_print_xml,
             )
             tools_menu.addAction(pretty_print_xml_action)
+
             # Pretty print HTML
             def pretty_print_html():
                 try:
                     self.tools.pretty_print_text("html")
                 except:
                     self.display.repl_display_error(traceback.format_exc())
+
             pretty_print_html_action = create_action(
-                'Pretty print HTML text',
+                "Pretty print HTML text",
                 None,
-                'Pretty print HTML text in the selected document',
-                'language_icons/logo_html.png',
+                "Pretty print HTML text in the selected document",
+                "language_icons/logo_html.png",
                 pretty_print_html,
             )
             tools_menu.addAction(pretty_print_html_action)
-        
-        #Execute the nested construction functions
+
+        # Execute the nested construction functions
         construct_file_menu()
         construct_edit_basic_menu()
         construct_edit_advanced_menu()
@@ -2577,17 +3024,19 @@ class MainWindow(qt.QMainWindow):
         construct_repl_menu()
         construct_tools_menu()
         construct_sessions_menu()
-#        construct_settings_menu()
+        #        construct_settings_menu()
         construct_help_menu()
+
         # Connect the triggered signal for hiding the function wheel on menubar clicks
         def hide_fw(action):
-            #Hide the function wheel only when the clicked action is not "Show/Hide Function Wheel"
+            # Hide the function wheel only when the clicked action is not "Show/Hide Function Wheel"
             if isinstance(action, qt.QAction):
                 if action.text() != "Show/Hide Function Wheel":
-                    #Hide the function wheel if it is shown
+                    # Hide the function wheel if it is shown
                     self.view.hide_function_wheel()
+
         self.menubar.triggered.connect(hide_fw)
-        #Add the menubar to the MainWindow
+        # Add the menubar to the MainWindow
         self.setMenuBar(self.menubar)
 
     def init_repl(self):
@@ -2605,14 +3054,18 @@ class MainWindow(qt.QMainWindow):
         Initialize the python interactive interpreter that will
         be used with the python REPL QLineEdit
         """
-        new_references, ac_list_prim, ac_list_sec = self.get_references_autocompletions()
-        #Initialize and set auto completer for the REPL
-        self.repl.interpreter_update_references(new_references, ac_list_prim, ac_list_sec)
-        #Initialize the autocompletions for the REPL helper
+        new_references, ac_list_prim, ac_list_sec = (
+            self.get_references_autocompletions()
+        )
+        # Initialize and set auto completer for the REPL
+        self.repl.interpreter_update_references(
+            new_references, ac_list_prim, ac_list_sec
+        )
+        # Initialize the autocompletions for the REPL helper
         merged_autocompletions = [word for word in new_references]
         merged_autocompletions.extend(ac_list_prim)
         self.repl_helper.update_autocompletions(merged_autocompletions)
-        #Import the user functions
+        # Import the user functions
         self.import_user_functions()
 
     def import_user_functions(self):
@@ -2621,22 +3074,22 @@ class MainWindow(qt.QMainWindow):
         user_file_path = os.path.join(data.application_directory, data.config_file)
         # Test if userfunctions file exists
         if os.path.isfile(user_file_path) == False:
-#            message = "User functions file does not exist!\n"
-#            message += "Create an empty file named '{}' ".format(data.config_file)
-#            message += "in the application directory\n"
-#            message += "to make this error dissappear."
-#            self.display.repl_display_message(
-#                message,
-#                message_type=constants.MessageType.ERROR
-#            )
+            #            message = "User functions file does not exist!\n"
+            #            message += "Create an empty file named '{}' ".format(data.config_file)
+            #            message += "in the application directory\n"
+            #            message += "to make this error dissappear."
+            #            self.display.repl_display_message(
+            #                message,
+            #                message_type=constants.MessageType.ERROR
+            #            )
             # Ask to create the user definitions
-#            message = "Do you wish to generate the default user definition and function file?"
-#            reply = YesNoDialog.question(message)
-#            if reply == constants.DialogResult.Yes.value:
-#                functions.create_default_config_file()
-#                self.display.repl_display_success(
-#                    "Default user definitions file generated!"
-#                )
+            #            message = "Do you wish to generate the default user definition and function file?"
+            #            reply = YesNoDialog.question(message)
+            #            if reply == constants.DialogResult.Yes.value:
+            #                functions.create_default_config_file()
+            #                self.display.repl_display_success(
+            #                    "Default user definitions file generated!"
+            #                )
             # Just create the user definitions
             functions.create_default_config_file()
             message = "User functions file does not exist, creating the default one."
@@ -2655,12 +3108,13 @@ class MainWindow(qt.QMainWindow):
         if self._first_scan == True:
             self._first_scan = False
             self.repl._repl_eval(
-                "if callable(first_scan):\n    first_scan();",
-                display_action=False
+                "if callable(first_scan):\n    first_scan();", display_action=False
             )
         try:
             # Update the REPL autocompletions
-            import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_list(user_code)
+            import_nodes, class_tree_nodes, function_nodes, global_vars = (
+                functions.get_python_node_list(user_code)
+            )
             # First get the function names
             user_function_names = [func.name for func in function_nodes]
             # Then get the autocompletions by testing if the function has
@@ -2669,7 +3123,7 @@ class MainWindow(qt.QMainWindow):
             user_function_autocompletions = []
             for func_name in user_function_names:
                 """User functions are stored in the REPL's intepreter 'locals' dictionary"""
-                function = self.repl.get_interpreter().__dict__['locals'][func_name]
+                function = self.repl.get_interpreter().__dict__["locals"][func_name]
                 # Check for the "autocompletions" attribute
                 if hasattr(function, "autocompletion"):
                     user_function_autocompletions.append(function.autocompletion)
@@ -2690,39 +3144,47 @@ class MainWindow(qt.QMainWindow):
             self.display.write_to_statusbar(message)
 
     def reset_interpreter(self):
-        new_references, ac_list_prim, ac_list_sec = self.get_references_autocompletions()
+        new_references, ac_list_prim, ac_list_sec = (
+            self.get_references_autocompletions()
+        )
         # Initialize and set auto completer
-        self.repl.interpreter_reset_references(new_references, ac_list_prim, ac_list_sec)
+        self.repl.interpreter_reset_references(
+            new_references, ac_list_prim, ac_list_sec
+        )
         # Reimport the user functions
         self.import_user_functions()
         # Display interpreter reset success
-        self.display.write_to_statusbar("REPL interpreter references successfully updated", 2000)
+        self.display.write_to_statusbar(
+            "REPL interpreter references successfully updated", 2000
+        )
 
     def create_new(self, tab_name=None, tab_widget=None):
         """Creates an empty scintilla document using a generator counter"""
-        #Set the new tab name
+        # Set the new tab name
         if tab_name is None:
             tab_name = "new_" + str(next(self.new_file_count))
-        #Create the new scintilla document in the selected basic widget
+        # Create the new scintilla document in the selected basic widget
         return_widget = None
         if tab_widget is None:
-            return_widget = self.get_largest_window().editor_add_document(tab_name, type="new")
+            return_widget = self.get_largest_window().editor_add_document(
+                tab_name, type="new"
+            )
         else:
             return_widget = tab_widget.editor_add_document(tab_name, type="new")
-        #Set focus to the new widget
+        # Set focus to the new widget
         return_widget.setFocus()
-        #Return the widget reference
+        # Return the widget reference
         return return_widget
 
     def open_file_with_dialog(self, tab_widget=None):
         """Open a file for editing using a file dialog"""
-        #Create and show a file dialog window, restore last browsed directory and set the file filter
+        # Create and show a file dialog window, restore last browsed directory and set the file filter
         file_dialog = qt.QFileDialog
         files = file_dialog.getOpenFileNames(
             self,
             "Open File",
             os.getcwd(),
-            "All Files (*);;Ex.Co. Files({})".format(' '.join(self.exco_file_exts))
+            "All Files (*);;Ex.Co. Files({})".format(" ".join(self.exco_file_exts)),
         )
         if qt.PYQT_MODE == 5:
             # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
@@ -2733,14 +3195,14 @@ class MainWindow(qt.QMainWindow):
 
     def open_files(self, files=None, tab_widget=None):
         """Cheach and read valid files to the selected TabWidget"""
-        #Check if the files are valid
+        # Check if the files are valid
         if files is None or files == "":
             return
-        if isinstance(files,  str):
-            #Single file
+        if isinstance(files, str):
+            # Single file
             self.open_file(files, tab_widget)
         else:
-            #List of files
+            # List of files
             for file in files:
                 self.open_file(file, tab_widget)
 
@@ -2748,22 +3210,25 @@ class MainWindow(qt.QMainWindow):
         """
         Read file contents into a TabWidget
         """
+
         def open_file_function(in_file, tab_widget):
             # Check if file exists
             if os.path.isfile(in_file) == False:
                 self.display.repl_display_message(
                     "File: {}\ndoesn't exist!".format(in_file),
-                    message_type=constants.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR,
                 )
                 return
             # Check the file size
             file_size = functions.get_file_size_Mb(in_file)
-            if file_size  > 50:
-                #Create the warning message
-                warning =   "The file is larger than 50 MB! ({:d} MB)\n".format(int(file_size))
-                warning +=  "A lot of RAM will be needed!\n"
-                warning +=  "Files larger than 300 MB can cause the system to hang!\n"
-                warning +=  "Are you sure you want to open it?"
+            if file_size > 50:
+                # Create the warning message
+                warning = "The file is larger than 50 MB! ({:d} MB)\n".format(
+                    int(file_size)
+                )
+                warning += "A lot of RAM will be needed!\n"
+                warning += "Files larger than 300 MB can cause the system to hang!\n"
+                warning += "Are you sure you want to open it?"
                 reply = YesNoDialog.warning(warning)
                 if reply == constants.DialogResult.No.value:
                     return
@@ -2777,7 +3242,9 @@ class MainWindow(qt.QMainWindow):
                 tab_widget = self.get_largest_window()
 
             # Add new scintilla document tab to the basic widget
-            new_tab = tab_widget.editor_add_document(in_file, "file", bypass_check=False)
+            new_tab = tab_widget.editor_add_document(
+                in_file, "file", bypass_check=False
+            )
             # Set the icon if it was set by the lexer
             new_tab.internals.update_icon(new_tab)
 
@@ -2790,7 +3257,11 @@ class MainWindow(qt.QMainWindow):
                         # Use append, it does not remove the NULL characters
                         new_tab.append(file_text)
                         # Display a warning that the text has NULL characters
-                        message = "CAUTION: NULL ('\\0') characters in file:\n'{}'".format(in_file)
+                        message = (
+                            "CAUTION: NULL ('\\0') characters in file:\n'{}'".format(
+                                in_file
+                            )
+                        )
                         self.display.repl_display_message(
                             message, message_type=constants.MessageType.WARNING
                         )
@@ -2801,31 +3272,35 @@ class MainWindow(qt.QMainWindow):
                         self.view.layout_save()
                 except MemoryError:
                     message = "Insufficient memory to open the file!"
-                    self.display.repl_display_message(message, message_type=constants.MessageType.ERROR)
+                    self.display.repl_display_message(
+                        message, message_type=constants.MessageType.ERROR
+                    )
                     self.display.write_to_statusbar(message)
                     tab_widget.widget(tab_widget.currentIndex()).setParent(None)
                     tab_widget.removeTab(tab_widget.currentIndex())
                     return None
                 except:
                     message = "Unexpected error occured while opening file!"
-                    self.display.repl_display_message(message, message_type=constants.MessageType.ERROR)
+                    self.display.repl_display_message(
+                        message, message_type=constants.MessageType.ERROR
+                    )
                     self.display.write_to_statusbar(message)
                     tab_widget.widget(tab_widget.currentIndex()).setParent(None)
                     tab_widget.removeTab(tab_widget.currentIndex())
                     return None
-                #Reset the changed status of the current tab,
-                #because adding the file content line by line was registered as a text change
+                # Reset the changed status of the current tab,
+                # because adding the file content line by line was registered as a text change
                 tab_widget.reset_text_changed()
-                #Update the settings manipulator with the new file
+                # Update the settings manipulator with the new file
                 self.settings.update_recent_list(in_file)
-                #Update the current working directory
+                # Update the current working directory
                 path = os.path.dirname(in_file)
                 if path == "":
                     path = data.application_directory
                 self.set_cwd(path)
-                #Set focus to the newly opened document
+                # Set focus to the newly opened document
                 tab_widget.currentWidget().setFocus()
-                #Update the Save/SaveAs buttons in the menubar
+                # Update the Save/SaveAs buttons in the menubar
                 self.set_save_file_state(True)
                 return new_tab
             else:
@@ -2834,6 +3309,7 @@ class MainWindow(qt.QMainWindow):
                 self.display.repl_display_error(message)
                 self.display.write_to_statusbar("File cannot be read!", 3000)
             return None
+
         if isinstance(file, str) == True:
             if file != "":
                 new_tab = open_file_function(file, tab_widget)
@@ -2851,29 +3327,28 @@ class MainWindow(qt.QMainWindow):
         else:
             self.display.repl_display_message(
                 "Unknown parameter type to 'open file' function!",
-                message_type=constants.MessageType.ERROR
+                message_type=constants.MessageType.ERROR,
             )
             return None
 
-    def open_file_hex(self,
-                      file_path,
-                      tab_widget=None,
-                      save_layout=False):
+    def open_file_hex(self, file_path, tab_widget=None, save_layout=False):
         # Check if file exists
         if os.path.isfile(file_path) == False:
             self.display.repl_display_message(
                 "File: {}\ndoesn't exist!".format(file_path),
-                message_type=constants.MessageType.ERROR
+                message_type=constants.MessageType.ERROR,
             )
             return
         # Check the file size
         file_size = functions.get_file_size_Mb(file_path)
         if file_size > 50:
-            #Create the warning message
-            warning =   "The file is larger than {0:d} MB! ({0:d} MB)\n".format(int(file_size))
-            warning +=  "A lot of RAM will be needed!\n"
-            warning +=  "Files larger than 300 MB can cause the system to hang!\n"
-            warning +=  "Are you sure you want to open it?"
+            # Create the warning message
+            warning = "The file is larger than {0:d} MB! ({0:d} MB)\n".format(
+                int(file_size)
+            )
+            warning += "A lot of RAM will be needed!\n"
+            warning += "Files larger than 300 MB can cause the system to hang!\n"
+            warning += "Are you sure you want to open it?"
             reply = YesNoDialog.warning(warning)
             if reply == constants.DialogResult.No.value:
                 return
@@ -2923,8 +3398,10 @@ class MainWindow(qt.QMainWindow):
             if _type == constants.FileType.Text:
                 for i in range(tab_widget.count()):
                     # Check the file name and file name with path
-                    if (tab_widget.widget(i).name == os.path.basename(file_with_path) and
-                        tab_widget.widget(i).save_name == file_with_path):
+                    if (
+                        tab_widget.widget(i).name == os.path.basename(file_with_path)
+                        and tab_widget.widget(i).save_name == file_with_path
+                    ):
                         # If the file is already open, get its index in the tab widget
                         found_tab_widget = tab_widget
                         found_index = i
@@ -2975,7 +3452,7 @@ class MainWindow(qt.QMainWindow):
                 self.file_save_all()
             elif reply == constants.DialogResult.Cancel.value:
                 return
-        #Close all tabs and remove all bookmarks from them
+        # Close all tabs and remove all bookmarks from them
         clear_index = 0
         for i in range(tab_widget.count()):
             if tab_widget.widget(clear_index) == widget:
@@ -2995,18 +3472,18 @@ class MainWindow(qt.QMainWindow):
         self.save_ansiwin_file_action.setEnabled(enable)
         self.save_in_encoding.setEnabled(enable)
         self.save_all_action.setEnabled(enable)
-        #Set the save state flag accordingly
+        # Set the save state flag accordingly
         self.save_state = enable
 
     def get_tab_by_name(self, tab_name):
         """Find a tab using its name in the basic widgets"""
         windows = self.get_all_windows()
-        #Loop through all the basic widgets/windows and check the tabs
+        # Loop through all the basic widgets/windows and check the tabs
         for window in windows:
             for i in range(0, window.count()):
                 if window.tabText(i) == tab_name:
                     return window.widget(i)
-        #Tab was not found
+        # Tab was not found
         return None
 
     def get_tab_by_save_name(self, in_save_name):
@@ -3014,24 +3491,26 @@ class MainWindow(qt.QMainWindow):
         Find a tab using its save name (file path) in the tab widgets
         """
         windows = self.get_all_windows()
-        #Loop through all the tab widgets/windows and check the tabs
+        # Loop through all the tab widgets/windows and check the tabs
         for window in windows:
             for i in range(0, window.count()):
-                if isinstance(window.widget(i), CustomEditor) and \
-                   window.widget(i).save_name == in_save_name:
-                        return window.widget(i)
-        #Tab was not found
+                if (
+                    isinstance(window.widget(i), CustomEditor)
+                    and window.widget(i).save_name == in_save_name
+                ):
+                    return window.widget(i)
+        # Tab was not found
         return None
 
     def get_tab_by_string_in_name(self, string):
         """Find a tab with 'string' in its name in the basic widgets"""
         windows = self.get_all_windows()
-        #Loop through all the basic widgets/windows and check the tabs
+        # Loop through all the basic widgets/windows and check the tabs
         for window in windows:
             for i in range(0, window.count()):
                 if string in window.tabText(i):
                     return window.widget(i)
-        #Tab was not found
+        # Tab was not found
         return None
 
     def get_tab_by_focus(self):
@@ -3075,7 +3554,7 @@ class MainWindow(qt.QMainWindow):
         Get the tab that was last used (if none return the main tab)
         """
         focused_tab = self.get_tab_by_focus()
-        #Check if any tab is focused
+        # Check if any tab is focused
         if focused_tab is None:
             focused_tab = self.get_largest_window()
         return focused_tab
@@ -3098,17 +3577,19 @@ class MainWindow(qt.QMainWindow):
         (Same as get_tab_by_focus but returns the window instead of the tab)
         """
         windows = self.get_all_windows()
-        #Loop through all the basic widgets/windows and check the tab focus
+        # Loop through all the basic widgets/windows and check the tab focus
         for window in windows:
             for i in range(0, window.count()):
                 if isinstance(window.widget(i), TextDiffer) == True:
-                    if (window.widget(i).editor_1.hasFocus() == True or
-                        window.widget(i).editor_2.hasFocus() == True):
+                    if (
+                        window.widget(i).editor_1.hasFocus() == True
+                        or window.widget(i).editor_2.hasFocus() == True
+                    ):
                         return window
                 else:
                     if window.widget(i).hasFocus() == True:
                         return window
-        #No tab in the basic widgets has focus
+        # No tab in the basic widgets has focus
         return None
 
     def get_window_by_indication(self):
@@ -3133,15 +3614,20 @@ class MainWindow(qt.QMainWindow):
         """
         Check if there are any modified documents in the editor windows
         """
+
         # Nested function for checking modified documents in a single basic widget
         # (just to play with nested functions)
         def check_documents_in_window(window):
             if window.count() > 0:
                 for i in range(0, window.count()):
                     if window.widget(i).savable == constants.CanSave.YES:
-                        if window.widget(i).save_status == constants.FileStatus.MODIFIED:
+                        if (
+                            window.widget(i).save_status
+                            == constants.FileStatus.MODIFIED
+                        ):
                             return True
             return False
+
         if tab_widget is None:
             # Check all widget in all three windows for changes
             if any([check_documents_in_window(x) for x in self.get_all_windows()]):
@@ -3165,6 +3651,7 @@ class MainWindow(qt.QMainWindow):
         Functions for manipulating the application settings
         (namespace/nested class to MainWindow)
         """
+
         # Class varibles
         _parent = None
         # Custom object for manipulating the settings of Ex.Co.
@@ -3185,6 +3672,7 @@ class MainWindow(qt.QMainWindow):
             """
             Update the settings manipulator with the new file
             """
+
             # Nested function for opening the recent file
             def new_file_function(file):
                 try:
@@ -3192,6 +3680,7 @@ class MainWindow(qt.QMainWindow):
                     self._parent.get_largest_window().currentWidget().setFocus()
                 except:
                     pass
+
             # Update the file manipulator
             if new_file is not None:
                 self.manipulator.add_recent_file(new_file)
@@ -3212,7 +3701,9 @@ class MainWindow(qt.QMainWindow):
                 # Check if the filename has too many characters
                 if len(recent_file_name) > 30:
                     # Shorten the name that will appear in the menubar
-                    recent_file_name = "...{}".format(os.path.splitdrive(recent_file)[1][-30:])
+                    recent_file_name = "...{}".format(
+                        os.path.splitdrive(recent_file)[1][-30:]
+                    )
                 new_file_action = qt.QAction(recent_file_name, recent_files_menu)
                 new_file_action.setStatusTip("Open: {}".format(recent_file))
                 # Create a function reference for opening the recent file
@@ -3240,22 +3731,23 @@ class MainWindow(qt.QMainWindow):
             for func_type in self.manipulator.context_menu_functions.keys():
                 funcs = self.manipulator.context_menu_functions[func_type]
                 for func_key in funcs.keys():
-                    getattr(gui.contextmenu.ContextMenuHex, func_type)[func_key] = funcs[func_key]
+                    getattr(gui.contextmenu.ContextMenuHex, func_type)[func_key] = (
+                        funcs[func_key]
+                    )
             # Display the settings load error AFTER the theme has been set
             # Otherwise the error text color will not be styled correctly
             if result == False:
                 self._parent.display.repl_display_message(
                     "Error loading the settings file, using the default settings values!\nTHE SETTINGS FILE WILL NOT BE UPDATED!",
-                    message_type=constants.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR,
                 )
 
         def save(self):
             """Save the current settings"""
             self.manipulator.save_settings(
-                data.theme,
-                gui.contextmenu.ContextMenuHex.get_settings()
+                data.theme, gui.contextmenu.ContextMenuHex.get_settings()
             )
-            #Display message in statusbar
+            # Display message in statusbar
             self._parent.display.write_to_statusbar("Saved settings", 1000)
 
     class Sessions:
@@ -3263,12 +3755,13 @@ class MainWindow(qt.QMainWindow):
         Functions for manipulating sessions
         (namespace/nested class to MainWindow)
         """
-        #Class varibles
+
+        # Class varibles
         _parent = None
 
         def __init__(self, parent):
             """Initialization of the Sessions object instance"""
-            #Get the reference to the MainWindow parent object instance
+            # Get the reference to the MainWindow parent object instance
             self._parent = parent
 
         def add(self, session_name, session_group_chain=[]):
@@ -3277,21 +3770,23 @@ class MainWindow(qt.QMainWindow):
             if len(session_name) < 3:
                 self._parent.display.repl_display_message(
                     "Session name is too short!",
-                    message_type=constants.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR,
                 )
                 return
             if session_group_chain is not None:
-                if (isinstance(session_group_chain, tuple) == False and
-                    isinstance(session_group_chain, list) == False):
+                if (
+                    isinstance(session_group_chain, tuple) == False
+                    and isinstance(session_group_chain, list) == False
+                ):
                     self._parent.display.repl_display_message(
                         "Group name must be a tuple/list of strings!",
-                        message_type=constants.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR,
                     )
                     return
             # Create lists of files in each window
             try:
                 all_windows = self._parent.get_all_windows()
-#                if len(all_windows) > 0 and any([x.count() > 0 for x in all_windows]) > 0:
+                #                if len(all_windows) > 0 and any([x.count() > 0 for x in all_windows]) > 0:
                 if len(all_windows) > 0:
                     # Check if the session is already stored
                     session_found = False
@@ -3317,8 +3812,7 @@ class MainWindow(qt.QMainWindow):
                             "/".join(session_group_chain), session_name
                         )
                     self._parent.display.repl_display_message(
-                        message,
-                        message_type=constants.MessageType.SUCCESS
+                        message, message_type=constants.MessageType.SUCCESS
                     )
                     # Refresh the sessions menu in the menubar
                     self.update_menu()
@@ -3327,9 +3821,11 @@ class MainWindow(qt.QMainWindow):
                 else:
                     self._parent.display.repl_display_message(
                         "No documents to store!",
-                        message_type=constants.MessageType.ERROR
+                        message_type=constants.MessageType.ERROR,
                     )
-                    self._parent.display.write_to_statusbar("No documents to store!", 1500)
+                    self._parent.display.write_to_statusbar(
+                        "No documents to store!", 1500
+                    )
                     # Return error
                     return False
             except Exception as ex:
@@ -3347,9 +3843,9 @@ class MainWindow(qt.QMainWindow):
             # Check if there are any modified documents
             if self._parent.check_document_states() == True:
                 message = (
-                    "Restoring session: '{}'\n".format(session["name"]) +
-                    "You have modified documents!\n" +
-                    "What do you wish to do?"
+                    "Restoring session: '{}'\n".format(session["name"])
+                    + "You have modified documents!\n"
+                    + "What do you wish to do?"
                 )
                 reply = RestoreSessionDialog.question(message)
                 if reply == constants.DialogResult.SaveAndRestore.value:
@@ -3364,12 +3860,9 @@ class MainWindow(qt.QMainWindow):
                 self._parent.view.layout_restore(session["layout"])
             else:
                 # Session was not found
-                message = "Session '{}' was not found!".format(
-                    session["chain"]
-                )
+                message = "Session '{}' was not found!".format(session["chain"])
                 self._parent.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.ERROR
+                    message, message_type=constants.MessageType.ERROR
                 )
                 self._parent.display.write_to_statusbar(message, 1500)
 
@@ -3380,9 +3873,9 @@ class MainWindow(qt.QMainWindow):
             # Check if there are any modified documents
             if self._parent.check_document_states() == True:
                 message = (
-                    "Restoring Ex.Co. development session\n" +
-                    "You have modified documents!\n" +
-                    "What do you wish to do?"
+                    "Restoring Ex.Co. development session\n"
+                    + "You have modified documents!\n"
+                    + "What do you wish to do?"
                 )
                 reply = RestoreSessionDialog.question(message)
                 if reply == constants.DialogResult.SaveAndRestore.value:
@@ -3404,12 +3897,14 @@ class MainWindow(qt.QMainWindow):
                     continue
                 for item in os.listdir(directory):
                     file_extension = os.path.splitext(item)[1].lower()
-                    if (file_extension == ".py" or
-                        file_extension == ".pyw" or
-                        file_extension == ".pyx" or
-                        file_extension == ".pxd" or
-                        file_extension == ".pxi" or
-                        file_extension == ".cfg"):
+                    if (
+                        file_extension == ".py"
+                        or file_extension == ".pyw"
+                        or file_extension == ".pyx"
+                        or file_extension == ".pxd"
+                        or file_extension == ".pxi"
+                        or file_extension == ".cfg"
+                    ):
                         file = os.path.join(directory, item)
                         exco_main_files.append(file)
             # Sort the files by name
@@ -3429,8 +3924,7 @@ class MainWindow(qt.QMainWindow):
                     "/".join(session["chain"]), session["name"]
                 )
                 self._parent.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.ERROR
+                    message, message_type=constants.MessageType.ERROR
                 )
                 self._parent.display.write_to_statusbar(message, 1500)
             else:
@@ -3439,18 +3933,19 @@ class MainWindow(qt.QMainWindow):
                     "/".join(session["chain"]), session["name"]
                 )
                 self._parent.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.WARNING
+                    message, message_type=constants.MessageType.WARNING
                 )
             # Refresh the sessions menu in the menubar
             self.update_menu()
 
         def update_menu(self):
             """Update the displayed items in the Sessions menu in the menubar"""
+
             # Nested function for retrieving the sessions name attribute case insensitively
             def get_case_insensitive_group_name(item):
                 name = item[0]
                 return name.lower()
+
             # Clear the sessions list
             self._parent.sessions_menu.clear()
             # First add the Ex.Co. session (all Ex.Co. source files)
@@ -3458,36 +3953,48 @@ class MainWindow(qt.QMainWindow):
             exco_session_action = qt.QAction(session_name, self._parent)
             exco_session_action.setStatusTip("Open all Ex.Co. source files")
             exco_session_method = self.exco_restore
-            exco_session_action.setIcon(functions.create_icon('exco-icon.png'))
+            exco_session_action.setIcon(functions.create_icon("exco-icon.png"))
             exco_session_action.triggered.connect(exco_session_method)
             self._parent.sessions_menu.addAction(exco_session_action)
             self._parent.sessions_menu.addSeparator()
+
             ## Create the Sessions menu
             # Group processing function
             def process_group(in_group, in_menu, create_menu=True):
                 # Create the new group and attach it to the parent menu
                 if create_menu:
-                    folder_name = in_group["name"].replace('&', "&&")
+                    folder_name = in_group["name"].replace("&", "&&")
                     new_group_menu = Menu(folder_name, self._parent.menubar)
                     in_menu.addMenu(new_group_menu)
-                    new_group_menu.setIcon(functions.create_icon('tango_icons/folder.png'))
+                    new_group_menu.setIcon(
+                        functions.create_icon("tango_icons/folder.png")
+                    )
                 else:
                     new_group_menu = in_menu
                 # Add the groups
-                for g,v in sorted(in_group["groups"].items(), key=lambda x: x[0].lower()):
+                for g, v in sorted(
+                    in_group["groups"].items(), key=lambda x: x[0].lower()
+                ):
                     process_group(v, new_group_menu)
                 # Add the sessions
-                for s,v in sorted(in_group["sessions"].items(), key=lambda x: x[0].lower()):
-                    session_name = s.replace('&', "&&")
+                for s, v in sorted(
+                    in_group["sessions"].items(), key=lambda x: x[0].lower()
+                ):
+                    session_name = s.replace("&", "&&")
                     new_session_action = qt.QAction(session_name, new_group_menu)
                     new_session_action.setStatusTip("Restore Session: {}".format(s))
                     new_session_method = functools.partial(self.restore, v)
-                    new_session_action.setIcon(functions.create_icon('tango_icons/sessions.png'))
+                    new_session_action.setIcon(
+                        functions.create_icon("tango_icons/sessions.png")
+                    )
                     new_session_action.triggered.connect(new_session_method)
                     new_group_menu.addAction(new_session_action)
+
             # Process the groups
             sessions_menu = self._parent.sessions_menu
-            main_session_group = self._parent.settings.manipulator.stored_sessions["main"]
+            main_session_group = self._parent.settings.manipulator.stored_sessions[
+                "main"
+            ]
             process_group(main_session_group, sessions_menu, create_menu=False)
 
         def get_window_documents(self):
@@ -3495,10 +4002,12 @@ class MainWindow(qt.QMainWindow):
             Return all the editor document paths in the selected window as a list
             """
             window = self._parent.get_window_by_indication()
-            documents = [window.widget(i).save_name
-                            for i in range(window.count())
-                                if  window.widget(i).savable == constants.CanSave.YES and
-                                    window.widget(i).save_name != ""]
+            documents = [
+                window.widget(i).save_name
+                for i in range(window.count())
+                if window.widget(i).savable == constants.CanSave.YES
+                and window.widget(i).save_name != ""
+            ]
             return documents
 
     class View:
@@ -3506,37 +4015,38 @@ class MainWindow(qt.QMainWindow):
         Functions for manipulating the application appearance
         (namespace/nested class to MainWindow)
         """
+
         # Class varibles
-        _parent                     = None
-        __stored_layout_standard    = None
-        __stored_layout_one_window  = None
-        #Default widths and heights of the windows
-        vertical_width_1            = 2/3
-        vertical_width_2            = 1/3
-        horizontal_width_1          = 2/3
-        horizontal_width_2          = 1/3
-        main_relation               = 55
-        #Overlay helper widget that will be displayed on top of the main groupbox
-        function_wheel_overlay      = None
-        #Last executed functions text on the function wheel
+        _parent = None
+        __stored_layout_standard = None
+        __stored_layout_one_window = None
+        # Default widths and heights of the windows
+        vertical_width_1 = 2 / 3
+        vertical_width_2 = 1 / 3
+        horizontal_width_1 = 2 / 3
+        horizontal_width_2 = 1 / 3
+        main_relation = 55
+        # Overlay helper widget that will be displayed on top of the main groupbox
+        function_wheel_overlay = None
+        # Last executed functions text on the function wheel
         last_executed_function_text = None
-        #Function wheel overlay minimum size
-        #Stored REPL single/multi line state
-        repl_state                  = None
-        #Lock used when spinning widgets, so the layout does not get saved mid-spin
-        layout_save_block           = False
+        # Function wheel overlay minimum size
+        # Stored REPL single/multi line state
+        repl_state = None
+        # Lock used when spinning widgets, so the layout does not get saved mid-spin
+        layout_save_block = False
 
         def __init__(self, parent):
             """Initialization of the View object instance"""
-            #Get the reference to the MainWindow parent object instance
+            # Get the reference to the MainWindow parent object instance
             self._parent = parent
-            #Initialize the REPL state to unknown, so it will force
-            #the form layout to refresh it
+            # Initialize the REPL state to unknown, so it will force
+            # the form layout to refresh it
             self.repl_state = None
 
         def save_layout(self):
             """Save the widths of the splitters"""
-            #Check if the splitters are filled correctly
+            # Check if the splitters are filled correctly
             if self.layout_save_block == True:
                 return
 
@@ -3549,15 +4059,12 @@ class MainWindow(qt.QMainWindow):
             main_splitter.setObjectName("MainSplitter")
             # Create the boxes
             boxes_groupbox = create_groupbox_with_layout(
-                name="MainGroupBox", borderless=True,
+                name="MainGroupBox",
+                borderless=True,
             )
             # Main box
             main_box = TheBox(
-                "",
-                "Main",
-                qt.Qt.Orientation.Horizontal,
-                self._parent,
-                self._parent
+                "", "Main", qt.Qt.Orientation.Horizontal, self._parent, self._parent
             )
             boxes_groupbox.layout().addWidget(main_box)
 
@@ -3566,7 +4073,7 @@ class MainWindow(qt.QMainWindow):
             main_splitter.addWidget(self._parent.repl_box)
             # Set the sizes for the main splitter
             main_splitter.setStretchFactor(0, 1)
-            #Initialize the main groupbox
+            # Initialize the main groupbox
             main_groupbox = qt.QGroupBox(self._parent)
             main_groupbox_layout = qt.QVBoxLayout(main_groupbox)
             main_groupbox_layout.addWidget(main_splitter)
@@ -3574,7 +4081,7 @@ class MainWindow(qt.QMainWindow):
             main_groupbox_layout.setSpacing(0)
             main_groupbox.setLayout(main_groupbox_layout)
             main_groupbox.setObjectName("Main_Groupbox")
-            #Add the splitters combined in the groupbox to the main form
+            # Add the splitters combined in the groupbox to the main form
             self._parent.setCentralWidget(main_groupbox)
             # Save references to the MainWindow
             self._parent.boxes_groupbox = boxes_groupbox
@@ -3582,7 +4089,7 @@ class MainWindow(qt.QMainWindow):
             self._parent.main_splitter = main_splitter
             self._parent.main_groupbox = main_groupbox
             self._parent.main_groupbox_layout = main_groupbox_layout
-            #Initialize the function wheel overlay over the QMainWindows central widget, if needed
+            # Initialize the function wheel overlay over the QMainWindows central widget, if needed
             self.function_wheel_overlay = FunctionWheel(
                 parent=self._parent.main_groupbox,
                 main_form=self._parent,
@@ -3604,9 +4111,9 @@ class MainWindow(qt.QMainWindow):
             """Show ExCo information"""
             about = ExCoInfo(
                 self._parent,
-                app_dir=self._parent.settings.manipulator.directories["application"]
+                app_dir=self._parent.settings.manipulator.directories["application"],
             )
-            #The exec_() function shows the dialog in MODAL mode (the parent is unclickable while the dialog is shown)
+            # The exec_() function shows the dialog in MODAL mode (the parent is unclickable while the dialog is shown)
             about.exec()
 
         def set_window_focus(self, window):
@@ -3631,7 +4138,9 @@ class MainWindow(qt.QMainWindow):
                     self._parent.display.update_cursor_position()
             except:
                 window.setFocus()
-                self._parent.display.write_to_statusbar("Empty window '" + window.name + "' focused!", 1000)
+                self._parent.display.write_to_statusbar(
+                    "Empty window '" + window.name + "' focused!", 1000
+                )
                 # Clear the cursor position
                 self._parent.display.update_cursor_position()
             finally:
@@ -3643,12 +4152,16 @@ class MainWindow(qt.QMainWindow):
             Set REPL input as a one line ReplLineEdit or a multiline ReplHelper
             """
             # Check if the REPL type needs to be updated
-            if (_type == constants.ReplType.SINGLE_LINE and
-                self.repl_state == constants.ReplType.SINGLE_LINE):
+            if (
+                _type == constants.ReplType.SINGLE_LINE
+                and self.repl_state == constants.ReplType.SINGLE_LINE
+            ):
                 self._parent.main_splitter.setSizes([10, 1])
                 return
-            elif (_type == constants.ReplType.MULTI_LINE and
-                self.repl_state == constants.ReplType.MULTI_LINE):
+            elif (
+                _type == constants.ReplType.MULTI_LINE
+                and self.repl_state == constants.ReplType.MULTI_LINE
+            ):
                 return
             self.repl_state = _type
             # Reinitialize the groupbox that holds the REPL
@@ -3674,7 +4187,7 @@ class MainWindow(qt.QMainWindow):
                 self.__stored_layout_standard = self.layout_generate()
                 json_layout = json.loads(self.__stored_layout_standard)
                 window_size = json_layout["WINDOW-SIZE"]
-                
+
                 # Remove the widget from current layout
                 widgets = []
                 for w in windows:
@@ -3685,7 +4198,7 @@ class MainWindow(qt.QMainWindow):
                         widget.setParent(None)
                     w.setParent(None)
                     w.deleteLater()
-                
+
                 # Set one-window layout
                 if self.__stored_layout_one_window is not None:
                     one_window_layout = self.__stored_layout_one_window
@@ -3703,7 +4216,10 @@ class MainWindow(qt.QMainWindow):
                 self.layout_restore(one_window_layout)
                 # Put all widgets back into the one
                 largest_window = self._parent.get_largest_window()
-                widgets.sort(key=lambda x: isinstance(x, CustomEditor) or isinstance(x, PlainEditor))
+                widgets.sort(
+                    key=lambda x: isinstance(x, CustomEditor)
+                    or isinstance(x, PlainEditor)
+                )
                 for w in reversed(widgets):
                     widget, tab_text = w
                     if tab_text == "REPL MESSAGES":
@@ -3719,8 +4235,8 @@ class MainWindow(qt.QMainWindow):
                 # Update the icons of the tabs
                 for i in range(largest_window.count()):
                     largest_window.update_tab_icon(largest_window.widget(i))
-            
-            else:                
+
+            else:
                 # Remove the widget from current layout
                 widgets = {}
                 for w in windows:
@@ -3734,17 +4250,19 @@ class MainWindow(qt.QMainWindow):
                         widget.setParent(None)
                     w.setParent(None)
                     w.deleteLater()
-                
+
                 # Restore stored layout
-                self.layout_restore(self.__stored_layout_standard, pre_stored_widgets=widgets)
-        
+                self.layout_restore(
+                    self.__stored_layout_standard, pre_stored_widgets=widgets
+                )
+
         def hide_all_overlay_widgets(self):
             """
             Hide every overlay widget: function wheel, settings gui manipulator, ...
             """
             self.hide_function_wheel()
             self.hide_settings_manipulator()
-        
+
         def toggle_function_wheel(self):
             """
             Show/hide the function wheel overlay
@@ -3753,7 +4271,7 @@ class MainWindow(qt.QMainWindow):
                 self.hide_function_wheel()
             else:
                 self.show_function_wheel()
-        
+
         def hide_function_wheel(self):
             """
             Hide the function wheel overlay
@@ -3768,11 +4286,19 @@ class MainWindow(qt.QMainWindow):
             self.hide_all_overlay_widgets()
             self.hide_settings_manipulator()
             # Check the windows size before displaying the overlay
-            if (self._parent.width() < self.function_wheel_overlay.width() or
-                self._parent.height() < self.function_wheel_overlay.height()):
-                new_size =  functions.create_size(
-                    int(self.function_wheel_overlay.width() + self.function_wheel_overlay.width()/5),
-                    int(self.function_wheel_overlay.height() + self.function_wheel_overlay.height()/5)
+            if (
+                self._parent.width() < self.function_wheel_overlay.width()
+                or self._parent.height() < self.function_wheel_overlay.height()
+            ):
+                new_size = functions.create_size(
+                    int(
+                        self.function_wheel_overlay.width()
+                        + self.function_wheel_overlay.width() / 5
+                    ),
+                    int(
+                        self.function_wheel_overlay.height()
+                        + self.function_wheel_overlay.height() / 5
+                    ),
                 )
                 self._parent.resize(new_size)
             # Check if the function wheel overlay is initialized
@@ -3786,13 +4312,15 @@ class MainWindow(qt.QMainWindow):
                 self._parent.last_focused_widget = focused_widget
                 # Show the function wheel overlay
                 self.function_wheel_overlay.show()
-        
+
         def toggle_settings_manipulator(self):
             """
             Show/hide the settings manipulator
             """
-            if self._parent.settings.gui_manipulator is not None and \
-               self._parent.settings.gui_manipulator.isVisible() == True:
+            if (
+                self._parent.settings.gui_manipulator is not None
+                and self._parent.settings.gui_manipulator.isVisible() == True
+            ):
                 self.hide_settings_manipulator()
             else:
                 self.show_settings_manipulator()
@@ -3802,13 +4330,15 @@ class MainWindow(qt.QMainWindow):
             # Initialize the settings GUI manipulator if needed
             if self._parent.settings.gui_manipulator is None:
                 compare_size = SettingsGuiManipulator.DEFAULT_SIZE
-                if (self._parent.width() < compare_size[0] or
-                    self._parent.height() < compare_size[1]):
-                        new_size =  functions.create_size(
-                            int(compare_size[0] + compare_size[0]/5),
-                            int(compare_size[1] + compare_size[1]/5)
-                        )
-                        self._parent.resize(new_size)
+                if (
+                    self._parent.width() < compare_size[0]
+                    or self._parent.height() < compare_size[1]
+                ):
+                    new_size = functions.create_size(
+                        int(compare_size[0] + compare_size[0] / 5),
+                        int(compare_size[1] + compare_size[1] / 5),
+                    )
+                    self._parent.resize(new_size)
                 self._parent.settings.gui_manipulator = SettingsGuiManipulator(
                     parent=self._parent.main_groupbox,
                     main_form=self._parent,
@@ -3823,7 +4353,7 @@ class MainWindow(qt.QMainWindow):
                 self._parent.settings.gui_manipulator.hide()
 
         def init_style_sheet(self):
-            style_sheet = ("""
+            style_sheet = """
 #Form {{
     background-color: {};
     border: 0px;
@@ -3858,7 +4388,7 @@ QSplitter::handle {{
                 StyleSheetTable.standard(),
                 StyleSheetTabWidget.standard(),
                 StyleSheetTreeWidget.standard(),
-            ))
+            )
             return style_sheet
 
         def reset_entire_style_sheet(self):
@@ -3866,7 +4396,7 @@ QSplitter::handle {{
             self._parent.setStyleSheet(style_sheet)
             self._parent.menubar.update_style()
             Menu.update_styles()
-#            self._parent.repl_box.indication_reset()
+            #            self._parent.repl_box.indication_reset()
             self.indication_check()
 
         def indicate_window(self):
@@ -3891,6 +4421,7 @@ QSplitter::handle {{
             self.indication_timer.start(50)
 
         __indication_state = None
+
         def __indication_check(self):
             """
             Check if any of the main windows or the REPL is focused
@@ -3903,8 +4434,10 @@ QSplitter::handle {{
             Menu.update_styles()
 
             # Check the REPL focus
-            if (self._parent.repl.hasFocus() == True or
-                self._parent.repl_helper.hasFocus() == True):
+            if (
+                self._parent.repl.hasFocus() == True
+                or self._parent.repl_helper.hasFocus() == True
+            ):
                 self._parent.repl_box.indication_set()
                 return
             else:
@@ -3914,7 +4447,7 @@ QSplitter::handle {{
             window_indicated_flag = False
             indication_list = {}
             for window in windows:
-#                window.setProperty("indicated", False)
+                #                window.setProperty("indicated", False)
                 indication_list[window] = False
             for window in windows:
                 if window.count() == 0:
@@ -3927,9 +4460,11 @@ QSplitter::handle {{
                     window.indicated = False
                     for i in range(window.count()):
                         if isinstance(window.widget(i), TextDiffer) == True:
-                            if (window.widget(i).hasFocus() == True or
-                                window.widget(i).editor_1.hasFocus() == True or
-                                window.widget(i).editor_2.hasFocus() == True):
+                            if (
+                                window.widget(i).hasFocus() == True
+                                or window.widget(i).editor_1.hasFocus() == True
+                                or window.widget(i).editor_2.hasFocus() == True
+                            ):
                                 indication_list[window] = True
                                 window_indicated_flag = True
                         else:
@@ -3939,7 +4474,7 @@ QSplitter::handle {{
                                 window_indicated_flag = True
 
             if window_indicated_flag:
-                for k,v in indication_list.items():
+                for k, v in indication_list.items():
                     k.setProperty("indicated", v)
                 self.indicate_window()
                 self.__indication_state = "window-indicated"
@@ -3970,7 +4505,7 @@ QSplitter::handle {{
 
         def create_recent_file_list_menu(self):
             self._parent.recent_files_menu = Menu("Recent Files", self._parent.menubar)
-            temp_icon = functions.create_icon('tango_icons/file-recent-files.png')
+            temp_icon = functions.create_icon("tango_icons/file-recent-files.png")
             self._parent.recent_files_menu.setIcon(temp_icon)
             return self._parent.recent_files_menu
 
@@ -3979,10 +4514,7 @@ QSplitter::handle {{
             self._parent.recent_files_menu = None
 
         def clear_recent_file_list(self):
-            warning = (
-                "Are you sure you wish to delete\n" +
-                "the recent files list?"
-            )
+            warning = "Are you sure you wish to delete\n" + "the recent files list?"
             reply = YesNoDialog.warning(warning)
             if reply == constants.DialogResult.No.value:
                 return
@@ -3990,10 +4522,10 @@ QSplitter::handle {{
             self._parent.settings.update_recent_list()
             self._parent.display.repl_display_success("Recent file list cleared.")
 
-
         """
         Layout
         """
+
         def check_all_close_buttons(self):
             for w in self._parent.get_all_windows():
                 w.check_close_button()
@@ -4001,13 +4533,13 @@ QSplitter::handle {{
         def get_layout_classes(self):
             # Class name storage
             classes = {
-                'CustomEditor': CustomEditor,
-                'PlainEditor': PlainEditor,
+                "CustomEditor": CustomEditor,
+                "PlainEditor": PlainEditor,
                 data.repl_messages_tab_name: PlainEditor,
-                'TreeDisplay': TreeDisplay,
-                'TreeExplorer': TreeExplorer,
-                'HexView': HexView,
-                'Terminal': Terminal,
+                "TreeDisplay": TreeDisplay,
+                "TreeExplorer": TreeExplorer,
+                "HexView": HexView,
+                "Terminal": Terminal,
             }
             inverted_classes = {v: k for k, v in classes.items()}
             return classes, inverted_classes
@@ -4026,8 +4558,7 @@ QSplitter::handle {{
                         if base_name != box_name:
                             name = box_name + ".Tabs0"
                         new_name = "{}{}".format(
-                            functions.remove_tab_number_from_name(name),
-                            index
+                            functions.remove_tab_number_from_name(name), index
                         )
                         tab_widget.setObjectName(new_name)
                         index += 1
@@ -4035,17 +4566,19 @@ QSplitter::handle {{
             # more than one box at one position
             boxes = self._parent.get_all_boxes()
             for b in boxes:
-                if b.count() == 1 and \
-                   isinstance(b.widget(0), TheBox) and \
-                   b.objectName() != "Main":
-                        # Remove the unnecessary box (OLD)
-#                        b.parent().addWidget(b.widget(0))
-                        # Remove the unnecessary box
-                        index = b.parent().indexOf(b)
-                        b.parent().insertWidget(index, b.widget(0))
+                if (
+                    b.count() == 1
+                    and isinstance(b.widget(0), TheBox)
+                    and b.objectName() != "Main"
+                ):
+                    # Remove the unnecessary box (OLD)
+                    #                        b.parent().addWidget(b.widget(0))
+                    # Remove the unnecessary box
+                    index = b.parent().indexOf(b)
+                    b.parent().insertWidget(index, b.widget(0))
 
-                        b.setParent(None)
-                        b.deleteLater()
+                    b.setParent(None)
+                    b.deleteLater()
                 elif b.count() == 0:
                     pass
 
@@ -4059,8 +4592,10 @@ QSplitter::handle {{
                             widget.setObjectName(box.objectName() + f".H{i}")
                         rename(widget)
                     else:
-                        tabs_name = widget.objectName().split('.')[-1]
-                        widget.setObjectName(widget.parent().objectName() + f".{tabs_name}")
+                        tabs_name = widget.objectName().split(".")[-1]
+                        widget.setObjectName(
+                            widget.parent().objectName() + f".{tabs_name}"
+                        )
 
             main_box = self._parent.findChild(TheBox, "Main")
             rename(main_box)
@@ -4069,9 +4604,7 @@ QSplitter::handle {{
             self.check_all_close_buttons()
 
             # Save the layout
-            qt.QTimer.singleShot(
-                10, self._parent.view.layout_save
-            )
+            qt.QTimer.singleShot(10, self._parent.view.layout_save)
 
         def layout_generate(self):
             main = self._parent.findChild(TheBox, "Main")
@@ -4080,10 +4613,7 @@ QSplitter::handle {{
             window_size = (window_size.width(), window_size.height())
             if self._parent.isMaximized():
                 window_size = "MAXIMIZED"
-            layout = {
-                "WINDOW-SIZE": window_size,
-                "BOXES": children
-            }
+            layout = {"WINDOW-SIZE": window_size, "BOXES": children}
 
             json_layout = json.dumps(layout, ensure_ascii=False)
             return json_layout
@@ -4106,8 +4636,7 @@ QSplitter::handle {{
             screen_size = functions.get_screen_size()
             if window_size == "MAXIMIZED":
                 self._parent.showMaximized()
-            elif isinstance(window_size, tuple) or \
-                 isinstance(window_size, list):
+            elif isinstance(window_size, tuple) or isinstance(window_size, list):
                 w, h = window_size
                 if w > screen_size[0] or h > screen_size[1]:
                     self._parent.showMaximized()
@@ -4117,13 +4646,13 @@ QSplitter::handle {{
 
             main_box = self._parent.main_box
             main_box.clear_all()
-#            self._parent._print_all_boxes_and_windows()
-            
+            #            self._parent._print_all_boxes_and_windows()
+
             def create_box(parent, box):
-                for k,v in sorted(box.items()):
+                for k, v in sorted(box.items()):
                     if k.startswith("BOX"):
                         orientation = qt.Qt.Orientation.Horizontal
-                        if k[-1] == 'V':
+                        if k[-1] == "V":
                             orientation = qt.Qt.Orientation.Vertical
                         new_box = parent.add_box(orientation, add_tabs=False)
                         new_box.show()
@@ -4134,10 +4663,12 @@ QSplitter::handle {{
                     elif k.startswith("TABS"):
                         new_tabs = parent.add_tabs()
                         new_tabs.check_close_button()
-                        
+
                         if pre_stored_widgets:
                             for key, class_string in v.items():
-                                if isinstance(class_string, tuple) or isinstance(class_string, list):
+                                if isinstance(class_string, tuple) or isinstance(
+                                    class_string, list
+                                ):
                                     cls, tab_index, widget_data = class_string
                                     number = widget_data[-1]
                                     if number in pre_stored_widgets.keys():
@@ -4146,13 +4677,15 @@ QSplitter::handle {{
                                         new_tabs.addTab(w, wd["tab-text"])
                                         if hasattr(w, "_parent"):
                                             w._parent = new_tabs
-                                        elif hasattr(w, "parent") and not callable(w.parent):
+                                        elif hasattr(w, "parent") and not callable(
+                                            w.parent
+                                        ):
                                             w.parent = new_tabs
                                         w.internals.update_tab_widget(new_tabs)
                                         w.internals.update_icon(w)
                                         w.internals.update_corner_widget(w)
                             continue
-                        
+
                         current_index = None
                         tab_index = None
                         widget_data = None
@@ -4162,7 +4695,9 @@ QSplitter::handle {{
                                 continue
                             elif isinstance(class_string, str):
                                 cls = class_string
-                            elif isinstance(class_string, tuple) or isinstance(class_string, list):
+                            elif isinstance(class_string, tuple) or isinstance(
+                                class_string, list
+                            ):
                                 cls, tab_index, widget_data = class_string
                             else:
                                 self._parent.display.repl_display_error(
@@ -4174,17 +4709,25 @@ QSplitter::handle {{
 
                                 if cls == "CustomEditor":
                                     file = key
-                                    if isinstance(class_string, tuple) or isinstance(class_string, list):
-                                        line, index, first_visible_line = widget_data[:3]
-                                    widget = self._parent.open_file(file, new_tabs, False)
+                                    if isinstance(class_string, tuple) or isinstance(
+                                        class_string, list
+                                    ):
+                                        line, index, first_visible_line = widget_data[
+                                            :3
+                                        ]
+                                    widget = self._parent.open_file(
+                                        file, new_tabs, False
+                                    )
                                     if tab_index is not None:
                                         widget = new_tabs.widget(tab_index)
                                         if widget is not None:
                                             widget.setCursorPosition(line, index)
-                                            widget.setFirstVisibleLine(first_visible_line)
+                                            widget.setFirstVisibleLine(
+                                                first_visible_line
+                                            )
 
-#                                elif cls == "Console":
-#                                    new_tabs.console_add(key)
+                                #                                elif cls == "Console":
+                                #                                    new_tabs.console_add(key)
 
                                 elif cls == "TreeExplorer":
                                     directory_path = widget_data[0]
@@ -4193,33 +4736,50 @@ QSplitter::handle {{
                                             data.file_explorer_tab_name, TreeExplorer
                                         )
                                         file_explorer.display_directory(directory_path)
-                                        file_explorer.open_file_signal.connect(self._parent.open_file)
-                                        file_explorer.open_file_hex_signal.connect(self._parent.open_file_hex)
-                                        file_explorer.internals.update_icon(file_explorer)
+                                        file_explorer.open_file_signal.connect(
+                                            self._parent.open_file
+                                        )
+                                        file_explorer.open_file_hex_signal.connect(
+                                            self._parent.open_file_hex
+                                        )
+                                        file_explorer.internals.update_icon(
+                                            file_explorer
+                                        )
 
                                 elif cls == "HexView":
                                     file_path = widget_data[0]
                                     if os.path.isfile(file_path):
                                         new_hexview = new_tabs.hexview_add(file_path)
-                                
+
                                 elif cls == "Terminal":
                                     new_terminal = new_tabs.terminal_add()
                                     working_path = widget_data[0]
-                                    if working_path is not None and os.path.isdir(working_path):
+                                    if working_path is not None and os.path.isdir(
+                                        working_path
+                                    ):
                                         new_terminal.set_cwd(working_path)
 
                                 elif cls == data.repl_messages_tab_name:
-                                    self._parent.repl_messages_tab = new_tabs.plain_add_document(
-                                        data.repl_messages_tab_name
+                                    self._parent.repl_messages_tab = (
+                                        new_tabs.plain_add_document(
+                                            data.repl_messages_tab_name
+                                        )
                                     )
                                     rmt = self._parent.repl_messages_tab
-                                    rmt.internals.set_icon(rmt, self._parent.display.repl_messages_icon)
+                                    rmt.internals.set_icon(
+                                        rmt, self._parent.display.repl_messages_icon
+                                    )
                             else:
-                                self._parent.display.repl_display_error(f"Unknown tab type: {v}")
+                                self._parent.display.repl_display_error(
+                                    f"Unknown tab type: {v}"
+                                )
                         if current_index is not None:
                             new_tabs.setCurrentIndex(current_index)
                     else:
-                        self._parent.display.repl_display_error("Unknown box child type: {}".format(k))
+                        self._parent.display.repl_display_error(
+                            "Unknown box child type: {}".format(k)
+                        )
+
             # Open the permanent items
             for k, v in sorted(layout["BOXES"].items()):
                 create_box(main_box, v)
@@ -4232,10 +4792,11 @@ QSplitter::handle {{
                     if _async:
                         self.layout_save_timer.stop()
                     layout = self.layout_generate()
-#                    file_path = "unknown"
-#                    functions.write_to_file(layout, file_path)
+                #                    file_path = "unknown"
+                #                    functions.write_to_file(layout, file_path)
                 except:
                     self._parent.display.repl_display_error(traceback.format_exc())
+
             if _async:
                 if not hasattr(self, "layout_save_timer"):
                     # Create the layout save timer if it doesn't exist yet
@@ -4257,77 +4818,73 @@ QSplitter::handle {{
             else:
                 return False
 
-
     class System:
         """
         Functions that interact with the system
         (namespace/nested class to MainWindow)
         """
-        #Class varibles
+
+        # Class varibles
         _parent = None
 
         def __init__(self, parent):
             """Initialization of the System object instance"""
-            #Get the reference to the MainWindow parent object instance
+            # Get the reference to the MainWindow parent object instance
             self._parent = parent
 
-        def find_files(self,
-                       file_name,
-                       search_dir=None,
-                       case_sensitive=False,
-                       search_subdirs=True):
+        def find_files(
+            self, file_name, search_dir=None, case_sensitive=False, search_subdirs=True
+        ):
             """Return a list of files that match file_name as a list and display it"""
-            #Check if the search directory is none, then use a dialog window
-            #to select the real search directory
+            # Check if the search directory is none, then use a dialog window
+            # to select the real search directory
             if search_dir is None:
                 search_dir = self._parent.get_directory_with_dialog()
-                #Update the current working directory
+                # Update the current working directory
                 if os.path.isdir(search_dir):
                     self._parent.set_cwd(search_dir)
-            #Execute the find function
+            # Execute the find function
             found_files = functions.find_files_by_name(
-                              file_name,
-                              search_dir,
-                              case_sensitive,
-                              search_subdirs
-                          )
-            #Check of the function return is valid
+                file_name, search_dir, case_sensitive, search_subdirs
+            )
+            # Check of the function return is valid
             if found_files is None:
-                #Check if directory is valid
+                # Check if directory is valid
                 self._parent.display.repl_display_message(
                     "Invalid search directory!",
-                    message_type=constants.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR,
                 )
-                self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                self._parent.display.write_to_statusbar(
+                    "Invalid search directory!", 2000
+                )
                 return
             elif found_files == []:
-                #Check if any files were found
+                # Check if any files were found
                 self._parent.display.repl_display_message(
-                    "No files found!",
-                    message_type=constants.MessageType.WARNING
+                    "No files found!", message_type=constants.MessageType.WARNING
                 )
                 self._parent.display.write_to_statusbar("No files found!", 2000)
                 return
-            #Display the found files
+            # Display the found files
             self._parent.display.show_found_files(
-                "'{}' in its name".format(file_name),
-                found_files,
-                search_dir
+                "'{}' in its name".format(file_name), found_files, search_dir
             )
 
-        def find_in_files(self,
-                          search_text,
-                          search_dir=None,
-                          case_sensitive=False,
-                          search_subdirs=True,
-                          break_on_find=False,
-                          file_filter=None):
+        def find_in_files(
+            self,
+            search_text,
+            search_dir=None,
+            case_sensitive=False,
+            search_subdirs=True,
+            break_on_find=False,
+            file_filter=None,
+        ):
             """Return a list of files that contain the searched text as a list and display it"""
-            #Check if the search directory is none, then use a dialog window
-            #to select the real search directory
+            # Check if the search directory is none, then use a dialog window
+            # to select the real search directory
             if search_dir is None:
                 search_dir = self._parent.get_directory_with_dialog()
-                #Update the current working directory
+                # Update the current working directory
                 if os.path.isdir(search_dir):
                     self._parent.set_cwd(search_dir)
             try:
@@ -4343,23 +4900,24 @@ QSplitter::handle {{
                 )
             except Exception as ex:
                 self._parent.display.repl_display_message(
-                    str(ex),
-                    message_type=constants.MessageType.ERROR
+                    str(ex), message_type=constants.MessageType.ERROR
                 )
 
-        def replace_in_files(self,
-                             search_text,
-                             replace_text,
-                             search_dir=None,
-                             case_sensitive=False,
-                             search_subdirs=True,
-                             file_filter=None):
+        def replace_in_files(
+            self,
+            search_text,
+            replace_text,
+            search_dir=None,
+            case_sensitive=False,
+            search_subdirs=True,
+            file_filter=None,
+        ):
             """
             Same as the function in the 'functions' module.
             Replaces all instances of search_string with the replace_string in the files,
             that contain the search string in the search_dir.
             """
-            #Close the log window if it is displayed
+            # Close the log window if it is displayed
             warning = "The replaced content will be saved back into the files!\n"
             warning += "You better have a backup of the files if you are unsure,\n"
             warning += "because this action CANNOT be undone!\n"
@@ -4367,53 +4925,53 @@ QSplitter::handle {{
             reply = YesNoDialog.warning(warning)
             if reply == constants.DialogResult.No.value:
                 return
-            #Check if the search directory is none, then use a dialog window
-            #to select the real search directory
+            # Check if the search directory is none, then use a dialog window
+            # to select the real search directory
             if search_dir is None:
                 search_dir = self._parent.get_directory_with_dialog()
-                #Update the current working directory
+                # Update the current working directory
                 if os.path.isdir(search_dir):
                     self._parent.set_cwd(search_dir)
-            #Replace the text in files
+            # Replace the text in files
             result = functions.replace_text_in_files_enum(
                 search_text,
                 replace_text,
                 search_dir,
                 case_sensitive,
                 search_subdirs,
-                file_filter
+                file_filter,
             )
             if result == -1:
                 self._parent.display.repl_display_message(
                     "Invalid search&replace in files directory!",
-                    message_type=constants.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR,
                 )
-                self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                self._parent.display.write_to_statusbar(
+                    "Invalid search directory!", 2000
+                )
                 return
             elif result == -2:
                 self._parent.display.repl_display_message(
                     "Cannot search&replace in files over multiple lines!",
-                    message_type=constants.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR,
                 )
-                self._parent.display.write_to_statusbar("Invalid search directory!", 2000)
+                self._parent.display.write_to_statusbar(
+                    "Invalid search directory!", 2000
+                )
                 return
-            #Check the return type
+            # Check the return type
             if len(result) == 0:
                 self._parent.display.repl_display_message(
                     "No files with '{}' in its text were found!".format(search_text),
-                    message_type=constants.MessageType.WARNING
+                    message_type=constants.MessageType.WARNING,
                 )
             elif isinstance(result, dict):
                 self._parent.display.show_replaced_text_in_files_in_tree(
-                    search_text,
-                    replace_text,
-                    result,
-                    search_dir
+                    search_text, replace_text, result, search_dir
                 )
             else:
                 self._parent.display.repl_display_message(
-                    "Unknown error!",
-                    message_type=constants.MessageType.ERROR
+                    "Unknown error!", message_type=constants.MessageType.ERROR
                 )
 
         def show_explorer(self):
@@ -4424,28 +4982,33 @@ QSplitter::handle {{
             else:
                 self._parent.display.repl_display_warning("Unimplemented yet!")
                 return
-            self._parent.repl.get_interpreter().run_cmd_process(command, show_console=False)
+            self._parent.repl.get_interpreter().run_cmd_process(
+                command, show_console=False
+            )
 
     class Editing:
         """
         Document editing functions
         (namespace/nested class to MainWindow)
         """
-        #Class varibles
+
+        # Class varibles
         _parent = None
 
         def __init__(self, parent):
             """Initialization of the Editing object instance"""
-            #Get the reference to the MainWindow parent object instance
+            # Get the reference to the MainWindow parent object instance
             self._parent = parent
-            #Initialize the namespace classes
-            self.line   = self.Line(self)
+            # Initialize the namespace classes
+            self.line = self.Line(self)
 
-        def find_in_open_documents(self,
-                                   search_text,
-                                   case_sensitive=False,
-                                   regular_expression=False,
-                                   window_name=None):
+        def find_in_open_documents(
+            self,
+            search_text,
+            case_sensitive=False,
+            regular_expression=False,
+            window_name=None,
+        ):
             """
             Find instances of search text accross all open documents
             in the selected window
@@ -4459,8 +5022,7 @@ QSplitter::handle {{
                 message = "No documents in " + tab_widget.name.lower()
                 message += " editing window"
                 self._parent.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.WARNING
+                    message, message_type=constants.MessageType.WARNING
                 )
                 return
             # Save the current index to reset focus to it if no
@@ -4488,13 +5050,13 @@ QSplitter::handle {{
                 result = tab_widget.widget(i).find_text(
                     search_text,
                     case_sensitive,
-                    True, # search_forward
-                    regular_expression
+                    True,  # search_forward
+                    regular_expression,
                 )
                 # If a replace was done, return success
-# I can't remember why CYCLED was added here???
-#                if (result == constants.SearchResult.FOUND or
-#                    result == constants.SearchResult.CYCLED):
+                # I can't remember why CYCLED was added here???
+                #                if (result == constants.SearchResult.FOUND or
+                #                    result == constants.SearchResult.CYCLED):
                 if result == constants.SearchResult.FOUND:
                     return True
             # Nothing found
@@ -4502,106 +5064,100 @@ QSplitter::handle {{
             message = "No instances of '" + search_text + "' found in "
             message += tab_widget.name.lower() + " editing window"
             self._parent.display.repl_display_message(
-                message,
-                message_type=constants.MessageType.WARNING
+                message, message_type=constants.MessageType.WARNING
             )
             return False
 
-        def find_replace_in_open_documents(self,
-                                           search_text,
-                                           replace_text,
-                                           case_sensitive=False,
-                                           regular_expression=False,
-                                           window_name=None):
+        def find_replace_in_open_documents(
+            self,
+            search_text,
+            replace_text,
+            case_sensitive=False,
+            regular_expression=False,
+            window_name=None,
+        ):
             """
             Find and replace instaces of search string with replace string
             across all of the open documents in the selected window, one
             instance at a time, starting from the currently selected widget.
             """
-            #Get the current widget
+            # Get the current widget
             tab_widget = self._parent.get_window_by_indication()
             if window_name is None:
                 window_name = "Main"
-            #Check if there are any documents in the basic widget
+            # Check if there are any documents in the basic widget
             if tab_widget.count() == 0:
                 message = "No documents in the " + tab_widget.name.lower()
                 message += " editing window"
                 self._parent.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.WARNING
+                    message, message_type=constants.MessageType.WARNING
                 )
                 return
-            #Save the current index to reset focus to it if no instances of search string are found
+            # Save the current index to reset focus to it if no instances of search string are found
             saved_index = tab_widget.currentIndex()
-            #Create a deque of the tab index order and start with the current index,
-            #deque is used, because it can be rotated by default
-            in_deque= collections.deque(range(tab_widget.count()))
-            #Rotate the deque until the first element is the current index
+            # Create a deque of the tab index order and start with the current index,
+            # deque is used, because it can be rotated by default
+            in_deque = collections.deque(range(tab_widget.count()))
+            # Rotate the deque until the first element is the current index
             while in_deque[0] != tab_widget.currentIndex():
                 in_deque.rotate(1)
-            #Find the next instance
+            # Find the next instance
             for i in in_deque:
                 result = tab_widget.widget(i).find_and_replace(
-                    search_text,
-                    replace_text,
-                    case_sensitive,
-                    regular_expression
+                    search_text, replace_text, case_sensitive, regular_expression
                 )
-                #If a replace was done, return success
+                # If a replace was done, return success
                 if result == True:
                     message = "Found and replaced in " + tab_widget.name.lower()
                     message += " editing window"
                     self._parent.display.write_to_statusbar(message)
                     return True
-            #Nothing found
+            # Nothing found
             tab_widget.setCurrentIndex(saved_index)
             message = "No instances of '" + search_text + "' found in the "
             message += tab_widget.name.lower() + " editing window"
             self._parent.display.repl_display_message(
-                message,
-                message_type=constants.MessageType.WARNING
+                message, message_type=constants.MessageType.WARNING
             )
             return False
 
-        def replace_all_in_open_documents(self,
-                                          search_text,
-                                          replace_text,
-                                          case_sensitive=False,
-                                          regular_expression=False,
-                                          window_name=None):
+        def replace_all_in_open_documents(
+            self,
+            search_text,
+            replace_text,
+            case_sensitive=False,
+            regular_expression=False,
+            window_name=None,
+        ):
             """
             Replace all instaces of search string with replace string across
             all of the open documents in the selected window
             """
-            #Get the current widget
+            # Get the current widget
             tab_widget = self._parent.get_window_by_indication()
             if window_name is None:
                 window_name = "Main"
-            #Loop over each widget and replace all instances of the search text
+            # Loop over each widget and replace all instances of the search text
             for i in range(tab_widget.count()):
                 tab_widget.widget(i).replace_all(
-                    search_text,
-                    replace_text,
-                    case_sensitive,
-                    regular_expression
+                    search_text, replace_text, case_sensitive, regular_expression
                 )
             message = "Replacing all in open documents completed"
             self._parent.display.repl_display_message(
-                message,
-                message_type=constants.MessageType.SUCCESS
+                message, message_type=constants.MessageType.SUCCESS
             )
 
         """
         Special wraper functions that take a existing function and
         execute it for the currently focused CustomEditor.
         """
-        def run_focused_widget_method(self,
-                                      method_name,
-                                      argument_list,
-                                      window_name=None):
+
+        def run_focused_widget_method(
+            self, method_name, argument_list, window_name=None
+        ):
             """Execute a focused widget method"""
             # Get the current widget
-#            widget = self._parent.get_tab_by_focus()
+            #            widget = self._parent.get_tab_by_focus()
             widget = self._parent.get_tab_by_indication()
             # None-check the current widget in the selected window
             if widget is not None:
@@ -4611,39 +5167,78 @@ QSplitter::handle {{
             else:
                 message = "No document in focused window!"
                 self._parent.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.WARNING
+                    message, message_type=constants.MessageType.WARNING
                 )
 
-        def find(self, search_text, case_sensitive=False, search_forward=True, window_name=None):
+        def find(
+            self,
+            search_text,
+            case_sensitive=False,
+            search_forward=True,
+            window_name=None,
+        ):
             """Find text in the currently focused window"""
             argument_list = [search_text, case_sensitive, search_forward]
             self.run_focused_widget_method("find_text", argument_list, window_name)
 
-        def regex_find(self, search_text, case_sensitive=False, search_forward=True, window_name=None):
+        def regex_find(
+            self,
+            search_text,
+            case_sensitive=False,
+            search_forward=True,
+            window_name=None,
+        ):
             """Find text in the currently focused window"""
             argument_list = [search_text, case_sensitive, search_forward, True]
             self.run_focused_widget_method("find_text", argument_list, window_name)
 
-        def find_and_replace(self, search_text, replace_text, case_sensitive=False, search_forward=True, window_name=None):
+        def find_and_replace(
+            self,
+            search_text,
+            replace_text,
+            case_sensitive=False,
+            search_forward=True,
+            window_name=None,
+        ):
             """Find and replace text in the currently focused window"""
             argument_list = [search_text, replace_text, case_sensitive, search_forward]
-            self.run_focused_widget_method("find_and_replace", argument_list, window_name)
+            self.run_focused_widget_method(
+                "find_and_replace", argument_list, window_name
+            )
 
-        def regex_find_and_replace(self, search_text, replace_text, case_sensitive=False, search_forward=True, window_name=None):
+        def regex_find_and_replace(
+            self,
+            search_text,
+            replace_text,
+            case_sensitive=False,
+            search_forward=True,
+            window_name=None,
+        ):
             """
             Find and replace text in the currently focused window
             using the regular expressions module
             """
-            argument_list = [search_text, replace_text, case_sensitive, search_forward, True]
-            self.run_focused_widget_method("find_and_replace", argument_list, window_name)
+            argument_list = [
+                search_text,
+                replace_text,
+                case_sensitive,
+                search_forward,
+                True,
+            ]
+            self.run_focused_widget_method(
+                "find_and_replace", argument_list, window_name
+            )
 
-        def replace_all(self, search_text, replace_text, case_sensitive=False, window_name=None):
+        def replace_all(
+            self, search_text, replace_text, case_sensitive=False, window_name=None
+        ):
             """Replace all occurences of a string in the currently focused window"""
             argument_list = [search_text, replace_text, case_sensitive]
             self.run_focused_widget_method("replace_all", argument_list, window_name)
 
-        def regex_replace_all(self, search_text, replace_text, case_sensitive=False, window_name=None):
+        def regex_replace_all(
+            self, search_text, replace_text, case_sensitive=False, window_name=None
+        ):
             """
             Replace all occurences of a string in the currently focused window
             using the regular expressions module
@@ -4651,25 +5246,35 @@ QSplitter::handle {{
             argument_list = [search_text, replace_text, case_sensitive, True]
             self.run_focused_widget_method("replace_all", argument_list, window_name)
 
-        def replace_in_selection(self, search_text, replace_text, case_sensitive=False, window_name=None):
+        def replace_in_selection(
+            self, search_text, replace_text, case_sensitive=False, window_name=None
+        ):
             """Replace all occurences of a string in the current selection in the currently focused window"""
             argument_list = [search_text, replace_text, case_sensitive]
-            self.run_focused_widget_method("replace_in_selection", argument_list, window_name)
+            self.run_focused_widget_method(
+                "replace_in_selection", argument_list, window_name
+            )
 
-        def regex_replace_in_selection(self, search_text, replace_text, case_sensitive=False, window_name=None):
+        def regex_replace_in_selection(
+            self, search_text, replace_text, case_sensitive=False, window_name=None
+        ):
             """
             Replace all occurences of a string in the current selection in the
             currently focused window using regular expressions module
             """
             argument_list = [search_text, replace_text, case_sensitive, True]
-            self.run_focused_widget_method("replace_in_selection", argument_list, window_name)
+            self.run_focused_widget_method(
+                "replace_in_selection", argument_list, window_name
+            )
 
         def highlight(self, highlight_text, case_sensitive=False, window_name=None):
             """Highlight all occurences of text in the currently focused window"""
             argument_list = [highlight_text, case_sensitive]
             self.run_focused_widget_method("highlight_text", argument_list, window_name)
 
-        def regex_highlight(self, highlight_text, case_sensitive=False, window_name=None):
+        def regex_highlight(
+            self, highlight_text, case_sensitive=False, window_name=None
+        ):
             """
             Highlight all occurences of text in the currently focused window
             using regular expressions
@@ -4680,7 +5285,9 @@ QSplitter::handle {{
         def clear_highlights(self, window_name=None):
             """Clear all highlights in the currently focused window"""
             argument_list = []
-            self.run_focused_widget_method("clear_highlights", argument_list, window_name)
+            self.run_focused_widget_method(
+                "clear_highlights", argument_list, window_name
+            )
 
         def convert_to_uppercase(self, window_name=None):
             """Change the case of the selected text in the currently focused window"""
@@ -4692,39 +5299,49 @@ QSplitter::handle {{
             argument_list = [False]
             self.run_focused_widget_method("convert_case", argument_list, window_name)
 
-        class Line():
-            #Class varibles
+        class Line:
+            # Class varibles
             parent = None
 
             def __init__(self, parent):
                 """Initialization of the Editing object instance"""
-                #Get the reference to the MainWindow parent object instance
+                # Get the reference to the MainWindow parent object instance
                 self._parent = parent
 
             def goto(self, line_number, window_name=None):
                 """Set focus and cursor to the selected line in the currently focused window"""
                 argument_list = [line_number]
-                self._parent.run_focused_widget_method("goto_line", argument_list, window_name)
+                self._parent.run_focused_widget_method(
+                    "goto_line", argument_list, window_name
+                )
 
             def replace(self, replace_text, line_number, window_name=None):
                 """Replace the selected line in the currently focused window"""
                 argument_list = [replace_text, line_number]
-                self._parent.run_focused_widget_method("replace_line", argument_list, window_name)
+                self._parent.run_focused_widget_method(
+                    "replace_line", argument_list, window_name
+                )
 
             def remove(self, line_number, window_name=None):
                 """Remove the selected line in the currently focused window"""
                 argument_list = [line_number]
-                self._parent.run_focused_widget_method("remove_line", argument_list, window_name)
+                self._parent.run_focused_widget_method(
+                    "remove_line", argument_list, window_name
+                )
 
             def get(self, line_number, window_name=None):
                 """Replace the selected line in the currently focused window"""
                 argument_list = [line_number]
-                self._parent.run_focused_widget_method("get_line", argument_list, window_name)
+                self._parent.run_focused_widget_method(
+                    "get_line", argument_list, window_name
+                )
 
             def set(self, line_text, line_number, window_name=None):
                 """Replace the selected line in the currently focused window"""
                 argument_list = [line_text, line_number]
-                self._parent.run_focused_widget_method("set_line", argument_list, window_name)
+                self._parent.run_focused_widget_method(
+                    "set_line", argument_list, window_name
+                )
 
     class Display:
         """
@@ -4732,27 +5349,28 @@ QSplitter::handle {{
         show_nodes, find_in_open_documents, ...
         (namespace/nested class to MainWindow)
         """
+
         # Class varibles
-        _parent             = None
+        _parent = None
         # Attribute for storing which type of tab is used for dispaying node trees
-        node_view_type      = constants.NodeDisplayType.TREE
+        node_view_type = constants.NodeDisplayType.TREE
         # Theme indicator label
-        theme_indicator    = None
-        repl_indicator    = None
+        theme_indicator = None
+        repl_indicator = None
         # Theme actions
-        action_air          = None
-        action_earth        = None
-        action_water        = None
-        action_mc           = None
+        action_air = None
+        action_earth = None
+        action_water = None
+        action_mc = None
         # References to the dynamically created menus
-        stored_menus        = []
+        stored_menus = []
         # Icons used for the special widgets
-        node_tree_icon              = None
-        repl_messages_icon          = None
-        system_found_files_icon     = None
-        system_found_in_files_icon  = None
-        system_replace_in_files_icon= None
-        system_show_cwd_tree_icon   = None
+        node_tree_icon = None
+        repl_messages_icon = None
+        system_found_files_icon = None
+        system_found_in_files_icon = None
+        system_replace_in_files_icon = None
+        system_show_cwd_tree_icon = None
 
         def __init__(self, parent):
             """
@@ -4761,12 +5379,24 @@ QSplitter::handle {{
             # Get the reference to the MainWindow parent object instance
             self._parent = parent
             # Initialize the stored icons
-            self.node_tree_icon = functions.create_icon('tango_icons/edit-node-tree.png')
-            self.repl_messages_icon = functions.create_icon('tango_icons/repl-messages.png')
-            self.system_found_files_icon = functions.create_icon('tango_icons/system-find-files.png')
-            self.system_found_in_files_icon = functions.create_icon('tango_icons/system-find-in-files.png')
-            self.system_replace_in_files_icon = functions.create_icon('tango_icons/system-replace-in-files.png')
-            self.system_show_cwd_tree_icon = functions.create_icon('tango_icons/system-show-cwd-tree.png')
+            self.node_tree_icon = functions.create_icon(
+                "tango_icons/edit-node-tree.png"
+            )
+            self.repl_messages_icon = functions.create_icon(
+                "tango_icons/repl-messages.png"
+            )
+            self.system_found_files_icon = functions.create_icon(
+                "tango_icons/system-find-files.png"
+            )
+            self.system_found_in_files_icon = functions.create_icon(
+                "tango_icons/system-find-in-files.png"
+            )
+            self.system_replace_in_files_icon = functions.create_icon(
+                "tango_icons/system-replace-in-files.png"
+            )
+            self.system_show_cwd_tree_icon = functions.create_icon(
+                "tango_icons/system-show-cwd-tree.png"
+            )
 
         def init_theme_indicator(self):
             """
@@ -4786,7 +5416,7 @@ QSplitter::handle {{
             self.theme_indicator.set_image(data.theme["image-file"])
             self.theme_indicator.setToolTip(data.theme["tooltip"])
             self.theme_indicator.restyle()
-        
+
         def init_repl_indicator(self):
             """
             Initialization of the REPL indicator in the statusbar
@@ -4806,7 +5436,9 @@ QSplitter::handle {{
             )
             self._parent.statusbar.showMessage(message, msec)
 
-        def update_cursor_position(self, cursor_line=None, cursor_column=None, index=None):
+        def update_cursor_position(
+            self, cursor_line=None, cursor_column=None, index=None
+        ):
             """
             Update the position of the cursor in the current widget
             to the statusbar.
@@ -4815,32 +5447,28 @@ QSplitter::handle {{
                 self._parent.statusbar_label_left.setText("")
             else:
                 statusbar_text = "LINE: {} COLUMN: {} / INDEX: {}".format(
-                    cursor_line+1,
-                    cursor_column+1,
-                    index
+                    cursor_line + 1, cursor_column + 1, index
                 )
                 self._parent.statusbar_label_left.setText(statusbar_text)
 
         def repl_display_success(self, *message):
             self.repl_display_message(
-                *message,
-                message_type=constants.MessageType.SUCCESS
+                *message, message_type=constants.MessageType.SUCCESS
             )
 
         def repl_display_error(self, *message):
             self.repl_display_message(
-                *message,
-                message_type=constants.MessageType.ERROR
+                *message, message_type=constants.MessageType.ERROR
             )
 
         def repl_display_warning(self, *message):
             self.repl_display_message(
-                *message,
-                message_type=constants.MessageType.WARNING
+                *message, message_type=constants.MessageType.WARNING
             )
 
         __repl_suppressed = False
         __repl_cache = []
+
         def repl_suppress(self):
             self.__repl_suppressed = True
 
@@ -4855,27 +5483,24 @@ QSplitter::handle {{
                 )
             self.__repl_cache = []
 
-        def repl_display_message(self,
-                                 *message,
-                                 scroll_to_end=True,
-                                 focus_repl_messages=True,
-                                 message_type=None):
+        def repl_display_message(
+            self,
+            *message,
+            scroll_to_end=True,
+            focus_repl_messages=True,
+            message_type=None,
+        ):
             """
             Display the REPL return message in a scintilla tab
             named "REPL Messages" in one of the basic widgets
             """
             if self.__repl_suppressed:
                 self.__repl_cache.append(
-                    (
-                        message,
-                        scroll_to_end,
-                        focus_repl_messages,
-                        message_type
-                    )
+                    (message, scroll_to_end, focus_repl_messages, message_type)
                 )
                 return
 
-            #Nested function for styling REPL MESSAGES text
+            # Nested function for styling REPL MESSAGES text
             def style_repl_text(start, end, color, lexer_number):
                 """
                 Initialize the style and style the text.
@@ -4889,46 +5514,39 @@ QSplitter::handle {{
                 parent.repl_messages_tab.SendScintilla(
                     qt.QsciScintillaBase.SCI_STYLESETFONT,
                     lexer_number,
-                    data.current_editor_font_name.encode("utf-8")
+                    data.current_editor_font_name.encode("utf-8"),
                 )
                 parent.repl_messages_tab.SendScintilla(
                     qt.QsciScintillaBase.SCI_STYLESETSIZE,
                     lexer_number,
-                    data.current_editor_font_size
+                    data.current_editor_font_size,
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    qt.QsciScintillaBase.SCI_STYLESETBOLD,
-                    lexer_number,
-                    True
+                    qt.QsciScintillaBase.SCI_STYLESETBOLD, lexer_number, True
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    qt.QsciScintillaBase.SCI_STYLESETUNDERLINE,
-                    lexer_number,
-                    False
+                    qt.QsciScintillaBase.SCI_STYLESETUNDERLINE, lexer_number, False
                 )
                 parent.repl_messages_tab.SendScintilla(
                     qt.QsciScintillaBase.SCI_STYLESETFORE,
                     lexer_number,
-                    qt.QColor(color)
+                    qt.QColor(color),
                 )
                 parent.repl_messages_tab.SendScintilla(
                     qt.QsciScintillaBase.SCI_STYLESETBACK,
                     lexer_number,
-                    qt.QColor(data.theme["fonts"]["default"]["background"])
+                    qt.QColor(data.theme["fonts"]["default"]["background"]),
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    qt.QsciScintillaBase.SCI_STARTSTYLING,
-                    start,
-                    lexer_number
+                    qt.QsciScintillaBase.SCI_STARTSTYLING, start, lexer_number
                 )
                 parent.repl_messages_tab.SendScintilla(
-                    qt.QsciScintillaBase.SCI_SETSTYLING,
-                    end - start,
-                    lexer_number
+                    qt.QsciScintillaBase.SCI_SETSTYLING, end - start, lexer_number
                 )
-            #Define references directly to the parent and mainform for performance and clarity
+
+            # Define references directly to the parent and mainform for performance and clarity
             parent = self._parent
-            #Find the "REPL Message" tab in the basic widgets
+            # Find the "REPL Message" tab in the basic widgets
             parent.repl_messages_tab = self.find_repl_messages_tab()
             # Create a new REPL tab in the lower basic widget if it doesn't exist
             if parent.repl_messages_tab is None:
@@ -4942,51 +5560,63 @@ QSplitter::handle {{
                 message = " ".join([str(x) for x in message])
             else:
                 message = message[0]
-            #Check if message is a string class, if not then make it a string
+            # Check if message is a string class, if not then make it a string
             if message is None:
                 return
-#            elif isinstance(message, bytes) == True:
-#                # Convert a byte string to utf-8 string
-#                message = message.decode("utf-8")
+            #            elif isinstance(message, bytes) == True:
+            #                # Convert a byte string to utf-8 string
+            #                message = message.decode("utf-8")
             elif isinstance(message, str) == False:
                 message = str(message)
-            #Check if the message should be error colored
+            # Check if the message should be error colored
             if message_type is not None:
-                #Convert the text to a byte array to get the correct length of the text
-                #if it contains non-ASCII characters
+                # Convert the text to a byte array to get the correct length of the text
+                # if it contains non-ASCII characters
                 start_bytes = parent.repl_messages_tab.text().encode("utf-8")
-                #Get the point from which the text will be highlighted
+                # Get the point from which the text will be highlighted
                 start = len(start_bytes) - 1
                 if start < 0:
                     start = 0
-                #Add the error message
+                # Add the error message
                 parent.repl_messages_tab.append("{}\n".format(message))
-                #Convert the text to a byte array to get the correct length of the text
-                #if it contains non-ASCII characters
+                # Convert the text to a byte array to get the correct length of the text
+                # if it contains non-ASCII characters
                 end_bytes = parent.repl_messages_tab.text().encode("utf-8")
-                #Get the end point to which the text will be highlighted
+                # Get the end point to which the text will be highlighted
                 end = len(end_bytes) - 1
                 if end < 0:
                     end = 0
                 elif end < start:
                     end = start
-                #THE MESSAGE COLORS ARE: 0xBBGGRR (BB-blue,GG-green,RR-red)
+                # THE MESSAGE COLORS ARE: 0xBBGGRR (BB-blue,GG-green,RR-red)
                 if message_type == constants.MessageType.ERROR:
-                    style_repl_text(start, end, data.theme["fonts"]["error"]["color"], 1)
+                    style_repl_text(
+                        start, end, data.theme["fonts"]["error"]["color"], 1
+                    )
                 elif message_type == constants.MessageType.WARNING:
-                    style_repl_text(start, end, data.theme["fonts"]["warning"]["color"], 2)
+                    style_repl_text(
+                        start, end, data.theme["fonts"]["warning"]["color"], 2
+                    )
                 elif message_type == constants.MessageType.SUCCESS:
-                    style_repl_text(start, end, data.theme["fonts"]["success"]["color"], 3)
+                    style_repl_text(
+                        start, end, data.theme["fonts"]["success"]["color"], 3
+                    )
                 elif message_type == constants.MessageType.DIFF_UNIQUE_1:
-                    style_repl_text(start, end, data.theme["fonts"]["diff-unique-1"]["color"], 4)
+                    style_repl_text(
+                        start, end, data.theme["fonts"]["diff-unique-1"]["color"], 4
+                    )
                 elif message_type == constants.MessageType.DIFF_UNIQUE_2:
-                    style_repl_text(start, end, data.theme["fonts"]["diff-unique-2"]["color"], 5)
+                    style_repl_text(
+                        start, end, data.theme["fonts"]["diff-unique-2"]["color"], 5
+                    )
                 elif message_type == constants.MessageType.DIFF_SIMILAR:
-                    style_repl_text(start, end, data.theme["fonts"]["diff-similar"]["color"], 6)
+                    style_repl_text(
+                        start, end, data.theme["fonts"]["diff-similar"]["color"], 6
+                    )
             else:
-                #Add REPL message to the REPL message tab
+                # Add REPL message to the REPL message tab
                 parent.repl_messages_tab.append("{}\n".format(message))
-            
+
             rmt = parent.repl_messages_tab
             if qt.sip.isdeleted(rmt):
                 return
@@ -4994,34 +5624,32 @@ QSplitter::handle {{
                 return
             # Bring the REPL tab to the front
             if focus_repl_messages == True:
+
                 def focus_repl():
                     if qt.sip.isdeleted(rmt):
                         return
                     if qt.sip.isdeleted(rmt._parent):
                         return
-                    rmt._parent.setCurrentWidget(
-                        parent.repl_messages_tab
-                    )
+                    rmt._parent.setCurrentWidget(parent.repl_messages_tab)
+
                 qt.QTimer.singleShot(0, focus_repl)
-                    
+
             # Bring cursor to the current message
             if scroll_to_end == True:
+
                 def scroll_to_end():
                     if qt.sip.isdeleted(rmt):
                         return
                     if qt.sip.isdeleted(rmt._parent):
                         return
-                    rmt.setCursorPosition(
-                        parent.repl_messages_tab.lines(), 0
-                    )
-                    rmt.setFirstVisibleLine(
-                        parent.repl_messages_tab.lines()
-                    )
+                    rmt.setCursorPosition(parent.repl_messages_tab.lines(), 0)
+                    rmt.setFirstVisibleLine(parent.repl_messages_tab.lines())
+
                 qt.QTimer.singleShot(1, scroll_to_end)
 
         def repl_scroll_to_bottom(self):
             """Scroll the REPL MESSAGES tab to the bottom"""
-            #Find the "REPL Message" tab in the basic widgets
+            # Find the "REPL Message" tab in the basic widgets
             self._parent.repl_messages_tab = self.find_repl_messages_tab()
             if self._parent.repl_messages_tab is not None:
                 self._parent.repl_messages_tab.goto_line(
@@ -5030,24 +5658,26 @@ QSplitter::handle {{
 
         def repl_clear_tab(self):
             """Clear text from the REPL messages tab"""
-            #Find the "REPL Message" tab in the basic widgets
+            # Find the "REPL Message" tab in the basic widgets
             self._parent.repl_messages_tab = self.find_repl_messages_tab()
-            #Check if REPL messages tab exists
+            # Check if REPL messages tab exists
             if self._parent.repl_messages_tab is not None:
                 self._parent.repl_messages_tab.setText("")
                 self._parent.repl_messages_tab.SendScintilla(
                     qt.QsciScintillaBase.SCI_STYLECLEARALL
                 )
                 self._parent.repl_messages_tab.set_theme(data.theme)
-                #Bring the REPL tab to the front
+                # Bring the REPL tab to the front
                 self._parent.repl_messages_tab._parent.setCurrentWidget(
                     self._parent.repl_messages_tab
                 )
 
         def find_repl_messages_tab(self):
             """Find the "REPL Message" tab in the basic widgets of the MainForm"""
-            #Call the MainForm function to find the repl tab by name
-            self._parent.repl_messages_tab = self._parent.get_tab_by_name(data.repl_messages_tab_name)
+            # Call the MainForm function to find the repl tab by name
+            self._parent.repl_messages_tab = self._parent.get_tab_by_name(
+                data.repl_messages_tab_name
+            )
             return self._parent.repl_messages_tab
 
         def show_nodes(self, custom_editor, parser):
@@ -5069,10 +5699,12 @@ QSplitter::handle {{
             # Check if the custom editor is valid
             if custom_editor is None:
                 parent.display.repl_display_message(
-                        "No document selected for node tree creation!",
-                        message_type=constants.MessageType.ERROR
+                    "No document selected for node tree creation!",
+                    message_type=constants.MessageType.ERROR,
                 )
-                parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
+                parent.display.write_to_statusbar(
+                    "No document selected for node tree creation!", 5000
+                )
                 return
             # Check if the document type is valid for node tree parsing
             valid_parsers = [
@@ -5089,12 +5721,13 @@ QSplitter::handle {{
                 "HTML",
                 "JSON",
             ]
-            if not(parser in valid_parsers):
+            if not (parser in valid_parsers):
                 parsers = ", ".join((x.title() for x in valid_parsers))
-                message = "Document type is not in ({}),\nbut is of type '{}'!".format(parsers, parser)
+                message = "Document type is not in ({}),\nbut is of type '{}'!".format(
+                    parsers, parser
+                )
                 parent.display.repl_display_message(
-                        message,
-                        message_type=constants.MessageType.ERROR
+                    message, message_type=constants.MessageType.ERROR
                 )
                 parent.display.write_to_statusbar(message, 5000)
                 return
@@ -5105,14 +5738,13 @@ QSplitter::handle {{
             if parent.node_tree_tab:
                 parent.node_tree_tab._parent.close_tab(node_tree_tab_name)
             # Create a new NODE tab in the upper basic widget and set its icon
-            parent.node_tree_tab = parent.get_helper_window().tree_add_tab(node_tree_tab_name)
+            parent.node_tree_tab = parent.get_helper_window().tree_add_tab(
+                node_tree_tab_name
+            )
             parent.node_tree_tab.current_icon = self.node_tree_icon
             node_tree_tab = parent.node_tree_tab
             node_tree_tab_index = node_tree_tab._parent.indexOf(node_tree_tab)
-            node_tree_tab._parent.setTabIcon(
-                node_tree_tab_index,
-                self.node_tree_icon
-            )
+            node_tree_tab._parent.setTabIcon(node_tree_tab_index, self.node_tree_icon)
             # Connect the editor destruction signal to the tree display
             custom_editor.destroyed.connect(node_tree_tab.parent_destroyed)
             # Focus the node tree tab
@@ -5121,7 +5753,9 @@ QSplitter::handle {{
             if parser == "PYTHON":
                 # Get all the file information
                 try:
-                    python_node_tree = functions.get_python_node_tree(custom_editor.text())
+                    python_node_tree = functions.get_python_node_tree(
+                        custom_editor.text()
+                    )
                     parser_error = False
                 except Exception as ex:
                     # Exception, probably an error in the file's syntax
@@ -5129,45 +5763,53 @@ QSplitter::handle {{
                     parser_error = ex
                 # Display the information in the tree tab
                 parent.node_tree_tab.display_python_nodes_in_tree(
-                    custom_editor,
-                    python_node_tree,
-                    parser_error
+                    custom_editor, python_node_tree, parser_error
                 )
                 new_keywords = [x.name for x in python_node_tree if x.type == "import"]
-                new_keywords.extend([x.name for x in python_node_tree if x.type == "class"])
-                new_keywords.extend([x.name for x in python_node_tree if x.type == "function"])
-                new_keywords.extend([x.name for x in python_node_tree if x.type == "global_variable"])
-                custom_editor.set_lexer(
-                    lexers.CustomPython(
-                        custom_editor, additional_keywords=new_keywords
-                    ),
-                    "PYTHON"
+                new_keywords.extend(
+                    [x.name for x in python_node_tree if x.type == "class"]
                 )
+                new_keywords.extend(
+                    [x.name for x in python_node_tree if x.type == "function"]
+                )
+                new_keywords.extend(
+                    [x.name for x in python_node_tree if x.type == "global_variable"]
+                )
+                if lexers.nim_lexers_found == True:
+                    custom_editor.set_lexer(
+                        lexers.CustomPython(
+                            custom_editor, additional_keywords=new_keywords
+                        ),
+                        "PYTHON",
+                    )
             elif parser == "NIM":
                 # Get all the file information
                 nim_nodes = functions.get_nim_node_tree(custom_editor.text())
                 # Display the information in the tree tab
-                parent.node_tree_tab.display_nim_nodes(
-                    custom_editor,
-                    nim_nodes
-                )
-            elif parser in ("C",
-                            "C++",
-                            "D",
-                            "PASCAL",
-                            "PHP",
-                            "JAVASCRIPT",
-                            "MAKEFILE",
-                            "HTML",):
+                parent.node_tree_tab.display_nim_nodes(custom_editor, nim_nodes)
+            elif parser in (
+                "C",
+                "C++",
+                "D",
+                "PASCAL",
+                "PHP",
+                "JAVASCRIPT",
+                "MAKEFILE",
+                "HTML",
+            ):
                 # Get all the file information
                 try:
                     icons = {
                         "C": functions.create_icon("language_icons/logo_c.png"),
                         "C++": functions.create_icon("language_icons/logo_cpp.png"),
                         "D": functions.create_icon("language_icons/logo_d.png"),
-                        "PASCAL": functions.create_icon("language_icons/logo_pascal.png"),
+                        "PASCAL": functions.create_icon(
+                            "language_icons/logo_pascal.png"
+                        ),
                         "PHP": functions.create_icon("language_icons/logo_php.png"),
-                        "JAVASCRIPT": functions.create_icon("language_icons/logo_javascript.png"),
+                        "JAVASCRIPT": functions.create_icon(
+                            "language_icons/logo_javascript.png"
+                        ),
                         "ASSEMBLY": functions.create_icon("various/node_unknown.png"),
                         "MAKEFILE": functions.create_icon("various/node_unknown.png"),
                         "HTML": functions.create_icon("language_icons/logo_html.png"),
@@ -5197,39 +5839,53 @@ QSplitter::handle {{
             # Check if the custom editor is valid
             if custom_editor is None:
                 parent.display.repl_display_message(
-                        "No document selected for node tree creation!",
-                        message_type=constants.MessageType.ERROR
+                    "No document selected for node tree creation!",
+                    message_type=constants.MessageType.ERROR,
                 )
-                parent.display.write_to_statusbar("No document selected for node tree creation!", 5000)
+                parent.display.write_to_statusbar(
+                    "No document selected for node tree creation!", 5000
+                )
                 return
             # Check if the document type is Python or C
             if parser != "PYTHON" and parser != "C":
                 parent.display.repl_display_message(
-                        "Document is not Python or C!",
-                        message_type=constants.MessageType.ERROR
+                    "Document is not Python or C!",
+                    message_type=constants.MessageType.ERROR,
                 )
                 parent.display.write_to_statusbar("Document is not Python or C", 5000)
                 return
+
             # Nested hotspot function
             def create_hotspot(node_tab):
-                #Create the hotspot boundaries
-                hotspot_line        = node_tab.lines()-2
-                hotspot_first_ch    = node_tab.text(hotspot_line).index("-")
+                # Create the hotspot boundaries
+                hotspot_line = node_tab.lines() - 2
+                hotspot_first_ch = node_tab.text(hotspot_line).index("-")
                 hotspot_line_length = node_tab.lineLength(hotspot_line)
-                hotspot_start       = node_tab.positionFromLineIndex(hotspot_line, hotspot_first_ch)
-                hotspot_end         = node_tab.positionFromLineIndex(hotspot_line, hotspot_line_length)
-                hotspot_length      = hotspot_end - hotspot_start
-                #Style the hotspot on the node tab
-                node_tab.hotspots.style(
-                    node_tab, hotspot_start, hotspot_length, color=0xff0000
+                hotspot_start = node_tab.positionFromLineIndex(
+                    hotspot_line, hotspot_first_ch
                 )
+                hotspot_end = node_tab.positionFromLineIndex(
+                    hotspot_line, hotspot_line_length
+                )
+                hotspot_length = hotspot_end - hotspot_start
+                # Style the hotspot on the node tab
+                node_tab.hotspots.style(
+                    node_tab, hotspot_start, hotspot_length, color=0xFF0000
+                )
+
             # Create the function and connect the hotspot release signal to it
             def hotspot_release(position, modifiers):
                 # Get the line and index at where the hotspot was clicked
                 line, index = parent.node_tree_tab.lineIndexFromPosition(position)
                 # Get the document name and focus on the tab with the document
-                document_name       = re.search(r"DOCUMENT\:\s*(.*)\n", parent.node_tree_tab.text(0)).group(1)
-                goto_line_number    = int(re.search(r".*\(line\:(\d+)\).*", parent.node_tree_tab.text(line)).group(1))
+                document_name = re.search(
+                    r"DOCUMENT\:\s*(.*)\n", parent.node_tree_tab.text(0)
+                ).group(1)
+                goto_line_number = int(
+                    re.search(
+                        r".*\(line\:(\d+)\).*", parent.node_tree_tab.text(line)
+                    ).group(1)
+                )
                 # Find the document, set focus to it and go to the line the hotspot points to
                 document_tab = parent.get_tab_by_name(document_name)
                 # Check if the document was modified
@@ -5241,43 +5897,47 @@ QSplitter::handle {{
                     document_tab.goto_line(goto_line_number)
                 except:
                     return
-            #Define a name for the NODE tab
+
+            # Define a name for the NODE tab
             node_tree_tab_name = "NODE TREE/LIST"
-            #Find the "NODE" tab in the basic widgets
+            # Find the "NODE" tab in the basic widgets
             parent.node_tree_tab = parent.get_tab_by_name(node_tree_tab_name)
             if parent.node_tree_tab:
                 parent.node_tree_tab._parent.close_tab(node_tree_tab_name)
-            #Create a new NODE tab in the upper basic widget
-            parent.node_tree_tab = parent.get_helper_window().plain_add_document(node_tree_tab_name)
+            # Create a new NODE tab in the upper basic widget
+            parent.node_tree_tab = parent.get_helper_window().plain_add_document(
+                node_tree_tab_name
+            )
             parent.node_tree_tab.current_icon = self.node_tree_icon
-            #Set the NODE document to be ReadOnly
+            # Set the NODE document to be ReadOnly
             parent.node_tree_tab.setReadOnly(True)
             parent.node_tree_tab.setText("")
             parent.node_tree_tab.SendScintilla(qt.QsciScintillaBase.SCI_STYLECLEARALL)
             parent.node_tree_tab.parentWidget().setCurrentWidget(parent.node_tree_tab)
-            #Check if the custom editor is valid
+            # Check if the custom editor is valid
             if isinstance(custom_editor, CustomEditor) == False:
                 message = "The editor is not valid!"
                 parent.display.repl_display_message(
-                        message,
-                        message_type=constants.MessageType.ERROR
+                    message, message_type=constants.MessageType.ERROR
                 )
-                parent.display.write_to_statusbar(message,  2000)
+                parent.display.write_to_statusbar(message, 2000)
                 return
             else:
-                #Check the type of document in the custom editor
+                # Check the type of document in the custom editor
                 parser = custom_editor.current_file_type
-            #Get the node tree for the current widget in the custom editor
+            # Get the node tree for the current widget in the custom editor
             if parser == "PYTHON":
-                import_nodes, class_tree_nodes, function_nodes, global_vars = functions.get_python_node_list(custom_editor.text())
-                init_space  = "    -"
+                import_nodes, class_tree_nodes, function_nodes, global_vars = (
+                    functions.get_python_node_list(custom_editor.text())
+                )
+                init_space = "    -"
                 extra_space = "     "
-                #Display document name, used for finding the tab when clicking the hotspot
+                # Display document name, used for finding the tab when clicking the hotspot
                 document_name = os.path.basename(custom_editor.save_name)
                 document_text = "DOCUMENT: {}\n".format(document_name)
                 parent.node_tree_tab.append(document_text)
                 parent.node_tree_tab.append("TYPE: {}\n\n".format(parser))
-                #Display class nodes
+                # Display class nodes
                 parent.node_tree_tab.append("CLASS/METHOD TREE:\n")
                 for node in class_tree_nodes:
                     node_text = init_space + str(node[0].name) + "(line:"
@@ -5285,47 +5945,47 @@ QSplitter::handle {{
                     parent.node_tree_tab.append(node_text)
                     create_hotspot(parent.node_tree_tab)
                     for child in node[1]:
-                        child_text = (child[0]+1)*extra_space + init_space
+                        child_text = (child[0] + 1) * extra_space + init_space
                         child_text += str(child[1].name) + "(line:"
                         child_text += str(child[1].lineno) + ")\n"
                         parent.node_tree_tab.append(child_text)
                         create_hotspot(parent.node_tree_tab)
                     parent.node_tree_tab.append("\n")
-                #Check if there were any nodes found
+                # Check if there were any nodes found
                 if class_tree_nodes == []:
                     parent.node_tree_tab.append("No classes found\n\n")
-                #Display function nodes
+                # Display function nodes
                 parent.node_tree_tab.append("FUNCTIONS:\n")
                 for func in function_nodes:
                     func_text = init_space + func.name + "(line:"
                     func_text += str(func.lineno) + ")\n"
                     parent.node_tree_tab.append(func_text)
                     create_hotspot(parent.node_tree_tab)
-                #Check if there were any nodes found
+                # Check if there were any nodes found
                 if function_nodes == []:
                     parent.node_tree_tab.append("No functions found\n\n")
-                #Connect the hotspot mouserelease signal
+                # Connect the hotspot mouserelease signal
                 parent.node_tree_tab.SCN_HOTSPOTRELEASECLICK.connect(hotspot_release)
             elif parser == "C":
                 function_nodes = functions.get_c_function_list(custom_editor.text())
-                init_space          = "    -"
-                extra_space     = "     "
-                #Display document name, used for finding the tab when clicking the hotspot
+                init_space = "    -"
+                extra_space = "     "
+                # Display document name, used for finding the tab when clicking the hotspot
                 document_name = os.path.basename(custom_editor.save_name)
                 document_text = "DOCUMENT: {}\n".format(document_name)
                 parent.node_tree_tab.append(document_text)
                 parent.node_tree_tab.append("TYPE: {}\n\n".format(parser))
-                #Display functions
+                # Display functions
                 parent.node_tree_tab.append("FUNCTION LIST:\n")
                 for func in function_nodes:
                     node_text = init_space + func[0] + extra_space
                     node_text += "(line:" + str(func[1]) + ")\n"
                     parent.node_tree_tab.append(node_text)
                     create_hotspot(parent.node_tree_tab)
-                #Check if there were any nodes found
+                # Check if there were any nodes found
                 if function_nodes == []:
                     parent.node_tree_tab.append("No functions found\n\n")
-                #Connect the hotspot mouserelease signal
+                # Connect the hotspot mouserelease signal
                 parent.node_tree_tab.SCN_HOTSPOTRELEASECLICK.connect(hotspot_release)
 
         def show_found_files(self, search_text, file_list, directory):
@@ -5342,63 +6002,78 @@ QSplitter::handle {{
             Display the found files returned from the find_files system function
             in the REPL MESSAGES tab
             """
-            #Create lines that will be displayed in the REPL messages window
+            # Create lines that will be displayed in the REPL messages window
             display_file_info = []
             for file in file_list:
                 display_file_info.append("{} ({})".format(os.path.basename(file), file))
-            #Display all found files
-            self._parent.display.repl_display_message("Found {:d} files:".format(len(file_list)))
-            #Use scintilla HOTSPOTS to create clickable file links
-            #Create the function and connect the hotspot release signal to it
+            # Display all found files
+            self._parent.display.repl_display_message(
+                "Found {:d} files:".format(len(file_list))
+            )
+
+            # Use scintilla HOTSPOTS to create clickable file links
+            # Create the function and connect the hotspot release signal to it
             def hotspot_release(position, modifiers):
-                #Get the line and index at where the hotspot was clicked
-                line, index = self._parent.repl_messages_tab.lineIndexFromPosition(position)
-                file =  re.search(
-                    r".*\((.*)\)",
-                    self._parent.repl_messages_tab.text(line)
-                ).group(1).replace("\n", "")
-                #Open the files
+                # Get the line and index at where the hotspot was clicked
+                line, index = self._parent.repl_messages_tab.lineIndexFromPosition(
+                    position
+                )
+                file = (
+                    re.search(r".*\((.*)\)", self._parent.repl_messages_tab.text(line))
+                    .group(1)
+                    .replace("\n", "")
+                )
+                # Open the files
                 self._parent.open_file(file, self._parent.get_largest_window())
-                #Because open_file updates the new CWD in the REPL MESSAGES,
-                #it is needed to set the cursor back to where the hotspot was clicked
+                # Because open_file updates the new CWD in the REPL MESSAGES,
+                # it is needed to set the cursor back to where the hotspot was clicked
                 self._parent.repl_messages_tab.setCursorPosition(line, index)
-            self._parent.repl_messages_tab.SCN_HOTSPOTRELEASECLICK.connect(hotspot_release)
-            #Get the start position
-            pos           = self._parent.repl_messages_tab.getCursorPosition()
-            hotspot_start = self._parent.repl_messages_tab.positionFromLineIndex(pos[0], pos[1])
-            #self.display.repl_display_message("\n".join(found_files))
+
+            self._parent.repl_messages_tab.SCN_HOTSPOTRELEASECLICK.connect(
+                hotspot_release
+            )
+            # Get the start position
+            pos = self._parent.repl_messages_tab.getCursorPosition()
+            hotspot_start = self._parent.repl_messages_tab.positionFromLineIndex(
+                pos[0], pos[1]
+            )
+            # self.display.repl_display_message("\n".join(found_files))
             self._parent.display.repl_display_message("\n".join(display_file_info))
-            #Get the end position
-            pos         = self._parent.repl_messages_tab.getCursorPosition()
-            hotspot_end = self._parent.repl_messages_tab.positionFromLineIndex(pos[0], pos[1])
-            #Style the hotspot on the node tab
+            # Get the end position
+            pos = self._parent.repl_messages_tab.getCursorPosition()
+            hotspot_end = self._parent.repl_messages_tab.positionFromLineIndex(
+                pos[0], pos[1]
+            )
+            # Style the hotspot on the node tab
             self._parent.repl_messages_tab.hotspots.style(
                 self._parent.repl_messages_tab,
                 hotspot_start,
                 hotspot_end,
-                color=0xff0000
+                color=0xFF0000,
             )
 
         def show_directory_tree(self, directory):
             """
             Display the directory information in a TreeDisplay widget
             """
-            #Define references directly to the parent and mainform for performance and clarity
+            # Define references directly to the parent and mainform for performance and clarity
             parent = self._parent
-            #Define a name for the FOUND FILES tab
+            # Define a name for the FOUND FILES tab
             found_files_tab_name = "FILE/DIRECTORY TREE"
-            #Find the "FILE/DIRECTORY TREE" tab in the basic widgets
+            # Find the "FILE/DIRECTORY TREE" tab in the basic widgets
             parent.found_files_tab = parent.get_tab_by_name(found_files_tab_name)
             if parent.found_files_tab:
                 parent.found_files_tab._parent.close_tab(found_files_tab_name)
-            #Create a new FOUND FILES tab in the upper basic widget
-            found_files_tab = parent.get_helper_window().tree_add_tab(found_files_tab_name)
+            # Create a new FOUND FILES tab in the upper basic widget
+            found_files_tab = parent.get_helper_window().tree_add_tab(
+                found_files_tab_name
+            )
             found_files_tab.internals.set_icon(
                 found_files_tab, self.system_show_cwd_tree_icon
             )
-            #Focus the node tree tab
+            # Focus the node tree tab
             found_files_tab._parent.setCurrentWidget(found_files_tab)
-            #Display the directory information in the tree tab
+            # Display the directory information in the tree tab
             found_files_tab.display_directory_tree(directory)
 
         def show_found_files_in_tree(self, search_text, file_list, directory):
@@ -5406,37 +6081,37 @@ QSplitter::handle {{
             Display the found files returned from the find_files system function
             in a TreeDisplay widget
             """
-            #Define references directly to the parent and mainform for performance and clarity
+            # Define references directly to the parent and mainform for performance and clarity
             parent = self._parent
-            #Define a name for the FOUND FILES tab
+            # Define a name for the FOUND FILES tab
             found_files_tab_name = "FOUND FILES"
-            #Find the "FOUND FILES" tab in the basic widgets
+            # Find the "FOUND FILES" tab in the basic widgets
             parent.found_files_tab = parent.get_tab_by_name(found_files_tab_name)
             if parent.found_files_tab:
                 parent.found_files_tab._parent.close_tab(found_files_tab_name)
             found_files_tab = parent.found_files_tab
-            #Create a new FOUND FILES tab in the upper basic widget
-            found_files_tab = parent.get_helper_window().tree_add_tab(found_files_tab_name)
+            # Create a new FOUND FILES tab in the upper basic widget
+            found_files_tab = parent.get_helper_window().tree_add_tab(
+                found_files_tab_name
+            )
             found_files_tab.internals.set_icon(
                 found_files_tab, self.system_found_files_icon
             )
-            #Focus the node tree tab
+            # Focus the node tree tab
             found_files_tab._parent.setCurrentWidget(found_files_tab)
-            #Display the found files information in the tree tab
-            found_files_tab.display_found_files(
-                search_text,
-                file_list,
-                directory
-            )
+            # Display the found files information in the tree tab
+            found_files_tab.display_found_files(search_text, file_list, directory)
 
-        def show_found_files_with_lines_in_tree(self,
-                                                search_title,
-                                                search_text,
-                                                search_dir,
-                                                case_sensitive,
-                                                search_subdirs,
-                                                break_on_find,
-                                                file_filter):
+        def show_found_files_with_lines_in_tree(
+            self,
+            search_title,
+            search_text,
+            search_dir,
+            case_sensitive,
+            search_subdirs,
+            break_on_find,
+            file_filter,
+        ):
             """
             Display the found files with line information returned from the
             find_in_files and replace_in_files system function in a TreeDisplay
@@ -5451,7 +6126,9 @@ QSplitter::handle {{
                 parent.found_files_tab._parent.close_tab(found_files_tab_name)
             found_files_tab = parent.found_files_tab
             # Create a new FOUND FILES tab in the upper basic widget
-            found_files_tab = parent.get_helper_window().tree_add_tab(found_files_tab_name)
+            found_files_tab = parent.get_helper_window().tree_add_tab(
+                found_files_tab_name
+            )
             found_files_tab.internals.set_icon(
                 found_files_tab, self.system_found_files_icon
             )
@@ -5465,46 +6142,41 @@ QSplitter::handle {{
                 case_sensitive,
                 search_subdirs,
                 break_on_find,
-                file_filter
+                file_filter,
             )
 
-        def show_replaced_text_in_files_in_tree(self,
-                                                search_text,
-                                                replace_text,
-                                                file_list,
-                                                directory):
+        def show_replaced_text_in_files_in_tree(
+            self, search_text, replace_text, file_list, directory
+        ):
             """
             Display the found files with line information returned from the
             find_in_files and replace_in_files system function in a TreeDisplay
             """
-            #Define references directly to the parent and mainform for performance and clarity
+            # Define references directly to the parent and mainform for performance and clarity
             parent = self._parent
-            #Define a name for the FOUND FILES tab
+            # Define a name for the FOUND FILES tab
             found_files_tab_name = "REPLACEMENTS IN FILES"
-            #Find the FOUND FILES tab in the basic widgets
+            # Find the FOUND FILES tab in the basic widgets
             parent.found_files_tab = parent.get_tab_by_name(found_files_tab_name)
             if parent.found_files_tab:
                 parent.found_files_tab._parent.close_tab(found_files_tab_name)
-            #Create a new FOUND FILES tab in the upper basic widget
-            parent.found_files_tab = parent.get_helper_window().tree_add_tab(found_files_tab_name)
+            # Create a new FOUND FILES tab in the upper basic widget
+            parent.found_files_tab = parent.get_helper_window().tree_add_tab(
+                found_files_tab_name
+            )
             parent.found_files_tab.internals.set_icon(
                 parent.found_files_tab, self.system_replace_in_files_icon
             )
-            #Focus the node tree tab
+            # Focus the node tree tab
             parent.found_files_tab._parent.setCurrentWidget(parent.found_files_tab)
-            #Display the found files information in the tree tab
+            # Display the found files information in the tree tab
             parent.found_files_tab.display_replacements_in_files(
-                search_text,
-                replace_text,
-                file_list,
-                directory
+                search_text, replace_text, file_list, directory
             )
 
-        def show_text_difference(self,
-                                 text_1,
-                                 text_2,
-                                 text_name_1=None,
-                                 text_name_2=None):
+        def show_text_difference(
+            self, text_1, text_2, text_name_1=None, text_name_2=None
+        ):
             """
             Display the difference between two texts in a TextDiffer
             """
@@ -5518,12 +6190,7 @@ QSplitter::handle {{
             largest_window = parent.get_largest_window()
             # Create and initialize a text differ
             text_differ = TextDiffer(
-                largest_window,
-                parent,
-                text_1,
-                text_2,
-                text_name_1,
-                text_name_2
+                largest_window, parent, text_1, text_2, text_name_1, text_name_2
             )
             # Find the "DIFF(...)" tab in the basic widgets and close it
             diff_tab_string = "DIFF("
@@ -5533,41 +6200,39 @@ QSplitter::handle {{
                 diff_tab._parent.close_tab(diff_tab_index)
             # Add the created text differ to the main window
             diff_index = largest_window.addTab(
-                text_differ,
-                "DIFF({} / {})".format(text_name_1, text_name_2)
+                text_differ, "DIFF({} / {})".format(text_name_1, text_name_2)
             )
-            #Set focus to the text differ tab
+            # Set focus to the text differ tab
             largest_window.setCurrentIndex(diff_index)
 
         def show_session_editor(self):
             """Display a window for editing sessions"""
-            #Create the SessionGuiManipulator
+            # Create the SessionGuiManipulator
             settings_manipulator = self._parent.settings.manipulator
             sessions_manipulator = SessionGuiManipulator(
-                settings_manipulator,
-                self._parent.get_helper_window(),
-                self._parent
+                settings_manipulator, self._parent.get_helper_window(), self._parent
             )
-            #Find the old "SESSIONS" tab in the basic widgets and close it
+            # Find the old "SESSIONS" tab in the basic widgets and close it
             sessions_tab_name = "SESSIONS"
             sessions_tab = self._parent.get_tab_by_name(sessions_tab_name)
             if sessions_tab:
                 sessions_tab._parent.close_tab(sessions_tab_name)
-            #Show the sessions in the manipulator
+            # Show the sessions in the manipulator
             sessions_manipulator.show_sessions()
-            #Add the created session manipulator to the upper window
+            # Add the created session manipulator to the upper window
             sm_index = self._parent.get_helper_window().addTab(
-                sessions_manipulator,
-                "SESSIONS"
+                sessions_manipulator, "SESSIONS"
             )
-            #Set focus to the text differ tab
+            # Set focus to the text differ tab
             self._parent.get_helper_window().setCurrentIndex(sm_index)
 
-        def create_lexers_menu(self,
-                               menu_name,
-                               set_lexer_func,
-                               store_menu_to_mainform=True,
-                               custom_parent=None):
+        def create_lexers_menu(
+            self,
+            menu_name,
+            set_lexer_func,
+            store_menu_to_mainform=True,
+            custom_parent=None,
+        ):
             """
             Create a lexer menu. Currently used in the View menu and
             the CustomEditor tab menu.
@@ -5576,13 +6241,9 @@ QSplitter::handle {{
                 - parameter lexer_name: a string
             """
             set_lexer = set_lexer_func
+
             # Nested function for creating an action
-            def create_action(name,
-                              key_combo,
-                              status_tip,
-                              icon,
-                              function,
-                              menu_parent):
+            def create_action(name, key_combo, status_tip, icon, function, menu_parent):
                 action = qt.QAction(name, menu_parent)
                 # Key combination
                 if key_combo is not None and key_combo != "" and key_combo != []:
@@ -5603,8 +6264,8 @@ QSplitter::handle {{
                 self._parent.menubar_functions[function.__name__] = function
                 # Check if there is a tab character in the function
                 # name and remove the part of the string after it
-                if '\t' in name:
-                    name = name[:name.find('\t')]
+                if "\t" in name:
+                    name = name[: name.find("\t")]
                 # Add the action to the context menu
                 # function list in the helper forms module
                 gui.contextmenu.add_function(
@@ -5614,324 +6275,327 @@ QSplitter::handle {{
                 # parameter and return the action
                 action.setEnabled(True)
                 return action
+
             # The owner of the lexers menu is always the MainWindow
             if custom_parent is not None:
                 parent = custom_parent
             else:
                 parent = self._parent
             lexers_menu = Menu(menu_name, parent)
+
             def create_lexer(lexer, description):
                 func = functools.partial(set_lexer, lexer, description)
                 func.__name__ = "set_lexer_{}".format(lexer.__name__)
                 return func
+
             NONE_action = create_action(
-                'No lexer',
+                "No lexer",
                 None,
-                'Disable document lexer',
-                'tango_icons/file.png',
-                create_lexer(lexers.Text, 'Plain text'),
-                lexers_menu
+                "Disable document lexer",
+                "tango_icons/file.png",
+                create_lexer(lexers.Text, "Plain text"),
+                lexers_menu,
             )
             ADA_action = create_action(
-                'Ada',
+                "Ada",
                 None,
-                'Change document lexer to: Ada',
-                'language_icons/logo_ada.png',
-                create_lexer(lexers.Ada, 'Ada'),
-                lexers_menu
+                "Change document lexer to: Ada",
+                "language_icons/logo_ada.png",
+                create_lexer(lexers.Ada, "Ada"),
+                lexers_menu,
             )
             AWK_action = create_action(
-                'AWK',
+                "AWK",
                 None,
-                'Change document lexer to: AWK',
-                'language_icons/logo_awk.png',
-                create_lexer(lexers.AWK, 'AWK'),
-                lexers_menu
+                "Change document lexer to: AWK",
+                "language_icons/logo_awk.png",
+                create_lexer(lexers.AWK, "AWK"),
+                lexers_menu,
             )
             BASH_action = create_action(
-                'Bash',
+                "Bash",
                 None,
-                'Change document lexer to: Bash',
-                'language_icons/logo_bash.png',
-                create_lexer(lexers.Bash, 'Bash'),
-                lexers_menu
+                "Change document lexer to: Bash",
+                "language_icons/logo_bash.png",
+                create_lexer(lexers.Bash, "Bash"),
+                lexers_menu,
             )
             BATCH_action = create_action(
-                'Batch',
+                "Batch",
                 None,
-                'Change document lexer to: Batch',
-                'language_icons/logo_batch.png',
-                create_lexer(lexers.Batch, 'Batch'),
-                lexers_menu
+                "Change document lexer to: Batch",
+                "language_icons/logo_batch.png",
+                create_lexer(lexers.Batch, "Batch"),
+                lexers_menu,
             )
             CMAKE_action = create_action(
-                'CMake',
+                "CMake",
                 None,
-                'Change document lexer to: CMake',
-                'language_icons/logo_cmake.png',
-                create_lexer(lexers.CMake, 'CMake'),
-                lexers_menu
+                "Change document lexer to: CMake",
+                "language_icons/logo_cmake.png",
+                create_lexer(lexers.CMake, "CMake"),
+                lexers_menu,
             )
             C_CPP_action = create_action(
-                'C / C++',
+                "C / C++",
                 None,
-                'Change document lexer to: C / C++',
-                'language_icons/logo_c_cpp.png',
-                create_lexer(lexers.CPP, 'C / C++'),
-                lexers_menu
+                "Change document lexer to: C / C++",
+                "language_icons/logo_c_cpp.png",
+                create_lexer(lexers.CPP, "C / C++"),
+                lexers_menu,
             )
             CSS_action = create_action(
-                'CSS',
+                "CSS",
                 None,
-                'Change document lexer to: CSS',
-                'language_icons/logo_css.png',
-                create_lexer(lexers.CSS, 'CSS'),
-                lexers_menu
+                "Change document lexer to: CSS",
+                "language_icons/logo_css.png",
+                create_lexer(lexers.CSS, "CSS"),
+                lexers_menu,
             )
             D_action = create_action(
-                'D',
+                "D",
                 None,
-                'Change document lexer to: D',
-                'language_icons/logo_d.png',
-                create_lexer(lexers.D, 'D'),
-                lexers_menu
+                "Change document lexer to: D",
+                "language_icons/logo_d.png",
+                create_lexer(lexers.D, "D"),
+                lexers_menu,
             )
             FORTRAN_action = create_action(
-                'Fortran',
+                "Fortran",
                 None,
-                'Change document lexer to: Fortran',
-                'language_icons/logo_fortran.png',
-                create_lexer(lexers.Fortran, 'Fortran'),
-                lexers_menu
+                "Change document lexer to: Fortran",
+                "language_icons/logo_fortran.png",
+                create_lexer(lexers.Fortran, "Fortran"),
+                lexers_menu,
             )
             HTML_action = create_action(
-                'HTML',
+                "HTML",
                 None,
-                'Change document lexer to: HTML',
-                'language_icons/logo_html.png',
-                create_lexer(lexers.HTML, 'HTML'),
-                lexers_menu
+                "Change document lexer to: HTML",
+                "language_icons/logo_html.png",
+                create_lexer(lexers.HTML, "HTML"),
+                lexers_menu,
             )
             LUA_action = create_action(
-                'Lua',
+                "Lua",
                 None,
-                'Change document lexer to: Lua',
-                'language_icons/logo_lua.png',
-                create_lexer(lexers.Lua, 'Lua'),
-                lexers_menu
+                "Change document lexer to: Lua",
+                "language_icons/logo_lua.png",
+                create_lexer(lexers.Lua, "Lua"),
+                lexers_menu,
             )
             MAKEFILE_action = create_action(
-                'MakeFile',
+                "MakeFile",
                 None,
-                'Change document lexer to: MakeFile',
-                'language_icons/logo_makefile.png',
-                create_lexer(lexers.Makefile, 'MakeFile'),
-                lexers_menu
+                "Change document lexer to: MakeFile",
+                "language_icons/logo_makefile.png",
+                create_lexer(lexers.Makefile, "MakeFile"),
+                lexers_menu,
             )
             MATLAB_action = create_action(
-                'Matlab',
+                "Matlab",
                 None,
-                'Change document lexer to: Matlab',
-                'language_icons/logo_matlab.png',
-                create_lexer(lexers.Matlab, 'Matlab'),
-                lexers_menu
+                "Change document lexer to: Matlab",
+                "language_icons/logo_matlab.png",
+                create_lexer(lexers.Matlab, "Matlab"),
+                lexers_menu,
             )
             NIM_action = create_action(
-                'Nim',
+                "Nim",
                 None,
-                'Change document lexer to: Nim',
-                'language_icons/logo_nim.png',
-                create_lexer(lexers.Nim, 'Nim'),
-                lexers_menu
+                "Change document lexer to: Nim",
+                "language_icons/logo_nim.png",
+                create_lexer(lexers.Nim, "Nim"),
+                lexers_menu,
             )
             OBERON_action = create_action(
-                'Oberon / Modula',
+                "Oberon / Modula",
                 None,
-                'Change document lexer to: Oberon / Modula',
-                'language_icons/logo_oberon.png',
-                create_lexer(lexers.Oberon, 'Oberon / Modula'),
-                lexers_menu
+                "Change document lexer to: Oberon / Modula",
+                "language_icons/logo_oberon.png",
+                create_lexer(lexers.Oberon, "Oberon / Modula"),
+                lexers_menu,
             )
             PASCAL_action = create_action(
-                'Pascal',
+                "Pascal",
                 None,
-                'Change document lexer to: Pascal',
-                'language_icons/logo_pascal.png',
-                create_lexer(lexers.Pascal, 'Pascal'),
-                lexers_menu
+                "Change document lexer to: Pascal",
+                "language_icons/logo_pascal.png",
+                create_lexer(lexers.Pascal, "Pascal"),
+                lexers_menu,
             )
             PERL_action = create_action(
-                'Perl',
+                "Perl",
                 None,
-                'Change document lexer to: Perl',
-                'language_icons/logo_perl.png',
-                create_lexer(lexers.Perl, 'Perl'),
-                lexers_menu
+                "Change document lexer to: Perl",
+                "language_icons/logo_perl.png",
+                create_lexer(lexers.Perl, "Perl"),
+                lexers_menu,
             )
             PYTHON_action = create_action(
-                'Python',
+                "Python",
                 None,
-                'Change document lexer to: Python',
-                'language_icons/logo_python.png',
-                create_lexer(lexers.Python, 'Python'),
-                lexers_menu
+                "Change document lexer to: Python",
+                "language_icons/logo_python.png",
+                create_lexer(lexers.Python, "Python"),
+                lexers_menu,
             )
             RUBY_action = create_action(
-                'Ruby',
+                "Ruby",
                 None,
-                'Change document lexer to: Ruby',
-                'language_icons/logo_ruby.png',
-                create_lexer(lexers.Ruby, 'Ruby'),
-                lexers_menu
+                "Change document lexer to: Ruby",
+                "language_icons/logo_ruby.png",
+                create_lexer(lexers.Ruby, "Ruby"),
+                lexers_menu,
             )
             ROUTEROS_action = create_action(
-                'RouterOS',
+                "RouterOS",
                 None,
-                'Change document lexer to: RouterOS',
-                'language_icons/logo_routeros.png',
-                create_lexer(lexers.RouterOS, 'RouterOS'),
-                lexers_menu
+                "Change document lexer to: RouterOS",
+                "language_icons/logo_routeros.png",
+                create_lexer(lexers.RouterOS, "RouterOS"),
+                lexers_menu,
             )
             Spice_action = create_action(
-                'Spice',
+                "Spice",
                 None,
-                'Change document lexer to: Spice',
-                'language_icons/logo_spice.png',
-                create_lexer(lexers.Spice, 'Spice'),
-                lexers_menu
+                "Change document lexer to: Spice",
+                "language_icons/logo_spice.png",
+                create_lexer(lexers.Spice, "Spice"),
+                lexers_menu,
             )
             SQL_action = create_action(
-                'SQL',
+                "SQL",
                 None,
-                'Change document lexer to: SQL',
-                'language_icons/logo_sql.png',
-                create_lexer(lexers.SQL, 'SQL'),
-                lexers_menu
+                "Change document lexer to: SQL",
+                "language_icons/logo_sql.png",
+                create_lexer(lexers.SQL, "SQL"),
+                lexers_menu,
             )
-            TCL_action = qt.QAction('TCL', lexers_menu)
-            TCL_action.setIcon(functions.create_icon('language_icons/logo_tcl.png'))
+            TCL_action = qt.QAction("TCL", lexers_menu)
+            TCL_action.setIcon(functions.create_icon("language_icons/logo_tcl.png"))
             TCL_action.triggered.connect(
-                functools.partial(set_lexer, lexers.TCL, 'TCL')
+                functools.partial(set_lexer, lexers.TCL, "TCL")
             )
             TCL_action = create_action(
-                'TCL',
+                "TCL",
                 None,
-                'Change document lexer to: TCL',
-                'language_icons/logo_tcl.png',
-                create_lexer(lexers.TCL, 'TCL'),
-                lexers_menu
+                "Change document lexer to: TCL",
+                "language_icons/logo_tcl.png",
+                create_lexer(lexers.TCL, "TCL"),
+                lexers_menu,
             )
             TEX_action = create_action(
-                'TeX',
+                "TeX",
                 None,
-                'Change document lexer to: TeX',
-                'language_icons/logo_tex.png',
-                create_lexer(lexers.TeX, 'TeX'),
-                lexers_menu
+                "Change document lexer to: TeX",
+                "language_icons/logo_tex.png",
+                create_lexer(lexers.TeX, "TeX"),
+                lexers_menu,
             )
             VERILOG_action = create_action(
-                'Verilog',
+                "Verilog",
                 None,
-                'Change document lexer to: Verilog',
-                'language_icons/logo_verilog.png',
-                create_lexer(lexers.Verilog, 'Verilog'),
-                lexers_menu
+                "Change document lexer to: Verilog",
+                "language_icons/logo_verilog.png",
+                create_lexer(lexers.Verilog, "Verilog"),
+                lexers_menu,
             )
             VHDL_action = create_action(
-                'VHDL',
+                "VHDL",
                 None,
-                'Change document lexer to: VHDL',
-                'language_icons/logo_vhdl.png',
-                create_lexer(lexers.VHDL, 'VHDL'),
-                lexers_menu
+                "Change document lexer to: VHDL",
+                "language_icons/logo_vhdl.png",
+                create_lexer(lexers.VHDL, "VHDL"),
+                lexers_menu,
             )
             XML_action = create_action(
-                'XML',
+                "XML",
                 None,
-                'Change document lexer to: XML',
-                'language_icons/logo_xml.png',
-                create_lexer(lexers.XML, 'XML'),
-                lexers_menu
+                "Change document lexer to: XML",
+                "language_icons/logo_xml.png",
+                create_lexer(lexers.XML, "XML"),
+                lexers_menu,
             )
             YAML_action = create_action(
-                'YAML',
+                "YAML",
                 None,
-                'Change document lexer to: YAML',
-                'language_icons/logo_yaml.png',
-                create_lexer(lexers.YAML, 'YAML'),
-                lexers_menu
+                "Change document lexer to: YAML",
+                "language_icons/logo_yaml.png",
+                create_lexer(lexers.YAML, "YAML"),
+                lexers_menu,
             )
             CSharp_action = create_action(
-                'C#',
+                "C#",
                 None,
-                'Change document lexer to: C#',
-                'language_icons/logo_csharp.png',
-                create_lexer(lexers.CPP, 'C#'),
-                lexers_menu
+                "Change document lexer to: C#",
+                "language_icons/logo_csharp.png",
+                create_lexer(lexers.CPP, "C#"),
+                lexers_menu,
             )
             Java_action = create_action(
-                'Java',
+                "Java",
                 None,
-                'Change document lexer to: Java',
-                'language_icons/logo_java.png',
-                create_lexer(lexers.Java, 'Java'),
-                lexers_menu
+                "Change document lexer to: Java",
+                "language_icons/logo_java.png",
+                create_lexer(lexers.Java, "Java"),
+                lexers_menu,
             )
             JavaScript_action = create_action(
-                'JavaScript',
+                "JavaScript",
                 None,
-                'Change document lexer to: JavaScript',
-                'language_icons/logo_javascript.png',
-                create_lexer(lexers.JavaScript, 'JavaScript'),
-                lexers_menu
+                "Change document lexer to: JavaScript",
+                "language_icons/logo_javascript.png",
+                create_lexer(lexers.JavaScript, "JavaScript"),
+                lexers_menu,
             )
             Octave_action = create_action(
-                'Octave',
+                "Octave",
                 None,
-                'Change document lexer to: Octave',
-                'language_icons/logo_octave.png',
-                create_lexer(lexers.Octave, 'Octave'),
-                lexers_menu
+                "Change document lexer to: Octave",
+                "language_icons/logo_octave.png",
+                create_lexer(lexers.Octave, "Octave"),
+                lexers_menu,
             )
             PostScript_action = create_action(
-                'PostScript',
+                "PostScript",
                 None,
-                'Change document lexer to: PostScript',
-                'language_icons/logo_postscript.png',
-                create_lexer(lexers.PostScript, 'PostScript'),
-                lexers_menu
+                "Change document lexer to: PostScript",
+                "language_icons/logo_postscript.png",
+                create_lexer(lexers.PostScript, "PostScript"),
+                lexers_menu,
             )
             Fortran77_action = create_action(
-                'Fortran77',
+                "Fortran77",
                 None,
-                'Change document lexer to: Fortran77',
-                'language_icons/logo_fortran77.png',
-                create_lexer(lexers.Fortran77, 'Fortran77'),
-                lexers_menu
+                "Change document lexer to: Fortran77",
+                "language_icons/logo_fortran77.png",
+                create_lexer(lexers.Fortran77, "Fortran77"),
+                lexers_menu,
             )
             IDL_action = create_action(
-                'IDL',
+                "IDL",
                 None,
-                'Change document lexer to: IDL',
-                'language_icons/logo_idl.png',
-                create_lexer(lexers.IDL, 'IDL'),
-                lexers_menu
+                "Change document lexer to: IDL",
+                "language_icons/logo_idl.png",
+                create_lexer(lexers.IDL, "IDL"),
+                lexers_menu,
             )
             cicode_action = create_action(
-                'CiCode',
+                "CiCode",
                 None,
-                'Change document lexer to: CiCode',
-                'language_icons/logo_cicode.png',
-                create_lexer(lexers.CiCode, 'CiCode'),
-                lexers_menu
+                "Change document lexer to: CiCode",
+                "language_icons/logo_cicode.png",
+                create_lexer(lexers.CiCode, "CiCode"),
+                lexers_menu,
             )
             json_action = create_action(
-                'JSON',
+                "JSON",
                 None,
-                'Change document lexer to: JSON',
-                'language_icons/logo_json.png',
-                create_lexer(lexers.JSON, 'JSON'),
-                lexers_menu
+                "Change document lexer to: JSON",
+                "language_icons/logo_json.png",
+                create_lexer(lexers.JSON, "JSON"),
+                lexers_menu,
             )
             lexers_menu.addAction(NONE_action)
             lexers_menu.addSeparator()
@@ -5993,6 +6657,7 @@ QSplitter::handle {{
         """
         Docking overlay
         """
+
         def docking_overlay_show(self):
             functions.process_events(1, delay=0.01)
             parent = self._parent
@@ -6011,6 +6676,7 @@ QSplitter::handle {{
         """
         All bookmark functionality
         """
+
         # Class varibles
         _parent = None
         # List of all the bookmarks
@@ -6034,7 +6700,7 @@ QSplitter::handle {{
 
         def add(self, editor, line):
             # Bookmarks should only work in editors
-            if (isinstance(editor, CustomEditor) == False or editor.embedded == True):
+            if isinstance(editor, CustomEditor) == False or editor.embedded == True:
                 return
             for i in range(10):
                 if self.marks[i]["editor"] is None and self.marks[i]["line"] is None:
@@ -6046,23 +6712,32 @@ QSplitter::handle {{
                     )
                     return i
             else:
-                self._parent.display.repl_display_error("All ten bookmarks are occupied!")
+                self._parent.display.repl_display_error(
+                    "All ten bookmarks are occupied!"
+                )
                 return None
 
         def add_mark_by_number(self, editor, line, mark_number):
             # Bookmarks should only work in editors
-            if (isinstance(editor, CustomEditor) == False or editor.embedded == True):
+            if isinstance(editor, CustomEditor) == False or editor.embedded == True:
                 return
             # Clear the selected marker if it is not empty
-            if self.marks[mark_number]["editor"] is not None and self.marks[mark_number]["line"] is not None:
-                self.marks[mark_number]["editor"].bookmarks.toggle_at_line(self.marks[mark_number]["line"])
+            if (
+                self.marks[mark_number]["editor"] is not None
+                and self.marks[mark_number]["line"] is not None
+            ):
+                self.marks[mark_number]["editor"].bookmarks.toggle_at_line(
+                    self.marks[mark_number]["line"]
+                )
                 self.marks[mark_number]["editor"] = None
                 self.marks[mark_number]["line"] = None
                 self.marks[mark_number]["handle"] = None
             # Check if there is a bookmark already at the selected editor line
             for i in range(10):
                 if self.marks[i]["editor"] == editor and self.marks[i]["line"] == line:
-                    self.marks[i]["editor"].bookmarks.toggle_at_line(self.marks[i]["line"])
+                    self.marks[i]["editor"].bookmarks.toggle_at_line(
+                        self.marks[i]["line"]
+                    )
                     break
             # Set and store the marker on the editor
             handle = editor.bookmarks.add_marker_at_line(line)
@@ -6076,16 +6751,19 @@ QSplitter::handle {{
         def clear(self):
             cleared_any = False
             for i in range(10):
-                if self.marks[i]["editor"] is not None and self.marks[i]["line"] is not None:
-                    self.marks[i]["editor"].bookmarks.toggle_at_line(self.marks[i]["line"])
+                if (
+                    self.marks[i]["editor"] is not None
+                    and self.marks[i]["line"] is not None
+                ):
+                    self.marks[i]["editor"].bookmarks.toggle_at_line(
+                        self.marks[i]["line"]
+                    )
                     self.marks[i]["editor"] = None
                     self.marks[i]["line"] = None
                     self.marks[i]["handle"] = None
                     cleared_any = True
             if cleared_any == False:
-                self._parent.display.repl_display_warning(
-                    "Bookmarks are clear."
-                )
+                self._parent.display.repl_display_warning("Bookmarks are clear.")
                 return
 
         def remove_by_number(self, mark_number):
@@ -6144,7 +6822,9 @@ QSplitter::handle {{
 
         def bounds_check(self, mark_number):
             if mark_number < 0 or mark_number > 9:
-                self._parent.display.repl_display_error("Bookmarks only go from 0 to 9!")
+                self._parent.display.repl_display_error(
+                    "Bookmarks only go from 0 to 9!"
+                )
                 return False
             else:
                 return True
@@ -6152,7 +6832,10 @@ QSplitter::handle {{
         def goto(self, mark_number):
             if self.bounds_check(mark_number) == False:
                 return
-            if self.marks[mark_number]["editor"] is None and self.marks[mark_number]["line"] is None:
+            if (
+                self.marks[mark_number]["editor"] is None
+                and self.marks[mark_number]["line"] is None
+            ):
                 self._parent.display.repl_display_warning(
                     "Bookmark '{:d}' is empty!".format(mark_number)
                 )
@@ -6168,45 +6851,46 @@ QSplitter::handle {{
         """
         Helper functions for everything
         """
+
         # Class varibles
         _parent = None
         filesystem_watcher = None
-        
+
         def __init__(self, parent):
             """
             Initialization of the Bookmarks object instance
             """
             # Get the reference to the MainWindow parent object instance
             self._parent = parent
-            
+
             # Initialize the file-system watcher
             self.filesystem_watcher = qt.QFileSystemWatcher(parent)
             self.filesystem_watcher.fileChanged.connect(self.__file_changed)
             self.filesystem_watcher.directoryChanged.connect(self.__directory_changed)
             data.signal_dispatcher.editor_initialized.connect(self.filewatcher_add)
             data.signal_dispatcher.editor_deleted.connect(self.filewatcher_remove)
-        
+
         def __file_changed(self, path: str) -> None:
             print("__file_changed", path)
-        
+
         def __directory_changed(self, path: str) -> None:
             print("__directory_changed", path)
-        
+
         def filewatcher_add(self, path: str) -> bool:
             return self.filesystem_watcher.addPath(path)
-        
+
         def filewatcher_remove(self, path: str) -> bool:
             return self.filesystem_watcher.removePath(path)
-        
+
         def pretty_print_text(self, _type: str) -> None:
             tab = self._parent.get_tab_by_indication()
-            
+
             if not hasattr(tab, "text"):
                 self._parent.display.repl_display_error(
                     f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
                 )
                 return
-            
+
             if _type == "json":
                 prettyfied_string = functions.pretty_print_json(tab.text())
             elif _type == "xml":
@@ -6218,39 +6902,44 @@ QSplitter::handle {{
                     f"Unknown pretty_print type: '{_type}'"
                 )
                 return
-            
+
             tab.set_all_text(prettyfied_string)
-        
+
         def format_python_all_text(self, library: str) -> None:
             tab = self._parent.get_tab_by_indication()
-            
+
             if not hasattr(tab, "text"):
                 self._parent.display.repl_display_error(
                     f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
                 )
                 return
-            
+
             first_line = tab.firstVisibleLine()
             cursor_line, cursor_index = tab.getCursorPosition()
             code = tab.text()
-            
+
             if library == "black":
                 formatted_code = black.format_str(code, mode=black.FileMode())
-            
+
             elif library == "autopep8":
                 formatted_code = autopep8.fix_code(code)
-            
+
             elif library == "yapf":
                 formatted_code, _ = yapf.yapf_api.FormatCode(code)
-            
+
+            else:
+                raise Exception(
+                    f"[PYTHON-FORMATTING] Unknown foramtter library selected: '{library}'"
+                )
+
             tab.set_all_text(formatted_code)
-            
+
             tab.setCursorPosition(cursor_line, cursor_index)
             tab.setFirstVisibleLine(first_line)
-        
+
         def format_python_selected_text(self, library: str) -> None:
             tab = self._parent.get_tab_by_indication()
-            
+
             if not hasattr(tab, "selectedText") or not hasattr(tab, "hasSelectedText"):
                 self._parent.display.repl_display_error(
                     f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
@@ -6261,16 +6950,49 @@ QSplitter::handle {{
                     f"No text selected in the editor!)"
                 )
                 return
-            
+
             code = tab.selectedText()
-            
+
             if library == "black":
                 formatted_code = black.format_str(code, mode=black.FileMode())
-            
+
             elif library == "autopep8":
                 formatted_code = autopep8.fix_code(code)
-            
+
             elif library == "yapf":
                 formatted_code, _ = yapf.yapf_api.FormatCode(code)
-            
+
+            else:
+                raise Exception(
+                    f"[PYTHON-FORMATTING] Unknown foramtter library selected: '{library}'"
+                )
+
             tab.replaceSelectedText(formatted_code)
+
+        def format_c_cpp_all_text(self, library: str) -> None:
+            tab = self._parent.get_tab_by_indication()
+
+            if not hasattr(tab, "text"):
+                self._parent.display.repl_display_error(
+                    f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
+                )
+                return
+
+            first_line = tab.firstVisibleLine()
+            cursor_line, cursor_index = tab.getCursorPosition()
+            code = tab.text()
+
+            if library == "clang-format":
+                formatted_code = functions.pretty_print_c_cpp(
+                    source_code=code, style="LLVM"
+                )
+
+            else:
+                raise Exception(
+                    f"[C/C++-FORMATTING] Unknown foramtter library selected: '{library}'"
+                )
+
+            tab.set_all_text(formatted_code)
+
+            tab.setCursorPosition(cursor_line, cursor_index)
+            tab.setFirstVisibleLine(first_line)
