@@ -46,9 +46,13 @@ All additional licenses are specified at the beginning of every source code file
   - hy
   - psutil
   - pyte
-  - PyQt6 (or PyQt5)
+  - PyQt6
   - QScintilla
   - fpdf2
+  - black
+  - autopep8
+  - yapf
+  - clang-format
   - ptyprocess (Linux only)
   - pywin32 (Windows only)
   - pywinpty (Windows only)
