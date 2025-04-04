@@ -22,6 +22,7 @@ import codecs
 import locale
 import shutil
 import timeit
+import pathlib
 import datetime
 import operator
 import itertools
@@ -53,6 +54,21 @@ def load_json_file(filepath):
         json_data = json.load(f)
         f.close()
     return json_data
+
+
+def are_paths_same(path1, path2):
+    return pathlib.Path(path1).resolve() == pathlib.Path(path2).resolve()
+
+
+def is_parent_directory(base_path: str, tested_path: str) -> bool:
+    base = pathlib.Path(base_path).resolve()
+    tested = pathlib.Path(tested_path).resolve()
+
+    try:
+        tested.relative_to(base)
+        return base != tested  # Exclude exact match
+    except ValueError:
+        return False
 
 
 def count_iterator(start=0):
@@ -2991,14 +3007,15 @@ def pretty_print_html(input_string: str) -> str:
     except Exception as e:
         raise ValueError("Error in pretty-printing HTML: " + str(e))
 
+
 def pretty_print_c_cpp(source_code: str, style: str = "LLVM") -> str:
     """Formats C/C++ source code using clang-format."""
     result = subprocess.run(
-        ["clang-format", f"--style={style}"],
+        ["clang-format", f"--style={{BasedOnStyle: {style}, IndentWidth: 4}}"],
         input=source_code.encode(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        check=True
+        check=True,
     )
     return result.stdout.decode()
 

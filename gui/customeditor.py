@@ -1964,6 +1964,8 @@ class CustomEditor(BaseEditor):
         lexer.open_close_comment_style = result[0]
         lexer.comment_string = result[1]
         lexer.end_comment_string = result[2]
+        # Set indentation style
+        lexer.setAutoIndentStyle(qt.QsciScintilla.AiOpening or qt.QsciScintilla.AiOpening)
         # Set the lexer for the current scintilla document
         lexer.setParent(self)
         self.setLexer(lexer)

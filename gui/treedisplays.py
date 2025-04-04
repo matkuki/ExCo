@@ -2054,6 +2054,7 @@ class TreeDisplay(qt.QTreeView):
 if data.platform == "Windows":
     import win32api, win32con
 
+
 class TreeDisplayBase(qt.QTreeView):
     # Custom item delegate
     class CustomItemDelegate(qt.QStyledItemDelegate):
@@ -2061,13 +2062,13 @@ class TreeDisplayBase(qt.QTreeView):
             editor = qt.QLineEdit(parent)
             editor.setStyleSheet(StyleSheetLineEdit.standard())
             return editor
-    
+
         def setEditorData(self, editor, index):
             editor.setText(index.data())
-    
+
         def setModelData(self, editor, model, index):
             model.setData(index, editor.text())
-    
+
     # Signals
     key_release_signal = qt.pyqtSignal(str, dict)
 
@@ -2961,6 +2962,24 @@ class TreeExplorer(TreeDisplayBase):
             return
         for it in items:
             path = it.path
+
+            # Skip the current path and display warning message
+            if functions.are_paths_same(path, self.current_viewed_directory):
+                self.main_form.display.repl_display_warning(
+                    "Cannot delete the path that you are currently viewing!\n"
+                    + f"  {path}"
+                )
+                continue
+            elif functions.is_parent_directory(
+                base_path=path, tested_path=self.current_viewed_directory
+            ):
+                self.main_form.display.repl_display_warning(
+                    "Cannot delete a path above the path that you are "
+                    + f"currently viewing!\n"
+                    + f"  {path}"
+                )
+                continue
+
             try:
                 if os.path.exists(path):
                     if os.path.isdir(path):
@@ -2975,6 +2994,7 @@ class TreeExplorer(TreeDisplayBase):
                         message_type=constants.MessageType.WARNING,
                     )
             except:
+                traceback.print_exc()
                 self.main_form.display.repl_display_message(
                     traceback.format_exc(), message_type=constants.MessageType.ERROR
                 )

@@ -22,8 +22,9 @@ import functools
 import itertools
 import traceback
 import collections
-import libraryfunctions
 import settings.constants
+import libraryfunctions
+import gui.contextmenu
 import components.thesquid
 import components.actionfilter
 import components.communicator
@@ -32,7 +33,8 @@ import black
 import autopep8
 import yapf
 
-import gui.contextmenu
+from typing import *
+
 from .custombuttons import *
 from .dialogs import *
 from .excoinfo import *
@@ -61,7 +63,6 @@ from .externalprogram import *
 
 if data.platform == "Windows":
     import win32gui
-
 """
 -------------------------------------------------
 Main window and its supporting objects
@@ -2350,6 +2351,7 @@ class MainWindow(qt.QMainWindow):
 
         # Lexers menu
         def construct_lexers_menu(parent):
+
             def set_lexer(lexer, lexer_name):
                 try:
                     # Get the focused tab and reset the lexer
@@ -2950,22 +2952,40 @@ class MainWindow(qt.QMainWindow):
             formatting_menu.addAction(format_python_yapf_action)
 
             formatting_menu.addSeparator()
-            
-            # Format C/C++ code for the entire file - clang-format
-            def format_c_cpp_code_clang_format():
-                try:
-                    self.tools.format_c_cpp_all_text("clang-format")
-                except:
-                    self.display.repl_display_error(traceback.format_exc())
 
-            format_c_cpp_clang_format_action = create_action(
-                "Format C/C++ code - entire file - clang-format",
-                None,
-                "Format C/C++ code in the entire selected document using the clang-format library",
-                "language_icons/logo_c_cpp.png",
-                format_c_cpp_code_clang_format,
+            # Format C/C++ code for the entire file - clang-format
+            def create_c_cpp_format_fund(style):
+                def format_c_cpp_code_clang_format():
+                    try:
+                        self.tools.format_c_cpp_all_text("clang-format", style=style)
+                    except:
+                        self.display.repl_display_error(traceback.format_exc())
+
+                return format_c_cpp_code_clang_format
+
+            clang_format_styles = (
+                "LLVM",
+                "Google",
+                "Chromium",
+                "Mozilla",
+                "WebKit",
+                "Microsoft",
+                "GNU",
+                "File",
+                "Default",
             )
-            formatting_menu.addAction(format_c_cpp_clang_format_action)
+            for style in clang_format_styles:
+                format_c_cpp_clang_format_action = create_action(
+                    f"Format C/C++ code - entire file - clang-format: {style}",
+                    None,
+                    (
+                        "Format C/C++ code in the entire selected document "
+                        f"using the clang-format library with the {style} style"
+                    ),
+                    "language_icons/logo_c_cpp.png",
+                    create_c_cpp_format_fund(style),
+                )
+                formatting_menu.addAction(format_c_cpp_clang_format_action)
 
             # Pretty print JSON
             def pretty_print_json():
@@ -4646,6 +4666,7 @@ QSplitter::handle {{
 
             main_box = self._parent.main_box
             main_box.clear_all()
+
             #            self._parent._print_all_boxes_and_windows()
 
             def create_box(parent, box):
@@ -4787,6 +4808,7 @@ QSplitter::handle {{
             main_form.display.repl_unsuppress()
 
         def layout_save(self, *args, _async=True):
+
             def save(*args, **kwargs):
                 try:
                     if _async:
@@ -6969,7 +6991,9 @@ QSplitter::handle {{
 
             tab.replaceSelectedText(formatted_code)
 
-        def format_c_cpp_all_text(self, library: str) -> None:
+        def format_c_cpp_all_text(
+            self, library: str, style: Optional[str] = "LLVM"
+        ) -> None:
             tab = self._parent.get_tab_by_indication()
 
             if not hasattr(tab, "text"):
@@ -6984,7 +7008,7 @@ QSplitter::handle {{
 
             if library == "clang-format":
                 formatted_code = functions.pretty_print_c_cpp(
-                    source_code=code, style="LLVM"
+                    source_code=code, style=style
                 )
 
             else:
