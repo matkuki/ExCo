@@ -1586,7 +1586,7 @@ class TreeDisplay(qt.QTreeView):
         # Check if any files were found
         if items != []:
 
-            def add_items(directory, items, thread):
+            def add_items(directory, items, cancel_flag=lambda: False):
                 # Set the UNIX file format to the directory
                 directory = directory.replace("\\", "/")
                 """
@@ -1620,7 +1620,7 @@ class TreeDisplay(qt.QTreeView):
                 sorted_items = self._sort_item_list(items, directory)
                 # Loop through the files while creating the directory tree
                 for item_with_path in sorted_items:
-                    if thread.stop_flag:
+                    if cancel_flag():
                         return None
 
                     if os.path.isfile(item_with_path):
@@ -1667,6 +1667,9 @@ class TreeDisplay(qt.QTreeView):
                         # Create the new directories
                         current_directory = base_directory
                         for dir in parsed_directory_list:
+                            if cancel_flag():
+                                return None
+                            
                             # Check if the current loop directory already exists
                             if dir in current_directory.directories:
                                 current_directory = current_directory.directories[dir]
@@ -1695,9 +1698,12 @@ class TreeDisplay(qt.QTreeView):
 
                 def stop(self):
                     self.stop_flag = True
+                
+                def stopped(self):
+                    return self.stop_flag
 
                 def run(self):
-                    result = add_items(directory, items, self)
+                    result = add_items(directory, items, self.stopped)
                     if result == None:
                         return None
                     item_base_directory, base_directory = result
@@ -1880,6 +1886,7 @@ class TreeDisplay(qt.QTreeView):
                 for item in walk_generator:
                     if self.stop_flag:
                         return
+                    
                     base_directory = item[0]
                     for _dir in item[1]:
                         found_items.append(
@@ -1949,6 +1956,9 @@ class TreeDisplay(qt.QTreeView):
 
             def stop(self):
                 self.stop_flag = True
+            
+            def stopped(self):
+                return self.stop_flag
 
             def run(self):
                 # Initialize the list that will hold both the directories and files
@@ -1959,6 +1969,7 @@ class TreeDisplay(qt.QTreeView):
                     search_subdirs,
                     break_on_find,
                     file_filter,
+                    self.stopped,
                 )
                 if isinstance(found_items, dict):
                     self.finished.emit(found_items)
@@ -2002,21 +2013,23 @@ class TreeDisplay(qt.QTreeView):
             reset()
 
         def error(message):
-            # Check if any files were found
-            self.main_form.display.repl_display_error(message)
-            self.main_form.display.write_to_statusbar(message, 2000)
-            # Display error in tree widget
-            brush = qt.QBrush(qt.QColor(data.theme["fonts"]["error"]["color"]))
-            font = qt.QFont(
-                data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
-            )
-            error_item = qt.QStandardItem(message)
-            error_item.setEditable(False)
-            error_item.setForeground(brush)
-            error_item.setFont(font)
-            tree_model.appendRow(error_item)
-            reset()
-            return
+            try:
+                # Check if any files were found
+                self.main_form.display.repl_display_error(message)
+                self.main_form.display.write_to_statusbar(message, 2000)
+                # Display error in tree widget
+                brush = qt.QBrush(qt.QColor(data.theme["fonts"]["error"]["color"]))
+                font = qt.QFont(
+                    data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+                )
+                error_item = qt.QStandardItem(message)
+                error_item.setEditable(False)
+                error_item.setForeground(brush)
+                error_item.setFont(font)
+                tree_model.appendRow(error_item)
+                reset()
+            except:
+                pass
 
         if self.worker_thread is not None:
             self.worker_thread.stop()

@@ -365,69 +365,60 @@ def find_files_with_text_enum(
     search_subdirs=True,
     break_on_find=False,
     file_filter=None,
+    cancel_flag=lambda: False
 ):
     """
     Search for the specified text in files in the specified directory and return a file list and
     lines where the text was found at.
     """
-    # Check if the directory is valid
     if os.path.isdir(search_dir) == False:
         return "Invalid directory!"
-    # Check if searching over multiple lines
     elif "\n" in search_text:
         return "Cannot search over multiple lines!"
     elif search_text == "":
         return "Cannot search for empty string!"
-    # Create an empty file list
+
     text_file_list = []
-    # Check if subdirectories should be included
-    if search_subdirs == True:
+
+    if search_subdirs:
         walk_tree = os.walk(search_dir)
     else:
-        # Only use the first generator value(only the top directory)
         walk_tree = [next(os.walk(search_dir))]
-    # "walk" through the directory tree and save the readable files to a list
+
     for root, subFolders, files in walk_tree:
+        if cancel_flag():
+            return "Search canceled!"
         for file in files:
+            if cancel_flag():
+                return "Search canceled!"
             if file_filter is not None:
-                filename, file_extension = os.path.splitext(file)
+                _, file_extension = os.path.splitext(file)
                 if file_extension.lower() not in file_filter:
                     continue
-            # Merge the path and filename
             full_with_path = os.path.join(root, file)
             if test_text_file(full_with_path) is not None:
-                # On windows, the function "os.path.join(root, file)" line gives a combination of "/" and "\\",
-                # which looks weird but works. The replace was added to have things consistent in the return file list.
                 full_with_path = full_with_path.replace("\\", "/")
                 text_file_list.append(full_with_path)
-    # Search for the text in found files
+
     return_file_dict = {}
-    break_out = False
     for file in text_file_list:
-        if break_out == True:
-            break
+        if cancel_flag():
+            return "Search canceled!"
         try:
             file_lines = read_file_to_list(file)
-            # Set the comparison according to case sensitivity
-            if case_sensitive == False:
-                compare_search_text = search_text.lower()
-            else:
-                compare_search_text = search_text
-            # Check the file line by line
+            compare_search_text = search_text if case_sensitive else search_text.lower()
+
             for i, line in enumerate(file_lines):
-                if case_sensitive == False:
-                    line = line.lower()
-                if compare_search_text in line:
-                    if file in return_file_dict:
-                        return_file_dict[file].append(i)
-                    else:
-                        return_file_dict[file] = [i]
-                    # Check if break option on first find is true
-                    if break_on_find == True:
-                        break_out = True
+                if cancel_flag():
+                    return "Search canceled!"
+                current_line = line if case_sensitive else line.lower()
+                if compare_search_text in current_line:
+                    return_file_dict.setdefault(file, []).append(i)
+                    if break_on_find:
+                        return return_file_dict
         except:
             continue
-    # Return the generated list
+
     return return_file_dict
 
 
