@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Copyright (c) 2013-present Matic Kukovec. 
 Released under the GNU GPL3 license.
@@ -22,31 +20,32 @@ class Python(qt.QsciLexerPython):
     """
     Standard Python lexer with added keywords from built-in functions
     """
+
     # Class variables
     _kwrds = None
     styles = {
-        "Default" : 0,
-        "Comment" : 1,
-        "Number" : 2,
-        "DoubleQuotedString" : 3,
-        "SingleQuotedString" : 4,
-        "Keyword" : 5,
-        "TripleSingleQuotedString" : 6,
-        "TripleDoubleQuotedString" : 7,
-        "ClassName" : 8,
-        "FunctionMethodName" : 9,
-        "Operator" : 10,
-        "Identifier" : 11,
-        "CommentBlock" : 12,
-        "UnclosedString" : 13,
-        "HighlightedIdentifier" : 14,
-        "Decorator" : 15,
+        "Default": 0,
+        "Comment": 1,
+        "Number": 2,
+        "DoubleQuotedString": 3,
+        "SingleQuotedString": 4,
+        "Keyword": 5,
+        "TripleSingleQuotedString": 6,
+        "TripleDoubleQuotedString": 7,
+        "ClassName": 8,
+        "FunctionMethodName": 9,
+        "Operator": 10,
+        "Identifier": 11,
+        "CommentBlock": 12,
+        "UnclosedString": 13,
+        "HighlightedIdentifier": 14,
+        "Decorator": 15,
         "DoubleQuotedFString": 16,
         "SingleQuotedFString": 17,
         "TripleSingleQuotedFString": 18,
         "TripleDoubleQuotedFString": 19,
     }
-    
+
     def __init__(self, parent=None, additional_keywords=[]):
         """Overridden initialization"""
         # Initialize superclass
@@ -59,36 +58,36 @@ class Python(qt.QsciLexerPython):
         self.init_kwrds(additional_keywords)
         # Set the theme
         self.set_theme(data.theme)
-    
+
     def init_kwrds(self, additional_keywords=[]):
-        #Initialize list with keywords
+        # Initialize list with keywords
         built_ins = keyword.kwlist
         if hasattr(keyword, "softkwlist"):
             built_ins.extend(keyword.softkwlist)
         for i in builtins.__dict__.keys():
-            if not(i in built_ins):
+            if not (i in built_ins):
                 built_ins.append(i)
         self._kwrds = list(set(built_ins + additional_keywords))
         self._kwrds.sort()
-        #Transform list into a single string with spaces between list items
+        # Transform list into a single string with spaces between list items
         self._kwrds = " ".join(self._kwrds)
-    
+
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
             self.setPaper(
-                qt.QColor(data.theme["fonts"][style.lower()]["background"]), 
-                self.styles[style]
+                qt.QColor(data.theme["fonts"][style.lower()]["background"]),
+                self.styles[style],
             )
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
-    
+
     def keywords(self, state):
         """
         Overridden method for determining keywords,
         read the QScintilla QsciLexer class documentation on the Riverbank website.
         """
-        #Only state 1 returns keywords, don't know why? Check the C++ Scintilla lexer source files.
+        # Only state 1 returns keywords, don't know why? Check the C++ Scintilla lexer source files.
         if state == 1:
             return self._kwrds
         else:
@@ -97,12 +96,7 @@ class Python(qt.QsciLexerPython):
 
 class CustomPython(qt.QsciLexerCustom):
     class Sequence:
-        def __init__(self, 
-                     start, 
-                     stop_sequences, 
-                     stop_characters, 
-                     style, 
-                     add_to_style):
+        def __init__(self, start, stop_sequences, stop_characters, style, add_to_style):
             self.start = start
             self.stop_sequences = stop_sequences
             self.stop_characters = stop_characters
@@ -115,53 +109,63 @@ class CustomPython(qt.QsciLexerCustom):
     index = 0
     # Styles
     styles = {
-        "Default" : 0,
-        "Comment" : 1,
-        "Number" : 2,
-        "DoubleQuotedString" : 3,
-        "SingleQuotedString" : 4,
-        "Keyword" : 5,
-        "TripleSingleQuotedString" : 6,
-        "TripleDoubleQuotedString" : 7,
-        "ClassName" : 8,
-        "FunctionMethodName" : 9,
-        "Operator" : 10,
-        "Identifier" : 11,
-        "CommentBlock" : 12,
-        "UnclosedString" : 13,
-        "HighlightedIdentifier" : 14,
-        "Decorator" : 15,
-        "CustomKeyword" : 16,
+        "Default": 0,
+        "Comment": 1,
+        "Number": 2,
+        "DoubleQuotedString": 3,
+        "SingleQuotedString": 4,
+        "Keyword": 5,
+        "TripleSingleQuotedString": 6,
+        "TripleDoubleQuotedString": 7,
+        "ClassName": 8,
+        "FunctionMethodName": 9,
+        "Operator": 10,
+        "Identifier": 11,
+        "CommentBlock": 12,
+        "UnclosedString": 13,
+        "HighlightedIdentifier": 14,
+        "Decorator": 15,
+        "CustomKeyword": 16,
     }
     # Styling lists and characters
-    keyword_list        = list(set(keyword.kwlist + dir(builtins)))
-    additional_list     = []
-    sq                  = Sequence('\'', ['\'', '\n'], [], styles["SingleQuotedString"], True)
-    dq                  = Sequence('"', ['"', '\n'], [], styles["DoubleQuotedString"], True)
-    edq                 = Sequence('""', [], [], styles["DoubleQuotedString"], True)
-    esq                 = Sequence('\'\'', [], [], styles["DoubleQuotedString"], True)
-    tqd                 = Sequence('\'\'\'', ['\'\'\''], [], styles["TripleSingleQuotedString"], True)
-    tqs                 = Sequence('"""', ['"""'], [], styles["TripleDoubleQuotedString"], True)
-    cls                 = Sequence('class', [':'], ['(', '\n'], styles["ClassName"], False)
-    defi                = Sequence('def', [], ['('], styles["FunctionMethodName"], False)
-    comment             = Sequence('#', [], ['\n'], styles["Comment"], True)
-    dcomment            = Sequence('##', [], ['\n'], styles["CommentBlock"], True)
-    decorator           = Sequence('@', ['\n'], [' '], styles["Decorator"], True)
-    sequence_lists      = [
-        sq, dq, edq, esq, tqd, tqs, cls, defi, comment, dcomment, decorator
-    ]                           
+    keyword_list = list(set(keyword.kwlist + dir(builtins)))
+    additional_list = []
+    sq = Sequence("'", ["'", "\n"], [], styles["SingleQuotedString"], True)
+    dq = Sequence('"', ['"', "\n"], [], styles["DoubleQuotedString"], True)
+    edq = Sequence('""', [], [], styles["DoubleQuotedString"], True)
+    esq = Sequence("''", [], [], styles["DoubleQuotedString"], True)
+    tqd = Sequence("'''", ["'''"], [], styles["TripleSingleQuotedString"], True)
+    tqs = Sequence('"""', ['"""'], [], styles["TripleDoubleQuotedString"], True)
+    cls = Sequence("class", [":"], ["(", "\n"], styles["ClassName"], False)
+    defi = Sequence("def", [], ["("], styles["FunctionMethodName"], False)
+    comment = Sequence("#", [], ["\n"], styles["Comment"], True)
+    dcomment = Sequence("##", [], ["\n"], styles["CommentBlock"], True)
+    decorator = Sequence("@", ["\n"], [" "], styles["Decorator"], True)
+    sequence_lists = [
+        sq,
+        dq,
+        edq,
+        esq,
+        tqd,
+        tqs,
+        cls,
+        defi,
+        comment,
+        dcomment,
+        decorator,
+    ]
     multiline_sequence_list = [tqd, tqs]
     sequence_start_chrs = [x.start for x in sequence_lists]
     # Regular expression split sequence to tokenize text
-    splitter            = re.compile(r"(\\'|\\\"|\(\*|\*\)|\n|\"+|\'+|\#+|\s+|\w+|\W)")
-    #Characters that autoindent one level on pressing Return/Enter
+    splitter = re.compile(r"(\\'|\\\"|\(\*|\*\)|\n|\"+|\'+|\#+|\s+|\w+|\W)")
+    # Characters that autoindent one level on pressing Return/Enter
     autoindent_characters = [":"]
 
     def __init__(self, parent=None, additional_keywords=[]):
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
-         # Set the lexer's index
+        # Set the lexer's index
         self.index = CustomPython._index
         CustomPython._index += 1
         # Set the additional keywords
@@ -177,37 +181,38 @@ class CustomPython(qt.QsciLexerCustom):
         self.setAutoIndentStyle(0)
         # Set the theme
         self.set_theme(data.theme)
-    
+
     def language(self):
         return "Python"
-    
+
     def description(self, style):
         if style <= 16:
             description = "Custom lexer for the Python programming languages"
         else:
             description = ""
         return description
-    
+
     def defaultStyle(self):
         return self.styles["Default"]
-    
+
     def braceStyle(self):
         return self.styles["Default"]
-    
+
     def defaultFont(self, style):
         return qt.QFont(data.current_font_name, data.current_font_size)
-    
+
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
             self.setPaper(
-                qt.QColor(data.theme["fonts"][style.lower()]["background"]), 
-                self.styles[style]
+                qt.QColor(data.theme["fonts"][style.lower()]["background"]),
+                self.styles[style],
             )
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
-    
+
     if lexers.nim_lexers_found == True:
+
         def __del__(self):
             lexers.nim_lexers.python_delete_keywords(self.index)
 
@@ -215,11 +220,11 @@ class CustomPython(qt.QsciLexerCustom):
             editor = self.editor()
             if editor is None:
                 return
-#            lexers.nim_lexers.python_style_test(self.index, start, end)
-            lexers.nim_lexers.python_style_text(
-                self.index, start, end, self, editor
-            )
+            #            lexers.nim_lexers.python_style_test(self.index, start, end)
+            lexers.nim_lexers.python_style_text(self.index, start, end, self, editor)
+
     else:
+
         def styleText(self, start, end):
             editor = self.editor()
             if editor is None:
@@ -229,10 +234,13 @@ class CustomPython(qt.QsciLexerCustom):
             # Scintilla works with bytes, so we have to adjust the start and end boundaries
             text = bytearray(editor.text(), "utf-8")[start:end].decode("utf-8")
             # Loop optimizations
-            setStyling  = self.setStyling
+            setStyling = self.setStyling
             # Initialize comment state and split the text into tokens
             sequence = None
-            tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
+            tokens = [
+                (token, len(bytearray(token, "utf-8")))
+                for token in self.splitter.findall(text)
+            ]
             # Check if there is a style(comment, string, ...) stretching on from the previous line
             if start != 0:
                 previous_style = editor.SendScintilla(editor.SCI_GETSTYLEAT, start - 1)
@@ -240,10 +248,10 @@ class CustomPython(qt.QsciLexerCustom):
                     if previous_style == i.style:
                         sequence = i
                         break
-            
+
             # Style the tokens accordingly
             for i, token in enumerate(tokens):
-#                print(token[0].encode("utf-8"))
+                #                print(token[0].encode("utf-8"))
                 token_name = token[0]
                 token_length = token[1]
                 if sequence != None:
@@ -276,7 +284,9 @@ class CustomPython(qt.QsciLexerCustom):
                                     if token_name in self.keyword_list:
                                         setStyling(token_length, self.styles["Keyword"])
                                     elif token_name in self.additional_list:
-                                        setStyling(token_length, self.styles["CustomKeyword"])
+                                        setStyling(
+                                            token_length, self.styles["CustomKeyword"]
+                                        )
                                     else:
                                         setStyling(token_length, self.styles["Default"])
                             break

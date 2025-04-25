@@ -123,7 +123,7 @@ class CustomEditor(BaseEditor):
             self.deleteLater()
         except:
             pass
-        
+
         # Signal file initialization
         data.signal_dispatcher.editor_deleted.emit(self.save_name)
 
@@ -169,6 +169,8 @@ class CustomEditor(BaseEditor):
         self.setEolMode(qt.QsciScintilla.EolMode(settings.editor["end_of_line_mode"]))
         # Set the initial zoom factor
         self.zoomTo(settings.editor["zoom_factor"])
+        # Set multi-paste
+        self.SendScintilla(self.SCI_SETMULTIPASTE, self.SC_MULTIPASTE_EACH)
         # Correct the file name if it is unspecified
         if file_with_path == None:
             file_with_path = ""
@@ -227,7 +229,7 @@ class CustomEditor(BaseEditor):
         # Enable multiple cursors and multi-cursor typing
         self.SendScintilla(self.SCI_SETMULTIPLESELECTION, True)
         self.SendScintilla(self.SCI_SETADDITIONALSELECTIONTYPING, True)
-        
+
         # Signal file initialization
         data.signal_dispatcher.editor_initialized.emit(self.save_name)
 
@@ -1965,7 +1967,9 @@ class CustomEditor(BaseEditor):
         lexer.comment_string = result[1]
         lexer.end_comment_string = result[2]
         # Set indentation style
-        lexer.setAutoIndentStyle(qt.QsciScintilla.AiOpening or qt.QsciScintilla.AiOpening)
+        lexer.setAutoIndentStyle(
+            qt.QsciScintilla.AiOpening or qt.QsciScintilla.AiOpening
+        )
         # Set the lexer for the current scintilla document
         lexer.setParent(self)
         self.setLexer(lexer)

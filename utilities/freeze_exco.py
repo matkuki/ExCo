@@ -35,6 +35,10 @@ def main():
         "hy",
         "hy.core",
         "hy.core.result_macros",
+        "black",
+        "autopep8",
+        "yapf",
+        "fpdf",
     ]
     local_modules = []
     # List all local modules
