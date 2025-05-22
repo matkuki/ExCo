@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -27,6 +27,7 @@ import datetime
 import operator
 import itertools
 import threading
+import tempfile
 import traceback
 import subprocess
 import webbrowser
@@ -365,7 +366,7 @@ def find_files_with_text_enum(
     search_subdirs=True,
     break_on_find=False,
     file_filter=None,
-    cancel_flag=lambda: False
+    cancel_flag=lambda: False,
 ):
     """
     Search for the specified text in files in the specified directory and return a file list and
@@ -2977,7 +2978,7 @@ def pretty_print_xml(input_string: str) -> str:
     return pretty_xml
 
 
-def pretty_print_html(input_string: str) -> str:
+def pretty_print_html_python_stdlib(input_string):
     # Validate HTML
     class HTMLValidator(html.parser.HTMLParser):
         def error(self, message):
@@ -2999,7 +3000,7 @@ def pretty_print_html(input_string: str) -> str:
         raise ValueError("Error in pretty-printing HTML: " + str(e))
 
 
-def pretty_print_c_cpp(source_code: str, style: str = "LLVM") -> str:
+def format_clangformat_c_cpp(source_code: str, style: str = "LLVM") -> str:
     """Formats C/C++ source code using clang-format."""
     result = subprocess.run(
         ["clang-format", f"--style={{BasedOnStyle: {style}, IndentWidth: 4}}"],
@@ -3009,6 +3010,24 @@ def pretty_print_c_cpp(source_code: str, style: str = "LLVM") -> str:
         check=True,
     )
     return result.stdout.decode()
+
+
+def format_ruff_python(code: str) -> str:
+    with tempfile.TemporaryDirectory() as tmpdir:  # type: ignore
+        file_path: pathlib.Path = pathlib.Path(tmpdir) / "temp_ruff_formatting_file.py"
+        file_path.write_text(code, encoding="utf-8")
+
+        result: subprocess.CompletedProcess[str] = subprocess.run(
+            ["ruff", "format", str(file_path)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",  # Ensure subprocess handles UTF-8 output
+        )
+
+        if result.returncode != 0:
+            raise RuntimeError(f"Ruff error:\n{result.stderr}")
+
+        return file_path.read_text(encoding="utf-8")
 
 
 """
@@ -3126,10 +3145,7 @@ def get_edges_to_widget(widget, widget_window, size, offset=(0, 0)):
 
 
 def get_screen_size():
-    if qt.PYQT_MODE < 6:
-        size = data.application.desktop().screen().rect().size()
-    else:
-        size = data.application.primaryScreen().size()
+    size = data.application.primaryScreen().size()
     return size.width(), size.height()
 
 

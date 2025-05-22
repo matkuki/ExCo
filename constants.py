@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -7,6 +7,7 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import enum
+
 
 # File extension lists
 supported_file_extentions = {
@@ -37,7 +38,7 @@ supported_file_extentions = {
     "d": [".d"],
     "fortran": [".f90", ".f95", ".f03"],
     "fortran77": [".f", ".for"],
-    "html": [".html", ".htm", ".svelte"],
+    "html": [".html", ".htm", ".svelte", ".htmx"],
     "idl": [".idl"],
     "ini": [".ini"],
     "java": [".java"],
@@ -166,10 +167,15 @@ class DialogResult(enum.Enum):
     SwitchToLargestWindow = 10
 
 
-# Default user configuration file content
-default_config_file_content = '''# -*- coding: utf-8 -*-
+class FormatterType(enum.Enum):
+    JSON = enum.auto()
+    XML = enum.auto()
+    HTML_Python_Standard_Library = enum.auto()
+    HTML_BeautifulSoup = enum.auto()
 
-##  FILE DESCRIPTION:
+
+# Default user configuration file content
+default_config_file_content = '''##  FILE DESCRIPTION:
 ##      Normal module with a special name that holds custom user functions/variables.
 ##      To manipulate the editors/windows, take a look at the QScintilla details at:
 ##      http://pyqt.sourceforge.net/Docs/QScintilla2

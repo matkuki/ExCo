@@ -1,6 +1,4 @@
 
-# -*- coding: utf-8 -*-
-
 """
 Copyright (c) 2013-2023 Matic Kukovec. 
 Released under the GNU GPL3 license.
@@ -209,9 +207,7 @@ if os.name == "posix":
 config_file = os.path.join(settings_directory,  "userfunctions.cfg") \
     .replace('\\', '/')
 # Default user configuration file content
-default_config_file_content = '''# -*- coding: utf-8 -*-
-
-##  FILE DESCRIPTION:
+default_config_file_content = '''##  FILE DESCRIPTION:
 ##      Normal module with a special name that holds custom user functions/variables.
 ##      To manipulate the editors/windows, take a look at the QScintilla details at:
 ##      http://pyqt.sourceforge.net/Docs/QScintilla2

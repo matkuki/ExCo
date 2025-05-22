@@ -29,9 +29,7 @@ import components.thesquid
 import components.actionfilter
 import components.communicator
 import components.processcontroller
-import black
-import autopep8
-import yapf
+from typing import *
 
 from typing import *
 
@@ -2248,9 +2246,9 @@ class MainWindow(qt.QMainWindow):
                 self.system.show_explorer()
 
             show_explorer_action = create_action(
-                "Show current working directory explorer",
+                "Open current working directory in operating system explorer",
                 settings.keyboard_shortcuts["general"]["cwd_explorer"],
-                "Show the current working directory in the systems explorer",
+                "Open the current working directory in the operating systems explorer",
                 "tango_icons/system-show-cwd.png",
                 show_explorer,
             )
@@ -2848,108 +2846,59 @@ class MainWindow(qt.QMainWindow):
 
             tools_menu.addSeparator()
 
+            # === Code formatting ===
             # Menu
             formatting_menu = tools_menu.addMenu("Code formatting")
-
-            ## Selected text
-            # Format Python code for a file's selected text - black
-            def format_python_selection_black():
-                try:
-                    self.tools.format_python_selected_text("black")
-                except:
-                    self.display.repl_display_error(traceback.format_exc())
-
-            format_python_black_action = create_action(
-                "Format Python code - selection - black",
-                None,
-                "Format Python code in the selected document's selected text using the black library",
-                "language_icons/logo_python.png",
-                format_python_selection_black,
-            )
-            formatting_menu.addAction(format_python_black_action)
             temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
             formatting_menu.setIcon(temp_icon)
 
-            # Format Python code for a file's selected text - autopep8
-            def format_python_selection_autopep8():
-                try:
-                    self.tools.format_python_selected_text("autopep8")
-                except:
-                    self.display.repl_display_error(traceback.format_exc())
-
-            format_python_autopep8_action = create_action(
-                "Format Python code - selection - autopep8",
-                None,
-                "Format Python code in the selected document's selected text using the autopep8 library",
-                "language_icons/logo_python.png",
-                format_python_selection_autopep8,
+            ## Formatting Python code
+            formatting_libraries = (
+                "black",
+                "autopep8",
+                "yapf",
+                "ruff",
             )
-            formatting_menu.addAction(format_python_autopep8_action)
-
-            # Format Python code for a file's selected text - yapf
-            def format_python_selection_yapf():
-                try:
-                    self.tools.format_python_selected_text("yapf")
-                except:
-                    self.display.repl_display_error(traceback.format_exc())
-
-            format_python_yapf_action = create_action(
-                "Format Python code - selection - yapf",
-                None,
-                "Format Python code in the selected document's selected text using the yapf library",
-                "language_icons/logo_python.png",
-                format_python_selection_yapf,
-            )
-            formatting_menu.addAction(format_python_yapf_action)
-
-            ## Entire file
-            # Format Python code for the entire file - black
-            def format_python_code_black():
-                try:
-                    self.tools.format_python_all_text("black")
-                except:
-                    self.display.repl_display_error(traceback.format_exc())
-
-            format_python_black_action = create_action(
-                "Format Python code - entire file - black",
-                None,
-                "Format Python code in the entire selected document using the black library",
-                "language_icons/logo_python.png",
-                format_python_code_black,
-            )
-            formatting_menu.addAction(format_python_black_action)
-
-            # Format Python code for the entire file - autopep8
-            def format_python_code_autopep8():
-                try:
-                    self.tools.format_python_all_text("autopep8")
-                except:
-                    self.display.repl_display_error(traceback.format_exc())
-
-            format_python_autopep8_action = create_action(
-                "Format Python code - entire file - autopep8",
-                None,
-                "Format Python code in the entire selected document using the autopep8 library",
-                "language_icons/logo_python.png",
-                format_python_code_autopep8,
-            )
-            formatting_menu.addAction(format_python_autopep8_action)
-
-            # Format Python code for the entire file - yapf
-            def format_python_code_yapf():
-                try:
-                    self.tools.format_python_all_text("yapf")
-                except:
-                    self.display.repl_display_error(traceback.format_exc())
-
-            format_python_yapf_action = create_action(
-                "Format Python code - entire file - yapf",
-                None,
-                "Format Python code in the entire selected document using the yapf library",
-                "language_icons/logo_python.png",
-                format_python_code_yapf,
-            )
-            formatting_menu.addAction(format_python_yapf_action)
+            
+            # Selected text
+            def format_python_formatting_selection_func_generator(library_name: str):
+                def format_python_selection_func(code: str):
+                    try:
+                        self.tools.format_python_selected_text(library_name)
+                    except:
+                        self.display.repl_display_error(traceback.format_exc())
+                
+                return format_python_selection_func
+            
+            for fl in formatting_libraries:
+                format_python_action = create_action(
+                    f"Format Python code - selection - {fl}",
+                    None,
+                    f"Format Python code in the selected document's selected text using the {fl} library",
+                    "language_icons/logo_python.png",
+                    format_python_formatting_selection_func_generator(fl),
+                )
+                formatting_menu.addAction(format_python_action)
+            
+            # Entire file
+            def format_python_formatting_entire_text_func_generator(library_name: str):
+                def format_python_entire_text_func(code: str):
+                    try:
+                        self.tools.format_python_all_text(library_name)
+                    except:
+                        self.display.repl_display_error(traceback.format_exc())
+                
+                return format_python_entire_text_func
+            
+            for fl in formatting_libraries:
+                format_python_action = create_action(
+                    f"Format Python code - entire file - {fl}",
+                    None,
+                    f"Format Python code in the entire selected document using the {fl} library",
+                    "language_icons/logo_python.png",
+                    format_python_formatting_entire_text_func_generator(fl),
+                )
+                formatting_menu.addAction(format_python_action)
 
             formatting_menu.addSeparator()
 
@@ -2987,10 +2936,16 @@ class MainWindow(qt.QMainWindow):
                 )
                 formatting_menu.addAction(format_c_cpp_clang_format_action)
 
+            # === Pretty printing ===
+            # Menu
+            pretty_print_menu = tools_menu.addMenu("Petty printing")
+            temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
+            pretty_print_menu.setIcon(temp_icon)
+
             # Pretty print JSON
             def pretty_print_json():
                 try:
-                    self.tools.pretty_print_text("json")
+                    self.tools.pretty_print_text(constants.FormatterType.JSON)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
 
@@ -3001,12 +2956,12 @@ class MainWindow(qt.QMainWindow):
                 "language_icons/logo_json.png",
                 pretty_print_json,
             )
-            tools_menu.addAction(pretty_print_json_action)
+            pretty_print_menu.addAction(pretty_print_json_action)
 
             # Pretty print XML
             def pretty_print_xml():
                 try:
-                    self.tools.pretty_print_text("xml")
+                    self.tools.pretty_print_text(constants.FormatterType.XML)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
 
@@ -3017,23 +2972,43 @@ class MainWindow(qt.QMainWindow):
                 "language_icons/logo_xml.png",
                 pretty_print_xml,
             )
-            tools_menu.addAction(pretty_print_xml_action)
+            pretty_print_menu.addAction(pretty_print_xml_action)
 
-            # Pretty print HTML
-            def pretty_print_html():
+            # Pretty print HTML with BeautifulSoup
+            def pretty_print_html_with_beautifulsoup():
                 try:
-                    self.tools.pretty_print_text("html")
+                    self.tools.pretty_print_text(
+                        constants.FormatterType.HTML_BeautifulSoup
+                    )
                 except:
                     self.display.repl_display_error(traceback.format_exc())
 
-            pretty_print_html_action = create_action(
-                "Pretty print HTML text",
+            pretty_print_html_0_action = create_action(
+                "Pretty print HTML text with BeautifulSoup",
                 None,
-                "Pretty print HTML text in the selected document",
+                "Pretty print HTML text in the selected document with the BeautifulSoup library",
                 "language_icons/logo_html.png",
-                pretty_print_html,
+                pretty_print_html_with_beautifulsoup,
             )
-            tools_menu.addAction(pretty_print_html_action)
+            pretty_print_menu.addAction(pretty_print_html_0_action)
+
+            # Pretty print HTML with Python's Standard Libary
+            def pretty_print_html_with_python_stdlib():
+                try:
+                    self.tools.pretty_print_text(
+                        constants.FormatterType.HTML_Python_Standard_Library
+                    )
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+
+            pretty_print_html_1_action = create_action(
+                "Pretty print HTML text with Python's Standard Libary",
+                None,
+                "Pretty print HTML text in the selected document with Python's Standard Libary",
+                "language_icons/logo_html.png",
+                pretty_print_html_with_python_stdlib,
+            )
+            pretty_print_menu.addAction(pretty_print_html_1_action)
 
         # Execute the nested construction functions
         construct_file_menu()
@@ -3044,7 +3019,7 @@ class MainWindow(qt.QMainWindow):
         construct_repl_menu()
         construct_tools_menu()
         construct_sessions_menu()
-        #        construct_settings_menu()
+        # construct_settings_menu()
         construct_help_menu()
 
         # Connect the triggered signal for hiding the function wheel on menubar clicks
@@ -3206,10 +3181,6 @@ class MainWindow(qt.QMainWindow):
             os.getcwd(),
             "All Files (*);;Ex.Co. Files({})".format(" ".join(self.exco_file_exts)),
         )
-        if qt.PYQT_MODE == 5:
-            # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
-            # so pass only the files to the function
-            files = files[0]
         # Check and then add the selected file to the main TabWidget if the window parameter is unspecified
         self.open_files(files, tab_widget)
 
@@ -6904,7 +6875,7 @@ QSplitter::handle {{
         def filewatcher_remove(self, path: str) -> bool:
             return self.filesystem_watcher.removePath(path)
 
-        def pretty_print_text(self, _type: str) -> None:
+        def pretty_print_text(self, _type: constants.FormatterType) -> None:
             tab = self._parent.get_tab_by_indication()
 
             if not hasattr(tab, "text"):
@@ -6913,12 +6884,20 @@ QSplitter::handle {{
                 )
                 return
 
-            if _type == "json":
+            if _type == constants.FormatterType.JSON:
                 prettyfied_string = functions.pretty_print_json(tab.text())
-            elif _type == "xml":
+            elif _type == constants.FormatterType.XML:
                 prettyfied_string = functions.pretty_print_xml(tab.text())
-            elif _type == "html":
-                prettyfied_string = functions.pretty_print_html(tab.text())
+            elif _type == constants.FormatterType.HTML_Python_Standard_Library:
+                prettyfied_string = functions.pretty_print_html_python_stdlib(
+                    tab.text()
+                )
+            elif _type == constants.FormatterType.HTML_BeautifulSoup:
+                prettyfied_string = (
+                    libraryfunctions.custom_format_html_document_beautifulsoup(
+                        tab.text()
+                    )
+                )
             else:
                 self._parent.display.repl_display_error(
                     f"Unknown pretty_print type: '{_type}'"
@@ -6940,19 +6919,7 @@ QSplitter::handle {{
             cursor_line, cursor_index = tab.getCursorPosition()
             code = tab.text()
 
-            if library == "black":
-                formatted_code = black.format_str(code, mode=black.FileMode())
-
-            elif library == "autopep8":
-                formatted_code = autopep8.fix_code(code)
-
-            elif library == "yapf":
-                formatted_code, _ = yapf.yapf_api.FormatCode(code)
-
-            else:
-                raise Exception(
-                    f"[PYTHON-FORMATTING] Unknown foramtter library selected: '{library}'"
-                )
+            formatted_code = libraryfunctions.format_python_code(code, library)
 
             tab.set_all_text(formatted_code)
 
@@ -6975,19 +6942,7 @@ QSplitter::handle {{
 
             code = tab.selectedText()
 
-            if library == "black":
-                formatted_code = black.format_str(code, mode=black.FileMode())
-
-            elif library == "autopep8":
-                formatted_code = autopep8.fix_code(code)
-
-            elif library == "yapf":
-                formatted_code, _ = yapf.yapf_api.FormatCode(code)
-
-            else:
-                raise Exception(
-                    f"[PYTHON-FORMATTING] Unknown foramtter library selected: '{library}'"
-                )
+            formatted_code = libraryfunctions.format_python_code(code, library)
 
             tab.replaceSelectedText(formatted_code)
 
@@ -7007,9 +6962,7 @@ QSplitter::handle {{
             code = tab.text()
 
             if library == "clang-format":
-                formatted_code = functions.pretty_print_c_cpp(
-                    source_code=code, style=style
-                )
+                formatted_code = functions.format_c_cpp(source_code=code, style=style)
 
             else:
                 raise Exception(

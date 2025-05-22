@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Copyright (c) 2013-present Matic Kukovec. 
 Released under the GNU GPL3 license.
@@ -134,10 +132,7 @@ LIBRARY_VERSIONS = "PyQt{} / QScintilla{}".format(
 
 # Store all Qt keys as a dictionary
 keys = {}
-if qt.PYQT_MODE < 6:
-    keys_namespace = qt.Qt
-else:
-    keys_namespace = qt.Qt.Key
+keys_namespace = qt.Qt.Key
  
 for k in dir(keys_namespace):
     if k.startswith("Key_"):

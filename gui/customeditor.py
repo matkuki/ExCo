@@ -1862,10 +1862,9 @@ class CustomEditor(BaseEditor):
                 os.getcwd() + self.save_name,
                 "All Files(*)",
             )
-            if qt.PYQT_MODE > 4:
-                # PyQt5's getOpenFileNames returns a tuple (files_list, selected_filter),
-                # so pass only the files to the function
-                temp_save_name = temp_save_name[0]
+            # PyQt6's getOpenFileNames returns a tuple (files_list, selected_filter),
+            # so pass only the files to the function
+            temp_save_name = temp_save_name[0]
             # Check if the user has selected a file
             if temp_save_name == "":
                 return False

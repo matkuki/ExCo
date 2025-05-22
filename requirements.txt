@@ -1,6 +1,5 @@
-psutil==5.9.4
-pyte==0.8.1
-#PyQt5>=5.15.0
+psutil>=5.9.4
+pyte>=0.8.1
 PyQt6>=6.5.2 
 PyQt6.QScintilla>=2.14.0
 hy>=0.25.0
@@ -10,6 +9,8 @@ black
 autopep8
 yapf
 clang-format
+beautifulsoup4
+ruff
 
 # Linux
 ptyprocess>=0.7.0; platform_system == "Linux"

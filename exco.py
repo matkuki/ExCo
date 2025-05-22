@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-# -*- coding: utf-8 -*-
-
 """
 Copyright (c) 2013-present Matic Kukovec. 
 Released under the GNU GPL3 license.
