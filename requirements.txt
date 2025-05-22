@@ -11,6 +11,7 @@ yapf
 clang-format
 beautifulsoup4
 ruff
+isort
 
 # Linux
 ptyprocess>=0.7.0; platform_system == "Linux"
