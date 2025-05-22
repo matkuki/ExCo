@@ -53,6 +53,8 @@ All additional licenses are specified at the beginning of every source code file
   - autopep8
   - yapf
   - clang-format
+  - ruff
+  - isort
   - ptyprocess (Linux only)
   - pywin32 (Windows only)
   - pywinpty (Windows only)
