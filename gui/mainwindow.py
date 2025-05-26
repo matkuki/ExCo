@@ -6,58 +6,58 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import gc
-import os
-import qt
-import re
-import data
-import json
-import lexers
-import inspect
-import keyword
-import settings
-import constants
-import functions
-import functools
-import itertools
-import traceback
 import collections
-import settings.constants
-import libraryfunctions
-import gui.contextmenu
-import components.thesquid
+import functools
+import gc
+import inspect
+import itertools
+import json
+import keyword
+import os
+import re
+import traceback
+from typing import *
+
 import components.actionfilter
 import components.communicator
 import components.processcontroller
-from typing import *
+import components.thesquid
+import constants
+import data
+import functions
+import lexers
+import libraryfunctions
+import qt
+import settings
+import settings.constants
 
-from typing import *
+import gui.contextmenu
 
 from .custombuttons import *
-from .dialogs import *
-from .excoinfo import *
-from .functionwheel import *
-from .messagelogger import *
-from .tabwidget import *
-from .plaineditor import *
 from .customeditor import *
-from .repllineedit import *
-from .replhelper import *
+from .dialogs import *
+from .dockingoverlay import *
+from .excoinfo import *
+from .externalprogram import *
+from .functionwheel import *
+from .hexview import *
+from .menu import *
+from .messagelogger import *
+from .plaineditor import *
 from .replbox import *
+from .replhelper import *
+from .replindicator import *
+from .repllineedit import *
 from .sessionguimanipulator import *
 from .settingsguimanipulator import *
-from .textdiffer import *
-from .treedisplays import *
-from .menu import *
-from .themeindicator import *
-from .replindicator import *
 from .stylesheets import *
-from .dockingoverlay import *
-from .thebox import *
-from .hexview import *
+from .tabwidget import *
 from .templates import *
 from .terminal import *
-from .externalprogram import *
+from .textdiffer import *
+from .thebox import *
+from .themeindicator import *
+from .treedisplays import *
 
 if data.platform == "Windows":
     import win32gui
@@ -2817,6 +2817,7 @@ class MainWindow(qt.QMainWindow):
             )
             help_menu.addAction(about_action)
 
+        # Tools menu
         def construct_tools_menu():
             tools_menu = Menu("&Tools", self.menubar)
             self.menubar.addMenu(tools_menu)
@@ -2852,6 +2853,11 @@ class MainWindow(qt.QMainWindow):
             temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
             formatting_menu.setIcon(temp_icon)
 
+            # Python
+            formatting_menu_python = formatting_menu.addMenu("Python")
+            temp_icon = functions.create_icon("language_icons/logo_python.png")
+            formatting_menu_python.setIcon(temp_icon)
+
             ## Formatting Python code
             formatting_libraries = (
                 "black",
@@ -2859,7 +2865,7 @@ class MainWindow(qt.QMainWindow):
                 "yapf",
                 "ruff",
             )
-            
+
             # Selected text
             def format_python_formatting_selection_func_generator(library_name: str):
                 def format_python_selection_func(code: str):
@@ -2867,9 +2873,9 @@ class MainWindow(qt.QMainWindow):
                         self.tools.format_python_selected_text(library_name)
                     except:
                         self.display.repl_display_error(traceback.format_exc())
-                
+
                 return format_python_selection_func
-            
+
             for fl in formatting_libraries:
                 format_python_action = create_action(
                     f"Format Python code - selection - {fl}",
@@ -2878,7 +2884,9 @@ class MainWindow(qt.QMainWindow):
                     "language_icons/logo_python.png",
                     format_python_formatting_selection_func_generator(fl),
                 )
-                formatting_menu.addAction(format_python_action)
+                formatting_menu_python.addAction(format_python_action)
+            
+            formatting_menu_python.addSeparator()
             
             # Entire file
             def format_python_formatting_entire_text_func_generator(library_name: str):
@@ -2887,9 +2895,9 @@ class MainWindow(qt.QMainWindow):
                         self.tools.format_python_all_text(library_name)
                     except:
                         self.display.repl_display_error(traceback.format_exc())
-                
+
                 return format_python_entire_text_func
-            
+
             for fl in formatting_libraries:
                 format_python_action = create_action(
                     f"Format Python code - entire file - {fl}",
@@ -2898,9 +2906,12 @@ class MainWindow(qt.QMainWindow):
                     "language_icons/logo_python.png",
                     format_python_formatting_entire_text_func_generator(fl),
                 )
-                formatting_menu.addAction(format_python_action)
+                formatting_menu_python.addAction(format_python_action)
 
-            formatting_menu.addSeparator()
+            # C / C++
+            formatting_menu_c_cpp = formatting_menu.addMenu("C/C++")
+            temp_icon = functions.create_icon("language_icons/logo_c_cpp.png")
+            formatting_menu_c_cpp.setIcon(temp_icon)
 
             # Format C/C++ code for the entire file - clang-format
             def create_c_cpp_format_fund(style):
@@ -2934,7 +2945,30 @@ class MainWindow(qt.QMainWindow):
                     "language_icons/logo_c_cpp.png",
                     create_c_cpp_format_fund(style),
                 )
-                formatting_menu.addAction(format_c_cpp_clang_format_action)
+                formatting_menu_c_cpp.addAction(format_c_cpp_clang_format_action)
+
+            # Zig
+            formatting_menu_zip = formatting_menu.addMenu("Zig")
+            temp_icon = functions.create_icon("language_icons/logo_zig.png")
+            formatting_menu_zip.setIcon(temp_icon)
+
+            def format_zig():
+                try:
+                    self.tools.format_zig_all_text()
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+
+            format_zig_action = create_action(
+                f"Format Zig code - entire file",
+                None,
+                (
+                    "Format Zig code in the entire selected document "
+                    "using the 'zig fmt' command"
+                ),
+                "language_icons/logo_zig.png",
+                format_zig,
+            )
+            formatting_menu_zip.addAction(format_zig_action)
 
             # === Pretty printing ===
             # Menu
@@ -6977,6 +7011,28 @@ QSplitter::handle {{
                 raise Exception(
                     f"[C/C++-FORMATTING] Unknown foramtter library selected: '{library}'"
                 )
+
+            tab.set_all_text(formatted_code)
+
+            tab.setCursorPosition(cursor_line, cursor_index)
+            tab.setFirstVisibleLine(first_line)
+
+        def format_zig_all_text(
+            self,
+        ) -> None:
+            tab = self._parent.get_tab_by_indication()
+
+            if not hasattr(tab, "text"):
+                self._parent.display.repl_display_error(
+                    f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
+                )
+                return
+
+            first_line = tab.firstVisibleLine()
+            cursor_line, cursor_index = tab.getCursorPosition()
+            code = tab.text()
+
+            formatted_code = functions.format_zig_code(zig_code_string=code)
 
             tab.set_all_text(formatted_code)
 

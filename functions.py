@@ -10,35 +10,35 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      Module that holds functions for various uses
 ##      that uses only the PyQt and standard libraries.
 
-
-import os
-import os.path
-import re
 import ast
-import sys
-import json
-import time
 import codecs
-import locale
-import shutil
-import timeit
-import pathlib
 import datetime
-import operator
-import itertools
-import threading
-import tempfile
-import traceback
-import subprocess
-import webbrowser
-import xml.etree.ElementTree
-import xml.dom.minidom
 import html
 import html.parser
+import itertools
+import json
+import locale
+import operator
+import os
+import os.path
+import pathlib
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import timeit
+import traceback
+import webbrowser
+import xml.dom.minidom
+import xml.etree.ElementTree
+from typing import *
 
-import qt
-import data
 import constants
+import data
+import qt
 
 # REPL message displaying function (that needs to be assigned at runtime!)
 repl_print = None
@@ -2726,7 +2726,9 @@ def is_number(string):
         float(string)
         return True
     except ValueError:
-        return False
+        if string[0].isdigit():
+            return True
+    return False
 
 
 def replace_and_index(
@@ -3030,6 +3032,71 @@ def format_ruff_python(code: str) -> str:
             raise RuntimeError(f"Ruff error:\n{result.stderr}")
 
         return file_path.read_text(encoding="utf-8")
+
+
+def format_zig_code(zig_code_string: str) -> str:
+    """
+    Formats a given Zig source code string using the 'zig fmt --stdin' command.
+
+    Args:
+        zig_code_string: The unformatted Zig source code as a string.
+
+    Returns:
+        The formatted Zig source code string.
+
+    Raises:
+        FileNotFoundError: If 'zig' executable is not found in the system's PATH.
+        subprocess.CalledProcessError: If 'zig fmt' exits with a non-zero status
+                                       (e.g., due to syntax errors in the input code).
+        Exception: For any other unexpected errors during subprocess execution.
+    """
+    try:
+        # Construct the command for zig fmt to read from stdin
+        command: list[str] = ["zig", "fmt", "--stdin"]
+
+        # Run the subprocess
+        # input: The string to pass to stdin, encoded to bytes
+        # capture_output=True: Capture stdout and stderr
+        # text=True: Decode stdout/stderr as text using default encoding (usually UTF-8)
+        # check=True: Raise CalledProcessError if the command returns a non-zero exit code
+        # encoding='utf-8': Explicitly specify encoding for robustness
+        result: subprocess.CompletedProcess[str] = subprocess.run(
+            command,
+            input=zig_code_string,
+            capture_output=True,
+            text=True,
+            check=True,
+            encoding="utf-8",
+        )
+
+        # The formatted output is in stdout
+        return (
+            result.stdout.strip()
+        )  # .strip() removes any leading/trailing whitespace/newlines
+
+    except FileNotFoundError:
+        # This occurs if the 'zig' executable is not found in PATH
+        raise FileNotFoundError(
+            "The 'zig' executable was not found. "
+            "Please ensure Zig is installed and 'zig' is in your system's PATH."
+        )
+    except subprocess.CalledProcessError as e:
+        # This occurs if 'zig fmt' itself encounters an error (e.g., invalid Zig syntax)
+        error_message: str = f"Zig formatting failed with exit code {e.returncode}:\n"
+        if e.stdout:
+            error_message += f"STDOUT:\n{e.stdout}\n"
+        if e.stderr:
+            error_message += f"STDERR:\n{e.stderr}\n"
+        # Re-raise the original exception with potentially more context
+        raise subprocess.CalledProcessError(
+            returncode=e.returncode,
+            cmd=e.cmd,
+            output=e.output,  # Use e.output for combined stdout/stderr if available, or e.stdout
+            stderr=e.stderr,  # Explicitly pass stderr
+        ) from e
+    except Exception as e:
+        # Catch any other unexpected exceptions
+        raise Exception(f"An unexpected error occurred while formatting Zig code: {e}")
 
 
 """
