@@ -1,45 +1,44 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-
 ##  FILE DESCRIPTION:
 ##      Functions used by lexers
 
-import keyword
 import builtins
+import keyword
 import re
-import functions
-import qt
-import data
 import time
+
+import data
+import qt
+
+import functions
 import lexers
-#import lexers.treesittermake
-#import lexers.treesitterpython
+
+# import lexers.treesittermake
+# import lexers.treesitterpython
+
 
 def set_font(lexer, style_name, style_options):
     style_index = lexer.styles[style_name]
-    lexer.setColor(
-        qt.QColor(style_options["color"]),
-        style_index
-    )
+    lexer.setColor(qt.QColor(style_options["color"]), style_index)
     weight = qt.QFont.Weight.Normal
     if style_options["bold"]:
         weight = qt.QFont.Weight.Bold
-#    elif bold == 2:
-#        weight = qt.QFont.Weight.Black
+    #    elif bold == 2:
+    #        weight = qt.QFont.Weight.Black
     lexer.setFont(
         qt.QFont(
-            data.current_editor_font_name,
-            data.current_editor_font_size,
-            weight=weight
+            data.current_editor_font_name, data.current_editor_font_size, weight=weight
         ),
-        style_index
+        style_index,
     )
+
 
 def get_lexer_from_file_type(file_type):
     current_file_type = file_type
@@ -49,7 +48,7 @@ def get_lexer_from_file_type(file_type):
             lexer = lexers.CustomPython()
         else:
             lexer = lexers.Python()
-#        lexer = lexers.treesitterpython.TreeSitterPython("Python", "python")
+    #        lexer = lexers.treesitterpython.TreeSitterPython("Python", "python")
     elif file_type == "cython":
         lexer = lexers.Cython()
     elif file_type == "c":
@@ -70,7 +69,7 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.Nim()
     elif file_type == "makefile":
         lexer = lexers.Makefile()
-#        lexer = lexers.treesittermake.TreeSitterMakefile("Make", "make")
+    #        lexer = lexers.treesittermake.TreeSitterMakefile("Make", "make")
     elif file_type == "xml":
         lexer = lexers.XML()
     elif file_type == "batch":
@@ -119,11 +118,14 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.SmallBasic()
     elif file_type == "yaml":
         lexer = lexers.YAML()
+    elif file_type == "zig":
+        lexer = lexers.Zig()
     else:
-        #No lexer was chosen, set file type to text and lexer to plain text
+        # No lexer was chosen, set file type to text and lexer to plain text
         current_file_type = "TEXT"
         lexer = lexers.Text()
     return (current_file_type, lexer)
+
 
 def get_comment_style_for_lexer(lexer):
     open_close_comment_style = False
@@ -197,9 +199,7 @@ def get_comment_style_for_lexer(lexer):
         open_close_comment_style = True
         comment_string = "/*"
         end_comment_string = "*/"
+    elif isinstance(lexer, lexers.Zig):
+        comment_string = "//"
     # Save the comment options to the lexer
     return (open_close_comment_style, comment_string, end_comment_string)
-
-
-
-

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -7,10 +7,12 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import data
-import functions
-import lexers
+
 # Tree-sitter modules
 import tree_sitter
+
+import functions
+import lexers
 
 # Relative imports
 from .baselexer import *
@@ -20,8 +22,9 @@ class TreeSitterBaseLexer(BaseLexer):
     """
     Lexer for styling documents with the tree-sitter library
     """
+
     symbols = {}
-    
+
     def __init__(self, name, tree_sitter_lexer, parent=None):
         """
         Overridden initialization
@@ -35,49 +38,51 @@ class TreeSitterBaseLexer(BaseLexer):
         tree_sitter_language = tree_sitter.Language(
             functions.unixify_join(
                 data.resources_directory,
-                "lexers/treesitter_parsers_{}.so".format(data.platform.lower())
+                "lexers/treesitter_parsers_{}.so".format(data.platform.lower()),
             ),
-            self.tree_sitter_lexer
+            self.tree_sitter_lexer,
         )
         self.parser = tree_sitter.Parser()
         self.parser.set_language(tree_sitter_language)
         self.tree = None
-    
-    def text_modified_callback(self,
-                               position,
-                               modificationType,
-                               text,
-                               length,
-                               added,
-                               line,
-                               foldLevelNow,
-                               foldLevelPrev,
-                               token,
-                               annotationLinesAdded):
+
+    def text_modified_callback(
+        self,
+        position,
+        modificationType,
+        text,
+        length,
+        added,
+        line,
+        foldLevelNow,
+        foldLevelPrev,
+        token,
+        annotationLinesAdded,
+    ):
         editor = self.editor()
         if editor is None:
             return
         functions.performance_timer_start()
         # Tree-sitter works with bytes, so we have to adjust the start and end boundaries
         text_bytes = editor.text().encode("utf-8")
-#        self.tree = self.parser.parse(text_bytes)
+        #        self.tree = self.parser.parse(text_bytes)
         if modificationType == editor.SC_MOD_DELETETEXT:
             positions = (
                 position,
-                position+length,
+                position + length,
                 position,
                 position,
-                position+length,
+                position + length,
                 position,
             )
         else:
             positions = (
                 position,
                 position,
-                position+length,
+                position + length,
                 position,
                 position,
-                position+length,
+                position + length,
             )
         if self.tree is not None:
             self.tree.edit(
@@ -88,39 +93,40 @@ class TreeSitterBaseLexer(BaseLexer):
                 old_end_point=(0, positions[4]),
                 new_end_point=(0, positions[5]),
             )
-#            new_tree = self.parser.parse(text_bytes, self.tree)
-#            old_tree = self.tree
-#            self.tree = new_tree
-#            print(len(self.tree.get_changed_ranges(old_tree)))
+            #            new_tree = self.parser.parse(text_bytes, self.tree)
+            #            old_tree = self.tree
+            #            self.tree = new_tree
+            #            print(len(self.tree.get_changed_ranges(old_tree)))
             self.tree = self.parser.parse(text_bytes, self.tree)
         else:
             self.tree = self.parser.parse(text_bytes)
-        
+
         functions.performance_timer_show("CHANGE")
-    
+
     def generate_tree(self, tree, start_byte, end_byte):
         functions.performance_timer_start()
-        
+
         cursor = tree.walk()
         node_list = []
         came_up = False
         level = 0
         while True:
             if not came_up:
-                if cursor.node.start_byte > (start_byte - 50) and \
-                   cursor.node.start_byte < (end_byte + 50):
+                if cursor.node.start_byte > (
+                    start_byte - 50
+                ) and cursor.node.start_byte < (end_byte + 50):
                     new_node = {
                         "type": cursor.node.type,
                         "start": cursor.node.start_byte,
                         "end": cursor.node.end_byte,
                         "level": level,
                     }
-    #                print(
-    #                    " " * level,
-    #                    new_node["type"],
-    #                    "{}:{}".format(new_node["start"],
-    #                    new_node["end"]),
-    #                )
+                    #                print(
+                    #                    " " * level,
+                    #                    new_node["type"],
+                    #                    "{}:{}".format(new_node["start"],
+                    #                    new_node["end"]),
+                    #                )
                     node_list.append(new_node)
                 if cursor.goto_first_child():
                     came_up = False
@@ -141,13 +147,13 @@ class TreeSitterBaseLexer(BaseLexer):
                     came_up = True
                     level -= 1
                     continue
-            
+
             break
-        
+
         functions.performance_timer_show("TREE-GENERATE")
-        
+
         return node_list
-    
+
     def styleText(self, start, end):
         """
         Main styling function, called everytime text changes
@@ -155,38 +161,41 @@ class TreeSitterBaseLexer(BaseLexer):
         editor = self.editor()
         if editor is None:
             return
-        
+
         node_list = self.generate_tree(self.tree, start, end)
-        
+
         functions.performance_timer_start()
-        
+
         # Loop optimizations
         setStyling = self.setStyling
-        
+
         spanning = None
         spanning_end_index = None
         previous_item = None
         last_item = None
         for node in node_list:
-#            print(node)
+            #            print(node)
             if node["start"] < (start - 50):
                 continue
             elif node["start"] > (end + 50):
                 continue
-            
+
             self.startStyling(node["start"])
             length = node["end"] - node["start"]
             _type = node["type"].lower()
             last_item = node
-            
+
             if spanning_end_index is not None and node["start"] > spanning_end_index:
                 spanning = None
                 spanning_end_index = None
-#                print("spanning-end", node["start"])
+            #                print("spanning-end", node["start"])
             if spanning is None:
-                for kk,vv in self.symbols.items():
+                for kk, vv in self.symbols.items():
                     if _type in vv["items"]:
-                        if "previous-special" in vv.keys() and previous_item is not None:
+                        if (
+                            "previous-special" in vv.keys()
+                            and previous_item is not None
+                        ):
                             for ps in vv["previous-special"]:
                                 if ps[0] == previous_item["type"]:
                                     setStyling(length, self.symbols[ps[1]]["index"])
@@ -198,14 +207,14 @@ class TreeSitterBaseLexer(BaseLexer):
                         if vv["is-span"]:
                             spanning = kk
                             spanning_end_index = node["end"]
-#                            print("spanning", kk, node["start"])
+                        #                            print("spanning", kk, node["start"])
                         break
                 else:
-#                    print("NOT FOUND:", f"'{_type}'", bytes(editor.text(), 'utf-8')[node["start"]:node["end"]].decode('utf-8'))
+                    #                    print("NOT FOUND:", f"'{_type}'", bytes(editor.text(), 'utf-8')[node["start"]:node["end"]].decode('utf-8'))
                     setStyling(length, self.styles["default"])
             else:
                 setStyling(length, self.styles[spanning])
-            
+
             previous_item = node
         else:
             if last_item:
@@ -216,9 +225,10 @@ class TreeSitterBaseLexer(BaseLexer):
                 length = end - start
                 if length > 0:
                     setStyling(length, self.styles["default"])
-        
+
         functions.performance_timer_show("STYLE")
-        
+
+
 class TreeSitterLexer(TreeSitterBaseLexer):
     """
     Custom tree-sitter lexer for all supported languages
@@ -237,20 +247,16 @@ class TreeSitterLexer(TreeSitterBaseLexer):
         "number": 8,
         "identifier": 9,
     }
-    
+
     symbols = {
         "comment": {
             "index": styles["comment"],
-            "items": (
-                "comment",
-            ),
+            "items": ("comment",),
             "is-span": True,
         },
         "error": {
             "index": styles["error"],
-            "items": (
-                "error",
-            ),
+            "items": ("error",),
             "is-span": False,
         },
         "string": {
@@ -300,8 +306,7 @@ class TreeSitterLexer(TreeSitterBaseLexer):
                 "abspath",
                 "call",
                 "dir",
-                "error"
-                "filter",
+                "error" "filter",
                 "firstword",
                 "info",
                 "lastword",
@@ -332,35 +337,52 @@ class TreeSitterLexer(TreeSitterBaseLexer):
         },
         "integer": {
             "index": styles["number"],
-            "items": (
-                "integer",
-            ),
+            "items": ("integer",),
             "is-span": False,
         },
         "operator": {
             "index": styles["operator"],
             "items": (
-                "(", ")",
-                "[", "]",
-                "{", "}",
-                "+", "-",
-                "*", "/",
-                ":", "!", "?", "|",
-                ">", "==", "-=", ",", "<<", ">>", 
-                "<", "!=", "=", "**", "%", "<=", ">=",
-                "+=", ".", "escape_sequence"
+                "(",
+                ")",
+                "[",
+                "]",
+                "{",
+                "}",
+                "+",
+                "-",
+                "*",
+                "/",
+                ":",
+                "!",
+                "?",
+                "|",
+                ">",
+                "==",
+                "-=",
+                ",",
+                "<<",
+                ">>",
+                "<",
+                "!=",
+                "=",
+                "**",
+                "%",
+                "<=",
+                ">=",
+                "+=",
+                ".",
+                "escape_sequence",
             ),
             "is-span": False,
         },
         "identifier": {
             "index": styles["identifier"],
-            "items": (
-                "identifier",
-            ),
+            "items": ("identifier",),
             "is-span": False,
         },
     }
-    
+
     # Characters that autoindent one level on pressing Return/Enter
     autoindents = {
         "make": [":"],
@@ -375,4 +397,3 @@ class TreeSitterLexer(TreeSitterBaseLexer):
         super().__init__(name, tree_sitter_lexer, parent)
         # Initialize autoindentation characters
         self.autoindent_characters = self.autoindents[tree_sitter_lexer]
-        

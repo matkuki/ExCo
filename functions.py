@@ -278,6 +278,8 @@ def get_language_file_icon(language_name):
         return create_icon("language_icons/logo_xml.png")
     elif language_name == "yaml":
         return create_icon("language_icons/logo_yaml.png")
+    elif language_name == "zig":
+        return create_icon("language_icons/logo_zig.png")
     elif language_name == "text":
         return create_icon("tango_icons/text-x-generic.png")
     else:

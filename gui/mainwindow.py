@@ -6518,6 +6518,14 @@ QSplitter::handle {{
                 create_lexer(lexers.YAML, "YAML"),
                 lexers_menu,
             )
+            Zig_action = create_action(
+                "Zig",
+                None,
+                "Change document lexer to: Zig",
+                "language_icons/logo_zig.png",
+                create_lexer(lexers.Zig, "Zig"),
+                lexers_menu,
+            )
             CSharp_action = create_action(
                 "C#",
                 None,
@@ -6629,6 +6637,7 @@ QSplitter::handle {{
             lexers_menu.addAction(VHDL_action)
             lexers_menu.addAction(XML_action)
             lexers_menu.addAction(YAML_action)
+            lexers_menu.addAction(Zig_action)
             # Clean-up the stored menus
             """
             This is needed only because the lexer menu is created on the fly!

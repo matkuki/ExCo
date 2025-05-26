@@ -1,19 +1,20 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import keyword
 import builtins
+import keyword
 import re
-import functions
-import qt
-import data
 import time
+
+import data
+import functions
 import lexers
+import qt
 
 
 class Python(qt.QsciLexerPython):
@@ -45,6 +46,9 @@ class Python(qt.QsciLexerPython):
         "TripleSingleQuotedFString": 18,
         "TripleDoubleQuotedFString": 19,
     }
+
+    # Characters that autoindent one level on pressing Return/Enter
+    autoindent_characters = [":"]
 
     def __init__(self, parent=None, additional_keywords=[]):
         """Overridden initialization"""
@@ -251,7 +255,6 @@ class CustomPython(qt.QsciLexerCustom):
 
             # Style the tokens accordingly
             for i, token in enumerate(tokens):
-                #                print(token[0].encode("utf-8"))
                 token_name = token[0]
                 token_length = token[1]
                 if sequence != None:

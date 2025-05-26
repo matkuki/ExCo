@@ -8,7 +8,6 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import enum
 
-
 # File extension lists
 supported_file_extentions = {
     # "assembly": [".s", ".S", ".Asm"],
@@ -72,6 +71,7 @@ supported_file_extentions = {
     "text": [".txt", ".text"],
     "xml": [".xml", ".tpy"],
     "yaml": [".yml", ".yaml"],
+    "zig": [".zig", ".zon"],
 }
 
 

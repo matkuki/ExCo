@@ -37,6 +37,7 @@ from lexers.spice import *
 from lexers.smallbasic import *
 from lexers.skill import *
 from lexers.text import *
+from lexers.zig import *
 
 from lexers.builtin import *
 
