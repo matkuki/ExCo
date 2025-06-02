@@ -192,6 +192,8 @@ class SessionGuiManipulator(qt.QTreeView):
                 self.refresh_display()
             elif changed_item.type == self.ItemType.GROUP:
                 self.reset_locks()
+                # Update sessions
+                self.settings_manipulator.load_settings()
                 # Item is a group
                 old_group_name = item.name
                 new_group_name = self.indexWidget(item.index()).text()
@@ -201,8 +203,8 @@ class SessionGuiManipulator(qt.QTreeView):
                 group = parent_group["groups"].pop(old_group_name)
                 item.name = new_group_name
                 item.setEditable(False)
-                parent_group["groups"][new_group_name] = group
                 self.settings_manipulator.rename_group(group, new_group_name)
+                parent_group["groups"][new_group_name] = group
                 # Save the the new session list by saving the settings
                 self.settings_manipulator.save_settings(
                     data.theme

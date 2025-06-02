@@ -500,15 +500,15 @@ class SettingsFileManipulator:
         return group
     
     def rename_group(self, group, new_group_name):
-        # Update sessions
-        self.load_settings()
-        
         def rename_first_group(grp, new_name, in_level):
+            if in_level < len(grp["chain"]):
+                return
             grp["chain"][in_level] = new_name
             for k,v in grp["groups"].items():
                 rename_first_group(v, new_name, in_level)
             for k,v in grp["sessions"].items():
                 v["chain"][in_level] = new_name
+        
         level = len(group["chain"]) - 1
         rename_first_group(group, new_group_name, level)
         group["name"] = new_group_name
