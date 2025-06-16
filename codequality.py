@@ -5,6 +5,7 @@ Prettyfying functions
 import enum
 import html
 import html.parser
+import importlib.util
 import io
 import json
 import pathlib
@@ -365,6 +366,10 @@ def run_ruff_on_code_snippet(
     if ruff_args is None:
         ruff_args = []
 
+    spec = importlib.util.find_spec("ruff")
+    if spec is None:
+        raise RuntimeError(f"Ruff is not installed!")
+
     # Determine creationflags for Windows to prevent console window pop-up
     creation_flags = 0
     if sys.platform == "win32":
@@ -374,7 +379,13 @@ def run_ruff_on_code_snippet(
         file_path: pathlib.Path = pathlib.Path(tmpdir) / "temp_ruff_code.py"
         file_path.write_text(code, encoding="utf-8")
 
-        command: List[str] = ["ruff", str(ruff_subcommand), str(file_path)] + ruff_args
+        command: List[str] = [
+            "python",
+            "-m",
+            "ruff",
+            str(ruff_subcommand),
+            str(file_path),
+        ] + ruff_args
 
         try:
             result: subprocess.CompletedProcess[str] = subprocess.run(
@@ -383,7 +394,7 @@ def run_ruff_on_code_snippet(
                 text=True,
                 encoding="utf-8",
                 check=False,
-                creationflags=creation_flags, # Added for Windows console suppression
+                creationflags=creation_flags,  # Added for Windows console suppression
             )
 
             # If the command modifies the file in place, read the updated content
@@ -394,13 +405,9 @@ def run_ruff_on_code_snippet(
                 except Exception as e:
                     # Log or handle error if file read fails after command
                     print(f"Warning: Could not read modified file content: {e}")
-                    stdout_output = "" # Return empty or original code as fallback
+                    stdout_output = ""  # Return empty or original code as fallback
 
             return result.returncode, stdout_output, result.stderr
-        except FileNotFoundError:
-            raise RuntimeError(
-                "Ruff executable not found. Make sure Ruff is installed and accessible in your PATH."
-            )
         except Exception as e:
             raise RuntimeError(f"An unexpected error occurred while running Ruff: {e}")
 
@@ -428,12 +435,16 @@ def run_ruff_command(
     if ruff_args is None:
         ruff_args = []
 
+    spec = importlib.util.find_spec("ruff")
+    if spec is None:
+        raise RuntimeError(f"Ruff is not installed!")
+
     # Determine creationflags for Windows to prevent console window pop-up
     creation_flags = 0
     if sys.platform == "win32":
         creation_flags = subprocess.CREATE_NO_WINDOW
 
-    command: List[str] = ["ruff", str(ruff_subcommand)] + ruff_args
+    command: List[str] = ["python", "-m", "ruff", str(ruff_subcommand)] + ruff_args
 
     try:
         result: subprocess.CompletedProcess[str] = subprocess.run(
@@ -442,7 +453,7 @@ def run_ruff_command(
             text=True,
             encoding="utf-8",
             check=False,
-            creationflags=creation_flags, # Added for Windows console suppression
+            creationflags=creation_flags,  # Added for Windows console suppression
         )
         return result.returncode, result.stdout, result.stderr
     except FileNotFoundError:
@@ -552,6 +563,10 @@ def analyze_pyflakes_file(
     if pyflakes_args is None:
         pyflakes_args = []
 
+    spec = importlib.util.find_spec("pyflakes")
+    if spec is None:
+        raise RuntimeError(f"Pyflakes is not installed!")
+
     if not isinstance(file_path, pathlib.Path):
         file_path = pathlib.Path(file_path)
 
@@ -567,7 +582,12 @@ def analyze_pyflakes_file(
         creation_flags = subprocess.CREATE_NO_WINDOW
 
     try:
-        command: List[str] = ["pyflakes", str(file_path)] + pyflakes_args
+        command: List[str] = [
+            "python",
+            "-m",
+            "pyflakes",
+            str(file_path),
+        ] + pyflakes_args
 
         result: subprocess.CompletedProcess[str] = subprocess.run(
             command,
