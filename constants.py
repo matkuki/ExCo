@@ -74,6 +74,10 @@ supported_file_extentions = {
     "zig": [".zig", ".zon"],
 }
 
+# Special tab names
+class SpecialTabNames(enum.Enum):
+    Messages = "Messages"
+    FileExplorer = "File explorer"
 
 # Global enumerations
 class FileStatus(enum.Enum):

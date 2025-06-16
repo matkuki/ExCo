@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """
 Copyright (c) 2013-present Matic Kukovec. 
 Released under the GNU GPL3 license.

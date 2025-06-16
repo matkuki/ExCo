@@ -18,6 +18,7 @@ import re
 import traceback
 from typing import *
 
+import codequality
 import components.actionfilter
 import components.communicator
 import components.processcontroller
@@ -2267,7 +2268,7 @@ class MainWindow(qt.QMainWindow):
 
             def open_general_explorer():
                 file_explorer = self.get_helper_window().tree_add_tab(
-                    data.file_explorer_tab_name, TreeExplorer
+                    constants.SpecialTabNames.FileExplorer.value, TreeExplorer
                 )
                 file_explorer.display_directory(os.getcwd())
                 file_explorer.open_file_signal.connect(self.open_file)
@@ -2849,7 +2850,7 @@ class MainWindow(qt.QMainWindow):
 
             # === Code formatting ===
             # Menu
-            formatting_menu = tools_menu.addMenu("Code formatting")
+            formatting_menu = tools_menu.addMenu("Formatting")
             temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
             formatting_menu.setIcon(temp_icon)
 
@@ -2885,9 +2886,9 @@ class MainWindow(qt.QMainWindow):
                     format_python_formatting_selection_func_generator(fl),
                 )
                 formatting_menu_python.addAction(format_python_action)
-            
+
             formatting_menu_python.addSeparator()
-            
+
             # Entire file
             def format_python_formatting_entire_text_func_generator(library_name: str):
                 def format_python_entire_text_func(code: str):
@@ -2969,6 +2970,36 @@ class MainWindow(qt.QMainWindow):
                 format_zig,
             )
             formatting_menu_zip.addAction(format_zig_action)
+
+            # === Analyzing ===
+            # Menu
+            analyzing_menu = tools_menu.addMenu("Analyzing")
+            temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
+            analyzing_menu.setIcon(temp_icon)
+            
+            analyzing_libraries = (
+                "ruff",
+                "pyflakes",
+            )
+            
+            def analyze_python_file_func_generator(library_name: str):
+                def analyze_python_file_func():
+                    try:
+                        self.tools.analyze_python_file(library_name)
+                    except:
+                        self.display.repl_display_error(traceback.format_exc())
+
+                return analyze_python_file_func
+
+            for al in analyzing_libraries:
+                analyze_python_action = create_action(
+                    f"Analyze Python file - {al}",
+                    None,
+                    f"Analyze Python document using the {al} library",
+                    "language_icons/logo_python.png",
+                    analyze_python_file_func_generator(al),
+                )
+                analyzing_menu.addAction(analyze_python_action)
 
             # === Pretty printing ===
             # Menu
@@ -4247,7 +4278,7 @@ class MainWindow(qt.QMainWindow):
                 )
                 for w in reversed(widgets):
                     widget, tab_text = w
-                    if tab_text == "REPL MESSAGES":
+                    if tab_text == constants.SpecialTabNames.Messages.value:
                         continue
                     largest_window.addTab(widget, tab_text)
                     if hasattr(widget, "_parent"):
@@ -4560,7 +4591,7 @@ QSplitter::handle {{
             classes = {
                 "CustomEditor": CustomEditor,
                 "PlainEditor": PlainEditor,
-                data.repl_messages_tab_name: PlainEditor,
+                constants.SpecialTabNames.Messages.value: PlainEditor,
                 "TreeDisplay": TreeDisplay,
                 "TreeExplorer": TreeExplorer,
                 "HexView": HexView,
@@ -4759,7 +4790,7 @@ QSplitter::handle {{
                                     directory_path = widget_data[0]
                                     if os.path.isdir(directory_path):
                                         file_explorer = new_tabs.tree_add_tab(
-                                            data.file_explorer_tab_name, TreeExplorer
+                                            constants.SpecialTabNames.FileExplorer.value, TreeExplorer
                                         )
                                         file_explorer.display_directory(directory_path)
                                         file_explorer.open_file_signal.connect(
@@ -4785,10 +4816,10 @@ QSplitter::handle {{
                                     ):
                                         new_terminal.set_cwd(working_path)
 
-                                elif cls == data.repl_messages_tab_name:
+                                elif cls == constants.SpecialTabNames.Messages.value:
                                     self._parent.repl_messages_tab = (
                                         new_tabs.plain_add_document(
-                                            data.repl_messages_tab_name
+                                            constants.SpecialTabNames.Messages.value
                                         )
                                     )
                                     rmt = self._parent.repl_messages_tab
@@ -5578,7 +5609,7 @@ QSplitter::handle {{
             # Create a new REPL tab in the lower basic widget if it doesn't exist
             if parent.repl_messages_tab is None:
                 parent.repl_messages_tab = parent.get_repl_window().plain_add_document(
-                    data.repl_messages_tab_name
+                    constants.SpecialTabNames.Messages.value
                 )
                 rmt = parent.repl_messages_tab
                 rmt.internals.set_icon(rmt, self.repl_messages_icon)
@@ -5703,7 +5734,7 @@ QSplitter::handle {{
             """Find the "REPL Message" tab in the basic widgets of the MainForm"""
             # Call the MainForm function to find the repl tab by name
             self._parent.repl_messages_tab = self._parent.get_tab_by_name(
-                data.repl_messages_tab_name
+                constants.SpecialTabNames.Messages.value
             )
             return self._parent.repl_messages_tab
 
@@ -6928,18 +6959,16 @@ QSplitter::handle {{
                 return
 
             if _type == constants.FormatterType.JSON:
-                prettyfied_string = functions.pretty_print_json(tab.text())
+                prettyfied_string = codequality.pretty_print_json(tab.text())
             elif _type == constants.FormatterType.XML:
-                prettyfied_string = functions.pretty_print_xml(tab.text())
+                prettyfied_string = codequality.pretty_print_xml(tab.text())
             elif _type == constants.FormatterType.HTML_Python_Standard_Library:
-                prettyfied_string = functions.pretty_print_html_python_stdlib(
+                prettyfied_string = codequality.pretty_print_html_python_stdlib(
                     tab.text()
                 )
             elif _type == constants.FormatterType.HTML_BeautifulSoup:
                 prettyfied_string = (
-                    libraryfunctions.custom_format_html_document_beautifulsoup(
-                        tab.text()
-                    )
+                    codequality.custom_format_html_document_beautifulsoup(tab.text())
                 )
             else:
                 self._parent.display.repl_display_error(
@@ -6962,7 +6991,7 @@ QSplitter::handle {{
             cursor_line, cursor_index = tab.getCursorPosition()
             code = tab.text()
 
-            formatted_code = libraryfunctions.format_python_code(code, library)
+            formatted_code = codequality.format_python_code(code, library)
 
             tab.set_all_text(formatted_code)
 
@@ -6985,7 +7014,7 @@ QSplitter::handle {{
 
             code = tab.selectedText()
 
-            formatted_code = libraryfunctions.format_python_code(code, library)
+            formatted_code = codequality.format_python_code(code, library)
 
             tab.replaceSelectedText(formatted_code)
 
@@ -7005,7 +7034,9 @@ QSplitter::handle {{
             code = tab.text()
 
             if library == "clang-format":
-                formatted_code = functions.format_c_cpp(source_code=code, style=style)
+                formatted_code = codequality.format_clangformat_c_cpp(
+                    source_code=code, style=style
+                )
 
             else:
                 raise Exception(
@@ -7032,9 +7063,39 @@ QSplitter::handle {{
             cursor_line, cursor_index = tab.getCursorPosition()
             code = tab.text()
 
-            formatted_code = functions.format_zig_code(zig_code_string=code)
+            formatted_code = codequality.format_zig_code(zig_code_string=code)
 
             tab.set_all_text(formatted_code)
 
             tab.setCursorPosition(cursor_line, cursor_index)
             tab.setFirstVisibleLine(first_line)
+        
+        def analyze_python_file(self, library: str) -> None:
+            tab = self._parent.get_tab_by_indication()
+
+            if not hasattr(tab, "save_name"):
+                self._parent.display.repl_display_error(
+                    f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
+                )
+                return
+            
+            file_path = tab.save_name
+            
+            if library == "ruff":
+                exit_code, analysis_results_or_error = codequality.analyze_ruff_file(file_path)
+                if exit_code != 0:
+                    self._parent.display.repl_display_message(analysis_results_or_error)
+                else:
+                    self._parent.display.repl_display_success("Ruff says everything is ok.")
+            
+            elif library == "pyflakes":
+                exit_code, stdout, stderr = codequality.analyze_pyflakes_file(file_path)
+                if exit_code != 0:
+                    self._parent.display.repl_display_message(stdout)
+                else:
+                    self._parent.display.repl_display_success("Pyflakes says everything is ok.")
+
+            else:
+                raise Exception(
+                    f"[PYTHON-ANALYZING] Unknown analyzer library selected: '{library}'"
+                )
