@@ -42,19 +42,4 @@ All additional licenses are specified at the beginning of every source code file
 
 ### Requirements: ###
 - __Python__ 3.6 or higher
-- __Packages__ ( install them with: `pip install -r requirements.txt` ):
-  - hy
-  - psutil
-  - pyte
-  - PyQt6
-  - QScintilla
-  - fpdf2
-  - black
-  - autopep8
-  - yapf
-  - clang-format
-  - ruff
-  - isort
-  - ptyprocess (Linux only)
-  - pywin32 (Windows only)
-  - pywinpty (Windows only)
+- __Packages__ install them with: `pip install -r requirements.txt` (check the file for more details)
