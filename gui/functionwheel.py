@@ -7,11 +7,12 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import functools
-import qt
-import data
-import settings
+
 import constants
+import data
 import functions
+import qt
+import settings
 
 from .custombuttons import *
 from .customeditor import *
@@ -19,14 +20,11 @@ from .plaineditor import *
 from .textdiffer import *
 
 
-"""
-----------------------------------------------------------------
-Overlay helper widget for visually selecting an Ex.Co. function
-----------------------------------------------------------------
-"""
-
-
 class FunctionWheel(qt.QFrame):
+    """
+    Overlay helper widget for visually selecting an Ex.Co. function
+    """
+
     SIZE = (640, 560)
     # Class variables
     _parent = None
@@ -118,7 +116,10 @@ class FunctionWheel(qt.QFrame):
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
         # Generate positions/size
-        size = (settings.get("standard_button_size"), settings.get("standard_button_size"))
+        size = (
+            settings.get("standard_button_size"),
+            settings.get("standard_button_size"),
+        )
         start = (0, 0)
         row = 0
         col = 0
@@ -1126,7 +1127,9 @@ class ButtonInfo:
         input_pixmap,
         input_function,
         input_function_text,
-        input_font=qt.QFont(settings.get("current_font_name"), 14, weight=qt.QFont.Weight.Bold),
+        input_font=qt.QFont(
+            settings.get("current_font_name"), 14, weight=qt.QFont.Weight.Bold
+        ),
         input_focus_last_widget=constants.HexButtonFocus.NONE,
         input_no_tab_focus_disable=False,
         input_no_document_focus_disable=True,

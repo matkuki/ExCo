@@ -6,13 +6,16 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import keyword
 import builtins
+import keyword
 import re
-import functions
-import qt
-import data
 import time
+
+import data
+import qt
+import settings
+
+import functions
 import lexers
 
 
