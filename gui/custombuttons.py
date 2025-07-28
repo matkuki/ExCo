@@ -4,108 +4,107 @@ Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
+
+Custom buttons used by the FunctionWheel and ContextMenuHex in the forms module
 """
 
 import math
 import traceback
+from typing import Optional
 
-import qt
-import data
-import constants
-import functions
 import components.hexbuilder
+import constants
+import data
+import functions
+import qt
+import settings
 
 
-"""
------------------------------------------------------------------------------------
-Custom buttons used by the FunctionWheel and ContextMenuHex in the forms module
------------------------------------------------------------------------------------
-"""
 class CustomButton(qt.QLabel):
     """
     Custom button used for displaying and executing Ex.Co. functions
     """
-    #Class variables
-    group_box_parent    = None
-    main_form           = None
-    stored_pixmap       = None
-    stored_font         = None
-    stored_hex          = None
-    function            = None
-    function_text       = None
-    stored_opacity      = 0.0
-    focus_last_widget   = True
-    no_tab_focus_disable       = False
-    no_document_focus_disable  = True
+
+    # Class variables
+    group_box_parent = None
+    main_form = None
+    stored_pixmap = None
+    stored_font = None
+    stored_hex = None
+    function = None
+    function_text = None
+    stored_opacity = 0.0
+    focus_last_widget = True
+    no_tab_focus_disable = False
+    no_document_focus_disable = True
     check_last_tab_type = False
-    check_text_differ   = None
-    tool_tip            = None
-    scale               = (1, 1)
+    check_text_differ = None
+    tool_tip = None
+    scale = (1, 1)
     # Class constants
-    OPACITY_LOW         = 0.5
-    OPACITY_HIGH        = 1.0
+    OPACITY_LOW = 0.5
+    OPACITY_HIGH = 1.0
     """
     This was measured by hand
     """
-    INNER_IMAGE_OFFSET  = (18, 13)
+    INNER_IMAGE_OFFSET = (18, 13)
     """
     This should be the actual pixel dimensions of the hex image file
     """
-    HEX_IMAGE_SIZE      = (68, 60)
+    HEX_IMAGE_SIZE = (68, 60)
 
-
-    def __init__(self,
-                 parent,
-                 main_form,
-                 input_pixmap,
-                 input_function=None,
-                 input_function_text="",
-                 input_font=qt.QFont(
-                 'Courier', 14, weight=qt.QFont.Weight.Bold
-                 ),
-                 input_focus_last_widget=constants.HexButtonFocus.NONE,
-                 input_no_tab_focus_disable=False,
-                 input_no_document_focus_disable=True,
-                 input_check_last_tab_type=False,
-                 input_check_text_differ=False,
-                 input_tool_tip=None,
-                 input_scale=(1, 1)):
-        #Initialize superclass
+    def __init__(
+        self,
+        parent,
+        main_form,
+        input_pixmap,
+        input_function=None,
+        input_function_text="",
+        input_font=qt.QFont("Courier", 14, weight=qt.QFont.Weight.Bold),
+        input_focus_last_widget=constants.HexButtonFocus.NONE,
+        input_no_tab_focus_disable=False,
+        input_no_document_focus_disable=True,
+        input_check_last_tab_type=False,
+        input_check_text_differ=False,
+        input_tool_tip=None,
+        input_scale=(1, 1),
+    ):
+        # Initialize superclass
         super().__init__(parent)
-        #Store the reference to the parent
+        # Store the reference to the parent
         self._parent = parent
-        #Store the reference to the main form
+        # Store the reference to the main form
         self.main_form = main_form
         # Set default font
-        self.setFont(data.get_current_font())
-        #Store the reference to the group box that holds the parent
-        #(the parent of the parent)
+        self.setFont(settings.get_current_font())
+        # Store the reference to the group box that holds the parent
+        # (the parent of the parent)
         self.group_box_parent = parent.parent
-        #Store the main function image
+        # Store the main function image
         self.stored_pixmap = input_pixmap
-        #Store the hex edge image
+        # Store the hex edge image
         self.__create_hex_pixmap()
-        #Store the function that will be executed on the click event
+        # Store the function that will be executed on the click event
         self.function = input_function
-        #Store the function text
+        # Store the function text
         self.function_text = input_function_text
-        #Set the attribute that will be check if focus update is needed
-        #when the custom button executes its function
+        # Set the attribute that will be check if focus update is needed
+        # when the custom button executes its function
         self.focus_last_widget = input_focus_last_widget
-        #Set the attribute that checks if any tab is focused
+        # Set the attribute that checks if any tab is focused
         self.no_tab_focus_disable = input_no_tab_focus_disable
-        #Set the attribute that will be check if button will be disabled
-        #if there is no focused document tab
+        # Set the attribute that will be check if button will be disabled
+        # if there is no focused document tab
         self.no_document_focus_disable = input_no_document_focus_disable
-        #Set checking the save state stored in the main form
+        # Set checking the save state stored in the main form
         self.check_last_tab_type = input_check_last_tab_type
-        #Set checking for if the focused tab is a text differer
+        # Set checking for if the focused tab is a text differer
         self.check_text_differ = input_check_text_differ
-        #Set the font that will be used with the button
+        # Set the font that will be used with the button
         self.stored_font = input_font
-        #Enable mouse move events
+        # Enable mouse move events
         self.setMouseTracking(True)
-        #Set the tooltip if it was set
+        # Set the tooltip if it was set
         if input_tool_tip != None:
             self.setToolTip(input_tool_tip)
         self.setToolTipDuration(0)
@@ -115,28 +114,25 @@ class CustomButton(qt.QLabel):
     @staticmethod
     def __create_hex_pixmap():
         if CustomButton.stored_hex is None:
-            #CustomButton.stored_hex = functions.create_pixmap("various/hex-button-edge.png")
+            # CustomButton.stored_hex = functions.create_pixmap("various/hex-button-edge.png")
             hex_image_size = CustomButton.HEX_IMAGE_SIZE
             hex_edge_length = 29
             hex_edge_width = 4
             image = qt.QImage(
-                *hex_image_size,
-                qt.QImage.Format.Format_ARGB32_Premultiplied
+                *hex_image_size, qt.QImage.Format.Format_ARGB32_Premultiplied
             )
             image.fill(qt.Qt.GlobalColor.transparent)
             painter = qt.QPainter()
             painter.begin(image)
 
             hex_builder = components.hexbuilder.HexBuilder(
-                painter,
-                (0, 0),
-                hex_edge_length
+                painter, (0, 0), hex_edge_length
             )
             hex_builder.draw_full_hexagon(
-                (int(hex_image_size[0]/2)+1, int(hex_image_size[1]/2)),
-                qt.QColor(data.theme["indication"]["passivebackground"]),
+                (int(hex_image_size[0] / 2) + 1, int(hex_image_size[1] / 2)),
+                qt.QColor(settings.get_theme()["indication"]["passivebackground"]),
                 hex_edge_width,
-                qt.QColor(data.theme["context-menu-hex-edge"]),
+                qt.QColor(settings.get_theme()["context-menu-hex-edge"]),
             )
             painter.end()
             CustomButton.stored_hex = qt.QPixmap.fromImage(image)
@@ -153,7 +149,7 @@ class CustomButton(qt.QLabel):
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
-            transformMode=qt.Qt.TransformationMode.SmoothTransformation
+            transformMode=qt.Qt.TransformationMode.SmoothTransformation,
         )
         # Scale the hex image
         hex_image = self.stored_hex
@@ -162,8 +158,8 @@ class CustomButton(qt.QLabel):
             math.ceil(hex_image.size().height() * self.scale[1]),
         )
         image = qt.QImage(
-            scaled_size, #hex_image.size(),
-            qt.QImage.Format.Format_ARGB32_Premultiplied
+            scaled_size,  # hex_image.size(),
+            qt.QImage.Format.Format_ARGB32_Premultiplied,
         )
         image.fill(qt.Qt.GlobalColor.transparent)
         # Create and initialize the QPainter that will manipulate the QImage
@@ -194,7 +190,7 @@ class CustomButton(qt.QLabel):
                 math.ceil(button_image.size().width() * self.scale[0]),
                 math.ceil(button_image.size().height() * self.scale[1]),
             ),
-            transformMode=qt.Qt.TransformationMode.SmoothTransformation
+            transformMode=qt.Qt.TransformationMode.SmoothTransformation,
         )
         # Scale the hex image
         hex_image = self.stored_hex
@@ -207,7 +203,7 @@ class CustomButton(qt.QLabel):
             qt.QImage.Format.Format_ARGB32_Premultiplied,
         )
         image.fill(qt.Qt.GlobalColor.transparent)
-#        image.fill(data.theme["context-menu-background"])
+        #        image.fill(settings.get_theme()["context-menu-background"])
         # Create and initialize the QPainter that will manipulate the QImage
         button_painter = qt.QPainter(image)
         button_painter.setCompositionMode(
@@ -220,7 +216,7 @@ class CustomButton(qt.QLabel):
                 math.ceil(hex_image.size().width() * self.scale[0]),
                 math.ceil(hex_image.size().height() * self.scale[1]),
             ),
-            transformMode=qt.Qt.TransformationMode.SmoothTransformation
+            transformMode=qt.Qt.TransformationMode.SmoothTransformation,
         )
         # Adjust inner button positioning according to the scale
         button_painter.drawPixmap(0, 0, hex_image)
@@ -239,33 +235,32 @@ class CustomButton(qt.QLabel):
             int(offset[0]),
             int(offset[1]),
             math.ceil(self.scale[0] * self.HEX_IMAGE_SIZE[0]),
-            math.ceil(self.scale[0] * self.HEX_IMAGE_SIZE[1])
+            math.ceil(self.scale[0] * self.HEX_IMAGE_SIZE[1]),
         )
 
     def mousePressEvent(self, event):
         """Overloaded widget click event"""
-        #Execute the superclass mouse click event first
+        # Execute the superclass mouse click event first
         super().mousePressEvent(event)
-        #Execute the function if it was initialized
+        # Execute the function if it was initialized
         if self.function != None:
             try:
-                #Set focus to the last focused widget stored on the main form
+                # Set focus to the last focused widget stored on the main form
                 if self.focus_last_widget == constants.HexButtonFocus.TAB:
                     self.main_form.last_focused_widget.currentWidget().setFocus()
                 elif self.focus_last_widget == constants.HexButtonFocus.WINDOW:
                     self.main_form.last_focused_widget.setFocus()
-                #Store the executed function for next cursor placement
+                # Store the executed function for next cursor placement
                 self.main_form.view.last_executed_function_text = self.function_text
-                #Execute the buttons stored function
+                # Execute the buttons stored function
                 self.function()
             except:
                 traceback.print_exc()
                 message = "You need to focus one of the editor windows first!"
                 self.main_form.display.repl_display_message(
-                    message,
-                    message_type=constants.MessageType.ERROR
+                    message, message_type=constants.MessageType.ERROR
                 )
-            #Close the function wheel
+            # Close the function wheel
             self._parent.hide()
 
     def mouseMoveEvent(self, event):
@@ -277,34 +272,34 @@ class CustomButton(qt.QLabel):
     def enterEvent(self, event):
         """Overloaded widget enter event"""
         super().enterEvent(event)
-        #Bring the widget to the front of the Z-axis stack
+        # Bring the widget to the front of the Z-axis stack
         self.raise_()
-        #Highlight the widget only if it's enabled
+        # Highlight the widget only if it's enabled
         if self.isEnabled() == True:
             self.highlight()
 
     def leaveEvent(self, event):
         """Overloaded widget leave event"""
         super().leaveEvent(event)
-        #Dim the widget only if it's enabled
+        # Dim the widget only if it's enabled
         if self.isEnabled() == True:
             self.dim()
 
     def dim(self, clear_hex_edge=False):
         """Set the buttons opacity to low and clear the function text"""
-        #Set the opacity to low
+        # Set the opacity to low
         if clear_hex_edge == True:
             self._set_opacity(self.OPACITY_LOW)
         else:
             self._set_opacity_with_hex_edge(self.OPACITY_LOW)
-        #Clear the text in the parent display label
+        # Clear the text in the parent display label
         self._parent.display("", self.stored_font)
 
     def highlight(self):
         """Set the buttons opacity to high and display the buttons function text"""
-        #Set the opacity to full
+        # Set the opacity to full
         self._set_opacity_with_hex_edge(self.OPACITY_HIGH)
-        #Display the stored function text
+        # Display the stored function text
         self._parent.display(self.function_text, self.stored_font)
 
 
@@ -314,106 +309,100 @@ class DoubleButton(CustomButton):
     used for when double functionality is needed, for example when
     a function has a version with or without a dialog window.
     """
-    #The extra button reference
-    parent                      = None
-    main_form                   = None
-    extra_button                = None
-    extra_button_size_factor    = 1/3
-    extra_button_position       = functions.create_point(0, 0)
-    extra_button_stored_opacity = None
-    extra_button_stored_pixmap  = None
-    extra_button_function       = None
-    extra_button_function_text  = None
-    #Class constants
-    OPACITY_LOW                 = 0.5
-    OPACITY_HIGH                = 1.0
 
-    def init_extra_button(self,
-                          parent,
-                          main_form,
-                          input_extra_pixmap,
-                          input_extra_function=None,
-                          input_extra_function_text=""):
-        #Store the parent and main form references
-        self._parent     = parent
-        self.main_form  = main_form
-        #Initialize the extra button
+    # The extra button reference
+    parent = None
+    main_form = None
+    extra_button = None
+    extra_button_size_factor = 1 / 3
+    extra_button_position = functions.create_point(0, 0)
+    extra_button_stored_opacity = None
+    extra_button_stored_pixmap = None
+    extra_button_function = None
+    extra_button_function_text = None
+    # Class constants
+    OPACITY_LOW = 0.5
+    OPACITY_HIGH = 1.0
+
+    def init_extra_button(
+        self,
+        parent,
+        main_form,
+        input_extra_pixmap,
+        input_extra_function=None,
+        input_extra_function_text="",
+    ):
+        # Store the parent and main form references
+        self._parent = parent
+        self.main_form = main_form
+        # Initialize the extra button
         self.extra_button = qt.QLabel(self)
-        width   = int(self.geometry().width() * self.extra_button_size_factor)
-        height  = int(self.geometry().height() * self.extra_button_size_factor)
+        width = int(self.geometry().width() * self.extra_button_size_factor)
+        height = int(self.geometry().height() * self.extra_button_size_factor)
         self.extra_button_position = functions.create_point(
-            int(self.geometry().width()*2/3-width),
-            int(self.geometry().height()*1/4)
+            int(self.geometry().width() * 2 / 3 - width),
+            int(self.geometry().height() * 1 / 4),
         )
         rectangle = functions.create_rect(
-            self.extra_button_position,
-            functions.create_size(width, height)
+            self.extra_button_position, functions.create_size(width, height)
         )
         self.extra_button.setGeometry(rectangle)
         self.extra_button_stored_pixmap = input_extra_pixmap
         self.extra_button.setPixmap(input_extra_pixmap)
         self.extra_button.setScaledContents(True)
-        #Store the function options
-        self.extra_button_function      = input_extra_function
+        # Store the function options
+        self.extra_button_function = input_extra_function
         self.extra_button_function_text = input_extra_function_text
-        #Set the extra button opacity to low
+        # Set the extra button opacity to low
         self._set_extra_button_opacity(self.OPACITY_LOW)
-        #Overridden the extra buttons events
-        self.extra_button.mousePressEvent   = self.extra_button_click
-        self.extra_button.enterEvent        = self.extra_button_enter_event
-        self.extra_button.leaveEvent        = self.extra_button_leave_event
+        # Overridden the extra buttons events
+        self.extra_button.mousePressEvent = self.extra_button_click
+        self.extra_button.enterEvent = self.extra_button_enter_event
+        self.extra_button.leaveEvent = self.extra_button_leave_event
 
     def extra_button_click(self, event):
         """mousePressEvent for the extra button"""
-        #Execute the function if it was initialized
+        # Execute the function if it was initialized
         if self.extra_button_function != None:
             try:
-                #Set focus to the last focused widget stored on the main form
+                # Set focus to the last focused widget stored on the main form
                 if self.focus_last_widget == constants.HexButtonFocus.TAB:
                     self.main_form.last_focused_widget.currentWidget().setFocus()
                 elif self.focus_last_widget == constants.HexButtonFocus.WINDOW:
                     self.main_form.last_focused_widget.setFocus()
-                #Store the executed function for next cursor placement
+                # Store the executed function for next cursor placement
                 self.main_form.view.last_executed_function_text = self.function_text
-                #Execute the buttons stored function
+                # Execute the buttons stored function
                 self.extra_button_function()
             except Exception as ex:
                 message = "You need to focus one of the editor windows first!"
                 self.main_form.display.repl_display_error(message)
-            #Close the function wheel
+            # Close the function wheel
             self._parent.hide()
 
     def extra_button_enter_event(self, event):
         """Overloaded widget enter event"""
-        #Check if the button is enabled
+        # Check if the button is enabled
         if self.isEnabled() == True:
             self._set_extra_button_opacity(self.OPACITY_HIGH)
-            #Display the stored extra buttons function text
+            # Display the stored extra buttons function text
             extra_button_font = qt.QFont(
-                data.current_font_name,
-                self.stored_font.pointSize()-2,
-                weight=qt.QFont.Weight.Bold
+                settings.get("current_font_name"),
+                self.stored_font.pointSize() - 2,
+                weight=qt.QFont.Weight.Bold,
             )
-            self._parent.display(
-                self.extra_button_function_text,
-                extra_button_font
-            )
+            self._parent.display(self.extra_button_function_text, extra_button_font)
 
     def extra_button_leave_event(self, event):
         """Overloaded widget enter event"""
-        #Check if the button is enabled
+        # Check if the button is enabled
         if self.isEnabled() == True:
             self._set_extra_button_opacity(self.OPACITY_LOW)
-            #Clear the function text
+            # Clear the function text
             extra_button_font = qt.QFont(
-                'Courier',
-                self.stored_font.pointSize()-2,
-                weight=qt.QFont.Weight.Bold
+                "Courier", self.stored_font.pointSize() - 2, weight=qt.QFont.Weight.Bold
             )
-            self._parent.display(
-                "",
-                extra_button_font
-            )
+            self._parent.display("", extra_button_font)
 
     def extra_button_enable(self):
         """Hide and disable the extra button"""
@@ -428,34 +417,32 @@ class DoubleButton(CustomButton):
 
     def resizeEvent(self, event):
         """Overridden resize event"""
-        #Execute the superclass resize function
+        # Execute the superclass resize function
         super().resizeEvent(event)
-        #Update the extra button geometry
+        # Update the extra button geometry
         width = int(self.geometry().width() * self.extra_button_size_factor)
         height = int(self.geometry().height() * self.extra_button_size_factor)
         rectangle = functions.create_rect(
-            self.extra_button_position,
-            functions.create_size(width, height)
+            self.extra_button_position, functions.create_size(width, height)
         )
         self.extra_button.setGeometry(rectangle)
 
     def _set_extra_button_opacity(self, input_opacity):
         """Set the opacity of the extra button"""
-        #Store the opacity
+        # Store the opacity
         self.extra_button_stored_opacity = input_opacity
-        #Create and initialize the QImage from the stored QPixmap
+        # Create and initialize the QImage from the stored QPixmap
         button_image = self.extra_button_stored_pixmap
         image = qt.QImage(
-            button_image.size(),
-            qt.QImage.Format.Format_ARGB32_Premultiplied
+            button_image.size(), qt.QImage.Format.Format_ARGB32_Premultiplied
         )
         image.fill(qt.Qt.GlobalColor.transparent)
-        #Create and initialize the QPainter that will manipulate the QImage
+        # Create and initialize the QPainter that will manipulate the QImage
         button_painter = qt.QPainter(image)
         button_painter.setOpacity(input_opacity)
         button_painter.drawPixmap(0, 0, button_image)
         button_painter.end()
-        #Display the manipulated image
+        # Display the manipulated image
         self.extra_button.setPixmap(qt.QPixmap.fromImage(image))
 
 
@@ -476,10 +463,12 @@ class PushButtonBase(qt.QPushButton):
             try:
                 self.clicked.disconnect()
             except TypeError as e:
-                print('ERROR: Could not disconnect clicked signal')
+                print("ERROR: Could not disconnect clicked signal")
             self.function = None
+
         def actual_func(state):
             func()
+
         self.clicked.connect(actual_func)
         self.function = func
 
@@ -533,6 +522,7 @@ class PushButtonBase(qt.QPushButton):
     def update_style(self):
         pass
 
+
 class StandardButton(PushButtonBase):
     # Class variables
     main_form = None
@@ -547,3 +537,82 @@ class StandardButton(PushButtonBase):
         self.setProperty("focused", value)
         self.style().unpolish(self)
         self.style().polish(self)
+
+
+class CustomCheckBox(qt.QCheckBox):
+    """
+    A QCheckBox styled to look like a rounded button, displaying an image,
+    and changing its background color when checked. Size is controlled via stylesheet
+    and can be changed dynamically after instantiation.
+    """
+
+    def __init__(
+        self,
+        icon_path: str,
+        width: int,
+        height: int,
+        parent: Optional[qt.QWidget] = None,
+    ) -> None:
+        """
+        Initializes the custom checkbox.
+
+        Args:
+            icon_path (str): The path to the image file to be displayed in the middle.
+            width (int): The initial desired width of the checkbox in pixels.
+            height (int): The initial desired height of the checkbox in pixels.
+            parent (Optional[qt.QWidget]): The parent widget. Defaults to None.
+        """
+        super().__init__(parent)
+        self.setCursor(qt.Qt.CursorShape.PointingHandCursor)
+
+        self._icon_path: str = icon_path
+        self.setIcon(qt.QIcon(self._icon_path))
+
+        # Apply initial size and stylesheet
+        self._apply_stylesheet_with_size(width, height)
+
+    def _apply_stylesheet_with_size(self, width: int, height: int) -> None:
+        """
+        Internal helper method to construct and apply the stylesheet with dynamic size.
+
+        Args:
+            width (int): The new desired width of the checkbox in pixels.
+            height (int): The new desired height of the checkbox in pixels.
+        """
+        # Adjust icon size proportionally to the new widget size
+        self.setIconSize(qt.QSize(int(width * 0.5), int(height * 0.5)))
+
+        self.setStyleSheet(
+            f"""
+            QCheckBox {{
+                /* General button-like styling */
+                width: {width}px; /* Set width via stylesheet */
+                height: {height}px; /* Set height via stylesheet */
+                border: 1px solid gray;
+                border-radius: 10px; /* Rounded corners */
+                padding: 5px; /* Padding around content */
+                background-color: white; /* Default background color (unchecked) */
+            }}
+            QCheckBox:hover {{
+                border: 1px solid darkgray; /* Subtle border change on hover */
+            }}
+            QCheckBox:checked {{
+                background-color: lightgreen; /* Background color when checked */
+            }}
+            QCheckBox::indicator {{
+                /* Hide the default checkbox indicator */
+                width: 0px;
+                height: 0px;
+            }}
+        """
+        )
+
+    def set_size(self, width: int, height: int) -> None:
+        """
+        Changes the size of the checkbox dynamically by updating its stylesheet.
+
+        Args:
+            width (int): The new desired width of the checkbox in pixels.
+            height (int): The new desired height of the checkbox in pixels.
+        """
+        self._apply_stylesheet_with_size(width, height)

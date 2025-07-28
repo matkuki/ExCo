@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -16,7 +16,7 @@ if sys.platform != "win32":
     print("We are not on Windows!")
     sys.exit(1)
 # Check if Nim is installed
-output = subprocess.check_output(['nim']).decode("utf-8")
+output = subprocess.check_output(["nim"]).decode("utf-8")
 if output.startswith("Nim Compiler Version") == False:
     print("Nim is not installed on the system!")
     sys.exit(1)
@@ -30,7 +30,7 @@ with open("exco.rs", "w+") as f:
 
 with open("exco.nim", "w+") as f:
     f.write(
-"""
+        """
 #[
     Compile with:
         nim c --out:ExCo.exe --passL:exco.res exco.nim
@@ -63,11 +63,11 @@ discard osproc.startProcess(
 # Create the resource file
 os.system("windres exco.rs -O coff -o exco.res")
 # Compile with Nim and pass the resource file to the underlying C compiler
-os.system('nim c --app:gui --out:ExCo.exe --passL:exco.res exco.nim')
+os.system("nim c --app:gui --out:ExCo.exe --passL:exco.res exco.nim")
 
 # Clean up
 os.remove("exco.rs")
 os.remove("exco.res")
 os.remove("exco.nim")
 os.remove("exco-icon-win.ico")
-#shutil.rmtree("nimcache/")
+# shutil.rmtree("nimcache/")

@@ -11,6 +11,7 @@ NOTE:
     Objects are imported so that they can be used either directly with qt.QSize,
     or by specifiying the full namespace with qt.PyQt.QtCore.QSize!
 """
+
 import PyQt6.Qsci
 import PyQt6.QtCore
 import PyQt6.QtGui

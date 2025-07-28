@@ -14,6 +14,7 @@ import components.actionfilter
 import components.thesquid
 import constants
 import data
+import settings
 import functions
 import qt
 
@@ -65,26 +66,26 @@ class TabWidget(qt.QTabWidget):
             # Set style
             self.set_style()
             # Set default font
-            self.setFont(data.get_current_font())
+            self.setFont(settings.get_current_font())
             # Don't draw the background, only the tabs
             self.setDrawBase(False)
 
         def set_style(self):
-            close_image = functions.get_resource_file(data.theme["close-image"])
+            close_image = functions.get_resource_file(settings.get_theme()["close-image"])
             close_hover_image = functions.get_resource_file(
-                data.theme["close-hover-image"]
+                settings.get_theme()["close-hover-image"]
             )
             right_arrow_image = functions.get_resource_file(
-                data.theme["right-arrow-image"]
+                settings.get_theme()["right-arrow-image"]
             )
             right_arrow_hover_image = functions.get_resource_file(
-                data.theme["right-arrow-hover-image"]
+                settings.get_theme()["right-arrow-hover-image"]
             )
             left_arrow_image = functions.get_resource_file(
-                data.theme["left-arrow-image"]
+                settings.get_theme()["left-arrow-image"]
             )
             left_arrow_hover_image = functions.get_resource_file(
-                data.theme["left-arrow-hover-image"]
+                settings.get_theme()["left-arrow-hover-image"]
             )
             style = """
 QTabBar::close-button {{
@@ -139,15 +140,15 @@ QTabBar::tab:selected {{
                 right_arrow_hover_image,
                 left_arrow_image,
                 left_arrow_hover_image,
-                data.theme["indication"]["passivebackground"],
-                data.theme["indication"]["passiveborder"],
-                data.theme["indication"]["passivebackground"],
-                data.theme["fonts"]["default"]["color"],
-                data.theme["indication"]["hover"],
-                data.theme["indication"]["hover"],
-                data.theme["indication"]["activebackground"],
-                data.theme["indication"]["activeborder"],
-                data.theme["indication"]["passivebackground"],
+                settings.get_theme()["indication"]["passivebackground"],
+                settings.get_theme()["indication"]["passiveborder"],
+                settings.get_theme()["indication"]["passivebackground"],
+                settings.get_theme()["fonts"]["default"]["color"],
+                settings.get_theme()["indication"]["hover"],
+                settings.get_theme()["indication"]["hover"],
+                settings.get_theme()["indication"]["activebackground"],
+                settings.get_theme()["indication"]["activeborder"],
+                settings.get_theme()["indication"]["passivebackground"],
             )
             self.setStyleSheet(style)
 
@@ -373,7 +374,7 @@ QTabBar::tab:selected {{
     # Custom tab bar
     custom_tab_bar = None
     # Default font for textboxes
-    default_editor_font = qt.QFont(data.current_font_name, data.current_font_size)
+    default_editor_font = qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
     # Default font and icon size for the tab bar
     default_tab_font = None
     default_icon_size = None
@@ -395,7 +396,7 @@ QTabBar::tab:selected {{
         self.main_form = main_form
         self.box = box
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
         # Initialize the custom tab bar
         self.custom_tab_bar = self.CustomTabBar(self)
         self.setTabBar(self.custom_tab_bar)
@@ -416,14 +417,14 @@ QTabBar::tab:selected {{
         self.tabBar().installEventFilter(self)
 
     def customize_tab_bar(self):
-        if data.custom_menu_scale != None and data.custom_menu_font != None:
-            self.tabBar().setFont(qt.QFont(*data.custom_menu_font))
+        if settings.get("custom_menu_scale") != None and settings.get("custom_menu_font") != None:
+            self.tabBar().setFont(qt.QFont(*settings.get("custom_menu_font")))
             new_icon_size = functions.create_size(
-                data.custom_menu_scale, data.custom_menu_scale
+                settings.get("custom_menu_scale"), settings.get("custom_menu_scale")
             )
             self.setIconSize(new_icon_size)
         else:
-            self.tabBar().setFont(data.get_current_font())
+            self.tabBar().setFont(settings.get_current_font())
             self.setIconSize(self.default_icon_size)
         self.tabBar().set_style()
 
@@ -814,8 +815,8 @@ QTabBar::tab:selected {{
                 parent=lbl,
             )
             movie.setCacheMode(qt.QMovie.CacheMode.CacheAll)
-            if data.custom_menu_scale != None:
-                size = tuple([(x * data.custom_menu_scale / 16) for x in (16, 16)])
+            if settings.get("custom_menu_scale") != None:
+                size = tuple([(x * settings.get("custom_menu_scale") / 16) for x in (16, 16)])
             else:
                 size = (16, 16)
             movie.setScaledSize(functions.create_size(*size))
@@ -1251,8 +1252,8 @@ QTabBar::tab:selected {{
             close_button.setIcon(functions.create_icon("various/close.png"))
             close_button.setIconSize(
                 qt.QSize(
-                    int(data.tree_display_icon_size * 2),
-                    int(data.tree_display_icon_size * 2),
+                    int(settings.get("tree_display_icon_size") * 2),
+                    int(settings.get("tree_display_icon_size") * 2),
                 )
             )
             tooltip = "Close this box"

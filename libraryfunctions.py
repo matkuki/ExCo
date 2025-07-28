@@ -15,6 +15,7 @@ import os
 import fpdf
 
 import data
+import settings
 import functions
 
 
@@ -31,9 +32,9 @@ def create_pdf_from_text(output_pdf_path, text):
     )
     pdf.add_font("Source Code Pro", fname=font_file_path, uni=True)
     # Set font
-    font_size = data.current_editor_font_size
+    font_size = settings.get("current_editor_font_size")
     line_height = font_size / 2
-    pdf.set_font(data.current_editor_font_name, size=font_size)
+    pdf.set_font(settings.get("current_editor_font_name"), size=font_size)
 
     # Add multi-cell to handle line wrapping
     pdf.multi_cell(0, line_height, text=text)

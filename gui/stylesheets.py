@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import os
 import sys
 import data
+import settings
 import functions
 
 
@@ -32,13 +33,13 @@ QLabel {{
     font-size: {}pt;
 }}
         """.format(
-            data.theme["form"],
-            data.theme["indication"]["font"],
-            data.current_font_name,
-            data.current_font_size,
-            data.theme["indication"]["font"],
-            data.current_font_name,
-            data.current_font_size,
+            settings.get_theme()["form"],
+            settings.get_theme()["indication"]["font"],
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            settings.get_theme()["indication"]["font"],
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
         )
         return style_sheet
 
@@ -48,9 +49,9 @@ class StyleSheetScrollbar:
     def horizontal():
         width = 10
         height = 10
-        color_background = data.theme["scrollbar"]["background"]
-        color_handle = data.theme["scrollbar"]["handle"]
-        color_handle_hover = data.theme["scrollbar"]["handle-hover"]
+        color_background = settings.get_theme()["scrollbar"]["background"]
+        color_handle = settings.get_theme()["scrollbar"]["handle"]
+        color_handle_hover = settings.get_theme()["scrollbar"]["handle-hover"]
         style_sheet = """
 QScrollBar:horizontal {{
     border: none;
@@ -89,9 +90,9 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
     def vertical():
         width = 10
         height = 10
-        color_background = data.theme["scrollbar"]["background"]
-        color_handle = data.theme["scrollbar"]["handle"]
-        color_handle_hover = data.theme["scrollbar"]["handle-hover"]
+        color_background = settings.get_theme()["scrollbar"]["background"]
+        color_handle = settings.get_theme()["scrollbar"]["handle"]
+        color_handle_hover = settings.get_theme()["scrollbar"]["handle-hover"]
         style_sheet = """
 QScrollBar:vertical {{
     border: none;
@@ -137,25 +138,25 @@ class StyleSheetButton:
     def standard():
         style_sheet = f"""
 QPushButton {{
-    background-color: {data.theme["indication"]["passivebackground"]};
-    color: {data.theme["indication"]["font"]};
-    border: 1px solid {data.theme["indication"]["passiveborder"]};
+    background-color: {settings.get_theme()["indication"]["passivebackground"]};
+    color: {settings.get_theme()["indication"]["font"]};
+    border: 1px solid {settings.get_theme()["indication"]["passiveborder"]};
     border-radius: 4px;
 }}
 QPushButton:hover {{
-    background-color: {data.theme["indication"]["hover"]};
-    color: {data.theme["indication"]["font"]};
-    border: 1px solid {data.theme["indication"]["activeborder"]};
+    background-color: {settings.get_theme()["indication"]["hover"]};
+    color: {settings.get_theme()["indication"]["font"]};
+    border: 1px solid {settings.get_theme()["indication"]["activeborder"]};
 }}
 QPushButton[focused=true] {{
-    background-color: {data.theme["indication"]["hover"]};
-    color: {data.theme["indication"]["font"]};
-    border: 1px solid {data.theme["indication"]["activeborder"]};
+    background-color: {settings.get_theme()["indication"]["hover"]};
+    color: {settings.get_theme()["indication"]["font"]};
+    border: 1px solid {settings.get_theme()["indication"]["activeborder"]};
 }}
 QPushButton:pressed {{
-    background-color: {data.theme["indication"]["activebackground"]};
-    color: {data.theme["indication"]["font"]};
-    border: 1px solid {data.theme["indication"]["activeborder"]};
+    background-color: {settings.get_theme()["indication"]["activebackground"]};
+    color: {settings.get_theme()["indication"]["font"]};
+    border: 1px solid {settings.get_theme()["indication"]["activeborder"]};
 }}
         """
         return style_sheet
@@ -194,12 +195,12 @@ QMenu::right-arrow:disabled  {{
     height: 14px;
 }}
         """.format(
-            data.theme["indication"]["passivebackground"],
-            data.theme["indication"]["passiveborder"],
-            data.theme["fonts"]["default"]["color"],
-            data.theme["indication"]["hover"],
-            functions.get_resource_file(data.theme["right-arrow-menu-image"]),
-            functions.get_resource_file(data.theme["right-arrow-menu-disabled-image"]),
+            settings.get_theme()["indication"]["passivebackground"],
+            settings.get_theme()["indication"]["passiveborder"],
+            settings.get_theme()["fonts"]["default"]["color"],
+            settings.get_theme()["indication"]["hover"],
+            functions.get_resource_file(settings.get_theme()["right-arrow-menu-image"]),
+            functions.get_resource_file(settings.get_theme()["right-arrow-menu-disabled-image"]),
         )
         return style_sheet
 
@@ -224,9 +225,9 @@ QMenuBar::item:selected {{
     background-color: {};
 }}
         """.format(
-            data.theme["indication"]["passivebackground"],
-            data.theme["fonts"]["default"]["color"],
-            data.theme["indication"]["hover"],
+            settings.get_theme()["indication"]["passivebackground"],
+            settings.get_theme()["fonts"]["default"]["color"],
+            settings.get_theme()["indication"]["hover"],
         )
         return style_sheet
 
@@ -236,11 +237,11 @@ class StyleSheetTooltip:
     def standard():
         style_sheet = f"""
 QToolTip {{
-    font-family: {data.current_font_name};
-    font-size: {data.current_font_size};
-    background-color: {data.theme["indication"]["passivebackground"]}; 
-    color: {data.theme["indication"]["font"]}; 
-    border: {data.theme["indication"]["passiveborder"]} solid 1px;
+    font-family: {settings.get("current_font_name")};
+    font-size: {settings.get("current_font_size")};
+    background-color: {settings.get_theme()["indication"]["passivebackground"]}; 
+    color: {settings.get_theme()["indication"]["font"]}; 
+    border: {settings.get_theme()["indication"]["passiveborder"]} solid 1px;
 }}
         """
         return style_sheet
@@ -249,10 +250,10 @@ QToolTip {{
 class StyleSheetFrame:
     @staticmethod
     def standard(background_transparent=False, no_border=True):
-        background_color = data.theme["fonts"]["default"]["background"]
+        background_color = settings.get_theme()["fonts"]["default"]["background"]
         if background_transparent:
             background_color = "transparent"
-        border = f'1px solid {data.theme["indication"]["passiveborder"]}'
+        border = f'1px solid {settings.get_theme()["indication"]["passiveborder"]}'
         if no_border:
             border = "none"
         style_sheet = f"""
@@ -273,43 +274,43 @@ class StyleSheetTable:
         spacing = 0
         return f"""
 QTableView {{
-    background-color: {data.theme["fonts"]["default"]["background"]};
-    color: {data.theme["fonts"]["default"]["color"]};
-    selection-background-color: {data.theme["indication"]["activebackground"]};
-    selection-color: {data.theme["fonts"]["default"]["color"]};
-    border: {border_width}px solid {data.theme["indication"]["passiveborder"]};
-    gridline-color: {data.theme["indication"]["passiveborder"]};
+    background-color: {settings.get_theme()["fonts"]["default"]["background"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    selection-background-color: {settings.get_theme()["indication"]["activebackground"]};
+    selection-color: {settings.get_theme()["fonts"]["default"]["color"]};
+    border: {border_width}px solid {settings.get_theme()["indication"]["passiveborder"]};
+    gridline-color: {settings.get_theme()["indication"]["passiveborder"]};
     padding: {padding}px;
     spacing: {padding}px;
-    font-family: {data.current_editor_font_name};
-    font-size: {data.current_editor_font_size}pt;
+    font-family: {settings.get("current_editor_font_name")};
+    font-size: {settings.get("current_editor_font_size")}pt;
 }}
 QTableView QTableCornerButton::section {{
-    background: {data.theme["fonts"]["default"]["background"]};
+    background: {settings.get_theme()["fonts"]["default"]["background"]};
     border: none;
 }}
 
 /*
 QTableView::item {{
-    border: {border_width}px solid {data.theme["indication"]["passiveborder"]};
+    border: {border_width}px solid {settings.get_theme()["indication"]["passiveborder"]};
 }}
 */
 QTableView::item::selected {{
-    background-color: {data.theme["indication"]["activebackground"]};
+    background-color: {settings.get_theme()["indication"]["activebackground"]};
 }}
 
 QHeaderView {{
-    background-color: {data.theme["table-header"]};
-    color: {data.theme["fonts"]["default"]["color"]};
+    background-color: {settings.get_theme()["table-header"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
 }}
 QHeaderView::section {{
     border-style: none;
-    border-right: 1px solid {data.theme["indication"]["passiveborder"]};
-    border-bottom: 1px solid {data.theme["indication"]["passiveborder"]};
-    background-color: {data.theme["table-header"]};
-    color: {data.theme["fonts"]["default"]["color"]};
-    font-family: {data.current_editor_font_name};
-    font-size: {data.current_editor_font_size}pt;
+    border-right: 1px solid {settings.get_theme()["indication"]["passiveborder"]};
+    border-bottom: 1px solid {settings.get_theme()["indication"]["passiveborder"]};
+    background-color: {settings.get_theme()["table-header"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    font-family: {settings.get("current_editor_font_name")};
+    font-size: {settings.get("current_editor_font_size")}pt;
 }}
         """
 
@@ -346,16 +347,16 @@ TabWidget QToolButton:hover {{
     border: 1px solid {};
 }}
         """.format(
-            data.theme["indication"]["passiveborder"],
-            data.theme["indication"]["passivebackground"],
-            data.theme["indication"]["passiveborder"],
-            data.theme["indication"]["passivebackground"],
-            data.theme["indication"]["activeborder"],
-            data.theme["indication"]["activebackground"],
-            data.theme["indication"]["passivebackground"],
-            data.theme["indication"]["passiveborder"],
-            data.theme["indication"]["activebackground"],
-            data.theme["indication"]["activeborder"],
+            settings.get_theme()["indication"]["passiveborder"],
+            settings.get_theme()["indication"]["passivebackground"],
+            settings.get_theme()["indication"]["passiveborder"],
+            settings.get_theme()["indication"]["passivebackground"],
+            settings.get_theme()["indication"]["activeborder"],
+            settings.get_theme()["indication"]["activebackground"],
+            settings.get_theme()["indication"]["passivebackground"],
+            settings.get_theme()["indication"]["passiveborder"],
+            settings.get_theme()["indication"]["activebackground"],
+            settings.get_theme()["indication"]["activeborder"],
         )
         return style_sheet
 
@@ -363,7 +364,7 @@ TabWidget QToolButton:hover {{
 class StyleSheetTreeWidget:
     @staticmethod
     def standard():
-        if data.theme["name"] != "Air":
+        if settings.get_theme()["name"] != "Air":
             shrink_icon = os.path.join(
                 data.resources_directory, "feather/air-light-grey/chevron-down.svg"
             ).replace("\\", "/")
@@ -379,11 +380,11 @@ class StyleSheetTreeWidget:
             ).replace("\\", "/")
         style_sheet = f"""
 QTreeView {{
-    color: {data.theme["fonts"]["default"]["color"]};
-    background-color: {data.theme["fonts"]["default"]["background"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    background-color: {settings.get_theme()["fonts"]["default"]["background"]};
 }}
 QTreeView::branch {{
-    background-color: {data.theme["fonts"]["default"]["background"]};
+    background-color: {settings.get_theme()["fonts"]["default"]["background"]};
 }}
 QTreeView::branch:closed:has-children:!has-siblings,
 QTreeView::branch:closed:has-children:has-siblings {{
@@ -397,12 +398,12 @@ QTreeView::branch:open:has-children:has-siblings {{
 }}
 
 QTreeView::item:hover {{
-    color: {data.theme["fonts"]["default"]["color"]};
-    background-color: {data.theme["indication"]["hover"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    background-color: {settings.get_theme()["indication"]["hover"]};
 }}
 QTreeView::item:selected {{
-    color: {data.theme["fonts"]["default"]["color"]};
-    background-color: {data.theme["indication"]["selection"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    background-color: {settings.get_theme()["indication"]["selection"]};
 }}
 """
         return style_sheet
@@ -414,11 +415,11 @@ class StyleSheetLineEdit:
         style_sheet = f"""
 QLineEdit {{
     text-align: left;
-    background: {data.theme["indication"]["passivebackground"]};
-    color: {data.theme["fonts"]["default"]["color"]};
-    border: 1px solid {data.theme["indication"]["passiveborder"]};
-    font-family: {data.current_font_name};
-    font-size: {data.current_font_size}pt;
+    background: {settings.get_theme()["indication"]["passivebackground"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    border: 1px solid {settings.get_theme()["indication"]["passiveborder"]};
+    font-family: {settings.get("current_font_name")};
+    font-size: {settings.get("current_font_size")}pt;
     padding: 0px 5px 0px 5px;
 }}
     """

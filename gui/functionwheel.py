@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import functools
 import qt
 import data
+import settings
 import constants
 import functions
 
@@ -23,6 +24,8 @@ from .textdiffer import *
 Overlay helper widget for visually selecting an Ex.Co. function
 ----------------------------------------------------------------
 """
+
+
 class FunctionWheel(qt.QFrame):
     SIZE = (640, 560)
     # Class variables
@@ -37,12 +40,14 @@ class FunctionWheel(qt.QFrame):
         try:
             self._parent = None
             self.main_form = None
+
             # Function for deleting an attribute
             def delete_attribute(att_name):
                 attr = getattr(self, att_name)
                 attr.setParent(None)
                 attr.deleteLater()
                 delattr(self, att_name)
+
             # List of attributes for clean up
             clean_up_list = [
                 "picture",
@@ -59,36 +64,36 @@ class FunctionWheel(qt.QFrame):
             pass
 
     def __init__(self, parent=None, main_form=None):
-        #Initialize the superclass
+        # Initialize the superclass
         super().__init__(parent)
-        #Store the reference to the parent
+        # Store the reference to the parent
         self._parent = parent
-        #Store the reference to the main form
+        # Store the reference to the main form
         self.main_form = main_form
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
         # Set the layout
-#        self.__layout = qt.QGridLayout()
-#        self.__layout.setSpacing(10)
-#        self.__layout.setContentsMargins(
-#            qt.QMargins(0,0,0,0)
-#        )
-#        self.setLayout(self.__layout)
-        #Initialize the display label that will display the function names
-        #when the mouse cursor is over a function button
+        #        self.__layout = qt.QGridLayout()
+        #        self.__layout.setSpacing(10)
+        #        self.__layout.setContentsMargins(
+        #            qt.QMargins(0,0,0,0)
+        #        )
+        #        self.setLayout(self.__layout)
+        # Initialize the display label that will display the function names
+        # when the mouse cursor is over a function button
         self.display_label = qt.QLabel(self)
         self.display_label.setGeometry(8, 450, 200, 100)
-        font = qt.QFont(data.current_font_name, 14)
+        font = qt.QFont(settings.get("current_font_name"), 14)
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
             qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
         )
-        #Initialize all of the hex function buttons
+        # Initialize all of the hex function buttons
         self.__init_all_buttons()
-        #Position the overlay to the center of the screen
+        # Position the overlay to the center of the screen
         self.center(qt.QSize(*self.SIZE))
-        #Scale the function wheel size if needed
+        # Scale the function wheel size if needed
         self.scale(1, 1)
         self.update_style()
 
@@ -105,7 +110,7 @@ class FunctionWheel(qt.QFrame):
         self.__init_system_view_buttons()
         self.__init_repl_buttons()
         self.__init_special_system_buttons()
-        #Check the states of the hex function buttons
+        # Check the states of the hex function buttons
         self.__check_hex_button_states()
 
     def __init_basic_buttons(self):
@@ -113,18 +118,20 @@ class FunctionWheel(qt.QFrame):
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
         # Generate positions/size
-        size = (data.standard_button_size, data.standard_button_size)
+        size = (settings.get("standard_button_size"), settings.get("standard_button_size"))
         start = (0, 0)
         row = 0
         col = 0
         geometries = []
         for i in range(12):
-            geometries.append((
-                (col * size[0])+self.button_x_offset,
-                (row * size[1])+self.button_y_offset,
-                size[0],
-                size[1],
-            ))
+            geometries.append(
+                (
+                    (col * size[0]) + self.button_x_offset,
+                    (row * size[1]) + self.button_y_offset,
+                    size[0],
+                    size[1],
+                )
+            )
             col += 1
             if col > 3:
                 col = 0
@@ -242,12 +249,14 @@ class FunctionWheel(qt.QFrame):
         col = 0
         geometries = []
         for i in range(26):
-            geometries.append((
-                (start[0] + (col * size[0]))+self.button_x_offset,
-                (start[1] + (row * size[1]))+self.button_y_offset,
-                size[0],
-                size[1],
-            ))
+            geometries.append(
+                (
+                    (start[0] + (col * size[0])) + self.button_x_offset,
+                    (start[1] + (row * size[1])) + self.button_y_offset,
+                    size[0],
+                    size[1],
+                )
+            )
             col += 1
             if col > 7:
                 col = 0
@@ -401,10 +410,12 @@ class FunctionWheel(qt.QFrame):
                 menubar_functions["create_node_tree"],
                 "Create/Reload\n Node Tree",
                 input_focus_last_widget=constants.HexButtonFocus.TAB,
-                input_tool_tip=("Create a node tree from the currently\n" +
-                                "selected document and display it in the\n" +
-                                "upper window.\nSupported programming languages:\n" +
-                                "- C\n- Nim\n- Python 3"),
+                input_tool_tip=(
+                    "Create a node tree from the currently\n"
+                    + "selected document and display it in the\n"
+                    + "upper window.\nSupported programming languages:\n"
+                    + "- C\n- Nim\n- Python 3"
+                ),
             ),
             ButtonInfo(
                 "button_29",
@@ -484,12 +495,14 @@ class FunctionWheel(qt.QFrame):
         col = 0
         geometries = []
         for i in range(13):
-            geometries.append((
-                (start[0] + (col * size[0])) + self.button_x_offset,
-                (start[1] + (row * size[1])) + self.button_y_offset,
-                size[0],
-                size[1],
-            ))
+            geometries.append(
+                (
+                    (start[0] + (col * size[0])) + self.button_x_offset,
+                    (start[1] + (row * size[1])) + self.button_y_offset,
+                    size[0],
+                    size[1],
+                )
+            )
             col += 1
             if col > 3:
                 col = 0
@@ -561,7 +574,6 @@ class FunctionWheel(qt.QFrame):
                 input_no_document_focus_disable=True,
                 input_check_last_tab_type=True,
             ),
-
             ButtonInfo(
                 "button_34",
                 geometries[next(gi)],
@@ -609,12 +621,14 @@ class FunctionWheel(qt.QFrame):
         col = 0
         geometries = []
         for i in range(24):
-            geometries.append((
-                (start[0] + (col * size[0])) + self.button_x_offset,
-                (start[1] + (row * size[1])) + self.button_y_offset,
-                size[0],
-                size[1],
-            ))
+            geometries.append(
+                (
+                    (start[0] + (col * size[0])) + self.button_x_offset,
+                    (start[1] + (row * size[1])) + self.button_y_offset,
+                    size[0],
+                    size[1],
+                )
+            )
             col += 1
             if col > 7:
                 col = 0
@@ -762,8 +776,10 @@ class FunctionWheel(qt.QFrame):
                 menubar_functions["create_cwd_tree"],
                 "Show CWD\nFile/Directory\nTree",
                 input_focus_last_widget=constants.HexButtonFocus.NONE,
-                input_tool_tip=("Create a file/directory tree for the " +
-                                "current working directory (CWD)"),
+                input_tool_tip=(
+                    "Create a file/directory tree for the "
+                    + "current working directory (CWD)"
+                ),
                 input_no_document_focus_disable=False,
             ),
             ButtonInfo(
@@ -789,12 +805,14 @@ class FunctionWheel(qt.QFrame):
         col = 0
         geometries = []
         for i in range(24):
-            geometries.append((
-                (start[0] + (col * size[0])) + self.button_x_offset,
-                (start[1] + (row * size[1])) + self.button_y_offset,
-                size[0],
-                size[1],
-            ))
+            geometries.append(
+                (
+                    (start[0] + (col * size[0])) + self.button_x_offset,
+                    (start[1] + (row * size[1])) + self.button_y_offset,
+                    size[0],
+                    size[1],
+                )
+            )
             col += 1
             if col > 7:
                 col = 0
@@ -839,19 +857,21 @@ class FunctionWheel(qt.QFrame):
         # Generate positions/size
         size = (50, 50)
         start = (
-            self.SIZE[0]-size[0]-self.button_x_offset*2,
-            self.SIZE[1]-size[1]-self.button_y_offset*2
+            self.SIZE[0] - size[0] - self.button_x_offset * 2,
+            self.SIZE[1] - size[1] - self.button_y_offset * 2,
         )
         row = 0
         col = 0
         geometries = []
         for i in range(1):
-            geometries.append((
-                (start[0] + (col * size[0])) + self.button_x_offset,
-                (start[1] + (row * size[1])) + self.button_y_offset,
-                size[0],
-                size[1],
-            ))
+            geometries.append(
+                (
+                    (start[0] + (col * size[0])) + self.button_x_offset,
+                    (start[1] + (row * size[1])) + self.button_y_offset,
+                    size[0],
+                    size[1],
+                )
+            )
             col += 1
             if col > 7:
                 col = 0
@@ -875,15 +895,21 @@ class FunctionWheel(qt.QFrame):
             def wrapper_click_func(*args):
                 self.main_form.view.hide_function_wheel()
                 func()
+
             return wrapper_click_func
+
         def create_enter_func(text, font):
             def wrapper_enter_func(*args):
                 self.display(text, font)
+
             return wrapper_enter_func
+
         def create_leave_func(font):
             def wrapper_leave_func(*args):
                 self.display("", font)
+
             return wrapper_leave_func
+
         # Create all of the buttons from the list
         for button in button_list:
             init_button = StandardButton(
@@ -906,30 +932,25 @@ class FunctionWheel(qt.QFrame):
             elif isinstance(button.pixmap, str):
                 init_button.setIcon(functions.create_icon(button.pixmap))
             else:
-                raise Exception("[FunctionWheel] Unknown pixmap type: {}".format(button.pixmap))
-            init_button.setIconSize(
-                qt.QSize(
-                    int(button.geometry[2]),
-                    int(button.geometry[3])
+                raise Exception(
+                    "[FunctionWheel] Unknown pixmap type: {}".format(button.pixmap)
                 )
+            init_button.setIconSize(
+                qt.QSize(int(button.geometry[2]), int(button.geometry[3]))
             )
             init_button.setToolTip(button.tool_tip)
             init_button.setStatusTip(button.tool_tip)
-            init_button.set_click_function(
-                create_click_func(button.function)
-            )
+            init_button.set_click_function(create_click_func(button.function))
             init_button.set_enter_function(
                 create_enter_func(button.function_text, button.font)
             )
-            init_button.set_leave_function(
-                create_leave_func(button.font)
-            )
+            init_button.set_leave_function(create_leave_func(button.font))
             # Set the button size and location
             init_button.setGeometry(
                 int(button.geometry[0]),
                 int(button.geometry[1]),
                 int(button.geometry[2]),
-                int(button.geometry[3])
+                int(button.geometry[3]),
             )
             self.button_cache.append(init_button)
 
@@ -957,25 +978,32 @@ class FunctionWheel(qt.QFrame):
             elif result == False and child_widget.no_document_focus_disable == True:
                 # If document focus is needed by the button, check if a tab is a focused document
                 child_widget.setEnabled(False)
-            elif (child_widget.no_document_focus_disable == True and
-                 (isinstance(indicated_widget, CustomEditor) == False and
-                  isinstance(indicated_widget, PlainEditor) == False)):
+            elif child_widget.no_document_focus_disable == True and (
+                isinstance(indicated_widget, CustomEditor) == False
+                and isinstance(indicated_widget, PlainEditor) == False
+            ):
                 # If focus is needed by the button, check the tab is an editing widget
                 child_widget.setEnabled(False)
-            elif (child_widget.check_last_tab_type == True and
-                  isinstance(indicated_widget, CustomEditor) == False):
+            elif (
+                child_widget.check_last_tab_type == True
+                and isinstance(indicated_widget, CustomEditor) == False
+            ):
                 # Check tab type for save/save_as/save_all buttons, it must be a CustomEditor
                 child_widget.setEnabled(False)
-            elif (child_widget.no_document_focus_disable == True and
-                  hasattr(indicated_widget, "actual_parent") == True and
-                  isinstance(indicated_widget.actual_parent, TextDiffer) == True):
+            elif (
+                child_widget.no_document_focus_disable == True
+                and hasattr(indicated_widget, "actual_parent") == True
+                and isinstance(indicated_widget.actual_parent, TextDiffer) == True
+            ):
                 # Check if tab is a TextDiffer, enable only the supported functions
-                if (child_widget.function_text != "Find" and
-                    child_widget.function_text != "Regex Find" and
-                    child_widget.function_text != "Goto Line" and
-                    child_widget.function_text != "Move Tab\nLeft" and
-                    child_widget.function_text != "Move Tab\nRight" and
-                    child_widget.function_text != "Close Current\nTab"):
+                if (
+                    child_widget.function_text != "Find"
+                    and child_widget.function_text != "Regex Find"
+                    and child_widget.function_text != "Goto Line"
+                    and child_widget.function_text != "Move Tab\nLeft"
+                    and child_widget.function_text != "Move Tab\nRight"
+                    and child_widget.function_text != "Close Current\nTab"
+                ):
                     child_widget.setEnabled(False)
 
     def hideEvent(self, event):
@@ -1037,8 +1065,7 @@ class FunctionWheel(qt.QFrame):
         new_width = int(geo.width() * width_scale_factor)
         new_height = int(geo.height() * height_scale_factor)
         rectangle = functions.create_rect(
-            geo.topLeft(),
-            functions.create_size(new_width, new_height)
+            geo.topLeft(), functions.create_size(new_width, new_height)
         )
         self.setGeometry(rectangle)
         # Scale all of the function wheel child widgets
@@ -1046,7 +1073,7 @@ class FunctionWheel(qt.QFrame):
             geo = button.geometry()
             new_topLeft = functions.create_point(
                 int(geo.topLeft().x() * width_scale_factor),
-                int(geo.topLeft().y() * height_scale_factor)
+                int(geo.topLeft().y() * height_scale_factor),
             )
             new_width = int(geo.width() * width_scale_factor)
             new_height = int(geo.height() * height_scale_factor)
@@ -1062,54 +1089,60 @@ class FunctionWheel(qt.QFrame):
         according to the size parameter
         """
         x_offset = int((self.main_form.size().width() - size.width()) / 2)
-        y_offset = int((self.main_form.size().height()*93/100 - size.height()) / 2)
+        y_offset = int((self.main_form.size().height() * 93 / 100 - size.height()) / 2)
         rectangle_top_left = functions.create_point(x_offset, y_offset)
         rectangle_size = size
         rectangle = functions.create_rect(rectangle_top_left, rectangle_size)
         self.setGeometry(rectangle)
 
     def update_style(self):
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
 QFrame {{
-    background-color: {data.theme["fonts"]["default"]["background"]};
-    color: {data.theme["fonts"]["default"]["color"]};
-    border: 1px solid {data.theme["indication"]["passiveborder"]};
+    background-color: {settings.get_theme()["fonts"]["default"]["background"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    border: 1px solid {settings.get_theme()["indication"]["passiveborder"]};
     margin: 0px;
     padding: 0px;
     spacing: 0px;
 }}
-        """)
-        self.display_label.setStyleSheet(f"""
+        """
+        )
+        self.display_label.setStyleSheet(
+            f"""
 QLabel {{
-    background-color: {data.theme["fonts"]["default"]["background"]};
-    color: {data.theme["fonts"]["default"]["color"]};
-    border: 1px solid {data.theme["indication"]["activeborder"]};
+    background-color: {settings.get_theme()["fonts"]["default"]["background"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    border: 1px solid {settings.get_theme()["indication"]["activeborder"]};
     border-radius: 4px;
 }}
-        """)
+        """
+        )
         for b in self.button_cache:
             b.update_style()
+
 
 class ButtonInfo:
     """
     Simple object used as a structure for the custom button information
     """
-    def __init__(self,
-                input_name,
-                input_geometry,
-                input_pixmap,
-                input_function,
-                input_function_text,
-                input_font=qt.QFont(
-                    data.current_font_name, 14, weight=qt.QFont.Weight.Bold
-                ),
-                input_focus_last_widget=constants.HexButtonFocus.NONE,
-                input_no_tab_focus_disable=False,
-                input_no_document_focus_disable=True,
-                input_check_last_tab_type=False,
-                input_extra_button=None,
-                input_check_text_differ=False,
-                input_tool_tip=None):
+
+    def __init__(
+        self,
+        input_name,
+        input_geometry,
+        input_pixmap,
+        input_function,
+        input_function_text,
+        input_font=qt.QFont(settings.get("current_font_name"), 14, weight=qt.QFont.Weight.Bold),
+        input_focus_last_widget=constants.HexButtonFocus.NONE,
+        input_no_tab_focus_disable=False,
+        input_no_document_focus_disable=True,
+        input_check_last_tab_type=False,
+        input_extra_button=None,
+        input_check_text_differ=False,
+        input_tool_tip=None,
+    ):
         # Initialize the attributes
         self.name = input_name
         self.geometry = input_geometry

@@ -1,6 +1,5 @@
-
 """
-Copyright (c) 2013-2023 Matic Kukovec. 
+Copyright (c) 2013-2023 Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -26,25 +25,25 @@ left_arrow_image = "feather/air-grey/chevron-left.svg"
 left_arrow_hover_image = "feather/air-blue/chevron-left.svg"
 
 Form = "#295a88"
-Context_Menu_Background = data.QColor(0x29, 0x5a, 0x88)
-Cursor = data.QColor(0xffffffff)
-Cursor_Line_Background = data.QColor(0x72, 0x9f, 0xcf, 80)
+Context_Menu_Background = data.QColor(0x29, 0x5A, 0x88)
+Cursor = data.QColor(0xFFFFFFFF)
+Cursor_Line_Background = data.QColor(0x72, 0x9F, 0xCF, 80)
 Settings_Background = data.QColor("#3b82c4")
-Settings_Label_Background = data.QColor(0x29, 0x5a, 0x88)
+Settings_Label_Background = data.QColor(0x29, 0x5A, 0x88)
 Settings_Hex_Edge = data.QColor("#e6e6e6")
-Settings_Hex_Background = data.QColor(0x29, 0x5a, 0x88)
+Settings_Hex_Background = data.QColor(0x29, 0x5A, 0x88)
 YesNoDialog_Edge = data.QColor("#e6e6e6")
 YesNoDialog_Background = data.QColor("#3b82c4")
 
 
 class FoldMargin:
-    ForeGround = data.QColor(0xff4096bf)
-    BackGround = data.QColor(0xff3476a3)
+    ForeGround = data.QColor(0xFF4096BF)
+    BackGround = data.QColor(0xFF3476A3)
 
 
 class LineMargin:
-    ForeGround = data.QColor(0xffffffff)
-    BackGround = data.QColor(0xff1f4661)
+    ForeGround = data.QColor(0xFFFFFFFF)
+    BackGround = data.QColor(0xFF1F4661)
 
 
 class ScrollBar:
@@ -68,2301 +67,7545 @@ class Indication:
 
 
 class TextDifferColors:
-    Indicator_Unique_1_Color = data.QColor(0x72, 0x9f, 0xcf, 80)
-    Indicator_Unique_2_Color = data.QColor(0xad, 0x7f, 0xa8, 80)
-    Indicator_Similar_Color = data.QColor(0x8a, 0xe2, 0x34, 80)
+    Indicator_Unique_1_Color = data.QColor(0x72, 0x9F, 0xCF, 80)
+    Indicator_Unique_2_Color = data.QColor(0xAD, 0x7F, 0xA8, 80)
+    Indicator_Similar_Color = data.QColor(0x8A, 0xE2, 0x34, 80)
 
 
 class Font:
-    Default = data.QColor(0xffffffff)
+    Default = data.QColor(0xFFFFFFFF)
     DefaultHtml = "#ffffff"
-    
+
     class Repl:
         """
         THE MESSAGE COLORS ARE: 0xBBGGRR (BB-blue,GG-green,RR-red)
         """
-        Error = 0x0000ff
-        Warning = 0xe4761f
-        Success = 0x007f00
-        Diff_Unique_1 = 0xcf9f72
-        Diff_Unique_2 = 0xa87fad
-        Diff_Similar = 0x069a4e
-    
+
+        Error = 0x0000FF
+        Warning = 0xE4761F
+        Success = 0x007F00
+        Diff_Unique_1 = 0xCF9F72
+        Diff_Unique_2 = 0xA87FAD
+        Diff_Similar = 0x069A4E
+
     class Ada:
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Procedure = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Type = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Package = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-    
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Procedure = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Type = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Package = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+
     class AWK:
-        Default = (data.current_editor_font_name, 0xff000000, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff007f00, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff00007f, data.current_editor_font_size, True)
-        BuiltInVariable = (data.current_editor_font_name, 0xffc07f40, data.current_editor_font_size, None)
-        BuiltInFunction = (data.current_editor_font_name, 0xff407fc0, data.current_editor_font_size, True)
-        String = (data.current_editor_font_name, 0xff7f007f, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff007f7f, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xff7f7f7f, data.current_editor_font_size, None)
-        
+        Default = (
+            data.current_editor_font_name,
+            0xFF000000,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF007F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF00007F,
+            data.current_editor_font_size,
+            True,
+        )
+        BuiltInVariable = (
+            data.current_editor_font_name,
+            0xFFC07F40,
+            data.current_editor_font_size,
+            None,
+        )
+        BuiltInFunction = (
+            data.current_editor_font_name,
+            0xFF407FC0,
+            data.current_editor_font_size,
+            True,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFF7F007F,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF007F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFF7F7F7F,
+            data.current_editor_font_size,
+            None,
+        )
+
     class CiCode:
-        Default = (data.current_editor_font_name, 0xff000000, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff007f00, data.current_editor_font_size, None)
-        MultilineComment = (data.current_editor_font_name, 0xff006f00, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff00007f, data.current_editor_font_size, True)
-        BuiltInFunction = (data.current_editor_font_name, 0xff407fc0, data.current_editor_font_size, True)
-        String = (data.current_editor_font_name, 0xff7f007f, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff007f7f, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xff7f7f7f, data.current_editor_font_size, None)
-        Function = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-    
+        Default = (
+            data.current_editor_font_name,
+            0xFF000000,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF007F00,
+            data.current_editor_font_size,
+            None,
+        )
+        MultilineComment = (
+            data.current_editor_font_name,
+            0xFF006F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF00007F,
+            data.current_editor_font_size,
+            True,
+        )
+        BuiltInFunction = (
+            data.current_editor_font_name,
+            0xFF407FC0,
+            data.current_editor_font_size,
+            True,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFF7F007F,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF007F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFF7F7F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        Function = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Nim:
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        BasicKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, True)
-        TopKeyword = (data.current_editor_font_name, 0xff407fc0, data.current_editor_font_size, True)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        LongString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xff7f7f7f, data.current_editor_font_size, None)
-        Unsafe = (data.current_editor_font_name, 0xffc00000, data.current_editor_font_size, True)
-        Type = (data.current_editor_font_name, 0xff6e6e00, data.current_editor_font_size, True)
-        DocumentationComment = (data.current_editor_font_name, 0xffc75146, data.current_editor_font_size, None)
-        Definition = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Class = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        KeywordOperator = (data.current_editor_font_name, 0xff963cc8, data.current_editor_font_size, None)
-        CharLiteral = (data.current_editor_font_name, 0xff00c8ff, data.current_editor_font_size, None)
-        CaseOf = (data.current_editor_font_name, 0xff8000ff, data.current_editor_font_size, None)
-        UserKeyword = (data.current_editor_font_name, 0xffff8040, data.current_editor_font_size, None)
-        MultilineComment = (data.current_editor_font_name, 0xffad2e24, data.current_editor_font_size, None)
-        MultilineDocumentation = (data.current_editor_font_name, 0xffea8c55, data.current_editor_font_size, None)
-        Pragma = (data.current_editor_font_name, 0xffc07f40, data.current_editor_font_size, None)
-    
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        BasicKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            True,
+        )
+        TopKeyword = (
+            data.current_editor_font_name,
+            0xFF407FC0,
+            data.current_editor_font_size,
+            True,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        LongString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFF7F7F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        Unsafe = (
+            data.current_editor_font_name,
+            0xFFC00000,
+            data.current_editor_font_size,
+            True,
+        )
+        Type = (
+            data.current_editor_font_name,
+            0xFF6E6E00,
+            data.current_editor_font_size,
+            True,
+        )
+        DocumentationComment = (
+            data.current_editor_font_name,
+            0xFFC75146,
+            data.current_editor_font_size,
+            None,
+        )
+        Definition = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Class = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordOperator = (
+            data.current_editor_font_name,
+            0xFF963CC8,
+            data.current_editor_font_size,
+            None,
+        )
+        CharLiteral = (
+            data.current_editor_font_name,
+            0xFF00C8FF,
+            data.current_editor_font_size,
+            None,
+        )
+        CaseOf = (
+            data.current_editor_font_name,
+            0xFF8000FF,
+            data.current_editor_font_size,
+            None,
+        )
+        UserKeyword = (
+            data.current_editor_font_name,
+            0xFFFF8040,
+            data.current_editor_font_size,
+            None,
+        )
+        MultilineComment = (
+            data.current_editor_font_name,
+            0xFFAD2E24,
+            data.current_editor_font_size,
+            None,
+        )
+        MultilineDocumentation = (
+            data.current_editor_font_name,
+            0xFFEA8C55,
+            data.current_editor_font_size,
+            None,
+        )
+        Pragma = (
+            data.current_editor_font_name,
+            0xFFC07F40,
+            data.current_editor_font_size,
+            None,
+        )
+
     class RouterOS:
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, True)
-        Operator = (data.current_editor_font_name, 0xffB4B80A, data.current_editor_font_size, True)
-        Comment = (data.current_editor_font_name, 0xff38B86B, data.current_editor_font_size, True)
-        Keyword1 = (data.current_editor_font_name, 0xff32CD32, data.current_editor_font_size, True)
-        Keyword2 = (data.current_editor_font_name, 0xffB9005C, data.current_editor_font_size, True)
-        Keyword3 = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, True)
-    
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            True,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFB4B80A,
+            data.current_editor_font_size,
+            True,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF38B86B,
+            data.current_editor_font_size,
+            True,
+        )
+        Keyword1 = (
+            data.current_editor_font_name,
+            0xFF32CD32,
+            data.current_editor_font_size,
+            True,
+        )
+        Keyword2 = (
+            data.current_editor_font_name,
+            0xFFB9005C,
+            data.current_editor_font_size,
+            True,
+        )
+        Keyword3 = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            True,
+        )
+
     class Oberon:
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Procedure = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        Module = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Type = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-    
-    
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Procedure = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        Module = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Type = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+
     class AVS:
-        BlockComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        ClipProperty = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Filter = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Function = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet6 = (data.current_editor_font_name, 0xff8000ff, data.current_editor_font_size, None)
-        LineComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        NestedBlockComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Plugin = (data.current_editor_font_name, 0xff0080c0, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        TripleString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-    
+        BlockComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        ClipProperty = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Filter = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Function = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet6 = (
+            data.current_editor_font_name,
+            0xFF8000FF,
+            data.current_editor_font_size,
+            None,
+        )
+        LineComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        NestedBlockComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Plugin = (
+            data.current_editor_font_name,
+            0xFF0080C0,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        TripleString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Bash:
-        Backticks = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc48e7b, data.current_editor_font_size, None)
-        Error = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        HereDocumentDelimiter = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ParameterExpansion = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Scalar = (data.current_editor_font_name, 0xfffce94f, data.current_editor_font_size, True)
-        SingleQuotedHereDocument = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-    
+        Backticks = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC48E7B,
+            data.current_editor_font_size,
+            None,
+        )
+        Error = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        HereDocumentDelimiter = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ParameterExpansion = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Scalar = (
+            data.current_editor_font_name,
+            0xFFFCE94F,
+            data.current_editor_font_size,
+            True,
+        )
+        SingleQuotedHereDocument = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Batch:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ExternalCommand = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        HideCommandChar = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Label = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Variable = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ExternalCommand = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        HideCommandChar = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Label = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Variable = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class CMake:
-        BlockForeach = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        BlockIf = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        BlockMacro = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        BlockWhile = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Function = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet3 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Label = (data.current_editor_font_name, 0xffcc3300, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        StringLeftQuote = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        StringRightQuote = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        StringVariable = (data.current_editor_font_name, 0xffcc3300, data.current_editor_font_size, None)
-        Variable = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-    
+        BlockForeach = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        BlockIf = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        BlockMacro = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        BlockWhile = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Function = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet3 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Label = (
+            data.current_editor_font_name,
+            0xFFCC3300,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        StringLeftQuote = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        StringRightQuote = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        StringVariable = (
+            data.current_editor_font_name,
+            0xFFCC3300,
+            data.current_editor_font_size,
+            None,
+        )
+        Variable = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+
     class CPP:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        CommentDocKeyword = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        CommentDocKeywordError = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        GlobalClass = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        HashQuotedString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveComment = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentDoc = (data.current_editor_font_name, 0xffd0d0d0, data.current_editor_font_size, None)
-        InactiveCommentDocKeyword = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentDocKeywordError = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentLine = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDefault = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDoubleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveGlobalClass = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveHashQuotedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveIdentifier = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveKeyword = (data.current_editor_font_name, 0xff9090b0, data.current_editor_font_size, None)
-        InactiveKeywordSet2 = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveNumber = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveOperator = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactivePreProcessor = (data.current_editor_font_name, 0xffb0b090, data.current_editor_font_size, None)
-        InactivePreProcessorComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactivePreProcessorCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveRawString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveRegex = (data.current_editor_font_name, 0xff7faf7f, data.current_editor_font_size, None)
-        InactiveSingleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveTripleQuotedVerbatimString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveUUID = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveVerbatimString = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet2 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        PreProcessorComment = (data.current_editor_font_name, 0xff659900, data.current_editor_font_size, None)
-        PreProcessorCommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        RawString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Regex = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        TripleQuotedVerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UUID = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveEscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        EscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveUserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveTaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        TaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        GlobalClass = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        HashQuotedString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveComment = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDoc = (
+            data.current_editor_font_name,
+            0xFFD0D0D0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLine = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDefault = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveGlobalClass = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveHashQuotedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveIdentifier = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeyword = (
+            data.current_editor_font_name,
+            0xFF9090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveNumber = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveOperator = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessor = (
+            data.current_editor_font_name,
+            0xFFB0B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRawString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRegex = (
+            data.current_editor_font_name,
+            0xFF7FAF7F,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUUID = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveVerbatimString = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorComment = (
+            data.current_editor_font_name,
+            0xFF659900,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        RawString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Regex = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        TripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UUID = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveEscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        EscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        TaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class CSS:
-        AtRule = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Attribute = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-        CSS1Property = (data.current_editor_font_name, 0xff0040e0, data.current_editor_font_size, None)
-        CSS2Property = (data.current_editor_font_name, 0xff00a0e0, data.current_editor_font_size, None)
-        CSS3Property = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ClassSelector = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffff0080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ExtendedCSSProperty = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ExtendedPseudoClass = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ExtendedPseudoElement = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        IDSelector = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Important = (data.current_editor_font_name, 0xffff8000, data.current_editor_font_size, None)
-        MediaRule = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PseudoClass = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-        PseudoElement = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Tag = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        UnknownProperty = (data.current_editor_font_name, 0xffff0000, data.current_editor_font_size, None)
-        UnknownPseudoClass = (data.current_editor_font_name, 0xffff0000, data.current_editor_font_size, None)
-        Value = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Variable = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        AtRule = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Attribute = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+        CSS1Property = (
+            data.current_editor_font_name,
+            0xFF0040E0,
+            data.current_editor_font_size,
+            None,
+        )
+        CSS2Property = (
+            data.current_editor_font_name,
+            0xFF00A0E0,
+            data.current_editor_font_size,
+            None,
+        )
+        CSS3Property = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ClassSelector = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFF0080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ExtendedCSSProperty = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ExtendedPseudoClass = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ExtendedPseudoElement = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        IDSelector = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Important = (
+            data.current_editor_font_name,
+            0xFFFF8000,
+            data.current_editor_font_size,
+            None,
+        )
+        MediaRule = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PseudoClass = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+        PseudoElement = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Tag = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        UnknownProperty = (
+            data.current_editor_font_name,
+            0xFFFF0000,
+            data.current_editor_font_size,
+            None,
+        )
+        UnknownPseudoClass = (
+            data.current_editor_font_name,
+            0xFFFF0000,
+            data.current_editor_font_size,
+            None,
+        )
+        Value = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Variable = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class CSharp:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        CommentDocKeyword = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        CommentDocKeywordError = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        GlobalClass = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        HashQuotedString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveComment = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentDoc = (data.current_editor_font_name, 0xffd0d0d0, data.current_editor_font_size, None)
-        InactiveCommentDocKeyword = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentDocKeywordError = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentLine = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDefault = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDoubleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveGlobalClass = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveHashQuotedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveIdentifier = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveKeyword = (data.current_editor_font_name, 0xff9090b0, data.current_editor_font_size, None)
-        InactiveKeywordSet2 = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveNumber = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveOperator = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactivePreProcessor = (data.current_editor_font_name, 0xffb0b090, data.current_editor_font_size, None)
-        InactivePreProcessorComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactivePreProcessorCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveRawString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveRegex = (data.current_editor_font_name, 0xff7faf7f, data.current_editor_font_size, None)
-        InactiveSingleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveTripleQuotedVerbatimString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveUUID = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveVerbatimString = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet2 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        PreProcessorComment = (data.current_editor_font_name, 0xff659900, data.current_editor_font_size, None)
-        PreProcessorCommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        RawString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Regex = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        TripleQuotedVerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UUID = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveEscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        EscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveUserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveTaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        TaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        GlobalClass = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        HashQuotedString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveComment = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDoc = (
+            data.current_editor_font_name,
+            0xFFD0D0D0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLine = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDefault = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveGlobalClass = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveHashQuotedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveIdentifier = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeyword = (
+            data.current_editor_font_name,
+            0xFF9090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveNumber = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveOperator = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessor = (
+            data.current_editor_font_name,
+            0xFFB0B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRawString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRegex = (
+            data.current_editor_font_name,
+            0xFF7FAF7F,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUUID = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveVerbatimString = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorComment = (
+            data.current_editor_font_name,
+            0xFF659900,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        RawString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Regex = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        TripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UUID = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveEscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        EscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        TaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class CoffeeScript:
-        BlockRegex = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        BlockRegexComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentBlock = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        CommentDocKeyword = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        CommentDocKeywordError = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        GlobalClass = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet2 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Regex = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        UUID = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-    
+        BlockRegex = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        BlockRegexComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentBlock = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        GlobalClass = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Regex = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        UUID = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+
     class D:
-        BackquoteString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Character = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        CommentDocKeyword = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        CommentDocKeywordError = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        CommentNested = (data.current_editor_font_name, 0xffa0c0a0, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordDoc = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSecondary = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet5 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        KeywordSet6 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        KeywordSet7 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        RawString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Typedefs = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        BackquoteString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Character = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentNested = (
+            data.current_editor_font_name,
+            0xFFA0C0A0,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordDoc = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSecondary = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet5 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet6 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet7 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        RawString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Typedefs = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Diff:
-        Command = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Header = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        LineAdded = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        LineChanged = (data.current_editor_font_name, 0xff7f7f7f, data.current_editor_font_size, None)
-        LineRemoved = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Position = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-    
+        Command = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Header = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        LineAdded = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        LineChanged = (
+            data.current_editor_font_name,
+            0xFF7F7F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        LineRemoved = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Position = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Fortran:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Continuation = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DottedOperator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ExtendedFunction = (data.current_editor_font_name, 0xffb04080, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        IntrinsicFunction = (data.current_editor_font_name, 0xffb00040, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Label = (data.current_editor_font_name, 0xffe0c0e0, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Continuation = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DottedOperator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ExtendedFunction = (
+            data.current_editor_font_name,
+            0xFFB04080,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        IntrinsicFunction = (
+            data.current_editor_font_name,
+            0xFFB00040,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Label = (
+            data.current_editor_font_name,
+            0xFFE0C0E0,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Fortran77:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Continuation = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DottedOperator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ExtendedFunction = (data.current_editor_font_name, 0xffb04080, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        IntrinsicFunction = (data.current_editor_font_name, 0xffb00040, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Label = (data.current_editor_font_name, 0xffe0c0e0, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Continuation = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DottedOperator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ExtendedFunction = (
+            data.current_editor_font_name,
+            0xFFB04080,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        IntrinsicFunction = (
+            data.current_editor_font_name,
+            0xFFB00040,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Label = (
+            data.current_editor_font_name,
+            0xFFE0C0E0,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class HTML:
-        ASPAtStart = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        ASPJavaScriptCommentDoc = (data.current_editor_font_name, 0xff7f7f7f, data.current_editor_font_size, None)
-        ASPJavaScriptCommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        ASPJavaScriptDefault = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ASPJavaScriptKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        ASPJavaScriptNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        ASPJavaScriptRegex = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ASPJavaScriptStart = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        ASPJavaScriptSymbol = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptWord = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPPythonClassName = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        ASPPythonComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        ASPPythonDefault = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        ASPPythonDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ASPPythonFunctionMethodName = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        ASPPythonIdentifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPPythonKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        ASPPythonNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        ASPPythonOperator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPPythonSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ASPPythonStart = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        ASPPythonTripleDoubleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        ASPPythonTripleSingleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        ASPStart = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPVBScriptComment = (data.current_editor_font_name, 0xff008000, data.current_editor_font_size, None)
-        ASPVBScriptDefault = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPVBScriptIdentifier = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        ASPVBScriptKeyword = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        ASPVBScriptNumber = (data.current_editor_font_name, 0xff008080, data.current_editor_font_size, None)
-        ASPVBScriptStart = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPVBScriptString = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        ASPVBScriptUnclosedString = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        ASPXCComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Attribute = (data.current_editor_font_name, 0xff008080, data.current_editor_font_size, None)
-        CDATA = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Entity = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        HTMLComment = (data.current_editor_font_name, 0xff808000, data.current_editor_font_size, None)
-        HTMLDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        HTMLNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        HTMLSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        HTMLValue = (data.current_editor_font_name, 0xffff00ff, data.current_editor_font_size, None)
-        JavaScriptComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        JavaScriptCommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        JavaScriptCommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        JavaScriptDefault = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        JavaScriptDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        JavaScriptKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        JavaScriptNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        JavaScriptRegex = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        JavaScriptSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        JavaScriptStart = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        JavaScriptSymbol = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        JavaScriptUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        JavaScriptWord = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        OtherInTag = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        PHPComment = (data.current_editor_font_name, 0xff999999, data.current_editor_font_size, None)
-        PHPCommentLine = (data.current_editor_font_name, 0xff666666, data.current_editor_font_size, None)
-        PHPDefault = (data.current_editor_font_name, 0xffc7dbf5, data.current_editor_font_size, None)
-        PHPDoubleQuotedString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        PHPDoubleQuotedVariable = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        PHPKeyword = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        PHPNumber = (data.current_editor_font_name, 0xffcc9900, data.current_editor_font_size, None)
-        PHPOperator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PHPSingleQuotedString = (data.current_editor_font_name, 0xff009f00, data.current_editor_font_size, None)
-        PHPStart = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        PHPVariable = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        PythonClassName = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        PythonComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        PythonDefault = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        PythonDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        PythonFunctionMethodName = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        PythonIdentifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PythonKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        PythonNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        PythonOperator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PythonSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        PythonStart = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        PythonTripleDoubleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        PythonTripleSingleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        SGMLBlockDefault = (data.current_editor_font_name, 0xfffff5b2, data.current_editor_font_size, None)
-        SGMLCommand = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        SGMLComment = (data.current_editor_font_name, 0xff808000, data.current_editor_font_size, None)
-        SGMLDefault = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        SGMLDoubleQuotedString = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-        SGMLEntity = (data.current_editor_font_name, 0xff333333, data.current_editor_font_size, None)
-        SGMLError = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-        SGMLParameter = (data.current_editor_font_name, 0xff006600, data.current_editor_font_size, None)
-        SGMLParameterComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SGMLSingleQuotedString = (data.current_editor_font_name, 0xff993300, data.current_editor_font_size, None)
-        SGMLSpecial = (data.current_editor_font_name, 0xff3366ff, data.current_editor_font_size, None)
-        Script = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        Tag = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        UnknownAttribute = (data.current_editor_font_name, 0xffff0000, data.current_editor_font_size, None)
-        UnknownTag = (data.current_editor_font_name, 0xffff0000, data.current_editor_font_size, None)
-        VBScriptComment = (data.current_editor_font_name, 0xff008000, data.current_editor_font_size, None)
-        VBScriptDefault = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VBScriptIdentifier = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        VBScriptKeyword = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        VBScriptNumber = (data.current_editor_font_name, 0xff008080, data.current_editor_font_size, None)
-        VBScriptStart = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VBScriptString = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        VBScriptUnclosedString = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        XMLEnd = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        XMLStart = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        XMLTagEnd = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-    
+        ASPAtStart = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptCommentDoc = (
+            data.current_editor_font_name,
+            0xFF7F7F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptCommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptDefault = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptRegex = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptStart = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptSymbol = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptWord = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonClassName = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonDefault = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonFunctionMethodName = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonIdentifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonOperator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonStart = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonTripleDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonTripleSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPStart = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptComment = (
+            data.current_editor_font_name,
+            0xFF008000,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptDefault = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptIdentifier = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptKeyword = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptNumber = (
+            data.current_editor_font_name,
+            0xFF008080,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptStart = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptString = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptUnclosedString = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPXCComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Attribute = (
+            data.current_editor_font_name,
+            0xFF008080,
+            data.current_editor_font_size,
+            None,
+        )
+        CDATA = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Entity = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLComment = (
+            data.current_editor_font_name,
+            0xFF808000,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLValue = (
+            data.current_editor_font_name,
+            0xFFFF00FF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptCommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptCommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptDefault = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptRegex = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptStart = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptSymbol = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptWord = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        OtherInTag = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPComment = (
+            data.current_editor_font_name,
+            0xFF999999,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPCommentLine = (
+            data.current_editor_font_name,
+            0xFF666666,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPDefault = (
+            data.current_editor_font_name,
+            0xFFC7DBF5,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPDoubleQuotedVariable = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPKeyword = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPNumber = (
+            data.current_editor_font_name,
+            0xFFCC9900,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPOperator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFF009F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPStart = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPVariable = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonClassName = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonDefault = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonFunctionMethodName = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonIdentifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonOperator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonStart = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonTripleDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonTripleSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLBlockDefault = (
+            data.current_editor_font_name,
+            0xFFFFF5B2,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLCommand = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLComment = (
+            data.current_editor_font_name,
+            0xFF808000,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLDefault = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLEntity = (
+            data.current_editor_font_name,
+            0xFF333333,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLError = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLParameter = (
+            data.current_editor_font_name,
+            0xFF006600,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLParameterComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFF993300,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLSpecial = (
+            data.current_editor_font_name,
+            0xFF3366FF,
+            data.current_editor_font_size,
+            None,
+        )
+        Script = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        Tag = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        UnknownAttribute = (
+            data.current_editor_font_name,
+            0xFFFF0000,
+            data.current_editor_font_size,
+            None,
+        )
+        UnknownTag = (
+            data.current_editor_font_name,
+            0xFFFF0000,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptComment = (
+            data.current_editor_font_name,
+            0xFF008000,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptDefault = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptIdentifier = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptKeyword = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptNumber = (
+            data.current_editor_font_name,
+            0xFF008080,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptStart = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptString = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptUnclosedString = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        XMLEnd = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        XMLStart = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        XMLTagEnd = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+
     class IDL:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        CommentDocKeyword = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        CommentDocKeywordError = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        GlobalClass = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        HashQuotedString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveComment = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentDoc = (data.current_editor_font_name, 0xffd0d0d0, data.current_editor_font_size, None)
-        InactiveCommentDocKeyword = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentDocKeywordError = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentLine = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDefault = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDoubleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveGlobalClass = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveHashQuotedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveIdentifier = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveKeyword = (data.current_editor_font_name, 0xff9090b0, data.current_editor_font_size, None)
-        InactiveKeywordSet2 = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveNumber = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveOperator = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactivePreProcessor = (data.current_editor_font_name, 0xffb0b090, data.current_editor_font_size, None)
-        InactivePreProcessorComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactivePreProcessorCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveRawString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveRegex = (data.current_editor_font_name, 0xff7faf7f, data.current_editor_font_size, None)
-        InactiveSingleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveTripleQuotedVerbatimString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveUUID = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveVerbatimString = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet2 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        PreProcessorComment = (data.current_editor_font_name, 0xff659900, data.current_editor_font_size, None)
-        PreProcessorCommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        RawString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Regex = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        TripleQuotedVerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UUID = (data.current_editor_font_name, 0xff804080, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveEscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        EscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveUserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveTaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        TaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        GlobalClass = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        HashQuotedString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveComment = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDoc = (
+            data.current_editor_font_name,
+            0xFFD0D0D0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLine = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDefault = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveGlobalClass = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveHashQuotedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveIdentifier = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeyword = (
+            data.current_editor_font_name,
+            0xFF9090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveNumber = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveOperator = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessor = (
+            data.current_editor_font_name,
+            0xFFB0B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRawString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRegex = (
+            data.current_editor_font_name,
+            0xFF7FAF7F,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUUID = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveVerbatimString = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorComment = (
+            data.current_editor_font_name,
+            0xFF659900,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        RawString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Regex = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        TripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UUID = (
+            data.current_editor_font_name,
+            0xFF804080,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveEscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        EscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        TaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Java:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        CommentDocKeyword = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        CommentDocKeywordError = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        GlobalClass = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        HashQuotedString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveComment = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentDoc = (data.current_editor_font_name, 0xffd0d0d0, data.current_editor_font_size, None)
-        InactiveCommentDocKeyword = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentDocKeywordError = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentLine = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDefault = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDoubleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveGlobalClass = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveHashQuotedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveIdentifier = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveKeyword = (data.current_editor_font_name, 0xff9090b0, data.current_editor_font_size, None)
-        InactiveKeywordSet2 = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveNumber = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveOperator = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactivePreProcessor = (data.current_editor_font_name, 0xffb0b090, data.current_editor_font_size, None)
-        InactivePreProcessorComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactivePreProcessorCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveRawString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveRegex = (data.current_editor_font_name, 0xff7faf7f, data.current_editor_font_size, None)
-        InactiveSingleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveTripleQuotedVerbatimString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveUUID = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveVerbatimString = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet2 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        PreProcessorComment = (data.current_editor_font_name, 0xff659900, data.current_editor_font_size, None)
-        PreProcessorCommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        RawString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Regex = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        TripleQuotedVerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UUID = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveEscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        EscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveUserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveTaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        TaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        GlobalClass = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        HashQuotedString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveComment = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDoc = (
+            data.current_editor_font_name,
+            0xFFD0D0D0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLine = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDefault = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveGlobalClass = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveHashQuotedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveIdentifier = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeyword = (
+            data.current_editor_font_name,
+            0xFF9090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveNumber = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveOperator = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessor = (
+            data.current_editor_font_name,
+            0xFFB0B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRawString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRegex = (
+            data.current_editor_font_name,
+            0xFF7FAF7F,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUUID = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveVerbatimString = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorComment = (
+            data.current_editor_font_name,
+            0xFF659900,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        RawString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Regex = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        TripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UUID = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveEscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        EscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        TaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class JavaScript:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        CommentDocKeyword = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        CommentDocKeywordError = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        GlobalClass = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        HashQuotedString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveComment = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentDoc = (data.current_editor_font_name, 0xffd0d0d0, data.current_editor_font_size, None)
-        InactiveCommentDocKeyword = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentDocKeywordError = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveCommentLine = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDefault = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveDoubleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveGlobalClass = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveHashQuotedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveIdentifier = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactiveKeyword = (data.current_editor_font_name, 0xff9090b0, data.current_editor_font_size, None)
-        InactiveKeywordSet2 = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveNumber = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        InactiveOperator = (data.current_editor_font_name, 0xffb0b0b0, data.current_editor_font_size, None)
-        InactivePreProcessor = (data.current_editor_font_name, 0xffb0b090, data.current_editor_font_size, None)
-        InactivePreProcessorComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactivePreProcessorCommentLineDoc = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveRawString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveRegex = (data.current_editor_font_name, 0xff7faf7f, data.current_editor_font_size, None)
-        InactiveSingleQuotedString = (data.current_editor_font_name, 0xffb090b0, data.current_editor_font_size, None)
-        InactiveTripleQuotedVerbatimString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveUUID = (data.current_editor_font_name, 0xffc0c0c0, data.current_editor_font_size, None)
-        InactiveUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InactiveVerbatimString = (data.current_editor_font_name, 0xff90b090, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet2 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        PreProcessorComment = (data.current_editor_font_name, 0xff659900, data.current_editor_font_size, None)
-        PreProcessorCommentLineDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        RawString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Regex = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        TripleQuotedVerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UUID = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VerbatimString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        UserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveEscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        EscapeSequence = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveUserLiteral = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveTaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        TaskMarker = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        GlobalClass = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        HashQuotedString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveComment = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDoc = (
+            data.current_editor_font_name,
+            0xFFD0D0D0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLine = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDefault = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveGlobalClass = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveHashQuotedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveIdentifier = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeyword = (
+            data.current_editor_font_name,
+            0xFF9090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveNumber = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveOperator = (
+            data.current_editor_font_name,
+            0xFFB0B0B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessor = (
+            data.current_editor_font_name,
+            0xFFB0B090,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRawString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveRegex = (
+            data.current_editor_font_name,
+            0xFF7FAF7F,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFB090B0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUUID = (
+            data.current_editor_font_name,
+            0xFFC0C0C0,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveVerbatimString = (
+            data.current_editor_font_name,
+            0xFF90B090,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet2 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorComment = (
+            data.current_editor_font_name,
+            0xFF659900,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorCommentLineDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        RawString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Regex = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        TripleQuotedVerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UUID = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VerbatimString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        UserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveEscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        EscapeSequence = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUserLiteral = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveTaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        TaskMarker = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Lua:
-        BasicFunctions = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Character = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CoroutinesIOSystemFacilities = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet5 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        KeywordSet6 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        KeywordSet7 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        KeywordSet8 = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Label = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        LineComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        LiteralString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Preprocessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        StringTableMathsFunctions = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        BasicFunctions = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Character = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CoroutinesIOSystemFacilities = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet5 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet6 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet7 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet8 = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Label = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        LineComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        LiteralString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Preprocessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        StringTableMathsFunctions = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Makefile:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Error = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Preprocessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Target = (data.current_editor_font_name, 0xffa00000, data.current_editor_font_size, None)
-        Variable = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Error = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Preprocessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Target = (
+            data.current_editor_font_name,
+            0xFFA00000,
+            data.current_editor_font_size,
+            None,
+        )
+        Variable = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Matlab:
-        Command = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-    
+        Command = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Octave:
-        Command = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-    
+        Command = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+
     class PO:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Flags = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Fuzzy = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageContext = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageContextText = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageContextTextEOL = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageId = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageIdText = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageIdTextEOL = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageStringText = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        MessageStringTextEOL = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ProgrammerComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Reference = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Flags = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Fuzzy = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageContext = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageContextText = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageContextTextEOL = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageId = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageIdText = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageIdTextEOL = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageStringText = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        MessageStringTextEOL = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ProgrammerComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Reference = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class POV:
-        BadDirective = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffff0080, data.current_editor_font_size, None)
-        Directive = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        KeywordSet6 = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet7 = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet8 = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        ObjectsCSGAppearance = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PredefinedFunctions = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        PredefinedIdentifiers = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        TypesModifiersItems = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        BadDirective = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFF0080,
+            data.current_editor_font_size,
+            None,
+        )
+        Directive = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet6 = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet7 = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet8 = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        ObjectsCSGAppearance = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PredefinedFunctions = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        PredefinedIdentifiers = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        TypesModifiersItems = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Pascal:
-        Asm = (data.current_editor_font_name, 0xff804080, data.current_editor_font_size, None)
-        Character = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentParenthesis = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        HexNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PreProcessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        PreProcessorParenthesis = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        Asm = (
+            data.current_editor_font_name,
+            0xFF804080,
+            data.current_editor_font_size,
+            None,
+        )
+        Character = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentParenthesis = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        HexNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PreProcessorParenthesis = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Perl:
-        Array = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        BacktickHereDocument = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        BacktickHereDocumentVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        Backticks = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        BackticksVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        DataSection = (data.current_editor_font_name, 0xff600000, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedHereDocument = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        DoubleQuotedHereDocumentVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        DoubleQuotedStringVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        Error = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        FormatBody = (data.current_editor_font_name, 0xffc000c0, data.current_editor_font_size, None)
-        FormatIdentifier = (data.current_editor_font_name, 0xffc000c0, data.current_editor_font_size, None)
-        Hash = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        HereDocumentDelimiter = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        POD = (data.current_editor_font_name, 0xff004000, data.current_editor_font_size, None)
-        PODVerbatim = (data.current_editor_font_name, 0xff004000, data.current_editor_font_size, None)
-        QuotedStringQ = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        QuotedStringQQ = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        QuotedStringQQVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        QuotedStringQR = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        QuotedStringQRVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        QuotedStringQW = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        QuotedStringQX = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        QuotedStringQXVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        Regex = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        RegexVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        Scalar = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SingleQuotedHereDocument = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        SubroutinePrototype = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Substitution = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SubstitutionVar = (data.current_editor_font_name, 0xffd00000, data.current_editor_font_size, None)
-        SymbolTable = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Translation = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        Array = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        BacktickHereDocument = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        BacktickHereDocumentVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        Backticks = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        BackticksVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        DataSection = (
+            data.current_editor_font_name,
+            0xFF600000,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedHereDocument = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedHereDocumentVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedStringVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        Error = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        FormatBody = (
+            data.current_editor_font_name,
+            0xFFC000C0,
+            data.current_editor_font_size,
+            None,
+        )
+        FormatIdentifier = (
+            data.current_editor_font_name,
+            0xFFC000C0,
+            data.current_editor_font_size,
+            None,
+        )
+        Hash = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        HereDocumentDelimiter = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        POD = (
+            data.current_editor_font_name,
+            0xFF004000,
+            data.current_editor_font_size,
+            None,
+        )
+        PODVerbatim = (
+            data.current_editor_font_name,
+            0xFF004000,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedStringQ = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedStringQQ = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedStringQQVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedStringQR = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedStringQRVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedStringQW = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedStringQX = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedStringQXVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        Regex = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        RegexVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        Scalar = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedHereDocument = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        SubroutinePrototype = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Substitution = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SubstitutionVar = (
+            data.current_editor_font_name,
+            0xFFD00000,
+            data.current_editor_font_size,
+            None,
+        )
+        SymbolTable = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Translation = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class PostScript:
-        ArrayParenthesis = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        BadStringCharacter = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        Base85String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        DSCComment = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        DSCCommentValue = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        DictionaryParenthesis = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        HexString = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        ImmediateEvalLiteral = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Literal = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Name = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        ProcedureParenthesis = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Text = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-    
+        ArrayParenthesis = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        BadStringCharacter = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        Base85String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        DSCComment = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        DSCCommentValue = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        DictionaryParenthesis = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        HexString = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        ImmediateEvalLiteral = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Literal = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Name = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        ProcedureParenthesis = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Text = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Properties:
-        Assignment = (data.current_editor_font_name, 0xffb06000, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        DefaultValue = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Key = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Section = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-    
+        Assignment = (
+            data.current_editor_font_name,
+            0xFFB06000,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        DefaultValue = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Key = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Section = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Python:
-        ClassName = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentBlock = (data.current_editor_font_name, 0xff7f7f7f, data.current_editor_font_size, None)
-        Decorator = (data.current_editor_font_name, 0xff805000, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        FunctionMethodName = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        HighlightedIdentifier = (data.current_editor_font_name, 0xff407090, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Inconsistent = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        NoWarning = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Spaces = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Tabs = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        TabsAfterSpaces = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        TripleDoubleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        TripleSingleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        CustomKeyword = (data.current_editor_font_name, 0xff6e6e00, data.current_editor_font_size, True)
-    
+        ClassName = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentBlock = (
+            data.current_editor_font_name,
+            0xFF7F7F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        Decorator = (
+            data.current_editor_font_name,
+            0xFF805000,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        FunctionMethodName = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        HighlightedIdentifier = (
+            data.current_editor_font_name,
+            0xFF407090,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Inconsistent = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        NoWarning = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Spaces = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Tabs = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        TabsAfterSpaces = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        TripleDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        TripleSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        CustomKeyword = (
+            data.current_editor_font_name,
+            0xFF6E6E00,
+            data.current_editor_font_size,
+            True,
+        )
+
     class Ruby:
-        Backticks = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        ClassName = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        ClassVariable = (data.current_editor_font_name, 0xff8000b0, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        DataSection = (data.current_editor_font_name, 0xff600000, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DemotedKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Error = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        FunctionMethodName = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Global = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        HereDocument = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        HereDocumentDelimiter = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        InstanceVariable = (data.current_editor_font_name, 0xffb00080, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        ModuleName = (data.current_editor_font_name, 0xffa000a0, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        POD = (data.current_editor_font_name, 0xff004000, data.current_editor_font_size, None)
-        PercentStringQ = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        PercentStringq = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        PercentStringr = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PercentStringw = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PercentStringx = (data.current_editor_font_name, 0xffffff00, data.current_editor_font_size, None)
-        Regex = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Stderr = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Stdin = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Stdout = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Symbol = (data.current_editor_font_name, 0xffc0a030, data.current_editor_font_size, None)
-    
+        Backticks = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        ClassName = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        ClassVariable = (
+            data.current_editor_font_name,
+            0xFF8000B0,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        DataSection = (
+            data.current_editor_font_name,
+            0xFF600000,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DemotedKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Error = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        FunctionMethodName = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Global = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        HereDocument = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        HereDocumentDelimiter = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        InstanceVariable = (
+            data.current_editor_font_name,
+            0xFFB00080,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        ModuleName = (
+            data.current_editor_font_name,
+            0xFFA000A0,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        POD = (
+            data.current_editor_font_name,
+            0xFF004000,
+            data.current_editor_font_size,
+            None,
+        )
+        PercentStringQ = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        PercentStringq = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        PercentStringr = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PercentStringw = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PercentStringx = (
+            data.current_editor_font_name,
+            0xFFFFFF00,
+            data.current_editor_font_size,
+            None,
+        )
+        Regex = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Stderr = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Stdin = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Stdout = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Symbol = (
+            data.current_editor_font_name,
+            0xFFC0A030,
+            data.current_editor_font_size,
+            None,
+        )
+
     class SQL:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentDoc = (data.current_editor_font_name, 0xff7f7f7f, data.current_editor_font_size, None)
-        CommentDocKeyword = (data.current_editor_font_name, 0xff3060a0, data.current_editor_font_size, None)
-        CommentDocKeywordError = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLineHash = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet5 = (data.current_editor_font_name, 0xff4b0082, data.current_editor_font_size, None)
-        KeywordSet6 = (data.current_editor_font_name, 0xffb00040, data.current_editor_font_size, None)
-        KeywordSet7 = (data.current_editor_font_name, 0xff8b0000, data.current_editor_font_size, None)
-        KeywordSet8 = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PlusComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        PlusKeyword = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        PlusPrompt = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        QuotedIdentifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        QuotedOperator = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDoc = (
+            data.current_editor_font_name,
+            0xFF7F7F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeyword = (
+            data.current_editor_font_name,
+            0xFF3060A0,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentDocKeywordError = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLineHash = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet5 = (
+            data.current_editor_font_name,
+            0xFF4B0082,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet6 = (
+            data.current_editor_font_name,
+            0xFFB00040,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet7 = (
+            data.current_editor_font_name,
+            0xFF8B0000,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet8 = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PlusComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        PlusKeyword = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PlusPrompt = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedIdentifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedOperator = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Spice:
-        Command = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        Delimiter = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Function = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Parameter = (data.current_editor_font_name, 0xff0040e0, data.current_editor_font_size, None)
-        Value = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-    
+        Command = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        Delimiter = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Function = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Parameter = (
+            data.current_editor_font_name,
+            0xFF0040E0,
+            data.current_editor_font_size,
+            None,
+        )
+        Value = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+
     class TCL:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentBlock = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        CommentBox = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        ExpandKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        ITCLKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet6 = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet7 = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet8 = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet9 = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        Modifier = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        QuotedKeyword = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        QuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        Substitution = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        SubstitutionBrace = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        TCLKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        TkCommand = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        TkKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentBlock = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentBox = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        ExpandKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        ITCLKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet6 = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet7 = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet8 = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet9 = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        Modifier = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedKeyword = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        QuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        Substitution = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        SubstitutionBrace = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        TCLKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        TkCommand = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        TkKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+
     class TeX:
-        Command = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff3f3f3f, data.current_editor_font_size, None)
-        Group = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        Special = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Symbol = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        Text = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-    
+        Command = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF3F3F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        Group = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        Special = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Symbol = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        Text = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+
     class VHDL:
-        Attribute = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet7 = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        StandardFunction = (data.current_editor_font_name, 0xff808020, data.current_editor_font_size, None)
-        StandardOperator = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        StandardPackage = (data.current_editor_font_name, 0xff208020, data.current_editor_font_size, None)
-        StandardType = (data.current_editor_font_name, 0xff208080, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        CommentBlock = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-    
+        Attribute = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet7 = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        StandardFunction = (
+            data.current_editor_font_name,
+            0xFF808020,
+            data.current_editor_font_size,
+            None,
+        )
+        StandardOperator = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        StandardPackage = (
+            data.current_editor_font_name,
+            0xFF208020,
+            data.current_editor_font_size,
+            None,
+        )
+        StandardType = (
+            data.current_editor_font_name,
+            0xFF208080,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentBlock = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class Verilog:
-        Comment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        CommentBang = (data.current_editor_font_name, 0xff3f7f3f, data.current_editor_font_size, None)
-        CommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        KeywordSet2 = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xff007070, data.current_editor_font_size, None)
-        Preprocessor = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        String = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        SystemTask = (data.current_editor_font_name, 0xff804020, data.current_editor_font_size, None)
-        UnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        UserKeywordSet = (data.current_editor_font_name, 0xff2a00ff, data.current_editor_font_size, None)
-        InactiveDefault = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveUnclosedString = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveCommentKeyword = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveKeywordSet2 = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveComment = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DeclareInputOutputPort = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveString = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        CommentKeyword = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DeclareOutputPort = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        PortConnection = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveKeyword = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        DeclareInputPort = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveDeclareInputPort = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveDeclareOutputPort = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveUserKeywordSet = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveCommentBang = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveIdentifier = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactivePortConnection = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveNumber = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveSystemTask = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactivePreprocessor = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveOperator = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveDeclareInputOutputPort = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        InactiveCommentLine = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-    
+        Comment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentBang = (
+            data.current_editor_font_name,
+            0xFF3F7F3F,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        KeywordSet2 = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFF007070,
+            data.current_editor_font_size,
+            None,
+        )
+        Preprocessor = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        String = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        SystemTask = (
+            data.current_editor_font_name,
+            0xFF804020,
+            data.current_editor_font_size,
+            None,
+        )
+        UnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        UserKeywordSet = (
+            data.current_editor_font_name,
+            0xFF2A00FF,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDefault = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUnclosedString = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentKeyword = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeywordSet2 = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveComment = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DeclareInputOutputPort = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveString = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        CommentKeyword = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DeclareOutputPort = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        PortConnection = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveKeyword = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        DeclareInputPort = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDeclareInputPort = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDeclareOutputPort = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveUserKeywordSet = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentBang = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveIdentifier = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePortConnection = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveNumber = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveSystemTask = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactivePreprocessor = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveOperator = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveDeclareInputOutputPort = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        InactiveCommentLine = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+
     class XML:
-        ASPAtStart = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        ASPJavaScriptCommentDoc = (data.current_editor_font_name, 0xff7f7f7f, data.current_editor_font_size, None)
-        ASPJavaScriptCommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        ASPJavaScriptDefault = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ASPJavaScriptKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        ASPJavaScriptNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        ASPJavaScriptRegex = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ASPJavaScriptStart = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        ASPJavaScriptSymbol = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPJavaScriptWord = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPPythonClassName = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        ASPPythonComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        ASPPythonDefault = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        ASPPythonDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ASPPythonFunctionMethodName = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        ASPPythonIdentifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPPythonKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        ASPPythonNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        ASPPythonOperator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPPythonSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        ASPPythonStart = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        ASPPythonTripleDoubleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        ASPPythonTripleSingleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        ASPStart = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPVBScriptComment = (data.current_editor_font_name, 0xff008000, data.current_editor_font_size, None)
-        ASPVBScriptDefault = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPVBScriptIdentifier = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        ASPVBScriptKeyword = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        ASPVBScriptNumber = (data.current_editor_font_name, 0xff008080, data.current_editor_font_size, None)
-        ASPVBScriptStart = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        ASPVBScriptString = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        ASPVBScriptUnclosedString = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        ASPXCComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Attribute = (data.current_editor_font_name, 0xff008080, data.current_editor_font_size, None)
-        CDATA = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Entity = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        HTMLComment = (data.current_editor_font_name, 0xff808000, data.current_editor_font_size, None)
-        HTMLDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        HTMLNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        HTMLSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        HTMLValue = (data.current_editor_font_name, 0xff608060, data.current_editor_font_size, None)
-        JavaScriptComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        JavaScriptCommentDoc = (data.current_editor_font_name, 0xff3f703f, data.current_editor_font_size, None)
-        JavaScriptCommentLine = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        JavaScriptDefault = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        JavaScriptDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        JavaScriptKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        JavaScriptNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        JavaScriptRegex = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        JavaScriptSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        JavaScriptStart = (data.current_editor_font_name, 0xff7f7f00, data.current_editor_font_size, None)
-        JavaScriptSymbol = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        JavaScriptUnclosedString = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        JavaScriptWord = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        OtherInTag = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        PHPComment = (data.current_editor_font_name, 0xff999999, data.current_editor_font_size, None)
-        PHPCommentLine = (data.current_editor_font_name, 0xff666666, data.current_editor_font_size, None)
-        PHPDefault = (data.current_editor_font_name, 0xffc7dbf5, data.current_editor_font_size, None)
-        PHPDoubleQuotedString = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        PHPDoubleQuotedVariable = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        PHPKeyword = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        PHPNumber = (data.current_editor_font_name, 0xffcc9900, data.current_editor_font_size, None)
-        PHPOperator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PHPSingleQuotedString = (data.current_editor_font_name, 0xff009f00, data.current_editor_font_size, None)
-        PHPStart = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-        PHPVariable = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        PythonClassName = (data.current_editor_font_name, 0xff5abcd8, data.current_editor_font_size, None)
-        PythonComment = (data.current_editor_font_name, 0xff6cab9d, data.current_editor_font_size, None)
-        PythonDefault = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        PythonDoubleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        PythonFunctionMethodName = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        PythonIdentifier = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PythonKeyword = (data.current_editor_font_name, 0xff2389da, data.current_editor_font_size, None)
-        PythonNumber = (data.current_editor_font_name, 0xff74ccf4, data.current_editor_font_size, None)
-        PythonOperator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        PythonSingleQuotedString = (data.current_editor_font_name, 0xffc4bbb8, data.current_editor_font_size, None)
-        PythonStart = (data.current_editor_font_name, 0xff808080, data.current_editor_font_size, None)
-        PythonTripleDoubleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        PythonTripleSingleQuotedString = (data.current_editor_font_name, 0xfff5b0cb, data.current_editor_font_size, None)
-        SGMLBlockDefault = (data.current_editor_font_name, 0xfffff5b2, data.current_editor_font_size, None)
-        SGMLCommand = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        SGMLComment = (data.current_editor_font_name, 0xff808000, data.current_editor_font_size, None)
-        SGMLDefault = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        SGMLDoubleQuotedString = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-        SGMLEntity = (data.current_editor_font_name, 0xff333333, data.current_editor_font_size, None)
-        SGMLError = (data.current_editor_font_name, 0xffedff86, data.current_editor_font_size, None)
-        SGMLParameter = (data.current_editor_font_name, 0xff006600, data.current_editor_font_size, None)
-        SGMLParameterComment = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        SGMLSingleQuotedString = (data.current_editor_font_name, 0xff993300, data.current_editor_font_size, None)
-        SGMLSpecial = (data.current_editor_font_name, 0xff3366ff, data.current_editor_font_size, None)
-        Script = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        Tag = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        UnknownAttribute = (data.current_editor_font_name, 0xff008080, data.current_editor_font_size, None)
-        UnknownTag = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        VBScriptComment = (data.current_editor_font_name, 0xff008000, data.current_editor_font_size, None)
-        VBScriptDefault = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VBScriptIdentifier = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        VBScriptKeyword = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        VBScriptNumber = (data.current_editor_font_name, 0xff008080, data.current_editor_font_size, None)
-        VBScriptStart = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        VBScriptString = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        VBScriptUnclosedString = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-        XMLEnd = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        XMLStart = (data.current_editor_font_name, 0xff800080, data.current_editor_font_size, None)
-        XMLTagEnd = (data.current_editor_font_name, 0xff1f76e4, data.current_editor_font_size, None)
-    
+        ASPAtStart = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptCommentDoc = (
+            data.current_editor_font_name,
+            0xFF7F7F7F,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptCommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptDefault = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptRegex = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptStart = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptSymbol = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPJavaScriptWord = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonClassName = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonDefault = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonFunctionMethodName = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonIdentifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonOperator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonStart = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonTripleDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPPythonTripleSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPStart = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptComment = (
+            data.current_editor_font_name,
+            0xFF008000,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptDefault = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptIdentifier = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptKeyword = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptNumber = (
+            data.current_editor_font_name,
+            0xFF008080,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptStart = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptString = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPVBScriptUnclosedString = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        ASPXCComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Attribute = (
+            data.current_editor_font_name,
+            0xFF008080,
+            data.current_editor_font_size,
+            None,
+        )
+        CDATA = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Entity = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLComment = (
+            data.current_editor_font_name,
+            0xFF808000,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        HTMLValue = (
+            data.current_editor_font_name,
+            0xFF608060,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptCommentDoc = (
+            data.current_editor_font_name,
+            0xFF3F703F,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptCommentLine = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptDefault = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptRegex = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptStart = (
+            data.current_editor_font_name,
+            0xFF7F7F00,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptSymbol = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptUnclosedString = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        JavaScriptWord = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        OtherInTag = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPComment = (
+            data.current_editor_font_name,
+            0xFF999999,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPCommentLine = (
+            data.current_editor_font_name,
+            0xFF666666,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPDefault = (
+            data.current_editor_font_name,
+            0xFFC7DBF5,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPDoubleQuotedVariable = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPKeyword = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPNumber = (
+            data.current_editor_font_name,
+            0xFFCC9900,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPOperator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFF009F00,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPStart = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+        PHPVariable = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonClassName = (
+            data.current_editor_font_name,
+            0xFF5ABCD8,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonComment = (
+            data.current_editor_font_name,
+            0xFF6CAB9D,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonDefault = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonFunctionMethodName = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonIdentifier = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonKeyword = (
+            data.current_editor_font_name,
+            0xFF2389DA,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonNumber = (
+            data.current_editor_font_name,
+            0xFF74CCF4,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonOperator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFC4BBB8,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonStart = (
+            data.current_editor_font_name,
+            0xFF808080,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonTripleDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        PythonTripleSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFFF5B0CB,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLBlockDefault = (
+            data.current_editor_font_name,
+            0xFFFFF5B2,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLCommand = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLComment = (
+            data.current_editor_font_name,
+            0xFF808000,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLDefault = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLDoubleQuotedString = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLEntity = (
+            data.current_editor_font_name,
+            0xFF333333,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLError = (
+            data.current_editor_font_name,
+            0xFFEDFF86,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLParameter = (
+            data.current_editor_font_name,
+            0xFF006600,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLParameterComment = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLSingleQuotedString = (
+            data.current_editor_font_name,
+            0xFF993300,
+            data.current_editor_font_size,
+            None,
+        )
+        SGMLSpecial = (
+            data.current_editor_font_name,
+            0xFF3366FF,
+            data.current_editor_font_size,
+            None,
+        )
+        Script = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        Tag = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        UnknownAttribute = (
+            data.current_editor_font_name,
+            0xFF008080,
+            data.current_editor_font_size,
+            None,
+        )
+        UnknownTag = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptComment = (
+            data.current_editor_font_name,
+            0xFF008000,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptDefault = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptIdentifier = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptKeyword = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptNumber = (
+            data.current_editor_font_name,
+            0xFF008080,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptStart = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptString = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        VBScriptUnclosedString = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+        XMLEnd = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        XMLStart = (
+            data.current_editor_font_name,
+            0xFF800080,
+            data.current_editor_font_size,
+            None,
+        )
+        XMLTagEnd = (
+            data.current_editor_font_name,
+            0xFF1F76E4,
+            data.current_editor_font_size,
+            None,
+        )
+
     class YAML:
-        Comment = (data.current_editor_font_name, 0xff008800, data.current_editor_font_size, None)
-        Default = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        DocumentDelimiter = (data.current_editor_font_name, 0xff112435, data.current_editor_font_size, None)
-        Identifier = (data.current_editor_font_name, 0xfff3c969, data.current_editor_font_size, None)
-        Keyword = (data.current_editor_font_name, 0xff880088, data.current_editor_font_size, None)
-        Number = (data.current_editor_font_name, 0xff880000, data.current_editor_font_size, None)
-        Operator = (data.current_editor_font_name, 0xffffffff, data.current_editor_font_size, None)
-        Reference = (data.current_editor_font_name, 0xff008888, data.current_editor_font_size, None)
-        SyntaxErrorMarker = (data.current_editor_font_name, 0xff112435, data.current_editor_font_size, None)
-        TextBlockMarker = (data.current_editor_font_name, 0xff333366, data.current_editor_font_size, None)
+        Comment = (
+            data.current_editor_font_name,
+            0xFF008800,
+            data.current_editor_font_size,
+            None,
+        )
+        Default = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        DocumentDelimiter = (
+            data.current_editor_font_name,
+            0xFF112435,
+            data.current_editor_font_size,
+            None,
+        )
+        Identifier = (
+            data.current_editor_font_name,
+            0xFFF3C969,
+            data.current_editor_font_size,
+            None,
+        )
+        Keyword = (
+            data.current_editor_font_name,
+            0xFF880088,
+            data.current_editor_font_size,
+            None,
+        )
+        Number = (
+            data.current_editor_font_name,
+            0xFF880000,
+            data.current_editor_font_size,
+            None,
+        )
+        Operator = (
+            data.current_editor_font_name,
+            0xFFFFFFFF,
+            data.current_editor_font_size,
+            None,
+        )
+        Reference = (
+            data.current_editor_font_name,
+            0xFF008888,
+            data.current_editor_font_size,
+            None,
+        )
+        SyntaxErrorMarker = (
+            data.current_editor_font_name,
+            0xFF112435,
+            data.current_editor_font_size,
+            None,
+        )
+        TextBlockMarker = (
+            data.current_editor_font_name,
+            0xFF333366,
+            data.current_editor_font_size,
+            None,
+        )
 
 
 class Paper:
-    Default = data.QColor(0xff112435)
-    
+    Default = data.QColor(0xFF112435)
+
     class Ada:
-        Default = 0xff112435
-        Comment = 0xff112435
-        Keyword = 0xff112435
-        String = 0xff112435
-        Procedure = 0xff112435
-        Number = 0xff112435
-        Type = 0xff112435
-        Package = 0xff112435
-    
+        Default = 0xFF112435
+        Comment = 0xFF112435
+        Keyword = 0xFF112435
+        String = 0xFF112435
+        Procedure = 0xFF112435
+        Number = 0xFF112435
+        Type = 0xFF112435
+        Package = 0xFF112435
+
     class AWK:
-        Default = 0xff112435
-        Comment = 0xff112435
-        Keyword = 0xff112435
-        BuiltInVariable = 0xff112435
-        BuiltInFunction = 0xff112435
-        String = 0xff112435
-        Number = 0xff112435
-        Operator = 0xff112435
-        
+        Default = 0xFF112435
+        Comment = 0xFF112435
+        Keyword = 0xFF112435
+        BuiltInVariable = 0xFF112435
+        BuiltInFunction = 0xFF112435
+        String = 0xFF112435
+        Number = 0xFF112435
+        Operator = 0xFF112435
+
     class CiCode:
-        Default = 0xff112435
-        Comment = 0xff112435
-        Keyword = 0xff112435
-        BuiltInVariable = 0xff112435
-        BuiltInFunction = 0xff112435
-        String = 0xff112435
-        Number = 0xff112435
-        Operator = 0xff112435
-    
+        Default = 0xFF112435
+        Comment = 0xFF112435
+        Keyword = 0xFF112435
+        BuiltInVariable = 0xFF112435
+        BuiltInFunction = 0xFF112435
+        String = 0xFF112435
+        Number = 0xFF112435
+        Operator = 0xFF112435
+
     class Nim:
-        Default = 0xff112435
-        Comment = 0xff112435
-        BasicKeyword = 0xff112435
-        TopKeyword = 0xff112435
-        String = 0xff112435
-        LongString = 0xff112435
-        Number = 0xff112435
-        Operator = 0xff112435
-        Unsafe = 0xff112435
-        Type = 0xff112435
-        DocumentationComment = 0xff112435
-        Definition = 0xff112435
-        Class = 0xff112435
-        KeywordOperator = 0xff112435
-        CharLiteral = 0xff112435
-        CaseOf = 0xff112435
-        UserKeyword = 0xff112435
-        MultilineComment = 0xff112435
-        MultilineDocumentation = 0xff112435
-        Pragma = 0xff112435
-    
+        Default = 0xFF112435
+        Comment = 0xFF112435
+        BasicKeyword = 0xFF112435
+        TopKeyword = 0xFF112435
+        String = 0xFF112435
+        LongString = 0xFF112435
+        Number = 0xFF112435
+        Operator = 0xFF112435
+        Unsafe = 0xFF112435
+        Type = 0xFF112435
+        DocumentationComment = 0xFF112435
+        Definition = 0xFF112435
+        Class = 0xFF112435
+        KeywordOperator = 0xFF112435
+        CharLiteral = 0xFF112435
+        CaseOf = 0xFF112435
+        UserKeyword = 0xFF112435
+        MultilineComment = 0xFF112435
+        MultilineDocumentation = 0xFF112435
+        Pragma = 0xFF112435
+
     class RouterOS:
-        Default = 0xff112435
-        Operator = 0xff112435
-        Comment = 0xff112435
-        Keyword1 = 0xff112435
-        Keyword2 = 0xff112435
-        Keyword3 = 0xff112435
-    
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        Comment = 0xFF112435
+        Keyword1 = 0xFF112435
+        Keyword2 = 0xFF112435
+        Keyword3 = 0xFF112435
+
     class Oberon:
-        Default = 0xff112435
-        Comment = 0xff112435
-        Keyword = 0xff112435
-        String = 0xff112435
-        Procedure = 0xff112435
-        Module = 0xff112435
-        Number = 0xff112435
-        Type = 0xff112435
-    
-    
+        Default = 0xFF112435
+        Comment = 0xFF112435
+        Keyword = 0xFF112435
+        String = 0xFF112435
+        Procedure = 0xFF112435
+        Module = 0xFF112435
+        Number = 0xFF112435
+        Type = 0xFF112435
+
     # Generated
     class AVS:
-        Function = 0xff112435
-        KeywordSet6 = 0xff112435
-        TripleString = 0xff112435
-        LineComment = 0xff112435
-        Plugin = 0xff112435
-        String = 0xff112435
-        ClipProperty = 0xff112435
-        Default = 0xff112435
-        Operator = 0xff112435
-        Number = 0xff112435
-        Filter = 0xff112435
-        Identifier = 0xff112435
-        NestedBlockComment = 0xff112435
-        Keyword = 0xff112435
-        BlockComment = 0xff112435
-    
+        Function = 0xFF112435
+        KeywordSet6 = 0xFF112435
+        TripleString = 0xFF112435
+        LineComment = 0xFF112435
+        Plugin = 0xFF112435
+        String = 0xFF112435
+        ClipProperty = 0xFF112435
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        Number = 0xFF112435
+        Filter = 0xFF112435
+        Identifier = 0xFF112435
+        NestedBlockComment = 0xFF112435
+        Keyword = 0xFF112435
+        BlockComment = 0xFF112435
+
     class Bash:
-        Error = 0xffff0000
-        Backticks = 0xffa08080
-        SingleQuotedHereDocument = 0xffddd0dd
-        Scalar = 0xffffe0e0
-        HereDocumentDelimiter = 0xffddd0dd
-        Comment = 0xff112435
-        SingleQuotedString = 0xff112435
-        Default = 0xff112435
-        Operator = 0xff112435
-        ParameterExpansion = 0xffffffe0
-        Number = 0xff112435
-        Identifier = 0xff112435
-        Keyword = 0xff112435
-        DoubleQuotedString = 0xff112435
-    
+        Error = 0xFFFF0000
+        Backticks = 0xFFA08080
+        SingleQuotedHereDocument = 0xFFDDD0DD
+        Scalar = 0xFFFFE0E0
+        HereDocumentDelimiter = 0xFFDDD0DD
+        Comment = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        ParameterExpansion = 0xFFFFFFE0
+        Number = 0xFF112435
+        Identifier = 0xFF112435
+        Keyword = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+
     class Batch:
-        Label = 0xff606060
-        Default = 0xff112435
-        Keyword = 0xff112435
-        ExternalCommand = 0xff112435
-        Variable = 0xff112435
-        Comment = 0xff112435
-        HideCommandChar = 0xff112435
-        Operator = 0xff112435
-    
+        Label = 0xFF606060
+        Default = 0xFF112435
+        Keyword = 0xFF112435
+        ExternalCommand = 0xFF112435
+        Variable = 0xFF112435
+        Comment = 0xFF112435
+        HideCommandChar = 0xFF112435
+        Operator = 0xFF112435
+
     class CMake:
-        Function = 0xff112435
-        BlockForeach = 0xff112435
-        BlockWhile = 0xff112435
-        StringLeftQuote = 0xffeeeeee
-        Label = 0xff112435
-        Comment = 0xff112435
-        BlockMacro = 0xff112435
-        StringRightQuote = 0xffeeeeee
-        Default = 0xff112435
-        Number = 0xff112435
-        BlockIf = 0xff112435
-        Variable = 0xff112435
-        KeywordSet3 = 0xff112435
-        String = 0xffeeeeee
-        StringVariable = 0xffeeeeee
-    
+        Function = 0xFF112435
+        BlockForeach = 0xFF112435
+        BlockWhile = 0xFF112435
+        StringLeftQuote = 0xFFEEEEEE
+        Label = 0xFF112435
+        Comment = 0xFF112435
+        BlockMacro = 0xFF112435
+        StringRightQuote = 0xFFEEEEEE
+        Default = 0xFF112435
+        Number = 0xFF112435
+        BlockIf = 0xFF112435
+        Variable = 0xFF112435
+        KeywordSet3 = 0xFF112435
+        String = 0xFFEEEEEE
+        StringVariable = 0xFFEEEEEE
+
     class CPP:
-        CommentDocKeywordError = 0xff112435
-        InactiveRegex = 0xffe0f0e0
-        InactivePreProcessorComment = 0xff112435
-        UUID = 0xff112435
-        InactiveVerbatimString = 0xffe0ffe0
-        SingleQuotedString = 0xff112435
-        Operator = 0xff112435
-        InactiveOperator = 0xff112435
-        InactivePreProcessor = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        Identifier = 0xff112435
-        InactiveRawString = 0xff112435
-        PreProcessor = 0xff112435
-        KeywordSet2 = 0xff112435
-        InactiveUnclosedString = 0xffe0c0e0
-        InactiveCommentLine = 0xff112435
-        InactiveNumber = 0xff112435
-        InactivePreProcessorCommentLineDoc = 0xff112435
-        Number = 0xff112435
-        InactiveUUID = 0xff112435
-        CommentDoc = 0xff112435
-        InactiveCommentDoc = 0xff112435
-        GlobalClass = 0xff112435
-        InactiveSingleQuotedString = 0xff112435
-        HashQuotedString = 0xffe7ffd7
-        VerbatimString = 0xffe0ffe0
-        InactiveHashQuotedString = 0xff112435
-        Regex = 0xffe0f0e0
-        InactiveGlobalClass = 0xff112435
-        InactiveIdentifier = 0xff112435
-        CommentLineDoc = 0xff112435
-        TripleQuotedVerbatimString = 0xffe0ffe0
-        InactiveKeywordSet2 = 0xff112435
-        InactiveCommentDocKeyword = 0xff112435
-        Keyword = 0xff112435
-        InactiveCommentLineDoc = 0xff112435
-        InactiveDefault = 0xff112435
-        InactiveCommentDocKeywordError = 0xff112435
-        InactiveTripleQuotedVerbatimString = 0xff112435
-        CommentDocKeyword = 0xff112435
-        InactiveDoubleQuotedString = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        PreProcessorComment = 0xff112435
-        InactiveComment = 0xff112435
-        RawString = 0xfffff3ff
-        Default = 0xff112435
-        PreProcessorCommentLineDoc = 0xff112435
-        DoubleQuotedString = 0xff112435
-        InactiveKeyword = 0xff112435
-        UserLiteral = 0xff112435
-        InactiveEscapeSequence = 0xff112435
-        EscapeSequence = 0xff112435
-        InactiveUserLiteral = 0xff112435
-        InactiveTaskMarker = 0xff112435
-        TaskMarker = 0xff112435
-    
+        CommentDocKeywordError = 0xFF112435
+        InactiveRegex = 0xFFE0F0E0
+        InactivePreProcessorComment = 0xFF112435
+        UUID = 0xFF112435
+        InactiveVerbatimString = 0xFFE0FFE0
+        SingleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+        InactiveOperator = 0xFF112435
+        InactivePreProcessor = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        Identifier = 0xFF112435
+        InactiveRawString = 0xFF112435
+        PreProcessor = 0xFF112435
+        KeywordSet2 = 0xFF112435
+        InactiveUnclosedString = 0xFFE0C0E0
+        InactiveCommentLine = 0xFF112435
+        InactiveNumber = 0xFF112435
+        InactivePreProcessorCommentLineDoc = 0xFF112435
+        Number = 0xFF112435
+        InactiveUUID = 0xFF112435
+        CommentDoc = 0xFF112435
+        InactiveCommentDoc = 0xFF112435
+        GlobalClass = 0xFF112435
+        InactiveSingleQuotedString = 0xFF112435
+        HashQuotedString = 0xFFE7FFD7
+        VerbatimString = 0xFFE0FFE0
+        InactiveHashQuotedString = 0xFF112435
+        Regex = 0xFFE0F0E0
+        InactiveGlobalClass = 0xFF112435
+        InactiveIdentifier = 0xFF112435
+        CommentLineDoc = 0xFF112435
+        TripleQuotedVerbatimString = 0xFFE0FFE0
+        InactiveKeywordSet2 = 0xFF112435
+        InactiveCommentDocKeyword = 0xFF112435
+        Keyword = 0xFF112435
+        InactiveCommentLineDoc = 0xFF112435
+        InactiveDefault = 0xFF112435
+        InactiveCommentDocKeywordError = 0xFF112435
+        InactiveTripleQuotedVerbatimString = 0xFF112435
+        CommentDocKeyword = 0xFF112435
+        InactiveDoubleQuotedString = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        PreProcessorComment = 0xFF112435
+        InactiveComment = 0xFF112435
+        RawString = 0xFFFFF3FF
+        Default = 0xFF112435
+        PreProcessorCommentLineDoc = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        InactiveKeyword = 0xFF112435
+        UserLiteral = 0xFF112435
+        InactiveEscapeSequence = 0xFF112435
+        EscapeSequence = 0xFF112435
+        InactiveUserLiteral = 0xFF112435
+        InactiveTaskMarker = 0xFF112435
+        TaskMarker = 0xFF112435
+
     class CSS:
-        Important = 0xff112435
-        CSS3Property = 0xff112435
-        Attribute = 0xff112435
-        Comment = 0xff112435
-        SingleQuotedString = 0xff112435
-        MediaRule = 0xff112435
-        AtRule = 0xff112435
-        UnknownPseudoClass = 0xff112435
-        PseudoClass = 0xff112435
-        Tag = 0xff112435
-        CSS2Property = 0xff112435
-        CSS1Property = 0xff112435
-        IDSelector = 0xff112435
-        ExtendedCSSProperty = 0xff112435
-        Variable = 0xff112435
-        ExtendedPseudoClass = 0xff112435
-        ClassSelector = 0xff112435
-        Default = 0xff112435
-        PseudoElement = 0xff112435
-        UnknownProperty = 0xff112435
-        Value = 0xff112435
-        ExtendedPseudoElement = 0xff112435
-        DoubleQuotedString = 0xff112435
-        Operator = 0xff112435
-    
+        Important = 0xFF112435
+        CSS3Property = 0xFF112435
+        Attribute = 0xFF112435
+        Comment = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        MediaRule = 0xFF112435
+        AtRule = 0xFF112435
+        UnknownPseudoClass = 0xFF112435
+        PseudoClass = 0xFF112435
+        Tag = 0xFF112435
+        CSS2Property = 0xFF112435
+        CSS1Property = 0xFF112435
+        IDSelector = 0xFF112435
+        ExtendedCSSProperty = 0xFF112435
+        Variable = 0xFF112435
+        ExtendedPseudoClass = 0xFF112435
+        ClassSelector = 0xFF112435
+        Default = 0xFF112435
+        PseudoElement = 0xFF112435
+        UnknownProperty = 0xFF112435
+        Value = 0xFF112435
+        ExtendedPseudoElement = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+
     class CSharp:
-        CommentDocKeywordError = 0xff112435
-        InactiveRegex = 0xff112435
-        InactivePreProcessorComment = 0xff112435
-        UUID = 0xff112435
-        InactiveVerbatimString = 0xff112435
-        SingleQuotedString = 0xff112435
-        Operator = 0xff112435
-        InactiveOperator = 0xff112435
-        InactivePreProcessor = 0xff112435
-        UnclosedString = 0xff112435
-        Identifier = 0xff112435
-        InactiveRawString = 0xff112435
-        PreProcessor = 0xff112435
-        KeywordSet2 = 0xff112435
-        InactiveUnclosedString = 0xff112435
-        InactiveCommentLine = 0xff112435
-        InactiveNumber = 0xff112435
-        InactivePreProcessorCommentLineDoc = 0xff112435
-        Number = 0xff112435
-        InactiveUUID = 0xff112435
-        CommentDoc = 0xff112435
-        InactiveCommentDoc = 0xff112435
-        GlobalClass = 0xff112435
-        InactiveSingleQuotedString = 0xff112435
-        HashQuotedString = 0xff112435
-        VerbatimString = 0xffe0ffe0
-        InactiveHashQuotedString = 0xff112435
-        Regex = 0xff112435
-        InactiveGlobalClass = 0xff112435
-        InactiveIdentifier = 0xff112435
-        CommentLineDoc = 0xff112435
-        TripleQuotedVerbatimString = 0xff112435
-        InactiveKeywordSet2 = 0xff112435
-        InactiveCommentDocKeyword = 0xff112435
-        Keyword = 0xff112435
-        InactiveCommentLineDoc = 0xff112435
-        InactiveDefault = 0xff112435
-        InactiveCommentDocKeywordError = 0xff112435
-        InactiveTripleQuotedVerbatimString = 0xff112435
-        CommentDocKeyword = 0xff112435
-        InactiveDoubleQuotedString = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        PreProcessorComment = 0xff112435
-        InactiveComment = 0xff112435
-        RawString = 0xff112435
-        Default = 0xff112435
-        PreProcessorCommentLineDoc = 0xff112435
-        DoubleQuotedString = 0xff112435
-        InactiveKeyword = 0xff112435
-        UserLiteral = 0xff112435
-        InactiveEscapeSequence = 0xff112435
-        EscapeSequence = 0xff112435
-        InactiveUserLiteral = 0xff112435
-        InactiveTaskMarker = 0xff112435
-        TaskMarker = 0xff112435
-    
+        CommentDocKeywordError = 0xFF112435
+        InactiveRegex = 0xFF112435
+        InactivePreProcessorComment = 0xFF112435
+        UUID = 0xFF112435
+        InactiveVerbatimString = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+        InactiveOperator = 0xFF112435
+        InactivePreProcessor = 0xFF112435
+        UnclosedString = 0xFF112435
+        Identifier = 0xFF112435
+        InactiveRawString = 0xFF112435
+        PreProcessor = 0xFF112435
+        KeywordSet2 = 0xFF112435
+        InactiveUnclosedString = 0xFF112435
+        InactiveCommentLine = 0xFF112435
+        InactiveNumber = 0xFF112435
+        InactivePreProcessorCommentLineDoc = 0xFF112435
+        Number = 0xFF112435
+        InactiveUUID = 0xFF112435
+        CommentDoc = 0xFF112435
+        InactiveCommentDoc = 0xFF112435
+        GlobalClass = 0xFF112435
+        InactiveSingleQuotedString = 0xFF112435
+        HashQuotedString = 0xFF112435
+        VerbatimString = 0xFFE0FFE0
+        InactiveHashQuotedString = 0xFF112435
+        Regex = 0xFF112435
+        InactiveGlobalClass = 0xFF112435
+        InactiveIdentifier = 0xFF112435
+        CommentLineDoc = 0xFF112435
+        TripleQuotedVerbatimString = 0xFF112435
+        InactiveKeywordSet2 = 0xFF112435
+        InactiveCommentDocKeyword = 0xFF112435
+        Keyword = 0xFF112435
+        InactiveCommentLineDoc = 0xFF112435
+        InactiveDefault = 0xFF112435
+        InactiveCommentDocKeywordError = 0xFF112435
+        InactiveTripleQuotedVerbatimString = 0xFF112435
+        CommentDocKeyword = 0xFF112435
+        InactiveDoubleQuotedString = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        PreProcessorComment = 0xFF112435
+        InactiveComment = 0xFF112435
+        RawString = 0xFF112435
+        Default = 0xFF112435
+        PreProcessorCommentLineDoc = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        InactiveKeyword = 0xFF112435
+        UserLiteral = 0xFF112435
+        InactiveEscapeSequence = 0xFF112435
+        EscapeSequence = 0xFF112435
+        InactiveUserLiteral = 0xFF112435
+        InactiveTaskMarker = 0xFF112435
+        TaskMarker = 0xFF112435
+
     class CoffeeScript:
-        UUID = 0xff112435
-        CommentDocKeywordError = 0xff112435
-        GlobalClass = 0xff112435
-        VerbatimString = 0xffe0ffe0
-        SingleQuotedString = 0xff112435
-        Operator = 0xff112435
-        Number = 0xff112435
-        Identifier = 0xff112435
-        Keyword = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        Regex = 0xffe0f0e0
-        CommentDocKeyword = 0xff112435
-        BlockRegex = 0xff112435
-        CommentLineDoc = 0xff112435
-        PreProcessor = 0xff112435
-        CommentLine = 0xff112435
-        CommentBlock = 0xff112435
-        Comment = 0xff112435
-        KeywordSet2 = 0xff112435
-        BlockRegexComment = 0xff112435
-        Default = 0xff112435
-        DoubleQuotedString = 0xff112435
-        CommentDoc = 0xff112435
-    
+        UUID = 0xFF112435
+        CommentDocKeywordError = 0xFF112435
+        GlobalClass = 0xFF112435
+        VerbatimString = 0xFFE0FFE0
+        SingleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+        Number = 0xFF112435
+        Identifier = 0xFF112435
+        Keyword = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        Regex = 0xFFE0F0E0
+        CommentDocKeyword = 0xFF112435
+        BlockRegex = 0xFF112435
+        CommentLineDoc = 0xFF112435
+        PreProcessor = 0xFF112435
+        CommentLine = 0xFF112435
+        CommentBlock = 0xFF112435
+        Comment = 0xFF112435
+        KeywordSet2 = 0xFF112435
+        BlockRegexComment = 0xFF112435
+        Default = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        CommentDoc = 0xFF112435
+
     class D:
-        BackquoteString = 0xff112435
-        CommentDocKeywordError = 0xff112435
-        Operator = 0xff112435
-        CommentNested = 0xff112435
-        KeywordDoc = 0xff112435
-        KeywordSet7 = 0xff112435
-        Keyword = 0xff112435
-        KeywordSecondary = 0xff112435
-        Identifier = 0xff112435
-        KeywordSet5 = 0xff112435
-        CommentDocKeyword = 0xff112435
-        KeywordSet6 = 0xff112435
-        CommentLineDoc = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        Typedefs = 0xff112435
-        Character = 0xff112435
-        RawString = 0xff112435
-        Default = 0xff112435
-        Number = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        String = 0xff112435
-        CommentDoc = 0xff112435
-    
+        BackquoteString = 0xFF112435
+        CommentDocKeywordError = 0xFF112435
+        Operator = 0xFF112435
+        CommentNested = 0xFF112435
+        KeywordDoc = 0xFF112435
+        KeywordSet7 = 0xFF112435
+        Keyword = 0xFF112435
+        KeywordSecondary = 0xFF112435
+        Identifier = 0xFF112435
+        KeywordSet5 = 0xFF112435
+        CommentDocKeyword = 0xFF112435
+        KeywordSet6 = 0xFF112435
+        CommentLineDoc = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        Typedefs = 0xFF112435
+        Character = 0xFF112435
+        RawString = 0xFF112435
+        Default = 0xFF112435
+        Number = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        String = 0xFF112435
+        CommentDoc = 0xFF112435
+
     class Diff:
-        Header = 0xff112435
-        LineChanged = 0xff112435
-        Default = 0xff112435
-        LineRemoved = 0xff112435
-        Command = 0xff112435
-        Position = 0xff112435
-        LineAdded = 0xff112435
-        Comment = 0xff112435
-    
+        Header = 0xFF112435
+        LineChanged = 0xFF112435
+        Default = 0xFF112435
+        LineRemoved = 0xFF112435
+        Command = 0xFF112435
+        Position = 0xFF112435
+        LineAdded = 0xFF112435
+        Comment = 0xFF112435
+
     class Fortran:
-        Label = 0xff112435
-        Identifier = 0xff112435
-        DottedOperator = 0xff112435
-        PreProcessor = 0xff112435
-        Comment = 0xff112435
-        SingleQuotedString = 0xff112435
-        Default = 0xff112435
-        DoubleQuotedString = 0xff112435
-        ExtendedFunction = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        Number = 0xff112435
-        Continuation = 0xfff0e080
-        IntrinsicFunction = 0xff112435
-        Keyword = 0xff112435
-        Operator = 0xff112435
-    
+        Label = 0xFF112435
+        Identifier = 0xFF112435
+        DottedOperator = 0xFF112435
+        PreProcessor = 0xFF112435
+        Comment = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        Default = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        ExtendedFunction = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        Number = 0xFF112435
+        Continuation = 0xFFF0E080
+        IntrinsicFunction = 0xFF112435
+        Keyword = 0xFF112435
+        Operator = 0xFF112435
+
     class Fortran77:
-        Label = 0xff112435
-        Identifier = 0xff112435
-        DottedOperator = 0xff112435
-        PreProcessor = 0xff112435
-        Comment = 0xff112435
-        SingleQuotedString = 0xff112435
-        Default = 0xff112435
-        DoubleQuotedString = 0xff112435
-        ExtendedFunction = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        Number = 0xff112435
-        Continuation = 0xfff0e080
-        IntrinsicFunction = 0xff112435
-        Keyword = 0xff112435
-        Operator = 0xff112435
-    
+        Label = 0xFF112435
+        Identifier = 0xFF112435
+        DottedOperator = 0xFF112435
+        PreProcessor = 0xFF112435
+        Comment = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        Default = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        ExtendedFunction = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        Number = 0xFF112435
+        Continuation = 0xFFF0E080
+        IntrinsicFunction = 0xFF112435
+        Keyword = 0xFF112435
+        Operator = 0xFF112435
+
     class HTML:
-        HTMLValue = 0xffffefff
-        PythonDefault = 0xffefffef
-        Entity = 0xff112435
-        SGMLParameter = 0xffefefff
-        SGMLDefault = 0xffefefff
-        PHPVariable = 0xfffff8f8
-        SGMLCommand = 0xffefefff
-        PythonClassName = 0xffefffef
-        VBScriptUnclosedString = 0xff7f7fff
-        ASPJavaScriptDefault = 0xffdfdf7f
-        ASPVBScriptStart = 0xff112435
-        VBScriptDefault = 0xffefefff
-        PythonNumber = 0xffefffef
-        PythonOperator = 0xffefffef
-        ASPJavaScriptSingleQuotedString = 0xffdfdf7f
-        PHPDefault = 0xfffff8f8
-        XMLStart = 0xff112435
-        PythonFunctionMethodName = 0xffefffef
-        ASPJavaScriptStart = 0xff112435
-        JavaScriptWord = 0xfff0f0ff
-        PHPSingleQuotedString = 0xfffff8f8
-        PythonTripleDoubleQuotedString = 0xffefffef
-        JavaScriptComment = 0xfff0f0ff
-        Default = 0xff112435
-        SGMLSingleQuotedString = 0xffefefff
-        VBScriptComment = 0xffefefff
-        ASPVBScriptNumber = 0xffcfcfef
-        ASPJavaScriptCommentDoc = 0xffdfdf7f
-        PythonIdentifier = 0xffefffef
-        VBScriptKeyword = 0xffefefff
-        JavaScriptDefault = 0xfff0f0ff
-        PythonStart = 0xff112435
-        ASPPythonComment = 0xffcfefcf
-        ASPJavaScriptWord = 0xffdfdf7f
-        SGMLParameterComment = 0xff112435
-        JavaScriptSingleQuotedString = 0xfff0f0ff
-        PythonSingleQuotedString = 0xffefffef
-        HTMLSingleQuotedString = 0xff112435
-        ASPVBScriptString = 0xffcfcfef
-        SGMLBlockDefault = 0xffcccce0
-        PythonKeyword = 0xffefffef
-        XMLTagEnd = 0xff112435
-        ASPVBScriptComment = 0xffcfcfef
-        ASPPythonSingleQuotedString = 0xffcfefcf
-        PHPDoubleQuotedVariable = 0xfffff8f8
-        ASPJavaScriptComment = 0xffdfdf7f
-        JavaScriptUnclosedString = 0xffbfbbb0
-        JavaScriptDoubleQuotedString = 0xfff0f0ff
-        UnknownAttribute = 0xff112435
-        ASPPythonOperator = 0xffcfefcf
-        ASPJavaScriptSymbol = 0xffdfdf7f
-        ASPPythonFunctionMethodName = 0xffcfefcf
-        SGMLDoubleQuotedString = 0xffefefff
-        PHPOperator = 0xfffff8f8
-        JavaScriptNumber = 0xfff0f0ff
-        PythonDoubleQuotedString = 0xffefffef
-        ASPAtStart = 0xffffff00
-        Script = 0xff112435
-        PHPCommentLine = 0xfffff8f8
-        SGMLComment = 0xffefefff
-        JavaScriptStart = 0xff112435
-        ASPPythonIdentifier = 0xffcfefcf
-        ASPVBScriptKeyword = 0xffcfcfef
-        ASPPythonTripleDoubleQuotedString = 0xffcfefcf
-        ASPPythonKeyword = 0xffcfefcf
-        ASPJavaScriptNumber = 0xffdfdf7f
-        PHPStart = 0xffffefbf
-        PythonTripleSingleQuotedString = 0xffefffef
-        PHPNumber = 0xfffff8f8
-        ASPPythonDefault = 0xffcfefcf
-        SGMLSpecial = 0xffefefff
-        OtherInTag = 0xff112435
-        JavaScriptCommentDoc = 0xfff0f0ff
-        Tag = 0xff112435
-        XMLEnd = 0xff112435
-        CDATA = 0xffffdf00
-        HTMLNumber = 0xff112435
-        SGMLError = 0xffff6666
-        PHPKeyword = 0xfffff8f8
-        ASPVBScriptUnclosedString = 0xff7f7fff
-        ASPPythonNumber = 0xffcfefcf
-        VBScriptString = 0xffefefff
-        ASPPythonClassName = 0xffcfefcf
-        ASPPythonStart = 0xff112435
-        JavaScriptRegex = 0xffffbbb0
-        ASPJavaScriptUnclosedString = 0xffbfbbb0
-        ASPJavaScriptCommentLine = 0xffdfdf7f
-        SGMLEntity = 0xffefefff
-        ASPJavaScriptDoubleQuotedString = 0xffdfdf7f
-        ASPStart = 0xffffdf00
-        Attribute = 0xff112435
-        ASPJavaScriptKeyword = 0xffdfdf7f
-        ASPVBScriptDefault = 0xffcfcfef
-        ASPVBScriptIdentifier = 0xffcfcfef
-        ASPJavaScriptRegex = 0xffffbbb0
-        VBScriptNumber = 0xffefefff
-        HTMLDoubleQuotedString = 0xff112435
-        ASPXCComment = 0xff112435
-        VBScriptStart = 0xff112435
-        PHPDoubleQuotedString = 0xfffff8f8
-        PHPComment = 0xfffff8f8
-        ASPPythonTripleSingleQuotedString = 0xffcfefcf
-        ASPPythonDoubleQuotedString = 0xffcfefcf
-        JavaScriptKeyword = 0xfff0f0ff
-        JavaScriptSymbol = 0xfff0f0ff
-        VBScriptIdentifier = 0xffefefff
-        HTMLComment = 0xff112435
-        UnknownTag = 0xff112435
-        JavaScriptCommentLine = 0xfff0f0ff
-        PythonComment = 0xffefffef
-    
+        HTMLValue = 0xFFFFEFFF
+        PythonDefault = 0xFFEFFFEF
+        Entity = 0xFF112435
+        SGMLParameter = 0xFFEFEFFF
+        SGMLDefault = 0xFFEFEFFF
+        PHPVariable = 0xFFFFF8F8
+        SGMLCommand = 0xFFEFEFFF
+        PythonClassName = 0xFFEFFFEF
+        VBScriptUnclosedString = 0xFF7F7FFF
+        ASPJavaScriptDefault = 0xFFDFDF7F
+        ASPVBScriptStart = 0xFF112435
+        VBScriptDefault = 0xFFEFEFFF
+        PythonNumber = 0xFFEFFFEF
+        PythonOperator = 0xFFEFFFEF
+        ASPJavaScriptSingleQuotedString = 0xFFDFDF7F
+        PHPDefault = 0xFFFFF8F8
+        XMLStart = 0xFF112435
+        PythonFunctionMethodName = 0xFFEFFFEF
+        ASPJavaScriptStart = 0xFF112435
+        JavaScriptWord = 0xFFF0F0FF
+        PHPSingleQuotedString = 0xFFFFF8F8
+        PythonTripleDoubleQuotedString = 0xFFEFFFEF
+        JavaScriptComment = 0xFFF0F0FF
+        Default = 0xFF112435
+        SGMLSingleQuotedString = 0xFFEFEFFF
+        VBScriptComment = 0xFFEFEFFF
+        ASPVBScriptNumber = 0xFFCFCFEF
+        ASPJavaScriptCommentDoc = 0xFFDFDF7F
+        PythonIdentifier = 0xFFEFFFEF
+        VBScriptKeyword = 0xFFEFEFFF
+        JavaScriptDefault = 0xFFF0F0FF
+        PythonStart = 0xFF112435
+        ASPPythonComment = 0xFFCFEFCF
+        ASPJavaScriptWord = 0xFFDFDF7F
+        SGMLParameterComment = 0xFF112435
+        JavaScriptSingleQuotedString = 0xFFF0F0FF
+        PythonSingleQuotedString = 0xFFEFFFEF
+        HTMLSingleQuotedString = 0xFF112435
+        ASPVBScriptString = 0xFFCFCFEF
+        SGMLBlockDefault = 0xFFCCCCE0
+        PythonKeyword = 0xFFEFFFEF
+        XMLTagEnd = 0xFF112435
+        ASPVBScriptComment = 0xFFCFCFEF
+        ASPPythonSingleQuotedString = 0xFFCFEFCF
+        PHPDoubleQuotedVariable = 0xFFFFF8F8
+        ASPJavaScriptComment = 0xFFDFDF7F
+        JavaScriptUnclosedString = 0xFFBFBBB0
+        JavaScriptDoubleQuotedString = 0xFFF0F0FF
+        UnknownAttribute = 0xFF112435
+        ASPPythonOperator = 0xFFCFEFCF
+        ASPJavaScriptSymbol = 0xFFDFDF7F
+        ASPPythonFunctionMethodName = 0xFFCFEFCF
+        SGMLDoubleQuotedString = 0xFFEFEFFF
+        PHPOperator = 0xFFFFF8F8
+        JavaScriptNumber = 0xFFF0F0FF
+        PythonDoubleQuotedString = 0xFFEFFFEF
+        ASPAtStart = 0xFFFFFF00
+        Script = 0xFF112435
+        PHPCommentLine = 0xFFFFF8F8
+        SGMLComment = 0xFFEFEFFF
+        JavaScriptStart = 0xFF112435
+        ASPPythonIdentifier = 0xFFCFEFCF
+        ASPVBScriptKeyword = 0xFFCFCFEF
+        ASPPythonTripleDoubleQuotedString = 0xFFCFEFCF
+        ASPPythonKeyword = 0xFFCFEFCF
+        ASPJavaScriptNumber = 0xFFDFDF7F
+        PHPStart = 0xFFFFEFBF
+        PythonTripleSingleQuotedString = 0xFFEFFFEF
+        PHPNumber = 0xFFFFF8F8
+        ASPPythonDefault = 0xFFCFEFCF
+        SGMLSpecial = 0xFFEFEFFF
+        OtherInTag = 0xFF112435
+        JavaScriptCommentDoc = 0xFFF0F0FF
+        Tag = 0xFF112435
+        XMLEnd = 0xFF112435
+        CDATA = 0xFFFFDF00
+        HTMLNumber = 0xFF112435
+        SGMLError = 0xFFFF6666
+        PHPKeyword = 0xFFFFF8F8
+        ASPVBScriptUnclosedString = 0xFF7F7FFF
+        ASPPythonNumber = 0xFFCFEFCF
+        VBScriptString = 0xFFEFEFFF
+        ASPPythonClassName = 0xFFCFEFCF
+        ASPPythonStart = 0xFF112435
+        JavaScriptRegex = 0xFFFFBBB0
+        ASPJavaScriptUnclosedString = 0xFFBFBBB0
+        ASPJavaScriptCommentLine = 0xFFDFDF7F
+        SGMLEntity = 0xFFEFEFFF
+        ASPJavaScriptDoubleQuotedString = 0xFFDFDF7F
+        ASPStart = 0xFFFFDF00
+        Attribute = 0xFF112435
+        ASPJavaScriptKeyword = 0xFFDFDF7F
+        ASPVBScriptDefault = 0xFFCFCFEF
+        ASPVBScriptIdentifier = 0xFFCFCFEF
+        ASPJavaScriptRegex = 0xFFFFBBB0
+        VBScriptNumber = 0xFFEFEFFF
+        HTMLDoubleQuotedString = 0xFF112435
+        ASPXCComment = 0xFF112435
+        VBScriptStart = 0xFF112435
+        PHPDoubleQuotedString = 0xFFFFF8F8
+        PHPComment = 0xFFFFF8F8
+        ASPPythonTripleSingleQuotedString = 0xFFCFEFCF
+        ASPPythonDoubleQuotedString = 0xFFCFEFCF
+        JavaScriptKeyword = 0xFFF0F0FF
+        JavaScriptSymbol = 0xFFF0F0FF
+        VBScriptIdentifier = 0xFFEFEFFF
+        HTMLComment = 0xFF112435
+        UnknownTag = 0xFF112435
+        JavaScriptCommentLine = 0xFFF0F0FF
+        PythonComment = 0xFFEFFFEF
+
     class IDL:
-        CommentDocKeywordError = 0xff112435
-        InactiveRegex = 0xffe0f0e0
-        InactivePreProcessorComment = 0xff112435
-        UUID = 0xff112435
-        InactiveVerbatimString = 0xffe0ffe0
-        SingleQuotedString = 0xff112435
-        Operator = 0xff112435
-        InactiveOperator = 0xff112435
-        InactivePreProcessor = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        Identifier = 0xff112435
-        InactiveRawString = 0xff112435
-        PreProcessor = 0xff112435
-        KeywordSet2 = 0xff112435
-        InactiveUnclosedString = 0xffe0c0e0
-        InactiveCommentLine = 0xff112435
-        InactiveNumber = 0xff112435
-        InactivePreProcessorCommentLineDoc = 0xff112435
-        Number = 0xff112435
-        InactiveUUID = 0xff112435
-        CommentDoc = 0xff112435
-        InactiveCommentDoc = 0xff112435
-        GlobalClass = 0xff112435
-        InactiveSingleQuotedString = 0xff112435
-        HashQuotedString = 0xffe7ffd7
-        VerbatimString = 0xffe0ffe0
-        InactiveHashQuotedString = 0xff112435
-        Regex = 0xffe0f0e0
-        InactiveGlobalClass = 0xff112435
-        InactiveIdentifier = 0xff112435
-        CommentLineDoc = 0xff112435
-        TripleQuotedVerbatimString = 0xffe0ffe0
-        InactiveKeywordSet2 = 0xff112435
-        InactiveCommentDocKeyword = 0xff112435
-        Keyword = 0xff112435
-        InactiveCommentLineDoc = 0xff112435
-        InactiveDefault = 0xff112435
-        InactiveCommentDocKeywordError = 0xff112435
-        InactiveTripleQuotedVerbatimString = 0xff112435
-        CommentDocKeyword = 0xff112435
-        InactiveDoubleQuotedString = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        PreProcessorComment = 0xff112435
-        InactiveComment = 0xff112435
-        RawString = 0xfffff3ff
-        Default = 0xff112435
-        PreProcessorCommentLineDoc = 0xff112435
-        DoubleQuotedString = 0xff112435
-        InactiveKeyword = 0xff112435
-        UserLiteral = 0xff112435
-        InactiveEscapeSequence = 0xff112435
-        EscapeSequence = 0xff112435
-        InactiveUserLiteral = 0xff112435
-        InactiveTaskMarker = 0xff112435
-        TaskMarker = 0xff112435
-    
+        CommentDocKeywordError = 0xFF112435
+        InactiveRegex = 0xFFE0F0E0
+        InactivePreProcessorComment = 0xFF112435
+        UUID = 0xFF112435
+        InactiveVerbatimString = 0xFFE0FFE0
+        SingleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+        InactiveOperator = 0xFF112435
+        InactivePreProcessor = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        Identifier = 0xFF112435
+        InactiveRawString = 0xFF112435
+        PreProcessor = 0xFF112435
+        KeywordSet2 = 0xFF112435
+        InactiveUnclosedString = 0xFFE0C0E0
+        InactiveCommentLine = 0xFF112435
+        InactiveNumber = 0xFF112435
+        InactivePreProcessorCommentLineDoc = 0xFF112435
+        Number = 0xFF112435
+        InactiveUUID = 0xFF112435
+        CommentDoc = 0xFF112435
+        InactiveCommentDoc = 0xFF112435
+        GlobalClass = 0xFF112435
+        InactiveSingleQuotedString = 0xFF112435
+        HashQuotedString = 0xFFE7FFD7
+        VerbatimString = 0xFFE0FFE0
+        InactiveHashQuotedString = 0xFF112435
+        Regex = 0xFFE0F0E0
+        InactiveGlobalClass = 0xFF112435
+        InactiveIdentifier = 0xFF112435
+        CommentLineDoc = 0xFF112435
+        TripleQuotedVerbatimString = 0xFFE0FFE0
+        InactiveKeywordSet2 = 0xFF112435
+        InactiveCommentDocKeyword = 0xFF112435
+        Keyword = 0xFF112435
+        InactiveCommentLineDoc = 0xFF112435
+        InactiveDefault = 0xFF112435
+        InactiveCommentDocKeywordError = 0xFF112435
+        InactiveTripleQuotedVerbatimString = 0xFF112435
+        CommentDocKeyword = 0xFF112435
+        InactiveDoubleQuotedString = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        PreProcessorComment = 0xFF112435
+        InactiveComment = 0xFF112435
+        RawString = 0xFFFFF3FF
+        Default = 0xFF112435
+        PreProcessorCommentLineDoc = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        InactiveKeyword = 0xFF112435
+        UserLiteral = 0xFF112435
+        InactiveEscapeSequence = 0xFF112435
+        EscapeSequence = 0xFF112435
+        InactiveUserLiteral = 0xFF112435
+        InactiveTaskMarker = 0xFF112435
+        TaskMarker = 0xFF112435
+
     class Java:
-        CommentDocKeywordError = 0xff112435
-        InactiveRegex = 0xffe0f0e0
-        InactivePreProcessorComment = 0xff112435
-        UUID = 0xff112435
-        InactiveVerbatimString = 0xffe0ffe0
-        SingleQuotedString = 0xff112435
-        Operator = 0xff112435
-        InactiveOperator = 0xff112435
-        InactivePreProcessor = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        Identifier = 0xff112435
-        InactiveRawString = 0xff112435
-        PreProcessor = 0xff112435
-        KeywordSet2 = 0xff112435
-        InactiveUnclosedString = 0xffe0c0e0
-        InactiveCommentLine = 0xff112435
-        InactiveNumber = 0xff112435
-        InactivePreProcessorCommentLineDoc = 0xff112435
-        Number = 0xff112435
-        InactiveUUID = 0xff112435
-        CommentDoc = 0xff112435
-        InactiveCommentDoc = 0xff112435
-        GlobalClass = 0xff112435
-        InactiveSingleQuotedString = 0xff112435
-        HashQuotedString = 0xffe7ffd7
-        VerbatimString = 0xffe0ffe0
-        InactiveHashQuotedString = 0xff112435
-        Regex = 0xffe0f0e0
-        InactiveGlobalClass = 0xff112435
-        InactiveIdentifier = 0xff112435
-        CommentLineDoc = 0xff112435
-        TripleQuotedVerbatimString = 0xffe0ffe0
-        InactiveKeywordSet2 = 0xff112435
-        InactiveCommentDocKeyword = 0xff112435
-        Keyword = 0xff112435
-        InactiveCommentLineDoc = 0xff112435
-        InactiveDefault = 0xff112435
-        InactiveCommentDocKeywordError = 0xff112435
-        InactiveTripleQuotedVerbatimString = 0xff112435
-        CommentDocKeyword = 0xff112435
-        InactiveDoubleQuotedString = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        PreProcessorComment = 0xff112435
-        InactiveComment = 0xff112435
-        RawString = 0xfffff3ff
-        Default = 0xff112435
-        PreProcessorCommentLineDoc = 0xff112435
-        DoubleQuotedString = 0xff112435
-        InactiveKeyword = 0xff112435
-        UserLiteral = 0xff112435
-        InactiveEscapeSequence = 0xff112435
-        EscapeSequence = 0xff112435
-        InactiveUserLiteral = 0xff112435
-        InactiveTaskMarker = 0xff112435
-        TaskMarker = 0xff112435
-    
+        CommentDocKeywordError = 0xFF112435
+        InactiveRegex = 0xFFE0F0E0
+        InactivePreProcessorComment = 0xFF112435
+        UUID = 0xFF112435
+        InactiveVerbatimString = 0xFFE0FFE0
+        SingleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+        InactiveOperator = 0xFF112435
+        InactivePreProcessor = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        Identifier = 0xFF112435
+        InactiveRawString = 0xFF112435
+        PreProcessor = 0xFF112435
+        KeywordSet2 = 0xFF112435
+        InactiveUnclosedString = 0xFFE0C0E0
+        InactiveCommentLine = 0xFF112435
+        InactiveNumber = 0xFF112435
+        InactivePreProcessorCommentLineDoc = 0xFF112435
+        Number = 0xFF112435
+        InactiveUUID = 0xFF112435
+        CommentDoc = 0xFF112435
+        InactiveCommentDoc = 0xFF112435
+        GlobalClass = 0xFF112435
+        InactiveSingleQuotedString = 0xFF112435
+        HashQuotedString = 0xFFE7FFD7
+        VerbatimString = 0xFFE0FFE0
+        InactiveHashQuotedString = 0xFF112435
+        Regex = 0xFFE0F0E0
+        InactiveGlobalClass = 0xFF112435
+        InactiveIdentifier = 0xFF112435
+        CommentLineDoc = 0xFF112435
+        TripleQuotedVerbatimString = 0xFFE0FFE0
+        InactiveKeywordSet2 = 0xFF112435
+        InactiveCommentDocKeyword = 0xFF112435
+        Keyword = 0xFF112435
+        InactiveCommentLineDoc = 0xFF112435
+        InactiveDefault = 0xFF112435
+        InactiveCommentDocKeywordError = 0xFF112435
+        InactiveTripleQuotedVerbatimString = 0xFF112435
+        CommentDocKeyword = 0xFF112435
+        InactiveDoubleQuotedString = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        PreProcessorComment = 0xFF112435
+        InactiveComment = 0xFF112435
+        RawString = 0xFFFFF3FF
+        Default = 0xFF112435
+        PreProcessorCommentLineDoc = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        InactiveKeyword = 0xFF112435
+        UserLiteral = 0xFF112435
+        InactiveEscapeSequence = 0xFF112435
+        EscapeSequence = 0xFF112435
+        InactiveUserLiteral = 0xFF112435
+        InactiveTaskMarker = 0xFF112435
+        TaskMarker = 0xFF112435
+
     class JavaScript:
-        CommentDocKeywordError = 0xff112435
-        InactiveRegex = 0xff112435
-        InactivePreProcessorComment = 0xff112435
-        UUID = 0xff112435
-        InactiveVerbatimString = 0xff112435
-        SingleQuotedString = 0xff112435
-        Operator = 0xff112435
-        InactiveOperator = 0xff112435
-        InactivePreProcessor = 0xff112435
-        UnclosedString = 0xff112435
-        Identifier = 0xff112435
-        InactiveRawString = 0xff112435
-        PreProcessor = 0xff112435
-        KeywordSet2 = 0xff112435
-        InactiveUnclosedString = 0xff112435
-        InactiveCommentLine = 0xff112435
-        InactiveNumber = 0xff112435
-        InactivePreProcessorCommentLineDoc = 0xff112435
-        Number = 0xff112435
-        InactiveUUID = 0xff112435
-        CommentDoc = 0xff112435
-        InactiveCommentDoc = 0xff112435
-        GlobalClass = 0xff112435
-        InactiveSingleQuotedString = 0xff112435
-        HashQuotedString = 0xff112435
-        VerbatimString = 0xff112435
-        InactiveHashQuotedString = 0xff112435
-        Regex = 0xffe0f0ff
-        InactiveGlobalClass = 0xff112435
-        InactiveIdentifier = 0xff112435
-        CommentLineDoc = 0xff112435
-        TripleQuotedVerbatimString = 0xff112435
-        InactiveKeywordSet2 = 0xff112435
-        InactiveCommentDocKeyword = 0xff112435
-        Keyword = 0xff112435
-        InactiveCommentLineDoc = 0xff112435
-        InactiveDefault = 0xff112435
-        InactiveCommentDocKeywordError = 0xff112435
-        InactiveTripleQuotedVerbatimString = 0xff112435
-        CommentDocKeyword = 0xff112435
-        InactiveDoubleQuotedString = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        PreProcessorComment = 0xff112435
-        InactiveComment = 0xff112435
-        RawString = 0xff112435
-        Default = 0xff112435
-        PreProcessorCommentLineDoc = 0xff112435
-        DoubleQuotedString = 0xff112435
-        InactiveKeyword = 0xff112435
-        UserLiteral = 0xff112435
-        InactiveEscapeSequence = 0xff112435
-        EscapeSequence = 0xff112435
-        InactiveUserLiteral = 0xff112435
-        InactiveTaskMarker = 0xff112435
-        TaskMarker = 0xff112435
-    
+        CommentDocKeywordError = 0xFF112435
+        InactiveRegex = 0xFF112435
+        InactivePreProcessorComment = 0xFF112435
+        UUID = 0xFF112435
+        InactiveVerbatimString = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+        InactiveOperator = 0xFF112435
+        InactivePreProcessor = 0xFF112435
+        UnclosedString = 0xFF112435
+        Identifier = 0xFF112435
+        InactiveRawString = 0xFF112435
+        PreProcessor = 0xFF112435
+        KeywordSet2 = 0xFF112435
+        InactiveUnclosedString = 0xFF112435
+        InactiveCommentLine = 0xFF112435
+        InactiveNumber = 0xFF112435
+        InactivePreProcessorCommentLineDoc = 0xFF112435
+        Number = 0xFF112435
+        InactiveUUID = 0xFF112435
+        CommentDoc = 0xFF112435
+        InactiveCommentDoc = 0xFF112435
+        GlobalClass = 0xFF112435
+        InactiveSingleQuotedString = 0xFF112435
+        HashQuotedString = 0xFF112435
+        VerbatimString = 0xFF112435
+        InactiveHashQuotedString = 0xFF112435
+        Regex = 0xFFE0F0FF
+        InactiveGlobalClass = 0xFF112435
+        InactiveIdentifier = 0xFF112435
+        CommentLineDoc = 0xFF112435
+        TripleQuotedVerbatimString = 0xFF112435
+        InactiveKeywordSet2 = 0xFF112435
+        InactiveCommentDocKeyword = 0xFF112435
+        Keyword = 0xFF112435
+        InactiveCommentLineDoc = 0xFF112435
+        InactiveDefault = 0xFF112435
+        InactiveCommentDocKeywordError = 0xFF112435
+        InactiveTripleQuotedVerbatimString = 0xFF112435
+        CommentDocKeyword = 0xFF112435
+        InactiveDoubleQuotedString = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        PreProcessorComment = 0xFF112435
+        InactiveComment = 0xFF112435
+        RawString = 0xFF112435
+        Default = 0xFF112435
+        PreProcessorCommentLineDoc = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        InactiveKeyword = 0xFF112435
+        UserLiteral = 0xFF112435
+        InactiveEscapeSequence = 0xFF112435
+        EscapeSequence = 0xFF112435
+        InactiveUserLiteral = 0xFF112435
+        InactiveTaskMarker = 0xFF112435
+        TaskMarker = 0xFF112435
+
     class Lua:
-        Label = 0xff112435
-        Identifier = 0xff112435
-        StringTableMathsFunctions = 0xffd0d0ff
-        CoroutinesIOSystemFacilities = 0xffffd0d0
-        KeywordSet5 = 0xff112435
-        KeywordSet6 = 0xff112435
-        Preprocessor = 0xff112435
-        LineComment = 0xff112435
-        Comment = 0xffd0f0f0
-        String = 0xff112435
-        Character = 0xff112435
-        Default = 0xff112435
-        Operator = 0xff112435
-        LiteralString = 0xffe0ffff
-        Number = 0xff112435
-        KeywordSet8 = 0xff112435
-        KeywordSet7 = 0xff112435
-        BasicFunctions = 0xffd0ffd0
-        Keyword = 0xff112435
-        UnclosedString = 0xffe0c0e0
-    
+        Label = 0xFF112435
+        Identifier = 0xFF112435
+        StringTableMathsFunctions = 0xFFD0D0FF
+        CoroutinesIOSystemFacilities = 0xFFFFD0D0
+        KeywordSet5 = 0xFF112435
+        KeywordSet6 = 0xFF112435
+        Preprocessor = 0xFF112435
+        LineComment = 0xFF112435
+        Comment = 0xFFD0F0F0
+        String = 0xFF112435
+        Character = 0xFF112435
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        LiteralString = 0xFFE0FFFF
+        Number = 0xFF112435
+        KeywordSet8 = 0xFF112435
+        KeywordSet7 = 0xFF112435
+        BasicFunctions = 0xFFD0FFD0
+        Keyword = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+
     class Makefile:
-        Default = 0xff112435
-        Operator = 0xff112435
-        Target = 0xff112435
-        Preprocessor = 0xff112435
-        Variable = 0xff112435
-        Comment = 0xff112435
-        Error = 0xffff0000
-    
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        Target = 0xFF112435
+        Preprocessor = 0xFF112435
+        Variable = 0xFF112435
+        Comment = 0xFF112435
+        Error = 0xFFFF0000
+
     class Matlab:
-        SingleQuotedString = 0xff112435
-        Default = 0xff112435
-        Keyword = 0xff112435
-        Number = 0xff112435
-        Command = 0xff112435
-        Identifier = 0xff112435
-        Comment = 0xff112435
-        DoubleQuotedString = 0xff112435
-        Operator = 0xff112435
-    
+        SingleQuotedString = 0xFF112435
+        Default = 0xFF112435
+        Keyword = 0xFF112435
+        Number = 0xFF112435
+        Command = 0xFF112435
+        Identifier = 0xFF112435
+        Comment = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+
     class Octave:
-        SingleQuotedString = 0xff112435
-        Default = 0xff112435
-        Keyword = 0xff112435
-        Number = 0xff112435
-        Command = 0xff112435
-        Identifier = 0xff112435
-        Comment = 0xff112435
-        DoubleQuotedString = 0xff112435
-        Operator = 0xff112435
-    
+        SingleQuotedString = 0xFF112435
+        Default = 0xFF112435
+        Keyword = 0xFF112435
+        Number = 0xFF112435
+        Command = 0xFF112435
+        Identifier = 0xFF112435
+        Comment = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+
     class PO:
-        ProgrammerComment = 0xff112435
-        Flags = 0xff112435
-        MessageContextText = 0xff112435
-        MessageStringTextEOL = 0xff112435
-        MessageId = 0xff112435
-        MessageIdText = 0xff112435
-        Reference = 0xff112435
-        Comment = 0xff112435
-        MessageStringText = 0xff112435
-        MessageContext = 0xff112435
-        Fuzzy = 0xff112435
-        Default = 0xff112435
-        MessageString = 0xff112435
-        MessageContextTextEOL = 0xff112435
-        MessageIdTextEOL = 0xff112435
-    
+        ProgrammerComment = 0xFF112435
+        Flags = 0xFF112435
+        MessageContextText = 0xFF112435
+        MessageStringTextEOL = 0xFF112435
+        MessageId = 0xFF112435
+        MessageIdText = 0xFF112435
+        Reference = 0xFF112435
+        Comment = 0xFF112435
+        MessageStringText = 0xFF112435
+        MessageContext = 0xFF112435
+        Fuzzy = 0xFF112435
+        Default = 0xFF112435
+        MessageString = 0xFF112435
+        MessageContextTextEOL = 0xFF112435
+        MessageIdTextEOL = 0xFF112435
+
     class POV:
-        KeywordSet7 = 0xffd0d0d0
-        KeywordSet6 = 0xffd0ffd0
-        PredefinedFunctions = 0xffd0d0ff
-        CommentLine = 0xff112435
-        PredefinedIdentifiers = 0xff112435
-        Comment = 0xff112435
-        Directive = 0xff112435
-        String = 0xff112435
-        BadDirective = 0xff112435
-        TypesModifiersItems = 0xffffffd0
-        Default = 0xff112435
-        Operator = 0xff112435
-        Number = 0xff112435
-        KeywordSet8 = 0xffe0e0e0
-        Identifier = 0xff112435
-        ObjectsCSGAppearance = 0xffffd0d0
-        UnclosedString = 0xffe0c0e0
-    
+        KeywordSet7 = 0xFFD0D0D0
+        KeywordSet6 = 0xFFD0FFD0
+        PredefinedFunctions = 0xFFD0D0FF
+        CommentLine = 0xFF112435
+        PredefinedIdentifiers = 0xFF112435
+        Comment = 0xFF112435
+        Directive = 0xFF112435
+        String = 0xFF112435
+        BadDirective = 0xFF112435
+        TypesModifiersItems = 0xFFFFFFD0
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        Number = 0xFF112435
+        KeywordSet8 = 0xFFE0E0E0
+        Identifier = 0xFF112435
+        ObjectsCSGAppearance = 0xFFFFD0D0
+        UnclosedString = 0xFFE0C0E0
+
     class Pascal:
-        PreProcessorParenthesis = 0xff112435
-        SingleQuotedString = 0xff112435
-        PreProcessor = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        CommentParenthesis = 0xff112435
-        Asm = 0xff112435
-        Character = 0xff112435
-        Default = 0xff112435
-        Operator = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        Number = 0xff112435
-        Identifier = 0xff112435
-        Keyword = 0xff112435
-        HexNumber = 0xff112435
-    
+        PreProcessorParenthesis = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        PreProcessor = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        CommentParenthesis = 0xFF112435
+        Asm = 0xFF112435
+        Character = 0xFF112435
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        Number = 0xFF112435
+        Identifier = 0xFF112435
+        Keyword = 0xFF112435
+        HexNumber = 0xFF112435
+
     class Perl:
-        Translation = 0xfff0e080
-        BacktickHereDocument = 0xffddd0dd
-        Array = 0xffffffe0
-        QuotedStringQXVar = 0xffa08080
-        PODVerbatim = 0xffc0ffc0
-        DoubleQuotedStringVar = 0xff112435
-        Regex = 0xffa0ffa0
-        HereDocumentDelimiter = 0xffddd0dd
-        SubroutinePrototype = 0xff112435
-        BacktickHereDocumentVar = 0xffddd0dd
-        QuotedStringQR = 0xff112435
-        SingleQuotedString = 0xff112435
-        QuotedStringQRVar = 0xff112435
-        SubstitutionVar = 0xff112435
-        Operator = 0xff112435
-        DoubleQuotedHereDocumentVar = 0xffddd0dd
-        Identifier = 0xff112435
-        QuotedStringQX = 0xff112435
-        BackticksVar = 0xffa08080
-        Keyword = 0xff112435
-        QuotedStringQ = 0xff112435
-        QuotedStringQQVar = 0xff112435
-        QuotedStringQQ = 0xff112435
-        POD = 0xffe0ffe0
-        FormatIdentifier = 0xff112435
-        RegexVar = 0xff112435
-        Backticks = 0xffa08080
-        DoubleQuotedHereDocument = 0xffddd0dd
-        Scalar = 0xffffe0e0
-        FormatBody = 0xfffff0ff
-        Comment = 0xff112435
-        QuotedStringQW = 0xff112435
-        SymbolTable = 0xffe0e0e0
-        Default = 0xff112435
-        Error = 0xffff0000
-        SingleQuotedHereDocument = 0xffddd0dd
-        Number = 0xff112435
-        Hash = 0xffffe0ff
-        Substitution = 0xfff0e080
-        DataSection = 0xfffff0d8
-        DoubleQuotedString = 0xff112435
-    
+        Translation = 0xFFF0E080
+        BacktickHereDocument = 0xFFDDD0DD
+        Array = 0xFFFFFFE0
+        QuotedStringQXVar = 0xFFA08080
+        PODVerbatim = 0xFFC0FFC0
+        DoubleQuotedStringVar = 0xFF112435
+        Regex = 0xFFA0FFA0
+        HereDocumentDelimiter = 0xFFDDD0DD
+        SubroutinePrototype = 0xFF112435
+        BacktickHereDocumentVar = 0xFFDDD0DD
+        QuotedStringQR = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        QuotedStringQRVar = 0xFF112435
+        SubstitutionVar = 0xFF112435
+        Operator = 0xFF112435
+        DoubleQuotedHereDocumentVar = 0xFFDDD0DD
+        Identifier = 0xFF112435
+        QuotedStringQX = 0xFF112435
+        BackticksVar = 0xFFA08080
+        Keyword = 0xFF112435
+        QuotedStringQ = 0xFF112435
+        QuotedStringQQVar = 0xFF112435
+        QuotedStringQQ = 0xFF112435
+        POD = 0xFFE0FFE0
+        FormatIdentifier = 0xFF112435
+        RegexVar = 0xFF112435
+        Backticks = 0xFFA08080
+        DoubleQuotedHereDocument = 0xFFDDD0DD
+        Scalar = 0xFFFFE0E0
+        FormatBody = 0xFFFFF0FF
+        Comment = 0xFF112435
+        QuotedStringQW = 0xFF112435
+        SymbolTable = 0xFFE0E0E0
+        Default = 0xFF112435
+        Error = 0xFFFF0000
+        SingleQuotedHereDocument = 0xFFDDD0DD
+        Number = 0xFF112435
+        Hash = 0xFFFFE0FF
+        Substitution = 0xFFF0E080
+        DataSection = 0xFFFFF0D8
+        DoubleQuotedString = 0xFF112435
+
     class PostScript:
-        DictionaryParenthesis = 0xff112435
-        HexString = 0xff112435
-        DSCCommentValue = 0xff112435
-        ProcedureParenthesis = 0xff112435
-        Comment = 0xff112435
-        ImmediateEvalLiteral = 0xff112435
-        Name = 0xff112435
-        DSCComment = 0xff112435
-        Default = 0xff112435
-        Base85String = 0xff112435
-        Number = 0xff112435
-        ArrayParenthesis = 0xff112435
-        Literal = 0xff112435
-        BadStringCharacter = 0xffff0000
-        Text = 0xff112435
-        Keyword = 0xff112435
-    
+        DictionaryParenthesis = 0xFF112435
+        HexString = 0xFF112435
+        DSCCommentValue = 0xFF112435
+        ProcedureParenthesis = 0xFF112435
+        Comment = 0xFF112435
+        ImmediateEvalLiteral = 0xFF112435
+        Name = 0xFF112435
+        DSCComment = 0xFF112435
+        Default = 0xFF112435
+        Base85String = 0xFF112435
+        Number = 0xFF112435
+        ArrayParenthesis = 0xFF112435
+        Literal = 0xFF112435
+        BadStringCharacter = 0xFFFF0000
+        Text = 0xFF112435
+        Keyword = 0xFF112435
+
     class Properties:
-        DefaultValue = 0xff112435
-        Default = 0xff112435
-        Section = 0xffe0f0f0
-        Assignment = 0xff112435
-        Key = 0xff112435
-        Comment = 0xff112435
-    
+        DefaultValue = 0xFF112435
+        Default = 0xFF112435
+        Section = 0xFFE0F0F0
+        Assignment = 0xFF112435
+        Key = 0xFF112435
+        Comment = 0xFF112435
+
     class Python:
-        TripleDoubleQuotedString = 0xff112435
-        FunctionMethodName = 0xff112435
-        TabsAfterSpaces = 0xff112435
-        Tabs = 0xff112435
-        Decorator = 0xff112435
-        NoWarning = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        Spaces = 0xff112435
-        CommentBlock = 0xff112435
-        Comment = 0xff112435
-        TripleSingleQuotedString = 0xff112435
-        SingleQuotedString = 0xff112435
-        Inconsistent = 0xff112435
-        Default = 0xff112435
-        DoubleQuotedString = 0xff112435
-        Operator = 0xff112435
-        Number = 0xff112435
-        Identifier = 0xff112435
-        ClassName = 0xff112435
-        Keyword = 0xff112435
-        HighlightedIdentifier = 0xff112435
-        CustomKeyword = 0xff112435
-    
+        TripleDoubleQuotedString = 0xFF112435
+        FunctionMethodName = 0xFF112435
+        TabsAfterSpaces = 0xFF112435
+        Tabs = 0xFF112435
+        Decorator = 0xFF112435
+        NoWarning = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        Spaces = 0xFF112435
+        CommentBlock = 0xFF112435
+        Comment = 0xFF112435
+        TripleSingleQuotedString = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        Inconsistent = 0xFF112435
+        Default = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        Operator = 0xFF112435
+        Number = 0xFF112435
+        Identifier = 0xFF112435
+        ClassName = 0xFF112435
+        Keyword = 0xFF112435
+        HighlightedIdentifier = 0xFF112435
+        CustomKeyword = 0xFF112435
+
     class Ruby:
-        Symbol = 0xff112435
-        Stderr = 0xffff8080
-        Global = 0xff112435
-        FunctionMethodName = 0xff112435
-        Stdin = 0xffff8080
-        HereDocumentDelimiter = 0xffddd0dd
-        PercentStringr = 0xffa0ffa0
-        PercentStringQ = 0xff112435
-        ModuleName = 0xff112435
-        HereDocument = 0xffddd0dd
-        SingleQuotedString = 0xff112435
-        PercentStringq = 0xff112435
-        Regex = 0xffa0ffa0
-        Operator = 0xff112435
-        PercentStringw = 0xffffffe0
-        PercentStringx = 0xffa08080
-        POD = 0xffc0ffc0
-        Keyword = 0xff112435
-        Stdout = 0xffff8080
-        ClassVariable = 0xff112435
-        Identifier = 0xff112435
-        DemotedKeyword = 0xff112435
-        Backticks = 0xffa08080
-        InstanceVariable = 0xff112435
-        Comment = 0xff112435
-        Default = 0xff112435
-        Error = 0xffff0000
-        Number = 0xff112435
-        DataSection = 0xfffff0d8
-        ClassName = 0xff112435
-        DoubleQuotedString = 0xff112435
-    
+        Symbol = 0xFF112435
+        Stderr = 0xFFFF8080
+        Global = 0xFF112435
+        FunctionMethodName = 0xFF112435
+        Stdin = 0xFFFF8080
+        HereDocumentDelimiter = 0xFFDDD0DD
+        PercentStringr = 0xFFA0FFA0
+        PercentStringQ = 0xFF112435
+        ModuleName = 0xFF112435
+        HereDocument = 0xFFDDD0DD
+        SingleQuotedString = 0xFF112435
+        PercentStringq = 0xFF112435
+        Regex = 0xFFA0FFA0
+        Operator = 0xFF112435
+        PercentStringw = 0xFFFFFFE0
+        PercentStringx = 0xFFA08080
+        POD = 0xFFC0FFC0
+        Keyword = 0xFF112435
+        Stdout = 0xFFFF8080
+        ClassVariable = 0xFF112435
+        Identifier = 0xFF112435
+        DemotedKeyword = 0xFF112435
+        Backticks = 0xFFA08080
+        InstanceVariable = 0xFF112435
+        Comment = 0xFF112435
+        Default = 0xFF112435
+        Error = 0xFFFF0000
+        Number = 0xFF112435
+        DataSection = 0xFFFFF0D8
+        ClassName = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+
     class SQL:
-        PlusComment = 0xff112435
-        KeywordSet7 = 0xff112435
-        PlusPrompt = 0xffe0ffe0
-        CommentDocKeywordError = 0xff112435
-        CommentDocKeyword = 0xff112435
-        KeywordSet6 = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        Operator = 0xff112435
-        QuotedIdentifier = 0xff112435
-        SingleQuotedString = 0xff112435
-        PlusKeyword = 0xff112435
-        Default = 0xff112435
-        DoubleQuotedString = 0xff112435
-        CommentLineHash = 0xff112435
-        KeywordSet5 = 0xff112435
-        Number = 0xff112435
-        KeywordSet8 = 0xff112435
-        Identifier = 0xff112435
-        Keyword = 0xff112435
-        CommentDoc = 0xff112435
-        QuotedOperator = 0xff112435
-    
+        PlusComment = 0xFF112435
+        KeywordSet7 = 0xFF112435
+        PlusPrompt = 0xFFE0FFE0
+        CommentDocKeywordError = 0xFF112435
+        CommentDocKeyword = 0xFF112435
+        KeywordSet6 = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        Operator = 0xFF112435
+        QuotedIdentifier = 0xFF112435
+        SingleQuotedString = 0xFF112435
+        PlusKeyword = 0xFF112435
+        Default = 0xFF112435
+        DoubleQuotedString = 0xFF112435
+        CommentLineHash = 0xFF112435
+        KeywordSet5 = 0xFF112435
+        Number = 0xFF112435
+        KeywordSet8 = 0xFF112435
+        Identifier = 0xFF112435
+        Keyword = 0xFF112435
+        CommentDoc = 0xFF112435
+        QuotedOperator = 0xFF112435
+
     class Spice:
-        Function = 0xff112435
-        Delimiter = 0xff112435
-        Value = 0xff112435
-        Default = 0xff112435
-        Number = 0xff112435
-        Parameter = 0xff112435
-        Command = 0xff112435
-        Identifier = 0xff112435
-        Comment = 0xff112435
-    
+        Function = 0xFF112435
+        Delimiter = 0xFF112435
+        Value = 0xFF112435
+        Default = 0xFF112435
+        Number = 0xFF112435
+        Parameter = 0xFF112435
+        Command = 0xFF112435
+        Identifier = 0xFF112435
+        Comment = 0xFF112435
+
     class TCL:
-        SubstitutionBrace = 0xff112435
-        CommentBox = 0xfff0fff0
-        ITCLKeyword = 0xfffff0f0
-        TkKeyword = 0xffe0fff0
-        Operator = 0xff112435
-        QuotedString = 0xfffff0f0
-        ExpandKeyword = 0xffffff80
-        KeywordSet7 = 0xff112435
-        TCLKeyword = 0xff112435
-        TkCommand = 0xffffd0d0
-        Identifier = 0xff112435
-        KeywordSet6 = 0xff112435
-        CommentLine = 0xff112435
-        CommentBlock = 0xfff0fff0
-        Comment = 0xfff0ffe0
-        Default = 0xff112435
-        KeywordSet9 = 0xff112435
-        Modifier = 0xff112435
-        Number = 0xff112435
-        KeywordSet8 = 0xff112435
-        Substitution = 0xffeffff0
-        QuotedKeyword = 0xfffff0f0
-    
+        SubstitutionBrace = 0xFF112435
+        CommentBox = 0xFFF0FFF0
+        ITCLKeyword = 0xFFFFF0F0
+        TkKeyword = 0xFFE0FFF0
+        Operator = 0xFF112435
+        QuotedString = 0xFFFFF0F0
+        ExpandKeyword = 0xFFFFFF80
+        KeywordSet7 = 0xFF112435
+        TCLKeyword = 0xFF112435
+        TkCommand = 0xFFFFD0D0
+        Identifier = 0xFF112435
+        KeywordSet6 = 0xFF112435
+        CommentLine = 0xFF112435
+        CommentBlock = 0xFFF0FFF0
+        Comment = 0xFFF0FFE0
+        Default = 0xFF112435
+        KeywordSet9 = 0xFF112435
+        Modifier = 0xFF112435
+        Number = 0xFF112435
+        KeywordSet8 = 0xFF112435
+        Substitution = 0xFFEFFFF0
+        QuotedKeyword = 0xFFFFF0F0
+
     class TeX:
-        Symbol = 0xff112435
-        Default = 0xff112435
-        Command = 0xff112435
-        Group = 0xff112435
-        Text = 0xff112435
-        Special = 0xff112435
-    
+        Symbol = 0xFF112435
+        Default = 0xFF112435
+        Command = 0xFF112435
+        Group = 0xFF112435
+        Text = 0xFF112435
+        Special = 0xFF112435
+
     class VHDL:
-        StandardOperator = 0xff112435
-        Attribute = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        String = 0xff112435
-        Default = 0xff112435
-        Operator = 0xff112435
-        StandardPackage = 0xff112435
-        Number = 0xff112435
-        Identifier = 0xff112435
-        KeywordSet7 = 0xff112435
-        StandardFunction = 0xff112435
-        StandardType = 0xff112435
-        Keyword = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        CommentBlock = 0xff112435
-    
+        StandardOperator = 0xFF112435
+        Attribute = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        String = 0xFF112435
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        StandardPackage = 0xFF112435
+        Number = 0xFF112435
+        Identifier = 0xFF112435
+        KeywordSet7 = 0xFF112435
+        StandardFunction = 0xFF112435
+        StandardType = 0xFF112435
+        Keyword = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        CommentBlock = 0xFF112435
+
     class Verilog:
-        CommentBang = 0xffe0f0ff
-        UserKeywordSet = 0xff112435
-        Preprocessor = 0xff112435
-        CommentLine = 0xff112435
-        Comment = 0xff112435
-        KeywordSet2 = 0xff112435
-        Default = 0xff112435
-        Operator = 0xff112435
-        Number = 0xff112435
-        Identifier = 0xff112435
-        SystemTask = 0xff112435
-        String = 0xff112435
-        Keyword = 0xff112435
-        UnclosedString = 0xffe0c0e0
-        InactiveDefault = 0xff112435
-        InactiveUnclosedString = 0xff112435
-        InactiveCommentKeyword = 0xff112435
-        InactiveKeywordSet2 = 0xff112435
-        InactiveComment = 0xff112435
-        DeclareInputOutputPort = 0xff112435
-        InactiveString = 0xff112435
-        CommentKeyword = 0xff112435
-        DeclareOutputPort = 0xff112435
-        PortConnection = 0xff112435
-        InactiveKeyword = 0xff112435
-        DeclareInputPort = 0xff112435
-        InactiveDeclareInputPort = 0xff112435
-        InactiveDeclareOutputPort = 0xff112435
-        InactiveUserKeywordSet = 0xff112435
-        InactiveCommentBang = 0xff112435
-        InactiveIdentifier = 0xff112435
-        InactivePortConnection = 0xff112435
-        InactiveNumber = 0xff112435
-        InactiveSystemTask = 0xff112435
-        InactivePreprocessor = 0xff112435
-        InactiveOperator = 0xff112435
-        InactiveDeclareInputOutputPort = 0xff112435
-        InactiveCommentLine = 0xff112435
-    
+        CommentBang = 0xFFE0F0FF
+        UserKeywordSet = 0xFF112435
+        Preprocessor = 0xFF112435
+        CommentLine = 0xFF112435
+        Comment = 0xFF112435
+        KeywordSet2 = 0xFF112435
+        Default = 0xFF112435
+        Operator = 0xFF112435
+        Number = 0xFF112435
+        Identifier = 0xFF112435
+        SystemTask = 0xFF112435
+        String = 0xFF112435
+        Keyword = 0xFF112435
+        UnclosedString = 0xFFE0C0E0
+        InactiveDefault = 0xFF112435
+        InactiveUnclosedString = 0xFF112435
+        InactiveCommentKeyword = 0xFF112435
+        InactiveKeywordSet2 = 0xFF112435
+        InactiveComment = 0xFF112435
+        DeclareInputOutputPort = 0xFF112435
+        InactiveString = 0xFF112435
+        CommentKeyword = 0xFF112435
+        DeclareOutputPort = 0xFF112435
+        PortConnection = 0xFF112435
+        InactiveKeyword = 0xFF112435
+        DeclareInputPort = 0xFF112435
+        InactiveDeclareInputPort = 0xFF112435
+        InactiveDeclareOutputPort = 0xFF112435
+        InactiveUserKeywordSet = 0xFF112435
+        InactiveCommentBang = 0xFF112435
+        InactiveIdentifier = 0xFF112435
+        InactivePortConnection = 0xFF112435
+        InactiveNumber = 0xFF112435
+        InactiveSystemTask = 0xFF112435
+        InactivePreprocessor = 0xFF112435
+        InactiveOperator = 0xFF112435
+        InactiveDeclareInputOutputPort = 0xFF112435
+        InactiveCommentLine = 0xFF112435
+
     class XML:
-        HTMLValue = 0xffffefff
-        PythonDefault = 0xffefffef
-        Entity = 0xff112435
-        SGMLParameter = 0xffefefff
-        SGMLDefault = 0xffefefff
-        PHPVariable = 0xfffff8f8
-        SGMLCommand = 0xffefefff
-        PythonClassName = 0xffefffef
-        VBScriptUnclosedString = 0xff7f7fff
-        ASPJavaScriptDefault = 0xffdfdf7f
-        ASPVBScriptStart = 0xff112435
-        VBScriptDefault = 0xffefefff
-        PythonNumber = 0xffefffef
-        PythonOperator = 0xffefffef
-        ASPJavaScriptSingleQuotedString = 0xffdfdf7f
-        PHPDefault = 0xfffff8f8
-        XMLStart = 0xff112435
-        PythonFunctionMethodName = 0xffefffef
-        ASPJavaScriptStart = 0xff112435
-        JavaScriptWord = 0xfff0f0ff
-        PHPSingleQuotedString = 0xfffff8f8
-        PythonTripleDoubleQuotedString = 0xffefffef
-        JavaScriptComment = 0xfff0f0ff
-        Default = 0xff112435
-        SGMLSingleQuotedString = 0xffefefff
-        VBScriptComment = 0xffefefff
-        ASPVBScriptNumber = 0xffcfcfef
-        ASPJavaScriptCommentDoc = 0xffdfdf7f
-        PythonIdentifier = 0xffefffef
-        VBScriptKeyword = 0xffefefff
-        JavaScriptDefault = 0xfff0f0ff
-        PythonStart = 0xff112435
-        ASPPythonComment = 0xffcfefcf
-        ASPJavaScriptWord = 0xffdfdf7f
-        SGMLParameterComment = 0xff112435
-        JavaScriptSingleQuotedString = 0xfff0f0ff
-        PythonSingleQuotedString = 0xffefffef
-        HTMLSingleQuotedString = 0xff112435
-        ASPVBScriptString = 0xffcfcfef
-        SGMLBlockDefault = 0xffcccce0
-        PythonKeyword = 0xffefffef
-        XMLTagEnd = 0xff112435
-        ASPVBScriptComment = 0xffcfcfef
-        ASPPythonSingleQuotedString = 0xffcfefcf
-        PHPDoubleQuotedVariable = 0xfffff8f8
-        ASPJavaScriptComment = 0xffdfdf7f
-        JavaScriptUnclosedString = 0xffbfbbb0
-        JavaScriptDoubleQuotedString = 0xfff0f0ff
-        UnknownAttribute = 0xff112435
-        ASPPythonOperator = 0xffcfefcf
-        ASPJavaScriptSymbol = 0xffdfdf7f
-        ASPPythonFunctionMethodName = 0xffcfefcf
-        SGMLDoubleQuotedString = 0xffefefff
-        PHPOperator = 0xfffff8f8
-        JavaScriptNumber = 0xfff0f0ff
-        PythonDoubleQuotedString = 0xffefffef
-        ASPAtStart = 0xffffff00
-        Script = 0xff112435
-        PHPCommentLine = 0xfffff8f8
-        SGMLComment = 0xffefefff
-        JavaScriptStart = 0xff112435
-        ASPPythonIdentifier = 0xffcfefcf
-        ASPVBScriptKeyword = 0xffcfcfef
-        ASPPythonTripleDoubleQuotedString = 0xffcfefcf
-        ASPPythonKeyword = 0xffcfefcf
-        ASPJavaScriptNumber = 0xffdfdf7f
-        PHPStart = 0xffffefbf
-        PythonTripleSingleQuotedString = 0xffefffef
-        PHPNumber = 0xfffff8f8
-        ASPPythonDefault = 0xffcfefcf
-        SGMLSpecial = 0xffefefff
-        OtherInTag = 0xff112435
-        JavaScriptCommentDoc = 0xfff0f0ff
-        Tag = 0xff112435
-        XMLEnd = 0xff112435
-        CDATA = 0xfffff0f0
-        HTMLNumber = 0xff112435
-        SGMLError = 0xffff6666
-        PHPKeyword = 0xfffff8f8
-        ASPVBScriptUnclosedString = 0xff7f7fff
-        ASPPythonNumber = 0xffcfefcf
-        VBScriptString = 0xffefefff
-        ASPPythonClassName = 0xffcfefcf
-        ASPPythonStart = 0xff112435
-        JavaScriptRegex = 0xffffbbb0
-        ASPJavaScriptUnclosedString = 0xffbfbbb0
-        ASPJavaScriptCommentLine = 0xffdfdf7f
-        SGMLEntity = 0xffefefff
-        ASPJavaScriptDoubleQuotedString = 0xffdfdf7f
-        ASPStart = 0xffffdf00
-        Attribute = 0xff112435
-        ASPJavaScriptKeyword = 0xffdfdf7f
-        ASPVBScriptDefault = 0xffcfcfef
-        ASPVBScriptIdentifier = 0xffcfcfef
-        ASPJavaScriptRegex = 0xffffbbb0
-        VBScriptNumber = 0xffefefff
-        HTMLDoubleQuotedString = 0xff112435
-        ASPXCComment = 0xff112435
-        VBScriptStart = 0xff112435
-        PHPDoubleQuotedString = 0xfffff8f8
-        PHPComment = 0xfffff8f8
-        ASPPythonTripleSingleQuotedString = 0xffcfefcf
-        ASPPythonDoubleQuotedString = 0xffcfefcf
-        JavaScriptKeyword = 0xfff0f0ff
-        JavaScriptSymbol = 0xfff0f0ff
-        VBScriptIdentifier = 0xffefefff
-        HTMLComment = 0xff112435
-        UnknownTag = 0xff112435
-        JavaScriptCommentLine = 0xfff0f0ff
-        PythonComment = 0xffefffef
-    
+        HTMLValue = 0xFFFFEFFF
+        PythonDefault = 0xFFEFFFEF
+        Entity = 0xFF112435
+        SGMLParameter = 0xFFEFEFFF
+        SGMLDefault = 0xFFEFEFFF
+        PHPVariable = 0xFFFFF8F8
+        SGMLCommand = 0xFFEFEFFF
+        PythonClassName = 0xFFEFFFEF
+        VBScriptUnclosedString = 0xFF7F7FFF
+        ASPJavaScriptDefault = 0xFFDFDF7F
+        ASPVBScriptStart = 0xFF112435
+        VBScriptDefault = 0xFFEFEFFF
+        PythonNumber = 0xFFEFFFEF
+        PythonOperator = 0xFFEFFFEF
+        ASPJavaScriptSingleQuotedString = 0xFFDFDF7F
+        PHPDefault = 0xFFFFF8F8
+        XMLStart = 0xFF112435
+        PythonFunctionMethodName = 0xFFEFFFEF
+        ASPJavaScriptStart = 0xFF112435
+        JavaScriptWord = 0xFFF0F0FF
+        PHPSingleQuotedString = 0xFFFFF8F8
+        PythonTripleDoubleQuotedString = 0xFFEFFFEF
+        JavaScriptComment = 0xFFF0F0FF
+        Default = 0xFF112435
+        SGMLSingleQuotedString = 0xFFEFEFFF
+        VBScriptComment = 0xFFEFEFFF
+        ASPVBScriptNumber = 0xFFCFCFEF
+        ASPJavaScriptCommentDoc = 0xFFDFDF7F
+        PythonIdentifier = 0xFFEFFFEF
+        VBScriptKeyword = 0xFFEFEFFF
+        JavaScriptDefault = 0xFFF0F0FF
+        PythonStart = 0xFF112435
+        ASPPythonComment = 0xFFCFEFCF
+        ASPJavaScriptWord = 0xFFDFDF7F
+        SGMLParameterComment = 0xFF112435
+        JavaScriptSingleQuotedString = 0xFFF0F0FF
+        PythonSingleQuotedString = 0xFFEFFFEF
+        HTMLSingleQuotedString = 0xFF112435
+        ASPVBScriptString = 0xFFCFCFEF
+        SGMLBlockDefault = 0xFFCCCCE0
+        PythonKeyword = 0xFFEFFFEF
+        XMLTagEnd = 0xFF112435
+        ASPVBScriptComment = 0xFFCFCFEF
+        ASPPythonSingleQuotedString = 0xFFCFEFCF
+        PHPDoubleQuotedVariable = 0xFFFFF8F8
+        ASPJavaScriptComment = 0xFFDFDF7F
+        JavaScriptUnclosedString = 0xFFBFBBB0
+        JavaScriptDoubleQuotedString = 0xFFF0F0FF
+        UnknownAttribute = 0xFF112435
+        ASPPythonOperator = 0xFFCFEFCF
+        ASPJavaScriptSymbol = 0xFFDFDF7F
+        ASPPythonFunctionMethodName = 0xFFCFEFCF
+        SGMLDoubleQuotedString = 0xFFEFEFFF
+        PHPOperator = 0xFFFFF8F8
+        JavaScriptNumber = 0xFFF0F0FF
+        PythonDoubleQuotedString = 0xFFEFFFEF
+        ASPAtStart = 0xFFFFFF00
+        Script = 0xFF112435
+        PHPCommentLine = 0xFFFFF8F8
+        SGMLComment = 0xFFEFEFFF
+        JavaScriptStart = 0xFF112435
+        ASPPythonIdentifier = 0xFFCFEFCF
+        ASPVBScriptKeyword = 0xFFCFCFEF
+        ASPPythonTripleDoubleQuotedString = 0xFFCFEFCF
+        ASPPythonKeyword = 0xFFCFEFCF
+        ASPJavaScriptNumber = 0xFFDFDF7F
+        PHPStart = 0xFFFFEFBF
+        PythonTripleSingleQuotedString = 0xFFEFFFEF
+        PHPNumber = 0xFFFFF8F8
+        ASPPythonDefault = 0xFFCFEFCF
+        SGMLSpecial = 0xFFEFEFFF
+        OtherInTag = 0xFF112435
+        JavaScriptCommentDoc = 0xFFF0F0FF
+        Tag = 0xFF112435
+        XMLEnd = 0xFF112435
+        CDATA = 0xFFFFF0F0
+        HTMLNumber = 0xFF112435
+        SGMLError = 0xFFFF6666
+        PHPKeyword = 0xFFFFF8F8
+        ASPVBScriptUnclosedString = 0xFF7F7FFF
+        ASPPythonNumber = 0xFFCFEFCF
+        VBScriptString = 0xFFEFEFFF
+        ASPPythonClassName = 0xFFCFEFCF
+        ASPPythonStart = 0xFF112435
+        JavaScriptRegex = 0xFFFFBBB0
+        ASPJavaScriptUnclosedString = 0xFFBFBBB0
+        ASPJavaScriptCommentLine = 0xFFDFDF7F
+        SGMLEntity = 0xFFEFEFFF
+        ASPJavaScriptDoubleQuotedString = 0xFFDFDF7F
+        ASPStart = 0xFFFFDF00
+        Attribute = 0xFF112435
+        ASPJavaScriptKeyword = 0xFFDFDF7F
+        ASPVBScriptDefault = 0xFFCFCFEF
+        ASPVBScriptIdentifier = 0xFFCFCFEF
+        ASPJavaScriptRegex = 0xFFFFBBB0
+        VBScriptNumber = 0xFFEFEFFF
+        HTMLDoubleQuotedString = 0xFF112435
+        ASPXCComment = 0xFF112435
+        VBScriptStart = 0xFF112435
+        PHPDoubleQuotedString = 0xFFFFF8F8
+        PHPComment = 0xFFFFF8F8
+        ASPPythonTripleSingleQuotedString = 0xFFCFEFCF
+        ASPPythonDoubleQuotedString = 0xFFCFEFCF
+        JavaScriptKeyword = 0xFFF0F0FF
+        JavaScriptSymbol = 0xFFF0F0FF
+        VBScriptIdentifier = 0xFFEFEFFF
+        HTMLComment = 0xFF112435
+        UnknownTag = 0xFF112435
+        JavaScriptCommentLine = 0xFFF0F0FF
+        PythonComment = 0xFFEFFFEF
+
     class YAML:
-        TextBlockMarker = 0xff112435
-        DocumentDelimiter = 0xfff3c969
-        Operator = 0xff112435
-        Number = 0xff112435
-        Default = 0xff112435
-        Identifier = 0xff112435
-        Reference = 0xff112435
-        Comment = 0xff112435
-        Keyword = 0xff112435
-        SyntaxErrorMarker = 0xffff0000
-    
-
-
-
-
+        TextBlockMarker = 0xFF112435
+        DocumentDelimiter = 0xFFF3C969
+        Operator = 0xFF112435
+        Number = 0xFF112435
+        Default = 0xFF112435
+        Identifier = 0xFF112435
+        Reference = 0xFF112435
+        Comment = 0xFF112435
+        Keyword = 0xFF112435
+        SyntaxErrorMarker = 0xFFFF0000

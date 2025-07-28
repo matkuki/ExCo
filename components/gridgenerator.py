@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -30,26 +30,27 @@ class GridGenerator:
     grid_type = None
     horizontal_step = None
     vertical_step = None
-    
-    def __init__(self, 
-                 starting_position, 
-                 edge_length, 
-                 grid_type="circular",
-                 grid_columns=5,
-                 rectangular_grid_first_step="up-right",
-                 rectangular_grid_row_addition=0.0,
-                 in_scale=1.0):
-        self.first_position = (
-            starting_position[0],
-            starting_position[1]
-        )
+
+    def __init__(
+        self,
+        starting_position,
+        edge_length,
+        grid_type="circular",
+        grid_columns=5,
+        rectangular_grid_first_step="up-right",
+        rectangular_grid_row_addition=0.0,
+        in_scale=1.0,
+    ):
+        self.first_position = (starting_position[0], starting_position[1])
         self.covered_positions = []
         self.add_position(self.first_position)
         self.current_direction = 1
-        if (grid_type != "circular" and 
-            grid_type != "trapezoid" and
-            grid_type != "rectangular"):
-                raise Exception("Unknown grid type specified!")
+        if (
+            grid_type != "circular"
+            and grid_type != "trapezoid"
+            and grid_type != "rectangular"
+        ):
+            raise Exception("Unknown grid type specified!")
         elif grid_type == "trapezoid":
             self.grid_columns = grid_columns
             self.step_direction = "down-right"
@@ -60,13 +61,13 @@ class GridGenerator:
             self.rectangular_grid_row_addition = rectangular_grid_row_addition
             self.column_counter = 0
         self.grid_type = grid_type
-        
+
         self.scaling = in_scale
         self.edge_length = edge_length
         self.horizontal_step, self.vertical_step, self.steps = GridGenerator.init_steps(
             self.edge_length, self.scaling
         )
-    
+
     @staticmethod
     def init_steps(edge_length, scaling):
         horizontal_step = (3 * edge_length) / 2
@@ -76,20 +77,20 @@ class GridGenerator:
         steps = {
             "down-left": (-horizontal_step, vertical_step),
             "down-right": (horizontal_step, vertical_step),
-            "down": (0, 2*vertical_step),
+            "down": (0, 2 * vertical_step),
             "up-left": (-horizontal_step, -vertical_step),
             "up-right": (horizontal_step, -vertical_step),
-            "up": (0, -2*vertical_step),
+            "up": (0, -2 * vertical_step),
         }
         return horizontal_step, vertical_step, steps
-    
+
     def add_position(self, position):
         self.current_position = position
         self.covered_positions.append(position)
-    
+
     def get_position(self):
         return self.current_position
-    
+
     def next(self):
         if self.grid_type == "circular":
             return self.next_circular()
@@ -97,7 +98,7 @@ class GridGenerator:
             return self.next_trapezoid()
         elif self.grid_type == "rectangular":
             return self.next_rectangular()
-    
+
     def next_rectangular(self):
         self.column_counter += 1
         spacing_step_x = 0
@@ -108,7 +109,7 @@ class GridGenerator:
             current_step = self.steps["down"]
             current_step = (
                 current_step[0],
-                current_step[1] + self.rectangular_grid_row_addition
+                current_step[1] + self.rectangular_grid_row_addition,
             )
             spacing = (0, 2 * spacing_step_y)
             if self.step_direction == "down-right":
@@ -140,7 +141,7 @@ class GridGenerator:
         new_position = (new_position[0], new_position[1])
         self.add_position(new_position)
         return self.get_position()
-    
+
     def next_trapezoid(self):
         self.column_counter += 1
         if self.column_counter == self.grid_columns:
@@ -158,7 +159,7 @@ class GridGenerator:
         )
         self.add_position(new_position)
         return self.get_position()
-    
+
     def next_circular(self):
         current_direction_name = self.directions[self.current_direction]
         current_step = self.steps[current_direction_name]
@@ -178,7 +179,7 @@ class GridGenerator:
                     self.current_position[0] + current_step[0],
                     self.current_position[1] + current_step[1],
                 )
-                if not(new_position in self.covered_positions):
+                if not (new_position in self.covered_positions):
                     break
             self.add_position(new_position)
             return self.get_position()

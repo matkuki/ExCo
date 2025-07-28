@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -19,6 +19,7 @@ class TreeSitterMakefile(TreeSitterLexer):
     """
     Custom tree-sitter lexer for the Makefile language
     """
+
     # Constants
     NAME = "Makefile"
     TREE_SITTER_LEXER = "make"
@@ -34,27 +35,21 @@ class TreeSitterMakefile(TreeSitterLexer):
         "error": 6,
         "operator": 7,
     }
-    
+
     symbols = {
         "default": {
             "index": styles["default"],
-            "items": (
-                "word",
-            ),
+            "items": ("word",),
             "is-span": False,
         },
         "comment": {
             "index": styles["comment"],
-            "items": (
-                "comment",
-            ),
+            "items": ("comment",),
             "is-span": False,
         },
         "error": {
             "index": styles["error"],
-            "items": (
-                "error",
-            ),
+            "items": ("error",),
         },
         "string": {
             "index": styles["string"],
@@ -87,8 +82,7 @@ class TreeSitterMakefile(TreeSitterLexer):
                 "abspath",
                 "call",
                 "dir",
-                "error"
-                "filter",
+                "error" "filter",
                 "firstword",
                 "info",
                 "lastword",
@@ -116,18 +110,32 @@ class TreeSitterMakefile(TreeSitterLexer):
         "operator": {
             "index": styles["operator"],
             "items": (
-                "(", ")",
-                "[", "]",
-                "{", "}",
-                "+", "-",
-                "*", "/",
-                ":", "!", "?", "|",
-                "=", ":=", ",", ";", 
-                "^", "<", ">", "@",
+                "(",
+                ")",
+                "[",
+                "]",
+                "{",
+                "}",
+                "+",
+                "-",
+                "*",
+                "/",
+                ":",
+                "!",
+                "?",
+                "|",
+                "=",
+                ":=",
+                ",",
+                ";",
+                "^",
+                "<",
+                ">",
+                "@",
             ),
             "is-span": False,
         },
     }
-    
+
     # Characters that autoindent one level on pressing Return/Enter
     autoindent_characters = [":"]

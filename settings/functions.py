@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -10,30 +10,31 @@ import os
 import sys
 import data
 
+
 def check_shortcut_combination(combination_string):
     keys = []
     current_key = []
     for c in combination_string:
-        if c == '+' and not (len(current_key) == 0):
+        if c == "+" and not (len(current_key) == 0):
             if len(current_key) > 0:
-                keys.append(''.join(current_key))
+                keys.append("".join(current_key))
                 current_key = []
         else:
             current_key.append(c)
     else:
         if len(current_key) > 0:
-            keys.append(''.join(current_key))
+            keys.append("".join(current_key))
         else:
             keys = []
     valid_modifiers = ("ctrl", "shift", "alt")
     valid_key_names = {
-        "add": '+',
-        "plus": '+',
-        "minus": '-',
-        "subtract": '-',
-        "divide": '/',
-        "multiply": '*',
-        "asterisk": '*',
+        "add": "+",
+        "plus": "+",
+        "minus": "-",
+        "subtract": "-",
+        "divide": "/",
+        "multiply": "*",
+        "asterisk": "*",
         "down": "down",
         "tab": "\t",
         "backspace": "backspace",

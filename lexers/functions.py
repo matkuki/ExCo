@@ -15,10 +15,10 @@ import re
 import time
 
 import data
-import qt
-
 import functions
 import lexers
+import qt
+import settings
 
 # import lexers.treesittermake
 # import lexers.treesitterpython
@@ -30,11 +30,13 @@ def set_font(lexer, style_name, style_options):
     weight = qt.QFont.Weight.Normal
     if style_options["bold"]:
         weight = qt.QFont.Weight.Bold
-    #    elif bold == 2:
-    #        weight = qt.QFont.Weight.Black
+    # elif bold == 2:
+    #     weight = qt.QFont.Weight.Black
     lexer.setFont(
         qt.QFont(
-            data.current_editor_font_name, data.current_editor_font_size, weight=weight
+            settings.get("current_editor_font_name"),
+            settings.get("current_editor_font_size"),
+            weight=weight,
         ),
         style_index,
     )
@@ -69,7 +71,7 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.Nim()
     elif file_type == "makefile":
         lexer = lexers.Makefile()
-    #        lexer = lexers.treesittermake.TreeSitterMakefile("Make", "make")
+    # lexer = lexers.treesittermake.TreeSitterMakefile("Make", "make")
     elif file_type == "xml":
         lexer = lexers.XML()
     elif file_type == "batch":

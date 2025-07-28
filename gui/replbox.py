@@ -8,6 +8,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import qt
 import data
+import settings
 import constants
 
 from .repllineedit import *
@@ -23,13 +24,15 @@ class ReplBox(qt.QGroupBox):
         super().__init__(parent)
         self.setObjectName("REPL_Box")
         self.main_form = parent
-        self.repl = ReplLineEdit(self, parent, interpreter_references=interpreter_references)
+        self.repl = ReplLineEdit(
+            self, parent, interpreter_references=interpreter_references
+        )
         self.repl.setObjectName("REPL_line")
         self.repl_helper = ReplHelper(self, parent, self.repl)
         self.repl_helper.setObjectName("REPL_multiline")
         # Create layout and children
         repl_layout = qt.QVBoxLayout()
-        repl_layout.setContentsMargins(4,4,4,4)
+        repl_layout.setContentsMargins(4, 4, 4, 4)
         repl_layout.setSpacing(0)
         repl_layout.addWidget(self.repl)
         repl_layout.addWidget(self.repl_helper)
@@ -38,11 +41,11 @@ class ReplBox(qt.QGroupBox):
         self.set_repl(constants.ReplType.SINGLE_LINE, constants.ReplLanguage.Python)
         self.indication_reset()
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
 
-    def set_repl(self,
-                 _type: constants.ReplType,
-                 language: constants.ReplLanguage) -> None:
+    def set_repl(
+        self, _type: constants.ReplType, language: constants.ReplLanguage
+    ) -> None:
         if language == constants.ReplLanguage.Python:
             self.setTitle("Python Interactive Interpreter (REPL)")
         elif language == constants.ReplLanguage.Hy:
@@ -60,9 +63,9 @@ class ReplBox(qt.QGroupBox):
             self.repl.setVisible(False)
             self.repl_helper.setVisible(True)
             self.repl_state = constants.ReplType.MULTI_LINE
-    
+
     def cycle_language(self) -> constants.ReplLanguage:
-        for i,lang in enumerate(constants.ReplLanguage):
+        for i, lang in enumerate(constants.ReplLanguage):
             if lang == self.repl.get_language():
                 if i == (len(constants.ReplLanguage) - 1):
                     new_lang = constants.ReplLanguage(0)
@@ -84,12 +87,13 @@ class ReplBox(qt.QGroupBox):
 
     def set_style(self, indicated):
         if indicated:
-            background = data.theme["indication"]["activebackground"]
-            border = data.theme["indication"]["activeborder"]
+            background = settings.get_theme()["indication"]["activebackground"]
+            border = settings.get_theme()["indication"]["activeborder"]
         else:
-            background = data.theme["indication"]["passivebackground"]
-            border = data.theme["indication"]["passiveborder"]
-        self.setStyleSheet("""
+            background = settings.get_theme()["indication"]["passivebackground"]
+            border = settings.get_theme()["indication"]["passiveborder"]
+        self.setStyleSheet(
+            """
 #REPL_Box {{
     font-size: 8pt;
     font-weight: bold;
@@ -114,9 +118,9 @@ class ReplBox(qt.QGroupBox):
     top: -6px;
 }}
         """.format(
-                 border,
-                 data.theme["indication"]["passivebackground"],
-                 border,
-                 data.theme["indication"]["activeborder"],
-        ))
-
+                border,
+                settings.get_theme()["indication"]["passivebackground"],
+                border,
+                settings.get_theme()["indication"]["activeborder"],
+            )
+        )

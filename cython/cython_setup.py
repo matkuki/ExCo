@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -20,49 +20,42 @@ from Cython.Build import build_ext
 
 # Clean-up
 print("Pre-build clean-up started ...")
-if os.path.exists('cython_build'):
-    shutil.rmtree('cython_build')
-if os.path.exists('build'):
-    shutil.rmtree('build')
+if os.path.exists("cython_build"):
+    shutil.rmtree("cython_build")
+if os.path.exists("build"):
+    shutil.rmtree("build")
 filelist = [f for f in os.listdir(".") if f.endswith(".c")]
 for f in filelist:
     os.remove(f)
 print("Pre-build clean-up completed.")
 
-source_files = [
-    "cython_lexers.pyx"
-]
+source_files = ["cython_lexers.pyx"]
 
 ext_modules = [
-    Extension(  
-        "cython_lexers",
-        source_files,
-        include_dirs = [],
-        libraries = [],
-        library_dirs = []
+    Extension(
+        "cython_lexers", source_files, include_dirs=[], libraries=[], library_dirs=[]
     )
 ]
 
 setup(
-    name = 'Ex.Co. Cython extensions',
-    cmdclass = {
-        'build_ext':    build_ext,
+    name="Ex.Co. Cython extensions",
+    cmdclass={
+        "build_ext": build_ext,
     },
-    ext_modules = ext_modules
+    ext_modules=ext_modules,
 )
 
 # Clean-up
-#print("Post-build clean-up started ...")
-#if os.path.exists('build'):
+# print("Post-build clean-up started ...")
+# if os.path.exists('build'):
 #    shutil.rmtree('build')
-#filelist = [f for f in os.listdir(".") if f.endswith(".c")]
-#for f in filelist:
+# filelist = [f for f in os.listdir(".") if f.endswith(".c")]
+# for f in filelist:
 #    os.remove(f)
-#print("Post-build clean-up completed.")
+# print("Post-build clean-up completed.")
 #
-#print("Kopiranje cython_lexers.pyd datoteke ...")
-#shutil.copyfile(
-#    'D:/Domaci_Projekti/ExCoEdit/cython_build/cython_lexers.pyd', 
+# print("Kopiranje cython_lexers.pyd datoteke ...")
+# shutil.copyfile(
+#    'D:/Domaci_Projekti/ExCoEdit/cython_build/cython_lexers.pyd',
 #    "D:/Domaci_Projekti/razno_za_exco/Testiranje/cython_lexers.pyd"
-#)
-
+# )

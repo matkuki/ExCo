@@ -15,15 +15,16 @@ import traceback
 
 import qt
 import data
+import settings
 import functions
 
 
-class DockingOverlay():
+class DockingOverlay:
     INFO_POINT_SIZE = (30, 30)
     parent = None
     overlay_label = None
     storage = []
-    
+
     class BaseDockLabel(qt.QLabel):
         name = None
         widget = None
@@ -31,49 +32,55 @@ class DockingOverlay():
         expanded_position = None
         initial_size = None
         expanded_size = None
-        
-        def __init__(self,
-                     name,
-                     parent,
-                     widget,
-                     initial_position,
-                     expanded_position,
-                     initial_size,
-                     expanded_size,
-                     image_path):
+
+        def __init__(
+            self,
+            name,
+            parent,
+            widget,
+            initial_position,
+            expanded_position,
+            initial_size,
+            expanded_size,
+            image_path,
+        ):
             super().__init__(parent)
             self.name = name
             self.widget = widget
             self.setAcceptDrops(True)
             self.setScaledContents(False)
-            self.setAlignment(qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter)
-            self.setStyleSheet(f"""
+            self.setAlignment(
+                qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
+            )
+            self.setStyleSheet(
+                f"""
 QLabel {{
-    border-color: {data.theme["indication"]["passiveborder"]};
+    border-color: {settings.get_theme()["indication"]["passiveborder"]};
     border-width: 1px;
     border-style: solid;
     padding: 0px;
-    background: {data.theme["dock_point_color_passive"]};
+    background: {settings.get_theme()["dock_point_color_passive"]};
     margin: 0px 0px 0px 0px;
 }}
 QLabel:hover {{
-    border-color: {data.theme["indication"]["passiveborder"]};
+    border-color: {settings.get_theme()["indication"]["passiveborder"]};
     border-width: 1px;
     border-style: solid;
     padding: 0px;
-    background: {data.theme["dock_point_color_active"]};
+    background: {settings.get_theme()["dock_point_color_active"]};
     margin: 0px 0px 0px 0px;
 }}
-            """)
+            """
+            )
             icon_scale = 0.8
             self.setPixmap(
                 functions.create_pixmap_with_size(
                     image_path,
                     initial_size[0] * icon_scale,
-                    initial_size[1] * icon_scale
+                    initial_size[1] * icon_scale,
                 )
             )
-            
+
             self.setGeometry(
                 int(initial_position[0]),
                 int(initial_position[1]),
@@ -84,7 +91,7 @@ QLabel:hover {{
             self.expanded_position = expanded_position
             self.initial_size = initial_size
             self.expanded_size = expanded_size
-        
+
         def dragEnterEvent(self, event):
             event.accept()
             self.setGeometry(
@@ -96,7 +103,7 @@ QLabel:hover {{
             self.stored_drag_enter_event = event.clone()
             self.widget.dragEnterEvent(event)
             return super().dragEnterEvent(event)
-        
+
         def dragLeaveEvent(self, event):
             self.setGeometry(
                 int(self.initial_position[0]),
@@ -105,8 +112,8 @@ QLabel:hover {{
                 int(self.initial_size[1]),
             )
             return super().dragLeaveEvent(event)
-    
-    class CentralDockLabel(BaseDockLabel):        
+
+    class CentralDockLabel(BaseDockLabel):
         def dropEvent(self, event):
             main_form = self.parent()
             main_form.display.docking_overlay_hide()
@@ -114,8 +121,8 @@ QLabel:hover {{
             main_form.view.reindex_all_windows()
             main_form.view.layout_save()
             return super().dropEvent(event)
-    
-    class SideDockLabel(BaseDockLabel):        
+
+    class SideDockLabel(BaseDockLabel):
         def dropEvent(self, event):
             main_form = self.parent()
             main_form.display.docking_overlay_hide()
@@ -146,9 +153,7 @@ QLabel:hover {{
                         old_tabs = box.widget(tabs_index)
                         old_tabs.hide()
                         new_box = box.add_box(
-                            qt.Qt.Orientation.Vertical,
-                            index=tabs_index,
-                            add_tabs=False
+                            qt.Qt.Orientation.Vertical, index=tabs_index, add_tabs=False
                         )
                         new_box.addWidget(old_tabs)
                         old_tabs.show()
@@ -162,7 +167,7 @@ QLabel:hover {{
                         new_tabs.dropEvent(event)
                         split_size = int(box.height() / box.count())
                         new_box.setSizes([split_size] * new_box.count())
-            
+
             elif self.name == "right" or self.name == "left":
                 if box.orientation() == qt.Qt.Orientation.Horizontal:
                     tabs_index = box.indexOf(self.widget)
@@ -190,7 +195,7 @@ QLabel:hover {{
                         new_box = box.add_box(
                             qt.Qt.Orientation.Horizontal,
                             index=tabs_index,
-                            add_tabs=False
+                            add_tabs=False,
                         )
                         new_box.addWidget(old_tabs)
                         old_tabs.show()
@@ -200,10 +205,10 @@ QLabel:hover {{
                         new_tabs.dropEvent(event)
                         split_size = int(box.width() / box.count())
                         new_box.setSizes([split_size] * new_box.count())
-            
+
             # Reindex the tabs in the box
             main_form.view.reindex_all_windows()
-            
+
             # Split windows equally
             if box.orientation() == qt.Qt.Orientation.Horizontal:
                 split_size = int(box.width() / box.count())
@@ -212,32 +217,33 @@ QLabel:hover {{
             box.setSizes([split_size] * box.count())
             # Save layout
             main_form.view.layout_save()
-            
+
             return super().dropEvent(event)
-            
 
     @staticmethod
     def get_scaled_point_size():
         return (
-            DockingOverlay.INFO_POINT_SIZE[0] * data.toplevel_menu_scale / 100.0,
-            DockingOverlay.INFO_POINT_SIZE[1] * data.toplevel_menu_scale / 100.0
+            DockingOverlay.INFO_POINT_SIZE[0] * settings.get("toplevel_menu_scale") / 100.0,
+            DockingOverlay.INFO_POINT_SIZE[1] * settings.get("toplevel_menu_scale") / 100.0,
         )
 
     @staticmethod
     def get_scaled_font_size():
-        return 10 * data.toplevel_menu_scale / 100.0
+        return 10 * settings.get("toplevel_menu_scale") / 100.0
 
     @staticmethod
-    def create_dock_point(name,
-                          parent,
-                          widget,
-                          _type,
-                          initial_position,
-                          expanded_position,
-                          initial_size,
-                          expanded_size,
-                          image_path,
-                          store=True):
+    def create_dock_point(
+        name,
+        parent,
+        widget,
+        _type,
+        initial_position,
+        expanded_position,
+        initial_size,
+        expanded_size,
+        image_path,
+        store=True,
+    ):
         dock_label = _type(
             name,
             parent,
@@ -246,7 +252,7 @@ QLabel:hover {{
             expanded_position,
             initial_size,
             expanded_size,
-            image_path
+            image_path,
         )
         if store == True:
             DockingOverlay.storage.append(dock_label)
@@ -272,14 +278,14 @@ QLabel:hover {{
                 center,
                 (
                     center[0] - (center_point_width / 2),
-                    center[1] - (center_point_height / 2)
+                    center[1] - (center_point_height / 2),
                 ),
                 point_size,
                 (
                     point_size[0] + center_point_width,
-                    point_size[1] + center_point_height
+                    point_size[1] + center_point_height,
                 ),
-                "various/window_insert.png"
+                "various/window_insert.png",
             )
             dock_point_center.show()
             # Rest
@@ -289,51 +295,45 @@ QLabel:hover {{
                 exp_size = None
                 name = None
                 if i == 0:
-                    exp_pos = (
-                        left[0],
-                        top[1]
-                    )
+                    exp_pos = (left[0], top[1])
                     exp_size = (
                         widget.geometry().width() * 1 / 3,
-                        widget.geometry().height()
+                        widget.geometry().height(),
                     )
                     name = "left"
                 elif i == 1:
                     exp_pos = (
                         (
-                            right[0] - 
-                            (widget.geometry().width() * 1 / 3) + 
-                            point_size[0]
+                            right[0]
+                            - (widget.geometry().width() * 1 / 3)
+                            + point_size[0]
                         ),
-                        top[1]
+                        top[1],
                     )
                     exp_size = (
                         widget.geometry().width() * 1 / 3,
-                        widget.geometry().height()
+                        widget.geometry().height(),
                     )
                     name = "right"
                 elif i == 2:
-                    exp_pos = (
-                        left[0],
-                        top[1]
-                    )
+                    exp_pos = (left[0], top[1])
                     exp_size = (
                         widget.geometry().width(),
-                        widget.geometry().height() * 1 / 3
+                        widget.geometry().height() * 1 / 3,
                     )
                     name = "top"
                 elif i == 3:
                     exp_pos = (
                         left[0],
                         (
-                            bottom[1] -
-                            (widget.geometry().height() * 1 / 3) +
-                            point_size[1]
-                        )
+                            bottom[1]
+                            - (widget.geometry().height() * 1 / 3)
+                            + point_size[1]
+                        ),
                     )
                     exp_size = (
                         widget.geometry().width(),
-                        widget.geometry().height() * 1 / 3
+                        widget.geometry().height() * 1 / 3,
                     )
                     name = "bottom"
                 dock_point = self.create_dock_point(
@@ -361,4 +361,3 @@ QLabel:hover {{
             w.setParent(None)
             w.deleteLater()
         DockingOverlay.storage = []
-

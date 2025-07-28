@@ -12,6 +12,7 @@ import re
 import typing
 
 import data
+import settings
 import qt
 
 
@@ -44,9 +45,9 @@ class TheSquid:
             return
         TheSquid.update_objects()
 
-        if data.custom_menu_font != None:
+        if settings.get("custom_menu_font") != None:
             for action in TheSquid.main_form.menubar.stored_actions:
-                action.setFont(qt.QFont(*data.custom_menu_font))
+                action.setFont(qt.QFont(*settings.get("custom_menu_font")))
 
         windows = TheSquid.main_form.get_all_windows()
 
@@ -55,9 +56,9 @@ class TheSquid:
 
             for i in range(window.count()):
                 if hasattr(window.widget(i), "corner_widget"):
-                    if data.custom_menu_scale != None:
+                    if settings.get("custom_menu_scale") != None:
                         window.widget(i).corner_widget.setIconSize(
-                            qt.QSize(data.custom_menu_scale, data.custom_menu_scale)
+                            qt.QSize(settings.get("custom_menu_scale"), settings.get("custom_menu_scale"))
                         )
                     else:
                         window.widget(i).corner_widget.setIconSize(qt.QSize(16, 16))

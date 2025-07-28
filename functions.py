@@ -2054,9 +2054,6 @@ def get_c_node_tree(c_code):
     return main_node_list
 
 
-
-
-
 def list_character_positions(string, character):
     """Return a list of positions of all the instances of character in a string"""
     return [i for i, char in enumerate(string) if char == character]
@@ -2081,6 +2078,7 @@ def index_strings_in_linelist(search_text, list_of_lines, case_sensitive=False):
         ]
         list_of_matches.extend(line_matches)
     return list_of_matches
+
 
 def index_strings_in_text(
     search_text,

@@ -6,25 +6,26 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import ast
+import enum
 import os
 import os.path
 import re
-import ast
-import enum
-import stat
-import time
-import types
 import shutil
-import traceback
+import stat
 import subprocess
+import time
+import traceback
+import types
 
-import qt
-import data
-import constants
-import functions
 import components.actionfilter
 import components.internals
 import components.thesquid
+import constants
+import data
+import functions
+import qt
+import settings
 
 from .dialogs import *
 from .menu import *
@@ -142,7 +143,7 @@ class TreeDisplay(qt.QTreeView):
         # Initialize the superclass
         super().__init__(parent)
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
         # Initialize components
         self.internals = components.internals.Internals(
             parent=parent, tab_widget=parent
@@ -213,7 +214,8 @@ class TreeDisplay(qt.QTreeView):
     def update_icon_size(self):
         self.setIconSize(
             functions.create_size(
-                data.tree_display_icon_size, data.tree_display_icon_size
+                settings.get("tree_display_icon_size"),
+                settings.get("tree_display_icon_size"),
             )
         )
 
@@ -637,10 +639,12 @@ class TreeDisplay(qt.QTreeView):
         self.setUniformRowHeights(True)
         # Add the file attributes to the tree display
         description_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["keyword"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["keyword"]["color"])
         )
         description_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
         item_document_name = qt.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -655,16 +659,20 @@ class TreeDisplay(qt.QTreeView):
         tree_model.appendRow(item_document_type)
         # Set the label properties
         label_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["singlequotedstring"]["color"])
         )
         label_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
         # Check if there was a parsing error
         if parse_error != False:
             error_brush = qt.QBrush(qt.QColor(180, 0, 0))
             error_font = qt.QFont(
-                data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+                settings.get("current_font_name"),
+                settings.get("current_font_size"),
+                qt.QFont.Weight.Bold,
             )
             item_error = qt.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
@@ -673,7 +681,7 @@ class TreeDisplay(qt.QTreeView):
             item_error.setIcon(self.get_node_icon("nothing"))
             tree_model.appendRow(item_error)
             # Show the error message
-            error_font = data.get_current_font()
+            error_font = settings.get_current_font()
             item_error_msg = qt.QStandardItem(str(parse_error))
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
@@ -872,10 +880,12 @@ class TreeDisplay(qt.QTreeView):
         self.setUniformRowHeights(True)
         # Add the file attributes to the tree display
         description_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["keyword"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["keyword"]["color"])
         )
         description_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
         item_document_name = qt.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -890,16 +900,20 @@ class TreeDisplay(qt.QTreeView):
         tree_model.appendRow(item_document_type)
         # Set the label properties
         label_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["singlequotedstring"]["color"])
         )
         label_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
         # Check if there was a parsing error
         if parse_error != False:
             error_brush = qt.QBrush(qt.QColor(180, 0, 0))
             error_font = qt.QFont(
-                data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+                settings.get("current_font_name"),
+                settings.get("current_font_size"),
+                qt.QFont.Weight.Bold,
             )
             item_error = qt.QStandardItem("ERROR PARSING FILE!")
             item_error.setEditable(False)
@@ -908,7 +922,7 @@ class TreeDisplay(qt.QTreeView):
             item_error.setIcon(self.get_node_icon("nothing"))
             tree_model.appendRow(item_error)
             # Show the error message
-            error_font = data.get_current_font()
+            error_font = settings.get_current_font()
             item_error_msg = qt.QStandardItem(str(parse_error))
             item_error_msg.setEditable(False)
             item_error_msg.setForeground(error_brush)
@@ -1016,10 +1030,12 @@ class TreeDisplay(qt.QTreeView):
         self.set_display_type(constants.TreeDisplayType.NODES)
         # Set the label properties
         label_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["singlequotedstring"]["color"])
         )
         label_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
 
         # Filter the nodes
@@ -1127,10 +1143,12 @@ class TreeDisplay(qt.QTreeView):
         self.setUniformRowHeights(True)
         # Add the file attributes to the tree display
         description_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["keyword"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["keyword"]["color"])
         )
         description_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
         item_document_name = qt.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -1177,10 +1195,12 @@ class TreeDisplay(qt.QTreeView):
         self.setUniformRowHeights(True)
         # Add the file attributes to the tree display
         description_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["keyword"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["keyword"]["color"])
         )
         description_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
         item_document_name = qt.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
@@ -1195,10 +1215,12 @@ class TreeDisplay(qt.QTreeView):
         tree_model.appendRow(item_document_type)
         """Add the nodes"""
         label_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["singlequotedstring"]["color"])
         )
         label_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
 
         # Nested function for creating a tree node
@@ -1488,10 +1510,12 @@ class TreeDisplay(qt.QTreeView):
         """Define the description details"""
         # Font
         description_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["keyword"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["keyword"]["color"])
         )
         description_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
         # Directory item
         item_directory = qt.QStandardItem(
@@ -1525,10 +1549,12 @@ class TreeDisplay(qt.QTreeView):
         """Define the description details"""
         # Font
         description_brush = qt.QBrush(
-            qt.QColor(data.theme["fonts"]["default"]["color"])
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
         )
         description_font = qt.QFont(
-            data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size"),
+            qt.QFont.Weight.Bold,
         )
         # Directory item
         item_directory = qt.QStandardItem(
@@ -1593,15 +1619,19 @@ class TreeDisplay(qt.QTreeView):
                 Adding the files
                 """
                 label_brush = qt.QBrush(
-                    qt.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
+                    qt.QColor(
+                        settings.get_theme()["fonts"]["singlequotedstring"]["color"]
+                    )
                 )
                 label_font = qt.QFont(
-                    data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+                    settings.get("current_font_name"),
+                    settings.get("current_font_size"),
+                    qt.QFont.Weight.Bold,
                 )
                 item_brush = qt.QBrush(
-                    qt.QColor(data.theme["fonts"]["default"]["color"])
+                    qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
                 )
-                item_font = data.get_current_font()
+                item_font = settings.get_current_font()
                 # Create the base directory item that will hold all of the found files
                 item_base_directory = qt.QStandardItem(directory)
                 item_base_directory.setEditable(False)
@@ -1669,7 +1699,7 @@ class TreeDisplay(qt.QTreeView):
                         for dir in parsed_directory_list:
                             if cancel_flag():
                                 return None
-                            
+
                             # Check if the current loop directory already exists
                             if dir in current_directory.directories:
                                 current_directory = current_directory.directories[dir]
@@ -1698,7 +1728,7 @@ class TreeDisplay(qt.QTreeView):
 
                 def stop(self):
                     self.stop_flag = True
-                
+
                 def stopped(self):
                     return self.stop_flag
 
@@ -1745,13 +1775,17 @@ class TreeDisplay(qt.QTreeView):
             directory = directory.replace("\\", "/")
             """Adding the files"""
             label_brush = qt.QBrush(
-                qt.QColor(data.theme["fonts"]["singlequotedstring"]["color"])
+                qt.QColor(settings.get_theme()["fonts"]["singlequotedstring"]["color"])
             )
             label_font = qt.QFont(
-                data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+                settings.get("current_font_name"),
+                settings.get("current_font_size"),
+                qt.QFont.Weight.Bold,
             )
-            item_brush = qt.QBrush(qt.QColor(data.theme["fonts"]["default"]["color"]))
-            item_font = data.get_current_font()
+            item_brush = qt.QBrush(
+                qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+            )
+            item_font = settings.get_current_font()
             # Create the base directory item that will hold all of the found files
             item_base_directory = qt.QStandardItem(directory)
             item_base_directory.setEditable(False)
@@ -1886,7 +1920,7 @@ class TreeDisplay(qt.QTreeView):
                 for item in walk_generator:
                     if self.stop_flag:
                         return
-                    
+
                     base_directory = item[0]
                     for _dir in item[1]:
                         found_items.append(
@@ -1956,7 +1990,7 @@ class TreeDisplay(qt.QTreeView):
 
             def stop(self):
                 self.stop_flag = True
-            
+
             def stopped(self):
                 return self.stop_flag
 
@@ -1997,9 +2031,13 @@ class TreeDisplay(qt.QTreeView):
                 )
                 self.main_form.display.write_to_statusbar(message, 2000)
                 # Display error in tree widget
-                brush = qt.QBrush(qt.QColor(data.theme["fonts"]["error"]["color"]))
+                brush = qt.QBrush(
+                    qt.QColor(settings.get_theme()["fonts"]["error"]["color"])
+                )
                 font = qt.QFont(
-                    data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+                    settings.get("current_font_name"),
+                    settings.get("current_font_size"),
+                    qt.QFont.Weight.Bold,
                 )
                 error_item = qt.QStandardItem(message)
                 error_item.setEditable(False)
@@ -2018,9 +2056,13 @@ class TreeDisplay(qt.QTreeView):
                 self.main_form.display.repl_display_error(message)
                 self.main_form.display.write_to_statusbar(message, 2000)
                 # Display error in tree widget
-                brush = qt.QBrush(qt.QColor(data.theme["fonts"]["error"]["color"]))
+                brush = qt.QBrush(
+                    qt.QColor(settings.get_theme()["fonts"]["error"]["color"])
+                )
                 font = qt.QFont(
-                    data.current_font_name, data.current_font_size, qt.QFont.Weight.Bold
+                    settings.get("current_font_name"),
+                    settings.get("current_font_size"),
+                    qt.QFont.Weight.Bold,
                 )
                 error_item = qt.QStandardItem(message)
                 error_item.setEditable(False)
@@ -2065,7 +2107,8 @@ class TreeDisplay(qt.QTreeView):
 
 
 if data.platform == "Windows":
-    import win32api, win32con
+    import win32api
+    import win32con
 
 
 class TreeDisplayBase(qt.QTreeView):
@@ -2137,7 +2180,7 @@ class TreeDisplayBase(qt.QTreeView):
         # Initialize the superclass
         super().__init__(parent)
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
         # Initialize everything else
         self._parent = parent
         self.main_form = main_form
@@ -2196,8 +2239,8 @@ class TreeDisplayBase(qt.QTreeView):
 
     def create_standard_item(self, text, bold=False, icon=None):
         # Font
-        #        brush = qt.QBrush(qt.QColor(data.theme["fonts"]["keyword"]["color"]))
-        font = data.get_current_font()
+        #        brush = qt.QBrush(qt.QColor(settings.get_theme()["fonts"]["keyword"]["color"]))
+        font = settings.get_current_font()
         font.setBold(bold)
         # Item initialization
         item = qt.QStandardItem(text)
@@ -2271,12 +2314,13 @@ class TreeDisplayBase(qt.QTreeView):
 
     def update_styles(self):
         self.update_icon_size()
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
 
     def update_icon_size(self):
         self.setIconSize(
             functions.create_size(
-                data.tree_display_icon_size, data.tree_display_icon_size
+                settings.get("tree_display_icon_size"),
+                settings.get("tree_display_icon_size"),
             )
         )
 

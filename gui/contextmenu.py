@@ -6,11 +6,11 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-
 import traceback
 
 import qt
 import data
+import settings
 import constants
 import functions
 import components.actionfilter
@@ -23,10 +23,12 @@ import gui.menu
 Custom standard context menu
 --------------------------------------------------------------
 """
+
+
 class ContextMenu(gui.menu.Menu):
     # Main form reference
     main_form = None
-    
+
     def __init__(self, parent=None, main_form=None, menu_type=None):
         # Initialize the superclass
         super().__init__(parent)
@@ -45,7 +47,7 @@ class ContextMenu(gui.menu.Menu):
             self.create_multiline_repl_actions()
         else:
             raise Exception("Unknown menu type: '{}'".format(menu_type))
-    
+
     def create_plain_actions(self):
         action_names = (
             "copy",
@@ -69,7 +71,7 @@ class ContextMenu(gui.menu.Menu):
             "open_in_browser",
         )
         self.__create_actions(action_names)
-    
+
     def create_special_actions(self):
         action_names = (
             "copy",
@@ -93,7 +95,7 @@ class ContextMenu(gui.menu.Menu):
             "create_node_tree",
         )
         self.__create_actions(action_names)
-    
+
     def create_multiline_repl_actions(self):
         action_names = (
             "copy",
@@ -106,10 +108,12 @@ class ContextMenu(gui.menu.Menu):
             "line_transpose",
         )
         self.__create_actions(action_names)
-    
+
     def __create_actions(self, action_names):
         for an in action_names:
-            name, function, icon, keys, status_tip = data.global_function_information[an]
+            name, function, icon, keys, status_tip = data.global_function_information[
+                an
+            ]
             action = qt.QAction(name, self)
             action.setToolTip(status_tip)
             action.setStatusTip(status_tip)
@@ -118,12 +122,12 @@ class ContextMenu(gui.menu.Menu):
                 action.triggered.connect(function)
             action.setEnabled(True)
             self.addAction(action)
-    
+
     def clear_items(self):
         for a in self.actions():
             a.triggered.disconnect()
             a.setParent(None)
-    
+
     def popup_at_cursor(self):
         click_global_position = qt.QCursor.pos()
         self.popup(click_global_position)
@@ -134,6 +138,8 @@ class ContextMenu(gui.menu.Menu):
 Custom context menu for the editors and REPL with HEX buttons
 --------------------------------------------------------------
 """
+
+
 class ContextMenuHex(qt.QGroupBox):
     # Various references
     main_form = None
@@ -150,7 +156,7 @@ class ContextMenuHex(qt.QGroupBox):
         (-27, 72, 3),
         (-68, 48, 4),
         (-68, 0, 5),
-        (-27, 24, 6)
+        (-27, 24, 6),
     ]
     outer_button_positions = [
         (-27, -72, 7),
@@ -220,7 +226,7 @@ class ContextMenuHex(qt.QGroupBox):
         "18": "create_node_tree",
     }
     # A Copy for when the functions need to be reset
-    stored_special_buttons = dict(special_buttons) # or special_buttons[:]
+    stored_special_buttons = dict(special_buttons)  # or special_buttons[:]
     horizontal_buttons = {
         "19": "copy",
         "20": "cut",
@@ -231,7 +237,7 @@ class ContextMenuHex(qt.QGroupBox):
         "25": "line_duplicate",
     }
     # A Copy for when the functions need to be reset
-    stored_horizontal_buttons = dict(horizontal_buttons) # or horizontal_buttons[:]
+    stored_horizontal_buttons = dict(horizontal_buttons)  # or horizontal_buttons[:]
     # Button scaling factor
     x_scale = 0.7
     y_scale = 0.7
@@ -248,7 +254,7 @@ class ContextMenuHex(qt.QGroupBox):
         # Store the reference to the main form
         self.main_form = main_form
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
         # Store the painting offset
         self.offset = offset
         # Set the background color
@@ -260,11 +266,11 @@ class ContextMenuHex(qt.QGroupBox):
         width, height = screen_resolution.width(), screen_resolution.height()
         self.setGeometry(functions.create_rect(0, 0, width, height))
         self.update_style()
-    
+
     def clear_items(self):
         for b in self.button_list:
             b.setParent(None)
-    
+
     @staticmethod
     def reset_functions():
         """
@@ -272,7 +278,9 @@ class ContextMenuHex(qt.QGroupBox):
         """
         ContextMenuHex.standard_buttons = dict(ContextMenuHex.stored_standard_buttons)
         ContextMenuHex.special_buttons = dict(ContextMenuHex.stored_special_buttons)
-        ContextMenuHex.horizontal_buttons = dict(ContextMenuHex.stored_horizontal_buttons)
+        ContextMenuHex.horizontal_buttons = dict(
+            ContextMenuHex.stored_horizontal_buttons
+        )
 
     @staticmethod
     def get_settings():
@@ -285,10 +293,9 @@ class ContextMenuHex(qt.QGroupBox):
             "horizontal_buttons": ContextMenuHex.horizontal_buttons,
         }
 
-    def check_position_offset(self,
-                              inner_buttons=True,
-                              outer_buttons=True,
-                              horizontal_buttons=False):
+    def check_position_offset(
+        self, inner_buttons=True, outer_buttons=True, horizontal_buttons=False
+    ):
         button_positions = []
         if inner_buttons == True:
             button_positions.extend(ContextMenuHex.inner_button_positions)
@@ -298,14 +305,16 @@ class ContextMenuHex(qt.QGroupBox):
             button_positions.extend(self.horizontal_button_positions)
         hex_x_size = ContextButton.HEX_IMAGE_SIZE[0] * self.x_scale
         hex_y_size = ContextButton.HEX_IMAGE_SIZE[1] * self.y_scale
-        window_size = self.parent().size() - functions.create_size(hex_x_size, hex_y_size)
+        window_size = self.parent().size() - functions.create_size(
+            hex_x_size, hex_y_size
+        )
         min_x = 0
         min_y = 0
         max_x = 0
         max_y = 0
         for b in button_positions:
-            x = self.offset[0]+ b[0]*self.x_scale/0.8 + self.total_offset[0]
-            y = self.offset[1]+ b[1]*self.y_scale/0.8 + self.total_offset[1]
+            x = self.offset[0] + b[0] * self.x_scale / 0.8 + self.total_offset[0]
+            y = self.offset[1] + b[1] * self.y_scale / 0.8 + self.total_offset[1]
             if x < min_x:
                 min_x = x
             if x > window_size.width():
@@ -319,13 +328,13 @@ class ContextMenuHex(qt.QGroupBox):
                 if new_max > max_y:
                     max_y = new_max
         if min_x != 0:
-            self.offset = (self.offset[0]-min_x, self.offset[1])
+            self.offset = (self.offset[0] - min_x, self.offset[1])
         if max_x != 0:
-            self.offset = (self.offset[0]-max_x, self.offset[1])
+            self.offset = (self.offset[0] - max_x, self.offset[1])
         if min_y != 0:
-            self.offset = (self.offset[0], self.offset[1]-min_y)
+            self.offset = (self.offset[0], self.offset[1] - min_y)
         if max_y != 0:
-            self.offset = (self.offset[0], self.offset[1]-max_y)
+            self.offset = (self.offset[0], self.offset[1] - max_y)
 
     def mousePressEvent(self, event):
         button = event.button()
@@ -352,10 +361,16 @@ class ContextMenuHex(qt.QGroupBox):
                 input_scale=(self.x_scale, self.y_scale),
             )
             button.number = button_number
-            #Set the button size and location
+            # Set the button size and location
             button.set_offset(
-                (self.offset[0]+ button_position[0]*self.x_scale/0.8 + total_offset[0],
-                    self.offset[1]+ button_position[1]*self.y_scale/0.8 + total_offset[1])
+                (
+                    self.offset[0]
+                    + button_position[0] * self.x_scale / 0.8
+                    + total_offset[0],
+                    self.offset[1]
+                    + button_position[1] * self.y_scale / 0.8
+                    + total_offset[1],
+                )
             )
             button.dim()
             self.button_list.append(button)
@@ -363,9 +378,7 @@ class ContextMenuHex(qt.QGroupBox):
     def create_horizontal_multiline_repl_buttons(self):
         # Check if any of the buttons are out of the window and adjust the offset
         self.check_position_offset(
-            inner_buttons=False,
-            outer_buttons=False,
-            horizontal_buttons=True
+            inner_buttons=False, outer_buttons=False, horizontal_buttons=True
         )
         buttons = [ContextMenuHex.horizontal_buttons[str(x)] for x in range(19, 26)]
         # Add the buttons
@@ -374,7 +387,9 @@ class ContextMenuHex(qt.QGroupBox):
         self.functions_type = "horizontal"
 
     def create_multiline_repl_buttons(self):
-        inner_buttons = [ContextMenuHex.horizontal_buttons[str(x)] for x in range(19, 26)]
+        inner_buttons = [
+            ContextMenuHex.horizontal_buttons[str(x)] for x in range(19, 26)
+        ]
         self.create_buttons(inner_buttons)
         self.functions_type = "horizontal"
 
@@ -385,25 +400,27 @@ class ContextMenuHex(qt.QGroupBox):
 
     def create_standard_buttons(self):
         inner_buttons = [ContextMenuHex.standard_buttons[str(x)] for x in range(7)]
-        outer_buttons = [ContextMenuHex.standard_buttons[str(x)] for x in range(7, len(ContextMenuHex.standard_buttons))]
+        outer_buttons = [
+            ContextMenuHex.standard_buttons[str(x)]
+            for x in range(7, len(ContextMenuHex.standard_buttons))
+        ]
         self.create_buttons(inner_buttons, outer_buttons)
         self.functions_type = "standard"
 
     def create_special_buttons(self):
         inner_buttons = [ContextMenuHex.special_buttons[str(x)] for x in range(7)]
-        outer_buttons = [ContextMenuHex.special_buttons[str(x)] for x in range(7, len(ContextMenuHex.standard_buttons))]
+        outer_buttons = [
+            ContextMenuHex.special_buttons[str(x)]
+            for x in range(7, len(ContextMenuHex.standard_buttons))
+        ]
         self.create_buttons(inner_buttons, outer_buttons)
         self.functions_type = "special"
 
-    def create_buttons(self,
-                       inner_buttons=[],
-                       outer_buttons=[]):
+    def create_buttons(self, inner_buttons=[], outer_buttons=[]):
         # Check if any of the buttons are out of the window and adjust the offset
         if outer_buttons == []:
             self.check_position_offset(
-                inner_buttons=True,
-                outer_buttons=False,
-                horizontal_buttons=False
+                inner_buttons=True, outer_buttons=False, horizontal_buttons=False
             )
         else:
             self.check_position_offset()
@@ -429,36 +446,36 @@ class ContextMenuHex(qt.QGroupBox):
         if len(in_buttons) > max_count:
             raise Exception("Too many inner buttons in context menu!")
         buttons = []
-        for i,button in enumerate(in_buttons):
+        for i, button in enumerate(in_buttons):
             if (button in function_list) == False:
                 self.main_form.display.repl_display_message(
                     "'{}' context menu function does not exist!".format(button),
-                    message_type=constants.MessageType.ERROR
+                    message_type=constants.MessageType.ERROR,
                 )
             else:
-                buttons.append(
-                    (function_list[button], positions[i])
-                )
+                buttons.append((function_list[button], positions[i]))
         self.add_buttons(buttons)
 
     def update_style(self):
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             QGroupBox {{
                 /*
-                background-color: {data.theme["fonts"]["default"]["background"]};
+                background-color: {settings.get_theme()["fonts"]["default"]["background"]};
                 */
                 background-color: transparent;
-                color: {data.theme["fonts"]["default"]["color"]};
-                border: 1px solid {data.theme["indication"]["passiveborder"]};
+                color: {settings.get_theme()["fonts"]["default"]["color"]};
+                border: 1px solid {settings.get_theme()["indication"]["passiveborder"]};
                 margin: 0px;
                 padding: 0px;
                 spacing: 0px;
             }}
             QLabel {{
-                background-color: {data.theme["fonts"]["default"]["background"]};
-                color: {data.theme["fonts"]["default"]["color"]};
+                background-color: {settings.get_theme()["fonts"]["default"]["background"]};
+                color: {settings.get_theme()["fonts"]["default"]["color"]};
             }}
-        """)
+        """
+        )
 
     def popup_at_cursor(self):
         super().show()
@@ -473,6 +490,7 @@ class ContextButton(gui.custombuttons.CustomButton):
     """
     Subclassed custom button
     """
+
     # The button's number in the context menu
     number = None
 
@@ -480,8 +498,7 @@ class ContextButton(gui.custombuttons.CustomButton):
         self.setAutoFillBackground(True)
         p = self.palette()
         p.setColor(
-            self.backgroundRole(),
-            qt.QColor(data.theme["context-menu-background"])
+            self.backgroundRole(), qt.QColor(settings.get_theme()["context-menu-background"])
         )
         self.setPalette(p)
 
@@ -502,23 +519,30 @@ class ContextButton(gui.custombuttons.CustomButton):
             # Execute the function if it was initialized
             if self.function is not None:
                 if components.actionfilter.ActionFilter.click_drag_action is not None:
-                    function_name = components.actionfilter.ActionFilter.click_drag_action.function.__name__
+                    function_name = (
+                        components.actionfilter.ActionFilter.click_drag_action.function.__name__
+                    )
                     if self._parent.functions_type == "standard":
-                        ContextMenuHex.standard_buttons[str(self.number)] = function_name
+                        ContextMenuHex.standard_buttons[str(self.number)] = (
+                            function_name
+                        )
                     elif self._parent.functions_type == "plain":
-                        ContextMenuHex.standard_buttons[str(self.number)] = function_name
+                        ContextMenuHex.standard_buttons[str(self.number)] = (
+                            function_name
+                        )
                     elif self._parent.functions_type == "horizontal":
-                        ContextMenuHex.horizontal_buttons[str(self.number)] = function_name
+                        ContextMenuHex.horizontal_buttons[str(self.number)] = (
+                            function_name
+                        )
                     elif self._parent.functions_type == "special":
                         ContextMenuHex.special_buttons[str(self.number)] = function_name
                     # Show the newly added function
                     message = "Added function '{}' at button number {}".format(
                         components.actionfilter.ActionFilter.click_drag_action.text(),
-                        self.number
+                        self.number,
                     )
                     self.main_form.display.repl_display_message(
-                        message,
-                        message_type=constants.MessageType.SUCCESS
+                        message, message_type=constants.MessageType.SUCCESS
                     )
                     # Reset cursor and stored action
                     data.application.restoreOverrideCursor()
@@ -531,8 +555,7 @@ class ContextButton(gui.custombuttons.CustomButton):
                         traceback.print_exc()
                         message = "You need to focus one of the editor windows first!"
                         self.main_form.display.repl_display_message(
-                            message,
-                            message_type=constants.MessageType.ERROR
+                            message, message_type=constants.MessageType.ERROR
                         )
                 # Close the function wheel
                 self._parent.hide()
@@ -568,6 +591,7 @@ Context menu helper functions
 HEX_STYLE = False
 function_list = {}
 
+
 def create(parent=None, main_form=None, offset=(0, 0), _type=None):
     if HEX_STYLE:
         context_menu = ContextMenuHex(parent, main_form, offset=offset)
@@ -584,6 +608,7 @@ def create(parent=None, main_form=None, offset=(0, 0), _type=None):
     else:
         context_menu = ContextMenu(parent, main_form, menu_type=_type)
     return context_menu
+
 
 def add_function(name, pixmap, function, function_name):
     function_list[name] = (pixmap, function, function_name)

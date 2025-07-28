@@ -29,23 +29,26 @@ STATUS_MODE = False
 """
 IPC-based communicator
 """
-ADDRESS = 'localhost'
+ADDRESS = "localhost"
 PORT = 19991
 PASSWORD = "ExCo"
+
 
 def debug_echo(obj, *messages):
     if DEBUG_MODE:
         print(
             "[{}-{}]".format(obj.__class__.__name__, obj.name),
-            " ".join([str(x) for x in messages])
+            " ".join([str(x) for x in messages]),
         )
+
 
 def status_echo(obj, *messages):
     if STATUS_MODE:
         print(
             "[{}-{}]".format(obj.__class__.__name__, obj.name),
-            " ".join([str(x) for x in messages])
+            " ".join([str(x) for x in messages]),
         )
+
 
 class CommClient:
     connection = None
@@ -68,8 +71,7 @@ class CommClient:
         while initialized == False:
             try:
                 self.connection = multiprocessing.connection.Client(
-                    (ADDRESS, PORT),
-                    authkey=PASSWORD.encode('utf-8')
+                    (ADDRESS, PORT), authkey=PASSWORD.encode("utf-8")
                 )
                 functions.create_thread(self.recv_loop)
                 initialized = True
@@ -124,21 +126,19 @@ class CommListener:
     def connecting_loop(self):
         try:
             with multiprocessing.connection.Listener(
-                (ADDRESS, PORT),
-                authkey=PASSWORD.encode('utf-8')) as listener:
-                    debug_echo(self, "Listening ...")
-                    self.running = True
-#                    listener._listener._socket.settimeout(1.0)
-                    while self.running == True:
-                        try:
-                            conn = listener.accept()
-                            self._create_listening_thread(
-                                conn, listener.last_accepted
-                            )
-                        except socket.timeout:
-                            pass
+                (ADDRESS, PORT), authkey=PASSWORD.encode("utf-8")
+            ) as listener:
+                debug_echo(self, "Listening ...")
+                self.running = True
+                #                    listener._listener._socket.settimeout(1.0)
+                while self.running == True:
+                    try:
+                        conn = listener.accept()
+                        self._create_listening_thread(conn, listener.last_accepted)
+                    except socket.timeout:
+                        pass
         except Exception as ex:
-#            debug_echo(self, ex)
+            #            debug_echo(self, ex)
             self.running = False
             time.sleep(0.1)
             self.stopped_callback()
@@ -156,15 +156,13 @@ class CommListener:
                 _data = conn.recv()
                 self.connection = None
                 status_echo(self, "listen success")
-#                debug_echo(self, "received data:", _data)
+                #                debug_echo(self, "received data:", _data)
                 # Resend to all connections
                 self.send(_data)
         except:
             self.connection = None
             status_echo(self, "listen error")
-            debug_echo(
-                self, f"Connection '{last_accepted[1]}' broken!"
-            )
+            debug_echo(self, f"Connection '{last_accepted[1]}' broken!")
             self.stored_connections.remove((conn, last_accepted))
         status_echo(self, "END")
 
@@ -181,9 +179,10 @@ class IpcCommunicator(qt.QObject):
     """
     Object for passing messages between processes/applications
     """
+
     # Signals
     received: qt.pyqtSignal = qt.pyqtSignal(object)
-    
+
     # Attributes
     name = None
     client = None
@@ -196,9 +195,7 @@ class IpcCommunicator(qt.QObject):
         self.comm_thread = qt.QThread()
         self.moveToThread(self.comm_thread)
         # Connect the startup function of communicator
-        self.comm_thread.started.connect(
-            functools.partial(self.initialize, name)
-        )
+        self.comm_thread.started.connect(functools.partial(self.initialize, name))
         # Start the process
         self.comm_thread.start()
 
@@ -235,53 +232,53 @@ class IpcCommunicator(qt.QObject):
 """
 File-based communicator
 """
+
+
 class FileCommunicator(qt.QObject):
     """
     Object for communicating between processes using files
     """
+
     # Constants
     COMM_FILE = "exco_comm.json"
-    
+
     # Signals
     received: qt.pyqtSignal = qt.pyqtSignal(object)
     __process_directory_queue: qt.pyqtSignal = qt.pyqtSignal()
-    
+
     # Attributes
     __name = ""
     __comm_file_path = None
     __file_watcher = None
     __processing_lock = multiprocessing.Lock()
     __processing_queue = multiprocessing.Queue()
-    
+
     def __init__(self, name):
         super().__init__()
-        
+
         self.__name = name
-        self.__comm_file_path = os.path.join(
-            data.settings_directory,
-            self.COMM_FILE
-        )
-        
+        self.__comm_file_path = os.path.join(data.settings_directory, self.COMM_FILE)
+
         self.__file_watcher = qt.QFileSystemWatcher(self)
         self.__file_watcher.directoryChanged.connect(self.__directory_changed)
         self.__file_watcher.fileChanged.connect(self.__file_changed)
         self.__file_watcher.addPath(data.settings_directory)
-        
+
         self.__process_directory_queue.connect(self.__process_change)
-    
+
     def __directory_changed(self, path):
         self.__processing_queue.put(path)
         self.__process_directory_queue.emit()
-    
+
     def __file_changed(self, path):
         self.__processing_queue.put(path)
         self.__process_directory_queue.emit()
-    
+
     def __process_change(self):
         acquired = self.__processing_lock.acquire(block=False)
         if not acquired:
             return
-        
+
         try:
             while True:
                 path = self.__processing_queue.get_nowait()
@@ -297,7 +294,7 @@ class FileCommunicator(qt.QObject):
             traceback.print_exc()
         finally:
             self.__processing_lock.release()
-    
+
     def send_data(self, _data):
         with open(self.__comm_file_path, "w+", encoding="utf-8") as f:
             f.write(json.dumps(_data, indent=4, ensure_ascii=False))

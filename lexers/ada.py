@@ -115,13 +115,13 @@ class Ada(qt.QsciLexerCustom):
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
-        self.setDefaultFont(data.get_editor_font())
+        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
-        self.set_theme(data.theme)
+        self.set_theme(settings.get_theme())
 
     def language(self):
         return "Ada"
@@ -137,7 +137,7 @@ class Ada(qt.QsciLexerCustom):
         for style in self.styles:
             # Papers
             self.setPaper(
-                qt.QColor(data.theme["fonts"][style.lower()]["background"]),
+                qt.QColor(settings.get_theme()["fonts"][style.lower()]["background"]),
                 self.styles[style],
             )
             # Fonts

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -10,6 +10,7 @@ import re
 
 import qt
 import data
+import settings
 import functions
 import lexers
 
@@ -20,9 +21,10 @@ class CustomSpice(qt.QsciLexerCustom):
     !! This lexer is not needed as there is a built-in !!
     !! one for the Spice programming language          !!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+
     Custom lexer for the Spice programming languages
     """
+
     styles = {
         "Default": 0,
         "Comment": 1,
@@ -35,19 +37,232 @@ class CustomSpice(qt.QsciLexerCustom):
     }
     # Class variables
     keyword_dictionary = {
-        "Instruction0": ("ac", "alias", "alter", "alterparam", "append", "askvalues", "assertvalid", "autoscale", "break", "compose", "copy", "copytodoc", "dc", "delete", "destroy", "destroyvec", "diff", "display", "disto", "dowhile", "echo", "else", "end", "errorstop", "fftinit", "filter", "foreach", "fourier", "freqtotime", "function", "functionundef", "goto", "homecursors", "if", "isdisplayed", "label", "let", "linearize", "listing", "load", "loadaccumulator", "makelabel", "movelabel", "makesmithplot", "movecursorleft", "movecursorright", "msgbox", "nameplot", "newplot", "nextparam", "noise", "nopoints", "op", "plot", "plotf", "plotref", "poly", "print", "printcursors", "printevent", "printname", "printplot", "printstatus", "printtext", "printtol", "printunits", "printval", "printvector", "pwl", "pz", "quit", "removesmithplot", "rename", "repeat", "resume", "rotate", "runs", "rusage", "save", "sendplot", "sendscript", "sens", "set", "setcursor", "setdoc", "setlabel", "setlabeltype", "setmargins", "setnthtrigger", "setunits", "setvec", "setparam", "setplot", "setquery", "setscaletype", "settracecolor", "settracestyle", "setsource", "settrigger", "setvec", "setxlimits", "setylimits", "show", "showmod", "sort", "status", "step", "stop", "switch", "tf", "timetofreq", "timetowave", "tran", "unalias", "unlet", "unset", "unalterparam", "update", "version", "view", "wavefilter", "wavetotime", "where", "while", "write"),
-        "Instruction1": ("abs", "askvalue", "atan", "average", "ceil", "cos", "db", "differentiate", "differentiatex", "exp", "finalvalue", "floor", "getcursorx", "getcursory", "getcursory0", "getcursory1", "getparam", "im", "ln", "initialvalue", "integrate", "integratex", "interpolate", "isdef", "isdisplayed", "j", "log", "length", "mag,", "max", "maxscale", "mean", "meanpts", "min", "minscale", "nextplot", "nextvector", "norm", "operatingpoint", "ph", "phase", "phaseextend", "pk_pk", "pos", "pulse", "re", "rms", "rmspts", "rnd", "sameplot", "sin", "sqrt", "stddev", "stddevpts", "tan", "tfall", "tolerance", "trise", "unitvec", "vector"),
-        "Type": ("param", "nodeset", "include", "options", "dcconv", "subckt", "ends", "model"),
+        "Instruction0": (
+            "ac",
+            "alias",
+            "alter",
+            "alterparam",
+            "append",
+            "askvalues",
+            "assertvalid",
+            "autoscale",
+            "break",
+            "compose",
+            "copy",
+            "copytodoc",
+            "dc",
+            "delete",
+            "destroy",
+            "destroyvec",
+            "diff",
+            "display",
+            "disto",
+            "dowhile",
+            "echo",
+            "else",
+            "end",
+            "errorstop",
+            "fftinit",
+            "filter",
+            "foreach",
+            "fourier",
+            "freqtotime",
+            "function",
+            "functionundef",
+            "goto",
+            "homecursors",
+            "if",
+            "isdisplayed",
+            "label",
+            "let",
+            "linearize",
+            "listing",
+            "load",
+            "loadaccumulator",
+            "makelabel",
+            "movelabel",
+            "makesmithplot",
+            "movecursorleft",
+            "movecursorright",
+            "msgbox",
+            "nameplot",
+            "newplot",
+            "nextparam",
+            "noise",
+            "nopoints",
+            "op",
+            "plot",
+            "plotf",
+            "plotref",
+            "poly",
+            "print",
+            "printcursors",
+            "printevent",
+            "printname",
+            "printplot",
+            "printstatus",
+            "printtext",
+            "printtol",
+            "printunits",
+            "printval",
+            "printvector",
+            "pwl",
+            "pz",
+            "quit",
+            "removesmithplot",
+            "rename",
+            "repeat",
+            "resume",
+            "rotate",
+            "runs",
+            "rusage",
+            "save",
+            "sendplot",
+            "sendscript",
+            "sens",
+            "set",
+            "setcursor",
+            "setdoc",
+            "setlabel",
+            "setlabeltype",
+            "setmargins",
+            "setnthtrigger",
+            "setunits",
+            "setvec",
+            "setparam",
+            "setplot",
+            "setquery",
+            "setscaletype",
+            "settracecolor",
+            "settracestyle",
+            "setsource",
+            "settrigger",
+            "setvec",
+            "setxlimits",
+            "setylimits",
+            "show",
+            "showmod",
+            "sort",
+            "status",
+            "step",
+            "stop",
+            "switch",
+            "tf",
+            "timetofreq",
+            "timetowave",
+            "tran",
+            "unalias",
+            "unlet",
+            "unset",
+            "unalterparam",
+            "update",
+            "version",
+            "view",
+            "wavefilter",
+            "wavetotime",
+            "where",
+            "while",
+            "write",
+        ),
+        "Instruction1": (
+            "abs",
+            "askvalue",
+            "atan",
+            "average",
+            "ceil",
+            "cos",
+            "db",
+            "differentiate",
+            "differentiatex",
+            "exp",
+            "finalvalue",
+            "floor",
+            "getcursorx",
+            "getcursory",
+            "getcursory0",
+            "getcursory1",
+            "getparam",
+            "im",
+            "ln",
+            "initialvalue",
+            "integrate",
+            "integratex",
+            "interpolate",
+            "isdef",
+            "isdisplayed",
+            "j",
+            "log",
+            "length",
+            "mag,",
+            "max",
+            "maxscale",
+            "mean",
+            "meanpts",
+            "min",
+            "minscale",
+            "nextplot",
+            "nextvector",
+            "norm",
+            "operatingpoint",
+            "ph",
+            "phase",
+            "phaseextend",
+            "pk_pk",
+            "pos",
+            "pulse",
+            "re",
+            "rms",
+            "rmspts",
+            "rnd",
+            "sameplot",
+            "sin",
+            "sqrt",
+            "stddev",
+            "stddevpts",
+            "tan",
+            "tfall",
+            "tolerance",
+            "trise",
+            "unitvec",
+            "vector",
+        ),
+        "Type": (
+            "param",
+            "nodeset",
+            "include",
+            "options",
+            "dcconv",
+            "subckt",
+            "ends",
+            "model",
+        ),
     }
     operator_list = [
-        "=", "+", "-", "/", "<", ">", "@", "$", ".",
-        "~", "&", "%", "|", "!", "?", "^", ".", ":", "\"",
+        "=",
+        "+",
+        "-",
+        "/",
+        "<",
+        ">",
+        "@",
+        "$",
+        ".",
+        "~",
+        "&",
+        "%",
+        "|",
+        "!",
+        "?",
+        "^",
+        ".",
+        ":",
+        '"',
     ]
     splitter = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
     # Characters that autoindent one level on pressing Return/Enter
     autoindent_characters = []
     # String start/end tokens
-    tokens_string = ("\"", )
+    tokens_string = ('"',)
     # Comment tokens
     tokens_comment = []
 
@@ -59,43 +274,43 @@ class CustomSpice(qt.QsciLexerCustom):
         super().__init__()
         print("INIT")
         # Set the default style values
-        self.setDefaultColor(qt.QColor(data.theme["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(data.theme["fonts"]["default"]["background"]))
-        self.setDefaultFont(data.get_editor_font())
+        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
+        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
-        self.set_theme(data.theme)
-    
+        self.set_theme(settings.get_theme())
+
     def language(self):
         return "Spice"
-    
+
     def description(self, style):
         if style < len(self.styles):
             description = "Custom lexer for the Spice circuit languages"
         else:
             description = ""
         return description
-    
+
     def defaultStyle(self):
         return self.styles["Default"]
-    
+
     def braceStyle(self):
         return self.styles["Default"]
-    
+
     def defaultFont(self, style):
-        return qt.QFont(data.current_font_name, data.current_font_size)
-    
+        return qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
+
     def set_theme(self, theme):
         for style in self.styles:
             # Papers
             self.setPaper(
-                qt.QColor(data.theme["fonts"][style.lower()]["background"]), 
-                self.styles[style]
+                qt.QColor(settings.get_theme()["fonts"][style.lower()]["background"]),
+                self.styles[style],
             )
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
-    
+
     def styleText(self, start, end):
         """
         Overloaded method for styling text.
@@ -110,23 +325,23 @@ class CustomSpice(qt.QsciLexerCustom):
         # the start and end boundaries
         text = bytearray(editor.text(), "utf-8")[start:end].decode("utf-8")
         # Loop optimizations
-        setStyling         = self.setStyling
-        operator_list      = self.operator_list
+        setStyling = self.setStyling
+        operator_list = self.operator_list
         keyword_dictionary = self.keyword_dictionary
-        DEFAULT            = self.styles["Default"]
-        COMMENT            = self.styles["Comment"]
-        INSTRUCTION0       = self.styles["Instruction0"]
-        INSTRUCTION1       = self.styles["Instruction1"]
-        TYPE               = self.styles["Type"]
-        STRING             = self.styles["String"]
-        NUMBER             = self.styles["Number"]
-        OPERATOR           = self.styles["Operator"]
+        DEFAULT = self.styles["Default"]
+        COMMENT = self.styles["Comment"]
+        INSTRUCTION0 = self.styles["Instruction0"]
+        INSTRUCTION1 = self.styles["Instruction1"]
+        TYPE = self.styles["Type"]
+        STRING = self.styles["String"]
+        NUMBER = self.styles["Number"]
+        OPERATOR = self.styles["Operator"]
         # Initialize various states and split the text into tokens
         stringing = False
         commenting = False
         tokens = [
-            (token, len(bytearray(token, "utf-8"))) 
-                for token in self.splitter.findall(text)
+            (token, len(bytearray(token, "utf-8")))
+            for token in self.splitter.findall(text)
         ]
         # Style the tokens accordingly
         for i, token in enumerate(tokens):
@@ -140,7 +355,7 @@ class CustomSpice(qt.QsciLexerCustom):
                 # Continuation of a string
                 setStyling(token[1], STRING)
                 # Check if string ends
-                if (token[0] == "\"" and (tokens[i-1][0] != "\\") or "\n" in token[0]):
+                if token[0] == '"' and (tokens[i - 1][0] != "\\") or "\n" in token[0]:
                     stringing = False
             elif token[0] in self.tokens_comment:
                 setStyling(token[1], COMMENT)

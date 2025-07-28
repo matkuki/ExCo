@@ -18,6 +18,7 @@ import threading
 import traceback
 
 import data
+import settings
 import hy
 
 import constants
@@ -428,7 +429,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
         else:
             # GNU/Linux (Lubuntu tested)
             if show_console == True:
-                if data.terminal == "x-terminal-emulator":
+                if settings.get("terminal") == "x-terminal-emulator":
                     # LXTerminal
                     end_delimiter_string = "-------------------------"
                     end_message_string = "Press ENTER to continue ..."
@@ -436,7 +437,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
                         """subprocess.Popen(
                                 ["{:s}","-l","-e","{:s};echo {:s};python3 -c 'input(\\"{:s}\\")'"]
                         )""".format(
-                            data.terminal,
+                            settings.get("terminal"),
                             command,
                             end_delimiter_string,
                             end_message_string,
@@ -450,7 +451,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
                         """subprocess.Popen(
                                 ["{:s}","-e","{:s};echo {:s};python3 -c 'input(\\"{:s}\\")'"]
                         )""".format(
-                            data.terminal,
+                            settings.get("terminal"),
                             command,
                             end_delimiter_string,
                             end_message_string,
@@ -502,10 +503,10 @@ class CustomInterpreter(code.InteractiveInterpreter):
         else:
             # GNU/Linux (Lubuntu tested)
             try:
-                subprocess.Popen([data.terminal])
+                subprocess.Popen([settings.get("terminal")])
             except Exception as ex:
                 self.repl_print(
-                    "Error creating a '{}' terminal!".format(data.terminal)
+                    "Error creating a '{}' terminal!".format(settings.get("terminal"))
                     + "To change the terminal application, edit the user settings.",
                     constants.MessageType.ERROR,
                 )

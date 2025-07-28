@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -14,17 +14,19 @@ import qt
 import data
 import functions
 
+
 class Hotspots:
     """
     Functions for styling text with hotspots (used by CustomEditor and PlainEditor)
-    """    
-    def style(self, editor, index_from, length, color=0xff0000):
+    """
+
+    def style(self, editor, index_from, length, color=0xFF0000):
         """
         Style the text from/to with a hotspot
         """
         send_scintilla = editor.SendScintilla
         qscintilla_base = qt.QsciScintillaBase
-        #Use the scintilla low level messaging system to set the hotspot
+        # Use the scintilla low level messaging system to set the hotspot
         send_scintilla(qscintilla_base.SCI_STYLESETHOTSPOT, 2, True)
         send_scintilla(qscintilla_base.SCI_SETHOTSPOTACTIVEFORE, True, color)
         send_scintilla(qscintilla_base.SCI_SETHOTSPOTACTIVEUNDERLINE, True)

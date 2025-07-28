@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -18,6 +18,7 @@ import themes
 
 from .menu import *
 
+
 class ReplIndicator(qt.QLabel):
     ICONS = {
         constants.ReplLanguage.Python: "language_icons/logo_python.png",
@@ -27,9 +28,9 @@ class ReplIndicator(qt.QLabel):
         constants.ReplLanguage.Python: "Python programming language",
         constants.ReplLanguage.Hy: "Hy programming language, a LISP dialect",
     }
-    
+
     selection_menu = None
-    
+
     def __init__(self, parent, main_form, repl_box):
         # Initialize superclass
         super().__init__(parent)
@@ -40,19 +41,19 @@ class ReplIndicator(qt.QLabel):
         # Initialize the menu
         self.init_selection_menu()
         # Set default font
-        self.setFont(data.get_current_font())
-    
+        self.setFont(settings.get_current_font())
+
     def mouseReleaseEvent(self, event):
         # Execute the superclass event method
         super().mouseReleaseEvent(event)
         cursor = qt.QCursor.pos()
         self.selection_menu.popup(cursor)
-    
+
     def init_selection_menu(self):
         """
         Initialization of the REPL type menu used by the REPL indicator
         """
-        
+
         if self.selection_menu is not None:
             # Clear the menu actions from memory
             self.selection_menu.clear()
@@ -76,22 +77,23 @@ class ReplIndicator(qt.QLabel):
             action_theme.setIcon(icon)
             action_theme.setToolTip(self.TOOLTIPS[lang])
             self.selection_menu.addAction(action_theme)
-    
+
     def set_image(self, image):
         raw_picture = qt.QPixmap(os.path.join(data.resources_directory, image))
         picture = raw_picture.scaled(16, 16, qt.Qt.AspectRatioMode.KeepAspectRatio)
         self.setPixmap(picture)
-    
+
     def set_language(self, lang):
         self.set_image(self.ICONS[lang])
         self.setToolTip(lang.name)
-    
+
     def choose_repl_type(self, lang):
         self.repl_box.set_repl(self.repl_box.repl_state, lang)
         self.set_language(lang)
-    
+
     def restyle(self):
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
 QLabel { 
     background-color: transparent;
     border: none;
@@ -100,4 +102,5 @@ QLabel {
     padding-left: 0px;
     padding-right: 4px;
 }
-        """)
+        """
+        )

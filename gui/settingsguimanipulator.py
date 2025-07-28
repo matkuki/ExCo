@@ -20,6 +20,8 @@ from .custombuttons import *
 Overlay helper widget for visually selecting an Ex.Co. function
 ----------------------------------------------------------------
 """
+
+
 class SettingsGuiManipulator(qt.QFrame):
     DEFAULT_SIZE = (640, 560)
     # Class variables
@@ -50,19 +52,19 @@ class SettingsGuiManipulator(qt.QFrame):
         # Store the reference to the main form
         self.main_form = main_form
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
         # Set the layout
-#        self.__layout = qt.QGridLayout()
-#        self.__layout.setSpacing(10)
-#        self.__layout.setContentsMargins(
-#            qt.QMargins(0,0,0,0)
-#        )
-#        self.setLayout(self.__layout)
+        #        self.__layout = qt.QGridLayout()
+        #        self.__layout.setSpacing(10)
+        #        self.__layout.setContentsMargins(
+        #            qt.QMargins(0,0,0,0)
+        #        )
+        #        self.setLayout(self.__layout)
         # Initialize the display label that will display the function names
         # when the mouse cursor is over a function button
         self.display_label = qt.QLabel(self)
         self.display_label.setGeometry(8, 450, 200, 100)
-        font = qt.QFont(data.current_font_name, 14)
+        font = qt.QFont(settings.get("current_font_name"), 14)
         font.setBold(True)
         self.display_label.setFont(font)
         self.display_label.setAlignment(
@@ -75,7 +77,7 @@ class SettingsGuiManipulator(qt.QFrame):
         # Scale the function wheel size if needed
         self.scale(1, 1)
         self.update_style()
-    
+
     def __init_options(self):
         pass
 
@@ -129,8 +131,7 @@ class SettingsGuiManipulator(qt.QFrame):
         new_width = int(geo.width() * width_scale_factor)
         new_height = int(geo.height() * height_scale_factor)
         rectangle = functions.create_rect(
-            geo.topLeft(),
-            functions.create_size(new_width, new_height)
+            geo.topLeft(), functions.create_size(new_width, new_height)
         )
         self.setGeometry(rectangle)
         # Center to main form
@@ -142,28 +143,32 @@ class SettingsGuiManipulator(qt.QFrame):
         according to the size parameter
         """
         x_offset = int((self.main_form.size().width() - size.width()) / 2)
-        y_offset = int((self.main_form.size().height()*93/100 - size.height()) / 2)
+        y_offset = int((self.main_form.size().height() * 93 / 100 - size.height()) / 2)
         rectangle_top_left = functions.create_point(x_offset, y_offset)
         rectangle_size = size
         rectangle = functions.create_rect(rectangle_top_left, rectangle_size)
         self.setGeometry(rectangle)
 
     def update_style(self):
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
 QFrame {{
-    background-color: {data.theme["fonts"]["default"]["background"]};
-    color: {data.theme["fonts"]["default"]["color"]};
-    border: 1px solid {data.theme["indication"]["passiveborder"]};
+    background-color: {settings.get_theme()["fonts"]["default"]["background"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    border: 1px solid {settings.get_theme()["indication"]["passiveborder"]};
     margin: 0px;
     padding: 0px;
     spacing: 0px;
 }}
-        """)
-        self.display_label.setStyleSheet(f"""
+        """
+        )
+        self.display_label.setStyleSheet(
+            f"""
 QLabel {{
-    background-color: {data.theme["fonts"]["default"]["background"]};
-    color: {data.theme["fonts"]["default"]["color"]};
-    border: 1px solid {data.theme["indication"]["activeborder"]};
+    background-color: {settings.get_theme()["fonts"]["default"]["background"]};
+    color: {settings.get_theme()["fonts"]["default"]["color"]};
+    border: 1px solid {settings.get_theme()["indication"]["activeborder"]};
     border-radius: 4px;
 }}
-        """)
+        """
+        )

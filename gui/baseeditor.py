@@ -6,17 +6,18 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-
 import qt
 import data
 
-from .stylesheets import *
+from .stylesheets import StyleSheetScrollbar
 
 """
 -----------------------------
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
 -----------------------------
 """
+
+
 class BaseEditor(qt.QsciScintilla):
 
     def set_theme(self, theme):
@@ -25,35 +26,35 @@ class BaseEditor(qt.QsciScintilla):
         else:
             self.setFoldMarginColors(
                 qt.QColor(theme["foldmargin"]["foreground"]),
-                qt.QColor(theme["foldmargin"]["background"])
+                qt.QColor(theme["foldmargin"]["background"]),
             )
         self.setMarginsForegroundColor(qt.QColor(theme["linemargin"]["foreground"]))
         self.setMarginsBackgroundColor(qt.QColor(theme["linemargin"]["background"]))
-        if self.lexer() is not None and hasattr(self.lexer(), "get_default_background_color"):
+        if self.lexer() is not None and hasattr(
+            self.lexer(), "get_default_background_color"
+        ):
             self.SendScintilla(
                 qt.QsciScintillaBase.SCI_STYLESETBACK,
                 qt.QsciScintillaBase.STYLE_DEFAULT,
-                self.lexer().get_default_background_color()
+                self.lexer().get_default_background_color(),
             )
         else:
             self.SendScintilla(
                 qt.QsciScintillaBase.SCI_STYLESETBACK,
                 qt.QsciScintillaBase.STYLE_DEFAULT,
-                qt.QColor(theme["fonts"]["default"]["background"])
+                qt.QColor(theme["fonts"]["default"]["background"]),
             )
         self.SendScintilla(
             qt.QsciScintillaBase.SCI_STYLESETBACK,
             qt.QsciScintillaBase.STYLE_LINENUMBER,
-            qt.QColor(theme["linemargin"]["background"])
+            qt.QColor(theme["linemargin"]["background"]),
         )
         self.SendScintilla(
-            qt.QsciScintillaBase.SCI_SETCARETFORE,
-            qt.QColor(theme["cursor"])
+            qt.QsciScintillaBase.SCI_SETCARETFORE, qt.QColor(theme["cursor"])
         )
-        self.setCaretLineBackgroundColor(
-            qt.QColor(theme["cursor-line-background"])
-        )
-        self.setStyleSheet("""
+        self.setCaretLineBackgroundColor(qt.QColor(theme["cursor-line-background"]))
+        self.setStyleSheet(
+            """
 BaseEditor {{
     border: 0px;
     background-color: {};
@@ -75,15 +76,16 @@ QListView::item:selected {{
 }}
 {}
         """.format(
-            theme["indication"]["passivebackground"],
-            theme["indication"]["passivebackground"],
-            theme["fonts"]["default"]["color"],
-            theme["indication"]["passivebackground"],
-            theme["fonts"]["default"]["color"],
-            theme["indication"]["activebackground"],
-            theme["fonts"]["default"]["color"],
-            StyleSheetScrollbar.full(),
-        ))
+                theme["indication"]["passivebackground"],
+                theme["indication"]["passivebackground"],
+                theme["fonts"]["default"]["color"],
+                theme["indication"]["passivebackground"],
+                theme["fonts"]["default"]["color"],
+                theme["indication"]["activebackground"],
+                theme["fonts"]["default"]["color"],
+                StyleSheetScrollbar.full(),
+            )
+        )
 
     def delete_context_menu(self):
         # Clean up the context menu

@@ -6,7 +6,6 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-
 import uuid
 import qt
 import data
@@ -20,7 +19,7 @@ class Menu(qt.QMenu):
     @staticmethod
     def update_styles():
         delete_list = []
-        for k,v in Menu.menu_cache.items():
+        for k, v in Menu.menu_cache.items():
             try:
                 v.update_style()
             except:
@@ -38,7 +37,7 @@ class Menu(qt.QMenu):
         # Set options
         self.setToolTipsVisible(True)
         # Set default font
-        self.setFont(data.get_current_font())
+        self.setFont(settings.get_current_font())
         # Update style
         self.update_style()
 
@@ -58,12 +57,4 @@ class MenuBar(qt.QMenuBar):
 
     def update_style(self):
         # Set the default font
-        self.setFont(data.get_current_font())
-
-
-
-
-
-
-
-
+        self.setFont(settings.get_current_font())

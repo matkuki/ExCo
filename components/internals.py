@@ -1,5 +1,5 @@
 """
-Copyright (c) 2013-present Matic Kukovec. 
+Copyright (c) 2013-present Matic Kukovec.
 Released under the GNU GPL3 license.
 
 For more information check the 'LICENSE.txt' file.
@@ -14,6 +14,7 @@ import traceback
 
 import qt
 import data
+import settings
 import functions
 
 
@@ -21,12 +22,13 @@ class Internals:
     """
     Icon manipulator for a widget inside a basic widget
     """
+
     _parent = None
     __tab_widget = None
     corner_groupbox = None
     __id_counter = 0
     __id = None
-    
+
     def __init__(self, parent=None, tab_widget=None, forced_id=None):
         self._parent = parent
         self.__tab_widget = tab_widget
@@ -35,29 +37,29 @@ class Internals:
         else:
             self.__id = Internals.__id_counter
         Internals.__id_counter += 1
-        
+
         self.__module_customeditor = importlib.import_module("gui.customeditor")
         self.__module_plaineditor = importlib.import_module("gui.plaineditor")
         self.__module_tabwidget = importlib.import_module("gui.tabwidget")
         self.__module_textdiffer = importlib.import_module("gui.textdiffer")
-    
+
     def __del__(self):
         self.remove_corner_groupbox()
-    
+
     def get_id(self):
         return self.__id
-    
+
     def set_icon(self, obj, icon):
         """
-        Set the current icon and update it by sending the signal to the 
+        Set the current icon and update it by sending the signal to the
         parent basic widget
         """
         obj.current_icon = icon
         self.update_icon(obj)
-    
+
     def update_tab_widget(self, new_tab_widget):
         self.__tab_widget = new_tab_widget
-    
+
     def update_icon(self, obj):
         try:
             self.__tab_widget.parent()
@@ -81,7 +83,7 @@ class Internals:
                 tab_widget.update_tab_icon(obj)
         elif hasattr(obj, "_parent") and obj.current_icon is not None:
             obj._parent.update_tab_icon(obj)
-    
+
     def update_corner_widget(self, obj):
         if self.corner_groupbox is not None:
             try:
@@ -94,12 +96,12 @@ class Internals:
             return True
         else:
             return False
-    
+
     def remove_corner_groupbox(self):
         if self.corner_groupbox is None:
             return
         self.corner_groupbox = None
-    
+
     def create_corner_button(self, icon, tooltip, function):
         button = qt.QToolButton()
         if isinstance(icon, qt.QIcon):
@@ -110,7 +112,7 @@ class Internals:
         button.setToolTip(tooltip)
         button.clicked.connect(function)
         return button
-    
+
     def add_corner_button(self, icon, tooltip, function):
         try:
             self.__tab_widget.parent()
@@ -136,27 +138,21 @@ class Internals:
         layout = self.corner_groupbox.layout()
         layout.addWidget(button)
         for i in range(layout.count()):
-            if data.custom_menu_scale is not None:
+            if settings.get("custom_menu_scale") is not None:
                 layout.itemAt(i).widget().setIconSize(
-                    qt.QSize(
-                        data.custom_menu_scale, 
-                        data.custom_menu_scale
-                    )
+                    qt.QSize(settings.get("custom_menu_scale"), settings.get("custom_menu_scale"))
                 )
-    
+
     def restyle_corner_button_icons(self):
         if self.corner_groupbox is None:
             return
         layout = self.corner_groupbox.layout()
         for i in range(layout.count()):
-            if data.custom_menu_scale is not None:
+            if settings.get("custom_menu_scale") is not None:
                 layout.itemAt(i).widget().setIconSize(
-                    qt.QSize(
-                        data.custom_menu_scale, 
-                        data.custom_menu_scale
-                    )
+                    qt.QSize(settings.get("custom_menu_scale"), settings.get("custom_menu_scale"))
                 )
-    
+
     def update_corner_button_icon(self, icon, index=0):
         if self.corner_groupbox is None:
             return
@@ -164,18 +160,14 @@ class Internals:
         if isinstance(icon, qt.QIcon):
             layout.itemAt(index).widget().setIcon(icon)
         else:
-            layout.itemAt(index).widget().setIcon(
-                functions.create_icon(icon)
-            )
-    
+            layout.itemAt(index).widget().setIcon(functions.create_icon(icon))
+
     def show_corner_groupbox(self, tab_widget):
         if self.corner_groupbox is None:
             return
         try:
             tab_widget.setCornerWidget(self.corner_groupbox)
             self.corner_groupbox.show()
-            self.corner_groupbox.setStyleSheet(
-                "QGroupBox {border: 0px;}"
-            )
+            self.corner_groupbox.setStyleSheet("QGroupBox {border: 0px;}")
         except:
             pass
