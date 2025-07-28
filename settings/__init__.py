@@ -54,7 +54,6 @@ def get_editor_font():
 exposed_api_names = ["load", "save", "save_last_layout", "add_recent_file"]
 exposed_api_map = [
     {"method": "load_settings", "exposed_function": "load"},
-    {"method": "save_settings", "exposed_function": "save"},
     {"method": "save_last_layout", "exposed_function": "save_last_layout"},
     {"method": "add_recent_file", "exposed_function": "add_recent_file"},
 ]

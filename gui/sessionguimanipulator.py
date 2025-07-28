@@ -176,7 +176,7 @@ class SessionGuiManipulator(qt.QTreeView):
                 session["name"] = new_item_name
                 group["sessions"][new_item_name] = session
                 # Save the the new session list by saving the settings
-                settings.save()
+                settings.get_sessions().store_sessions()
                 group_name = "/".join(item_chain)
                 self.main_form.display.repl_display_message(
                     "Session '{}/{}' was renamed to '{}/{}'!".format(
@@ -202,7 +202,7 @@ class SessionGuiManipulator(qt.QTreeView):
                 settings.get_sessions().rename_group(group, new_group_name)
                 parent_group["groups"][new_group_name] = group
                 # Save the the new session list by saving the settings
-                settings.save()
+                settings.get_sessions().store_sessions()
                 # Display successful group deletion
                 self.main_form.display.repl_display_message(
                     "Group '{}' was renamed to '{}'!".format(
@@ -263,7 +263,7 @@ class SessionGuiManipulator(qt.QTreeView):
                     # Add group to sessions
                     settings.get_sessions().add_group(group_name, group_chain)
                     # Save the sessions
-                    settings.save()
+                    settings.get_sessions().store_sessions()
                 # Update the type
                 changed_item.type = ItemType.GROUP
 

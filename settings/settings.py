@@ -173,14 +173,6 @@ class SettingsManipulator:
     def get_settings_file(self):
         return self.get("settings_filename_with_path")
 
-    def save_settings(self):
-        """
-        Save all settings to the settings file
-        """
-        if self.error_lock == True:
-            return
-        self.sessions.set_sessions(self.sessions.get_sessions())
-
     def update_recent_files(self):
         """
         Update only the recent file list in settings file
@@ -334,6 +326,9 @@ class Sessions:
 
     def set_sessions(self, new_sessions) -> None:
         self.__sessions = new_sessions
+        self.store_sessions()
+        
+    def store_sessions(self) -> None:
         self.__parent.set("stored_sessions", self.__sessions)
 
     def get_sessions(self) -> dict:
@@ -373,7 +368,7 @@ class Sessions:
             group = group["groups"][c]
         group["sessions"][session_name] = new_session
         # Save the new settings
-        self.__parent.save_settings()
+        self.store_sessions()
 
     def add_group(self, group_name, group_chain):
         """
@@ -392,7 +387,7 @@ class Sessions:
             group = group["groups"][c]
         group["groups"][group_name] = new_group
         # Save the new settings
-        self.__parent.save_settings()
+        self.store_sessions()
 
     def remove_session(self, session_to_remove):
         """
@@ -408,7 +403,7 @@ class Sessions:
             # Remove the session from the stored session list
             group["sessions"].pop(session_to_remove["name"])
             # Save the new settings
-            self.__parent.save_settings()
+            self.store_sessions()
             return True
         # Signal that the session was not removed
         return False
@@ -428,7 +423,7 @@ class Sessions:
             # Remove the session from the stored session list
             group["groups"].pop(remove_group["name"])
             # Save the new settings
-            self.__parent.save_settings()
+            self.store_sessions()
             return True
         # Signal that the group was not removed
         return False

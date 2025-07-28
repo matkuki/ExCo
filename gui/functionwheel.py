@@ -583,14 +583,6 @@ class FunctionWheel(qt.QFrame):
                 input_no_document_focus_disable=False,
             ),
             ButtonInfo(
-                "button_35",
-                geometries[next(gi)],
-                "tango_icons/file-settings-save.png",
-                form.settings.save,
-                "Save\nsettings",
-                input_no_document_focus_disable=False,
-            ),
-            ButtonInfo(
                 "button_36",
                 geometries[next(gi)],
                 "tango_icons/file-settings-load.png",

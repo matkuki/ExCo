@@ -451,7 +451,6 @@ class MainWindow(qt.QMainWindow):
             close_all=self.close_all_tabs,
             # Settings functions
             settings=settings,
-            save_settings=self.settings.save,
             load_settings=self.settings.restore,
             # Session functions
             session_add=self.sessions.add,
@@ -3828,12 +3827,6 @@ class MainWindow(qt.QMainWindow):
                     "Error loading the settings file, using the default settings values!\nTHE SETTINGS FILE WILL NOT BE UPDATED!",
                     message_type=constants.MessageType.ERROR,
                 )
-
-        def save(self):
-            """Save the current settings"""
-            settings.save()
-            # Display message in statusbar
-            self._parent.display.write_to_statusbar("Saved settings", 1000)
 
     class Sessions:
         """
