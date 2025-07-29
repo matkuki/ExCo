@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import qt
 import data
 import lexers
+import settings
 
 
 missing_themes = {}
