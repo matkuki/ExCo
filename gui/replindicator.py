@@ -16,7 +16,7 @@ import constants
 import functions
 import themes
 
-from .menu import *
+from gui.menu import *
 
 
 class ReplIndicator(qt.QLabel):

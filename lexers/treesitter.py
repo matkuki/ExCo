@@ -15,7 +15,7 @@ import functions
 import lexers
 
 # Relative imports
-from .baselexer import *
+from lexers.baselexer import *
 
 
 class TreeSitterBaseLexer(BaseLexer):

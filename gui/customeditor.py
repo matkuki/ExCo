@@ -23,14 +23,8 @@ import settings
 
 import gui.contextmenu
 
-from .baseeditor import BaseEditor
-from .dialogs import YesNoDialog
-
-"""
----------------------------------------------
-Subclassed QScintilla widget used for editing
----------------------------------------------
-"""
+from gui.baseeditor import BaseEditor
+from gui.dialogs import YesNoDialog
 
 
 class CustomEditor(BaseEditor):
@@ -47,10 +41,11 @@ class CustomEditor(BaseEditor):
     _parent = None
     main_form = None
     name = ""
-    save_name = ""
+    save_path = ""
     save_status = constants.FileStatus.OK
     savable = constants.CanSave.NO
     embedded = False
+    modification_time = None
     # Current document type, initialized to text
     current_file_type = "TEXT"
     # Current tab icon
@@ -126,7 +121,7 @@ class CustomEditor(BaseEditor):
 
         # Signal file initialization
         if not qt.sip.isdeleted(data.signal_dispatcher):
-            data.signal_dispatcher.editor_deleted.emit(self.save_name)
+            data.signal_dispatcher.editor_deleted.emit(self.save_path)
 
     def __init__(self, parent, main_form, file_with_path=None):
         """
@@ -188,12 +183,12 @@ class CustomEditor(BaseEditor):
         self.name = os.path.basename(file_with_path)
         # Set save name with path
         if os.path.dirname(file_with_path) != "":
-            self.save_name = file_with_path
+            self.save_path = file_with_path
         else:
-            self.save_name = ""
+            self.save_path = ""
         # Replace back-slashes to forward-slashes on Windows
         if data.platform == "Windows":
-            self.save_name = self.save_name.replace("\\", "/")
+            self.save_path = self.save_path.replace("\\", "/")
         # Reset the file save status
         self.save_status = constants.FileStatus.OK
         # Enable saving of the scintilla document
@@ -241,7 +236,7 @@ class CustomEditor(BaseEditor):
         self.update_variable_settings()
 
         # Signal file initialization
-        data.signal_dispatcher.editor_initialized.emit(self.save_name)
+        data.signal_dispatcher.editor_initialized.emit(self.save_path)
 
     def __setattr__(self, name, value):
         """
@@ -1599,10 +1594,10 @@ class CustomEditor(BaseEditor):
         # Setup the indicator style, the replace indicator is 1
         self.set_indicator("replace")
         # Correct the displayed file name
-        if self.save_name == None or self.save_name == "":
+        if self.save_path == None or self.save_path == "":
             file_name = self._parent.tabText(self._parent.currentIndex())
         else:
-            file_name = os.path.basename(self.save_name)
+            file_name = os.path.basename(self.save_path)
         # Check if there are any instances of the search text in the document
         # based on the regular expression flag
         search_result = None
@@ -1920,35 +1915,35 @@ class CustomEditor(BaseEditor):
         """
         Save a document to a file
         """
-        if self.save_name == "" or saveas != False:
+        if self.save_path == "" or saveas != False:
             # Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QFileDialog
             # Get the filename from the QFileDialog window
             tab_text = self._parent.tabText(self._parent.indexOf(self))
-            temp_save_name = qt.QFileDialog.getSaveFileName(
+            temp_save_path = qt.QFileDialog.getSaveFileName(
                 self,
                 "Save File: '{}'".format(tab_text),
-                os.getcwd() + self.save_name,
+                os.getcwd() + self.save_path,
                 "All Files(*)",
             )
             # PyQt6's getOpenFileNames returns a tuple (files_list, selected_filter),
             # so pass only the files to the function
-            temp_save_name = temp_save_name[0]
+            temp_save_path = temp_save_path[0]
             # Check if the user has selected a file
-            if temp_save_name == "":
+            if temp_save_path == "":
                 return False
             # Replace back-slashes to forward-slashes on Windows
             if data.platform == "Windows":
-                temp_save_name = functions.unixify_path(temp_save_name)
-            # Save the chosen file name to the document "save_name" attribute
-            self.save_name = temp_save_name
+                temp_save_path = functions.unixify_path(temp_save_path)
+            # Save the chosen file name to the document "save_path" attribute
+            self.save_path = temp_save_path
         # Set the tab name by filtering it out from the QFileDialog result
-        self.name = os.path.basename(self.save_name)
+        self.name = os.path.basename(self.save_path)
         # Change the displayed name of the tab in the basic widget
         self._parent.set_tab_name(self, self.name)
         # Check if a line ending was specified
         if line_ending == None:
             # Write contents of the tab into the specified file
-            save_result = functions.write_to_file(self.text(), self.save_name, encoding)
+            save_result = functions.write_to_file(self.text(), self.save_path, encoding)
         else:
             # The line ending has to be a string
             if isinstance(line_ending, str) == False:
@@ -1962,18 +1957,20 @@ class CustomEditor(BaseEditor):
                 text_list = self.line_list
                 converted_text = line_ending.join(text_list)
                 save_result = functions.write_to_file(
-                    converted_text, self.save_name, encoding
+                    converted_text, self.save_path, encoding
                 )
-        # Check result of the functions.write_to_file function
+        # Store the modification time
+        self.modification_time = os.path.getmtime(self.save_path)
+        # Check save result
         if save_result == True:
             # Saving has succeded
             self.reset_text_changed()
             # Update the lexer for the document only if the lexer is not set
             if isinstance(self.lexer(), lexers.Text):
-                file_type = functions.get_file_type(self.save_name)
+                file_type = functions.get_file_type(self.save_path)
                 self.choose_lexer(file_type)
             # Update the settings manipulator with the new file
-            self.main_form.settings.update_recent_list(self.save_name)
+            self.main_form.settings.update_recent_list(self.save_path)
             return True
         else:
             # Saving has failed
@@ -2134,7 +2131,7 @@ class CustomEditor(BaseEditor):
         Reload current document from disk
         """
         # Check if file was loaded from or saved to disk
-        if self.save_name == "":
+        if self.save_path == "":
             self.main_form.display.write_to_statusbar(
                 "Document has no file on disk!", 3000
             )
@@ -2156,7 +2153,7 @@ class CustomEditor(BaseEditor):
             return
         # Open the file and read the contents
         try:
-            disk_file_text = functions.read_file_to_string(self.save_name)
+            disk_file_text = functions.read_file_to_string(self.save_path)
         except:
             self.main_form.display.write_to_statusbar("Error reloading file!", 3000)
             return
@@ -2300,7 +2297,7 @@ class CustomEditor(BaseEditor):
     def autocompletion_disable(self):
         """Disable the CustomEditor autocompletions"""
         self.setAutoCompletionSource(qt.QsciScintilla.AutoCompletionSource.AcsNone)
-    
+
     def set_autocompletion(self, state):
         if state:
             self.autocompletion_enable()
@@ -2310,10 +2307,10 @@ class CustomEditor(BaseEditor):
     def autocompletion_toggle(self):
         """Enable/disable autocompletions for the CustomEditor"""
         # Initilize the document name for displaying
-        if self.save_name == None or self.save_name == "":
+        if self.save_path == None or self.save_path == "":
             document_name = self._parent.tabText(self._parent.currentIndex())
         else:
-            document_name = os.path.basename(self.save_name)
+            document_name = os.path.basename(self.save_path)
         # Check the autocompletion source
         if (
             self.autoCompletionSource()
@@ -2332,7 +2329,7 @@ class CustomEditor(BaseEditor):
                 message, message_type=constants.MessageType.SUCCESS
             )
             self.main_form.display.write_to_statusbar("Autocompletions ENABLED")
-    
+
     def set_wordwrap(self, state):
         """
         Wrap modes:
@@ -2352,17 +2349,11 @@ class CustomEditor(BaseEditor):
         """
         if state:
             self.setWrapMode(qt.QsciScintilla.WrapMode.WrapWord)
-            self.setWrapVisualFlags(
-                qt.QsciScintilla.WrapVisualFlag.WrapFlagByText
-            )
-            self.setWrapIndentMode(
-                qt.QsciScintilla.WrapIndentMode.WrapIndentSame
-            )
+            self.setWrapVisualFlags(qt.QsciScintilla.WrapVisualFlag.WrapFlagByText)
+            self.setWrapIndentMode(qt.QsciScintilla.WrapIndentMode.WrapIndentSame)
         else:
             self.setWrapMode(qt.QsciScintilla.WrapMode.WrapNone)
-            self.setWrapVisualFlags(
-                qt.QsciScintilla.WrapVisualFlag.WrapFlagNone
-            )
+            self.setWrapVisualFlags(qt.QsciScintilla.WrapVisualFlag.WrapFlagNone)
 
 
 class Bookmarks:

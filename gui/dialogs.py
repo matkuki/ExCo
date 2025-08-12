@@ -12,9 +12,9 @@ import settings
 import constants
 import functions
 
-from .custombuttons import *
-from .stylesheets import *
-from .templates import *
+from gui.custombuttons import *
+from gui.stylesheets import *
+from gui.templates import *
 
 
 """

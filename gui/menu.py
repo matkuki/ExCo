@@ -10,7 +10,7 @@ import uuid
 import qt
 import data
 
-from .stylesheets import *
+from gui.stylesheets import *
 
 
 class Menu(qt.QMenu):

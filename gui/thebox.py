@@ -15,7 +15,7 @@ import data
 import functions
 import qt
 
-from . import (
+from gui import (
     customeditor,
     hexview,
     plaineditor,
@@ -150,7 +150,7 @@ class TheBox(qt.QSplitter):
                     name = w.name
                     # Custom editor
                     if isinstance(w, customeditor.CustomEditor):
-                        name = w.save_name
+                        name = w.save_path
                         if name.strip() == "":
                             name = tab_text
                         line, index = w.getCursorPosition()
@@ -192,7 +192,7 @@ class TheBox(qt.QSplitter):
                             inverted_classes[w.__class__],
                             j,
                             (
-                                w.save_name,
+                                w.save_path,
                                 w.internals.get_id(),
                             ),
                         )

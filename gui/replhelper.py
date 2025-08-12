@@ -17,8 +17,8 @@ import settings
 import lexers
 import gui.contextmenu
 
-from .customeditor import *
-from .tabwidget import *
+from gui.customeditor import *
+from gui.tabwidget import *
 
 
 """

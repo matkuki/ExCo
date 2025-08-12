@@ -14,26 +14,20 @@ import components.actionfilter
 import components.thesquid
 import constants
 import data
-import settings
 import functions
 import qt
+import settings
 
-from .custombuttons import *
-from .customeditor import *
-from .dialogs import *
-from .externalprogram import *
-from .hexview import *
-from .menu import *
-from .plaineditor import *
-from .templates import *
-from .terminal import *
-from .treedisplays import *
-
-"""
------------------------------
-Subclassed QTabWidget that can hold all custom editor and other widgets
------------------------------
-"""
+from gui.custombuttons import *
+from gui.customeditor import *
+from gui.dialogs import *
+from gui.externalprogram import *
+from gui.hexview import *
+from gui.menu import *
+from gui.plaineditor import *
+from gui.templates import *
+from gui.terminal import *
+from gui.treedisplays import *
 
 
 class TabWidget(qt.QTabWidget):
@@ -71,7 +65,9 @@ class TabWidget(qt.QTabWidget):
             self.setDrawBase(False)
 
         def set_style(self):
-            close_image = functions.get_resource_file(settings.get_theme()["close-image"])
+            close_image = functions.get_resource_file(
+                settings.get_theme()["close-image"]
+            )
             close_hover_image = functions.get_resource_file(
                 settings.get_theme()["close-hover-image"]
             )
@@ -188,7 +184,7 @@ QTabBar::tab:selected {{
             # Nested function for updating the current working directory
             def update_cwd():
                 # Get the document path
-                path = os.path.dirname(widget.save_name)
+                path = os.path.dirname(widget.save_path)
                 # Check if the path is not an empty string
                 if path == "":
                     message = "Document path is not valid!"
@@ -209,7 +205,7 @@ QTabBar::tab:selected {{
             )
             clear_repl_action.triggered.connect(main_form.display.repl_clear_tab)
 
-            if hasattr(widget, "save_name") == True:
+            if hasattr(widget, "save_path") == True:
                 update_cwd_action = qt.QAction("Update CWD", self)
                 update_cwd_action.setIcon(
                     functions.create_icon("tango_icons/update-cwd.png")
@@ -239,7 +235,7 @@ QTabBar::tab:selected {{
                 def clipboard_path_copy():
                     cb = data.application.clipboard()
                     cb.clear(mode=cb.Mode.Clipboard)
-                    cb.setText(widget.save_name, mode=cb.Mode.Clipboard)
+                    cb.setText(widget.save_path, mode=cb.Mode.Clipboard)
 
                 clipboard_copy_path_action.setIcon(
                     functions.create_icon("tango_icons/edit-copy.png")
@@ -267,7 +263,7 @@ QTabBar::tab:selected {{
             if self.__check_for_editor(tab_widget):
                 # Open in Hex-View
                 def open_hex():
-                    file_path = widget.save_name
+                    file_path = widget.save_path
                     main_form.open_file_hex(file_path)
 
                 action_open_hex = qt.QAction("Open with Hex-View", self)
@@ -279,7 +275,7 @@ QTabBar::tab:selected {{
                 open_in_explorer_action = qt.QAction("Open document in explorer", self)
 
                 def open_in_explorer():
-                    path = widget.save_name
+                    path = widget.save_path
                     try:
                         result = functions.open_item_in_explorer(path)
                     except:
@@ -374,7 +370,9 @@ QTabBar::tab:selected {{
     # Custom tab bar
     custom_tab_bar = None
     # Default font for textboxes
-    default_editor_font = qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
+    default_editor_font = qt.QFont(
+        settings.get("current_font_name"), settings.get("current_font_size")
+    )
     # Default font and icon size for the tab bar
     default_tab_font = None
     default_icon_size = None
@@ -417,7 +415,10 @@ QTabBar::tab:selected {{
         self.tabBar().installEventFilter(self)
 
     def customize_tab_bar(self):
-        if settings.get("custom_menu_scale") != None and settings.get("custom_menu_font") != None:
+        if (
+            settings.get("custom_menu_scale") != None
+            and settings.get("custom_menu_font") != None
+        ):
             self.tabBar().setFont(qt.QFont(*settings.get("custom_menu_font")))
             new_icon_size = functions.create_size(
                 settings.get("custom_menu_scale"), settings.get("custom_menu_scale")
@@ -816,7 +817,9 @@ QTabBar::tab:selected {{
             )
             movie.setCacheMode(qt.QMovie.CacheMode.CacheAll)
             if settings.get("custom_menu_scale") != None:
-                size = tuple([(x * settings.get("custom_menu_scale") / 16) for x in (16, 16)])
+                size = tuple(
+                    [(x * settings.get("custom_menu_scale") / 16) for x in (16, 16)]
+                )
             else:
                 size = (16, 16)
             movie.setScaledSize(functions.create_size(*size))
@@ -1111,14 +1114,14 @@ QTabBar::tab:selected {{
             return
         # Check if the source file already exists in the target basic widget
         check_tab_widget, check_index = self.main_form.check_open_file(
-            source_widget.save_name
+            source_widget.save_path
         )
         if check_index is not None and check_tab_widget is self:
             # File is already open, focus it
             self.setCurrentIndex(check_index)
             return
         # Create a new editor document
-        new_widget = self.editor_create_document(source_widget.save_name)
+        new_widget = self.editor_create_document(source_widget.save_path)
         # Add the copied custom editor to the target basic widget
         new_index = self.addTab(
             new_widget,
@@ -1148,7 +1151,7 @@ QTabBar::tab:selected {{
         if isinstance(moved_widget, CustomEditor) == True:
             # Check if the source file already exists in the target basic widget
             check_tab_widget, check_index = self.main_form.check_open_file(
-                moved_widget.save_name
+                moved_widget.save_path
             )
             if check_index is not None and check_tab_widget is self:
                 # File is already open, focus it
@@ -1187,7 +1190,7 @@ QTabBar::tab:selected {{
             # Check if the source file already exists
             # in the target basic widget
             check_tab_widget, check_index = self.main_form.check_open_file(
-                dragged_widget.save_name
+                dragged_widget.save_path
             )
             if check_index is not None and check_tab_widget is self:
                 # File is already open, focus it

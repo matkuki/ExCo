@@ -17,7 +17,7 @@ import constants
 import functions
 import themes
 
-from .menu import *
+from gui.menu import *
 
 
 class ThemeIndicator(qt.QLabel):

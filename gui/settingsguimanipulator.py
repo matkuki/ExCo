@@ -12,7 +12,7 @@ import data
 import functions
 import settings
 
-from .custombuttons import *
+from gui.custombuttons import *
 
 
 """

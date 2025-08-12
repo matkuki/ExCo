@@ -9,7 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import qt
 import data
 
-from .stylesheets import StyleSheetScrollbar
+from gui.stylesheets import StyleSheetScrollbar
 
 """
 -----------------------------

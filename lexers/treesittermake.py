@@ -12,7 +12,7 @@ import time
 
 # Relative imports
 from typing import *
-from .treesitter import *
+from lexers.treesitter import *
 
 
 class TreeSitterMakefile(TreeSitterLexer):

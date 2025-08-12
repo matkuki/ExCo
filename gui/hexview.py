@@ -13,8 +13,8 @@ import constants
 import functions
 import components.internals
 
-from .templates import *
-from .stylesheets import *
+from gui.templates import *
+from gui.stylesheets import *
 
 
 class HexView(qt.QFrame):
@@ -25,14 +25,14 @@ class HexView(qt.QFrame):
     current_icon = None
     internals = None
     savable = constants.CanSave.NO
-    save_name = None
+    save_path = None
     # Reference to the custom context menu
     context_menu = None
 
     def __init__(self, file_path, parent, main_form):
         super().__init__(parent)
         self.name = os.path.basename(file_path)
-        self.save_name = file_path
+        self.save_path = file_path
         self._parent = parent
         self.main_form = main_form
 
@@ -74,75 +74,6 @@ class HexView(qt.QFrame):
         scroll_area.setWidget(main_view)
         self.__cache_views["main"] = main_view
         main_layout = main_view.layout()
-
-        # Function for adding items
-        #        def add_items(button_groups, parent, in_layout):
-        #            for g,d in button_groups.items():
-        #                # Add group
-        #                new_group = wg.create_groupbox_with_layout(
-        #                    parent=parent,
-        #                    name=g,
-        #                    borderless=True,
-        #                    vertical=False,
-        #                    margins=(2,2,2,2),
-        #                    spacing=2,
-        #                    h_size_policy=qt.QSizePolicy.Policy.Fixed,
-        #                    v_size_policy=qt.QSizePolicy.Policy.Fixed,
-        #                )
-        #                in_layout.addWidget(new_group)
-        #                self.__cache_views[g] = new_group
-        #
-        #                # Add the comboboxes, if any
-        #                if "comboboxes" in d.keys():
-        #                    for k,v in d["comboboxes"].items():
-        #                        new_combobox = wg.create_advancedcombobox(
-        #                            parent=new_group,
-        #                            no_selection_text=v["initial-text"],
-        #                        )
-        #                        if "items" in v.keys():
-        #                            for cbi in v["items"]:
-        #                                new_combobox.add_item(cbi)
-        #                        if "selected-item" in v.keys():
-        #                            new_combobox.set_selected_name(v["selected-item"])
-        #                        if v["disabled"] == True:
-        #                            new_combobox.disable()
-        #                        self.__cache_comboboxes[v["name"]] = new_combobox
-        #                        new_group.layout().addWidget(new_combobox)
-        #                        new_group.layout().setAlignment(
-        #                            new_combobox,
-        #                            qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter
-        #                        )
-        #
-        #                # Add buttons to group
-        #                for k,v in d["buttons"].items():
-        #                    if "icon-path" in v.keys() or "icon" in v.keys():
-        #                        new_button = wg.create_pushbutton(
-        #                            parent=new_group,
-        #                            name=v["name"],
-        #                            icon_name=v["icon-path"],
-        #                            tooltip=v["tooltip"],
-        #                            statustip=v["tooltip"],
-        #                            click_func=v["click-func"],
-        #                            disabled=v["disabled"],
-        #                            style="debugger",
-        #                        )
-        #                    else:
-        #                        new_button = wg.create_pushbutton(
-        #                            parent=new_group,
-        #                            name=v["name"],
-        #                            text=v["text"],
-        #                            tooltip=v["tooltip"],
-        #                            statustip=v["tooltip"],
-        #                            click_func=v["click-func"],
-        #                            disabled=v["disabled"],
-        #                            style="debugger",
-        #                        )
-        #                    self.__cache_buttons[v["name"]] = new_button
-        #                    new_group.layout().addWidget(new_button)
-        #                    new_group.layout().setAlignment(
-        #                        new_button,
-        #                        qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter
-        #                    )
 
         # Table cache
         self.cache_table = {}
@@ -229,7 +160,7 @@ class HexView(qt.QFrame):
                 char = chr(num)
                 if (
                     char
-                    in """0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ """
+                    in r"""0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ """
                 ):
                     ascii_list.append(char)
                 else:
@@ -254,7 +185,7 @@ class HexView(qt.QFrame):
         table.setUpdatesEnabled(True)
 
     def reload_file(self):
-        with open(self.save_name, "rb") as f:
+        with open(self.save_path, "rb") as f:
             content = f.read()
         self.show_file_hex_data(content)
 

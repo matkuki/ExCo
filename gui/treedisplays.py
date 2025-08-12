@@ -27,9 +27,9 @@ import functions
 import qt
 import settings
 
-from .dialogs import *
-from .menu import *
-from .stylesheets import *
+from gui.dialogs import *
+from gui.menu import *
+from gui.stylesheets import *
 
 
 def remove_readonly(func, path, excinfo):
@@ -37,14 +37,6 @@ def remove_readonly(func, path, excinfo):
     func(path)
 
 
-"""
-----------------------------------------------------------------------------
-Object for displaying various results in a tree structure
-----------------------------------------------------------------------------
-"""
-
-
-# Class custom objects/types
 class Directory:
     """
     Object for holding directory/file information when building directory trees
@@ -562,7 +554,7 @@ class TreeDisplay(qt.QTreeView):
             # Check if a line item was clicked
             if hasattr(item, "line_number") == True:
                 # Goto the stored line number
-                document = self.main_form.get_tab_by_save_name(item.full_name)
+                document = self.main_form.get_tab_by_save_path(item.full_name)
                 document.goto_line(item.line_number)
 
     def _node_item_parse(self, item):
@@ -623,7 +615,7 @@ class TreeDisplay(qt.QTreeView):
         # Set the tree display type to NODE
         self.set_display_type(constants.TreeDisplayType.NODES)
         # Define the document name, type
-        document_name = os.path.basename(custom_editor.save_name)
+        document_name = os.path.basename(custom_editor.save_path)
         document_name_text = "DOCUMENT: {:s}".format(document_name)
         document_type_text = "TYPE: {:s}".format(custom_editor.current_file_type)
         # Define the display structure texts
@@ -862,7 +854,7 @@ class TreeDisplay(qt.QTreeView):
         # Set the tree display type to NODE
         self.set_display_type(constants.TreeDisplayType.NODES)
         # Define the document name, type
-        document_name = os.path.basename(custom_editor.save_name)
+        document_name = os.path.basename(custom_editor.save_path)
         document_name_text = "DOCUMENT: {:s}".format(document_name)
         document_type_text = "TYPE: {:s}".format(custom_editor.current_file_type)
         # Define the display structure texts
@@ -1129,7 +1121,7 @@ class TreeDisplay(qt.QTreeView):
                     node_cache[parent_string].appendRow(node)
 
         # Define the document name, type
-        document_name = os.path.basename(custom_editor.save_name)
+        document_name = os.path.basename(custom_editor.save_path)
         document_name_text = "DOCUMENT: {:s}".format(document_name)
         document_type_text = "TYPE: {:s}".format(custom_editor.current_file_type)
         document_type_icon = parser_icon
@@ -1182,7 +1174,7 @@ class TreeDisplay(qt.QTreeView):
         # Set the tree display type to NODE
         self.set_display_type(constants.TreeDisplayType.NODES)
         # Define the document name, type
-        document_name = os.path.basename(custom_editor.save_name)
+        document_name = os.path.basename(custom_editor.save_path)
         document_name_text = "DOCUMENT: {:s}".format(document_name)
         document_type_text = "TYPE: {:s}".format(custom_editor.current_file_type)
         # Initialize the tree display

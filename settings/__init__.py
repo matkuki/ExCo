@@ -11,7 +11,7 @@ from typing import Any, Dict
 import qt
 import themes
 
-from .settings import SettingsManipulator
+from settings.settings import SettingsManipulator
 
 __settings_manipulator: SettingsManipulator = SettingsManipulator()
 __theme_cache: Dict[str, Dict[str, Any]] = {}

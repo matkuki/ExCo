@@ -17,13 +17,9 @@ import os
 import re
 import sys
 import traceback
-from typing import Optional
+from typing import Callable, Optional
 
 import codequality
-import components.actionfilter
-import components.communicator
-import components.processcontroller
-import components.thesquid
 import constants
 import data
 import functions
@@ -33,27 +29,26 @@ import libraryfunctions
 import qt
 import settings
 import settings.constants
-
-from .custombuttons import CustomButton
-from .customeditor import CustomEditor
-from .dialogs import (
+from gui.custombuttons import CustomButton
+from gui.customeditor import CustomEditor
+from gui.dialogs import (
     CloseEditorDialog,
     QuitDialog,
     RestoreSessionDialog,
     YesNoDialog,
 )
-from .dockingoverlay import DockingOverlay
-from .excoinfo import ExCoInfo
-from .externalprogram import ExternalWidget
-from .functionwheel import FunctionWheel
-from .hexview import HexView
-from .menu import Menu, MenuBar
-from .plaineditor import PlainEditor
-from .replbox import ReplBox
-from .replindicator import ReplIndicator
-from .sessionguimanipulator import SessionGuiManipulator
-from .settingsguimanipulator import SettingsGuiManipulator
-from .stylesheets import (
+from gui.dockingoverlay import DockingOverlay
+from gui.excoinfo import ExCoInfo
+from gui.externalprogram import ExternalWidget
+from gui.functionwheel import FunctionWheel
+from gui.hexview import HexView
+from gui.menu import Menu, MenuBar
+from gui.plaineditor import PlainEditor
+from gui.replbox import ReplBox
+from gui.replindicator import ReplIndicator
+from gui.sessionguimanipulator import SessionGuiManipulator
+from gui.settingsguimanipulator import SettingsGuiManipulator
+from gui.stylesheets import (
     StyleSheetButton,
     StyleSheetMenu,
     StyleSheetMenuBar,
@@ -63,20 +58,26 @@ from .stylesheets import (
     StyleSheetTooltip,
     StyleSheetTreeWidget,
 )
-from .tabwidget import TabWidget
-from .templates import (
+from gui.tabwidget import TabWidget
+from gui.templates import (
     create_groupbox_with_layout,
 )
-from .terminal import (
+from gui.terminal import (
     Terminal,
 )
-from .textdiffer import TextDiffer
-from .thebox import TheBox
-from .themeindicator import ThemeIndicator
-from .treedisplays import (
+from gui.textdiffer import TextDiffer
+from gui.thebox import TheBox
+from gui.themeindicator import ThemeIndicator
+from gui.treedisplays import (
     TreeDisplay,
     TreeExplorer,
 )
+
+import components.actionfilter
+import components.communicator
+import components.processcontroller
+import components.thesquid
+from components.pathwatcher import FileEvent, PathWatcher
 
 if data.platform == "Windows":
     import win32gui
@@ -256,7 +257,7 @@ class MainWindow(qt.QMainWindow):
             self.display.repl_display_message(
                 "Nim lexers imported.", message_type=constants.MessageType.SUCCESS
             )
-    
+
     def __restore_last_session(self) -> None:
         last_layout_filepath = functions.unixify_join(
             data.settings_directory, settings.get("last-layout-filename")
@@ -577,7 +578,7 @@ class MainWindow(qt.QMainWindow):
         if window is None:
             return
         current_widget = window.currentWidget()
-        path = os.path.dirname(current_widget.save_name)
+        path = os.path.dirname(current_widget.save_path)
         # Check if the path is not an empty string
         if path == "":
             message = "Document path is not valid!"
@@ -727,16 +728,16 @@ class MainWindow(qt.QMainWindow):
                 )
                 if encoding == "cp1250":
                     self.display.repl_display_success(
-                        "Saved file {} in ANSI encoding.".format(focused_tab.save_name)
+                        "Saved file {} in ANSI encoding.".format(focused_tab.save_path)
                     )
                 elif encoding == "ascii":
                     self.display.repl_display_success(
-                        "Saved file {} in ASCII encoding.".format(focused_tab.save_name)
+                        "Saved file {} in ASCII encoding.".format(focused_tab.save_path)
                     )
                 # Set the icon if it was set by the lexer
                 focused_tab.internals.update_icon(focused_tab)
                 # Reimport the user configuration file and update the menubar
-                if functions.is_config_file(focused_tab.save_name) == True:
+                if functions.is_config_file(focused_tab.save_path) == True:
                     self.update_menubar()
                     self.import_user_functions()
 
@@ -748,7 +749,7 @@ class MainWindow(qt.QMainWindow):
             # Set the icon if it was set by the lexer
             focused_tab.internals.update_icon(focused_tab)
             # Reimport the user configuration file and update the menubar
-            if functions.is_config_file(focused_tab.save_name) == True:
+            if functions.is_config_file(focused_tab.save_path) == True:
                 self.update_menubar()
                 self.import_user_functions()
 
@@ -3491,7 +3492,7 @@ class MainWindow(qt.QMainWindow):
                     # Check the file name and file name with path
                     if (
                         tab_widget.widget(i).name == os.path.basename(file_with_path)
-                        and tab_widget.widget(i).save_name == file_with_path
+                        and tab_widget.widget(i).save_path == file_with_path
                     ):
                         # If the file is already open, get its index in the tab widget
                         found_tab_widget = tab_widget
@@ -3501,7 +3502,7 @@ class MainWindow(qt.QMainWindow):
                 for i in range(tab_widget.count()):
                     # Check the file name and file name with path
                     tab = tab_widget.widget(i)
-                    if isinstance(tab, HexView) and tab.save_name == file_with_path:
+                    if isinstance(tab, HexView) and tab.save_path == file_with_path:
                         # If the file is already open, get its index in the tab widget
                         found_tab_widget = tab_widget
                         found_index = i
@@ -3577,7 +3578,7 @@ class MainWindow(qt.QMainWindow):
         # Tab was not found
         return None
 
-    def get_tab_by_save_name(self, in_save_name):
+    def get_tab_by_save_path(self, in_save_path):
         """
         Find a tab using its save name (file path) in the tab widgets
         """
@@ -3587,7 +3588,7 @@ class MainWindow(qt.QMainWindow):
             for i in range(0, window.count()):
                 if (
                     isinstance(window.widget(i), CustomEditor)
-                    and window.widget(i).save_name == in_save_name
+                    and window.widget(i).save_path == in_save_path
                 ):
                     return window.widget(i)
         # Tab was not found
@@ -4079,10 +4080,10 @@ class MainWindow(qt.QMainWindow):
             """
             window = self._parent.get_window_by_indication()
             documents = [
-                window.widget(i).save_name
+                window.widget(i).save_path
                 for i in range(window.count())
                 if window.widget(i).savable == constants.CanSave.YES
-                and window.widget(i).save_name != ""
+                and window.widget(i).save_path != ""
             ]
             return documents
 
@@ -6019,7 +6020,7 @@ QSplitter::handle {{
                 init_space = "    -"
                 extra_space = "     "
                 # Display document name, used for finding the tab when clicking the hotspot
-                document_name = os.path.basename(custom_editor.save_name)
+                document_name = os.path.basename(custom_editor.save_path)
                 document_text = "DOCUMENT: {}\n".format(document_name)
                 parent.node_tree_tab.append(document_text)
                 parent.node_tree_tab.append("TYPE: {}\n\n".format(parser))
@@ -6057,7 +6058,7 @@ QSplitter::handle {{
                 init_space = "    -"
                 extra_space = "     "
                 # Display document name, used for finding the tab when clicking the hotspot
-                document_name = os.path.basename(custom_editor.save_name)
+                document_name = os.path.basename(custom_editor.save_path)
                 document_text = "DOCUMENT: {}\n".format(document_name)
                 parent.node_tree_tab.append(document_text)
                 parent.node_tree_tab.append("TYPE: {}\n\n".format(parser))
@@ -6948,7 +6949,7 @@ QSplitter::handle {{
 
         # Class varibles
         _parent = None
-        filesystem_watcher = None
+        path_watcher = None
 
         def __init__(self, parent):
             """
@@ -6958,23 +6959,48 @@ QSplitter::handle {{
             self._parent = parent
 
             # Initialize the file-system watcher
-            self.filesystem_watcher = qt.QFileSystemWatcher(parent)
-            self.filesystem_watcher.fileChanged.connect(self.__file_changed)
-            self.filesystem_watcher.directoryChanged.connect(self.__directory_changed)
-            data.signal_dispatcher.editor_initialized.connect(self.filewatcher_add)
-            data.signal_dispatcher.editor_deleted.connect(self.filewatcher_remove)
+            self.path_watcher = PathWatcher()
+            self.path_watcher.file_changed.connect(self.__file_change_handler)
+            data.signal_dispatcher.editor_initialized.connect(self.pathwatcher_add)
+            data.signal_dispatcher.editor_deleted.connect(self.pathwatcher_remove)
 
-        def __file_changed(self, path: str) -> None:
-            print("__file_changed", path)
+        def __file_change_handler(
+            self,
+            event_type: FileEvent,
+            source: str,
+            destination: Optional[str],
+            modification_time: Optional[float],
+        ):
+            """Handle all file events with consistent signature."""
 
-        def __directory_changed(self, path: str) -> None:
-            print("__directory_changed", path)
+            match event_type:
+                case FileEvent.CREATED:
+                    print(f"File created: {source}")
 
-        def filewatcher_add(self, path: str) -> bool:
-            return self.filesystem_watcher.addPath(path)
+                case FileEvent.MODIFIED:
+                    if os.path.isfile(source):
+                        editors = self._parent.get_all_editors()
+                        for e in editors:
+                            if not os.path.isfile(e.save_path):
+                                continue
+                            if os.path.samefile(e.save_path, source):
+                                if e.modification_time != modification_time:
+                                    e.reload_file()
 
-        def filewatcher_remove(self, path: str) -> bool:
-            return self.filesystem_watcher.removePath(path)
+                case FileEvent.DELETED:
+                    print(f"File deleted: {source}")
+
+                case FileEvent.MOVED:
+                    print(f"File moved from {source} to {destination}")
+
+                case _:
+                    raise Exception(f"Unknown FileEvent: {event_type}")
+
+        def pathwatcher_add(self, path: str) -> bool:
+            return self.path_watcher.add_file(path)
+
+        def pathwatcher_remove(self, path: str) -> bool:
+            return self.path_watcher.remove_file(path)
 
         def pretty_print_text(self, _type: constants.FormatterType) -> None:
             tab = self._parent.get_tab_by_indication()
@@ -7100,13 +7126,13 @@ QSplitter::handle {{
         def analyze_python_file(self, library: str) -> None:
             tab = self._parent.get_tab_by_indication()
 
-            if not hasattr(tab, "save_name"):
+            if not hasattr(tab, "save_path"):
                 self._parent.display.repl_display_error(
                     f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
                 )
                 return
 
-            file_path = tab.save_name
+            file_path = tab.save_path
 
             if library == "ruff":
                 exit_code, analysis_results_or_error = codequality.analyze_ruff_file(

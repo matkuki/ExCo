@@ -15,8 +15,7 @@ import data
 import settings
 from pprint import pprint
 
-from . import *
-from .functions import set_font
+from lexers.functions import set_font
 
 
 class Nim(qt.QsciLexerCustom):

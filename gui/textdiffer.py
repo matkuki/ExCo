@@ -18,7 +18,7 @@ import constants
 import components.actionfilter
 import components.internals
 
-from .customeditor import *
+from gui.customeditor import *
 
 """
 ----------------------------------------------------------------------------

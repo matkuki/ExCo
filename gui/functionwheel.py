@@ -14,10 +14,10 @@ import functions
 import qt
 import settings
 
-from .custombuttons import *
-from .customeditor import *
-from .plaineditor import *
-from .textdiffer import *
+from gui.custombuttons import *
+from gui.customeditor import *
+from gui.plaineditor import *
+from gui.textdiffer import *
 
 
 class FunctionWheel(qt.QFrame):

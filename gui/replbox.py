@@ -11,8 +11,8 @@ import data
 import settings
 import constants
 
-from .repllineedit import *
-from .replhelper import *
+from gui.repllineedit import *
+from gui.replhelper import *
 
 
 class ReplBox(qt.QGroupBox):

@@ -16,7 +16,7 @@ import settings
 import functions
 import qt
 
-from .dialogs import *
+from gui.dialogs import *
 
 """
 -------------------------------------------------
