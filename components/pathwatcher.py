@@ -8,37 +8,37 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import threading
-import time
-import traceback
 from enum import Enum, auto
-from pathlib import Path
 from threading import Lock, Timer
 from types import TracebackType
-from typing import Callable, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
+import qt
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
-import qt
-
 
 class FileEvent(Enum):
-    """Enumeration of all possible file system events."""
+    """
+    Enumeration of all possible file system events.
+    """
 
     MODIFIED = auto()
     CREATED = auto()
     DELETED = auto()
     MOVED = auto()
 
+
 class PathWatcher(qt.QObject):
     """
     A class to monitor file system changes for specific files using watchdog.
     Files can be dynamically added and removed from monitoring.
     """
+
     # Define a custom signal that matches the callback's signature
     file_changed = qt.pyqtSignal(object, str, object, object)
 
-    ECHO_ENABLED: bool = False  # Class variable to control echo output
+    ECHO_ENABLED: bool = True  # Class variable to control echo output
 
     def __init__(self, parent: Optional[qt.QObject] = None) -> None:
         """
@@ -213,7 +213,9 @@ class PathWatcher(qt.QObject):
             self.echo(f"File {event_type.name}: {source_path}")
 
         # Call the callback if provided
-        self.file_changed.emit(event_type, source_path, destination_path, modification_time)
+        self.file_changed.emit(
+            event_type, source_path, destination_path, modification_time
+        )
 
     def start_monitoring(self) -> None:
         """Start the monitoring process. This is non-blocking."""
@@ -382,21 +384,15 @@ class FileChangeHandler(FileSystemEventHandler):
 
     def on_modified(self, event: FileSystemEvent) -> None:
         if not event.is_directory:
-            self._start_debounce_timer(
-                event.src_path, FileEvent.MODIFIED
-            )
+            self._start_debounce_timer(event.src_path, FileEvent.MODIFIED)
 
     def on_created(self, event: FileSystemEvent) -> None:
         if not event.is_directory:
-            self._start_debounce_timer(
-                event.src_path, FileEvent.CREATED
-            )
+            self._start_debounce_timer(event.src_path, FileEvent.CREATED)
 
     def on_deleted(self, event: FileSystemEvent) -> None:
         if not event.is_directory:
-            self._start_debounce_timer(
-                event.src_path, FileEvent.DELETED
-            )
+            self._start_debounce_timer(event.src_path, FileEvent.DELETED)
 
     def on_moved(self, event: FileSystemEvent) -> None:
         if not event.is_directory and hasattr(event, "dest_path"):

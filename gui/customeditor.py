@@ -22,7 +22,6 @@ import qt
 import settings
 
 import gui.contextmenu
-
 from gui.baseeditor import BaseEditor
 from gui.dialogs import YesNoDialog
 
@@ -1959,8 +1958,7 @@ class CustomEditor(BaseEditor):
                 save_result = functions.write_to_file(
                     converted_text, self.save_path, encoding
                 )
-        # Store the modification time
-        self.modification_time = os.path.getmtime(self.save_path)
+
         # Check save result
         if save_result == True:
             # Saving has succeded
@@ -2123,8 +2121,16 @@ class CustomEditor(BaseEditor):
             self.edge_marker_hide()
 
     def reset_text_changed(self):
+        self.update_document_modification_time()
+
         # Reset text changed indication
         self._parent.reset_text_changed(self._parent.indexOf(self))
+
+    def update_document_modification_time(self) -> None:
+        if self.save_path is None:
+            return
+        # Store the modification time
+        self.modification_time = os.path.getmtime(self.save_path)
 
     def reload_file(self):
         """
@@ -2149,7 +2155,7 @@ class CustomEditor(BaseEditor):
                 # Cancel tab file reloading
                 return
         # Check if the name of the document is valid
-        if self.name == "" or self.name == None:
+        if self.name == "" or self.name is None:
             return
         # Open the file and read the contents
         try:
@@ -2159,10 +2165,12 @@ class CustomEditor(BaseEditor):
             return
         # Save the current cursor position
         temp_position = self.getCursorPosition()
+        first_visible_line = self.firstVisibleLine()
         # Reload the file
         self.replace_entire_text(disk_file_text)
         # Restore saved cursor position
         self.setCursorPosition(temp_position[0], temp_position[1])
+        self.setFirstVisibleLine(first_visible_line)
         # Reset text changed indication
         self.reset_text_changed()
 

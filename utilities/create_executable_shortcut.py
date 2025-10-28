@@ -51,7 +51,7 @@ for arg in arguments:
     parameters.add(arg)
 # Run ExCo process
 discard osproc.startProcess(
-    command="C:/Program Files/Python313/pythonw.exe",
+    command="C:/Python313/pythonw.exe",
     workingDir="",
     args=parameters,
     env=nil

@@ -15,6 +15,7 @@ import data
 import settings
 from pprint import pprint
 
+import lexers
 from lexers.functions import set_font
 
 
