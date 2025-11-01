@@ -339,6 +339,7 @@ class MainWindow(qt.QMainWindow):
         if window is None:
             self.reset_title()
             return
+        
         current_widget = window.currentWidget()
         current_index = window.currentIndex()
         if current_widget:

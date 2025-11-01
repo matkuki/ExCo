@@ -3248,3 +3248,13 @@ class TreeExplorer(TreeDisplayBase):
                 self.verticalScrollBar().setValue(y)
 
             qt.QTimer.singleShot(0, __scroll_restore)
+
+        # Update tab name
+        if self.parent() is not None:
+            if self.parent().parent() is not None:
+                tab_widget = self.parent().parent()
+                base_path = os.path.basename(self.current_viewed_directory)
+                tab_widget.set_tab_name(
+                    self,
+                    f"{constants.SpecialTabNames.FileExplorer.value}: {base_path}",
+                )

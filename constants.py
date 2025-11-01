@@ -77,7 +77,7 @@ supported_file_extentions = {
 
 # Special tab names
 class SpecialTabNames(enum.Enum):
-    Messages = "Messages"
+    Messages = "Message log"
     FileExplorer = "File explorer"
 
 
