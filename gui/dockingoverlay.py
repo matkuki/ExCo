@@ -120,6 +120,7 @@ QLabel:hover {{
             self.widget.dropEvent(event)
             main_form.view.reindex_all_windows()
             main_form.view.layout_save()
+            qt.QCoreApplication.processEvents()
             return super().dropEvent(event)
 
     class SideDockLabel(BaseDockLabel):
@@ -217,7 +218,7 @@ QLabel:hover {{
             box.setSizes([split_size] * box.count())
             # Save layout
             main_form.view.layout_save()
-
+            
             return super().dropEvent(event)
 
     @staticmethod
@@ -348,10 +349,13 @@ QLabel:hover {{
                     "various/plus.png",
                 )
                 dock_point.show()
+                
+        qt.QCoreApplication.processEvents()
 
     def hide(self):
         if self.overlay_label != None:
             self.overlay_label.hide()
+        
         for w in DockingOverlay.storage:
             if hasattr(w, "description"):
                 d = w.description
@@ -359,5 +363,5 @@ QLabel:hover {{
                 d.deleteLater()
                 w.description = None
             w.setParent(None)
-            w.deleteLater()
+            qt.QCoreApplication.processEvents()
         DockingOverlay.storage = []

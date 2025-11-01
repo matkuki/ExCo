@@ -206,6 +206,7 @@ class CustomButton(qt.QLabel):
         #        image.fill(settings.get_theme()["context-menu-background"])
         # Create and initialize the QPainter that will manipulate the QImage
         button_painter = qt.QPainter(image)
+        button_painter.begin()
         button_painter.setCompositionMode(
             qt.QPainter.CompositionMode.CompositionMode_SourceOver
         )
@@ -439,6 +440,7 @@ class DoubleButton(CustomButton):
         image.fill(qt.Qt.GlobalColor.transparent)
         # Create and initialize the QPainter that will manipulate the QImage
         button_painter = qt.QPainter(image)
+        button_painter.begin()
         button_painter.setOpacity(input_opacity)
         button_painter.drawPixmap(0, 0, button_image)
         button_painter.end()

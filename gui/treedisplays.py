@@ -17,6 +17,7 @@ import subprocess
 import time
 import traceback
 import types
+from pathlib import Path
 
 import components.actionfilter
 import components.internals
@@ -3249,12 +3250,25 @@ class TreeExplorer(TreeDisplayBase):
 
             qt.QTimer.singleShot(0, __scroll_restore)
 
+        self.__update_tab_title()
+
+    def __update_tab_title(self) -> None:
         # Update tab name
-        if self.parent() is not None:
-            if self.parent().parent() is not None:
-                tab_widget = self.parent().parent()
-                base_path = os.path.basename(self.current_viewed_directory)
-                tab_widget.set_tab_name(
-                    self,
-                    f"{constants.SpecialTabNames.FileExplorer.value}: {base_path}",
-                )
+        if self.parent() is not None and self.parent().parent() is not None:
+            tab_widget = self.parent().parent()
+            path = Path(self.current_viewed_directory)
+
+            # Handle root directories
+            if path.name == "":
+                # For Windows, use drive letter if available, otherwise use path as-is
+                if os.name == "nt" and path.drive:
+                    base_path = f"{path.drive}/"
+                else:
+                    base_path = str(path) if str(path) else "/"
+            else:
+                base_path = path.name
+
+            tab_widget.set_tab_name(
+                self,
+                f"{constants.SpecialTabNames.FileExplorer.value}: {base_path}",
+            )

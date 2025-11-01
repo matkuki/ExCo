@@ -3407,6 +3407,7 @@ class MainWindow(qt.QMainWindow):
         if isinstance(file, str) == True:
             if file != "":
                 new_tab = open_file_function(file, tab_widget)
+                qt.QCoreApplication.processEvents()
                 self.repaint()
                 qt.QCoreApplication.processEvents()
                 return new_tab
@@ -3414,7 +3415,9 @@ class MainWindow(qt.QMainWindow):
             tabs = []
             for f in file:
                 new_tab = open_file_function(f, tab_widget)
+                qt.QCoreApplication.processEvents()
                 tabs.append(new_tab)
+                qt.QCoreApplication.processEvents()
                 self.repaint()
                 qt.QCoreApplication.processEvents()
             return tabs
@@ -4480,8 +4483,11 @@ QSplitter::handle {{
             windows = self._parent.get_all_windows()
             for w in windows:
                 w.style().unpolish(w)
+                qt.QCoreApplication.processEvents()
                 w.style().polish(w)
+                qt.QCoreApplication.processEvents()
                 w.repaint()
+                qt.QCoreApplication.processEvents()
 
             data.signal_dispatcher.update_title.emit()
 
