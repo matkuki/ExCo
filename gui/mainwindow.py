@@ -20,6 +20,10 @@ import traceback
 from typing import Callable, Optional
 
 import codequality
+import components.actionfilter
+import components.communicator
+import components.processcontroller
+import components.thesquid
 import constants
 import data
 import functions
@@ -29,6 +33,7 @@ import libraryfunctions
 import qt
 import settings
 import settings.constants
+from components.pathwatcher import FileEvent, PathWatcher
 from gui.custombuttons import CustomButton
 from gui.customeditor import CustomEditor
 from gui.dialogs import (
@@ -72,12 +77,6 @@ from gui.treedisplays import (
     TreeDisplay,
     TreeExplorer,
 )
-
-import components.actionfilter
-import components.communicator
-import components.processcontroller
-import components.thesquid
-from components.pathwatcher import FileEvent, PathWatcher
 
 if data.platform == "Windows":
     import win32gui
@@ -339,7 +338,7 @@ class MainWindow(qt.QMainWindow):
         if window is None:
             self.reset_title()
             return
-        
+
         current_widget = window.currentWidget()
         current_index = window.currentIndex()
         if current_widget:
@@ -3048,7 +3047,7 @@ class MainWindow(qt.QMainWindow):
             # Pretty print JSON
             def pretty_print_json():
                 try:
-                    self.tools.pretty_print_text(constants.FormatterType.JSON)
+                    self.tools.pretty_print_text(constants.FormatterType.JSON, sort_keys=False)
                 except:
                     self.display.repl_display_error(traceback.format_exc())
 
@@ -3058,6 +3057,21 @@ class MainWindow(qt.QMainWindow):
                 "Pretty print JSON text in the selected document",
                 "language_icons/logo_json.png",
                 pretty_print_json,
+            )
+            pretty_print_menu.addAction(pretty_print_json_action)
+            
+            def pretty_print_json_with_key_sorting():
+                try:
+                    self.tools.pretty_print_text(constants.FormatterType.JSON, sort_keys=True)
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+
+            pretty_print_json_action = create_action(
+                "Pretty print JSON text - with key sorting",
+                None,
+                "Pretty print JSON text with key sorting in the selected document",
+                "language_icons/logo_json.png",
+                pretty_print_json_with_key_sorting,
             )
             pretty_print_menu.addAction(pretty_print_json_action)
 
@@ -7008,7 +7022,7 @@ QSplitter::handle {{
         def pathwatcher_remove(self, path: str) -> bool:
             return self.path_watcher.remove_file(path)
 
-        def pretty_print_text(self, _type: constants.FormatterType) -> None:
+        def pretty_print_text(self, _type: constants.FormatterType, **kwargs) -> None:
             tab = self._parent.get_tab_by_indication()
 
             if not hasattr(tab, "text"):
@@ -7018,16 +7032,18 @@ QSplitter::handle {{
                 return
 
             if _type == constants.FormatterType.JSON:
-                prettyfied_string = codequality.pretty_print_json(tab.text())
+                prettyfied_string = codequality.pretty_print_json(tab.text(), **kwargs)
             elif _type == constants.FormatterType.XML:
-                prettyfied_string = codequality.pretty_print_xml(tab.text())
+                prettyfied_string = codequality.pretty_print_xml(tab.text(), **kwargs)
             elif _type == constants.FormatterType.HTML_Python_Standard_Library:
                 prettyfied_string = codequality.pretty_print_html_python_stdlib(
                     tab.text()
                 )
             elif _type == constants.FormatterType.HTML_BeautifulSoup:
                 prettyfied_string = (
-                    codequality.custom_format_html_document_beautifulsoup(tab.text())
+                    codequality.custom_format_html_document_beautifulsoup(
+                        tab.text(), **kwargs
+                    )
                 )
             else:
                 self._parent.display.repl_display_error(

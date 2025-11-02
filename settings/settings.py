@@ -13,6 +13,7 @@ import json
 import os
 import os.path
 import shutil
+import copy
 import threading
 import traceback
 from collections import UserDict
@@ -20,6 +21,7 @@ from typing import Any, Callable, Dict, Union
 
 import data
 import filefunctions
+
 import functions
 import settings.constants
 import settings.functions
@@ -619,35 +621,25 @@ class SettingsStorage(UserDict):
         Overrides the dictionary's __setitem__ method to save settings
         only if the value truly changes or it's a new key.
         If the value is a dictionary and the existing item is also a dictionary,
-        it performs a recursive update with deep change detection.
+        it performs a full replacement with deep change detection.
         """
         changed = False
-
+    
         if (
             key in self.data
             and isinstance(self.data[key], dict)
             and isinstance(value, dict)
         ):
             # --- Deep Change Detection for Nested Dictionary ---
-
-            # 1. Capture the initial state of the nested dict
-            initial_nested_snapshot = json.dumps(self.data[key], sort_keys=True)
-
-            # 2. Perform the recursive update (modifies self.data[key] in-place)
-            self.data[key].update(value)
-
-            # 3. Capture the final state of the nested dict
-            final_nested_snapshot = json.dumps(self.data[key], sort_keys=True)
-
-            # 4. Compare snapshots to check for change
-            if final_nested_snapshot != initial_nested_snapshot:
+            
+            # Check if dicts are different (handles additions, modifications, deletions)
+            if not self._dicts_equal(self.data[key], value):
                 self.echo(f"Setting '{key}' (nested dict) updated.")
+                # REPLACE entirely with deep copy
+                super().__setitem__(key, copy.deepcopy(value))
                 changed = True
             else:
-                # If the nested update did not result in a change, we exit the method
-                # early to prevent unnecessary saving.
-                return
-
+                return  # No change
         else:
             # Standard set item, with simple change detection for non-dict values
             if key in self.data:
@@ -659,12 +651,31 @@ class SettingsStorage(UserDict):
             else:
                 self.echo(f"Setting '{key}' added.")
                 changed = True
-
+    
             # Perform the actual set operation
             super().__setitem__(key, value)
-
+    
         if changed:
             self.__save()
+    
+    def _dicts_equal(self, d1: dict, d2: dict) -> bool:
+        """Fast recursive dictionary comparison."""
+        # Quick check: different lengths = different dicts
+        if len(d1) != len(d2):
+            return False
+        
+        for k, v1 in d1.items():
+            if k not in d2:
+                return False  # Key in d1 but not in d2
+            
+            v2 = d2[k]
+            if isinstance(v1, dict) and isinstance(v2, dict):
+                if not self._dicts_equal(v1, v2):
+                    return False
+            elif v1 != v2:
+                return False
+        
+        return True
 
     def __delitem__(self, key: str) -> None:
         """
