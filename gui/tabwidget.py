@@ -784,17 +784,17 @@ QTabBar::tab:selected {{
         if self.count() == 0:
             self.main_form.set_save_file_state(False)
 
-    def _signal_text_changed(self):
+    def _signal_text_changed(self, widget: qt.QWidget):
         """Signal that is emmited when the document text changes"""
         # Check if the current widget is valid
-        if self.currentWidget() == None:
+        if widget is None:
             return
         # Update the save status of the current widget
-        if self.currentWidget().savable == constants.CanSave.YES:
+        if widget.savable == constants.CanSave.YES:
             # Set document as modified
-            self.currentWidget().save_status = constants.FileStatus.MODIFIED
+            widget.save_status = constants.FileStatus.MODIFIED
             # Check if special character is already in the name of the tab
-            self.set_text_changed(self.currentIndex())
+            self.set_text_changed(self.indexOf(widget))
         # Update margin width
         self.editor_update_margin()
 

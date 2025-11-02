@@ -571,7 +571,7 @@ class CustomEditor(BaseEditor):
         # Update the line count list with a list comprehention
         self.line_count = [line for line in range(1, self.lines() + 1)]
         # Execute the parent basic widget signal
-        self._parent._signal_text_changed()
+        self._parent._signal_text_changed(self)
 
     def setFocus(self):
         """Overridden focus event"""

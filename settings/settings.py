@@ -184,20 +184,6 @@ class SettingsManipulator:
     def get_settings_file(self):
         return self.get("settings_filename_with_path")
 
-    def update_recent_files(self):
-        """
-        Update only the recent file list in settings file
-        """
-        if self.__error_check():
-            return
-
-        settings_data = functions.load_json_file(
-            self.get("settings_filename_with_path")
-        )
-        # Load the session data from the file to have it up-to-date
-        stored_sessions = settings_data["stored_sessions"]
-        self.sessions.set_sessions(stored_sessions)
-
     def clear_recent_files(self):
         if self.__error_check():
             return
@@ -249,26 +235,29 @@ class SettingsManipulator:
         # Replace back-slashes to forward-slashes on Windows
         if data.platform == "Windows":
             new_file = new_file.replace("\\", "/")
+        
+        current_list = self.get("recent_files").copy()
+        
         # Check recent files list length
-        while len(self.get("recent_files")) > self.get("max-number-of-recent-files"):
+        while len(current_list) > self.get("max-number-of-recent-files"):
             # The recent files list is to long
-            self.get("recent_files").pop(0)
+            current_list.pop(0)
         # Check if he new file is already in the list
         if new_file in self.get("recent_files"):
             # Check if the file is already at the top
-            if self.get("recent_files").index(new_file) == (
+            if current_list.index(new_file) == (
                 self.get("max-number-of-recent-files") - 1
             ):
                 return
             # Remove the old file with the same name as the new file from the list
-            self.get("recent_files").pop(self.get("recent_files").index(new_file))
+            current_list.pop(self.get("recent_files").index(new_file))
             # Add the new file to the end of the list
-            self.get("recent_files").append(new_file)
+            current_list.append(new_file)
         else:
             # The new file is not in the list, append it to the end of the list
-            self.get("recent_files").append(new_file)
-        # Save the new settings
-        self.update_recent_files()
+            current_list.append(new_file)
+        
+        self.set("recent_files", current_list)
 
     def save_last_layout(self, layout):
         if self.__error_check():
@@ -620,57 +609,136 @@ class SettingsStorage(UserDict):
         """
         Overrides the dictionary's __setitem__ method to save settings
         only if the value truly changes or it's a new key.
-        If the value is a dictionary and the existing item is also a dictionary,
-        it performs a full replacement with deep change detection.
+        For mutable types (dict, list, set, tuple), performs deep comparison
+        and stores a deep copy to prevent external mutations.
         """
         changed = False
     
-        if (
-            key in self.data
-            and isinstance(self.data[key], dict)
-            and isinstance(value, dict)
-        ):
-            # --- Deep Change Detection for Nested Dictionary ---
+        # Check if both existing and new values are mutable types that need deep comparison
+        if key in self.data:
+            existing = self.data[key]
             
-            # Check if dicts are different (handles additions, modifications, deletions)
-            if not self._dicts_equal(self.data[key], value):
-                self.echo(f"Setting '{key}' (nested dict) updated.")
-                # REPLACE entirely with deep copy
-                super().__setitem__(key, copy.deepcopy(value))
-                changed = True
+            # Handle dictionaries
+            if isinstance(existing, dict) and isinstance(value, dict):
+                if not self._dicts_equal(existing, value):
+                    self.echo(f"Setting '{key}' (dict) updated.")
+                    super().__setitem__(key, copy.deepcopy(value))
+                    changed = True
+                else:
+                    return  # No change
+            
+            # Handle lists
+            elif isinstance(existing, list) and isinstance(value, list):
+                if not self._lists_equal(existing, value):
+                    self.echo(f"Setting '{key}' (list) updated.")
+                    super().__setitem__(key, copy.deepcopy(value))
+                    changed = True
+                else:
+                    return  # No change
+            
+            # Handle sets
+            elif isinstance(existing, set) and isinstance(value, set):
+                if existing != value:
+                    self.echo(f"Setting '{key}' (set) updated.")
+                    super().__setitem__(key, copy.deepcopy(value))
+                    changed = True
+                else:
+                    return  # No change
+            
+            # Handle tuples (immutable but can contain mutable objects)
+            elif isinstance(existing, tuple) and isinstance(value, tuple):
+                if not self._tuples_equal(existing, value):
+                    self.echo(f"Setting '{key}' (tuple) updated.")
+                    super().__setitem__(key, copy.deepcopy(value))
+                    changed = True
+                else:
+                    return  # No change
+            
+            # Handle all other types (including immutable types)
             else:
-                return  # No change
-        else:
-            # Standard set item, with simple change detection for non-dict values
-            if key in self.data:
-                if self.data[key] == value:
-                    return  # No change, no save
+                if existing == value:
+                    return  # No change
                 else:
                     self.echo(f"Setting '{key}' changed.")
+                    # Deep copy mutable types, direct assignment for immutable
+                    if isinstance(value, (dict, list, set)):
+                        super().__setitem__(key, copy.deepcopy(value))
+                    else:
+                        super().__setitem__(key, value)
                     changed = True
+        else:
+            # New key
+            self.echo(f"Setting '{key}' added.")
+            # Deep copy mutable types to prevent external mutations
+            if isinstance(value, (dict, list, set, tuple)):
+                super().__setitem__(key, copy.deepcopy(value))
             else:
-                self.echo(f"Setting '{key}' added.")
-                changed = True
-    
-            # Perform the actual set operation
-            super().__setitem__(key, value)
+                super().__setitem__(key, value)
+            changed = True
     
         if changed:
             self.__save()
     
     def _dicts_equal(self, d1: dict, d2: dict) -> bool:
         """Fast recursive dictionary comparison."""
-        # Quick check: different lengths = different dicts
         if len(d1) != len(d2):
             return False
         
         for k, v1 in d1.items():
             if k not in d2:
-                return False  # Key in d1 but not in d2
+                return False
             
             v2 = d2[k]
             if isinstance(v1, dict) and isinstance(v2, dict):
                 if not self._dicts_equal(v1, v2):
+                    return False
+            elif isinstance(v1, list) and isinstance(v2, list):
+                if not self._lists_equal(v1, v2):
+                    return False
+            elif isinstance(v1, tuple) and isinstance(v2, tuple):
+                if not self._tuples_equal(v1, v2):
+                    return False
+            elif v1 != v2:
+                return False
+        
+        return True
+    
+    def _lists_equal(self, l1: list, l2: list) -> bool:
+        """Fast recursive list comparison."""
+        if len(l1) != len(l2):
+            return False
+        
+        for i, v1 in enumerate(l1):
+            v2 = l2[i]
+            if isinstance(v1, dict) and isinstance(v2, dict):
+                if not self._dicts_equal(v1, v2):
+                    return False
+            elif isinstance(v1, list) and isinstance(v2, list):
+                if not self._lists_equal(v1, v2):
+                    return False
+            elif isinstance(v1, tuple) and isinstance(v2, tuple):
+                if not self._tuples_equal(v1, v2):
+                    return False
+            elif v1 != v2:
+                return False
+        
+        return True
+    
+    def _tuples_equal(self, t1: tuple, t2: tuple) -> bool:
+        """Fast recursive tuple comparison."""
+        if len(t1) != len(t2):
+            return False
+        
+        for i, v1 in enumerate(t1):
+            v2 = t2[i]
+            if isinstance(v1, dict) and isinstance(v2, dict):
+                if not self._dicts_equal(v1, v2):
+                    return False
+            elif isinstance(v1, list) and isinstance(v2, list):
+                if not self._lists_equal(v1, v2):
+                    return False
+            elif isinstance(v1, tuple) and isinstance(v2, tuple):
+                if not self._tuples_equal(v1, v2):
                     return False
             elif v1 != v2:
                 return False
