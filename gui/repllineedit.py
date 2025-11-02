@@ -47,6 +47,11 @@ class ReplLineEdit(qt.QLineEdit):
     # Flag that when set, make the next REPL evaluation not focus back on the REPL
     _repl_focus_flag = False
 
+    # File for history persistence (using a .txt extension now for clarity)
+    _history_file_path = None
+    # Max lines to keep in memory for performance
+    _MAX_HISTORY_LINES = 2000
+
     """
     Built-in and private functions
     """
@@ -74,6 +79,31 @@ class ReplLineEdit(qt.QLineEdit):
         self._list_repl_references = [str_ref for str_ref in interpreter_references]
         # Initialize style
         self.update_style()
+        # Load history from the file
+        self._history_file_path = settings.get("repl_history_filename_with_path")
+        self._input_buffer_load()
+    
+    def _input_buffer_load(self):
+        """Load the input buffer list from the static history text file."""
+        if not os.path.exists(self._history_file_path):
+            return
+
+        try:
+            with open(self._history_file_path, 'r', encoding='utf-8') as f:
+                # Read all lines, strip leading/trailing whitespace/newlines
+                history_list = [line.strip() for line in f if line.strip()]
+                
+                # Only keep the N most recent lines in memory for performance
+                if len(history_list) > self._MAX_HISTORY_LINES:
+                    history_list = history_list[-self._MAX_HISTORY_LINES:]
+
+                self._input_buffer["list"] = history_list
+                self.main_form.display.write_to_statusbar(
+                    f"REPL history loaded from {self._history_file_path}", 1000
+                )
+        except IOError as e:
+            # Handle file read errors gracefully
+            self.main_form.display.repl_display_error(f"Error loading REPL history from file: {e}")
 
     def update_style(self):
         # REPL and REPL helper have to be set directly
@@ -299,21 +329,40 @@ QLineEdit[indicated=true] {{
                 self.setText(self._input_buffer["current_input"])
 
     def _input_buffer_add(self, entry):
-        """Add a single value to the input buffer"""
+        """Add a single value to the input buffer and append it to the history file."""
+        
         # Check if there is any input text
-        if self.text() == "":
+        if entry == "":
             return
-        # Check if the last saved input is the same as the current input, otherwise add it to the input buffer
+            
+        # Check if the last saved input is the same as the current input, 
+        # otherwise add it to the input buffer
         if len(self._input_buffer["list"]) > 0:
-            if self.text() != self._input_buffer["list"][-1]:
-                self._input_buffer["list"].append(self.text())
+            if entry != self._input_buffer["list"][-1]:
+                self._input_buffer["list"].append(entry)
+                self.__input_buffer_append_file(entry) # ADDED: Append to file
         else:
-            # Add the text into the buffer withoit checking if the input buffer is empty
-            self._input_buffer["list"].append(self.text())
-        # Reset the item counter
+            # Add the text into the buffer when it's empty
+            self._input_buffer["list"].append(entry)
+            self.__input_buffer_append_file(entry) # ADDED: Append to file
+            
+        # Keep the in-memory buffer size limited
+        if len(self._input_buffer["list"]) > self._MAX_HISTORY_LINES:
+            del self._input_buffer["list"][0]
+
+        # Reset the item counter and current input text
         self._input_buffer["count"] = 0
-        # Reset the stored current input text
         self._input_buffer["current_input"] = ""
+    
+    def __input_buffer_append_file(self, entry):
+        """Append a single entry to the history file for fast persistence."""
+        try:
+            # Open file in append mode ('a')
+            with open(self._history_file_path, 'a', encoding='utf-8') as f:
+                f.write(entry + '\n')
+        except IOError as e:
+            # Handle file write errors gracefully
+            self.main_form.display.repl_display_error(f"Error appending REPL history to file: {e}")
 
     def input_buffer_clear(self):
         """Clear the input buffer, counter and current saved input"""

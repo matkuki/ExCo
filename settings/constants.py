@@ -316,6 +316,9 @@ default_settings = {
     "settings_filename_with_path": functions.unixify_join(
         data.settings_directory, settings_filename["mark-3"]
     ),
+    "repl_history_filename_with_path": functions.unixify_join(
+        data.settings_directory, "repl_history.ini"
+    ),
     "terminal": "x-terminal-emulator",  # Terminal console program used on GNU/Linux
     "tree_display_icon_size": 16,  # Default tree display icon size
     "current_font_name": "Selawik",
