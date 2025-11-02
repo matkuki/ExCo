@@ -3415,10 +3415,9 @@ class MainWindow(qt.QMainWindow):
             tabs = []
             for f in file:
                 new_tab = open_file_function(f, tab_widget)
-                qt.QCoreApplication.processEvents()
                 tabs.append(new_tab)
-                qt.QCoreApplication.processEvents()
                 self.repaint()
+                # Needed for every file opened to be visually updated clearly
                 qt.QCoreApplication.processEvents()
             return tabs
         else:

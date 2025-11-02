@@ -24,7 +24,7 @@ import threading
 import time
 import traceback
 import webbrowser
-from typing import Callable
+from typing import *
 
 import constants
 import data
@@ -2576,9 +2576,13 @@ def output_get_file_with_timestamp() -> str:
     return os.path.join(
         output_get_backup_directory(),
         OUTPUT_FILENAME.replace(
-            sf[1], datetime.datetime.now().strftime(".%Y%m%d_%H%M%S.txt")
+            sf[1], get_default_datetime_formatted_string() + ".txt"
         ),
     )
+
+
+def get_default_datetime_formatted_string() -> str:
+    return datetime.datetime.now().strftime(".%Y%m%d_%H%M%S")
 
 
 def output_redirect() -> None:
@@ -2664,3 +2668,274 @@ def reorganize_imports(import_code: str) -> str:
 
     # Combine import statements followed by from ... import statements
     return "\n".join(import_lines + from_import_lines)
+
+
+def get_module_attributes(code: str) -> List[str]:
+    """
+    Analyze Python code and return a list of all module-level attributes.
+
+    Args:
+        code (str): Python source code as a string
+
+    Returns:
+        List[str]: List of attribute names found at module level
+    """
+    try:
+        tree = ast.parse(code)
+        attributes = []
+
+        for node in tree.body:
+            if isinstance(node, ast.FunctionDef):
+                # Function definitions
+                attributes.append(node.name)
+            elif isinstance(node, ast.AsyncFunctionDef):
+                # Async function definitions
+                attributes.append(node.name)
+            elif isinstance(node, ast.ClassDef):
+                # Class definitions
+                attributes.append(node.name)
+            elif isinstance(node, ast.Assign):
+                # Variable assignments
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        attributes.append(target.id)
+            elif isinstance(node, ast.AnnAssign):
+                # Annotated assignments (e.g., x: int = 5)
+                if isinstance(node.target, ast.Name):
+                    attributes.append(node.target.id)
+            elif isinstance(node, ast.Import):
+                # Import statements (e.g., import os)
+                for alias in node.names:
+                    attributes.append(alias.asname or alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                # From imports (e.g., from os import path)
+                for alias in node.names:
+                    attributes.append(alias.asname or alias.name)
+            elif isinstance(node, ast.AugAssign):
+                # Augmented assignments (e.g., x += 1)
+                if isinstance(node.target, ast.Name):
+                    attributes.append(node.target.id)
+
+        return sorted(list(set(attributes)))  # Remove duplicates and sort
+
+    except SyntaxError as e:
+        raise ValueError(f"Invalid Python code: {e}")
+
+
+def get_used_symbols(code: str) -> Set[str]:
+    """
+    Extract all names used in the code (variables, functions, classes, etc.).
+
+    Args:
+        code (str): Python source code as a string
+
+    Returns:
+        Set[str]: Set of all symbol names used in the code
+    """
+    try:
+        tree = ast.parse(code)
+        used_symbols = set()
+
+        class NameVisitor(ast.NodeVisitor):
+            def visit_Name(self, node):
+                if isinstance(
+                    node.ctx, ast.Load
+                ):  # Only count when reading/using the name
+                    used_symbols.add(node.id)
+                self.generic_visit(node)
+
+            def visit_Attribute(self, node):
+                # Handle attribute access like module.function, object.method
+                if isinstance(node.value, ast.Name):
+                    used_symbols.add(node.value.id)
+                self.generic_visit(node)
+
+            def visit_Import(self, node):
+                for alias in node.names:
+                    used_symbols.add(alias.asname or alias.name)
+                self.generic_visit(node)
+
+            def visit_ImportFrom(self, node):
+                for alias in node.names:
+                    used_symbols.add(alias.asname or alias.name)
+                self.generic_visit(node)
+
+        visitor = NameVisitor()
+        visitor.visit(tree)
+        return used_symbols
+
+    except SyntaxError as e:
+        raise ValueError(f"Invalid Python code: {e}")
+
+
+def analyze_symbol_usage(source_file: str, target_file: str) -> Dict[str, List[str]]:
+    """
+    Analyze which symbols from source_file are used in target_file.
+
+    Args:
+        source_file (str): Path to the module providing symbols
+        target_file (str): Path to the module using symbols
+
+    Returns:
+        Dict[str, List[str]]: Dictionary with analysis results:
+            - 'defined_in_source': List of symbols defined in source file
+            - 'used_in_target': List of symbols used in target file
+            - 'used_from_source': List of symbols from source that are used in target
+            - 'unused_from_source': List of symbols from source that are NOT used in target
+    """
+
+    # Read and analyze both files
+    with open(source_file, "r", encoding="utf-8") as f:
+        source_code = f.read()
+
+    with open(target_file, "r", encoding="utf-8") as f:
+        target_code = f.read()
+
+    # Get symbols defined in source file
+    source_symbols = set(get_module_attributes(source_code))
+
+    # Get all symbols used in target file
+    target_used_symbols = get_used_symbols(target_code)
+
+    # Find intersection - symbols from source that are used in target
+    used_from_source = source_symbols.intersection(target_used_symbols)
+
+    # Find symbols from source that are NOT used in target
+    unused_from_source = source_symbols - target_used_symbols
+
+    return {
+        "defined_in_source": sorted(list(source_symbols)),
+        "used_in_target": sorted(list(target_used_symbols)),
+        "used_from_source": sorted(list(used_from_source)),
+        "unused_from_source": sorted(list(unused_from_source)),
+        "source_file": os.path.basename(source_file),
+        "target_file": os.path.basename(target_file),
+    }
+
+
+def print_symbol_analysis(results: Dict[str, List[str]]):
+    """
+    Pretty print the symbol usage analysis results.
+    """
+    print(f"Symbol Usage Analysis:")
+    print(f"Source: {results['source_file']} → Target: {results['target_file']}")
+    print("=" * 50)
+
+    print(f"\n📁 Defined in source ({len(results['defined_in_source'])}):")
+    for symbol in results["defined_in_source"]:
+        print(f"   {symbol}")
+
+    print(f"\n🔍 Used from source in target ({len(results['used_from_source'])}):")
+    for symbol in results["used_from_source"]:
+        print(f"   ✅ {symbol}")
+
+    print(f"\n🚫 Not used from source ({len(results['unused_from_source'])}):")
+    for symbol in results["unused_from_source"]:
+        print(f"   ❌ {symbol}")
+
+    usage_ratio = (
+        len(results["used_from_source"]) / len(results["defined_in_source"])
+        if results["defined_in_source"]
+        else 0
+    )
+    print(
+        f"\n📊 Usage ratio: {usage_ratio:.1%} ({len(results['used_from_source'])}/{len(results['defined_in_source'])})"
+    )
+
+
+def get_module_attributes_detailed(code: str) -> Dict[str, List[str]]:
+    """
+    Analyze Python code and return detailed information about module-level attributes.
+
+    Args:
+        code (str): Python source code as a string
+
+    Returns:
+        Dict[str, List[str]]: Dictionary with attribute types as keys and names as values
+    """
+    try:
+        tree = ast.parse(code)
+        result = {
+            "functions": [],
+            "async_functions": [],
+            "classes": [],
+            "variables": [],
+            "imports": [],
+            "constants": [],  # UPPER_CASE variables
+        }
+
+        for node in tree.body:
+            if isinstance(node, ast.FunctionDef):
+                result["functions"].append(node.name)
+            elif isinstance(node, ast.AsyncFunctionDef):
+                result["async_functions"].append(node.name)
+            elif isinstance(node, ast.ClassDef):
+                result["classes"].append(node.name)
+            elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                # Handle different types of assignments
+                if isinstance(node, ast.Assign):
+                    targets = node.targets
+                elif isinstance(node, ast.AnnAssign):
+                    targets = [node.target]
+                else:  # AugAssign
+                    targets = [node.target]
+
+                for target in targets:
+                    if isinstance(target, ast.Name):
+                        name = target.id
+                        result["variables"].append(name)
+                        # Check if it looks like a constant (UPPER_CASE)
+                        if name.isupper():
+                            result["constants"].append(name)
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                for alias in node.names:
+                    import_name = alias.asname or alias.name
+                    result["imports"].append(import_name)
+
+        # Remove duplicates from each category
+        for key in result:
+            result[key] = sorted(list(set(result[key])))
+
+        return result
+
+    except SyntaxError as e:
+        raise ValueError(f"Invalid Python code: {e}")
+
+
+def analyze_symbol_usage_detailed(source_file: str, target_file: str) -> Dict[str, any]:
+    """
+    Enhanced analysis with more detailed information about symbol usage.
+    """
+    results = analyze_symbol_usage(source_file, target_file)
+
+    # Read target file for context
+    with open(target_file, "r", encoding="utf-8") as f:
+        target_code = f.read()
+
+    # Find where each used symbol appears in target file
+    symbol_locations = {}
+    for symbol in results["used_from_source"]:
+        lines = []
+        for i, line in enumerate(target_code.splitlines(), 1):
+            if symbol in line and not line.strip().startswith("#"):
+                lines.append((i, line.strip()))
+        symbol_locations[symbol] = lines
+
+    results["symbol_locations"] = symbol_locations
+    return results
+
+
+def print_detailed_analysis(results: Dict[str, any], print_func: callable):
+    """
+    Print detailed analysis with line numbers.
+    """
+    print_symbol_analysis(results)
+
+    print_func(f"\n📍 Usage locations in target file:")
+    for symbol, locations in results["symbol_locations"].items():
+        if locations:
+            print_func(f"\n   {symbol}:")
+            for line_num, line_content in locations[:3]:  # Show first 3 occurrences
+                print_func(f"      Line {line_num}: {line_content}")
+            if len(locations) > 3:
+                print_func(f"      ... and {len(locations) - 3} more occurrences")

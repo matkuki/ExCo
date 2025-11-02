@@ -578,9 +578,7 @@ QTabBar::tab:selected {{
                 # Delay ensures cleanup completes before we move tabs around.
                 qt.QTimer.singleShot(50, lambda: self.drag_tab_in(source, index))
                 event.accept()
-                qt.QCoreApplication.processEvents()
                 self.update()
-                qt.QCoreApplication.processEvents()
                 TabWidget.drag_event_data = None
             else:
                 event.ignore()

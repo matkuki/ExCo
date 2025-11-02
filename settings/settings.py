@@ -12,6 +12,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import json
 import os
 import os.path
+import shutil
 import threading
 import traceback
 from collections import UserDict
@@ -19,7 +20,6 @@ from typing import Any, Callable, Dict, Union
 
 import data
 import filefunctions
-
 import functions
 import settings.constants
 import settings.functions
@@ -37,7 +37,13 @@ class SettingsManipulator:
     Object that will be used for saving, loading, ... all of the Ex.Co. settings
     """
 
-    error_lock = False
+    __error_lock: bool = False
+
+    def __error_check(self) -> None:
+        if self.__error_lock:
+            raise Exception("[Settings] An error occurred during loading of settings!")
+
+        return self.__error_lock
 
     def __init__(self):
         # Set the current active settings file path
@@ -162,6 +168,9 @@ class SettingsManipulator:
         return self.storage[name]
 
     def set(self, name: str, value: Any) -> None:
+        if self.__error_check():
+            return
+
         self.storage[name] = value
 
     def check_settings_file(self, settings_file_path: str):
@@ -177,8 +186,9 @@ class SettingsManipulator:
         """
         Update only the recent file list in settings file
         """
-        if self.error_lock == True:
+        if self.__error_check():
             return
+
         settings_data = functions.load_json_file(
             self.get("settings_filename_with_path")
         )
@@ -187,8 +197,9 @@ class SettingsManipulator:
         self.sessions.set_sessions(stored_sessions)
 
     def clear_recent_files(self):
-        if self.error_lock == True:
+        if self.__error_check():
             return
+
         settings_data = functions.load_json_file(
             self.get("settings_filename_with_path")
         )
@@ -221,22 +232,8 @@ class SettingsManipulator:
             return True
         except:
             traceback.print_exc()
-            # Set the default settings values
-            self.set("theme-name", "Air")
-            self.set("recent_files", [])
-            self.sessions.set_sessions(
-                {
-                    "main": {
-                        "name": "main",
-                        "chain": [],
-                        "groups": {},
-                        "sessions": {},
-                    }
-                }
-            )
-            self.set("context_menu_functions", {})
             # Set the error flag
-            self.error_lock = True
+            self.__error_lock = True
             # Return error
             return False
 
@@ -244,6 +241,9 @@ class SettingsManipulator:
         """
         Add a new file to the recent file list
         """
+        if self.__error_check():
+            return
+
         # Replace back-slashes to forward-slashes on Windows
         if data.platform == "Windows":
             new_file = new_file.replace("\\", "/")
@@ -269,6 +269,9 @@ class SettingsManipulator:
         self.update_recent_files()
 
     def save_last_layout(self, layout):
+        if self.__error_check():
+            return
+
         filepath = os.path.join(
             data.settings_directory, self.get("last-layout-filename")
         )
@@ -327,7 +330,7 @@ class Sessions:
     def set_sessions(self, new_sessions) -> None:
         self.__sessions = new_sessions
         self.store_sessions()
-        
+
     def store_sessions(self) -> None:
         self.__parent.set("stored_sessions", self.__sessions)
 
@@ -527,6 +530,14 @@ class SettingsStorage(UserDict):
         """
         self.__print(message)
 
+    def __backup_file(self) -> None:
+        # Create a copy of the settings file
+        settings_file = self.file_path
+        settings_copy = (
+            f"{settings_file}.{functions.get_default_datetime_formatted_string()}.bak"
+        )
+        shutil.copy(settings_file, settings_copy)
+
     def __load(self) -> None:
         """
         Loads settings from the JSON file. If the file doesn't exist or is invalid,
@@ -534,42 +545,60 @@ class SettingsStorage(UserDict):
         """
         if not os.path.exists(self.file_path):
             self.echo(
-                f"Settings file not found at '{self.file_path}'. Using default settings."
+                f"Settings file not found at '{self.file_path}'.\n"
+                "Using default settings.\n"
             )
             # Use the intelligent update to set defaults, enabling recursive merging
             # if default_settings contains nested dicts
-            self.data.clear() # Ensure data is empty before applying defaults
-            self.update(self.__default_settings, _initial_load=True) # Pass a flag to prevent saving here
+            self.data.clear()  # Ensure data is empty before applying defaults
+            self.update(
+                self.__default_settings, _initial_load=True
+            )  # Pass a flag to prevent saving here
             # The initial load ensures default settings are applied and saved if needed
-            if self.data != self.__default_settings: # Only save if something was actually changed/merged
+            if (
+                self.data != self.__default_settings
+            ):  # Only save if something was actually changed/merged
                 self.__save()
-            elif not os.path.exists(self.file_path): # Ensure a file is written if it truly didn't exist
-                 self.__save()
+            elif not os.path.exists(
+                self.file_path
+            ):  # Ensure a file is written if it truly didn't exist
+                self.__save()
             return
 
         try:
             with open(self.file_path, "r", encoding="utf-8") as f:
                 loaded_data = json.load(f)
                 # First, apply defaults. Then, apply loaded data on top, merging recursively.
-                self.data.clear() # Clear existing data to ensure defaults are the base
+                self.data.clear()  # Clear existing data to ensure defaults are the base
                 self.update(self.__default_settings, _initial_load=True)
-                self.update(loaded_data, _initial_load=True) # Merge loaded data
-                if self.data != loaded_data: # If merging changed something from purely loaded
-                    self.__save() # Save if the merge process modified something
-
+                self.update(loaded_data, _initial_load=True)  # Merge loaded data
+                if (
+                    self.data != loaded_data
+                ):  # If merging changed something from purely loaded
+                    self.__save()  # Save if the merge process modified something
         except json.JSONDecodeError:
             self.echo(
-                f"Error decoding JSON from '{self.file_path}'. File might be corrupted. "
-                f"Using default settings and overwriting the file."
+                f"Error decoding JSON from '{self.file_path}'.\n"
+                "File might be corrupted.\n"
+                f"Using default settings and overwriting the file.\n"
+                f"A backup copy will be created of the invalid file!\n"
             )
+
+            # Create a copy of the invalid settings file
+            self.__backup_file()
+
             self.data.clear()
             self.update(self.__default_settings, _initial_load=True)
             self.__save()
         except Exception as e:
             self.echo(
-                f"An unexpected error occurred while loading settings from '{self.file_path}': {e}. "
-                f"Using default settings."
+                f"An unexpected error occurred while loading settings from '{self.file_path}':\n  -> {e}.\n"
+                f"Using default settings.\n"
             )
+
+            # Create a copy of the invalid settings file
+            self.__backup_file()
+
             self.data.clear()
             self.update(self.__default_settings, _initial_load=True)
             self.__save()
@@ -590,20 +619,40 @@ class SettingsStorage(UserDict):
         Overrides the dictionary's __setitem__ method to save settings
         only if the value truly changes or it's a new key.
         If the value is a dictionary and the existing item is also a dictionary,
-        it performs a recursive update.
+        it performs a recursive update with deep change detection.
         """
         changed = False
 
-        if key in self.data and isinstance(self.data[key], dict) and isinstance(value, dict):
-            # If both old and new values are dictionaries, recursively update
-            self.echo(f"Setting '{key}' (nested dict) updated.")
-            self.data[key].update(value) # This will call the dict's own update, which is what we want
-            changed = True # Assume change, actual check might be deeper if we compare
+        if (
+            key in self.data
+            and isinstance(self.data[key], dict)
+            and isinstance(value, dict)
+        ):
+            # --- Deep Change Detection for Nested Dictionary ---
+
+            # 1. Capture the initial state of the nested dict
+            initial_nested_snapshot = json.dumps(self.data[key], sort_keys=True)
+
+            # 2. Perform the recursive update (modifies self.data[key] in-place)
+            self.data[key].update(value)
+
+            # 3. Capture the final state of the nested dict
+            final_nested_snapshot = json.dumps(self.data[key], sort_keys=True)
+
+            # 4. Compare snapshots to check for change
+            if final_nested_snapshot != initial_nested_snapshot:
+                self.echo(f"Setting '{key}' (nested dict) updated.")
+                changed = True
+            else:
+                # If the nested update did not result in a change, we exit the method
+                # early to prevent unnecessary saving.
+                return
+
         else:
-            # Standard set item, with change detection
+            # Standard set item, with simple change detection for non-dict values
             if key in self.data:
                 if self.data[key] == value:
-                    return # No change, no save
+                    return  # No change, no save
                 else:
                     self.echo(f"Setting '{key}' changed.")
                     changed = True
@@ -611,7 +660,8 @@ class SettingsStorage(UserDict):
                 self.echo(f"Setting '{key}' added.")
                 changed = True
 
-            super().__setitem__(key, value) # Perform the actual set operation
+            # Perform the actual set operation
+            super().__setitem__(key, value)
 
         if changed:
             self.__save()
@@ -622,11 +672,13 @@ class SettingsStorage(UserDict):
         only if the key-value pair was actually deleted.
         """
         if key in self.data:
-            self.echo(f"Setting '{key}' deleted.") # Message updated
+            self.echo(f"Setting '{key}' deleted.")  # Message updated
             super().__delitem__(key)
             self.__save()
         else:
-            self.echo(f"Attempted to delete non-existent setting '{key}'. No action, no save.")
+            self.echo(
+                f"Attempted to delete non-existent setting '{key}'. No action, no save."
+            )
             raise KeyError(f"'{key}' not found in settings.")
 
     def update(self, other=None, _initial_load=False, **kwargs) -> None:
@@ -634,41 +686,79 @@ class SettingsStorage(UserDict):
         Overrides the update method to save settings only if the data truly changes.
         If a value is a dictionary and the existing item is also a dictionary,
         it performs a recursive update.
-        Includes a private '_initial_load' flag to control saving behavior during __load.
+
+        The final JSON snapshot check ensures all changes, including those from
+        recursive dictionary updates, are accurately detected before saving.
         """
-        initial_data_snapshot = json.dumps(self.data, sort_keys=True) # Deep comparison check
+
+        # 1. Capture the initial state for the final deep comparison (to catch ALL changes)
+        initial_data_snapshot = json.dumps(self.data, sort_keys=True)
+
+        # --- Helper function for setting key/value and tracking changes ---
+        # NOTE: This helper is only for non-recursive assignments. It relies on
+        # the final JSON snapshot check for recursive changes.
+        def _set_item_and_check_change(key, value):
+            # Check if the key exists AND the value is different
+            if key in self.data and self.data[key] == value:
+                return  # Value is the same, do nothing
+
+            # Value is new or different, set it.
+            # We explicitly pass the class name 'SettingsStorage' to super()
+            # to resolve the nested function scope issue.
+            super(SettingsStorage, self).__setitem__(key, value)
+
+            # Since the value changed, we don't need a separate _changed flag
+            # here anymore, as the final JSON snapshot will capture this change too.
+            # The JSON comparison is the single source of truth for change detection.
 
         # Process 'other' if it's a dict or iterable of key-value pairs
         if other:
-            if hasattr(other, 'keys'): # It's a dict-like object
+            if hasattr(other, "keys"):  # It's a dict-like object
                 for key, value in other.items():
-                    if key in self.data and isinstance(self.data[key], dict) and isinstance(value, dict):
-                        # Recursive update for nested dictionaries
-                        self.data[key].update(value) # Let the dict handle its own update
-                    else:
-                        super().__setitem__(key, value) # Use super to avoid triggering __setitem__ here directly
-            else: # Assume iterable of (key, value) pairs
-                for key, value in other:
-                    if key in self.data and isinstance(self.data[key], dict) and isinstance(value, dict):
+                    if (
+                        key in self.data
+                        and isinstance(self.data[key], dict)
+                        and isinstance(value, dict)
+                    ):
+                        # Recursive update for nested dictionaries.
+                        # This update modifies self.data[key] in-place.
                         self.data[key].update(value)
+                        # NO _changed = True HERE! Rely on JSON comparison.
                     else:
-                        super().__setitem__(key, value)
+                        _set_item_and_check_change(key, value)
+            else:  # Assume iterable of (key, value) pairs
+                for key, value in other:
+                    if (
+                        key in self.data
+                        and isinstance(self.data[key], dict)
+                        and isinstance(value, dict)
+                    ):
+                        self.data[key].update(value)
+                        # NO _changed = True HERE! Rely on JSON comparison.
+                    else:
+                        _set_item_and_check_change(key, value)
 
         # Process kwargs
         for key, value in kwargs.items():
-            if key in self.data and isinstance(self.data[key], dict) and isinstance(value, dict):
+            if (
+                key in self.data
+                and isinstance(self.data[key], dict)
+                and isinstance(value, dict)
+            ):
                 # Recursive update for nested dictionaries
                 self.data[key].update(value)
+                # NO _changed = True HERE! Rely on JSON comparison.
             else:
-                super().__setitem__(key, value) # Use super to avoid triggering __setitem__ here directly
+                _set_item_and_check_change(key, value)
 
+        # 2. Capture the final state for the final deep comparison
         final_data_snapshot = json.dumps(self.data, sort_keys=True)
 
+        # 3. Final Check and Save
+        # The JSON comparison is now the ONLY check for any change (simple or deep).
         if final_data_snapshot != initial_data_snapshot:
-            if not _initial_load: # Only save if not called from __load during initial setup
+            if not _initial_load:  # Only save if not called from __load
                 self.__save()
-        # else: No message when no change occurs from update()
-
 
     def update_without_saving(self, other=None, **kwargs) -> None:
         """
@@ -684,7 +774,7 @@ class SettingsStorage(UserDict):
         """
         Overries the clear method to save settings only if there were items to clear.
         """
-        if self.data: # Only save if data was cleared
+        if self.data:  # Only save if data was cleared
             self.echo("All settings cleared.")
             super().clear()
             self.__save()
@@ -700,15 +790,19 @@ class SettingsStorage(UserDict):
         """
         if key not in self:
             self.echo(f"Setting default '{key}' applied.")
-            self[key] = value  # Use self[key] to trigger __setitem__ (which handles recursion)
+            self[key] = (
+                value  # Use self[key] to trigger __setitem__ (which handles recursion)
+            )
         elif isinstance(self.data.get(key), dict) and isinstance(value, dict):
             # If default is a dict and existing is a dict, attempt to merge
             initial_snapshot = json.dumps(self.data[key], sort_keys=True)
-            self.data[key].update(value) # This performs the merge
+            self.data[key].update(value)  # This performs the merge
             if json.dumps(self.data[key], sort_keys=True) != initial_snapshot:
                 self.echo(f"Setting default '{key}' (nested dict) merged.")
                 self.__save()
             else:
-                self.echo(f"Setting '{key}' already exists and merge resulted in no changes, default not applied.")
+                self.echo(
+                    f"Setting '{key}' already exists and merge resulted in no changes, default not applied."
+                )
         else:
             self.echo(f"Setting '{key}' already exists, default not applied.")

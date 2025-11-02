@@ -6,16 +6,16 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import itertools
 import os
 import re
-import itertools
-import qt
-import data
-import constants
-import components.actionfilter
-import interpreter
-import settings
 
+import components.actionfilter
+import constants
+import data
+import interpreter
+import qt
+import settings
 
 """
 -----------------------------
@@ -59,7 +59,9 @@ class ReplLineEdit(qt.QLineEdit):
         self.main_form = main_form
         # Set default font
         font = qt.QFont(
-            settings.get("current_font_name"), settings.get("current_font_size") + 2, qt.QFont.Weight.Bold
+            settings.get("current_font_name"),
+            settings.get("current_font_size") + 2,
+            qt.QFont.Weight.Bold,
         )
         self.setFont(font)
         # Set initial interpreter language

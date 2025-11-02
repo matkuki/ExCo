@@ -2,6 +2,7 @@
 Prettyfying functions
 """
 
+import collections
 import enum
 import html
 import html.parser
@@ -14,7 +15,7 @@ import sys
 import tempfile
 import xml.dom.minidom
 import xml.etree.ElementTree
-from typing import List, Optional, Tuple, Union
+from typing import *
 
 import autopep8
 import black
@@ -24,17 +25,68 @@ import ruff
 import yapf
 
 
-def pretty_print_json(input_string) -> str:
+def pretty_print_json(
+    input_string: str,
+    sort_keys: bool = True,
+    key_sort_function: Callable[[str], Any] = None,
+) -> str:
+    """
+    Pretty print JSON with optional key sorting.
+
+    Args:
+        input_string: JSON string to format
+        sort_keys: Whether to sort keys alphabetically
+        key_sort_function: Custom function for sorting keys
+                          (e.g., lambda x: x.lower() for case-insensitive sorting)
+
+    Returns:
+        Formatted JSON string
+    """
     try:
-        # Parse the input string to check if it's valid JSON
         json_object = json.loads(input_string)
     except json.JSONDecodeError as e:
-        # Raise an exception if the input is not valid JSON
         raise ValueError("Invalid JSON") from e
 
-    # Pretty print the JSON with an indentation level of 2
-    pretty_json = json.dumps(json_object, indent=2, ensure_ascii=False)
+    if sort_keys:
+        if key_sort_function:
+            sorted_object = sort_json_keys_custom(json_object, key_sort_function)
+        else:
+            sorted_object = sort_json_keys_recursive(json_object)
+    else:
+        sorted_object = json_object
+
+    pretty_json = json.dumps(sorted_object, indent=2, ensure_ascii=False)
     return pretty_json
+
+
+def sort_json_keys_recursive(obj):
+    """
+    Recursively sort JSON keys using OrderedDict for consistent ordering.
+    """
+    if isinstance(obj, dict):
+        return collections.OrderedDict(
+            (key, sort_json_keys_recursive(obj[key])) for key in sorted(obj.keys())
+        )
+    elif isinstance(obj, list):
+        return [sort_json_keys_recursive(item) for item in obj]
+    else:
+        return obj
+
+
+def sort_json_keys_custom(obj: Any, key_sort_function: Callable[[str], Any]) -> Any:
+    """
+    Recursively sort JSON keys using a custom sorting function.
+    """
+    if isinstance(obj, dict):
+        sorted_keys = sorted(obj.keys(), key=key_sort_function)
+        return {
+            key: sort_json_keys_custom(obj[key], key_sort_function)
+            for key in sorted_keys
+        }
+    elif isinstance(obj, list):
+        return [sort_json_keys_custom(item, key_sort_function) for item in obj]
+    else:
+        return obj
 
 
 def pretty_print_xml(input_string: str) -> str:

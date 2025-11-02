@@ -100,7 +100,6 @@ class TheBox(qt.QSplitter):
             tab_widget = tabwidget.TabWidget(self, self.main_form, self)
             tab_widget.setObjectName(box.generated_name + f".Tabs{tabs_number}")
             box.addWidget(tab_widget)
-        qt.QCoreApplication.processEvents()
         return box
 
     def add_tabs(self, index=None):
@@ -111,7 +110,6 @@ class TheBox(qt.QSplitter):
             self.insertWidget(index, tab_widget)
         else:
             self.addWidget(tab_widget)
-        qt.QCoreApplication.processEvents()
         return tab_widget
 
     def rename(self, new_name):
@@ -130,10 +128,8 @@ class TheBox(qt.QSplitter):
     def clear_all(self):
         for i in reversed(range(self.count())):
             self.widget(i).setParent(None)
-            qt.QCoreApplication.processEvents()
         for box in self.findChildren(TheBox):
             box.setParent(None)
-            qt.QCoreApplication.processEvents()
 
     def get_child_boxes(self):
         classes, inverted_classes = self.main_form.view.get_layout_classes()
@@ -219,7 +215,7 @@ class TheBox(qt.QSplitter):
         return children
 
     def update_style(self):
-        qt.QCoreApplication.processEvents()
+        pass
 
     """
     Overridden functions
