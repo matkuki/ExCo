@@ -17,7 +17,6 @@ import os
 import re
 import sys
 import traceback
-import threading
 from typing import Callable, Optional
 
 import codequality
@@ -4162,7 +4161,6 @@ class MainWindow(qt.QMainWindow):
         _parent = None
         __stored_layout_standard = None
         __stored_layout_one_window = None
-        _restore_lock = threading.Lock()
         # Default widths and heights of the windows
         vertical_width_1 = 2 / 3
         vertical_width_2 = 1 / 3
@@ -4756,172 +4754,170 @@ QSplitter::handle {{
             return json_layout
 
         def layout_restore(self, json_layout, pre_stored_widgets=None):
-            with self._restore_lock:
-                    
-                main_form = self._parent
-                main_form.display.repl_suppress()
-                # Class name storage
-                classes, inverted_classes = self.get_layout_classes()
-    
-                # First load the JSON layout, to see if it's valid
-                if isinstance(json_layout, str):
-                    layout = json.loads(json_layout)
-                else:
-                    layout = json_layout
-    
-                # Restore size
-                window_size = layout["WINDOW-SIZE"]
-                screen_size = functions.get_screen_size()
-                if window_size == "MAXIMIZED":
+            main_form = self._parent
+            main_form.display.repl_suppress()
+            # Class name storage
+            classes, inverted_classes = self.get_layout_classes()
+
+            # First load the JSON layout, to see if it's valid
+            if isinstance(json_layout, str):
+                layout = json.loads(json_layout)
+            else:
+                layout = json_layout
+
+            # Restore size
+            window_size = layout["WINDOW-SIZE"]
+            screen_size = functions.get_screen_size()
+            if window_size == "MAXIMIZED":
+                self._parent.showMaximized()
+            elif isinstance(window_size, tuple) or isinstance(window_size, list):
+                w, h = window_size
+                if w > screen_size[0] or h > screen_size[1]:
                     self._parent.showMaximized()
-                elif isinstance(window_size, tuple) or isinstance(window_size, list):
-                    w, h = window_size
-                    if w > screen_size[0] or h > screen_size[1]:
-                        self._parent.showMaximized()
-                    else:
-                        self._parent.resize(qt.QSize(int(w), int(h)))
-                        functions.center_to_current_screen(self._parent)
-    
-                main_box = self._parent.main_box
-                main_box.clear_all()
-    
-                def create_box(parent, box):
-                    for k, v in sorted(box.items()):
-                        if k.startswith("BOX"):
-                            orientation = qt.Qt.Orientation.Horizontal
-                            if k[-1] == "V":
-                                orientation = qt.Qt.Orientation.Vertical
-                            new_box = parent.add_box(orientation, add_tabs=False)
-                            new_box.show()
-                            for _k, _v in v.items():
-                                create_box(new_box, _v)
-                        elif k == "SIZES":
-                            new_box.setSizes(v)
-                        elif k.startswith("TABS"):
-                            new_tabs = parent.add_tabs()
-                            new_tabs.check_close_button()
-    
-                            if pre_stored_widgets:
-                                for key, class_string in v.items():
-                                    if isinstance(class_string, tuple) or isinstance(
-                                        class_string, list
-                                    ):
-                                        cls, tab_index, widget_data = class_string
-                                        number = widget_data[-1]
-                                        if number in pre_stored_widgets.keys():
-                                            wd = pre_stored_widgets[number]
-                                            w = wd["widget"]
-                                            new_tabs.addTab(w, wd["tab-text"])
-                                            if hasattr(w, "_parent"):
-                                                w._parent = new_tabs
-                                            elif hasattr(w, "parent") and not callable(
-                                                w.parent
-                                            ):
-                                                w.parent = new_tabs
-                                            w.internals.update_tab_widget(new_tabs)
-                                            w.internals.update_icon(w)
-                                            w.internals.update_corner_widget(w)
-                                continue
-    
-                            current_index = None
-                            tab_index = None
-                            widget_data = None
+                else:
+                    self._parent.resize(qt.QSize(int(w), int(h)))
+                    functions.center_to_current_screen(self._parent)
+
+            main_box = self._parent.main_box
+            main_box.clear_all()
+
+            def create_box(parent, box):
+                for k, v in sorted(box.items()):
+                    if k.startswith("BOX"):
+                        orientation = qt.Qt.Orientation.Horizontal
+                        if k[-1] == "V":
+                            orientation = qt.Qt.Orientation.Vertical
+                        new_box = parent.add_box(orientation, add_tabs=False)
+                        new_box.show()
+                        for _k, _v in v.items():
+                            create_box(new_box, _v)
+                    elif k == "SIZES":
+                        new_box.setSizes(v)
+                    elif k.startswith("TABS"):
+                        new_tabs = parent.add_tabs()
+                        new_tabs.check_close_button()
+
+                        if pre_stored_widgets:
                             for key, class_string in v.items():
-                                if key == "CURRENT-INDEX":
-                                    current_index = class_string
-                                    continue
-                                elif isinstance(class_string, str):
-                                    cls = class_string
-                                elif isinstance(class_string, tuple) or isinstance(
+                                if isinstance(class_string, tuple) or isinstance(
                                     class_string, list
                                 ):
                                     cls, tab_index, widget_data = class_string
-                                else:
-                                    self._parent.display.repl_display_error(
-                                        f"[LAYOUT] Unknown item 'class_string': {class_string.__class__}"
-                                    )
-                                    continue
-    
-                                if cls in classes.keys():
-                                    if cls == "CustomEditor":
-                                        file = key
-                                        if isinstance(class_string, tuple) or isinstance(
-                                            class_string, list
+                                    number = widget_data[-1]
+                                    if number in pre_stored_widgets.keys():
+                                        wd = pre_stored_widgets[number]
+                                        w = wd["widget"]
+                                        new_tabs.addTab(w, wd["tab-text"])
+                                        if hasattr(w, "_parent"):
+                                            w._parent = new_tabs
+                                        elif hasattr(w, "parent") and not callable(
+                                            w.parent
                                         ):
-                                            line, index, first_visible_line = widget_data[
-                                                :3
-                                            ]
-                                        widget = self._parent.open_file(
-                                            file, new_tabs, False
-                                        )
-                                        if tab_index is not None:
-                                            widget = new_tabs.widget(tab_index)
-                                            if widget is not None:
-                                                widget.setCursorPosition(line, index)
-                                                widget.setFirstVisibleLine(
-                                                    first_visible_line
-                                                )
-    
-                                    #                                elif cls == "Console":
-                                    #                                    new_tabs.console_add(key)
-    
-                                    elif cls == "TreeExplorer":
-                                        directory_path = widget_data[0]
-                                        if os.path.isdir(directory_path):
-                                            file_explorer = new_tabs.tree_add_tab(
-                                                constants.SpecialTabNames.FileExplorer.value,
-                                                TreeExplorer,
-                                            )
-                                            file_explorer.display_directory(directory_path)
-                                            file_explorer.open_file_signal.connect(
-                                                self._parent.open_file
-                                            )
-                                            file_explorer.open_file_hex_signal.connect(
-                                                self._parent.open_file_hex
-                                            )
-                                            file_explorer.internals.update_icon(
-                                                file_explorer
-                                            )
-    
-                                    elif cls == "HexView":
-                                        file_path = widget_data[0]
-                                        if os.path.isfile(file_path):
-                                            new_tabs.hexview_add(file_path)
-    
-                                    elif cls == "Terminal":
-                                        new_terminal = new_tabs.terminal_add()
-                                        working_path = widget_data[0]
-                                        if working_path is not None and os.path.isdir(
-                                            working_path
-                                        ):
-                                            new_terminal.set_cwd(working_path)
-    
-                                    elif cls == constants.SpecialTabNames.Messages.value:
-                                        self._parent.repl_messages_tab = (
-                                            new_tabs.plain_add_document(
-                                                constants.SpecialTabNames.Messages.value
-                                            )
-                                        )
-                                        rmt = self._parent.repl_messages_tab
-                                        rmt.internals.set_icon(
-                                            rmt, self._parent.display.repl_messages_icon
-                                        )
-                                else:
-                                    self._parent.display.repl_display_error(
-                                        f"Unknown tab type: {v}"
+                                            w.parent = new_tabs
+                                        w.internals.update_tab_widget(new_tabs)
+                                        w.internals.update_icon(w)
+                                        w.internals.update_corner_widget(w)
+                            continue
+
+                        current_index = None
+                        tab_index = None
+                        widget_data = None
+                        for key, class_string in v.items():
+                            if key == "CURRENT-INDEX":
+                                current_index = class_string
+                                continue
+                            elif isinstance(class_string, str):
+                                cls = class_string
+                            elif isinstance(class_string, tuple) or isinstance(
+                                class_string, list
+                            ):
+                                cls, tab_index, widget_data = class_string
+                            else:
+                                self._parent.display.repl_display_error(
+                                    f"[LAYOUT] Unknown item 'class_string': {class_string.__class__}"
+                                )
+                                continue
+
+                            if cls in classes.keys():
+                                if cls == "CustomEditor":
+                                    file = key
+                                    if isinstance(class_string, tuple) or isinstance(
+                                        class_string, list
+                                    ):
+                                        line, index, first_visible_line = widget_data[
+                                            :3
+                                        ]
+                                    widget = self._parent.open_file(
+                                        file, new_tabs, False
                                     )
-                            if current_index is not None:
-                                new_tabs.setCurrentIndex(current_index)
-                        else:
-                            self._parent.display.repl_display_error(
-                                "Unknown box child type: {}".format(k)
-                            )
-    
-                # Open the permanent items
-                for k, v in sorted(layout["BOXES"].items()):
-                    create_box(main_box, v)
-    
-                main_form.display.repl_unsuppress()
+                                    if tab_index is not None:
+                                        widget = new_tabs.widget(tab_index)
+                                        if widget is not None:
+                                            widget.setCursorPosition(line, index)
+                                            widget.setFirstVisibleLine(
+                                                first_visible_line
+                                            )
+
+                                #                                elif cls == "Console":
+                                #                                    new_tabs.console_add(key)
+
+                                elif cls == "TreeExplorer":
+                                    directory_path = widget_data[0]
+                                    if os.path.isdir(directory_path):
+                                        file_explorer = new_tabs.tree_add_tab(
+                                            constants.SpecialTabNames.FileExplorer.value,
+                                            TreeExplorer,
+                                        )
+                                        file_explorer.display_directory(directory_path)
+                                        file_explorer.open_file_signal.connect(
+                                            self._parent.open_file
+                                        )
+                                        file_explorer.open_file_hex_signal.connect(
+                                            self._parent.open_file_hex
+                                        )
+                                        file_explorer.internals.update_icon(
+                                            file_explorer
+                                        )
+
+                                elif cls == "HexView":
+                                    file_path = widget_data[0]
+                                    if os.path.isfile(file_path):
+                                        new_tabs.hexview_add(file_path)
+
+                                elif cls == "Terminal":
+                                    new_terminal = new_tabs.terminal_add()
+                                    working_path = widget_data[0]
+                                    if working_path is not None and os.path.isdir(
+                                        working_path
+                                    ):
+                                        new_terminal.set_cwd(working_path)
+
+                                elif cls == constants.SpecialTabNames.Messages.value:
+                                    self._parent.repl_messages_tab = (
+                                        new_tabs.plain_add_document(
+                                            constants.SpecialTabNames.Messages.value
+                                        )
+                                    )
+                                    rmt = self._parent.repl_messages_tab
+                                    rmt.internals.set_icon(
+                                        rmt, self._parent.display.repl_messages_icon
+                                    )
+                            else:
+                                self._parent.display.repl_display_error(
+                                    f"Unknown tab type: {v}"
+                                )
+                        if current_index is not None:
+                            new_tabs.setCurrentIndex(current_index)
+                    else:
+                        self._parent.display.repl_display_error(
+                            "Unknown box child type: {}".format(k)
+                        )
+
+            # Open the permanent items
+            for k, v in sorted(layout["BOXES"].items()):
+                create_box(main_box, v)
+
+            main_form.display.repl_unsuppress()
 
         def layout_save(self, *args, _async=True):
             def save(*args, **kwargs):
@@ -4932,20 +4928,19 @@ QSplitter::handle {{
                 except:
                     self._parent.display.repl_display_error(traceback.format_exc())
             
-            with self._restore_lock:
-                if _async:
-                    if not hasattr(self, "layout_save_timer"):
-                        # Create the layout save timer if it doesn't exist yet
-                        self.layout_save_timer = qt.QTimer(self._parent)
-                        self.layout_save_timer.setInterval(500)
-                        self.layout_save_timer.setSingleShot(True)
-                        self.layout_save_timer.timeout.connect(save)
-                    timer = self.layout_save_timer
-                    if timer.isActive():
-                        timer.stop()
-                    timer.start()
-                else:
-                    save()
+            if _async:
+                if not hasattr(self, "layout_save_timer"):
+                    # Create the layout save timer if it doesn't exist yet
+                    self.layout_save_timer = qt.QTimer(self._parent)
+                    self.layout_save_timer.setInterval(500)
+                    self.layout_save_timer.setSingleShot(True)
+                    self.layout_save_timer.timeout.connect(save)
+                timer = self.layout_save_timer
+                if timer.isActive():
+                    timer.stop()
+                timer.start()
+            else:
+                save()
 
         def check_layout_timer(self):
             if hasattr(self, "layout_save_timer"):
@@ -7046,14 +7041,13 @@ QSplitter::handle {{
                 case FileEvent.MODIFIED:
                     print(f"File modified: {source}")
                     if os.path.isfile(source):
-                        with self._parent.view._restore_lock:
-                            editors = self._parent.get_all_editors()
-                            for e in editors:
-                                if not os.path.isfile(e.save_path):
-                                    continue
-                                if os.path.samefile(e.save_path, source):
-                                    if e.modification_time != modification_time:
-                                        e.reload_file()
+                        editors = self._parent.get_all_editors()
+                        for e in editors:
+                            if not os.path.isfile(e.save_path):
+                                continue
+                            if os.path.samefile(e.save_path, source):
+                                if e.modification_time != modification_time:
+                                    e.reload_file()
 
                 case FileEvent.DELETED:
                     print(f"File deleted: {source}")
