@@ -2386,6 +2386,14 @@ class TreeExplorer(TreeDisplayBase):
         self.__file_watcher = qt.QFileSystemWatcher(self)
         self.__file_watcher.directoryChanged.connect(self.__directory_changed)
         self.__file_watcher.fileChanged.connect(self.__file_changed)
+        
+        # Searching / filtering initialization
+        # Proxy model for filtering
+        self.proxy_model = qt.QSortFilterProxyModel()
+        self.proxy_model.setSourceModel(self.model())
+        self.proxy_model.setFilterCaseSensitivity(qt.Qt.CaseSensitivity.CaseInsensitive)
+        self.proxy_model.setRecursiveFilteringEnabled(True)  # Crucial for tree filtering
+        self.setModel(self.proxy_model)
 
     @qt.pyqtSlot(str)
     def __directory_changed(self, path):

@@ -6,18 +6,20 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+import math
 import os
 import sys
-import math
-import time
 import threading
+import time
 import traceback
 
-import qt
-import data
-import constants
-import functions
 import components.internals
+import constants
+import data
+import functions
+import qt
+import settings
+
 import gui.menu
 import gui.stylesheets
 

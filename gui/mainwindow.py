@@ -879,7 +879,6 @@ class MainWindow(qt.QMainWindow):
 
         # File menu
         def construct_file_menu():
-            #            file_menu = self.menubar.addMenu("&File")
             file_menu = Menu("&File", self.menubar)
             self.menubar.addMenu(file_menu)
             file_menu.installEventFilter(click_filter)
@@ -3468,9 +3467,8 @@ class MainWindow(qt.QMainWindow):
         if isinstance(file, str) == True:
             if file != "":
                 new_tab = open_file_function(file, tab_widget)
-                qt.QCoreApplication.processEvents()
                 self.repaint()
-                qt.QCoreApplication.processEvents()
+                functions.process_events()
                 return new_tab
         elif isinstance(file, list) == True:
             tabs = []
@@ -3479,7 +3477,7 @@ class MainWindow(qt.QMainWindow):
                 tabs.append(new_tab)
                 self.repaint()
                 # Needed for every file opened to be visually updated clearly
-                qt.QCoreApplication.processEvents()
+                functions.process_events()
             return tabs
         else:
             self.display.repl_display_message(
@@ -4241,6 +4239,8 @@ class MainWindow(qt.QMainWindow):
 
             self.layout_restore(settings.constants.default_layout)
             self.check_all_close_buttons()
+            
+            functions.process_events()
 
         def show_about(self):
             """Show ExCo information"""
@@ -4537,11 +4537,9 @@ QSplitter::handle {{
             windows = self._parent.get_all_windows()
             for w in windows:
                 w.style().unpolish(w)
-                qt.QCoreApplication.processEvents()
                 w.style().polish(w)
-                qt.QCoreApplication.processEvents()
                 w.repaint()
-                qt.QCoreApplication.processEvents()
+                functions.process_events()
 
             data.signal_dispatcher.update_title.emit()
 
@@ -4857,9 +4855,6 @@ QSplitter::handle {{
                                             widget.setFirstVisibleLine(
                                                 first_visible_line
                                             )
-
-                                #                                elif cls == "Console":
-                                #                                    new_tabs.console_add(key)
 
                                 elif cls == "TreeExplorer":
                                     directory_path = widget_data[0]
