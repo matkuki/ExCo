@@ -27,7 +27,6 @@ import data
 import functions
 import qt
 import settings
-
 from gui.dialogs import *
 from gui.menu import *
 from gui.stylesheets import *
@@ -2386,13 +2385,15 @@ class TreeExplorer(TreeDisplayBase):
         self.__file_watcher = qt.QFileSystemWatcher(self)
         self.__file_watcher.directoryChanged.connect(self.__directory_changed)
         self.__file_watcher.fileChanged.connect(self.__file_changed)
-        
+
         # Searching / filtering initialization
         # Proxy model for filtering
         self.proxy_model = qt.QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model())
         self.proxy_model.setFilterCaseSensitivity(qt.Qt.CaseSensitivity.CaseInsensitive)
-        self.proxy_model.setRecursiveFilteringEnabled(True)  # Crucial for tree filtering
+        self.proxy_model.setRecursiveFilteringEnabled(
+            True
+        )  # Crucial for tree filtering
         self.setModel(self.proxy_model)
 
     @qt.pyqtSlot(str)
@@ -3100,7 +3101,17 @@ class TreeExplorer(TreeDisplayBase):
                     for it in self.iterate_items(root):
                         if it.text() == base_name:
                             self.setCurrentIndex(it.index())
-                            self.scrollTo(it.index())
+                            self.scrollTo(
+                                it.index(),
+                                qt.QAbstractItemView.ScrollHint.EnsureVisible,
+                            )
+                            qt.QTimer.singleShot(
+                                0,
+                                lambda: self.scrollTo(
+                                    it.index(),
+                                    qt.QAbstractItemView.ScrollHint.EnsureVisible,
+                                ),
+                            )
                 except:
                     traceback.print_exc()
         if item.attributes.itype == TreeExplorer.ItemType.FILE:
