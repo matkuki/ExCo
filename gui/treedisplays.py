@@ -2999,6 +2999,9 @@ class TreeExplorer(TreeDisplayBase):
                 TreeExplorer.ItemType.DIRECTORY,
             ]:
                 items.append(it.attributes)
+        if len(items) == 0:
+            self.main_form.display.repl_display_message("Nothing selected to cut!")
+            return
         TreeExplorer.cut_items = items
         TreeExplorer.copy_items = None
         self.main_form.display.repl_display_message("Cut items:")
@@ -3097,6 +3100,7 @@ class TreeExplorer(TreeDisplayBase):
                     for it in self.iterate_items(root):
                         if it.text() == base_name:
                             self.setCurrentIndex(it.index())
+                            self.scrollTo(it)
                 except:
                     traceback.print_exc()
         if item.attributes.itype == TreeExplorer.ItemType.FILE:
