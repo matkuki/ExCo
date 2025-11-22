@@ -2551,18 +2551,17 @@ class TreeExplorer(TreeDisplayBase):
             try:
                 os.rename(old_name, new_name)
                 item.attributes.path = new_name
-                self.main_form.display.repl_display_message(
+                self.main_form.display.repl_display_success(
                     "Renamed {}:\n    '{}'\n  to:\n    '{}'!".format(
                         item_text.lower(), old_name, new_name
-                    ),
-                    message_type=constants.MessageType.SUCCESS,
+                    )
                 )
             except:
-                self.main_form.display.repl_display_message(
+                self.main_form.display.repl_display_error(traceback.format_exc())
+                self.main_form.display.repl_display_error(
                     "Error while renaming {}: '{}'!".format(
                         item_text.lower(), item.attributes.path
-                    ),
-                    message_type=constants.MessageType.ERROR,
+                    )
                 )
                 self.display_directory(
                     self.current_viewed_directory, scroll_restore=False

@@ -19,21 +19,22 @@ import sys
 import traceback
 from typing import Callable, Optional
 
-import codequality
 import components.actionfilter
+import components.codequality
 import components.communicator
 import components.processcontroller
 import components.thesquid
 import constants
 import data
 import functions
-import gui.contextmenu
 import lexers
 import libraryfunctions
 import qt
 import settings
 import settings.constants
 from components.pathwatcher import FileEvent, PathWatcher
+
+import gui.contextmenu
 from gui.custombuttons import CustomButton
 from gui.customeditor import CustomEditor
 from gui.dialogs import (
@@ -1014,7 +1015,7 @@ class MainWindow(qt.QMainWindow):
                 "tango_icons/close-tab.png",
                 close_tab,
             )
-            
+
             # Close all
             close_all_action = create_action(
                 "Close All Tabs",
@@ -1023,7 +1024,7 @@ class MainWindow(qt.QMainWindow):
                 "tango_icons/close-all-tabs.png",
                 self.close_all_tabs,
             )
-            
+
             # Add recent file list in the file menu
             recent_file_list_menu = self.view.create_recent_file_list_menu()
             clear_recent_file_list_action = create_action(
@@ -1033,7 +1034,7 @@ class MainWindow(qt.QMainWindow):
                 "tango_icons/edit-clear.png",
                 self.view.clear_recent_file_list,
             )
-            
+
             # Add the actions to the File menu
             file_menu.addAction(new_file_action)
             file_menu.addAction(open_file_action)
@@ -2069,7 +2070,7 @@ class MainWindow(qt.QMainWindow):
                 "tango_icons/gnome-web-browser.png",
                 open_in_browser,
             )
-            
+
             def special_find_in():
                 # The second argument is raw, so that single backslashes work for windows paths
                 self.repl.setText(
@@ -2161,7 +2162,7 @@ class MainWindow(qt.QMainWindow):
             self.menubar_functions["special_replace_in_files_with_dialog"] = (
                 special_replace_in_files_with_dialog
             )
-            
+
             temp_string = "Find all the files in a directory/subdirectories "
             temp_string += "that have the search string in them and replace all "
             temp_string += "instances in the file with the replace string"
@@ -2172,7 +2173,7 @@ class MainWindow(qt.QMainWindow):
                 "tango_icons/system-replace-in-files.png",
                 special_replace_in_files,
             )
-            
+
             # Adding the edit menu and constructing all of the options
             edit_menu.addAction(find_action)
             edit_menu.addAction(regex_find_action)
@@ -2204,14 +2205,13 @@ class MainWindow(qt.QMainWindow):
             edit_menu.addAction(find_files_action)
             edit_menu.addAction(find_in_files_action)
             edit_menu.addAction(replace_in_files_action)
-            
 
         # System menu
         def construct_system_menu():
             system_menu = Menu("S&ystem", self.menubar)
             self.menubar.addMenu(system_menu)
             system_menu.installEventFilter(click_filter)
-            
+
             # Open the settings file
             def open_settings_file():
                 settings_file = settings.get("settings_filename_with_path")
@@ -2230,7 +2230,7 @@ class MainWindow(qt.QMainWindow):
                 "tango_icons/settings.png",
                 open_settings_file,
             )
-            
+
             # Add the editing option for the userfunctions file
             def open_user_func_file():
                 user_definitions_file = os.path.join(
@@ -2273,7 +2273,7 @@ class MainWindow(qt.QMainWindow):
                 "tango_icons/file-user-funcs-reload.png",
                 self.import_user_functions,
             )
-            
+
             # Open the REPL history file
             def open_repl_history():
                 user_repl_history_file = settings.get("repl_history_filename_with_path")
@@ -2293,7 +2293,7 @@ class MainWindow(qt.QMainWindow):
                 "tango_icons/repl-focus-single.png",
                 open_repl_history,
             )
-            
+
             # Special run command
             def special_run_command():
                 self.repl.setText('run("",show_console=True)')
@@ -3053,6 +3053,29 @@ class MainWindow(qt.QMainWindow):
                 format_zig,
             )
             formatting_menu_zip.addAction(format_zig_action)
+            
+            # Nim
+            formatting_menu_nim = formatting_menu.addMenu("Nim")
+            temp_icon = functions.create_icon("language_icons/logo_nim.png")
+            formatting_menu_nim.setIcon(temp_icon)
+
+            def format_nim():
+                try:
+                    self.tools.format_nim_file()
+                except:
+                    self.display.repl_display_error(traceback.format_exc())
+
+            format_nim_action = create_action(
+                "Format Nim code - entire file",
+                None,
+                (
+                    "Format Nim code in the entire selected document "
+                    "using the 'nph' command line formatter"
+                ),
+                "language_icons/logo_nim.png",
+                format_nim,
+            )
+            formatting_menu_nim.addAction(format_nim_action)
 
             # === Analyzing ===
             # Menu
@@ -3093,7 +3116,9 @@ class MainWindow(qt.QMainWindow):
             # Pretty print JSON
             def pretty_print_json():
                 try:
-                    self.tools.pretty_print_text(constants.FormatterType.JSON, sort_keys=False)
+                    self.tools.pretty_print_text(
+                        constants.FormatterType.JSON, sort_keys=False
+                    )
                 except:
                     self.display.repl_display_error(traceback.format_exc())
 
@@ -3105,10 +3130,12 @@ class MainWindow(qt.QMainWindow):
                 pretty_print_json,
             )
             pretty_print_menu.addAction(pretty_print_json_action)
-            
+
             def pretty_print_json_with_key_sorting():
                 try:
-                    self.tools.pretty_print_text(constants.FormatterType.JSON, sort_keys=True)
+                    self.tools.pretty_print_text(
+                        constants.FormatterType.JSON, sort_keys=True
+                    )
                 except:
                     self.display.repl_display_error(traceback.format_exc())
 
@@ -4239,7 +4266,7 @@ class MainWindow(qt.QMainWindow):
 
             self.layout_restore(settings.constants.default_layout)
             self.check_all_close_buttons()
-            
+
             functions.process_events()
 
         def show_about(self):
@@ -4922,7 +4949,7 @@ QSplitter::handle {{
                     self.layout_generate()
                 except:
                     self._parent.display.repl_display_error(traceback.format_exc())
-            
+
             if _async:
                 if not hasattr(self, "layout_save_timer"):
                     # Create the layout save timer if it doesn't exist yet
@@ -7069,16 +7096,20 @@ QSplitter::handle {{
                 return
 
             if _type == constants.FormatterType.JSON:
-                prettyfied_string = codequality.pretty_print_json(tab.text(), **kwargs)
+                prettyfied_string = components.codequality.pretty_print_json(
+                    tab.text(), **kwargs
+                )
             elif _type == constants.FormatterType.XML:
-                prettyfied_string = codequality.pretty_print_xml(tab.text(), **kwargs)
+                prettyfied_string = components.codequality.pretty_print_xml(
+                    tab.text(), **kwargs
+                )
             elif _type == constants.FormatterType.HTML_Python_Standard_Library:
-                prettyfied_string = codequality.pretty_print_html_python_stdlib(
-                    tab.text()
+                prettyfied_string = (
+                    components.codequality.pretty_print_html_python_stdlib(tab.text())
                 )
             elif _type == constants.FormatterType.HTML_BeautifulSoup:
                 prettyfied_string = (
-                    codequality.custom_format_html_document_beautifulsoup(
+                    components.codequality.custom_format_html_document_beautifulsoup(
                         tab.text(), **kwargs
                     )
                 )
@@ -7103,7 +7134,7 @@ QSplitter::handle {{
             cursor_line, cursor_index = tab.getCursorPosition()
             code = tab.text()
 
-            formatted_code = codequality.format_python_code(code, library)
+            formatted_code = components.codequality.format_python_code(code, library)
 
             tab.set_all_text(formatted_code)
 
@@ -7126,7 +7157,7 @@ QSplitter::handle {{
 
             code = tab.selectedText()
 
-            formatted_code = codequality.format_python_code(code, library)
+            formatted_code = components.codequality.format_python_code(code, library)
 
             tab.replaceSelectedText(formatted_code)
 
@@ -7146,7 +7177,7 @@ QSplitter::handle {{
             code = tab.text()
 
             if library == "clang-format":
-                formatted_code = codequality.format_clangformat_c_cpp(
+                formatted_code = components.codequality.format_clangformat_c_cpp(
                     source_code=code, style=style
                 )
 
@@ -7175,9 +7206,33 @@ QSplitter::handle {{
             cursor_line, cursor_index = tab.getCursorPosition()
             code = tab.text()
 
-            formatted_code = codequality.format_zig_code(zig_code_string=code)
+            formatted_code = components.codequality.format_zig_code(
+                zig_code_string=code
+            )
 
             tab.set_all_text(formatted_code)
+
+            tab.setCursorPosition(cursor_line, cursor_index)
+            tab.setFirstVisibleLine(first_line)
+        
+        def format_nim_file(
+            self,
+        ) -> None:
+            tab = self._parent.get_tab_by_indication()
+
+            if not hasattr(tab, "save_path"):
+                self._parent.display.repl_display_error(
+                    f"Indicated tab is not an editor! ('{tab.__class__.__name__}')"
+                )
+                return
+
+            first_line = tab.firstVisibleLine()
+            cursor_line, cursor_index = tab.getCursorPosition()
+            nim_file_path = tab.save_path
+
+            formatted_code = components.codequality.format_nim_file(
+                file_path=nim_file_path
+            )
 
             tab.setCursorPosition(cursor_line, cursor_index)
             tab.setFirstVisibleLine(first_line)
@@ -7194,8 +7249,8 @@ QSplitter::handle {{
             file_path = tab.save_path
 
             if library == "ruff":
-                exit_code, analysis_results_or_error = codequality.analyze_ruff_file(
-                    file_path
+                exit_code, analysis_results_or_error = (
+                    components.codequality.analyze_ruff_file(file_path)
                 )
                 if exit_code != 0:
                     self._parent.display.repl_display_message("Ruff results:")
@@ -7206,7 +7261,9 @@ QSplitter::handle {{
                     )
 
             elif library == "pyflakes":
-                exit_code, stdout, stderr = codequality.analyze_pyflakes_file(file_path)
+                exit_code, stdout, stderr = (
+                    components.codequality.analyze_pyflakes_file(file_path)
+                )
                 if exit_code != 0:
                     self._parent.display.repl_display_message("Pyflakes results:")
                     self._parent.display.repl_display_message(stdout)
