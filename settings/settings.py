@@ -250,7 +250,12 @@ class SettingsManipulator:
             ):
                 return
             # Remove the old file with the same name as the new file from the list
-            current_list.pop(self.get("recent_files").index(new_file))
+            try:
+                while True:
+                    pop_index = current_list.index(new_file)
+                    current_list.pop(pop_index)
+            except ValueError:
+                pass
             # Add the new file to the end of the list
             current_list.append(new_file)
         else:
