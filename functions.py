@@ -25,6 +25,7 @@ import time
 import traceback
 import webbrowser
 from typing import *
+from types import TracebackType
 
 import constants
 import data
@@ -2597,12 +2598,16 @@ def output_redirect() -> None:
     output_file: str = output_get_file()
 
     # Open file and redirect output
-    f = open(output_file, "w+", encoding="utf-8", newline="\n", errors="replace")
+    f: TextIOWrapper = open(
+        output_file, "w+", encoding="utf-8", newline="\n", errors="replace"
+    )
     sys.stdout = f
     sys.stderr = f
 
     # Adapt exception hook for all threads
-    def exception_hook(exctype, value, trace) -> None:
+    def exception_hook(
+        exctype: type, value: BaseException, trace: TracebackType
+    ) -> None:
         print("-" * 80)
         print(
             "".join(traceback.format_exception(exctype, value, trace)),
@@ -2610,7 +2615,12 @@ def output_redirect() -> None:
         )
         print("-" * 80)
         qt.QApplication.quit()
-        f.close()
+        # Close file properly
+        if hasattr(sys.stdout, "close"):
+            sys.stdout.close()
+        # Restore original streams before backup
+        sys.stdout = original_output_stream
+        sys.stderr = original_error_stream
         # Create backup with timestamp
         output_file_with_date: str = output_get_file_with_timestamp()
         shutil.copy(output_file, output_file_with_date)
@@ -2618,11 +2628,11 @@ def output_redirect() -> None:
     sys.excepthook = exception_hook
     init_original: Callable = threading.Thread.__init__
 
-    def init(self, *args, **kwargs) -> None:
+    def init(self: threading.Thread, *args: Any, **kwargs: Any) -> None:
         init_original(self, *args, **kwargs)
-        run_original = self.run
+        run_original: Callable = self.run
 
-        def run_with_except_hook(*args2, **kwargs2):
+        def run_with_except_hook(*args2: Any, **kwargs2: Any) -> None:
             try:
                 run_original(*args2, **kwargs2)
             except Exception:
@@ -2638,7 +2648,14 @@ def output_backup() -> None:
     output_file: str = output_get_file()
     # Create backup with timestamp
     output_file_with_date: str = output_get_file_with_timestamp()
-    shutil.copy(output_file, output_file_with_date)
+
+    # Check if the file exists and has content before copying
+    try:
+        if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+            shutil.copy(output_file, output_file_with_date)
+    except (OSError, IOError):
+        # Handle potential file access errors silently
+        traceback.print_exc()
 
 
 def reorganize_imports(import_code: str) -> str:
