@@ -56,26 +56,40 @@ def create_thread(func, *args):
 icon_cache = {}
 
 
-def create_icon(icon):
+def create_icon(icon: Union[qt.QPixmap, str]) -> qt.QIcon:
     """
     Function for initializing and returning an QIcon object
+
+    :param icon: Either a QPixmap object or a string file path.
+    :return: A QIcon object initialized from the input.
     """
     # Pixmap
     if isinstance(icon, qt.QPixmap):
-        new_icon = qt.QIcon(icon)
+        new_icon: qt.QIcon = qt.QIcon(icon)
     # Path
     elif isinstance(icon, str):
-        full_icon_path = unixify_join(data.resources_directory, icon)
+        full_icon_path: str = unixify_join(data.resources_directory, icon)
+
+        # Check cache
         if full_icon_path in icon_cache.keys():
-            cached_icon = icon_cache[full_icon_path]
+            # The cached_icon might be a QIcon or QPixmap depending on how
+            # the cache is managed, but we assume it can be used to construct a QIcon.
+            cached_icon: Any = icon_cache[full_icon_path]
             return qt.QIcon(cached_icon)
+
+        # Check file existence
         if not os.path.isfile(full_icon_path):
             raise Exception("Icon file doesn't exist: {}".format(full_icon_path))
+
+        # Initialize from path and cache it
         new_icon = qt.QIcon(full_icon_path)
         icon_cache[full_icon_path] = new_icon
     # Unknown
     else:
+        # This branch should technically be unreachable if type checking is used,
+        # but it remains for runtime safety and handles any unexpected object types.
         raise Exception("Unknown icon construction type: {}".format(icon))
+
     return new_icon
 
 
@@ -150,101 +164,86 @@ def ovarlay_images(base_path, overlay_path):
     return base_pixmap
 
 
-def get_language_file_icon(language_name):
+__LANGUAGE_ICON_MAP = {
+    # Primary names (lowercase, normalized)
+    "python": "language_icons/logo_python.png",
+    "cython": "language_icons/logo_cython.png",
+    "c": "language_icons/logo_c.png",
+    "awk": "language_icons/logo_awk.png",
+    "c++": "language_icons/logo_cpp.png",
+    "cpp": "language_icons/logo_cpp.png",  # alias
+    "c / c++": "language_icons/logo_c_cpp.png",
+    "cicode": "language_icons/logo_cicode.png",
+    "oberon / modula": "language_icons/logo_oberon.png",
+    "d": "language_icons/logo_d.png",
+    "nim": "language_icons/logo_nim.png",
+    "ada": "language_icons/logo_ada.png",
+    "cmake": "language_icons/logo_cmake.png",
+    "css": "language_icons/logo_css.png",
+    "html": "language_icons/logo_html.png",
+    "json": "language_icons/logo_json.png",
+    "lua": "language_icons/logo_lua.png",
+    "matlab": "language_icons/logo_matlab.png",
+    "perl": "language_icons/logo_perl.png",
+    "ruby": "language_icons/logo_ruby.png",
+    "tcl": "language_icons/logo_tcl.png",
+    "tex": "language_icons/logo_tex.png",
+    "idl": "language_icons/logo_idl.png",
+    "bash": "language_icons/logo_bash.png",
+    "batch": "language_icons/logo_batch.png",
+    "fortran": "language_icons/logo_fortran.png",
+    "fortran77": "language_icons/logo_fortran77.png",
+    "coffeescript": "language_icons/logo_coffeescript.png",
+    "c#": "language_icons/logo_csharp.png",
+    "csharp": "language_icons/logo_csharp.png",  # alias
+    "cs": "language_icons/logo_csharp.png",  # another alias
+    "java": "language_icons/logo_java.png",
+    "javascript": "language_icons/logo_javascript.png",
+    "js": "language_icons/logo_javascript.png",  # alias
+    "makefile": "language_icons/logo_makefile.png",
+    "octave": "language_icons/logo_octave.png",
+    "pascal": "language_icons/logo_pascal.png",
+    "postscript": "language_icons/logo_postscript.png",
+    "routeros": "language_icons/logo_routeros.png",
+    "spice": "language_icons/logo_spice.png",
+    "sql": "language_icons/logo_sql.png",
+    "verilog": "language_icons/logo_verilog.png",
+    "vhdl": "language_icons/logo_vhdl.png",
+    "xml": "language_icons/logo_xml.png",
+    "yaml": "language_icons/logo_yaml.png",
+    "zig": "language_icons/logo_zig.png",
+    # Generic configs/data
+    "ini": "tango_icons/document-properties.png",
+    # Fallbacks
+    "text": "tango_icons/text-x-generic.png",
+}
+
+# Default fallback icon
+__FALLBACK_ICON = "tango_icons/file.png"
+
+
+def get_language_file_icon(language_name: str) -> str:
     """
-    Function for getting the programming language icon from the language name
+    Get the appropriate icon path for a given programming language name.
+
+    Normalizes input (case-insensitive, strips whitespace), supports aliases,
+    and falls back to a generic file icon if unknown.
+
+    Args:
+        language_name: Name of the programming language (e.g., 'Python', 'C++').
+
+    Returns:
+        Path to the icon file (string).
     """
-    language_name = language_name.lower()
-    if language_name == "python":
-        return create_icon("language_icons/logo_python.png")
-    elif language_name == "cython":
-        return create_icon("language_icons/logo_cython.png")
-    elif language_name == "c":
-        return create_icon("language_icons/logo_c.png")
-    elif language_name == "awk":
-        return create_icon("language_icons/logo_awk.png")
-    elif language_name == "c++":
-        return create_icon("language_icons/logo_cpp.png")
-    elif language_name == "c / c++":
-        return create_icon("language_icons/logo_c_cpp.png")
-    elif language_name == "cicode":
-        return create_icon("language_icons/logo_cicode.png")
-    elif language_name == "oberon / modula":
-        return create_icon("language_icons/logo_oberon.png")
-    elif language_name == "d":
-        return create_icon("language_icons/logo_d.png")
-    elif language_name == "nim":
-        return create_icon("language_icons/logo_nim.png")
-    elif language_name == "ada":
-        return create_icon("language_icons/logo_ada.png")
-    elif language_name == "cmake":
-        return create_icon("language_icons/logo_cmake.png")
-    elif language_name == "css":
-        return create_icon("language_icons/logo_css.png")
-    elif language_name == "html":
-        return create_icon("language_icons/logo_html.png")
-    elif language_name == "json":
-        return create_icon("language_icons/logo_json.png")
-    elif language_name == "lua":
-        return create_icon("language_icons/logo_lua.png")
-    elif language_name == "matlab":
-        return create_icon("language_icons/logo_matlab.png")
-    elif language_name == "perl":
-        return create_icon("language_icons/logo_perl.png")
-    elif language_name == "ruby":
-        return create_icon("language_icons/logo_ruby.png")
-    elif language_name == "tcl":
-        return create_icon("language_icons/logo_tcl.png")
-    elif language_name == "tex":
-        return create_icon("language_icons/logo_tex.png")
-    elif language_name == "idl":
-        return create_icon("language_icons/logo_idl.png")
-    elif language_name == "bash":
-        return create_icon("language_icons/logo_bash.png")
-    elif language_name == "batch":
-        return create_icon("language_icons/logo_batch.png")
-    elif language_name == "fortran":
-        return create_icon("language_icons/logo_fortran.png")
-    elif language_name == "fortran77":
-        return create_icon("language_icons/logo_fortran77.png")
-    elif language_name == "ini" or language_name == "makefile":
-        return create_icon("tango_icons/document-properties.png")
-    elif language_name == "coffeescript":
-        return create_icon("language_icons/logo_coffeescript.png")
-    elif language_name == "c#":
-        return create_icon("language_icons/logo_csharp.png")
-    elif language_name == "java":
-        return create_icon("language_icons/logo_java.png")
-    elif language_name == "javascript":
-        return create_icon("language_icons/logo_javascript.png")
-    elif language_name == "makefile":
-        return create_icon("language_icons/logo_makefile.png")
-    elif language_name == "octave":
-        return create_icon("language_icons/logo_octave.png")
-    elif language_name == "pascal":
-        return create_icon("language_icons/logo_pascal.png")
-    elif language_name == "postscript":
-        return create_icon("language_icons/logo_postscript.png")
-    elif language_name == "routeros":
-        return create_icon("language_icons/logo_routeros.png")
-    elif language_name == "spice":
-        return create_icon("language_icons/logo_spice.png")
-    elif language_name == "sql":
-        return create_icon("language_icons/logo_sql.png")
-    elif language_name == "verilog":
-        return create_icon("language_icons/logo_verilog.png")
-    elif language_name == "vhdl":
-        return create_icon("language_icons/logo_vhdl.png")
-    elif language_name == "xml":
-        return create_icon("language_icons/logo_xml.png")
-    elif language_name == "yaml":
-        return create_icon("language_icons/logo_yaml.png")
-    elif language_name == "zig":
-        return create_icon("language_icons/logo_zig.png")
-    elif language_name == "text":
-        return create_icon("tango_icons/text-x-generic.png")
-    else:
-        return create_icon("tango_icons/file.png")
+    if not isinstance(language_name, str):
+        language_name = str(language_name)
+
+    # Normalize: lowercase, strip, and replace common variants
+    key = language_name.strip().lower()
+
+    # Look up; fallback to default
+    icon_path = __LANGUAGE_ICON_MAP.get(key, __FALLBACK_ICON)
+    return create_icon(icon_path)
 
 
 def create_language_document_icon_from_path(path, check_content=True):

@@ -134,7 +134,7 @@ class MainWindow(qt.QMainWindow):
     save_state = False
     # Supported Ex.Co. file extension types
     exco_file_exts = []
-    for k, v in data.supported_file_extentions.items():
+    for k, v in constants.supported_file_extentions.items():
         exco_file_exts.extend(["*" + x for x in v])
     # Dictionary for storing the menubar special functions
     menubar_functions = {}
@@ -1878,9 +1878,9 @@ class MainWindow(qt.QMainWindow):
                     )
 
             node_tree_action = create_action(
-                "Create/reload node tree (C / Nim / Python3)",
+                "Create/reload node tree (C / Nim / Python / ...)",
                 settings.get("keyboard-shortcuts")["general"]["node_tree"],
-                "Create a node tree for the code for the currently selected document (C / Nim / Python3)",
+                "Create a node tree for the code for the currently selected document (C / Nim / Python / ...)",
                 "tango_icons/edit-node-tree.png",
                 create_node_tree,
             )
@@ -5953,10 +5953,14 @@ QSplitter::handle {{
                         "PYTHON",
                     )
             elif parser == "NIM":
+#                # Get all the file information
+#                nim_nodes = functions.get_nim_node_tree(custom_editor.text())
+#                # Display the information in the tree tab
+#                parent.node_tree_tab.display_nim_nodes(custom_editor, nim_nodes)
                 # Get all the file information
-                nim_nodes = functions.get_nim_node_tree(custom_editor.text())
+                nim_nodes = components.codequality.parse_nim_file(custom_editor.save_path)
                 # Display the information in the tree tab
-                parent.node_tree_tab.display_nim_nodes(custom_editor, nim_nodes)
+                parent.node_tree_tab.display_nim_nodes_new(custom_editor, nim_nodes)
             elif parser in (
                 "C",
                 "C++",

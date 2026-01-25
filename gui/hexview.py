@@ -236,10 +236,11 @@ class HexTableModel(qt.QAbstractTableModel):
     def __init__(self, row_data, parent=None):
         super().__init__(parent)
         self.__row_data = row_data
-        self.__last_index = len(row_data[0]) - 1
-        self.__headers = {0: "Address", self.__last_index: "ASCII"}
-        for i in range(len(row_data[0]) - 2):
-            self.__headers[i + 1] = "{:02x}".format(i)
+        if (row_data is not None) and (len(row_data) > 0):
+            self.__last_index = len(row_data[0]) - 1
+            self.__headers = {0: "Address", self.__last_index: "ASCII"}
+            for i in range(len(row_data[0]) - 2):
+                self.__headers[i + 1] = "{:02x}".format(i)
 
     def rowCount(self, parent=None):
         return len(self.__row_data)

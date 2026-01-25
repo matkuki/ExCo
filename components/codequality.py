@@ -11,6 +11,7 @@ import io
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,7 @@ from typing import *
 import autopep8
 import black
 import bs4
+import data
 import isort
 import ruff
 import yapf
@@ -728,3 +730,105 @@ def analyze_pyflakes_file(
         raise Exception(
             f"An unexpected error occurred while running pyflakes on file '{file_path}': {e}"
         )
+
+
+def parse_nim_tags(text: str) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Parse ctags text and return a dictionary mapping 'kind' values to a list of dictionaries.
+
+    Args:
+        text: The input text containing ctags data
+
+    Returns:
+        Dictionary where keys are 'kind' values and values are lists of dictionaries
+        containing 'kind' (str) and 'line' (int) keys, plus the tag name as 'name'
+    """
+    result: Dict[str, List[Dict[str, Any]]] = {}
+
+    for line in text.strip().splitlines():
+        # Skip lines starting with '!_' (metadata lines)
+        if line.startswith("!_"):
+            continue
+
+        # Split by tabs
+        parts: List[str] = line.split("\t")
+
+        if len(parts) < 3:  # Need at least tag, file, address
+            continue
+
+        # First item is the tag name (function/variable name)
+        tag_name: str = parts[0]
+
+        # Initialize values to extract
+        kind: Optional[str] = None
+        line_number: Optional[int] = None
+
+        # Look for kind and line fields starting from the 4th part
+        for i in range(3, len(parts)):
+            if parts[i].startswith("kind:"):
+                kind = parts[i][5:]  # Skip 'kind:' prefix
+            elif parts[i].startswith("line:"):
+                try:
+                    line_number = int(parts[i][5:])  # Skip 'line:' prefix
+                except ValueError:
+                    line_number = None
+
+        # If we found a kind, add to dictionary
+        if kind and line_number is not None:
+            # Create the dictionary entry
+            tag_dict: Dict[str, Any] = {
+                "name": tag_name,
+                "kind": kind,
+                "line": line_number,
+            }
+
+            # Add to result dictionary
+            if kind not in result:
+                result[kind] = []
+            result[kind].append(tag_dict)
+
+    return result
+
+
+def parse_nim_file(file_path: str) -> Dict[str, List[Dict[str, Any]]]:
+    try:
+        command: list[str] = ["ntagger", "--private", file_path]
+
+        programs_path = os.path.normpath(
+            os.path.join(data.resources_directory, "programs")
+        )
+        os.environ["PATH"] = programs_path + os.pathsep + os.environ.get("PATH", "")
+
+        result: subprocess.CompletedProcess[str] = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=True,
+            encoding="utf-8",
+        )
+
+        # The formatted output is in stdout
+        return parse_nim_tags(result.stdout.strip())
+
+    except FileNotFoundError:
+        # This occurs if the 'ntagger' executable is not found in PATH
+        raise FileNotFoundError(
+            "The 'ntagger' executable was not found. "
+            "Please ensure 'ntagger' is in your system's PATH."
+        )
+    except subprocess.CalledProcessError as e:
+        error_message: str = f"Nim parsing failed with exit code {e.returncode}:\n"
+        if e.stdout:
+            error_message += f"STDOUT:\n{e.stdout}\n"
+        if e.stderr:
+            error_message += f"STDERR:\n{e.stderr}\n"
+        # Re-raise the original exception with potentially more context
+        raise subprocess.CalledProcessError(
+            returncode=e.returncode,
+            cmd=e.cmd,
+            output=e.output,  # Use e.output for combined stdout/stderr if available, or e.stdout
+            stderr=e.stderr,  # Explicitly pass stderr
+        ) from e
+    except Exception as e:
+        # Catch any other unexpected exceptions
+        raise Exception(f"An unexpected error occurred while parsing Nim code: {e}")

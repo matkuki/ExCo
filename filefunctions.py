@@ -7,13 +7,14 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import codecs
+import itertools
 import json
 import locale
 import os
 import pathlib
 import re
-import itertools
 
+import constants
 import data
 
 

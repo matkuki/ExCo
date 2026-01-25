@@ -30,8 +30,6 @@ def set_font(lexer, style_name, style_options):
     weight = qt.QFont.Weight.Normal
     if style_options["bold"]:
         weight = qt.QFont.Weight.Bold
-    # elif bold == 2:
-    #     weight = qt.QFont.Weight.Black
     lexer.setFont(
         qt.QFont(
             settings.get("current_editor_font_name"),
@@ -50,7 +48,6 @@ def get_lexer_from_file_type(file_type):
             lexer = lexers.CustomPython()
         else:
             lexer = lexers.Python()
-    #        lexer = lexers.treesitterpython.TreeSitterPython("Python", "python")
     elif file_type == "cython":
         lexer = lexers.Cython()
     elif file_type == "c":
