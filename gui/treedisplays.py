@@ -1171,28 +1171,29 @@ class TreeDisplay(qt.QTreeView):
         # Resize the header so the horizontal scrollbar will have the correct width
         self.resize_horizontal_scrollbar()
 
-    def display_nim_nodes_new(self, custom_editor: "CustomEditor", 
-                              nim_nodes: Dict[str, List[Dict[str, Any]]]) -> None:
+    def display_nim_nodes_new(
+        self, custom_editor: "CustomEditor", nim_nodes: Dict[str, List[Dict[str, Any]]]
+    ) -> None:
         """Display the Nim nodes in a tree structure."""
         # Store the custom editor tab for quicker navigation
         self.bound_tab: "CustomEditor" = custom_editor
         self.set_display_type(constants.TreeDisplayType.NODES)
-        
+
         # Initialize UI settings
         self.setSelectionBehavior(qt.QAbstractItemView.SelectionBehavior.SelectRows)
         self.setUniformRowHeights(True)
         self.header().hide()
-        
+
         # Create model and clear previous content
         tree_model: qt.QStandardItemModel = qt.QStandardItemModel()
         self.clean_model()
         self.setModel(tree_model)
-        
+
         # Cache theme and font settings
         theme: Dict[str, Any] = settings.get_theme()
         font_name: str = settings.get("current_font_name")
         font_size: int = settings.get("current_font_size")
-        
+
         # Create description styling (reused for header items)
         description_brush: qt.QBrush = qt.QBrush(
             qt.QColor(theme["fonts"]["keyword"]["color"])
@@ -1200,73 +1201,70 @@ class TreeDisplay(qt.QTreeView):
         description_font: qt.QFont = qt.QFont(
             font_name, font_size, qt.QFont.Weight.Bold
         )
-        
+
         # Add document header
         document_name: str = os.path.basename(custom_editor.save_path)
         document_name_text: str = f"DOCUMENT: {document_name}"
         document_type_text: str = f"TYPE: {custom_editor.current_file_type}"
-        
+
         item_document_name: qt.QStandardItem = qt.QStandardItem(document_name_text)
         item_document_name.setEditable(False)
         item_document_name.setForeground(description_brush)
         item_document_name.setFont(description_font)
         item_document_name.setIcon(self.file_icon)
-        
+
         item_document_type: qt.QStandardItem = qt.QStandardItem(document_type_text)
         item_document_type.setEditable(False)
         item_document_type.setForeground(description_brush)
         item_document_type.setFont(description_font)
         item_document_type.setIcon(self.nim_icon)
-        
+
         tree_model.appendRow(item_document_name)
         tree_model.appendRow(item_document_type)
-        
+
         # Add nodes section if there are any nodes
         if nim_nodes:
             # Create label styling for node categories
             label_brush: qt.QBrush = qt.QBrush(
                 qt.QColor(theme["fonts"]["singlequotedstring"]["color"])
             )
-            label_font: qt.QFont = qt.QFont(
-                font_name, font_size, qt.QFont.Weight.Bold
-            )
-            
+            label_font: qt.QFont = qt.QFont(font_name, font_size, qt.QFont.Weight.Bold)
+
             # Sort node types alphabetically for consistent display
             sorted_node_types: List[str] = sorted(nim_nodes.keys())
-            
+
             for node_type in sorted_node_types:
                 type_nodes: List[Dict[str, Any]] = nim_nodes[node_type]
                 if not type_nodes:
                     continue
-                
+
                 # Create parent item for this node type
                 parent_item: qt.QStandardItem = qt.QStandardItem(f"{node_type}:")
                 parent_item.setEditable(False)
                 parent_item.setForeground(label_brush)
                 parent_item.setFont(label_font)
                 tree_model.appendRow(parent_item)
-                
+
                 # Sort nodes by name (case-insensitive) and add as children
                 sorted_nodes: List[Dict[str, Any]] = sorted(
-                    type_nodes, 
-                    key=lambda x: x["name"].lower()
+                    type_nodes, key=lambda x: x["name"].lower()
                 )
-                
+
                 for node in sorted_nodes:
                     child_item: qt.QStandardItem = qt.QStandardItem(node["name"])
                     child_item.setEditable(False)
-                    
+
                     # Add line number as custom attribute
                     if "line" in node:
                         child_item.line_number = node["line"]  # type: ignore[attr-defined]
-                    
+
                     # Set icon based on node type
                     icon: Optional[qt.QIcon] = self.get_node_icon(node_type)
                     if icon:
                         child_item.setIcon(icon)
-                    
+
                     parent_item.appendRow(child_item)
-        
+
         # Expand all nodes for better visibility
         self.expandAll()
 
@@ -2762,9 +2760,7 @@ class TreeExplorer(TreeDisplayBase):
                     else:
                         subprocess.call(["xdg-open", item.attributes.path])
                 except:
-                    self.main_form.display.repl_display_error(
-                        traceback.format_exc()
-                    )
+                    self.main_form.display.repl_display_error(traceback.format_exc())
 
             if item.attributes.itype == TreeExplorer.ItemType.FILE:
                 action_open_system = qt.QAction("Open with system", self.tree_menu)
@@ -3182,6 +3178,17 @@ class TreeExplorer(TreeDisplayBase):
     def __item_double_click(self, model_index):
         self.__open_items(model_index)
 
+    def scroll_and_ensure_item_visible(self, item: qt.QStandardItem) -> None:
+        """Scroll the tree view to ensure the given item is visible.
+
+        Args:
+            item: The QStandardItem to scroll into view.
+        """
+        self.scrollTo(
+            item.index(),
+            qt.QAbstractItemView.ScrollHint.EnsureVisible,
+        )
+
     def open_item(self, item):
         if hasattr(item, "attributes") == False:
             index = item.index()
@@ -3207,17 +3214,11 @@ class TreeExplorer(TreeDisplayBase):
                     for it in self.iterate_items(root):
                         if it.text() == base_name:
                             self.setCurrentIndex(it.index())
-                            self.scrollTo(
-                                it.index(),
-                                qt.QAbstractItemView.ScrollHint.EnsureVisible,
-                            )
+                            # Run the view update code asynchronously
                             qt.QTimer.singleShot(
-                                0,
-                                lambda: self.scrollTo(
-                                    it.index(),
-                                    qt.QAbstractItemView.ScrollHint.EnsureVisible,
-                                ),
+                                0, lambda: self.scroll_and_ensure_item_visible(it)
                             )
+                            break
                 except:
                     traceback.print_exc()
         if item.attributes.itype == TreeExplorer.ItemType.FILE:
@@ -3368,9 +3369,11 @@ class TreeExplorer(TreeDisplayBase):
         tree_model.itemChanged.connect(self.__item_changed)
         # Expand the base item
         self.expand(base_item.index())
+        # Make sure the base item is visible
+        self.scroll_and_ensure_item_visible(base_item)
 
         # Restore scroll position
-        if scroll_restore is not None:
+        if scroll_restore:
 
             def __scroll_restore():
                 x, y = scroll_position
