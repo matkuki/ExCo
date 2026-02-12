@@ -119,6 +119,8 @@ def get_lexer_from_file_type(file_type):
         lexer = lexers.YAML()
     elif file_type == "zig":
         lexer = lexers.Zig()
+    elif file_type == "rust":
+        lexer = lexers.Rust()
     else:
         # No lexer was chosen, set file type to text and lexer to plain text
         current_file_type = "TEXT"
@@ -199,6 +201,8 @@ def get_comment_style_for_lexer(lexer):
         comment_string = "/*"
         end_comment_string = "*/"
     elif isinstance(lexer, lexers.Zig):
+        comment_string = "//"
+    elif isinstance(lexer, lexers.Rust):
         comment_string = "//"
     # Save the comment options to the lexer
     return (open_close_comment_style, comment_string, end_comment_string)

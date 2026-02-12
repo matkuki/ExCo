@@ -213,6 +213,7 @@ __LANGUAGE_ICON_MAP = {
     "xml": "language_icons/logo_xml.png",
     "yaml": "language_icons/logo_yaml.png",
     "zig": "language_icons/logo_zig.png",
+    "rust": "language_icons/logo_rust.png",
     # Generic configs/data
     "ini": "tango_icons/document-properties.png",
     # Fallbacks
