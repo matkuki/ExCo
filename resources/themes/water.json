@@ -12,6 +12,16 @@
     "foreground": "#ff4096bf"
   },
   "fonts": {
+    "lifetime": {
+      "color": "#ff007f7f",
+      "bold": false,
+      "background": "#ff112435"
+    },
+    "macro": {
+      "color": "#ff7f00ff",
+      "bold": false,
+      "background": "#ff112435"
+    },
     "array": {
       "color": "#ffffffff",
       "bold": false,

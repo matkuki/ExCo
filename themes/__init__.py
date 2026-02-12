@@ -1288,6 +1288,16 @@ def __check(theme_data):
                 "bold": __check_bool,
                 "background": __check_color,
             },
+            "lifetime": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "macro": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
             "mediarule": {
                 "color": __check_color,
                 "bold": __check_bool,
