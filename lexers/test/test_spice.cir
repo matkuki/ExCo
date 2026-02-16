@@ -1,0 +1,38 @@
+* Spice test file for lexer testing
+
+* Comments
+* This is a comment
+
+* Title
+.title Test Circuit
+
+* Resistor
+R1 1 2 1k
+
+* Capacitor
+C1 2 0 10u
+
+* Voltage source
+V1 1 0 DC 5
+
+* Subcircuits
+X1 3 0 mySub
+
+* Models
+.model myMod NPN (BF=100 IS=1e-14)
+
+* Control statements
+.control
+  run
+  plot v(1) v(2)
+.endc
+
+* Functions and expressions
+.param res=1k
+.param cap={10u/2}
+
+* .measure statements
+.measure tran delay trig v(1) val=2.5 td=1u rise=1 targ v(2) val=2.5 rise=1
+
+* End
+.end

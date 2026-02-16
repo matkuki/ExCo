@@ -6,13 +6,17 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+from __future__ import annotations
+
 import builtins
 import keyword
 import re
 import time
+from typing import Any
 
 import data
 import qt
+import settings
 
 import functions
 import lexers
@@ -21,7 +25,7 @@ import lexers
 class Ada(qt.QsciLexerCustom):
     """Custom lexer for the Ada programming languages"""
 
-    styles = {
+    styles: dict[str, int] = {
         "Default": 0,
         "Comment": 1,
         "Keyword": 2,
@@ -33,7 +37,7 @@ class Ada(qt.QsciLexerCustom):
     }
 
     # Class variables
-    keyword_list = [
+    keyword_list: list[str] = [
         "abort",
         "else",
         "new",
@@ -108,32 +112,36 @@ class Ada(qt.QsciLexerCustom):
         "requeue",
         "xor",
     ]
-    splitter = re.compile(r"(\-\-|\s+|\w+|\W)")
+    splitter: re.Pattern[str] = re.compile(r"(\-\-|\s+|\w+|\W)")
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def language(self):
+    def language(self) -> str:
         return "Ada"
 
-    def description(self, style):
+    def description(self, style: int) -> str:
         if style <= 7:
             description = "Custom lexer for the Ada programming languages"
         else:
             description = ""
         return description
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         for style in self.styles:
             # Papers
             self.setPaper(
@@ -143,7 +151,7 @@ class Ada(qt.QsciLexerCustom):
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
 
-    def styleText(self, start, end):
+    def styleText(self, start: int, end: int) -> None:
         """
         Overloaded method for styling text.
         NOTE:

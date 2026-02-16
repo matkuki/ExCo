@@ -6,6 +6,10 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import data
 import functions
 import time
@@ -21,11 +25,11 @@ class TreeSitterMakefile(TreeSitterLexer):
     """
 
     # Constants
-    NAME = "Makefile"
-    TREE_SITTER_LEXER = "make"
+    NAME: str = "Makefile"
+    TREE_SITTER_LEXER: str = "make"
 
     # Class variables
-    styles = {
+    styles: dict[str, int] = {
         "default": 0,
         "comment": 1,
         "string": 2,
@@ -82,7 +86,7 @@ class TreeSitterMakefile(TreeSitterLexer):
                 "abspath",
                 "call",
                 "dir",
-                "error" "filter",
+                "errorfilter",
                 "firstword",
                 "info",
                 "lastword",

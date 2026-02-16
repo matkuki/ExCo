@@ -6,6 +6,10 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import data
 
 # Tree-sitter modules
@@ -23,9 +27,9 @@ class TreeSitterBaseLexer(BaseLexer):
     Lexer for styling documents with the tree-sitter library
     """
 
-    symbols = {}
+    symbols: dict[str, int] = {}
 
-    def __init__(self, name, tree_sitter_lexer, parent=None):
+    def __init__(self, name: str, tree_sitter_lexer: Any, parent: Any = None) -> None:
         """
         Overridden initialization
         """
@@ -306,7 +310,7 @@ class TreeSitterLexer(TreeSitterBaseLexer):
                 "abspath",
                 "call",
                 "dir",
-                "error" "filter",
+                "errorfilter",
                 "firstword",
                 "info",
                 "lastword",

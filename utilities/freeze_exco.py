@@ -37,8 +37,6 @@ def main():
         "autopep8",
         "yapf",
         "fpdf",
-        "isort",
-        "bs4",
     ]
     local_modules = []
     # List all local modules
@@ -71,6 +69,8 @@ def main():
                 local_modules.append(new_module)
     pprint.pprint(local_modules)
 
+    modules = local_modules + builtin_modules
+
     search_path = sys.path
     search_path.append(file_directory)
 
@@ -94,12 +94,12 @@ def main():
             "PyQt5.QtGui",
             "PyQt5.Qsci",
             "PyQt5.QtTest",
-            # "PyQt6",
-            # "PyQt6.QtCore",
-            # "PyQt6.QtWidgets",
-            # "PyQt6.QtGui",
-            # "PyQt6.Qsci",
-            # "PyQt6.QtTest",
+            #            "PyQt6",
+            #            "PyQt6.QtCore",
+            #            "PyQt6.QtWidgets",
+            #            "PyQt6.QtGui",
+            #            "PyQt6.Qsci",
+            #            "PyQt6.QtTest",
         ]
 
         executable_name = "ExCo.exe"
@@ -110,8 +110,6 @@ def main():
                 "ptyprocess",
             ]
         )
-    
-    modules = local_modules + builtin_modules
 
     executables = [
         cx_Freeze.Executable(

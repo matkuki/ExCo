@@ -6,6 +6,10 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import keyword
 import builtins
 import re
@@ -22,7 +26,7 @@ class RouterOS(qt.QsciLexerCustom):
     Custom lexer for the RouterOS syntax for MikroTik routers (WinBox)
     """
 
-    styles = {
+    styles: dict[str, int] = {
         "Default": 0,
         "Operator": 1,
         "Comment": 2,
@@ -31,9 +35,22 @@ class RouterOS(qt.QsciLexerCustom):
         "Keyword3": 5,
     }
     # All keywords, operators, ...
-    operator_list = ["!", "$", "(", ")", ",", ":", "[", "]", "{", "|", "}", "="]
-    comment_list = ["#"]
-    keyword1_list = [
+    operator_list: list[str] = [
+        "!",
+        "$",
+        "(",
+        ")",
+        ",",
+        ":",
+        "[",
+        "]",
+        "{",
+        "|",
+        "}",
+        "=",
+    ]
+    comment_list: list[str] = ["#"]
+    keyword1_list: list[str] = [
         "ac-name",
         "accept",
         "accessible-via-web",
@@ -678,39 +695,45 @@ class RouterOS(qt.QsciLexerCustom):
     # Characters that autoindent one level on pressing Return/Enter
     autoindent_characters = [":", "="]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def language(self):
+    def language(self) -> str:
         return "RouterOS"
 
-    def description(self, style):
+    def description(self, style: int) -> str:
         if style < len(self.styles):
             description = "Custom lexer for the RouterOS syntax by MikroTik"
         else:
             description = ""
         return description
 
-    def defaultStyle(self):
+    def defaultStyle(self) -> int:
         return self.styles["Default"]
 
-    def braceStyle(self):
+    def braceStyle(self) -> int:
         return self.styles["Default"]
 
-    def defaultFont(self, style):
-        return qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
+    def defaultFont(self, style: int | None = None) -> qt.QFont:
+        return qt.QFont(
+            settings.get("current_font_name"), settings.get("current_font_size")
+        )
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         for style in self.styles:
             # Papers
             self.setPaper(
@@ -720,7 +743,7 @@ class RouterOS(qt.QsciLexerCustom):
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
 
-    def styleText(self, start, end):
+    def styleText(self, start: int, end: int) -> None:
         """
         Overloaded method for styling text.
         NOTE:

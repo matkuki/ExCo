@@ -9,6 +9,10 @@ For complete license information of the dependencies, check the 'additional_lice
 ##  FILE DESCRIPTION:
 ##      Functions used by lexers
 
+from __future__ import annotations
+
+from typing import Any
+
 import builtins
 import keyword
 import re
@@ -20,11 +24,8 @@ import lexers
 import qt
 import settings
 
-# import lexers.treesittermake
-# import lexers.treesitterpython
 
-
-def set_font(lexer, style_name, style_options):
+def set_font(lexer: Any, style_name: str, style_options: dict[str, Any]) -> None:
     style_index = lexer.styles[style_name]
     lexer.setColor(qt.QColor(style_options["color"]), style_index)
     weight = qt.QFont.Weight.Normal

@@ -1,0 +1,81 @@
+// CiCode test file for lexer testing
+
+// Variables
+INT x = 10;
+REAL y = 3.14;
+STRING name = "Test";
+
+// Arrays
+INT arr[10];
+arr[0] = 1;
+arr[1] = 2;
+
+// Functions
+INT Add(INT a, INT b)
+BEGIN
+    RETURN a + b;
+END
+
+// Procedures
+VOID PrintMessage(STRING msg)
+BEGIN
+    Message(msg);
+END
+
+// If statement
+IF x > 5 THEN
+    x = x + 1;
+ELSE
+    x = x - 1;
+END
+
+// While loop
+WHILE x < 100 DO
+    x = x + 1;
+END
+
+// For loop
+FOR i = 0 TO 10 DO
+    arr[i] = i * 2;
+END
+
+// Switch
+SWITCH x OF
+    CASE 1:
+        Print("One");
+    CASE 2:
+        Print("Two");
+    DEFAULT:
+        Print("Other");
+END
+
+// Comments
+// This is a line comment
+
+/* This is a
+   multi-line
+   comment */
+
+// Function call
+result = Add(5, 10);
+
+// Built-in functions
+Message("Hello");
+Delay(1000);
+Beep();
+
+// Tags
+TAG MyTag;
+
+// I/O
+AnalogInput(1);
+DigitalOutput(2);
+
+// Error handling
+TRY
+    x = 1 / 0;
+CATCH
+    x = 0;
+ENDTRY
+
+Print("Program completed");

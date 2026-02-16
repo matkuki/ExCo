@@ -6,6 +6,10 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import builtins
 import keyword
 import re
@@ -17,14 +21,15 @@ import settings
 
 import functions
 import lexers
+from lexers.python import Python
 
 
-class Cython(qt.QsciLexerPython):
+class Cython(Python):
     """Cython - basically Python with added keywords"""
 
     # Class variables
-    _kwrds = None
-    styles = {
+    _kwrds: Any = None
+    styles: dict[str, int] = {
         "Default": 0,
         "Comment": 1,
         "Number": 2,
@@ -77,31 +82,28 @@ class Cython(qt.QsciLexerPython):
         "ELSE",
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
-        # Initialize list with keywords
-        # Initialize list with keywords
-        built_ins = keyword.kwlist
-        for i in builtins.__dict__.keys():
-            if not (i in built_ins):
-                built_ins.append(i)
-        self._kwrds = list(set(built_ins))
-        # Transform list into a single string with spaces between list items
-        # Add the C keywords supported by Cython
-        self._kwrds.extend(self._c_kwrds)
-        # Add the Cython keywords
-        self._kwrds.extend(self._cython_kwrds)
-        # Transform list into a single string with spaces between list items
-        self._kwrds.sort()
-        self._kwrds = " ".join(self._kwrds)
-        # Reset autoindentation style
-        self.setAutoIndentStyle(0)
+        # Set default colors
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
+        self.setDefaultFont(
+            qt.QFont(
+                settings.get("current_font_name"), settings.get("current_font_size")
+            )
+        )
+        # Initialize the keyword list
+        self.init_kwrds()
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         for style in self.styles:
             # Papers
             self.setPaper(

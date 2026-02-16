@@ -1,0 +1,10 @@
+This is a plain text file for testing the text lexer.
+It contains no special syntax, just regular text.
+
+This is another paragraph with some numbers (123) and symbols (!@#$%^&*).
+
+URLs like https://example.com and paths like C:\Users\test are also plain text.
+
+Email: test@example.com
+
+The text lexer should just display everything in the default style.

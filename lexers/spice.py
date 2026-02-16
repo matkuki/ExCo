@@ -6,6 +6,10 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import re
 
 import qt
@@ -25,7 +29,7 @@ class CustomSpice(qt.QsciLexerCustom):
     Custom lexer for the Spice programming languages
     """
 
-    styles = {
+    styles: dict[str, int] = {
         "Default": 0,
         "Comment": 1,
         "Instruction0": 2,
@@ -36,7 +40,7 @@ class CustomSpice(qt.QsciLexerCustom):
         "Operator": 7,
     }
     # Class variables
-    keyword_dictionary = {
+    keyword_dictionary: dict[str, tuple[str, ...]] = {
         "Instruction0": (
             "ac",
             "alias",
@@ -266,7 +270,7 @@ class CustomSpice(qt.QsciLexerCustom):
     # Comment tokens
     tokens_comment = []
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         """
         Overridden initialization
         """
@@ -274,8 +278,12 @@ class CustomSpice(qt.QsciLexerCustom):
         super().__init__()
         print("INIT")
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
@@ -299,7 +307,9 @@ class CustomSpice(qt.QsciLexerCustom):
         return self.styles["Default"]
 
     def defaultFont(self, style):
-        return qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
+        return qt.QFont(
+            settings.get("current_font_name"), settings.get("current_font_size")
+        )
 
     def set_theme(self, theme):
         for style in self.styles:
