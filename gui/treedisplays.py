@@ -18,6 +18,7 @@ import time
 import traceback
 import types
 from pathlib import Path
+from send2trash import send2trash
 from typing import *
 
 import components.actionfilter
@@ -28,6 +29,7 @@ import data
 import functions
 import qt
 import settings
+
 from gui.dialogs import *
 from gui.menu import *
 from gui.stylesheets import *
@@ -3118,16 +3120,21 @@ class TreeExplorer(TreeDisplayBase):
         for i in self.selectedIndexes():
             item = self.model().itemFromIndex(i)
             items.append(item.attributes)
-        message = "Are you sure you want to delete the {} selected items?".format(
+        message = "What would you like to do with the {} selected items?".format(
             len(items)
         )
-        reply = YesNoDialog.question(message)
-        if reply != constants.DialogResult.Yes.value:
+        reply = DeleteDialog.warning(message)
+        if reply == constants.DialogResult.Cancel.value:
+            return
+        elif reply == constants.DialogResult.RecycleBin.value:
+            use_recycle_bin = True
+        elif reply == constants.DialogResult.PermanentDelete.value:
+            use_recycle_bin = False
+        else:
             return
         for it in items:
             path = it.path
 
-            # Skip the current path and display warning message
             if functions.are_paths_same(path, self.current_viewed_directory):
                 self.main_form.display.repl_display_warning(
                     "Cannot delete the path that you are currently viewing!\n"
@@ -3146,10 +3153,13 @@ class TreeExplorer(TreeDisplayBase):
 
             try:
                 if os.path.exists(path):
-                    if os.path.isdir(path):
-                        shutil.rmtree(path, onerror=remove_readonly)
+                    if use_recycle_bin:
+                        send2trash(os.path.abspath(path))
                     else:
-                        os.remove(path)
+                        if os.path.isdir(path):
+                            shutil.rmtree(path, onerror=remove_readonly)
+                        else:
+                            os.remove(path)
                 else:
                     self.main_form.display.repl_display_message(
                         "Item '{}'\n does not seem to exist!!".format(

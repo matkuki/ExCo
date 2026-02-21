@@ -8,6 +8,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import enum
 
+
 class LanguageIcon(enum.Enum):
     PYTHON = "language_icons/logo_python.png"
     CYTHON = "language_icons/logo_cython.png"
@@ -54,6 +55,7 @@ class LanguageIcon(enum.Enum):
     INI = "tango_icons/document-properties.png"
     TEXT = "tango_icons/text-x-generic.png"
     UNKNOWN = "tango_icons/file.png"
+
 
 # File extension lists
 supported_file_extentions = {
@@ -219,6 +221,8 @@ class DialogResult(enum.Enum):
     SaveAndClose = 8
     SaveAndRestore = 9
     SwitchToLargestWindow = 10
+    RecycleBin = 11
+    PermanentDelete = 12
 
 
 class FormatterType(enum.Enum):

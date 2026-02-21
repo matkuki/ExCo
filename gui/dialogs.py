@@ -243,7 +243,10 @@ class YesNoDialog(BaseDialog):
                 "name": "yes",
                 "text": "Yes",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Confirm the action",
                 "state": constants.DialogResult.Yes.value,
                 "click-func": lambda *args: self.done(constants.DialogResult.Yes.value),
@@ -252,7 +255,10 @@ class YesNoDialog(BaseDialog):
                 "name": "no",
                 "text": "No",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Decline the action",
                 "state": constants.DialogResult.No.value,
                 "click-func": lambda *args: self.done(constants.DialogResult.No.value),
@@ -267,10 +273,61 @@ class OkDialog(BaseDialog):
                 "name": "ok",
                 "text": "OK",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Close the dialog window",
                 "state": constants.DialogResult.No.value,
                 "click-func": lambda *args: self.done(constants.DialogResult.No.value),
+            },
+        )
+
+
+class DeleteDialog(BaseDialog):
+    def create_button_list(self):
+        return (
+            {
+                "name": "recycle-bin",
+                "text": "Move to\nRecycle Bin",
+                "icon": None,
+                "size": (
+                    int(settings.get("standard_button_size") * 1.5),
+                    settings.get("standard_button_size"),
+                ),
+                "tooltip": "Send items to recycle bin (safer, can be recovered)",
+                "state": constants.DialogResult.RecycleBin.value,
+                "click-func": lambda *args: self.done(
+                    constants.DialogResult.RecycleBin.value
+                ),
+            },
+            {
+                "name": "permanent",
+                "text": "Permanent\nDelete",
+                "icon": None,
+                "size": (
+                    int(settings.get("standard_button_size") * 1.5),
+                    settings.get("standard_button_size"),
+                ),
+                "tooltip": "Permanently delete items (cannot be recovered)",
+                "state": constants.DialogResult.PermanentDelete.value,
+                "click-func": lambda *args: self.done(
+                    constants.DialogResult.PermanentDelete.value
+                ),
+            },
+            {
+                "name": "cancel",
+                "text": "Cancel",
+                "icon": None,
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
+                "tooltip": "Cancel the deletion",
+                "state": constants.DialogResult.Cancel.value,
+                "click-func": lambda *args: self.done(
+                    constants.DialogResult.Cancel.value
+                ),
             },
         )
 
@@ -296,7 +353,10 @@ class CloseEditorDialog(BaseDialog):
                 "name": "close",
                 "text": "Close",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Close the document without saving",
                 "state": constants.DialogResult.Close.value,
                 "click-func": lambda *args: self.done(
@@ -307,7 +367,10 @@ class CloseEditorDialog(BaseDialog):
                 "name": "cancel",
                 "text": "Cancel",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Cancel closing of the document",
                 "state": constants.DialogResult.Cancel.value,
                 "click-func": lambda *args: self.done(
@@ -324,7 +387,10 @@ class ToggleOneWindowDialog(BaseDialog):
                 "name": "restore",
                 "text": "Restore",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Restore the layout to the pre-one-window one",
                 "state": constants.DialogResult.Restore.value,
                 "click-func": lambda *args: self.done(
@@ -335,7 +401,10 @@ class ToggleOneWindowDialog(BaseDialog):
                 "name": "cancel",
                 "text": "Cancel",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Cancel closing of the document",
                 "state": constants.DialogResult.Cancel.value,
                 "click-func": lambda *args: self.done(
@@ -366,7 +435,10 @@ class QuitDialog(BaseDialog):
                 "name": "quit",
                 "text": "Quit",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Quit ExCo without saving",
                 "state": constants.DialogResult.Quit.value,
                 "click-func": lambda *args: self.done(
@@ -377,7 +449,10 @@ class QuitDialog(BaseDialog):
                 "name": "cancel",
                 "text": "Cancel",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Cancel quitting ExCo",
                 "state": constants.DialogResult.Cancel.value,
                 "click-func": lambda *args: self.done(
@@ -408,7 +483,10 @@ class RestoreSessionDialog(BaseDialog):
                 "name": "close",
                 "text": "Close",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Restore the session without saving",
                 "state": constants.DialogResult.Restore.value,
                 "click-func": lambda *args: self.done(
@@ -419,7 +497,10 @@ class RestoreSessionDialog(BaseDialog):
                 "name": "cancel",
                 "text": "Cancel",
                 "icon": None,
-                "size": (settings.get("standard_button_size"), settings.get("standard_button_size")),
+                "size": (
+                    settings.get("standard_button_size"),
+                    settings.get("standard_button_size"),
+                ),
                 "tooltip": "Cancel restoring of the session",
                 "state": constants.DialogResult.Cancel.value,
                 "click-func": lambda *args: self.done(
