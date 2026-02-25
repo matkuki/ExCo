@@ -1914,9 +1914,12 @@ class CustomEditor(BaseEditor):
         """
         Save a document to a file
         """
+        add_monitoring: bool = False
         if self.save_path == "" or saveas != False:
             # Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QFileDialog
             # Get the filename from the QFileDialog window
+            add_monitoring = True
+            
             tab_text = self._parent.tabText(self._parent.indexOf(self))
             temp_save_path = qt.QFileDialog.getSaveFileName(
                 self,
@@ -1969,6 +1972,9 @@ class CustomEditor(BaseEditor):
                 self.choose_lexer(file_type)
             # Update the settings manipulator with the new file
             self.main_form.settings.update_recent_list(self.save_path)
+            # Signal file initialization
+            if add_monitoring:
+                data.signal_dispatcher.editor_file_saved_as.emit(self.save_path)
             return True
         else:
             # Saving has failed

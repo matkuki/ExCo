@@ -205,7 +205,7 @@ class CustomInterpreter(code.InteractiveInterpreter):
         # The (?=...) regex operator means "stop matching if you get to ..., but ... has to be in the string"
         # The "((.*)(?=\)))" has to be the last expression if using "s:" in a function like "print()" because it captures anything until the closing parenthesis
     )
-    """
+    r"""
     Example of replacing a function name with a new function name:
         import re
         a = "old(test)"

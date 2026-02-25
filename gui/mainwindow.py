@@ -3053,7 +3053,7 @@ class MainWindow(qt.QMainWindow):
                 format_zig,
             )
             formatting_menu_zip.addAction(format_zig_action)
-            
+
             # Nim
             formatting_menu_nim = formatting_menu.addMenu("Nim")
             temp_icon = functions.create_icon("language_icons/logo_nim.png")
@@ -5953,12 +5953,14 @@ QSplitter::handle {{
                         "PYTHON",
                     )
             elif parser == "NIM":
-#                # Get all the file information
-#                nim_nodes = functions.get_nim_node_tree(custom_editor.text())
-#                # Display the information in the tree tab
-#                parent.node_tree_tab.display_nim_nodes(custom_editor, nim_nodes)
+                #                # Get all the file information
+                #                nim_nodes = functions.get_nim_node_tree(custom_editor.text())
+                #                # Display the information in the tree tab
+                #                parent.node_tree_tab.display_nim_nodes(custom_editor, nim_nodes)
                 # Get all the file information
-                nim_nodes = components.codequality.parse_nim_file(custom_editor.save_path)
+                nim_nodes = components.codequality.parse_nim_file(
+                    custom_editor.save_path
+                )
                 # Display the information in the tree tab
                 parent.node_tree_tab.display_nim_nodes_new(custom_editor, nim_nodes)
             elif parser in (
@@ -7049,6 +7051,7 @@ QSplitter::handle {{
             self.path_watcher = PathWatcher()
             self.path_watcher.file_changed.connect(self.__file_change_handler)
             data.signal_dispatcher.editor_initialized.connect(self.pathwatcher_add)
+            data.signal_dispatcher.editor_file_saved_as.connect(self.pathwatcher_add)
             data.signal_dispatcher.editor_deleted.connect(self.pathwatcher_remove)
 
         def __file_change_handler(
@@ -7063,6 +7066,16 @@ QSplitter::handle {{
             match event_type:
                 case FileEvent.CREATED:
                     print(f"File created: {source}")
+                    # If file is open in any editor, reload it
+                    # This handles git/hg revert where MOVED removes from monitored list
+                    editors = self._parent.get_all_editors()
+                    for e in editors:
+                        try:
+                            if os.path.samefile(e.save_path, source):
+                                e.reload_file()
+                        except (OSError, ValueError):
+                            # Editor may have no save_path or path no longer exists
+                            pass
 
                 case FileEvent.MODIFIED:
                     print(f"File modified: {source}")
@@ -7218,7 +7231,7 @@ QSplitter::handle {{
 
             tab.setCursorPosition(cursor_line, cursor_index)
             tab.setFirstVisibleLine(first_line)
-        
+
         def format_nim_file(
             self,
         ) -> None:

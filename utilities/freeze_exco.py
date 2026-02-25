@@ -11,81 +11,118 @@ import sys
 import pprint
 import shutil
 import inspect
+import importlib.util
 import platform
+from typing import Set, List, Dict
+
 import cx_Freeze
 
 
-def main():
-    file_directory = os.path.join(
+def get_all_imports() -> Dict[str, List[str]]:
+    """
+    Import exco.py and collect all third-party module imports.
+    Returns a dict with 'modules' and 'packages' lists.
+    - 'modules': Single file modules (.py files)
+    - 'packages': Packages with __init__.py (directories)
+    """
+    project_dir: str = os.path.dirname(os.path.abspath(__file__))
+    parent_dir: str = os.path.dirname(project_dir)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+
+    before: Set[str] = set(sys.modules.keys())
+
+    try:
+        import exco  # type: ignore
+    except Exception:
+        pass
+
+    after: Set[str] = set(sys.modules.keys())
+    new_modules: Set[str] = after - before
+
+    # Test each import to determine if it's a module or package
+    modules: List[str] = []
+    packages: List[str] = []
+
+    for mod_name in new_modules:
+        # Try to find the module/package
+        try:
+            spec = importlib.util.find_spec(mod_name)
+        except (ValueError, ModuleNotFoundError):
+            # Some modules have None __spec__ and raise ValueError
+            continue
+
+        if spec is None:
+            continue
+
+        if spec.submodule_search_locations is None:
+            # It's a module (single .py file)
+            modules.append(mod_name)
+        else:
+            # It's a package (has __init__.py)
+            packages.append(mod_name)
+
+    return {
+        "modules": sorted(modules),
+        "packages": sorted(packages),
+    }
+
+
+def main() -> int:
+    """
+    Main function to build the ExCo application using cx_Freeze.
+    Returns exit code (0 = success).
+    """
+    # Get the project directory (parent of utilities/)
+    file_directory: str = os.path.join(
         os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
         "..",
     )
-    output_directory = "frozen_exco_{}_{}".format(
+
+    # Output directory name based on OS and architecture
+    output_directory: str = "frozen_exco_{}_{}".format(
         platform.system().lower(),
         platform.architecture()[0],
     )
 
-    builtin_modules = [
-        "PyQt6",
-        "PyQt6.Qsci",
-        "PyQt6.QtTest",
-        "pyte",
-        "hy",
-        "hy.core",
-        "hy.core.result_macros",
-        "black",
-        "autopep8",
-        "yapf",
-        "fpdf",
-    ]
-    local_modules = []
-    # List all local modules
-    exclude_dirs = [
+    # Get all imports and separate into modules vs packages
+    import_result: Dict[str, List[str]] = get_all_imports()
+    includes: List[str] = import_result["modules"]
+    packages_list: List[str] = import_result["packages"]
+
+    # Add PyQt6 to packages (needed for proper freezing)
+    packages_list.append("PyQt6")
+
+    # Directories to exclude when scanning for local modules
+    exclude_dirs: list[str] = [
         "cython",
-        "nim",
         "utilities",
+        "nim",
         "git_clone",
     ]
-    excluded_modules = [
+
+    # Specific modules to exclude
+    excluded_modules: list[str] = [
         "freeze_exco",
         "git_clone",
     ]
-    for root, dirs, files in os.walk(file_directory):
-        base_path = os.path.join(root).replace(file_directory, "")
-        if base_path.startswith("/"):
-            base_path = base_path[1:]
-        if any([x in base_path for x in exclude_dirs]):
-            continue
-        for f in files:
-            if f.endswith(".py"):
-                raw_module = f.replace(".py", "").replace(".pyd", "").replace(".so", "")
-                raw_module = raw_module.split(".")[0]
-                new_module = f"{base_path}/{raw_module}"
-                if new_module.startswith("\\") or new_module.startswith("/"):
-                    new_module = new_module[1:]
-                new_module = new_module.replace("\\", ".").replace("/", ".")
-                if new_module in excluded_modules:
-                    continue
-                local_modules.append(new_module)
-    pprint.pprint(local_modules)
 
-    modules = local_modules + builtin_modules
-
-    search_path = sys.path
+    # Add project directory to Python path
+    search_path: list[str] = sys.path
     search_path.append(file_directory)
 
-    base = None
-    excludes = [
+    # Base type for executable (None = console app)
+    base: str | None = None
+    excludes: list[str] = [
         "tkinter",
     ]
-    executable_name = "ExCo"
+    executable_name: str = "ExCo"
+
+    # Platform-specific configuration
     if platform.system().lower() == "windows":
-        base = "Win32GUI"
+        base = "gui"  # GUI app without console
 
-        builtin_modules.extend(
-            ["win32api", "win32con", "win32gui", "win32file", "winpty"]
-        )
-
+        # Exclude PyQt5 modules to avoid conflicts
         excludes = [
             "tkinter",
             "PyQt5",
@@ -94,24 +131,17 @@ def main():
             "PyQt5.QtGui",
             "PyQt5.Qsci",
             "PyQt5.QtTest",
-            #            "PyQt6",
-            #            "PyQt6.QtCore",
-            #            "PyQt6.QtWidgets",
-            #            "PyQt6.QtGui",
-            #            "PyQt6.Qsci",
-            #            "PyQt6.QtTest",
+            "venv",
         ]
 
         executable_name = "ExCo.exe"
 
     elif platform.system().lower() == "linux":
-        builtin_modules.extend(
-            [
-                "ptyprocess",
-            ]
-        )
+        # Add Linux-specific includes
+        includes.extend(["ptyprocess"])
 
-    executables = [
+    # Define the executable to create
+    executables: list[cx_Freeze.Executable] = [
         cx_Freeze.Executable(
             "exco.py",
             init_script=None,
@@ -121,9 +151,11 @@ def main():
         )
     ]
 
-    freezer = cx_Freeze.Freezer(
+    # Configure and run the freezer
+    freezer: cx_Freeze.Freezer = cx_Freeze.Freezer(
         executables,
-        includes=modules,
+        includes=includes,
+        packages=packages_list,
         excludes=excludes,
         replace_paths=[],
         compress=True,
@@ -137,8 +169,11 @@ def main():
     )
     freezer.freeze()
 
+    # Copy resources directory to output
     shutil.copytree("resources", output_directory + "/resources")
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

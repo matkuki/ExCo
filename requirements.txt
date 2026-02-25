@@ -1,7 +1,7 @@
 psutil>=5.9.4
 pyte>=0.8.1
 PyQt6>=6.5.2 
-PyQt6.QScintilla>=2.14.0
+PyQt6-QScintilla>=2.14.0
 hy>=0.25.0
 cx_freeze>=6.15.0
 fpdf2>=2.7.8

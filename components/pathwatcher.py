@@ -46,9 +46,9 @@ class PathWatcher(qt.QObject):
         """
         super().__init__(parent)
         self.monitored_files: List[str] = []  # List of files being monitored
-        self.observers: Dict[str, Observer] = (
-            {}
-        )  # Dictionary mapping directory paths to observers
+        self.observers: Dict[
+            str, Observer
+        ] = {}  # Dictionary mapping directory paths to observers
         self._lock: threading.Lock = (
             threading.Lock()
         )  # Thread safety for file list operations
@@ -402,45 +402,17 @@ class FileChangeHandler(FileSystemEventHandler):
             with self.path_watcher._lock:
                 if source_path in self.path_watcher.monitored_files:
                     self.path_watcher.monitored_files.remove(source_path)
-                    self.path_watcher.monitored_files.append(destination_path)
 
                     with self._timer_lock:
                         if source_path in self._debounce_timers:
-                            timer_data: Dict[str, Any] = self._debounce_timers.pop(
-                                source_path
-                            )
-                            timer_data["timer"].cancel()
-                            self._debounce_timers[destination_path] = timer_data
-
-                    old_directory: str = os.path.dirname(source_path)
-                    new_directory: str = os.path.dirname(destination_path)
-                    still_needed_old: bool = any(
-                        os.path.dirname(f) == old_directory
-                        for f in self.path_watcher.monitored_files
-                    )
-                    if (
-                        not still_needed_old
-                        and old_directory in self.path_watcher.observers
-                    ):
-                        self.path_watcher._stop_watching_directory(old_directory)
-
-                    if new_directory not in self.path_watcher.observers:
-                        self.path_watcher._start_watching_directory(new_directory)
-
-                    mtime: Optional[float] = None
-                    try:
-                        mtime = os.path.getmtime(destination_path)
-                    except FileNotFoundError:
-                        self.path_watcher.echo(
-                            f"File not found for mtime check: {destination_path}"
-                        )
+                            self._debounce_timers.pop(source_path)
 
                     self.path_watcher._handle_file_event(
                         FileEvent.MOVED,
                         source_path,
                         destination_path,
-                        mtime,
+                        None,
                     )
                     self.path_watcher.echo(
-                        f"Updated monitoring: {source_path} -> {destination_path}"
+                        f"Stopped monitoring: {source_path} (moved to {destination_path})"
                     )
