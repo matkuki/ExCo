@@ -17,7 +17,7 @@ import os
 import re
 import sys
 import traceback
-from typing import Callable, Optional
+from typing import *
 
 import components.actionfilter
 import components.codequality
@@ -7036,13 +7036,13 @@ QSplitter::handle {{
         Helper functions for everything
         """
 
-        # Class varibles
-        _parent = None
-        path_watcher = None
+        # Class variables
+        _parent: "MainWindow"
+        path_watcher: PathWatcher
 
-        def __init__(self, parent):
+        def __init__(self, parent: "MainWindow") -> None:
             """
-            Initialization of the Bookmarks object instance
+            Initialization of the Tools object instance
             """
             # Get the reference to the MainWindow parent object instance
             self._parent = parent
@@ -7060,7 +7060,7 @@ QSplitter::handle {{
             source: str,
             destination: Optional[str],
             modification_time: Optional[float],
-        ):
+        ) -> None:
             """Handle all file events with consistent signature."""
 
             match event_type:
@@ -7073,9 +7073,8 @@ QSplitter::handle {{
                         try:
                             if os.path.samefile(e.save_path, source):
                                 e.reload_file()
-                        except (OSError, ValueError):
-                            # Editor may have no save_path or path no longer exists
-                            pass
+                        except (OSError, ValueError) as ex:
+                            self._parent.display.repl_display_error(str(ex))
 
                 case FileEvent.MODIFIED:
                     print(f"File modified: {source}")
@@ -7090,9 +7089,65 @@ QSplitter::handle {{
 
                 case FileEvent.DELETED:
                     print(f"File deleted: {source}")
+                    # Scan all open editors and mark as changed if displaying the deleted file
+                    editors = self._parent.get_all_editors()
+                    source_normalized = os.path.normpath(os.path.normcase(source))
+                    for e in editors:
+                        try:
+                            e_path_normalized = os.path.normpath(
+                                os.path.normcase(e.save_path)
+                            )
+                            if e_path_normalized == source_normalized:
+                                tab_widget = e.parent()
+                                while not isinstance(
+                                    tab_widget, gui.tabwidget.TabWidget
+                                ):
+                                    tab_widget = tab_widget.parent()
+                                    if tab_widget is None:
+                                        break
+                                if tab_widget is not None:
+                                    tab_widget._signal_text_changed(e)
+                        except (OSError, ValueError, TypeError) as ex:
+                            self._parent.display.repl_display_error(str(ex))
 
                 case FileEvent.MOVED:
                     print(f"File moved from {source} to {destination}")
+                    # Reload editors if either source or destination matches
+                    # This handles hg/git revert where source becomes backup and new file appears
+                    editors = self._parent.get_all_editors()
+                    for e in editors:
+                        try:
+                            if os.path.samefile(e.save_path, source):
+                                e.reload_file()
+                            if os.path.samefile(e.save_path, destination):
+                                e.reload_file()
+                        except (OSError, ValueError) as ex:
+                            self._parent.display.repl_display_error(str(ex))
+
+                case FileEvent.RENAME:
+                    print(f"File renamed from {source} to {destination}")
+                    editors = self._parent.get_all_editors()
+                    source_normalized = os.path.normpath(os.path.normcase(source))
+                    for e in editors:
+                        try:
+                            e_path_normalized = os.path.normpath(
+                                os.path.normcase(e.save_path)
+                            )
+                            if e_path_normalized == source_normalized:
+                                # Update editor's internal save path
+                                e.save_path = destination
+                                # Update tab title - editor's parent is QStackedWidget, grandparent is TabWidget
+                                stacked_widget = e.parent()
+                                tab_widget = stacked_widget.parent()
+                                if hasattr(tab_widget, "setTabText"):
+                                    index = tab_widget.indexOf(e)
+                                    if index != -1:
+                                        tab_widget.setTabText(
+                                            index, os.path.basename(destination)
+                                        )
+                                e.reload_file()
+                        except (OSError, ValueError, FileNotFoundError) as ex:
+                            self._parent.display.repl_display_error(str(ex))
 
                 case _:
                     raise Exception(f"Unknown FileEvent: {event_type}")
@@ -7103,7 +7158,9 @@ QSplitter::handle {{
         def pathwatcher_remove(self, path: str) -> bool:
             return self.path_watcher.remove_file(path)
 
-        def pretty_print_text(self, _type: constants.FormatterType, **kwargs) -> None:
+        def pretty_print_text(
+            self, _type: constants.FormatterType, **kwargs: Any
+        ) -> None:
             tab = self._parent.get_tab_by_indication()
 
             if not hasattr(tab, "text"):
@@ -7147,11 +7204,15 @@ QSplitter::handle {{
                 )
                 return
 
-            first_line = tab.firstVisibleLine()
+            first_line: int = tab.firstVisibleLine()
+            cursor_line: int
+            cursor_index: int
             cursor_line, cursor_index = tab.getCursorPosition()
-            code = tab.text()
+            code: str = tab.text()
 
-            formatted_code = components.codequality.format_python_code(code, library)
+            formatted_code: str = components.codequality.format_python_code(
+                code, library
+            )
 
             tab.set_all_text(formatted_code)
 
@@ -7172,9 +7233,11 @@ QSplitter::handle {{
                 )
                 return
 
-            code = tab.selectedText()
+            code: str = tab.selectedText()
 
-            formatted_code = components.codequality.format_python_code(code, library)
+            formatted_code: str = components.codequality.format_python_code(
+                code, library
+            )
 
             tab.replaceSelectedText(formatted_code)
 
@@ -7189,12 +7252,14 @@ QSplitter::handle {{
                 )
                 return
 
-            first_line = tab.firstVisibleLine()
+            first_line: int = tab.firstVisibleLine()
+            cursor_line: int
+            cursor_index: int
             cursor_line, cursor_index = tab.getCursorPosition()
-            code = tab.text()
+            code: str = tab.text()
 
             if library == "clang-format":
-                formatted_code = components.codequality.format_clangformat_c_cpp(
+                formatted_code: str = components.codequality.format_clangformat_c_cpp(
                     source_code=code, style=style
                 )
 
@@ -7219,11 +7284,13 @@ QSplitter::handle {{
                 )
                 return
 
-            first_line = tab.firstVisibleLine()
+            first_line: int = tab.firstVisibleLine()
+            cursor_line: int
+            cursor_index: int
             cursor_line, cursor_index = tab.getCursorPosition()
-            code = tab.text()
+            code: str = tab.text()
 
-            formatted_code = components.codequality.format_zig_code(
+            formatted_code: str = components.codequality.format_zig_code(
                 zig_code_string=code
             )
 
@@ -7243,13 +7310,13 @@ QSplitter::handle {{
                 )
                 return
 
-            first_line = tab.firstVisibleLine()
+            first_line: int = tab.firstVisibleLine()
+            cursor_line: int
+            cursor_index: int
             cursor_line, cursor_index = tab.getCursorPosition()
-            nim_file_path = tab.save_path
+            nim_file_path: str = tab.save_path
 
-            formatted_code = components.codequality.format_nim_file(
-                file_path=nim_file_path
-            )
+            components.codequality.format_nim_file(file_path=nim_file_path)
 
             tab.setCursorPosition(cursor_line, cursor_index)
             tab.setFirstVisibleLine(first_line)
@@ -7263,9 +7330,11 @@ QSplitter::handle {{
                 )
                 return
 
-            file_path = tab.save_path
+            file_path: str = tab.save_path
 
             if library == "ruff":
+                exit_code: int
+                analysis_results_or_error: str
                 exit_code, analysis_results_or_error = (
                     components.codequality.analyze_ruff_file(file_path)
                 )
@@ -7278,6 +7347,9 @@ QSplitter::handle {{
                     )
 
             elif library == "pyflakes":
+                exit_code: int
+                stdout: str
+                stderr: str
                 exit_code, stdout, stderr = (
                     components.codequality.analyze_pyflakes_file(file_path)
                 )

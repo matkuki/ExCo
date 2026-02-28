@@ -1919,7 +1919,7 @@ class CustomEditor(BaseEditor):
             # Tab has an empty directory attribute or "SaveAs" was invoked, select file using the QFileDialog
             # Get the filename from the QFileDialog window
             add_monitoring = True
-            
+
             tab_text = self._parent.tabText(self._parent.indexOf(self))
             temp_save_path = qt.QFileDialog.getSaveFileName(
                 self,
@@ -1972,6 +1972,11 @@ class CustomEditor(BaseEditor):
                 self.choose_lexer(file_type)
             # Update the settings manipulator with the new file
             self.main_form.settings.update_recent_list(self.save_path)
+            # Check if file is monitored, if not add it
+            if hasattr(self.main_form, "tools"):
+                path_watcher = self.main_form.tools.path_watcher
+                if self.save_path not in path_watcher.monitored_files:
+                    path_watcher.add_file(self.save_path)
             # Signal file initialization
             if add_monitoring:
                 data.signal_dispatcher.editor_file_saved_as.emit(self.save_path)
@@ -2406,9 +2411,9 @@ class Bookmarks:
                 handle = self._parent.markerAdd(
                     scintilla_line, self._parent.bookmark_marker
                 )
-                self._parent.main_form.bookmarks.marks[new_marker_index][
-                    "handle"
-                ] = handle
+                self._parent.main_form.bookmarks.marks[new_marker_index]["handle"] = (
+                    handle
+                )
         else:
             self._parent.main_form.bookmarks.remove_by_reference(self._parent, line)
             self._parent.markerDelete(scintilla_line, self._parent.bookmark_marker)

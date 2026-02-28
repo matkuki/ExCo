@@ -800,7 +800,7 @@ QTabBar::tab:selected {{
 
     def set_text_changed(self, index):
         if not "*" in self.tabText(index):
-            self.setTabText(index, "*" + self.tabText(index) + "*")
+            self.setTabText(index, f"*{self.tabText(index)}*")
 
     def reset_text_changed(self, index=None):
         """Reset the changed status of the current widget (remove the * symbols from the tab name)"""

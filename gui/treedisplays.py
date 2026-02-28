@@ -2438,16 +2438,16 @@ class TreeDisplayBase(qt.QTreeView):
 class TreeExplorer(TreeDisplayBase):
     # Item type enumeration
     class ItemType(enum.Enum):
-        FILE = 0
-        DIRECTORY = 1
-        BASE_DIRECTORY = 2
-        ONE_UP_DIRECTORY = 3
-        DISK = 4
-        NEW_FILE = 5
-        NEW_DIRECTORY = 6
-        RENAME_FILE = 7
-        RENAME_DIRECTORY = 8
-        COMPUTER = 9
+        FILE = enum.auto()
+        DIRECTORY = enum.auto()
+        BASE_DIRECTORY = enum.auto()
+        ONE_UP_DIRECTORY = enum.auto()
+        DISK = enum.auto()
+        NEW_FILE = enum.auto()
+        NEW_DIRECTORY = enum.auto()
+        RENAME_FILE = enum.auto()
+        RENAME_DIRECTORY = enum.auto()
+        COMPUTER = enum.auto()
 
     # Signals
     open_file_signal = qt.pyqtSignal(str)
@@ -2611,7 +2611,14 @@ class TreeExplorer(TreeDisplayBase):
             self.base_item.removeRow(self.added_item.row())
             self.added_item = None
         elif self.renamed_item is not None:
-            #            self.renamed_item.setEditable(False)
+            # Reset item type back to original when cancelling rename
+            if (
+                self.renamed_item.attributes.itype
+                == TreeExplorer.ItemType.RENAME_DIRECTORY
+            ):
+                self.renamed_item.attributes.itype = TreeExplorer.ItemType.DIRECTORY
+            else:
+                self.renamed_item.attributes.itype = TreeExplorer.ItemType.FILE
             self.renamed_item = None
         self._unlock_key_release()
 
@@ -3158,6 +3165,7 @@ class TreeExplorer(TreeDisplayBase):
                 continue
 
             try:
+                is_file = it.itype == TreeExplorer.ItemType.FILE
                 if os.path.exists(path):
                     if use_recycle_bin:
                         send2trash(os.path.abspath(path))
@@ -3166,6 +3174,9 @@ class TreeExplorer(TreeDisplayBase):
                             shutil.rmtree(path, onerror=remove_readonly)
                         else:
                             os.remove(path)
+                    # Remove from PathWatcher if it was being monitored
+                    if is_file:
+                        self.main_form.tools.pathwatcher_remove(path)
                 else:
                     self.main_form.display.repl_display_message(
                         "Item '{}'\n does not seem to exist!!".format(

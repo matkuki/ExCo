@@ -27,6 +27,7 @@ class FileEvent(Enum):
     CREATED = auto()
     DELETED = auto()
     MOVED = auto()
+    RENAME = auto()
 
 
 class PathWatcher(qt.QObject):
@@ -282,14 +283,6 @@ class PathWatcher(qt.QObject):
 
             self.echo(f"Updated file path: {old_path} -> {new_path}")
             return True
-        """
-        Get a list of directories currently being watched.
-        
-        Returns:
-            List of directory paths being monitored
-        """
-        with self._lock:
-            return list(self.observers.keys())
 
     def __enter__(self) -> "PathWatcher":
         """Context manager entry."""
@@ -332,20 +325,6 @@ class FileChangeHandler(FileSystemEventHandler):
         if not is_monitored:
             return
 
-        if event_type == FileEvent.DELETED:
-            with self.path_watcher._lock:
-                self.path_watcher._handle_file_event(
-                    event_type, file_path_abs, None, None
-                )
-                if file_path_abs in self.path_watcher.monitored_files:
-                    self.path_watcher.monitored_files.remove(file_path_abs)
-
-            with self._timer_lock:
-                if file_path_abs in self._debounce_timers:
-                    self._debounce_timers[file_path_abs]["timer"].cancel()
-                    del self._debounce_timers[file_path_abs]
-            return
-
         with self._timer_lock:
             timer_data: Optional[Dict[str, Any]] = self._debounce_timers.get(
                 file_path_abs
@@ -370,6 +349,27 @@ class FileChangeHandler(FileSystemEventHandler):
         This function is called when the debounce timer for a file expires.
         It retrieves the mtime and passes it to the handler.
         """
+        if event_type == FileEvent.DELETED:
+            # Check if file still doesn't exist
+            if not os.path.exists(file_path):
+                with self.path_watcher._lock:
+                    if file_path in self.path_watcher.monitored_files:
+                        self.path_watcher.monitored_files.remove(file_path)
+                self.path_watcher._handle_file_event(
+                    FileEvent.DELETED, file_path, None, None
+                )
+                self.path_watcher.echo(f"File deleted: {file_path}")
+            else:
+                # File was recreated, treat as modified
+                mtime = os.path.getmtime(file_path)
+                self.path_watcher._handle_file_event(
+                    FileEvent.MODIFIED, file_path, None, mtime
+                )
+                self.path_watcher.echo(
+                    f"File reappeared, treated as MODIFIED: {file_path}"
+                )
+            return
+
         mtime: Optional[float] = None
         try:
             mtime = os.path.getmtime(file_path)
@@ -399,20 +399,41 @@ class FileChangeHandler(FileSystemEventHandler):
             source_path: str = os.path.abspath(event.src_path)
             destination_path: str = os.path.abspath(event.dest_path)
 
+            source_dir = os.path.dirname(source_path)
+            destination_dir = os.path.dirname(destination_path)
+
+            event_to_emit: FileEvent
+            if source_dir == destination_dir:
+                event_to_emit = FileEvent.RENAME
+            else:
+                event_to_emit = FileEvent.MOVED
+
             with self.path_watcher._lock:
                 if source_path in self.path_watcher.monitored_files:
                     self.path_watcher.monitored_files.remove(source_path)
 
+                    if event_to_emit == FileEvent.RENAME:
+                        self.path_watcher.monitored_files.append(destination_path)
+
                     with self._timer_lock:
                         if source_path in self._debounce_timers:
-                            self._debounce_timers.pop(source_path)
+                            timer_data = self._debounce_timers.pop(source_path)
+                            timer_data["timer"].cancel()
+                            if event_to_emit == FileEvent.RENAME:
+                                self._debounce_timers[destination_path] = timer_data
 
                     self.path_watcher._handle_file_event(
-                        FileEvent.MOVED,
+                        event_to_emit,
                         source_path,
                         destination_path,
                         None,
                     )
-                    self.path_watcher.echo(
-                        f"Stopped monitoring: {source_path} (moved to {destination_path})"
-                    )
+
+                    if event_to_emit == FileEvent.RENAME:
+                        self.path_watcher.echo(
+                            f"Monitored file RENAME: {source_path} -> {destination_path}"
+                        )
+                    else:
+                        self.path_watcher.echo(
+                            f"Stopped monitoring: {source_path} (moved to {destination_path})"
+                        )
