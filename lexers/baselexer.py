@@ -95,4 +95,4 @@ class BaseLexer(qt.QsciLexerCustom):
         )
 
     def styleText(self, start: int, end: int) -> None:
-        raise Exception("[BaseLexer] Styling function needs to be overriden!")
+        raise Exception("[BaseLexer] Styling function needs to be overridden!")
