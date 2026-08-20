@@ -11,6 +11,8 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      Paints the pyte screen (and styled scrollback history) cell by cell,
 ##      with incremental repaints driven by the screen's dirty-line set.
 
+import math
+
 import data
 import functions
 import gui.menu
@@ -95,6 +97,9 @@ class TerminalView(qt.QWidget):
         # Selection state (start/end cells in stack coordinates)
         self._selection: Optional[Selection] = None
         self._selection_active: bool = False
+        # Shift-bypass of mouse tracking: while Shift is held, mouse events
+        # drive native selection / scrollback scroll instead of reports.
+        self._shift_selecting: bool = False
 
         # Last painted cursor row (for clearing the previous cursor position)
         self._last_cursor_y: Optional[int] = None
@@ -111,8 +116,6 @@ class TerminalView(qt.QWidget):
             Tuple[Any, ...], Tuple[qt.QColor, qt.QColor, qt.QFont]
         ] = {}
         self._color_cache: Dict[str, qt.QColor] = {}
-        # Screen size at the last repaint scheduling (pixel-scroll guard)
-        self._last_screen_lines: int = 0
 
         # Scrollbar
         self._scrollbar: qt.QScrollBar = qt.QScrollBar(qt.Qt.Orientation.Vertical, self)
@@ -185,13 +188,14 @@ class TerminalView(qt.QWidget):
         rows: int = max(int(self.height() / self._char_height), 1)
         return cols, rows
 
-    def _row_rect(self, y: int) -> qt.QRectF:
-        return qt.QRectF(
-            0.0,
-            y * self._char_height,
-            self._content_width,
-            self._char_height,
-        )
+    def _row_band(self, y: int) -> qt.QRect:
+        """Integer rectangle that fully covers the row's pixel band. The
+        char height is often fractional (e.g. 13.3px), so naive rounding of
+        the row rect would leave 1px gaps between adjacent rows that never
+        get repainted; floor/ceil guarantees gapless coverage."""
+        top: int = math.floor(y * self._char_height)
+        bottom: int = math.ceil((y + 1) * self._char_height)
+        return qt.QRect(0, top, self._content_width, bottom - top)
 
     def _recompute_geometry(self) -> None:
         scrollbar: qt.QScrollBar = self._scrollbar
@@ -302,82 +306,30 @@ class TerminalView(qt.QWidget):
         if self._scroll_offset > 0:
             # History grew / content shifted; repaint everything visible.
             self.update()
-        elif (
-            pending_scroll != 0
-            and not self._flash
-            and lines == self._last_screen_lines
-            and self._char_height.is_integer()
-        ):
-            self._last_screen_lines = lines
-            delta: int = pending_scroll
-            if abs(delta) >= lines:
-                # The whole viewport was replaced; a pixel scroll has
-                # nothing to preserve.
-                self.update()
-            else:
-                # Pixel-scroll the backing store so the shifted content
-                # does not have to be re-rendered; only the newly exposed
-                # rows and the rows touched by the cursor / selection
-                # overlays are repainted.
-                row_px: int = int(self._char_height)
-                self.scroll(0, -delta * row_px)
-                if delta > 0:
-                    exposed: range = range(max(lines - delta, 0), lines)
-                else:
-                    exposed = range(0, min(-delta, lines))
-                for y in exposed:
-                    self.update(self._row_rect(y).toRect())
-            # Rows whose content changed within the chunk (prompt rewrites,
-            # spinner updates, ...) still need a full repaint.
-            for y in edited:
-                if 0 <= y < lines:
-                    self.update(self._row_rect(y).toRect())
-            # Cursor overlay: the old block cursor's pixels were shifted
-            # with the scroll and must be cleared.
-            old_cy: Optional[int] = self._last_cursor_y
-            if old_cy is not None:
-                shifted_cy: int = old_cy - delta
-                if 0 <= shifted_cy < lines:
-                    self.update(self._row_rect(shifted_cy).toRect())
-            cursor_y: int = screen.cursor.y
-            if not screen.cursor.hidden and 0 <= cursor_y < lines:
-                self.update(self._row_rect(cursor_y).toRect())
-            self._last_cursor_y = cursor_y if not screen.cursor.hidden else None
-            # Selection highlight is index-anchored while the blit moves
-            # the content through the stack; repaint the selection's rows
-            # and the rows its old highlight pixels landed on.
-            if self._selection is not None:
-                bounds: Optional[Selection] = self._selection_bounds()
-                if bounds is not None:
-                    r0: int
-                    c0: int
-                    r1: int
-                    c1: int
-                    r0, c0, r1, c1 = cast(Tuple[int, int, int, int], bounds)
-                    base: int = self._history_len() - self._scroll_offset
-                    for stack_row in range(r0, r1 + 1):
-                        for view_y in (stack_row - base, stack_row - base - delta):
-                            if 0 <= view_y < lines:
-                                self.update(self._row_rect(view_y).toRect())
+        elif pending_scroll != 0:
+            # Content scrolled a whole viewport's worth of lines. A full
+            # repaint is cheap on a terminal-sized grid and avoids the
+            # QWidget::scroll() artifacts seen on some platforms; the
+            # cursor and selection overlays are repainted in the same pass.
+            self.update()
         else:
-            self._last_screen_lines = lines
             for y in dirty:
                 if 0 <= y < lines:
-                    self.update(self._row_rect(y).toRect())
+                    self.update(self._row_band(y))
             cursor_y = screen.cursor.y
             if screen.cursor.hidden or cursor_y != self._last_cursor_y:
                 # The cursor moved or vanished: repaint its previous cell so
                 # the old block cursor does not linger (pyte cursor moves do
                 # not mark rows dirty).
                 if self._last_cursor_y is not None and 0 <= self._last_cursor_y < lines:
-                    self.update(self._row_rect(self._last_cursor_y).toRect())
+                    self.update(self._row_band(self._last_cursor_y))
                 self._last_cursor_y = cursor_y if not screen.cursor.hidden else None
-            self.update(self._row_rect(cursor_y).toRect())
+            self.update(self._row_band(cursor_y))
         dirty.clear()
         edited.clear()
         # The scroll delta is only meaningful for the chunk just fed; consume
         # it so a second schedule_repaint in the same iteration does not
-        # pixel-scroll again.
+        # trigger another full repaint.
         screen.pending_scroll = 0
         self._refresh_scrollbar()
 
@@ -399,16 +351,16 @@ class TerminalView(qt.QWidget):
         # toggle; no need to repaint the whole viewport.
         lines: int = screen.lines
         if self._last_cursor_y is not None and 0 <= self._last_cursor_y < lines:
-            self.update(self._row_rect(self._last_cursor_y).toRect())
+            self.update(self._row_band(self._last_cursor_y))
         if 0 <= screen.cursor.y < lines:
-            self.update(self._row_rect(screen.cursor.y).toRect())
+            self.update(self._row_band(screen.cursor.y))
         # SGR-5 blink-attributed cells elsewhere on screen toggle with the
         # phase too; repaint the rows that carry one (the scan is cheap and
         # runs once per blink period).
         for y in range(lines):
             row: Any = screen.buffer.get(y)
             if row is not None and any(cell.blink for cell in row.values()):
-                self.update(self._row_rect(y).toRect())
+                self.update(self._row_band(y))
 
     def flash(self) -> None:
         """Visual bell: briefly lighten the viewport."""
@@ -457,7 +409,7 @@ class TerminalView(qt.QWidget):
             stack_row: int = self._stack_row(y)
             if stack_row < 0:
                 break
-            if not event.rect().intersects(self._row_rect(y).toRect()):
+            if not event.rect().intersects(self._row_band(y)):
                 continue
             row: Any = self._stack_row_cells(stack_row)
             self._paint_cells(painter, y, row, columns)
@@ -792,6 +744,17 @@ class TerminalView(qt.QWidget):
         self.setFocus()
         self.focused.emit()
         if self.terminal.screen.mouse_mode != 0:
+            if event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier:
+                # Shift bypass: the app never sees the event, so native
+                # selection works inside mouse-capturing TUIs (OpenCode, ...).
+                self._shift_selecting = True
+                self._last_motion_cell = None
+                if event.button() == qt.Qt.MouseButton.LeftButton:
+                    self._start_selection(event.position())
+                event.accept()
+                return
+            self._shift_selecting = False
+            self._last_motion_cell = None
             button: int = self._mouse_button_code(event.button())
             x: int
             y: int
@@ -813,6 +776,9 @@ class TerminalView(qt.QWidget):
 
     def mouseMoveEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
         screen: ExtendedScreen = self.terminal.screen
+        if self._shift_selecting:
+            self._update_selection(event.position())
+            return super().mouseMoveEvent(event)
         if screen.mouse_mode == 3:
             x: int
             y: int
@@ -842,6 +808,12 @@ class TerminalView(qt.QWidget):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
+        if self._shift_selecting:
+            self._shift_selecting = False
+            if event.button() == qt.Qt.MouseButton.LeftButton:
+                self._end_selection()
+            event.accept()
+            return
         if self.terminal.screen.mouse_mode != 0:
             button: int = self._mouse_button_code(event.button())
             x: int
@@ -857,6 +829,15 @@ class TerminalView(qt.QWidget):
     def wheelEvent(self, event: qt.QWheelEvent) -> None:  # type: ignore[override]
         delta: int = event.angleDelta().y()
         if self.terminal.screen.mouse_mode != 0:
+            if event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier:
+                # Shift bypass: scroll the history instead of reporting the
+                # wheel to the app.
+                if delta > 0:
+                    self._scroll_up(int(delta / 120))
+                else:
+                    self._scroll_down(int(abs(delta) / 120))
+                event.accept()
+                return
             x: int
             y: int
             x, y = self._mouse_cell(event.position())
