@@ -18,7 +18,7 @@ import functions
 import gui.menu
 import qt
 import settings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
 from wcwidth import wcwidth
 
 from gui.terminal.screen import ExtendedScreen
@@ -298,7 +298,6 @@ class TerminalView(qt.QWidget):
         """
         screen: ExtendedScreen = self.terminal.screen
         dirty: Any = screen.dirty
-        edited: Set[int] = screen.edited
         pending_scroll: int = screen.pending_scroll
         lines: int = screen.lines
         if self._in_alt():
@@ -326,7 +325,6 @@ class TerminalView(qt.QWidget):
                 self._last_cursor_y = cursor_y if not screen.cursor.hidden else None
             self.update(self._row_band(cursor_y))
         dirty.clear()
-        edited.clear()
         # The scroll delta is only meaningful for the chunk just fed; consume
         # it so a second schedule_repaint in the same iteration does not
         # trigger another full repaint.

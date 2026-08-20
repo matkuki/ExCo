@@ -53,13 +53,13 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        # Per-feed-chunk change tracking for the view's pixel-scroll fast
-        # path: pending_scroll is the number of viewport rows the content
-        # moved (positive = content up), edited holds the rows whose content
-        # changed for reasons other than a pure scroll shift. Initialized
-        # before super().__init__ because pyte's reset() runs during it.
+        # Per-feed-chunk scroll tracking for the view's repaint decision:
+        # pending_scroll is non-zero when the content moved vertically this
+        # chunk (the view then does a full repaint). Initialized before
+        # super().__init__ because pyte's reset() runs during it; reset()
+        # also clears keyboard_flags, so it lives here too.
         self.pending_scroll: int = 0
-        self.edited: Set[int] = set()
+        self.keyboard_flags: int = 0
         super().__init__(*args, **kwargs)
         # Alternate screen state
         self._alt_saved: Optional[Dict[str, Any]] = None
@@ -74,9 +74,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self.cursor_blink: bool = True
         # Bell
         self.bell_triggered: bool = False
-        # Kitty keyboard protocol flags (0 = disabled); the view consults
-        # this when deciding how to encode modified keys.
-        self.keyboard_flags: int = 0
 
     # ------------------------------------------------------------------
     # Alternate screen
@@ -112,7 +109,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self.margins = saved["margins"]
         self._alt_saved = None
         self.hyperlink_spans.clear()
-        self.edited.update(range(self.lines))
         self.dirty.update(range(self.lines))
 
     def set_mode(self, *modes: int, **kwargs: Any) -> None:
@@ -164,12 +160,9 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         bottom: int
         top, bottom = self.margins or pyte_screens.Margins(0, self.lines - 1)
         full: bool = top == 0 and bottom == self.lines - 1 and self.cursor.y == top
-        inside: bool = top <= self.cursor.y <= bottom
         super().insert_lines(count)
         if full:
             self.pending_scroll -= count
-        elif inside:
-            self.edited.update(range(self.cursor.y, bottom + 1))
 
     def delete_lines(self, count: Optional[int] = None) -> None:
         count = count or 1
@@ -177,12 +170,9 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         bottom: int
         top, bottom = self.margins or pyte_screens.Margins(0, self.lines - 1)
         full: bool = top == 0 and bottom == self.lines - 1 and self.cursor.y == top
-        inside: bool = top <= self.cursor.y <= bottom
         super().delete_lines(count)
         if full:
             self.pending_scroll += count
-        elif inside:
-            self.edited.update(range(self.cursor.y, bottom + 1))
 
     def resize(
         self, lines: Optional[int] = None, columns: Optional[int] = None
@@ -246,7 +236,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
     MAX_HYPERLINK_SPANS: int = 1000
 
     def draw(self, data: str) -> None:
-        self.edited.add(self.cursor.y)
         if self._active_hyperlink is not None:
             start: Tuple[int, int] = (self.cursor.y, self.cursor.x)
             super().draw(data)
@@ -284,40 +273,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
     def bell(self, *args: Any) -> None:
         self.bell_triggered = True
 
-    # ------------------------------------------------------------------
-    # Content-edit tracking (see pending_scroll / edited)
-    # ------------------------------------------------------------------
-
-    def erase_in_line(self, how: int = 0, private: bool = False) -> None:
-        self.edited.add(self.cursor.y)
-        super().erase_in_line(how, private=private)
-
-    def erase_in_display(self, how: int = 0) -> None:
-        if how == 0:
-            interval: Any = range(self.cursor.y, self.lines)
-        elif how == 1:
-            interval = range(0, self.cursor.y + 1)
-        elif how == 2:
-            interval = range(0, self.lines)
-        else:
-            interval = [self.cursor.y]
-        self.edited.update(interval)
-        super().erase_in_display(how)
-
-    def erase_characters(self, count: Optional[int] = None) -> None:
-        self.edited.add(self.cursor.y)
-        super().erase_characters(count)
-
-    def insert_characters(self, count: Optional[int] = None) -> None:
-        self.edited.add(self.cursor.y)
-        super().insert_characters(count)
-
-    def delete_characters(self, count: Optional[int] = None) -> None:
-        self.edited.add(self.cursor.y)
-        super().delete_characters(count)
-
     def reset(self) -> None:
-        self.edited.update(range(self.lines))
+        # A full reset (RIS) also drops the Kitty keyboard protocol mode;
+        # the app re-pushes it on the next enable.
+        self.keyboard_flags = 0
         super().reset()
 
 
@@ -347,7 +306,6 @@ class ExtendedStream(pyte_streams.Stream):
         screen: Any = self.listener
         if screen is not None:
             screen.pending_scroll = 0
-            screen.edited.clear()
         super().feed(data)
 
     def _parser_fsm(self) -> Generator[Optional[bool], str, None]:
