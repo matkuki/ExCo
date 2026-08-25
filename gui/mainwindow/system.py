@@ -11,6 +11,7 @@ the MainWindow instance.
 """
 
 import os
+import subprocess
 from typing import Optional, TYPE_CHECKING
 
 import constants
@@ -177,11 +178,24 @@ class System:
             )
 
     def show_explorer(self) -> None:
-        if data.platform == "Windows":
-            command = "explorer ."
-        elif data.platform == "Linux":
-            command = "xdg-open {}".format(os.getcwd())
-        else:
-            self._parent.display.repl_display_warning("Unimplemented yet!")
+        """Open the current working directory in the operating system explorer"""
+        directory: Optional[str]
+        try:
+            directory = os.getcwd()
+        except OSError:
+            directory = None
+        if not directory or not os.path.isdir(directory):
+            self._parent.display.repl_display_error(
+                "Current working directory is invalid: '{}'".format(directory)
+            )
             return
-        self._parent.repl.get_interpreter().run_cmd_process(command, show_console=False)
+        try:
+            if data.on_windows:
+                os.startfile(directory)
+            else:
+                subprocess.Popen(["xdg-open", directory])
+        except OSError as ex:
+            self._parent.display.repl_display_error(
+                "Cannot open directory in system explorer:"
+                + " '{}' ({})".format(directory, ex)
+            )

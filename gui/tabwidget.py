@@ -718,8 +718,12 @@ QTabBar::tab:selected {{
             clear_document_bookmarks()
             # The document cannot be saved, close it
             self.removeTab(emmited_tab_number)
-        # Delete the tab from memory
-        if hasattr(tab, "__del__"):
+        # Clean up the tab widget: prefer an explicit 'shutdown' method
+        # (terminal tabs release their PTY there), fall back to the legacy
+        # '__del__' convention for the other tab types
+        if hasattr(tab, "shutdown"):
+            tab.shutdown()
+        elif hasattr(tab, "__del__"):
             tab.__del__()
         # Just in case, decrement the refcount of the tab (that's what del does)
         del tab

@@ -107,6 +107,11 @@ class TerminalView(qt.QWidget):
         # Last reported mouse-motion cell (mode 1003 throttle)
         self._last_motion_cell: Optional[Tuple[int, int]] = None
 
+        # High-resolution wheel accumulation: touchpads deliver angleDelta
+        # values well below the 120 eighth-degree wheel step; they are
+        # summed until a full step is reached.
+        self._wheel_accumulator: float = 0.0
+
         # Visual bell flash state
         self._flash: bool = False
 
@@ -161,6 +166,7 @@ class TerminalView(qt.QWidget):
 
     def _load_style(self) -> None:
         """(Re)apply the configured font and theme-derived default colors."""
+        self._clear_selection()
         self._font: qt.QFont = self._terminal_font()
         self._font.setStyleHint(qt.QFont.StyleHint.Monospace)
         self._font.setFixedPitch(True)
@@ -217,6 +223,7 @@ class TerminalView(qt.QWidget):
         )
 
     def resizeEvent(self, event: qt.QResizeEvent) -> None:  # type: ignore[override]
+        self._clear_selection()
         self._recompute_geometry()
         cols: int
         rows: int
@@ -229,10 +236,10 @@ class TerminalView(qt.QWidget):
     # ------------------------------------------------------------------
 
     def _in_alt(self) -> bool:
-        return self.terminal.screen.in_alt_screen
+        return self.terminal.term_screen.in_alt_screen
 
     def _history_len(self) -> int:
-        return len(self.terminal.screen.history.top)
+        return len(self.terminal.term_screen.history.top)
 
     def _stack_row(self, viewport_y: int) -> int:
         """Map a viewport row to a row index in the (history + screen) stack."""
@@ -240,7 +247,7 @@ class TerminalView(qt.QWidget):
 
     def _stack_row_cells(self, stack_row: int) -> Any:
         """Return the cell row (StaticDefaultDict) for a stack row index."""
-        screen: ExtendedScreen = self.terminal.screen
+        screen: ExtendedScreen = self.terminal.term_screen
         history_len: int = self._history_len()
         if stack_row < history_len:
             return screen.history.top[stack_row]
@@ -261,7 +268,7 @@ class TerminalView(qt.QWidget):
         self.update()
 
     def _page_rows(self) -> int:
-        return max(self.terminal.screen.lines - 1, 1)
+        return max(self.terminal.term_screen.lines - 1, 1)
 
     def _refresh_scrollbar(self) -> None:
         if self._in_alt():
@@ -296,7 +303,7 @@ class TerminalView(qt.QWidget):
         scrollbar. Multiple calls within one event-loop iteration are
         coalesced by Qt into a single paint event.
         """
-        screen: ExtendedScreen = self.terminal.screen
+        screen: ExtendedScreen = self.terminal.term_screen
         dirty: Any = screen.dirty
         pending_scroll: int = screen.pending_scroll
         lines: int = screen.lines
@@ -334,7 +341,7 @@ class TerminalView(qt.QWidget):
     def _on_blink(self) -> None:
         if not self.isVisible():
             return
-        screen: ExtendedScreen = self.terminal.screen
+        screen: ExtendedScreen = self.terminal.term_screen
         if screen.cursor.hidden:
             # Reset the phase so the cursor is immediately visible when it
             # reappears instead of staying hidden for up to one blink period.
@@ -400,7 +407,7 @@ class TerminalView(qt.QWidget):
         painter.fillRect(event.rect(), self._default_bg)
         if self._flash:
             painter.fillRect(event.rect(), qt.QColor(255, 255, 255, 40))
-        screen: ExtendedScreen = self.terminal.screen
+        screen: ExtendedScreen = self.terminal.term_screen
         lines: int = screen.lines
         columns: int = screen.columns
         for y in range(lines):
@@ -518,7 +525,7 @@ class TerminalView(qt.QWidget):
         return style
 
     def _paint_cursor(self, painter: qt.QPainter) -> None:
-        screen: ExtendedScreen = self.terminal.screen
+        screen: ExtendedScreen = self.terminal.term_screen
         if self._scroll_offset != 0 or screen.cursor.hidden:
             return
         if self._selection is not None:
@@ -582,7 +589,7 @@ class TerminalView(qt.QWidget):
     # ------------------------------------------------------------------
 
     def _pos_cell(self, position: qt.QPointF) -> Tuple[int, int]:
-        screen: ExtendedScreen = self.terminal.screen
+        screen: ExtendedScreen = self.terminal.term_screen
         cols: int = screen.columns
         lines: int = screen.lines
         x: int = int(position.x() / self._char_width)
@@ -633,7 +640,7 @@ class TerminalView(qt.QWidget):
         r0, c0, r1, c1 = cast(Tuple[int, int, int, int], bounds)
         if (r0, c0) > (r1, c1):
             r0, c0, r1, c1 = r1, c1, r0, c0
-        columns: int = self.terminal.screen.columns
+        columns: int = self.terminal.term_screen.columns
         lines: List[str] = []
         for stack_row in range(r0, r1 + 1):
             row: Any = self._stack_row_cells(stack_row)
@@ -653,7 +660,7 @@ class TerminalView(qt.QWidget):
         application: Any = data.application
         text: str = application.clipboard().text()
         if text:
-            if self.terminal.screen.bracketed_paste:
+            if self.terminal.term_screen.bracketed_paste:
                 text = "\x1b[200~" + text + "\x1b[201~"
             self.paste_event.emit(text)
 
@@ -661,6 +668,21 @@ class TerminalView(qt.QWidget):
         self._selection = self._pos_cell(position)
         self._selection_active = True
         self.update()
+
+    def _clear_selection(self) -> None:
+        """
+        Drop the current selection. Called when the cell grid geometry
+        changes (resize, font change): stored cell coordinates would
+        otherwise point at unrelated cells. Tolerates being called from
+        _load_style before the selection state is initialized.
+        """
+        had_selection: bool = getattr(self, "_selection", None) is not None or getattr(
+            self, "_selection_active", False
+        )
+        self._selection = None
+        self._selection_active = False
+        if had_selection:
+            self.update()
 
     def _update_selection(self, position: qt.QPointF) -> None:
         if not self._selection_active:
@@ -714,7 +736,7 @@ class TerminalView(qt.QWidget):
         motion: bool = False,
     ) -> None:
         """Emit a mouse report to the application when a mouse mode is set."""
-        screen: ExtendedScreen = self.terminal.screen
+        screen: ExtendedScreen = self.terminal.term_screen
         if screen.mouse_mode == 0:
             return
         cx: int = x + 1
@@ -735,13 +757,18 @@ class TerminalView(qt.QWidget):
                 "\x1b[<{};{};{}{}".format(code, cx, cy, "M" if pressed else "m")
             )
         else:
-            # X10-style: CSI M b+32 x+32 y+32
+            # X10-style: CSI M b+32 x+32 y+32. The encoding is limited to
+            # 223 columns/rows; larger coordinates are clipped, matching
+            # xterm (otherwise chr() wraps into the C0 control range and
+            # the application receives garbage).
+            cx = min(cx, 223)
+            cy = min(cy, 223)
             self.send_text.emit("\x1b[M" + chr(code + 32) + chr(cx + 32) + chr(cy + 32))
 
     def mousePressEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
         self.setFocus()
         self.focused.emit()
-        if self.terminal.screen.mouse_mode != 0:
+        if self.terminal.term_screen.mouse_mode != 0:
             if event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier:
                 # Shift bypass: the app never sees the event, so native
                 # selection works inside mouse-capturing TUIs (OpenCode, ...).
@@ -773,7 +800,7 @@ class TerminalView(qt.QWidget):
         return super().focusInEvent(event)
 
     def mouseMoveEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
-        screen: ExtendedScreen = self.terminal.screen
+        screen: ExtendedScreen = self.terminal.term_screen
         if self._shift_selecting:
             self._update_selection(event.position())
             return super().mouseMoveEvent(event)
@@ -812,7 +839,7 @@ class TerminalView(qt.QWidget):
                 self._end_selection()
             event.accept()
             return
-        if self.terminal.screen.mouse_mode != 0:
+        if self.terminal.term_screen.mouse_mode != 0:
             button: int = self._mouse_button_code(event.button())
             x: int
             y: int
@@ -824,16 +851,34 @@ class TerminalView(qt.QWidget):
             self._end_selection()
         event.accept()
 
+    def _wheel_scroll(self, delta: int) -> None:
+        """
+        Accumulate wheel deltas and scroll one page-row per full step.
+
+        High-resolution devices (touchpads) deliver many small angleDelta
+        values; the previous 'int(delta / 120)' truncated them to zero, so
+        touchpad scrolling stayed dead until a full-size delta arrived.
+        """
+        if delta == 0:
+            return
+        self._wheel_accumulator += delta
+        steps: int = int(abs(self._wheel_accumulator) // 120)
+        if steps == 0:
+            return
+        direction: int = 1 if self._wheel_accumulator > 0 else -1
+        self._wheel_accumulator -= steps * 120 * direction
+        if direction > 0:
+            self._scroll_up(steps)
+        else:
+            self._scroll_down(steps)
+
     def wheelEvent(self, event: qt.QWheelEvent) -> None:  # type: ignore[override]
         delta: int = event.angleDelta().y()
-        if self.terminal.screen.mouse_mode != 0:
+        if self.terminal.term_screen.mouse_mode != 0:
             if event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier:
                 # Shift bypass: scroll the history instead of reporting the
                 # wheel to the app.
-                if delta > 0:
-                    self._scroll_up(int(delta / 120))
-                else:
-                    self._scroll_down(int(abs(delta) / 120))
+                self._wheel_scroll(delta)
                 event.accept()
                 return
             x: int
@@ -842,14 +887,11 @@ class TerminalView(qt.QWidget):
             self._mouse_report(1 if delta > 0 else 0, x, y, pressed=True, wheel=True)
             event.accept()
             return
-        if delta > 0:
-            self._scroll_up(int(delta / 120))
-        else:
-            self._scroll_down(int(abs(delta) / 120))
+        self._wheel_scroll(delta)
         event.accept()
 
     def contextMenuEvent(self, event: qt.QContextMenuEvent) -> None:  # type: ignore[override]
-        if self.terminal.screen.mouse_mode != 0:
+        if self.terminal.term_screen.mouse_mode != 0:
             event.ignore()
             return
         context_menu: Any = gui.menu.Menu(parent=self)
@@ -1026,7 +1068,9 @@ class TerminalView(qt.QWidget):
                 # Windows console host does not translate a CSI-u Ctrl+Enter
                 # reliably, so follow the Windows Terminal convention.
                 output = "\n"
-            elif self.terminal.screen.keyboard_flags & 1 and (alt or shift or meta):
+            elif self.terminal.term_screen.keyboard_flags & 1 and (
+                alt or shift or meta
+            ):
                 # Kitty keyboard protocol: a modified Enter arrives as
                 # CSI u (key 13 + XTerm-style modifier) so applications
                 # can tell it apart from a plain Enter.

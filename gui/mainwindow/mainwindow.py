@@ -103,10 +103,14 @@ class MainWindow(qt.QMainWindow):
     boxes_groupbox = None
     main_box = None
     main_splitter = None
-    main_groupbox = None  # QGroupBox that will hold the main splitter, needed for overlaying
+    main_groupbox = (
+        None  # QGroupBox that will hold the main splitter, needed for overlaying
+    )
     main_groupbox_layout = None  # QVBoxLayout used by the main groupbox
     repl = None  # QLineEdit that will be used for the Python REPL
-    repl_helper = None  # QTextEdit helper for inputting more than one line into the REPL
+    repl_helper = (
+        None  # QTextEdit helper for inputting more than one line into the REPL
+    )
     repl_box = None  # QGroupBox that the REPL will be in
     repl_messages_tab = None  # Reference to a tab that displays REPL messages
     node_tree_tab = None  # Reference to a tab that displays NODE TREE information
@@ -115,8 +119,12 @@ class MainWindow(qt.QMainWindow):
     sessions_menu = None  # Sessions option on the menubar
     toolbar = None  # Toolbar
     statusbar = None  # Statusbar
-    statusbar_label_left = None  # Left side of the statusbar for showing line and column numbers
-    docking_overlay = None  # Left side of the statusbar for showing line and column numbers
+    statusbar_label_left = (
+        None  # Left side of the statusbar for showing line and column numbers
+    )
+    docking_overlay = (
+        None  # Left side of the statusbar for showing line and column numbers
+    )
     # Flag for locking the main window keypress and release
     key_lock = False
     # Flag indicating the first time the user config file was imported
@@ -196,7 +204,9 @@ class MainWindow(qt.QMainWindow):
                 message = ["REPL PRINT:\n", message[0]]
             else:
                 message = ["REPL PRINT:\n"] + [str(x) for x in message]
-            self.display.repl_display_message(*message, message_type=constants.MessageType.WARNING)
+            self.display.repl_display_message(
+                *message, message_type=constants.MessageType.WARNING
+            )
 
         functions.repl_print = repl_print
         # Initialize layout
@@ -259,7 +269,10 @@ class MainWindow(qt.QMainWindow):
         self.view.layout_restore(last_layout)
 
         # Open startup files AFTER layout restore completes
-        if hasattr(self, "_startup_file_arguments") and self._startup_file_arguments is not None:
+        if (
+            hasattr(self, "_startup_file_arguments")
+            and self._startup_file_arguments is not None
+        ):
             for file in self._startup_file_arguments:
                 self.open_file(file=file, tab_widget=self.get_largest_window())
 
@@ -482,7 +495,9 @@ class MainWindow(qt.QMainWindow):
             replace_in_files=self.system.replace_in_files,
             # Document editing references
             find=self.editing.find,
-            regex_find=lambda *a, **kw: self.editing.find(*a, regular_expression=True, **kw),
+            regex_find=lambda *a, **kw: self.editing.find(
+                *a, regular_expression=True, **kw
+            ),
             find_and_replace=self.editing.find_and_replace,
             regex_find_and_replace=lambda *a, **kw: self.editing.find_and_replace(
                 *a, regular_expression=True, **kw
@@ -493,8 +508,8 @@ class MainWindow(qt.QMainWindow):
                 *a, regular_expression=True, **kw
             ),
             replace_in_selection=self.editing.replace_in_selection,
-            regex_replace_in_selection=lambda *a, **kw: self.editing.replace_in_selection(
-                *a, regular_expression=True, **kw
+            regex_replace_in_selection=lambda *a, **kw: (
+                self.editing.replace_in_selection(*a, regular_expression=True, **kw)
             ),
             highlight=self.editing.highlight,
             regex_highlight=lambda *a, **kw: self.editing.highlight(
@@ -541,7 +556,9 @@ class MainWindow(qt.QMainWindow):
         for key in keywords:
             ac_list_sec.append(key)
             # Add methods to secondary autocompletion list
-            for method in inspect.getmembers(keywords[key], predicate=inspect.isroutine):
+            for method in inspect.getmembers(
+                keywords[key], predicate=inspect.isroutine
+            ):
                 if str(method[0])[0] != "_":
                     ac_list_sec.append(str(key) + "." + str(method[0]))
             # Add variables to secondary autocompletion list
@@ -562,15 +579,7 @@ class MainWindow(qt.QMainWindow):
 
     def open_cwd(self):
         """Display the current working directory in the systems explorer"""
-        cwd = os.getcwd()
-        if data.platform == "Windows":
-            self.repl._repl_eval("r: explorer .")
-        elif data.platform == "Linux":
-            self.repl._repl_eval('r: xdg-open "{}"'.format(cwd))
-        else:
-            self.display.repl_display_message(
-                "Not implemented on '{}' platform!".format(data.platform)
-            )
+        self.system.show_explorer()
 
     def set_cwd(self, directory):
         """Set the current working directory and display it"""
@@ -593,7 +602,9 @@ class MainWindow(qt.QMainWindow):
 
         # Nested function for displaying multiple messages
         def display(message):
-            self.display.repl_display_message(message, message_type=constants.MessageType.WARNING)
+            self.display.repl_display_message(
+                message, message_type=constants.MessageType.WARNING
+            )
             self.display.write_to_statusbar(message)
 
         # Get the document path
@@ -726,7 +737,9 @@ class MainWindow(qt.QMainWindow):
         """
         self.display.repl_display_message('Executing CMD command: "' + command + '"')
         # Run the command and display the result
-        result = self.repl.get_interpreter().run_cmd_process(command, show_console, output_to_repl)
+        result = self.repl.get_interpreter().run_cmd_process(
+            command, show_console, output_to_repl
+        )
         self.display.repl_display_message(result)
 
     def file_create_new(self):
@@ -742,7 +755,9 @@ class MainWindow(qt.QMainWindow):
         focused_tab = self.get_tab_by_focus()
         if isinstance(focused_tab, CustomEditor) == True:
             if focused_tab is not None and focused_tab.savable == constants.CanSave.YES:
-                focused_tab.save_document(saveas=False, encoding=encoding, line_ending=line_ending)
+                focused_tab.save_document(
+                    saveas=False, encoding=encoding, line_ending=line_ending
+                )
                 if encoding == "cp1250":
                     self.display.repl_display_success(
                         "Saved file {} in ANSI encoding.".format(focused_tab.save_path)
@@ -837,9 +852,13 @@ class MainWindow(qt.QMainWindow):
         Initialize the python interactive interpreter that will
         be used with the python REPL QLineEdit
         """
-        new_references, ac_list_prim, ac_list_sec = self.get_references_autocompletions()
+        new_references, ac_list_prim, ac_list_sec = (
+            self.get_references_autocompletions()
+        )
         # Initialize and set auto completer for the REPL
-        self.repl.interpreter_update_references(new_references, ac_list_prim, ac_list_sec)
+        self.repl.interpreter_update_references(
+            new_references, ac_list_prim, ac_list_sec
+        )
         # Initialize the autocompletions for the REPL helper
         merged_autocompletions = [word for word in new_references]
         merged_autocompletions.extend(ac_list_prim)
@@ -879,7 +898,9 @@ class MainWindow(qt.QMainWindow):
         user_file.close()
         result = self.repl._repl_eval(user_code, display_action=False)
         if result is not None:
-            self.display.repl_display_error("ERROR IN USER CONFIGURATION FILE:\n" + result)
+            self.display.repl_display_error(
+                "ERROR IN USER CONFIGURATION FILE:\n" + result
+            )
             return
         # Execute the data module's first_scan function once
         if self._first_scan == True:
@@ -915,17 +936,25 @@ class MainWindow(qt.QMainWindow):
             self.display.write_to_statusbar("User functions imported successfully!")
         except:
             message = "!! Error importing user functions !!"
-            self.display.repl_display_error("{}\n{}".format(traceback.format_exc(), message))
+            self.display.repl_display_error(
+                "{}\n{}".format(traceback.format_exc(), message)
+            )
             self.display.write_to_statusbar(message)
 
     def reset_interpreter(self):
-        new_references, ac_list_prim, ac_list_sec = self.get_references_autocompletions()
+        new_references, ac_list_prim, ac_list_sec = (
+            self.get_references_autocompletions()
+        )
         # Initialize and set auto completer
-        self.repl.interpreter_reset_references(new_references, ac_list_prim, ac_list_sec)
+        self.repl.interpreter_reset_references(
+            new_references, ac_list_prim, ac_list_sec
+        )
         # Reimport the user functions
         self.import_user_functions()
         # Display interpreter reset success
-        self.display.write_to_statusbar("REPL interpreter references successfully updated", 2000)
+        self.display.write_to_statusbar(
+            "REPL interpreter references successfully updated", 2000
+        )
 
     def create_new(self, tab_name=None, tab_widget=None):
         """Creates an empty scintilla document using a generator counter"""
@@ -935,7 +964,9 @@ class MainWindow(qt.QMainWindow):
         # Create the new scintilla document in the selected basic widget
         return_widget = None
         if tab_widget is None:
-            return_widget = self.get_largest_window().editor_add_document(tab_name, type="new")
+            return_widget = self.get_largest_window().editor_add_document(
+                tab_name, type="new"
+            )
         else:
             return_widget = tab_widget.editor_add_document(tab_name, type="new")
         # Set focus to the new widget
@@ -986,7 +1017,9 @@ class MainWindow(qt.QMainWindow):
             file_size = functions.get_file_size_Mb(in_file)
             if file_size > 50:
                 # Create the warning message
-                warning = "The file is larger than 50 MB! ({:d} MB)\n".format(int(file_size))
+                warning = "The file is larger than 50 MB! ({:d} MB)\n".format(
+                    int(file_size)
+                )
                 warning += "A lot of RAM will be needed!\n"
                 warning += "Files larger than 300 MB can cause the system to hang!\n"
                 warning += "Are you sure you want to open it?"
@@ -1003,7 +1036,9 @@ class MainWindow(qt.QMainWindow):
                 tab_widget = self.get_largest_window()
 
             # Add new scintilla document tab to the basic widget
-            new_tab = tab_widget.editor_add_document(in_file, "file", bypass_check=False)
+            new_tab = tab_widget.editor_add_document(
+                in_file, "file", bypass_check=False
+            )
             # Set the icon if it was set by the lexer
             new_tab.internals.update_icon(new_tab)
 
@@ -1016,7 +1051,11 @@ class MainWindow(qt.QMainWindow):
                         # Use append, it does not remove the NULL characters
                         new_tab.append(file_text)
                         # Display a warning that the text has NULL characters
-                        message = "CAUTION: NULL ('\\0') characters in file:\n'{}'".format(in_file)
+                        message = (
+                            "CAUTION: NULL ('\\0') characters in file:\n'{}'".format(
+                                in_file
+                            )
+                        )
                         self.display.repl_display_message(
                             message, message_type=constants.MessageType.WARNING
                         )
@@ -1099,7 +1138,9 @@ class MainWindow(qt.QMainWindow):
         file_size = functions.get_file_size_Mb(file_path)
         if file_size > 50:
             # Create the warning message
-            warning = "The file is larger than {0:d} MB! ({0:d} MB)\n".format(int(file_size))
+            warning = "The file is larger than {0:d} MB! ({0:d} MB)\n".format(
+                int(file_size)
+            )
             warning += "A lot of RAM will be needed!\n"
             warning += "Files larger than 300 MB can cause the system to hang!\n"
             warning += "Are you sure you want to open it?"
@@ -1247,7 +1288,9 @@ class MainWindow(qt.QMainWindow):
         Find a tab using its save name (file path) in the tab widgets
         """
         return self._find_tab(
-            lambda w, win, i: isinstance(w, CustomEditor) and w.save_path == in_save_path
+            lambda w, win, i: (
+                isinstance(w, CustomEditor) and w.save_path == in_save_path
+            )
         )
 
     def get_tab_by_string_in_name(self, string):
@@ -1362,7 +1405,10 @@ class MainWindow(qt.QMainWindow):
             if window.count() > 0:
                 for i in range(0, window.count()):
                     if window.widget(i).savable == constants.CanSave.YES:
-                        if window.widget(i).save_status == constants.FileStatus.MODIFIED:
+                        if (
+                            window.widget(i).save_status
+                            == constants.FileStatus.MODIFIED
+                        ):
                             return True
             return False
 

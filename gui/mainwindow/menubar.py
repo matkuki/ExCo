@@ -14,6 +14,7 @@ a single `init_menubar(self)` function called by MainWindow.
 
 import functools
 import os
+import shutil
 import sys
 import traceback
 
@@ -477,7 +478,8 @@ def init_menubar(self) -> None:
                 self.display.repl_display_error(traceback.format_exc())
 
         go_to_start_action = create_action(
-            "Go to start\t" + settings.get("keyboard-shortcuts")["editor"]["go_to_start"],
+            "Go to start\t"
+            + settings.get("keyboard-shortcuts")["editor"]["go_to_start"],
             "#" + settings.get("keyboard-shortcuts")["editor"]["go_to_start"],
             "Move cursor up to the start of the currently selected document",
             "tango_icons/goto-start.png",
@@ -507,7 +509,8 @@ def init_menubar(self) -> None:
                 self.display.repl_display_error(traceback.format_exc())
 
         select_page_up_action = create_action(
-            "Select page up\t" + settings.get("keyboard-shortcuts")["editor"]["select_page_up"],
+            "Select page up\t"
+            + settings.get("keyboard-shortcuts")["editor"]["select_page_up"],
             "#" + settings.get("keyboard-shortcuts")["editor"]["select_page_up"],
             "Select text up one page of the currently selected document",
             "tango_icons/Input-keyboard.svg",
@@ -522,7 +525,8 @@ def init_menubar(self) -> None:
                 self.display.repl_display_error(traceback.format_exc())
 
         select_page_down_action = create_action(
-            "Select page down\t" + settings.get("keyboard-shortcuts")["editor"]["select_page_down"],
+            "Select page down\t"
+            + settings.get("keyboard-shortcuts")["editor"]["select_page_down"],
             "#" + settings.get("keyboard-shortcuts")["editor"]["select_page_down"],
             "Select text down one page of the currently selected document",
             "tango_icons/Input-keyboard.svg",
@@ -537,7 +541,8 @@ def init_menubar(self) -> None:
                 self.display.repl_display_error(traceback.format_exc())
 
         select_to_start_action = create_action(
-            "Select to start\t" + settings.get("keyboard-shortcuts")["editor"]["select_to_start"],
+            "Select to start\t"
+            + settings.get("keyboard-shortcuts")["editor"]["select_to_start"],
             "#" + settings.get("keyboard-shortcuts")["editor"]["select_to_start"],
             "Select all text up to the start of the currently selected document",
             "tango_icons/Input-keyboard.svg",
@@ -552,7 +557,8 @@ def init_menubar(self) -> None:
                 self.display.repl_display_error(traceback.format_exc())
 
         select_to_end_action = create_action(
-            "Select to end\t" + settings.get("keyboard-shortcuts")["editor"]["select_to_end"],
+            "Select to end\t"
+            + settings.get("keyboard-shortcuts")["editor"]["select_to_end"],
             "#" + settings.get("keyboard-shortcuts")["editor"]["select_to_end"],
             "Select all text down to the start of the currently selected document",
             "tango_icons/Input-keyboard.svg",
@@ -582,7 +588,8 @@ def init_menubar(self) -> None:
                 self.display.repl_display_error(traceback.format_exc())
 
         scroll_down_action = create_action(
-            "Scroll down\t" + settings.get("keyboard-shortcuts")["editor"]["scroll_down"],
+            "Scroll down\t"
+            + settings.get("keyboard-shortcuts")["editor"]["scroll_down"],
             "#" + settings.get("keyboard-shortcuts")["editor"]["scroll_down"],
             "Scroll down one page of the currently selected document",
             "tango_icons/scroll-down.png",
@@ -627,7 +634,8 @@ def init_menubar(self) -> None:
                 self.display.repl_display_error(traceback.format_exc())
 
         line_delete_action = create_action(
-            "Line Delete\t" + settings.get("keyboard-shortcuts")["editor"]["line_delete"],
+            "Line Delete\t"
+            + settings.get("keyboard-shortcuts")["editor"]["line_delete"],
             "#" + settings.get("keyboard-shortcuts")["editor"]["line_delete"],
             "Delete the current line of the currently selected document",
             "tango_icons/edit-line-delete.png",
@@ -642,7 +650,8 @@ def init_menubar(self) -> None:
                 self.display.repl_display_error(traceback.format_exc())
 
         line_transpose_action = create_action(
-            "Line Transpose\t" + settings.get("keyboard-shortcuts")["editor"]["line_transpose"],
+            "Line Transpose\t"
+            + settings.get("keyboard-shortcuts")["editor"]["line_transpose"],
             "#" + settings.get("keyboard-shortcuts")["editor"]["line_transpose"],
             "Switch the current line with the line above it of the currently selected document",
             "tango_icons/edit-line-transpose.png",
@@ -660,7 +669,8 @@ def init_menubar(self) -> None:
         line_duplicate_action = create_action(
             "Line/Selection Duplicate\t"
             + settings.get("keyboard-shortcuts")["editor"]["line_selection_duplicate"],
-            "#" + settings.get("keyboard-shortcuts")["editor"]["line_selection_duplicate"],
+            "#"
+            + settings.get("keyboard-shortcuts")["editor"]["line_selection_duplicate"],
             "Duplicate the current line/selection of the currently selected document",
             "tango_icons/edit-line-duplicate.png",
             line_duplicate,
@@ -672,7 +682,9 @@ def init_menubar(self) -> None:
             action_text,
             self,
         )
-        temp_string = "Select rectangle using the mouse in the currently selected document"
+        temp_string = (
+            "Select rectangle using the mouse in the currently selected document"
+        )
         rect_block_action.setStatusTip(temp_string)
         #            temp_icon = functions.create_icon("")
         #            rect_block_action.setIcon(temp_icon)
@@ -813,7 +825,9 @@ def init_menubar(self) -> None:
                 temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                 self.repl.setText(temp_string)
             except:
-                self.repl.setText('regex_find_and_replace(r"",r"",case_sensitive=False)')
+                self.repl.setText(
+                    'regex_find_and_replace(r"",r"",case_sensitive=False)'
+                )
             self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
             self.repl.setFocus()
             self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
@@ -884,7 +898,9 @@ def init_menubar(self) -> None:
             try:
                 focused_tab = self.get_used_tab()
                 self.repl.setText(
-                    'clear_highlights(window_name="{}")'.format(focused_tab._parent.name)
+                    'clear_highlights(window_name="{}")'.format(
+                        focused_tab._parent.name
+                    )
                 )
             except:
                 self.repl.setText("clear_highlights()")
@@ -927,7 +943,9 @@ def init_menubar(self) -> None:
                 temp_string += 'window_name="{}")'.format(focused_tab._parent.name)
                 self.repl.setText(temp_string)
             except:
-                self.repl.setText('regex_replace_in_selection(r"",r"",case_sensitive=False)')
+                self.repl.setText(
+                    'regex_replace_in_selection(r"",r"",case_sensitive=False)'
+                )
             self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
             self.repl.setFocus()
             self.repl.setCursorPosition(self.repl.text().find('",r"",case_sensitive'))
@@ -1065,7 +1083,9 @@ def init_menubar(self) -> None:
             else:
                 message = "No document opened in the selected window or\n"
                 message += "the document is not an editor!"
-                self.display.repl_display_message(message, message_type=constants.MessageType.ERROR)
+                self.display.repl_display_message(
+                    message, message_type=constants.MessageType.ERROR
+                )
 
         node_tree_action = create_action(
             "Create/reload node tree (C / Nim / Python / ...)",
@@ -1078,7 +1098,9 @@ def init_menubar(self) -> None:
         def special_goto_line() -> None:
             try:
                 focused_tab = self.get_used_tab()
-                self.repl.setText('goto_line(,window_name="{}")'.format(focused_tab._parent.name))
+                self.repl.setText(
+                    'goto_line(,window_name="{}")'.format(focused_tab._parent.name)
+                )
                 self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
                 self.repl.setCursorPosition(self.repl.text().find(",window_name"))
             except:
@@ -1172,7 +1194,9 @@ def init_menubar(self) -> None:
                     .replace('"', '\\"')
                     .replace("\n", "\\n")
                 )
-                repl_text = 'find_replace_in_open_documents("{}",""'.format(selected_text)
+                repl_text = 'find_replace_in_open_documents("{}",""'.format(
+                    selected_text
+                )
                 repl_text += ",case_sensitive=False,regular_expression=False"
                 repl_text += ',window_name="{}")'.format(focused_tab._parent.name)
                 self.repl.setText(repl_text)
@@ -1202,7 +1226,9 @@ def init_menubar(self) -> None:
                     .replace('"', '\\"')
                     .replace("\n", "\\n")
                 )
-                repl_text = 'replace_all_in_open_documents("{}",""'.format(selected_text)
+                repl_text = 'replace_all_in_open_documents("{}",""'.format(
+                    selected_text
+                )
                 repl_text += ",case_sensitive=False,regular_expression=False"
                 repl_text += ',window_name="{}")'.format(focused_tab._parent.name)
                 self.repl.setText(repl_text)
@@ -1236,7 +1262,9 @@ def init_menubar(self) -> None:
                 selected_text = focused_tab.selectedText()
                 functions.open_url(selected_text)
             except:
-                message = "Cannot open selected editor text in the system's web-browser!"
+                message = (
+                    "Cannot open selected editor text in the system's web-browser!"
+                )
                 self.display.repl_display_error(message)
 
         open_in_browser_action = create_action(
@@ -1254,7 +1282,9 @@ def init_menubar(self) -> None:
             )
             self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
             self.repl.setFocus()
-            self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
+            self.repl.setSelection(
+                self.repl.text().index("directory"), len("directory")
+            )
 
         def special_find_in_with_dialog() -> None:
             # The second argument is raw, so that single backslashes work for windows paths
@@ -1265,7 +1295,9 @@ def init_menubar(self) -> None:
             self.repl.setFocus()
             self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
 
-        self.menubar_functions["special_find_in_with_dialog"] = special_find_in_with_dialog
+        self.menubar_functions["special_find_in_with_dialog"] = (
+            special_find_in_with_dialog
+        )
         temp_string = "Find all the files in a directory/subdirectories "
         temp_string += "that contain the search string"
         find_in_files_action = create_action(
@@ -1283,7 +1315,9 @@ def init_menubar(self) -> None:
             )
             self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
             self.repl.setFocus()
-            self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
+            self.repl.setSelection(
+                self.repl.text().index("directory"), len("directory")
+            )
 
         def special_find_file_with_dialog() -> None:
             # The second argument is raw, so that single backslashes work for windows paths
@@ -1292,7 +1326,9 @@ def init_menubar(self) -> None:
             self.repl.setFocus()
             self.repl.setCursorPosition(self.repl.text().find('",case_sensitive'))
 
-        self.menubar_functions["special_find_file_with_dialog"] = special_find_file_with_dialog
+        self.menubar_functions["special_find_file_with_dialog"] = (
+            special_find_file_with_dialog
+        )
         temp_string = "Find all the files in a directory/subdirectories "
         temp_string += "that have the search string in them"
         find_files_action = create_action(
@@ -1310,7 +1346,9 @@ def init_menubar(self) -> None:
             self.repl.setText(temp_string)
             self.view.set_repl_type(constants.ReplType.SINGLE_LINE)
             self.repl.setFocus()
-            self.repl.setSelection(self.repl.text().index("directory"), len("directory"))
+            self.repl.setSelection(
+                self.repl.text().index("directory"), len("directory")
+            )
 
         def special_replace_in_files_with_dialog() -> None:
             # The second argument is raw, so that single backslashes work for windows paths
@@ -1379,7 +1417,9 @@ def init_menubar(self) -> None:
             settings_file = settings.get("settings_filename_with_path")
             # Test if userfunctions file exists
             if os.path.isfile(settings_file) == False:
-                self.display.repl_display_error("User definitions file does not exist!\n")
+                self.display.repl_display_error(
+                    "User definitions file does not exist!\n"
+                )
                 return
             self.open_file(settings_file)
 
@@ -1393,7 +1433,9 @@ def init_menubar(self) -> None:
 
         # Add the editing option for the userfunctions file
         def open_user_func_file() -> None:
-            user_definitions_file = os.path.join(data.application_directory, data.config_file)
+            user_definitions_file = os.path.join(
+                data.application_directory, data.config_file
+            )
             # Test if userfunctions file exists
             if os.path.isfile(user_definitions_file) == False:
                 self.display.repl_display_message(
@@ -1547,21 +1589,46 @@ def init_menubar(self) -> None:
 
         # Terminals
         if data.platform == "Windows":
-            # PowerShell
+
             def add_powershell_terminal_emulator() -> None:
                 terminal = self.get_helper_window().terminal_emulator_add(
-                    "Terminal - PowerShell", "powershell.exe"
+                    "Terminal - PowerShell 5.1", "powershell.exe"
                 )
                 self.get_helper_window().setCurrentWidget(terminal)
 
             add_powershell_terminal_emulator_action = create_action(
-                "Terminal Emulator (Powershell)",
+                "Terminal Emulator (PowerShell 5.1)",
                 None,
-                "Add a Windows PowerShell terminal emulator to the layout",
+                "Add a Windows PowerShell 5.1 terminal emulator to the layout",
                 "tango_icons/utilities-terminal.png",
                 add_powershell_terminal_emulator,
             )
             system_menu.addAction(add_powershell_terminal_emulator_action)
+
+            pwsh_path: Optional[str] = shutil.which("pwsh")
+            if pwsh_path is not None:
+                version_directory: str = os.path.basename(os.path.dirname(pwsh_path))
+                pwsh_version: str = (
+                    version_directory if version_directory[:1].isdigit() else "7"
+                )
+
+                def add_pwsh_terminal_emulator() -> None:
+                    terminal = self.get_helper_window().terminal_emulator_add(
+                        "Terminal - PowerShell {}".format(pwsh_version),
+                        "pwsh.exe",
+                    )
+                    self.get_helper_window().setCurrentWidget(terminal)
+
+                add_pwsh_terminal_emulator_action = create_action(
+                    "Terminal Emulator (PowerShell {})".format(pwsh_version),
+                    None,
+                    "Add a PowerShell {} terminal emulator to the layout".format(
+                        pwsh_version
+                    ),
+                    "tango_icons/utilities-terminal.png",
+                    add_pwsh_terminal_emulator,
+                )
+                system_menu.addAction(add_pwsh_terminal_emulator_action)
 
         system_menu.addAction(show_external_terminal_action)
 
@@ -1612,7 +1679,9 @@ def init_menubar(self) -> None:
         # Show/hide the settings manipulator
         settings_manipulator_toggle_action = create_action(
             "Show/Hide Settings Manipulator",
-            settings.get("keyboard-shortcuts")["general"]["settings_manipulator_toggle"],
+            settings.get("keyboard-shortcuts")["general"][
+                "settings_manipulator_toggle"
+            ],
             "Show/hide the Ex.Co. settings manipulator",
             data.application_icon,
             self.view.toggle_settings_manipulator,
@@ -1957,7 +2026,9 @@ def init_menubar(self) -> None:
         sessions_menu.installEventFilter(click_filter)
 
         def add_session() -> None:
-            repl_text_input(text='session_add("", session_group=None)', cursor_position=13)
+            repl_text_input(
+                text='session_add("", session_group=None)', cursor_position=13
+            )
 
         add_session_action = create_action(
             "Add Session",
@@ -1968,7 +2039,9 @@ def init_menubar(self) -> None:
         )
 
         def remove_session() -> None:
-            repl_text_input(text='session_remove("", session_group=None)', cursor_position=13)
+            repl_text_input(
+                text='session_remove("", session_group=None)', cursor_position=13
+            )
 
         remove_session_action = create_action(
             "Remove Session",
@@ -2014,9 +2087,7 @@ def init_menubar(self) -> None:
 
     # Testing menu (debug mode only)
     def construct_testing_menu() -> None:
-        testing_dir = functions.unixify_join(
-            data.application_directory, "testing"
-        )
+        testing_dir = functions.unixify_join(data.application_directory, "testing")
         # Create the testing directory if it doesn't exist
         if os.path.isdir(testing_dir) == False:
             try:
@@ -2037,10 +2108,13 @@ def init_menubar(self) -> None:
         testing_menu.installEventFilter(click_filter)
 
         # Find all .py files in the testing directory
-        test_files = sorted([
-            f for f in os.listdir(testing_dir)
-            if f.endswith(".py") and os.path.isfile(os.path.join(testing_dir, f))
-        ])
+        test_files = sorted(
+            [
+                f
+                for f in os.listdir(testing_dir)
+                if f.endswith(".py") and os.path.isfile(os.path.join(testing_dir, f))
+            ]
+        )
 
         if not test_files:
             empty_action = qt.QAction("No test files", self)
@@ -2052,20 +2126,26 @@ def init_menubar(self) -> None:
             filepath = os.path.join(testing_dir, test_file)
             test_name = os.path.splitext(test_file)[0]
 
-            def run_test(checked: bool = False, fp: str = filepath, tn: str = test_name) -> None:
+            def run_test(
+                checked: bool = False, fp: str = filepath, tn: str = test_name
+            ) -> None:
                 process = qt.QProcess(self)
                 output_lines: list[str] = []
 
                 def on_stdout() -> None:
-                    data = process.readAllStandardOutput().data().decode(
-                        "utf-8", errors="replace"
+                    data = (
+                        process.readAllStandardOutput()
+                        .data()
+                        .decode("utf-8", errors="replace")
                     )
                     if data:
                         output_lines.append(data)
 
                 def on_stderr() -> None:
-                    data = process.readAllStandardError().data().decode(
-                        "utf-8", errors="replace"
+                    data = (
+                        process.readAllStandardError()
+                        .data()
+                        .decode("utf-8", errors="replace")
                     )
                     if data:
                         output_lines.append(data)
@@ -2099,9 +2179,7 @@ def init_menubar(self) -> None:
                         qt.QProcess.ProcessError.Crashed: "Crashed",
                         qt.QProcess.ProcessError.Timedout: "Timed out",
                     }.get(error, f"Error ({error})")
-                    self.display.repl_display_error(
-                        f"Test '{tn}' {error_msg}"
-                    )
+                    self.display.repl_display_error(f"Test '{tn}' {error_msg}")
                     process.deleteLater()
 
                 def on_timeout() -> None:
@@ -2299,7 +2377,9 @@ def init_menubar(self) -> None:
         format_zig_action = create_action(
             "Format Zig code - entire file",
             None,
-            ("Format Zig code in the entire selected document using the 'zig fmt' command"),
+            (
+                "Format Zig code in the entire selected document using the 'zig fmt' command"
+            ),
             "language_icons/logo_zig.png",
             format_zig,
         )
@@ -2367,7 +2447,9 @@ def init_menubar(self) -> None:
         # Pretty print JSON
         def pretty_print_json() -> None:
             try:
-                self.tools.pretty_print_text(constants.FormatterType.JSON, sort_keys=False)
+                self.tools.pretty_print_text(
+                    constants.FormatterType.JSON, sort_keys=False
+                )
             except:
                 self.display.repl_display_error(traceback.format_exc())
 
@@ -2382,7 +2464,9 @@ def init_menubar(self) -> None:
 
         def pretty_print_json_with_key_sorting() -> None:
             try:
-                self.tools.pretty_print_text(constants.FormatterType.JSON, sort_keys=True)
+                self.tools.pretty_print_text(
+                    constants.FormatterType.JSON, sort_keys=True
+                )
             except:
                 self.display.repl_display_error(traceback.format_exc())
 
@@ -2430,7 +2514,9 @@ def init_menubar(self) -> None:
         # Pretty print HTML with Python's Standard Libary
         def pretty_print_html_with_python_stdlib() -> None:
             try:
-                self.tools.pretty_print_text(constants.FormatterType.HTML_Python_Standard_Library)
+                self.tools.pretty_print_text(
+                    constants.FormatterType.HTML_Python_Standard_Library
+                )
             except:
                 self.display.repl_display_error(traceback.format_exc())
 

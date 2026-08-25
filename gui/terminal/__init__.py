@@ -26,11 +26,12 @@ from gui.terminal.backend import (
     get_default_shell,
 )
 from gui.terminal.screen import ExtendedScreen, ExtendedStream
-from gui.terminal.terminal import Terminal
+from gui.terminal.terminal import Terminal, shutdown_all_terminals
 from gui.terminal.view import TerminalView
 
 __all__: List[str] = [
     "Terminal",
+    "shutdown_all_terminals",
     "TerminalView",
     "ExtendedScreen",
     "ExtendedStream",

@@ -212,9 +212,11 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
     # ------------------------------------------------------------------
 
     def osc(self, code: str, param: str) -> None:
-        if code in "01":
+        # Tuple membership, not substring checks: an empty or unrelated
+        # code (e.g. "") must not trigger icon/title changes.
+        if code in ("0", "1", "01"):
             self.set_icon_name(param)
-        if code in "02":
+        if code in ("0", "2", "02"):
             self.set_title(param)
         if code == "7":
             # OSC 7 - set the current working directory. An empty parameter

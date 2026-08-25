@@ -241,7 +241,9 @@ class CustomInterpreter(code.InteractiveInterpreter):
             self.eval_error = None
             # Replace certain strings with methods
             filtered_command = self.replace_references(self.dict_re_references, command)
-            filtered_command = self.replace_keywords(self.dict_keywords, filtered_command)
+            filtered_command = self.replace_keywords(
+                self.dict_keywords, filtered_command
+            )
             # Remove the literal sequences from the command
             filtered_command = filtered_command.replace(self.re_escape_sequence, "")
             # Execute the filtered command string with the custom InteractiveInterpreter
@@ -370,14 +372,14 @@ class CustomInterpreter(code.InteractiveInterpreter):
                     options = "startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True"
                     # Double quotes have to be handled differently on Windows (don't know about Linux yet)
                     if '"' in command:
-                        sub_call = "subprocess.Popen('start cmd.exe /c {:s}', {:s})".format(
-                            command, options
-                        )
-                    else:
                         sub_call = (
-                            'subprocess.Popen(["start", "cmd.exe", "/c", "{:s}"], {:s})'.format(
+                            "subprocess.Popen('start cmd.exe /c {:s}', {:s})".format(
                                 command, options
                             )
+                        )
+                    else:
+                        sub_call = 'subprocess.Popen(["start", "cmd.exe", "/c", "{:s}"], {:s})'.format(
+                            command, options
                         )
                     process_commands = [
                         "startupinfo = subprocess.STARTUPINFO()",
@@ -390,14 +392,14 @@ class CustomInterpreter(code.InteractiveInterpreter):
                     options = "startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True"
                     # Double quotes have to be handled differently on Windows (don't know about Linux yet)
                     if '"' in command:
-                        sub_call = "subprocess.Popen('start cmd.exe /c {:s}', {:s})".format(
-                            command, options
-                        )
-                    else:
                         sub_call = (
-                            'subprocess.Popen(["start", "cmd.exe", "/c", "{:s}"], {:s})'.format(
+                            "subprocess.Popen('start cmd.exe /c {:s}', {:s})".format(
                                 command, options
                             )
+                        )
+                    else:
+                        sub_call = 'subprocess.Popen(["start", "cmd.exe", "/c", "{:s}"], {:s})'.format(
+                            command, options
                         )
                     """
                     'THE THIRD LINE HAS TO CONTAIN MORE THAN JUST sub_call! Otherwise the python
@@ -406,7 +408,9 @@ class CustomInterpreter(code.InteractiveInterpreter):
                     process_commands = [
                         "startupinfo = subprocess.STARTUPINFO()",
                         "startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW",
-                        "try:\n  {:s}\nexcept Exception as ex:\n  print(ex)".format(sub_call),
+                        "try:\n  {:s}\nexcept Exception as ex:\n  print(ex)".format(
+                            sub_call
+                        ),
                     ]
 
                 # Create a function that will evaluate commands in the new thread
@@ -415,10 +419,16 @@ class CustomInterpreter(code.InteractiveInterpreter):
                     for command in commands:
                         result = self.eval_command(command)
                         if result != None:
+                            # This runs in a background thread, so log the
+                            # error instead of touching the GUI directly;
+                            # output_redirect() persists it to the log file.
+                            print(result)
                             return
 
                 # Start the new thread
-                thread = threading.Thread(target=threaded_function, args=(process_commands,))
+                thread = threading.Thread(
+                    target=threaded_function, args=(process_commands,)
+                )
                 thread.start()
                 return
         else:
@@ -454,7 +464,9 @@ class CustomInterpreter(code.InteractiveInterpreter):
                     ]
             else:
                 if output_to_repl == True:
-                    options = "stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True"
+                    options = (
+                        "stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True"
+                    )
                     sub_call = 'subprocess.Popen("{:s}", {:s})'.format(command, options)
                     process_commands = [
                         "result = " + sub_call,
@@ -462,7 +474,9 @@ class CustomInterpreter(code.InteractiveInterpreter):
                         "print(output)",
                     ]
                 else:
-                    options = "stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True"
+                    options = (
+                        "stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True"
+                    )
                     sub_call = 'subprocess.Popen("{:s}", {:s})'.format(command, options)
                     process_commands = [
                         "result = " + sub_call,
@@ -472,6 +486,8 @@ class CustomInterpreter(code.InteractiveInterpreter):
         for cmd in process_commands:
             result = self.eval_command(cmd)
             if result != None:
+                # Log the error so command failures do not disappear silently
+                print(result)
                 return
 
     def create_terminal(self, dir=None):
