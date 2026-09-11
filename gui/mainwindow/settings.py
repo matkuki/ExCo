@@ -76,7 +76,9 @@ class Settings:
             # Check if the filename has too many characters
             if len(recent_file_name) > 30:
                 # Shorten the name that will appear in the menubar
-                recent_file_name = "...{}".format(os.path.splitdrive(recent_file)[1][-30:])
+                recent_file_name = "...{}".format(
+                    os.path.splitdrive(recent_file)[1][-30:]
+                )
             new_file_action = qt.QAction(recent_file_name, recent_files_menu)
             new_file_action.setStatusTip("Open: {}".format(recent_file))
             # Create a function reference for opening the recent file
@@ -103,7 +105,9 @@ class Settings:
         for func_type in settings.get("context_menu_functions").keys():
             funcs = settings.get("context_menu_functions")[func_type]
             for func_key in funcs.keys():
-                getattr(gui.contextmenu.ContextMenuHex, func_type)[func_key] = funcs[func_key]
+                getattr(gui.contextmenu.ContextMenuHex, func_type)[func_key] = funcs[
+                    func_key
+                ]
         # Display the settings load error AFTER the theme has been set
         # Otherwise the error text color will not be styled correctly
         if result == False:

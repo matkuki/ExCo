@@ -55,7 +55,6 @@ from gui.plaineditor import PlainEditor
 from gui.replbox import ReplBox
 from gui.replindicator import ReplIndicator
 from gui.sessionguimanipulator import SessionGuiManipulator
-from gui.settingsguimanipulator import SettingsGuiManipulator
 from gui.stylesheets import (
     StyleSheetButton,
     StyleSheetMenu,

@@ -43,7 +43,9 @@ class SettingsManipulator:
         self.active_settings_file = functions.unixify_join(
             data.settings_directory, settings.constants.settings_filename["mark-3"]
         )
-        active_settings_file_exists = self.check_settings_file(self.active_settings_file)
+        active_settings_file_exists = self.check_settings_file(
+            self.active_settings_file
+        )
 
         # Create storage
         self.storage = SettingsStorage(
@@ -112,15 +114,15 @@ class SettingsManipulator:
                     }
                     layout = json.loads(settings.constants.default_layout)
                     windows = {
-                        "main-window-files": layout["BOXES"]["0"]["BOX-H"]["0"]["BOX-V"]["0"][
-                            "TABS"
-                        ],
-                        "upper-window-files": layout["BOXES"]["0"]["BOX-H"]["1"]["BOX-V"]["0"][
-                            "BOX-H"
+                        "main-window-files": layout["BOXES"]["0"]["BOX-H"]["0"][
+                            "BOX-V"
                         ]["0"]["TABS"],
-                        "lower-window-files": layout["BOXES"]["0"]["BOX-H"]["1"]["BOX-V"]["1"][
-                            "BOX-H"
-                        ]["0"]["TABS"],
+                        "upper-window-files": layout["BOXES"]["0"]["BOX-H"]["1"][
+                            "BOX-V"
+                        ]["0"]["BOX-H"]["0"]["TABS"],
+                        "lower-window-files": layout["BOXES"]["0"]["BOX-H"]["1"][
+                            "BOX-V"
+                        ]["1"]["BOX-H"]["0"]["TABS"],
                     }
                     for kk, vv in windows.items():
                         files = v[kk]["files"]
@@ -170,6 +172,19 @@ class SettingsManipulator:
 
         self.storage[name] = value
 
+    def add_change_listener(self, callback: Callable[[str, Any], None]) -> None:
+        """
+        Register a callback to be invoked as callback(key, value) after
+        any real settings change is saved to disk.
+        """
+        self.storage.add_change_listener(callback)
+
+    def remove_change_listener(self, callback: Callable[[str, Any], None]) -> None:
+        """
+        Unregister a previously registered settings change callback.
+        """
+        self.storage.remove_change_listener(callback)
+
     def check_settings_file(self, settings_file_path: str):
         """
         Check if the settings file exists
@@ -183,7 +198,9 @@ class SettingsManipulator:
         if self.__error_check():
             return
 
-        settings_data = functions.load_json_file(self.get("settings_filename_with_path"))
+        settings_data = functions.load_json_file(
+            self.get("settings_filename_with_path")
+        )
         # Load the session data from the file to have it up-to-date
         stored_sessions = settings_data["stored_sessions"]
         self.sessions.set_sessions(stored_sessions)
@@ -194,7 +211,9 @@ class SettingsManipulator:
         """
         try:
             # Load data from file
-            settings_data = functions.load_json_file(self.get("settings_filename_with_path"))
+            settings_data = functions.load_json_file(
+                self.get("settings_filename_with_path")
+            )
 
             # Update storage
             self.storage.update_without_saving(settings_data)
@@ -234,7 +253,9 @@ class SettingsManipulator:
         # Check if he new file is already in the list
         if new_file in self.get("recent_files"):
             # Check if the file is already at the top
-            if current_list.index(new_file) == (self.get("max-number-of-recent-files") - 1):
+            if current_list.index(new_file) == (
+                self.get("max-number-of-recent-files") - 1
+            ):
                 return
             # Remove the old file with the same name as the new file from the list
             try:
@@ -255,7 +276,9 @@ class SettingsManipulator:
         if self.__error_check():
             return
 
-        filepath = os.path.join(data.settings_directory, self.get("last-layout-filename"))
+        filepath = os.path.join(
+            data.settings_directory, self.get("last-layout-filename")
+        )
         with open(filepath, "w+", encoding="utf-8") as f:
             f.write(json.dumps(layout, indent=2, ensure_ascii=False))
 
@@ -484,6 +507,8 @@ class SettingsStorage(UserDict):
             raise Exception("Default settings are needed here!")
         self.__default_settings = default_settings
         self.__print = print_func
+        # Callbacks invoked as callback(key, value) after any real setting change
+        self.change_listeners: list[Callable[[str, Any], None]] = []
 
         self.__load()
 
@@ -499,7 +524,9 @@ class SettingsStorage(UserDict):
     def __backup_file(self) -> None:
         # Create a copy of the settings file
         settings_file = self.file_path
-        settings_copy = f"{settings_file}.{functions.get_default_datetime_formatted_string()}.bak"
+        settings_copy = (
+            f"{settings_file}.{functions.get_default_datetime_formatted_string()}.bak"
+        )
         shutil.copy(settings_file, settings_copy)
 
     def __load(self) -> None:
@@ -508,7 +535,9 @@ class SettingsStorage(UserDict):
         it uses the default settings and saves them to the file immediately.
         """
         if not os.path.exists(self.file_path):
-            self.echo(f"Settings file not found at '{self.file_path}'.\nUsing default settings.\n")
+            self.echo(
+                f"Settings file not found at '{self.file_path}'.\nUsing default settings.\n"
+            )
             # Use the intelligent update to set defaults, enabling recursive merging
             # if default_settings contains nested dicts
             self.data.clear()  # Ensure data is empty before applying defaults
@@ -533,7 +562,9 @@ class SettingsStorage(UserDict):
                 self.data.clear()  # Clear existing data to ensure defaults are the base
                 self.update(self.__default_settings, _initial_load=True)
                 self.update(loaded_data, _initial_load=True)  # Merge loaded data
-                if self.data != loaded_data:  # If merging changed something from purely loaded
+                if (
+                    self.data != loaded_data
+                ):  # If merging changed something from purely loaded
                     self.__save()  # Save if the merge process modified something
         except json.JSONDecodeError:
             self.echo(
@@ -587,7 +618,9 @@ class SettingsStorage(UserDict):
             existing = self.data[key]
 
             # Handle dict, list, tuple: deep recursive comparison
-            if isinstance(existing, (dict, list, tuple)) and isinstance(value, (dict, list, tuple)):
+            if isinstance(existing, (dict, list, tuple)) and isinstance(
+                value, (dict, list, tuple)
+            ):
                 if type(existing) is type(value) and self._deep_equal(existing, value):
                     return
                 self.echo(f"Setting '{key}' ({type(value).__name__}) updated.")
@@ -625,6 +658,7 @@ class SettingsStorage(UserDict):
 
         if changed:
             self.__save()
+            self._notify_change(key)
 
     def _deep_equal(self, a: Any, b: Any) -> bool:
         """Recursive deep equality for nested dict/list/tuple structures."""
@@ -650,7 +684,9 @@ class SettingsStorage(UserDict):
             super().__delitem__(key)
             self.__save()
         else:
-            self.echo(f"Attempted to delete non-existent setting '{key}'. No action, no save.")
+            self.echo(
+                f"Attempted to delete non-existent setting '{key}'. No action, no save."
+            )
             raise KeyError(f"'{key}' not found in settings.")
 
     def update(self, other=None, _initial_load=False, **kwargs) -> None:
@@ -660,13 +696,16 @@ class SettingsStorage(UserDict):
         it performs a recursive update.
         """
         _changed = False
+        changed_keys: list[str] = []
 
         def _set_item_and_check_change(key, value):
-            nonlocal _changed
+            nonlocal _changed, changed_keys
             if key in self.data and self.data[key] == value:
                 return
             super(SettingsStorage, self).__setitem__(key, value)
             _changed = True
+            if key not in changed_keys:
+                changed_keys.append(key)
 
         if other:
             other_items = other.items() if hasattr(other, "keys") else other
@@ -678,18 +717,28 @@ class SettingsStorage(UserDict):
                 ):
                     self.data[key].update(value)
                     _changed = True
+                    if key not in changed_keys:
+                        changed_keys.append(key)
                 else:
                     _set_item_and_check_change(key, value)
 
         for key, value in kwargs.items():
-            if key in self.data and isinstance(self.data[key], dict) and isinstance(value, dict):
+            if (
+                key in self.data
+                and isinstance(self.data[key], dict)
+                and isinstance(value, dict)
+            ):
                 self.data[key].update(value)
                 _changed = True
+                if key not in changed_keys:
+                    changed_keys.append(key)
             else:
                 _set_item_and_check_change(key, value)
 
         if _changed and not _initial_load:
             self.__save()
+            for key in changed_keys:
+                self._notify_change(key)
 
     def update_without_saving(self, other=None, **kwargs) -> None:
         """
@@ -712,6 +761,28 @@ class SettingsStorage(UserDict):
         else:
             self.echo("Settings were already empty. No clear action, no save.")
 
+    def add_change_listener(self, callback: Callable[[str, Any], None]) -> None:
+        """
+        Register a callback to be invoked as callback(key, value) after
+        any real settings change is saved to disk.
+        """
+        if callback not in self.change_listeners:
+            self.change_listeners.append(callback)
+
+    def remove_change_listener(self, callback: Callable[[str, Any], None]) -> None:
+        """
+        Unregister a previously registered settings change callback.
+        """
+        if callback in self.change_listeners:
+            self.change_listeners.remove(callback)
+
+    def _notify_change(self, key: str) -> None:
+        for listener in self.change_listeners:
+            try:
+                listener(key, self.data.get(key))
+            except Exception:
+                pass
+
     def set_default(self, key: str, value: Any) -> None:
         """
         Sets a default value for a setting if it doesn't already exist.
@@ -721,7 +792,9 @@ class SettingsStorage(UserDict):
         """
         if key not in self:
             self.echo(f"Setting default '{key}' applied.")
-            self[key] = value  # Use self[key] to trigger __setitem__ (which handles recursion)
+            self[key] = (
+                value  # Use self[key] to trigger __setitem__ (which handles recursion)
+            )
         elif isinstance(self.data.get(key), dict) and isinstance(value, dict):
             # If default is a dict and existing is a dict, attempt to merge
             initial_snapshot = json.dumps(self.data[key], sort_keys=True)

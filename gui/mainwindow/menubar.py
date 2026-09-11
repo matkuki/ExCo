@@ -1678,7 +1678,7 @@ def init_menubar(self) -> None:
         )
         # Show/hide the settings manipulator
         settings_manipulator_toggle_action = create_action(
-            "Show/Hide Settings Manipulator",
+            "Show/Hide Settings",
             settings.get("keyboard-shortcuts")["general"][
                 "settings_manipulator_toggle"
             ],
@@ -2073,7 +2073,7 @@ def init_menubar(self) -> None:
         settings_menu.installEventFilter(click_filter)
 
         def show_settings() -> None:
-            self.view.show_settings_manipulator()
+            self.view.toggle_settings_manipulator()
 
         show_gui_action = create_action(
             "Graphical Settings Editor",

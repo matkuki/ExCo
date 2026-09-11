@@ -97,7 +97,9 @@ class View:
             borderless=True,
         )
         # Main box
-        main_box = TheBox("", "Main", qt.Qt.Orientation.Horizontal, self._parent, self._parent)
+        main_box = TheBox(
+            "", "Main", qt.Qt.Orientation.Horizontal, self._parent, self._parent
+        )
         boxes_groupbox.layout().addWidget(main_box)
 
         # Vertically split edit fields with the REPL
@@ -250,7 +252,9 @@ class View:
             self.layout_restore(one_window_layout)
             # Put all widgets back into the one
             largest_window = self._parent.get_largest_window()
-            widgets.sort(key=lambda x: isinstance(x, CustomEditor) or isinstance(x, PlainEditor))
+            widgets.sort(
+                key=lambda x: isinstance(x, CustomEditor) or isinstance(x, PlainEditor)
+            )
             for w in reversed(widgets):
                 widget, tab_text = w
                 if tab_text == constants.SpecialTabNames.Messages.value:
@@ -283,7 +287,9 @@ class View:
                 w.deleteLater()
 
             # Restore stored layout
-            self.layout_restore(self.__stored_layout_standard, pre_stored_widgets=widgets)
+            self.layout_restore(
+                self.__stored_layout_standard, pre_stored_widgets=widgets
+            )
 
     def hide_all_overlay_widgets(self) -> None:
         """
@@ -313,16 +319,19 @@ class View:
         Show the function wheel overlay
         """
         self.hide_all_overlay_widgets()
-        self.hide_settings_manipulator()
         # Check the windows size before displaying the overlay
         if (
             self._parent.width() < self.function_wheel_overlay.width()
             or self._parent.height() < self.function_wheel_overlay.height()
         ):
             new_size = functions.create_size(
-                int(self.function_wheel_overlay.width() + self.function_wheel_overlay.width() / 5),
                 int(
-                    self.function_wheel_overlay.height() + self.function_wheel_overlay.height() / 5
+                    self.function_wheel_overlay.width()
+                    + self.function_wheel_overlay.width() / 5
+                ),
+                int(
+                    self.function_wheel_overlay.height()
+                    + self.function_wheel_overlay.height() / 5
                 ),
             )
             self._parent.resize(new_size)
@@ -354,7 +363,10 @@ class View:
         # Initialize the settings GUI manipulator if needed
         if self._parent.settings.gui_manipulator is None:
             compare_size = SettingsGuiManipulator.DEFAULT_SIZE
-            if self._parent.width() < compare_size[0] or self._parent.height() < compare_size[1]:
+            if (
+                self._parent.width() < compare_size[0]
+                or self._parent.height() < compare_size[1]
+            ):
                 new_size = functions.create_size(
                     int(compare_size[0] + compare_size[0] / 5),
                     int(compare_size[1] + compare_size[1] / 5),
@@ -454,7 +466,10 @@ QSplitter::handle {{
         Menu.update_styles()
 
         # Check the REPL focus
-        if self._parent.repl.hasFocus() == True or self._parent.repl_helper.hasFocus() == True:
+        if (
+            self._parent.repl.hasFocus() == True
+            or self._parent.repl_helper.hasFocus() == True
+        ):
             self._parent.repl_box.indication_set()
             return
         else:
@@ -508,7 +523,9 @@ QSplitter::handle {{
                     window.widget(i).set_theme(settings.get_theme())
         self._parent.repl_helper.refresh_lexer()
         self.reset_entire_style_sheet()
-        self._parent.statusbar.setStyleSheet(gui.stylesheets.StyleSheetStatusbar.standard())
+        self._parent.statusbar.setStyleSheet(
+            gui.stylesheets.StyleSheetStatusbar.standard()
+        )
         # Update the taskbar menu
         self._parent.display.update_theme_taskbar_icon()
 
@@ -574,14 +591,20 @@ QSplitter::handle {{
                     box_name = box.objectName()
                     if base_name != box_name:
                         name = box_name + ".Tabs0"
-                    new_name = "{}{}".format(functions.remove_tab_number_from_name(name), index)
+                    new_name = "{}{}".format(
+                        functions.remove_tab_number_from_name(name), index
+                    )
                     tab_widget.setObjectName(new_name)
                     index += 1
         # Adjust unnecessary box duplications in names and
         # more than one box at one position
         boxes = self._parent.get_all_boxes()
         for b in boxes:
-            if b.count() == 1 and isinstance(b.widget(0), TheBox) and b.objectName() != "Main":
+            if (
+                b.count() == 1
+                and isinstance(b.widget(0), TheBox)
+                and b.objectName() != "Main"
+            ):
                 # Remove the unnecessary box (OLD)
                 #                        b.parent().addWidget(b.widget(0))
                 # Remove the unnecessary box
@@ -627,7 +650,9 @@ QSplitter::handle {{
         json_layout = json.dumps(layout, ensure_ascii=False)
         return json_layout
 
-    def layout_restore(self, json_layout: Any, pre_stored_widgets: Optional[Dict] = None) -> None:
+    def layout_restore(
+        self, json_layout: Any, pre_stored_widgets: Optional[Dict] = None
+    ) -> None:
         main_form = self._parent
         main_form.display.repl_suppress()
         # Class name storage
@@ -673,7 +698,9 @@ QSplitter::handle {{
 
                     if pre_stored_widgets:
                         for key, class_string in v.items():
-                            if isinstance(class_string, tuple) or isinstance(class_string, list):
+                            if isinstance(class_string, tuple) or isinstance(
+                                class_string, list
+                            ):
                                 cls, tab_index, widget_data = class_string
                                 number = widget_data[-1]
                                 if number in pre_stored_widgets.keys():
@@ -682,7 +709,9 @@ QSplitter::handle {{
                                     new_tabs.addTab(w, wd["tab-text"])
                                     if hasattr(w, "_parent"):
                                         w._parent = new_tabs
-                                    elif hasattr(w, "parent") and not callable(w.parent):
+                                    elif hasattr(w, "parent") and not callable(
+                                        w.parent
+                                    ):
                                         w.parent = new_tabs
                                     w.internals.update_tab_widget(new_tabs)
                                     w.internals.update_icon(w)
@@ -698,7 +727,9 @@ QSplitter::handle {{
                             continue
                         elif isinstance(class_string, str):
                             cls = class_string
-                        elif isinstance(class_string, tuple) or isinstance(class_string, list):
+                        elif isinstance(class_string, tuple) or isinstance(
+                            class_string, list
+                        ):
                             cls, tab_index, widget_data = class_string
                         else:
                             self._parent.display.repl_display_error(
@@ -728,7 +759,9 @@ QSplitter::handle {{
                                         TreeExplorer,
                                     )
                                     file_explorer.display_directory(directory_path)
-                                    file_explorer.open_file_signal.connect(self._parent.open_file)
+                                    file_explorer.open_file_signal.connect(
+                                        self._parent.open_file
+                                    )
                                     file_explorer.open_file_hex_signal.connect(
                                         self._parent.open_file_hex
                                     )
@@ -745,21 +778,31 @@ QSplitter::handle {{
                                 # the default when restoring older ones.
                                 shell = widget_data[1] if len(widget_data) > 2 else None
                                 new_terminal = new_tabs.terminal_add(shell=shell)
-                                if working_path is not None and os.path.isdir(working_path):
+                                if working_path is not None and os.path.isdir(
+                                    working_path
+                                ):
                                     new_terminal.set_cwd(working_path)
 
                             elif cls == constants.SpecialTabNames.Messages.value:
-                                self._parent.repl_messages_tab = new_tabs.plain_add_document(
-                                    constants.SpecialTabNames.Messages.value
+                                self._parent.repl_messages_tab = (
+                                    new_tabs.plain_add_document(
+                                        constants.SpecialTabNames.Messages.value
+                                    )
                                 )
                                 rmt = self._parent.repl_messages_tab
-                                rmt.internals.set_icon(rmt, self._parent.display.repl_messages_icon)
+                                rmt.internals.set_icon(
+                                    rmt, self._parent.display.repl_messages_icon
+                                )
                         else:
-                            self._parent.display.repl_display_error(f"Unknown tab type: {v}")
+                            self._parent.display.repl_display_error(
+                                f"Unknown tab type: {v}"
+                            )
                     if current_index is not None:
                         new_tabs.setCurrentIndex(current_index)
                 else:
-                    self._parent.display.repl_display_error("Unknown box child type: {}".format(k))
+                    self._parent.display.repl_display_error(
+                        "Unknown box child type: {}".format(k)
+                    )
 
         # Open the permanent items
         for k, v in sorted(layout["BOXES"].items()):

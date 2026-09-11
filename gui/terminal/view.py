@@ -154,15 +154,20 @@ class TerminalView(qt.QWidget):
     # ------------------------------------------------------------------
 
     def _terminal_font(self) -> qt.QFont:
-        """Font for the terminal: configured override or the editor font."""
+        """Font for the terminal: configured override or the editor font.
+
+        The configured size is applied in both modes, so changing only the
+        size also takes effect while the family is inherited.
+        """
         font_name: Any = settings.get("terminal-font-name")
         font_size: Any = settings.get("terminal-font-size")
         if font_name:
             font: qt.QFont = qt.QFont(font_name)
-            if font_size:
-                font.setPointSizeF(font_size)
-            return font
-        return qt.QFont(settings.get_editor_font())
+        else:
+            font = qt.QFont(settings.get_editor_font())
+        if font_size:
+            font.setPointSizeF(font_size)
+        return font
 
     def _load_style(self) -> None:
         """(Re)apply the configured font and theme-derived default colors."""
@@ -768,6 +773,13 @@ class TerminalView(qt.QWidget):
     def mousePressEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
         self.setFocus()
         self.focused.emit()
+        # Match the editor widgets: any click outside the overlays closes
+        # the settings panel and the function wheel.
+        main_form: Any = getattr(self.terminal, "main_form", None)
+        if main_form is not None:
+            view: Any = getattr(main_form, "view", None)
+            if view is not None and hasattr(view, "hide_all_overlay_widgets"):
+                view.hide_all_overlay_widgets()
         if self.terminal.term_screen.mouse_mode != 0:
             if event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier:
                 # Shift bypass: the app never sees the event, so native

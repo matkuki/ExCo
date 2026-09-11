@@ -6,7 +6,7 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
 import qt
 import themes
@@ -19,6 +19,21 @@ __theme_cache: Dict[str, Dict[str, Any]] = {}
 
 def get(name: str) -> Any:
     return __settings_manipulator.get(name)
+
+
+def connect_change(callback: Callable[[str, Any], None]) -> None:
+    """
+    Register a callback to be invoked as callback(key, value) whenever a
+    setting is changed anywhere through the settings facade.
+    """
+    __settings_manipulator.add_change_listener(callback)
+
+
+def disconnect_change(callback: Callable[[str, Any], None]) -> None:
+    """
+    Unregister a previously registered settings change callback.
+    """
+    __settings_manipulator.remove_change_listener(callback)
 
 
 def get_theme() -> dict:
