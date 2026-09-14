@@ -603,11 +603,14 @@ class TerminalView(qt.QWidget):
             )
             painter.fillRect(bar, fg)
         else:
-            # Block cursor is the complement of the painted cell: fill with
-            # the painted background and draw the glyph in the painted
-            # foreground so it stays readable over reverse-video cells.
-            painter.fillRect(rect, bg)
-            painter.setPen(fg)
+            # Block cursor inverts the painted cell: fill with the painted
+            # foreground and draw the glyph in the painted background so the
+            # block stays visible on plain, reverse-video and highlighted
+            # cells alike.  (Filling with the background and drawing the
+            # glyph in the foreground would reproduce the cell exactly and
+            # make the cursor invisible.)
+            painter.fillRect(rect, fg)
+            painter.setPen(bg)
             painter.setFont(self._cell_font(cell))
             if clip_glyph:
                 painter.save()
