@@ -3198,7 +3198,97 @@ class TreeExplorer(TreeDisplayBase):
         # Show the menu
         self.tree_menu.popup(cursor)
 
+    def __paste_copy_path(self, new_path: str, itype: "TreeExplorer.ItemType") -> str:
+        """
+        Build a '-copy' destination for an existing item, auto-incrementing
+        with a trailing number until the name is free.
+        For files the '-copy' is inserted before the extension.
+        """
+        directory = os.path.dirname(new_path)
+        base_name = os.path.basename(new_path)
+        counter = 1
+        if itype in [
+            TreeExplorer.ItemType.DIRECTORY,
+            TreeExplorer.ItemType.BASE_DIRECTORY,
+        ]:
+            new_name = f"{base_name}-copy"
+        else:
+            stem, extension = os.path.splitext(base_name)
+            new_name = f"{stem}-copy{extension}"
+        candidate = os.path.join(directory, new_name)
+        while os.path.lexists(candidate):
+            if itype in [
+                TreeExplorer.ItemType.DIRECTORY,
+                TreeExplorer.ItemType.BASE_DIRECTORY,
+            ]:
+                new_name = f"{base_name}-copy{counter}"
+            else:
+                new_name = f"{stem}-copy{counter}{extension}"
+            candidate = os.path.join(directory, new_name)
+            counter += 1
+        return candidate
+
+    def __paste_temp_path(self, new_path: str) -> str:
+        """
+        Build a unique sibling '.exco-tmp' staging path for 'new_path',
+        auto-incrementing with a trailing number until the name is free.
+        """
+        directory = os.path.dirname(new_path)
+        base_name = os.path.basename(new_path)
+        counter = 1
+        candidate = os.path.join(directory, f"{base_name}.exco-tmp")
+        while os.path.lexists(candidate):
+            candidate = os.path.join(directory, f"{base_name}.exco-tmp{counter}")
+            counter += 1
+        return candidate
+
+    def __resolve_paste_target(
+        self,
+        path: str,
+        itype: "TreeExplorer.ItemType",
+        base_name: str,
+        new_path: str,
+    ) -> tuple[str | None, constants.DialogResult | None]:
+        """
+        Resolve the destination of a single paste item.
+        Free targets are used directly; on a collision the user chooses
+        between overwrite, overwrite-all, a '-copy' rename, rename-all,
+        skip, or skip-all.
+
+        Returns (destination, response); response identifies the 'all'
+        choices so the caller can apply them to the remaining items.
+        """
+        if not os.path.lexists(new_path):
+            return (new_path, None)
+        message: str = (
+            f'The item "{base_name}" already exists!\n'
+            "Do you want to overwrite it, paste it as a renamed copy, or skip it?"
+        )
+        reply: int = OverwriteDialog.question(message)
+        if reply == constants.DialogResult.Yes.value:
+            return (new_path, constants.DialogResult.Yes)
+        if reply == constants.DialogResult.OverwriteAll.value:
+            return (new_path, constants.DialogResult.OverwriteAll)
+        if reply == constants.DialogResult.Rename.value:
+            return (
+                self.__paste_copy_path(new_path, itype),
+                constants.DialogResult.Rename,
+            )
+        if reply == constants.DialogResult.RenameAll.value:
+            return (
+                self.__paste_copy_path(new_path, itype),
+                constants.DialogResult.RenameAll,
+            )
+        if reply == constants.DialogResult.SkipAll.value:
+            return (None, constants.DialogResult.SkipAll)
+        return (None, constants.DialogResult.No)
+
     def __paste_items(self) -> None:
+        if self.current_viewed_directory is None:
+            self.main_form.display.repl_display_message(
+                "Cannot paste: no directory is currently viewed!"
+            )
+            return
         try:
             items: list[types.SimpleNamespace]
             if TreeExplorer.cut_items is not None:
@@ -3211,45 +3301,69 @@ class TreeExplorer(TreeDisplayBase):
                     + "Cannot perform this action!"
                 )
                 return
+            force_overwrite: bool = False
+            force_copy: bool = False
+            force_skip: bool = False
             for it in items:
                 path: str = it.path
                 itype: "TreeExplorer.ItemType" = it.itype
                 base_name: str = os.path.basename(path)
                 new_path: str = os.path.join(self.current_viewed_directory, base_name)
                 is_symlink = os.path.islink(path)
-                if itype == TreeExplorer.ItemType.DIRECTORY:
-                    if os.path.lexists(new_path):
-                        message: str = "The PASTE directory already exists! "
-                        message += "Do you wish to overwrite it?"
-                        reply: int = YesNoDialog.question(message)
-                        if reply != constants.DialogResult.Yes.value:
-                            return
-                    if os.path.isdir(new_path):
-                        shutil.rmtree(new_path, onerror=remove_readonly)
-                        time.sleep(0.1)
-                    if is_symlink:
-                        # Preserve symlink - recreate it pointing to same target
-                        target = os.readlink(path)
-                        os.symlink(target, new_path)
+                if os.path.lexists(new_path):
+                    if force_overwrite:
+                        destination = new_path
+                    elif force_copy:
+                        destination = self.__paste_copy_path(new_path, itype)
+                    elif force_skip:
+                        destination = None
                     else:
-                        shutil.copytree(path, new_path)
+                        destination, response = self.__resolve_paste_target(
+                            path, itype, base_name, new_path
+                        )
+                        if response is constants.DialogResult.OverwriteAll:
+                            force_overwrite = True
+                        elif response is constants.DialogResult.RenameAll:
+                            force_copy = True
+                        elif response is constants.DialogResult.SkipAll:
+                            force_skip = True
+                else:
+                    destination = new_path
+                if destination is None:
+                    continue
+                if itype in [
+                    TreeExplorer.ItemType.DIRECTORY,
+                    TreeExplorer.ItemType.BASE_DIRECTORY,
+                ]:
+                    if is_symlink:
+                        if os.path.isdir(destination):
+                            shutil.rmtree(destination, onerror=remove_readonly)
+                            time.sleep(0.1)
+                        target = os.readlink(path)
+                        os.symlink(target, destination)
+                    elif os.path.isdir(destination):
+                        temporary = self.__paste_temp_path(destination)
+                        try:
+                            shutil.copytree(path, temporary)
+                        except BaseException:
+                            shutil.rmtree(temporary, onerror=remove_readonly)
+                            raise
+                        shutil.rmtree(destination, onerror=remove_readonly)
+                        time.sleep(0.1)
+                        os.rename(temporary, destination)
+                    else:
+                        shutil.copytree(path, destination)
                     if TreeExplorer.cut_items is not None:
                         if is_symlink:
                             os.remove(path)
                         else:
                             shutil.rmtree(path, onerror=remove_readonly)
                 else:
-                    if os.path.lexists(new_path):
-                        message = "The PASTE file already exists! "
-                        message += "Do you wish to overwrite it?"
-                        reply = YesNoDialog.question(message)
-                        if reply != constants.DialogResult.Yes.value:
-                            return
                     if is_symlink:
                         target = os.readlink(path)
-                        os.symlink(target, new_path)
+                        os.symlink(target, destination)
                     else:
-                        shutil.copy(path, new_path)
+                        shutil.copy(path, destination)
                     if TreeExplorer.cut_items is not None:
                         os.remove(path)
         except:

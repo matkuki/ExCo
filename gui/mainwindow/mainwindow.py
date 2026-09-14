@@ -294,12 +294,13 @@ class MainWindow(qt.QMainWindow):
             qt.QEvent.Type.KeyPress,
         ):
             if data.platform == "Windows":
-                import win32gui
+                if event.type() != qt.QEvent.Type.Enter or self.isActiveWindow():
+                    import win32gui
 
-                try:
-                    win32gui.SetFocus(self.winId())
-                except:
-                    pass
+                    try:
+                        win32gui.SetFocus(self.winId())
+                    except:
+                        pass
         elif event.type() == qt.QEvent.Type.Leave:
             if data.platform == "Windows":
 

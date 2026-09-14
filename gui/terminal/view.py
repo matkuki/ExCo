@@ -439,20 +439,31 @@ class TerminalView(qt.QWidget):
             style: Tuple[qt.QColor, qt.QColor, qt.QFont] = self._cell_style(cell, y, x)
             run_text: List[str] = []
             run_start: int = x
+            needs_clip: bool = False
             while x < columns:
                 current: Any = row[x]
                 if self._cell_style(current, y, x) != style:
                     break
+                char_w: int = wcwidth(current.data)
+                # A full-width character and its trailing stub (pyte marks
+                # the stub with empty data) form one atomic unit: absorb the
+                # stub unconditionally so selection or style changes at the
+                # stub can never split the glyph into a one-cell box.
+                if x + 1 < columns and char_w == 2 and row[x + 1].data == "":
+                    run_text.append(current.data)
+                    x += 2
+                    continue
                 char: str = current.data
                 if char == "" or (current.blink and not self._blink_phase):
                     char = " "
+                    char_w = 1
+                if char_w == 2:
+                    # Wide glyph without a stub (last column): it cannot lay
+                    # out at natural width in a one-cell rect, so clip the
+                    # run so the glyph cannot bleed into the neighbor cell.
+                    needs_clip = True
                 run_text.append(char)
                 x += 1
-                if x < columns and wcwidth(current.data) == 2 and row[x].data == "":
-                    # A full-width character spans two cells: absorb the
-                    # trailing stub cell (pyte marks it with empty data) so
-                    # the glyph lays out at its natural width.
-                    x += 1
             rect: qt.QRectF = qt.QRectF(
                 run_start * cell_width,
                 y * cell_height,
@@ -470,11 +481,16 @@ class TerminalView(qt.QWidget):
                 if style[2] != last_font:
                     painter.setFont(style[2])
                     last_font = style[2]
+                if needs_clip:
+                    painter.save()
+                    painter.setClipRect(rect)
                 painter.drawText(
                     rect,
                     qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter,
                     "".join(run_text),
                 )
+                if needs_clip:
+                    painter.restore()
 
     def _cell_font(self, cell: Any) -> qt.QFont:
         """Styled font for a cell, drawn from a small cache keyed on the
@@ -547,14 +563,17 @@ class TerminalView(qt.QWidget):
         bg: qt.QColor = self._resolve_color(cell.bg, False)
         if cell.reverse:
             fg, bg = bg, fg
+        cursor_style: str = screen.cursor_style
+        char: str = cell.data if cell.data != "" else " "
+        wide: bool = wcwidth(char) == 2
+        has_stub: bool = wide and x + 1 < screen.columns and row[x + 1].data == ""
         rect: qt.QRectF = qt.QRectF(
             x * self._char_width,
             y * self._char_height,
-            self._char_width,
+            self._char_width * (2 if has_stub else 1),
             self._char_height,
         )
-        cursor_style: str = screen.cursor_style
-        char: str = cell.data if cell.data != "" else " "
+        clip_glyph: bool = wide and not has_stub
         if cursor_style == "underline":
             underline: qt.QRectF = qt.QRectF(
                 rect.x(),
@@ -565,11 +584,16 @@ class TerminalView(qt.QWidget):
             painter.fillRect(underline, fg)
             painter.setPen(fg)
             painter.setFont(self._cell_font(cell))
+            if clip_glyph:
+                painter.save()
+                painter.setClipRect(rect)
             painter.drawText(
                 rect,
                 qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter,
                 char,
             )
+            if clip_glyph:
+                painter.restore()
         elif cursor_style == "bar":
             bar: qt.QRectF = qt.QRectF(
                 rect.x(),
@@ -579,15 +603,22 @@ class TerminalView(qt.QWidget):
             )
             painter.fillRect(bar, fg)
         else:
-            # Block cursor: fill with foreground, draw text with background.
-            painter.fillRect(rect, fg)
-            painter.setPen(bg)
+            # Block cursor is the complement of the painted cell: fill with
+            # the painted background and draw the glyph in the painted
+            # foreground so it stays readable over reverse-video cells.
+            painter.fillRect(rect, bg)
+            painter.setPen(fg)
             painter.setFont(self._cell_font(cell))
+            if clip_glyph:
+                painter.save()
+                painter.setClipRect(rect)
             painter.drawText(
                 rect,
                 qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter,
                 char,
             )
+            if clip_glyph:
+                painter.restore()
 
     # ------------------------------------------------------------------
     # Selection

@@ -25,8 +25,11 @@ Custom Yes/No dialog window
 
 
 class BaseDialog(qt.QDialog):
-    # Replaced by each subclass: list of (text, tooltip, state_enum, is_wide)
+    # Replaced by each subclass: list of (text, tooltip, state_enum, is_wide [, width_scale])
     button_specs: list = []
+    # When set, buttons are laid out in a grid with this many columns,
+    # flowing column-first so pairs of buttons stack one below the other
+    layout_columns: int | None = None
 
     def __init__(self, text, dialog_type=None, parent=None):
         super().__init__(parent)
@@ -46,8 +49,10 @@ class BaseDialog(qt.QDialog):
     def create_button_list(self):
         std = settings.get("standard_button_size")
         button_list = []
-        for text, tooltip, state_enum, is_wide in self.button_specs:
-            width = int(std * 1.5) if is_wide else std
+        for spec in self.button_specs:
+            text, tooltip, state_enum, is_wide = spec[:4]
+            width_scale: float = spec[4] if len(spec) > 4 else (1.5 if is_wide else 1.0)
+            width = int(std * width_scale)
             button_list.append(
                 {
                     "text": text,
@@ -63,7 +68,9 @@ class BaseDialog(qt.QDialog):
         self.button_cache = []
 
         # Create the main layout
-        main_layout = create_layout(layout=LayoutType.Vertical, margins=(8, 8, 8, 8), spacing=4)
+        main_layout = create_layout(
+            layout=LayoutType.Vertical, margins=(8, 8, 8, 8), spacing=4
+        )
         self.setLayout(main_layout)
 
         # Add the label
@@ -71,20 +78,33 @@ class BaseDialog(qt.QDialog):
         label.setWordWrap(True)
         label.setAlignment(qt.Qt.AlignmentFlag.AlignCenter)
         label.setText(text)
+        label.setMaximumWidth(700)
         main_layout.addWidget(label)
 
         # Add the button groupbox
-        button_frame = create_frame(
-            layout=LayoutType.Horizontal,
-            spacing=10,
-            parent=self,
-        )
+        if self.layout_columns is None:
+            button_frame = create_frame(
+                layout=LayoutType.Horizontal,
+                spacing=10,
+                parent=self,
+            )
+        else:
+            button_frame = create_frame(
+                layout=LayoutType.Grid,
+                spacing=10,
+                parent=self,
+            )
         button_layout = button_frame.layout()
         main_layout.addWidget(button_frame)
 
         button_list = self.create_button_list()
+        rows_per_column = (
+            (len(button_list) + self.layout_columns - 1) // self.layout_columns
+            if self.layout_columns is not None
+            else 0
+        )
         # Create all of the buttons from the list
-        for button in button_list:
+        for i, button in enumerate(button_list):
             new_button = StandardButton(
                 self,
                 None,
@@ -96,7 +116,9 @@ class BaseDialog(qt.QDialog):
                 new_button.setIcon(button)
                 if button.get("size") is not None:
                     new_button.setIconSize(
-                        qt.QSize(int(button["size"][0] * 0.8), int(button["size"][1] * 0.8))
+                        qt.QSize(
+                            int(button["size"][0] * 0.8), int(button["size"][1] * 0.8)
+                        )
                     )
             new_button.setToolTip(button["tooltip"])
             new_button.setStatusTip(button["tooltip"])
@@ -109,9 +131,18 @@ class BaseDialog(qt.QDialog):
             #                create_leave_func(button.font)
             #            )
             if button["size"] is not None:
-                new_button.setFixedSize(qt.QSize(int(button["size"][0]), int(button["size"][1])))
+                new_button.setFixedSize(
+                    qt.QSize(int(button["size"][0]), int(button["size"][1]))
+                )
 
-            button_layout.addWidget(new_button)
+            if self.layout_columns is None:
+                button_layout.addWidget(new_button)
+            else:
+                row = i % rows_per_column
+                col = i // rows_per_column
+                button_layout.addWidget(
+                    new_button, row, col, qt.Qt.AlignmentFlag.AlignHCenter
+                )
             self.button_cache.append(new_button)
 
         self.set_state(len(self.button_cache) - 1)
@@ -125,7 +156,9 @@ class BaseDialog(qt.QDialog):
     def __set_button_states(self, button_states):
         if len(button_states) != len(self.button_cache):
             raise Exception(
-                "Length mismatch: {} != {}".format(len(button_states), len(self.button_cache))
+                "Length mismatch: {} != {}".format(
+                    len(button_states), len(self.button_cache)
+                )
             )
         for i, item in enumerate(self.button_cache):
             item.set_focused(button_states[i])
@@ -275,6 +308,45 @@ class DeleteDialog(BaseDialog):
     ]
 
 
+class OverwriteDialog(BaseDialog):
+    layout_columns = 3
+    button_specs = [
+        (
+            "Overwrite",
+            "Replace the existing item",
+            constants.DialogResult.Yes,
+            True,
+        ),
+        (
+            "Overwrite all",
+            "Replace all colliding items without asking",
+            constants.DialogResult.OverwriteAll,
+            True,
+        ),
+        (
+            "Make a copy",
+            "Paste it as a renamed copy",
+            constants.DialogResult.Rename,
+            True,
+            2.0,
+        ),
+        (
+            "Make all copies",
+            "Paste all colliding items as renamed copies",
+            constants.DialogResult.RenameAll,
+            True,
+            2.0,
+        ),
+        ("Skip", "Skip this item and continue", constants.DialogResult.No, False),
+        (
+            "Skip all",
+            "Skip all colliding items without asking",
+            constants.DialogResult.SkipAll,
+            False,
+        ),
+    ]
+
+
 class CloseEditorDialog(BaseDialog):
     button_specs = [
         (
@@ -283,8 +355,18 @@ class CloseEditorDialog(BaseDialog):
             constants.DialogResult.SaveAndClose,
             True,
         ),
-        ("Close", "Close the document without saving", constants.DialogResult.Close, False),
-        ("Cancel", "Cancel closing of the document", constants.DialogResult.Cancel, False),
+        (
+            "Close",
+            "Close the document without saving",
+            constants.DialogResult.Close,
+            False,
+        ),
+        (
+            "Cancel",
+            "Cancel closing of the document",
+            constants.DialogResult.Cancel,
+            False,
+        ),
     ]
 
 
@@ -296,7 +378,12 @@ class ToggleOneWindowDialog(BaseDialog):
             constants.DialogResult.Restore,
             False,
         ),
-        ("Cancel", "Cancel closing of the document", constants.DialogResult.Cancel, False),
+        (
+            "Cancel",
+            "Cancel closing of the document",
+            constants.DialogResult.Cancel,
+            False,
+        ),
     ]
 
 
@@ -321,6 +408,16 @@ class RestoreSessionDialog(BaseDialog):
             constants.DialogResult.SaveAndRestore,
             True,
         ),
-        ("Close", "Restore the session without saving", constants.DialogResult.Restore, False),
-        ("Cancel", "Cancel restoring of the session", constants.DialogResult.Cancel, False),
+        (
+            "Close",
+            "Restore the session without saving",
+            constants.DialogResult.Restore,
+            False,
+        ),
+        (
+            "Cancel",
+            "Cancel restoring of the session",
+            constants.DialogResult.Cancel,
+            False,
+        ),
     ]

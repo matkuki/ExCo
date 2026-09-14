@@ -19,7 +19,7 @@ import settings
 import themes
 
 
-class SettingsGuiManipulator(qt.QScrollArea):
+class SettingsGuiManipulator(qt.QFrame):
     """
     Overlay widget for dynamically displaying and updating
     a subset of the application settings. Every change is
@@ -49,7 +49,7 @@ class SettingsGuiManipulator(qt.QScrollArea):
         except:
             pass
 
-    def __init__(self, parent=None, main_form=None):
+    def __init__(self, parent=None, main_form=None) -> None:
         # Initialize the superclass
         super().__init__(parent)
         # Store the reference to the parent
@@ -58,19 +58,36 @@ class SettingsGuiManipulator(qt.QScrollArea):
         self.main_form = main_form
         # Set default font
         self.setFont(settings.get_current_font())
-        # Make the widget scrollable: every control lives inside a content
-        # widget that scrolls when it grows beyond the overlay size.
-        self.setWidgetResizable(True)
+        # Anchor the filter bar to the top and keep the settings
+        # groups in their own scrollable area below it.
         self.setFrameShape(qt.QFrame.Shape.NoFrame)
-        self.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.setVerticalScrollBarPolicy(qt.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.__content = qt.QWidget(self)
+        self.__shell_layout = qt.QVBoxLayout(self)
+        self.__shell_layout.setSpacing(0)
+        self.__shell_layout.setContentsMargins(qt.QMargins(0, 0, 0, 0))
+        self.__top_bar = qt.QWidget(self)
+        self.__top_bar.setObjectName("SettingsTopBar")
+        self.__top_layout = qt.QVBoxLayout(self.__top_bar)
+        self.__top_layout.setSpacing(5)
+        self.__top_layout.setContentsMargins(qt.QMargins(9, 9, 9, 5))
+        self.__shell_layout.addWidget(self.__top_bar)
+        self.__scroll = qt.QScrollArea(self)
+        self.__scroll.setObjectName("SettingsScroll")
+        self.__scroll.setWidgetResizable(True)
+        self.__scroll.setFrameShape(qt.QFrame.Shape.NoFrame)
+        self.__scroll.setHorizontalScrollBarPolicy(
+            qt.Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.__scroll.setVerticalScrollBarPolicy(
+            qt.Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.__content = qt.QWidget(self.__scroll)
         self.__content.setObjectName("SettingsContent")
         # Create the layout
         self.__layout = qt.QVBoxLayout(self.__content)
         self.__layout.setSpacing(5)
         self.__layout.setContentsMargins(qt.QMargins(9, 9, 9, 9))
-        self.setWidget(self.__content)
+        self.__scroll.setWidget(self.__content)
+        self.__shell_layout.addWidget(self.__scroll, 1)
         # Initialize the controls
         self._setting_listeners = {
             "current_font_name": lambda v: self._set_combo(self.app_font_combo, str(v)),
@@ -124,6 +141,7 @@ class SettingsGuiManipulator(qt.QScrollArea):
             "terminal": lambda v: self._set_line_edit(
                 self.terminal_program_edit, str(v)
             ),
+            "theme": self.__sync_theme,
         }
         # Initialize the options
         self.__group_filters: dict[Any, str] = {}
@@ -136,20 +154,19 @@ class SettingsGuiManipulator(qt.QScrollArea):
         # React to settings changed from anywhere
         settings.connect_change(self._on_settings_changed)
 
-    def __init_options(self):
+    def __init_options(self) -> None:
         """
         Create and lay out all of the settings controls.
         Each control reflects the current setting value and
         applies the change immediately through the settings facade.
-        C++ options
         """
         # Filter field that hides non-matching groups while typing.
         # An empty field shows every group.
-        self.__filter_edit = qt.QLineEdit(self.__content)
+        self.__filter_edit = qt.QLineEdit(self.__top_bar)
         self.__filter_edit.setPlaceholderText("Filter settings\u2026")
         self.__filter_edit.setClearButtonEnabled(True)
         self.__filter_edit.textChanged.connect(self.__apply_settings_filter)
-        self.__layout.addWidget(self.__filter_edit)
+        self.__top_layout.addWidget(self.__filter_edit)
         # ------------------------------------------------------------------
         # Fonts
         # ------------------------------------------------------------------
@@ -608,6 +625,9 @@ class SettingsGuiManipulator(qt.QScrollArea):
         Signal blocks prevent echoing our own changes back out.
         """
         editor_settings = value if isinstance(value, dict) else settings.get("editor")
+        self._set_spin(self.tab_width_spinbox, int(editor_settings["tab_width"]))
+        self._set_spin(self.zoom_factor_spinbox, int(editor_settings["zoom_factor"]))
+        self._set_check(self.word_wrap_checkbox, bool(editor_settings["word_wrap"]))
         self._set_check(
             self.autocompletion_checkbox, bool(editor_settings["autocompletion"])
         )
@@ -772,10 +792,10 @@ class SettingsGuiManipulator(qt.QScrollArea):
     def __apply_terminal_font(self) -> None:
         self._tabs_with("update_style", skip_with="update_variable_settings")
 
-    def __menu_font_family_changed(self, text: str) -> None:
+    def __menu_font_family_changed(self, _text: str) -> None:
         self.__apply_menu_font()
 
-    def __menu_font_size_changed(self, value: int) -> None:
+    def __menu_font_size_changed(self, _value: int) -> None:
         self.__apply_menu_font()
 
     def __apply_menu_font(self) -> None:
@@ -793,6 +813,18 @@ class SettingsGuiManipulator(qt.QScrollArea):
         theme = self.__theme_list[index]
         settings.set("theme", theme["name"])
         self.main_form.view.refresh_theme()
+        self.update_style()
+
+    def __sync_theme(self, value: Any) -> None:
+        """
+        Reflect an external theme change onto the theme combobox and styles.
+        """
+        name = str(value if value is not None else settings.get("theme"))
+        self.theme_combobox.blockSignals(True)
+        index = self.theme_combobox.findText(name)
+        if index >= 0:
+            self.theme_combobox.setCurrentIndex(index)
+        self.theme_combobox.blockSignals(False)
         self.update_style()
 
     def _tabs_with(self, method_name: str, skip_with: str | None = None) -> None:
@@ -881,14 +913,14 @@ class SettingsGuiManipulator(qt.QScrollArea):
             if last_widget.currentWidget() is not None:
                 last_widget.currentWidget().setFocus()
 
-    def hide(self):
+    def hide(self) -> None:
         """
         Hide the settings manipulator
         """
         self.setVisible(False)
         self.setEnabled(False)
 
-    def show(self):
+    def show(self) -> None:
         """
         Show the settings manipulator
         """
@@ -896,9 +928,13 @@ class SettingsGuiManipulator(qt.QScrollArea):
         self.setEnabled(True)
         # Center to the main form
         self.center(self.size())
-        self.setFocus()
+        self.__scroll.setFocus()
 
-    def scale(self, width_scale_factor=1, height_scale_factor=1):
+    def scale(
+        self,
+        width_scale_factor: float = 1.0,
+        height_scale_factor: float = 1.0,
+    ) -> None:
         """
         Scale the size of the settings manipulator and all of its child widgets
         """
@@ -912,7 +948,7 @@ class SettingsGuiManipulator(qt.QScrollArea):
         # Center to the main form
         self.center(self.size())
 
-    def center(self, size):
+    def center(self, size: qt.QSize) -> None:
         """
         Center the settings manipulator to the main form,
         according to the size parameter
@@ -1041,6 +1077,13 @@ QScrollArea {{
 }}
 #SettingsContent {{
     background: transparent;
+}}
+#SettingsTopBar {{
+    background: transparent;
+    border-bottom: 1px solid {passive_border};
+}}
+#SettingsScroll {{
+    border: none;
 }}
 QPushButton {{
     background: {passive_background};

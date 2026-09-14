@@ -225,6 +225,10 @@ class DialogResult(enum.Enum):
     SwitchToLargestWindow = 10
     RecycleBin = 11
     PermanentDelete = 12
+    Rename = 13
+    OverwriteAll = 14
+    SkipAll = 15
+    RenameAll = 16
 
 
 class FormatterType(enum.Enum):

@@ -36,7 +36,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "7.15.0"
+application_version = "7.15.3"
 # Global variables
 command_line_options = None
 debug_mode = False

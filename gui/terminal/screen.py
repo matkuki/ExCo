@@ -276,9 +276,16 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self.bell_triggered = True
 
     def reset(self) -> None:
-        # A full reset (RIS) also drops the Kitty keyboard protocol mode;
-        # the app re-pushes it on the next enable.
         self.keyboard_flags = 0
+        self._alt_saved = None
+        self._alt_modes_active = set()
+        self.cursor_style = "block"
+        self.cursor_blink = True
+        self.bell_triggered = False
+        if hasattr(self, "hyperlink_spans"):
+            self.hyperlink_spans.clear()
+        self._active_hyperlink = None
+        self.pending_scroll = 0
         super().reset()
 
 
@@ -471,18 +478,20 @@ class ExtendedStream(pyte_streams.Stream):
                     continue
                 elif code == "P":
                     continue
-
+                nxt = yield None
+                while nxt.isdigit():
+                    code += nxt
+                    nxt = yield None
                 param: str = ""
-                while True:
-                    char = yield None
-                    if char == ESC:
-                        char += yield None
-                    if char in OSC_TERMINATORS:
-                        break
-                    else:
-                        param += char
-
-                param = param[1:]  # Drop the ;.
+                if nxt == ";":
+                    while True:
+                        char = yield None
+                        if char == ESC:
+                            char += yield None
+                        if char in OSC_TERMINATORS:
+                            break
+                        else:
+                            param += char
                 listener.osc(code, param)
             elif char not in NUL_OR_DEL:
                 draw(char)
