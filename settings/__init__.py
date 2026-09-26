@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict
 import qt
 import themes
 
-from settings.settings import SettingsManipulator
+from settings.settings import SettingsManipulator, Sessions
 
 __settings_manipulator: SettingsManipulator = SettingsManipulator()
 __theme_cache: Dict[str, Dict[str, Any]] = {}
@@ -43,7 +43,7 @@ def get_theme() -> dict:
     return __theme_cache[theme_name]
 
 
-def get_sessions() -> dict:
+def get_sessions() -> Sessions:
     return __settings_manipulator.sessions
 
 

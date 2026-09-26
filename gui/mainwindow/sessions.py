@@ -43,39 +43,44 @@ class Sessions:
         # Get the reference to the MainWindow parent object instance
         self._parent = parent
 
-    def add(self, session_name: str, session_group_chain: List[str] = []) -> Optional[bool]:
+    def add(self, session_name: str, session_group_chain: Optional[List[str]] = None) -> Optional[bool]:
         """Add the current opened documents in the main and upper window"""
+        if session_group_chain is None:
+            session_group_chain = []
         # Check if the session name is too short
         if len(session_name) < 3:
             self._parent.display.repl_display_message(
                 "Session name is too short!",
                 message_type=constants.MessageType.ERROR,
             )
-            return
-        if session_group_chain is not None:
-            if (
-                isinstance(session_group_chain, tuple) == False
-                and isinstance(session_group_chain, list) == False
-            ):
-                self._parent.display.repl_display_message(
-                    "Group name must be a tuple/list of strings!",
-                    message_type=constants.MessageType.ERROR,
-                )
-                return
+            return None
+        if isinstance(session_group_chain, tuple):
+            session_group_chain = list(session_group_chain)
+        if isinstance(session_group_chain, list) == False:
+            self._parent.display.repl_display_message(
+                "Group name must be a tuple/list of strings!",
+                message_type=constants.MessageType.ERROR,
+            )
+            return None
         # Create lists of files in each window
         try:
             all_windows = self._parent.get_all_windows()
             #                if len(all_windows) > 0 and any([x.count() > 0 for x in all_windows]) > 0:
             if len(all_windows) > 0:
-                # Check if the session is already stored
+                # Walk the group chain and check if the session is already stored
                 session_found = False
                 group = settings.get("stored_sessions")["main"]
                 for c in session_group_chain:
-                    if c in group["groups"].keys():
-                        group = group["groups"][c]
-                else:
-                    if session_name in group["sessions"].keys():
-                        session_found = True
+                    if c not in group["groups"].keys():
+                        message = "Group '{}' in the session chain was not found!".format(c)
+                        self._parent.display.repl_display_message(
+                            message, message_type=constants.MessageType.ERROR
+                        )
+                        self._parent.display.write_to_statusbar(message, 1500)
+                        return False
+                    group = group["groups"][c]
+                if session_name in group["sessions"].keys():
+                    session_found = True
                 # Store the session
                 settings.get_sessions().add_session(
                     session_name,
@@ -107,7 +112,7 @@ class Sessions:
                 return False
         except:
             self._parent.display.repl_display_error(traceback.format_exc())
-            message = "Invalid document types in the main or upper window!"
+            message = "An error occurred while storing the session!"
             self._parent.display.repl_display_error(message)
             self._parent.display.write_to_statusbar(message, 1500)
             # Return error
@@ -117,6 +122,14 @@ class Sessions:
         """
         Restore the files as stored in the selected session
         """
+        # Check if the session was found
+        if session is None:
+            message = "Session was not found!"
+            self._parent.display.repl_display_message(
+                message, message_type=constants.MessageType.ERROR
+            )
+            self._parent.display.write_to_statusbar(message, 1500)
+            return
         # Check if there are any modified documents
         if self._parent.check_document_states() == True:
             message = (
@@ -129,19 +142,10 @@ class Sessions:
                 self.file_save_all()
             elif reply == constants.DialogResult.Cancel.value:
                 return
-        # Check if session was found
-        if session is not None:
-            # Clear all documents from the main and upper window
-            self._parent.close_all_tabs()
-            # Add files to windows
-            self._parent.view.layout_restore(session["layout"])
-        else:
-            # Session was not found
-            message = "Session '{}' was not found!".format(session["chain"])
-            self._parent.display.repl_display_message(
-                message, message_type=constants.MessageType.ERROR
-            )
-            self._parent.display.write_to_statusbar(message, 1500)
+        # Clear all documents from the main and upper window
+        self._parent.close_all_tabs()
+        # Add files to windows
+        self._parent.view.layout_restore(session["layout"])
 
     def exco_restore(self) -> None:
         """
@@ -190,28 +194,46 @@ class Sessions:
         for file in exco_main_files:
             self._parent.open_file(file, self._parent.get_largest_window())
 
-    def remove(self, session: dict) -> None:
+    def remove(self, session_name: str, session_group_chain: Optional[List[str]] = None) -> None:
         """
-        Delete the session
+        Delete the session with the matching name and group chain
         """
-        result = settings.sessions.remove_session(session)
-        if result == False:
+        if session_group_chain is None:
+            session_group_chain = []
+        try:
+            session = settings.get_sessions().get_session(
+                session_name, list(session_group_chain)
+            )
+        except KeyError:
+            session = None
+        if session is None:
             # Session was not found
             message = "Session '{}/{}' was not found!".format(
-                "/".join(session["chain"]), session["name"]
+                "/".join(session_group_chain), session_name
             )
             self._parent.display.repl_display_message(
                 message, message_type=constants.MessageType.ERROR
             )
             self._parent.display.write_to_statusbar(message, 1500)
         else:
-            # Session was removed successfully
-            message = "Session '{}/{}' was removed!".format(
-                "/".join(session["chain"]), session["name"]
-            )
-            self._parent.display.repl_display_message(
-                message, message_type=constants.MessageType.WARNING
-            )
+            result = settings.get_sessions().remove_session(session)
+            if result == False:
+                # Session was not found
+                message = "Session '{}/{}' was not found!".format(
+                    "/".join(session_group_chain), session_name
+                )
+                self._parent.display.repl_display_message(
+                    message, message_type=constants.MessageType.ERROR
+                )
+                self._parent.display.write_to_statusbar(message, 1500)
+            else:
+                # Session was removed successfully
+                message = "Session '{}/{}' was removed!".format(
+                    "/".join(session_group_chain), session_name
+                )
+                self._parent.display.repl_display_message(
+                    message, message_type=constants.MessageType.WARNING
+                )
         # Refresh the sessions menu in the menubar
         self.update_menu()
 

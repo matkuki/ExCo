@@ -283,7 +283,7 @@ QTabBar::tab:selected {{
                     action_open_md = qt.QAction("Open with Markdown Viewer", self)
                     action_open_md.triggered.connect(open_markdown)
                     action_open_md.setIcon(
-                        functions.create_icon("tango_icons/text-x-generic.png")
+                        functions.create_icon("tango_icons/markdown.png")
                     )
                     self.addAction(action_open_md)
 
@@ -382,9 +382,17 @@ QTabBar::tab:selected {{
                 text_1_name = compare_tab_1.name
                 text_2 = compare_tab_2.text()
                 text_2_name = compare_tab_2.name
+                # Get the source paths (may be None for unsaved documents)
+                text_1_path = compare_tab_1.save_path
+                text_2_path = compare_tab_2.save_path
                 # Display the text difference
                 main_form.display.show_text_difference(
-                    text_1, text_2, text_1_name, text_2_name
+                    text_1,
+                    text_2,
+                    text_1_name,
+                    text_2_name,
+                    text_1_path,
+                    text_2_path,
                 )
 
             diff_action = qt.QAction(action_name, self)
@@ -767,7 +775,8 @@ QTabBar::tab:selected {{
 
     def _signal_editor_tabclose(self, emmited_tab_number, force=False):
         """
-        Event that fires when a tab close
+        Event that fires when a tab close.
+        Returns True if the tab was closed, False if the close was cancelled.
         """
 
         # Nested function for clearing all bookmarks in the document
@@ -790,7 +799,7 @@ QTabBar::tab:selected {{
                 if reply == constants.DialogResult.SaveAndClose.value:
                     result = tab.save_document()
                     if result == False:
-                        return
+                        return False
                     clear_document_bookmarks()
                     # Close tab anyway
                     self.removeTab(emmited_tab_number)
@@ -800,7 +809,7 @@ QTabBar::tab:selected {{
                     self.removeTab(emmited_tab_number)
                 else:
                     # Cancel tab closing
-                    return
+                    return False
             else:
                 clear_document_bookmarks()
                 # The document is unmodified
@@ -818,6 +827,7 @@ QTabBar::tab:selected {{
             tab.__del__()
         # Just in case, decrement the refcount of the tab (that's what del does)
         del tab
+        return True
 
     def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
         """
@@ -872,6 +882,9 @@ QTabBar::tab:selected {{
         if self.widget(index).savable == constants.CanSave.YES:
             self.widget(index).save_status = constants.FileStatus.OK
             self.setTabText(index, self.tabText(index).strip("*"))
+            # Anchor the Scintilla save point so that a later undo/redo back to
+            # this state fires SCN_SAVEPOINTREACHED and clears the asterisk.
+            self.widget(index).anchor_savepoint()
 
     def _set_wait_animation(self, index, show):
         tabBar = self.tabBar()
@@ -896,30 +909,30 @@ QTabBar::tab:selected {{
             tabBar.setTabButton(index, qt.QTabBar.ButtonPosition.LeftSide, None)
 
     def close_tab(self, tab=None, force=False):
-        """Close a tab in the basic widget"""
+        """Close a tab in the basic widget; returns True if a tab was closed"""
         # Return if there are no tabs open
         if self.count == 0:
-            return
+            return False
         # First check if a tab name was given
         if isinstance(tab, str):
             for i in range(0, self.count()):
                 if self.tabText(i) == tab:
                     # Tab found, close it
-                    self._signal_editor_tabclose(i, force)
-                    break
+                    return self._signal_editor_tabclose(i, force)
+            return False
         elif isinstance(tab, int):
             # Close the tab
-            self._signal_editor_tabclose(tab, force)
+            return self._signal_editor_tabclose(tab, force)
         elif tab == None:
             # No tab number given, select the current tab for closing
-            self._signal_editor_tabclose(self.currentIndex(), force)
+            return self._signal_editor_tabclose(self.currentIndex(), force)
         else:
             for i in range(0, self.count()):
                 # Close tab by reference
                 if self.widget(i) == tab:
                     # Tab found, close it
-                    self._signal_editor_tabclose(i, force)
-                    break
+                    return self._signal_editor_tabclose(i, force)
+            return False
 
     def zoom_in(self):
         """Zoom in view function (it is the same for the CustomEditor and QTextEdit)"""
@@ -1006,7 +1019,9 @@ QTabBar::tab:selected {{
         new_scintilla_tab.textChanged.connect(new_scintilla_tab.text_changed)
         return new_scintilla_tab
 
-    def editor_add_document(self, document_name, type=None, bypass_check=False):
+    def editor_add_document(
+        self, document_name, type=None, bypass_check=False, index=None
+    ):
         """Check tab type and add a document to self(QTabWidget)"""
         if type == "file":
             ## New tab is a file on disk
@@ -1027,9 +1042,14 @@ QTabBar::tab:selected {{
                 # Set the lexer that colour codes the document
                 new_editor_tab.choose_lexer(file_type)
                 # Add the scintilla document to the tab widget
-                new_editor_tab_index = self.addTab(
-                    new_editor_tab, os.path.basename(document_name)
-                )
+                if index is None:
+                    new_editor_tab_index = self.addTab(
+                        new_editor_tab, os.path.basename(document_name)
+                    )
+                else:
+                    new_editor_tab_index = self.insertTab(
+                        index, new_editor_tab, os.path.basename(document_name)
+                    )
                 # Make the new tab visible
                 self.setCurrentIndex(new_editor_tab_index)
                 # Return the reference to the new added scintilla tab widget
@@ -1045,7 +1065,12 @@ QTabBar::tab:selected {{
             # Create new scintilla object
             new_editor_tab = self.editor_create_document(document_name)
             # Add the scintilla document to the tab widget
-            new_editor_tab_index = self.addTab(new_editor_tab, document_name)
+            if index is None:
+                new_editor_tab_index = self.addTab(new_editor_tab, document_name)
+            else:
+                new_editor_tab_index = self.insertTab(
+                    index, new_editor_tab, document_name
+                )
             # Make new tab visible
             self.setCurrentIndex(new_editor_tab_index)
             # Return the reference to the new added scintilla tab widget
@@ -1060,24 +1085,64 @@ QTabBar::tab:selected {{
         self.setCurrentIndex(new_hexview_tab_index)
         return self.widget(new_hexview_tab_index)
 
-    def markdown_add(self, file_path):
+    def markdown_add(self, file_path, index=None):
         # Initialize the markdown viewer
         new_markdown = MarkdownViewer(file_path, self, self.main_form)
         tab_text = new_markdown.name
-        new_markdown_tab_index = self.addTab(new_markdown, tab_text)
+        if index is None:
+            new_markdown_tab_index = self.addTab(new_markdown, tab_text)
+        else:
+            new_markdown_tab_index = self.insertTab(index, new_markdown, tab_text)
         # Make new tab visible
         self.setCurrentIndex(new_markdown_tab_index)
         return self.widget(new_markdown_tab_index)
 
+    def switch_to_markdown_view(self, index):
+        """Close the editor tab at 'index' and open a markdown viewer in its place"""
+        if index is None or index < 0 or index >= self.count():
+            return
+        widget = self.widget(index)
+        if not isinstance(widget, CustomEditor):
+            return
+        if widget.save_path == "":
+            self.main_form.display.write_to_statusbar(
+                "Document has no file on disk!", 3000
+            )
+            return
+        file_path = widget.save_path
+        # Close the editor (prompting for modified documents) first
+        if self.close_tab(index) == False:
+            # The close was cancelled
+            return
+        # Open the markdown viewer in the same position
+        insert_index = min(index, self.count())
+        self.main_form.open_file_markdown(
+            file_path, tab_widget=self, index=insert_index
+        )
+
+    def switch_to_editor_view(self, index):
+        """Close the markdown viewer tab at 'index' and open an editor in its place"""
+        if index is None or index < 0 or index >= self.count():
+            return
+        widget = self.widget(index)
+        if not isinstance(widget, MarkdownViewer):
+            return
+        file_path = widget.save_path
+        # Close the markdown viewer (not savable, so never prompts)
+        self.close_tab(index)
+        # Open the editor in the same position
+        insert_index = min(index, self.count())
+        self.main_form.open_file(file_path, tab_widget=self, index=insert_index)
+
     terminal_count = 0
 
-    def terminal_add(self, shell=None):
+    def terminal_add(self, shell=None, cwd=None):
         from gui.terminal import Terminal
 
         name = "TERMINAL-{}".format(self.terminal_count)
         self.terminal_count += 1
         # Initialize the terminal emulator
-        new_terminal = Terminal(self, self.main_form, name, shell=shell)
+        new_terminal = Terminal(self, self.main_form, name, shell=shell, cwd=cwd)
         tab_text = name
         new_terminal_tab_index = self.addTab(new_terminal, tab_text)
         # Follow OSC title changes from the shell

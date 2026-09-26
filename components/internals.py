@@ -113,12 +113,12 @@ class Internals:
         button.clicked.connect(function)
         return button
 
-    def add_corner_button(self, icon, tooltip, function):
+    def add_corner_button(self, icon, tooltip, function, index=None):
         try:
             self.__tab_widget.parent()
         except:
             self.__del__()
-            return
+            return None
         # Create the group box for buttons if needed
         reinit = False
         try:
@@ -133,14 +133,22 @@ class Internals:
             self.corner_groupbox.setLayout(corner_layout)
             self.corner_groupbox.setStyleSheet("QGroupBox{border: 0px;}")
             self.corner_groupbox.show()
-        # Add the button
+        # Add the button (left-to-right; index 0 is the leftmost button)
         button = self.create_corner_button(icon, tooltip, function)
         layout = self.corner_groupbox.layout()
-        layout.addWidget(button)
+        button_index = index if index is not None else layout.count()
+        layout.insertWidget(button_index, button)
+        self._restyle_corner_button_icons(layout)
+        return button_index
+
+    def _restyle_corner_button_icons(self, layout):
         for i in range(layout.count()):
             if settings.get("custom_menu_scale") is not None:
                 layout.itemAt(i).widget().setIconSize(
-                    qt.QSize(settings.get("custom_menu_scale"), settings.get("custom_menu_scale"))
+                    qt.QSize(
+                        settings.get("custom_menu_scale"),
+                        settings.get("custom_menu_scale"),
+                    )
                 )
 
     def restyle_corner_button_icons(self):
@@ -150,7 +158,10 @@ class Internals:
         for i in range(layout.count()):
             if settings.get("custom_menu_scale") is not None:
                 layout.itemAt(i).widget().setIconSize(
-                    qt.QSize(settings.get("custom_menu_scale"), settings.get("custom_menu_scale"))
+                    qt.QSize(
+                        settings.get("custom_menu_scale"),
+                        settings.get("custom_menu_scale"),
+                    )
                 )
 
     def update_corner_button_icon(self, icon, index=0):

@@ -2027,9 +2027,7 @@ def init_menubar(self) -> None:
         sessions_menu.installEventFilter(click_filter)
 
         def add_session() -> None:
-            repl_text_input(
-                text='session_add("", session_group=None)', cursor_position=13
-            )
+            repl_text_input(text='session_add("", [])', cursor_position=13)
 
         add_session_action = create_action(
             "Add Session",
@@ -2040,9 +2038,7 @@ def init_menubar(self) -> None:
         )
 
         def remove_session() -> None:
-            repl_text_input(
-                text='session_remove("", session_group=None)', cursor_position=13
-            )
+            repl_text_input(text='session_remove("", [])', cursor_position=16)
 
         remove_session_action = create_action(
             "Remove Session",
@@ -2080,7 +2076,7 @@ def init_menubar(self) -> None:
             "Graphical Settings Editor",
             None,
             "Graphical user friendly settings editor",
-            "tango_icons/settings-png",
+            "tango_icons/settings.png",
             show_settings,
         )
         # Add the items

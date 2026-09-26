@@ -76,31 +76,41 @@ def __check_color_list(field, color_list, prior_keys):
 def __check_string(field, string, prior_keys):
     if not isinstance(string, str):
         raise Exception(
-            "[Themes] String error: {} / '{}'!".format("->".join(prior_keys + (field,)), string)
+            "[Themes] String error: {} / '{}'!".format(
+                "->".join(prior_keys + (field,)), string
+            )
         )
 
 
 def __check_bool(field, boolean, prior_keys):
     if not isinstance(boolean, bool):
         raise Exception(
-            "[Themes] Boolean error: {} / '{}'!".format("->".join(prior_keys + (field,)), boolean)
+            "[Themes] Boolean error: {} / '{}'!".format(
+                "->".join(prior_keys + (field,)), boolean
+            )
         )
 
 
 def __check_fields(schema, dictionary, prior_keys=()):
     for k, v in dictionary.items():
         try:
-            nested_schema_item = functools.reduce(lambda seq, key: seq[key], prior_keys, schema)
+            nested_schema_item = functools.reduce(
+                lambda seq, key: seq[key], prior_keys, schema
+            )
         except:
             raise Exception(
-                "[Themes] Unknown schema key: {} / '{}'!".format("->".join(prior_keys + (k,)), v)
+                "[Themes] Unknown schema key: {} / '{}'!".format(
+                    "->".join(prior_keys + (k,)), v
+                )
             )
         if isinstance(v, dict):
             __check_fields(schema, v, (*prior_keys, k))
         elif isinstance(v, int) and not isinstance(v, bool):
             if dictionary[k] != nested_schema_item[k]:
                 raise Exception(
-                    "[Themes] Integer error: {} / '{}'!".format("->".join(prior_keys + (k,)), v)
+                    "[Themes] Integer error: {} / '{}'!".format(
+                        "->".join(prior_keys + (k,)), v
+                    )
                 )
         else:
             try:
@@ -418,6 +428,11 @@ def __check(theme_data):
                 "bold": __check_bool,
                 "background": __check_color,
             },
+            "blockquote": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
             "blockregex": {
                 "color": __check_color,
                 "bold": __check_bool,
@@ -484,6 +499,21 @@ def __check(theme_data):
                 "background": __check_color,
             },
             "clipproperty": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "codebackticks": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "codeblock": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "codedoublebackticks": {
                 "color": __check_color,
                 "bold": __check_bool,
                 "background": __check_color,
@@ -708,6 +738,16 @@ def __check(theme_data):
                 "bold": __check_bool,
                 "background": __check_color,
             },
+            "emphasisasterisks": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "emphasisunderscores": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
             "entity": {
                 "color": __check_color,
                 "bold": __check_bool,
@@ -818,6 +858,36 @@ def __check(theme_data):
                 "bold": __check_bool,
                 "background": __check_color,
             },
+            "header1": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "header2": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "header3": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "header4": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "header5": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "header6": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
             "heredocument": {
                 "color": __check_color,
                 "bold": __check_bool,
@@ -844,6 +914,11 @@ def __check(theme_data):
                 "background": __check_color,
             },
             "highlightedidentifier": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "horizontalrule": {
                 "color": __check_color,
                 "bold": __check_bool,
                 "background": __check_color,
@@ -1263,6 +1338,11 @@ def __check(theme_data):
                 "bold": __check_bool,
                 "background": __check_color,
             },
+            "link": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
             "literal": {
                 "color": __check_color,
                 "bold": __check_bool,
@@ -1389,6 +1469,11 @@ def __check(theme_data):
                 "background": __check_color,
             },
             "operator": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "orderedlistitem": {
                 "color": __check_color,
                 "bold": __check_bool,
                 "background": __check_color,
@@ -1529,6 +1614,11 @@ def __check(theme_data):
                 "background": __check_color,
             },
             "pragma": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "prechar": {
                 "color": __check_color,
                 "bold": __check_bool,
                 "background": __check_color,
@@ -1858,6 +1948,11 @@ def __check(theme_data):
                 "bold": __check_bool,
                 "background": __check_color,
             },
+            "strikeout": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
             "string": {
                 "color": __check_color,
                 "bold": __check_bool,
@@ -1879,6 +1974,16 @@ def __check(theme_data):
                 "background": __check_color,
             },
             "stringvariable": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "strongemphasisasterisks": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "strongemphasisunderscores": {
                 "color": __check_color,
                 "bold": __check_bool,
                 "background": __check_color,
@@ -2044,6 +2149,11 @@ def __check(theme_data):
                 "background": __check_color,
             },
             "unknowntag": {
+                "color": __check_color,
+                "bold": __check_bool,
+                "background": __check_color,
+            },
+            "unorderedlistitem": {
                 "color": __check_color,
                 "bold": __check_bool,
                 "background": __check_color,
@@ -2216,6 +2326,8 @@ def __check(theme_data):
             "handle": __check_color,
             "handle-hover": __check_color,
         },
+        "scroller-down-image": __check_string,
+        "scroller-up-image": __check_string,
         "settings-background": __check_color,
         "settings-hex-background": __check_color,
         "settings-hex-edge": __check_color,

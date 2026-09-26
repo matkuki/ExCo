@@ -46,7 +46,7 @@ class MarkdownViewer(qt.QTextBrowser):
         self._parent = parent
         self.main_form = main_form
 
-        self.current_icon = functions.create_icon("tango_icons/text-x-generic.png")
+        self.current_icon = functions.create_icon("tango_icons/markdown.png")
         self.internals = components.internals.Internals(parent=self, tab_widget=parent)
         self.internals.update_icon(self)
 
@@ -77,12 +77,8 @@ class MarkdownViewer(qt.QTextBrowser):
         # Theme styling
         self.set_theme(settings.get_theme())
 
-        # Corner button for the browser preview
-        self.internals.add_corner_button(
-            "tango_icons/gnome-web-browser.png",
-            "Open rendered preview in browser",
-            self.open_preview_in_browser,
-        )
+        # Corner buttons: browser preview and back-to-editor switch
+        self.add_corner_buttons()
 
         # Link handling
         self.anchorClicked.connect(self._anchor_clicked)
@@ -114,6 +110,24 @@ class MarkdownViewer(qt.QTextBrowser):
         self.setFont(settings.get_current_font())
         self.document().setDefaultFont(  # type: ignore[union-attr]
             settings.get_current_font()
+        )
+
+    def add_corner_buttons(self) -> None:
+        """Add the corner buttons of the markdown viewer tab"""
+
+        def back_to_editor() -> None:
+            index = self._parent.indexOf(self)
+            self._parent.switch_to_editor_view(index)
+
+        self.internals.add_corner_button(
+            "tango_icons/gnome-web-browser.png",
+            "Open rendered preview in browser",
+            self.open_preview_in_browser,
+        )
+        self.internals.add_corner_button(
+            "tango_icons/accessories-text-editor.png",
+            "Back to editor view",
+            back_to_editor,
         )
 
     """

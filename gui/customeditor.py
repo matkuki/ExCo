@@ -47,10 +47,16 @@ class CustomEditor(BaseEditor):
     savable = constants.CanSave.NO
     embedded = False
     modification_time = None
+    # Fingerprint (hash) of the document content at the latest save point.
+    # Compares undo/redo results against the last saved/loaded state so the tab
+    # title asterisk is cleared only when content actually matches the file.
+    _saved_text_hash: int = hash("")
     # Current document type, initialized to text
     current_file_type = "TEXT"
     # Current tab icon
     current_icon = None
+    # Layout index of the 'Change lexer' corner button (rightmost button)
+    _lexer_button_index = 0
     internals = None
     # Comment character/s that will be used in comment/uncomment functions
     comment_string = None
@@ -145,8 +151,11 @@ class CustomEditor(BaseEditor):
         # Set margin width and font
         self.setMarginWidth(0, "00")
         self.setMarginsFont(settings.get_editor_font())
-        # Reset the modified status of the document
+        # Reset the modified status of the document and record the fingerprint
+        # of the pristine content so the save-point handler can tell whether an
+        # undo/redo actually returned the document to the on-disk state.
         self.setModified(False)
+        self._saved_text_hash = self._document_hash()
         # Set brace matching
         self.setBraceMatching(qt.QsciScintilla.BraceMatch.SloppyBraceMatch)
         self.setMatchedBraceBackgroundColor(
@@ -205,6 +214,12 @@ class CustomEditor(BaseEditor):
         self.linesChanged.connect(self.__lines_changed)
         self.selectionChanged.connect(self.__selection_changed)
         self.SCN_MODIFIED.connect(self.__text_modified)
+        # Scintilla save point notifications: they fire when an undo/redo
+        # carries the document back into (or out of) the state it had when the
+        # save point was last set, letting us drop the "edited" asterisk only
+        # when the content truly matches the file on disk.
+        self.SCN_SAVEPOINTREACHED.connect(self.__savepoint_reached)
+        self.SCN_SAVEPOINTLEFT.connect(self.__savepoint_left)
         self.SendScintilla(
             self.SCI_SETMODEVENTMASK,
             self.SC_MOD_INSERTTEXT | self.SC_MOD_DELETETEXT,
@@ -350,6 +365,46 @@ class CustomEditor(BaseEditor):
                     annotationLinesAdded,
                 )
 
+    def _document_hash(self) -> int:
+        """Hash of the current document content (normalized line endings)."""
+        return hash(self._normalize_line_endings(self.text()))
+
+    def anchor_savepoint(self) -> None:
+        """Anchor the Scintilla save point at the current document content."""
+        self._saved_text_hash = self._document_hash()
+        self.SendScintilla(self.SCI_SETSAVEPOINT)
+
+    def __savepoint_reached(self):
+        """Document was undone/redone back to the anchored save point.
+
+        Clear the edited-asterisk and the MODIFIED status only when the content
+        really matches the last saved/loaded state; undoing past the save point
+        re-anchors Scintilla's save point to the earlier state, which would
+        falsely clear the asterisk without this content hash guard.
+        """
+        if self.savable != constants.CanSave.YES:
+            return
+        if self._document_hash() != self._saved_text_hash:
+            return
+        self.save_status = constants.FileStatus.OK
+        index = self._parent.indexOf(self)
+        if index != -1:
+            self._parent.setTabText(index, self._parent.tabText(index).strip("*"))
+
+    def __savepoint_left(self):
+        """Document left the save point: ensure it is marked modified.
+
+        The regular text change handler already marks the document dirty on
+        every edit and undo/redo step; this only reinforces that state when
+        Scintilla reports the save point being left.
+        """
+        if self.savable != constants.CanSave.YES:
+            return
+        self.save_status = constants.FileStatus.MODIFIED
+        index = self._parent.indexOf(self)
+        if index != -1:
+            self._parent.set_text_changed(index)
+
     def _init_special_functions(self):
         """Initialize the methods for document manipulation"""
         # Set references to the special functions
@@ -378,15 +433,32 @@ class CustomEditor(BaseEditor):
         # Add/remove bookmark
         self.bookmarks.toggle_at_line(adjusted_line)
 
+    def _sync_bookmark_lines(self) -> None:
+        """Re-read the stored bookmark line numbers from the markers' actual
+        positions. Records whose marker no longer exists (its line was removed
+        by a reload or a bulk edit, or the marker was deleted directly) are
+        dropped instead of being left pointing at line 0."""
+        main_form: Any = self.main_form
+        marks = main_form.bookmarks.marks
+        for i in marks:
+            if marks[i]["editor"] != self:
+                continue
+            handle = marks[i]["handle"]
+            if isinstance(handle, int) and handle >= 0:
+                line = self.markerLine(handle) + 1
+            else:
+                line = 0
+            if line < 1:
+                # The marker is gone, remove the stale bookmark record
+                main_form.bookmarks.remove_by_number(i)
+            else:
+                marks[i]["line"] = line
+
     def __lines_changed(self):
         """
         Signal that fires when the number of lines changes
         """
-        bookmarks = self.main_form.bookmarks.marks
-        for i in bookmarks:
-            if bookmarks[i]["editor"] == self:
-                line = self.markerLine(bookmarks[i]["handle"]) + 1
-                bookmarks[i]["line"] = line
+        self._sync_bookmark_lines()
 
     selection_lock = False
 
@@ -436,7 +508,9 @@ class CustomEditor(BaseEditor):
                     lexer_instance = lexer()
                     self.set_lexer(lexer_instance, lexer_name)
                     # Change the corner widget (button) icon
-                    self.internals.update_corner_button_icon(self.current_icon)
+                    self.internals.update_corner_button_icon(
+                        self.current_icon, index=self._lexer_button_index
+                    )
                     self.internals.update_icon(self)
                     # Display the lexer change
                     message = "Lexer changed to: {}".format(lexer_name)
@@ -453,8 +527,21 @@ class CustomEditor(BaseEditor):
             cursor = qt.QCursor.pos()
             lexers_menu.popup(cursor)
 
-        # Edit session
-        self.internals.add_corner_button(
+        # Markdown view switch (only for markdown files); leftmost button
+        if functions.get_file_type(self.save_path) == "markdown":
+
+            def switch_to_markdown():
+                index = self._parent.indexOf(self)
+                self._parent.switch_to_markdown_view(index)
+
+            self.internals.add_corner_button(
+                "tango_icons/document-print-preview.png",
+                "Switch to Markdown view",
+                switch_to_markdown,
+            )
+
+        # Edit session (rightmost button)
+        self._lexer_button_index = self.internals.add_corner_button(
             self.current_icon, "Change the current lexer", show_lexer_menu
         )
 
@@ -594,17 +681,14 @@ class CustomEditor(BaseEditor):
         self.main_form.view.indication_check()
 
     def replaceSelectedText(self, *args, **kwargs):
-        marks = self.main_form.bookmarks.get_editor_all(self)
-        mark_data = []
-        for mark in marks:
-            mark_data.append((mark["line"], mark))
-        for line, mark in mark_data:
-            self.bookmarks.remove_marker_at_line(line)
+        # Let Scintilla move the bookmark markers along with the edited text
+        # instead of re-anchoring them at their old line numbers, then re-sync
+        # the stored line numbers with the markers' actual positions. This
+        # keeps bookmarks on the same content when lines are added or removed
+        # above them (indent/unindent, line removal, comment toggles,
+        # find&replace, code formatters).
         super().replaceSelectedText(*args, **kwargs)
-        for line, mark in mark_data:
-            new_handle = self.bookmarks.add_marker_at_line(line)
-            mark["line"] = line
-            mark["handle"] = new_handle
+        self._sync_bookmark_lines()
 
     """
     Line manipulation functions
@@ -1997,7 +2081,9 @@ class CustomEditor(BaseEditor):
         # Set the theme
         self.set_theme(settings.get_theme())
         # Update corner icons
-        self.internals.update_corner_button_icon(self.current_icon)
+        self.internals.update_corner_button_icon(
+            self.current_icon, index=self._lexer_button_index
+        )
         self.internals.update_icon(self)
         # Check for special lexer functionality
         qt.QTimer.singleShot(10, self.__check_special_lexer_functionality)

@@ -9890,10 +9890,14 @@ class Markdown(qt.QsciLexerMarkdown):
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
         for style in self.styles.keys():
-            # Some themes do not carry style entries for every Markdown style.
-            # Fall back per-style to the defaults instead of raising, so the
-            # lexer stays usable with any bundled theme.
-            style_options = theme["fonts"].get(style.lower())
+            # Themes may not carry style entries for every Markdown style.
+            # Fall back per-style to the theme's default entry instead of
+            # QScintilla's built-in colors, so custom themes keep their
+            # palette and backgrounds stay consistent.
+            style_options = theme["fonts"].get(
+                style.lower(),
+                theme["fonts"].get("default"),
+            )
             if style_options is None:
                 continue
             self.setPaper(qt.QColor(style_options["background"]), self.styles[style])

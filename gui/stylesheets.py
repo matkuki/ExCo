@@ -194,13 +194,31 @@ QMenu::right-arrow:disabled  {{
     width: 14px;
     height: 14px;
 }}
+QMenu::scroller {{
+    background-color: {};
+}}
+QMenu::scroller:up {{
+    image: url({});
+    width: 14px;
+    height: 14px;
+}}
+QMenu::scroller:down {{
+    image: url({});
+    width: 14px;
+    height: 14px;
+}}
         """.format(
             settings.get_theme()["indication"]["passivebackground"],
             settings.get_theme()["indication"]["passiveborder"],
             settings.get_theme()["fonts"]["default"]["color"],
             settings.get_theme()["indication"]["hover"],
             functions.get_resource_file(settings.get_theme()["right-arrow-menu-image"]),
-            functions.get_resource_file(settings.get_theme()["right-arrow-menu-disabled-image"]),
+            functions.get_resource_file(
+                settings.get_theme()["right-arrow-menu-disabled-image"]
+            ),
+            settings.get_theme()["indication"]["passivebackground"],
+            functions.get_resource_file(settings.get_theme()["scroller-up-image"]),
+            functions.get_resource_file(settings.get_theme()["scroller-down-image"]),
         )
         return style_sheet
 

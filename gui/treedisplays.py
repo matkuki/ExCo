@@ -235,7 +235,7 @@ class TreeDisplay(qt.QTreeView):
             "template": functions.create_icon("various/node_template.png"),
             "class": functions.create_icon("various/node_class.png"),
             "iterator": functions.create_icon("various/node_iterator.png"),
-            "nothing": functions.create_icon("tango_icons/dialog-warning.png"),
+            "nothing": functions.create_icon("various/node_unknown.png"),
             "unknown": functions.create_icon("various/node_unknown.png"),
         }
         self.python_icon = functions.create_icon("language_icons/logo_python.png")
@@ -359,7 +359,41 @@ class TreeDisplay(qt.QTreeView):
                 )
                 open_in_explorer_action.triggered.connect(open_in_explorer)
                 self.tree_menu.addAction(open_in_explorer_action)
-                self.tree_menu.addSeparator()
+
+                # Open in terminal
+                item_full_name = getattr(item, "full_name", None)
+                if item_full_name is not None:
+                    terminal_path = functions.resolve_terminal_directory(
+                        item_full_name, True
+                    )
+
+                    def open_in_terminal():
+                        self.main_form.open_terminal_in_directory(
+                            terminal_path, self._parent
+                        )
+
+                    open_in_terminal_action = qt.QAction("Open in Terminal", self)
+                    open_in_terminal_action.setIcon(
+                        functions.create_icon("tango_icons/utilities-terminal.png")
+                    )
+                    open_in_terminal_action.triggered.connect(open_in_terminal)
+                    self.tree_menu.addAction(open_in_terminal_action)
+
+                    # Open in external terminal
+                    def open_in_external_terminal():
+                        self.main_form.open_external_terminal(terminal_path)
+
+                    open_in_external_terminal_action = qt.QAction(
+                        "Open in External Terminal", self
+                    )
+                    open_in_external_terminal_action.setIcon(
+                        functions.create_icon("tango_icons/utilities-terminal.png")
+                    )
+                    open_in_external_terminal_action.triggered.connect(
+                        open_in_external_terminal
+                    )
+                    self.tree_menu.addAction(open_in_external_terminal_action)
+                    self.tree_menu.addSeparator()
 
                 # Clipboard copy name
                 clipboard_copy_action = qt.QAction(
@@ -510,7 +544,7 @@ class TreeDisplay(qt.QTreeView):
                         "Open with Markdown Viewer", self.tree_menu
                     )
                     action_open_markdown.triggered.connect(open_markdown)
-                    icon = functions.create_icon("tango_icons/text-x-generic.png")
+                    icon = functions.create_icon("tango_icons/markdown.png")
                     action_open_markdown.setIcon(icon)
                     self.tree_menu.addAction(action_open_markdown)
 
@@ -533,6 +567,38 @@ class TreeDisplay(qt.QTreeView):
                 )
                 open_in_explorer_action.triggered.connect(open_in_explorer)
                 self.tree_menu.addAction(open_in_explorer_action)
+
+                # Open in terminal
+                terminal_path = functions.resolve_terminal_directory(
+                    item.full_name, False
+                )
+
+                def open_in_terminal():
+                    self.main_form.open_terminal_in_directory(
+                        terminal_path, self._parent
+                    )
+
+                open_in_terminal_action = qt.QAction("Open in Terminal", self)
+                open_in_terminal_action.setIcon(
+                    functions.create_icon("tango_icons/utilities-terminal.png")
+                )
+                open_in_terminal_action.triggered.connect(open_in_terminal)
+                self.tree_menu.addAction(open_in_terminal_action)
+
+                # Open in external terminal
+                def open_in_external_terminal():
+                    self.main_form.open_external_terminal(terminal_path)
+
+                open_in_external_terminal_action = qt.QAction(
+                    "Open in External Terminal", self
+                )
+                open_in_external_terminal_action.setIcon(
+                    functions.create_icon("tango_icons/utilities-terminal.png")
+                )
+                open_in_external_terminal_action.triggered.connect(
+                    open_in_external_terminal
+                )
+                self.tree_menu.addAction(open_in_external_terminal_action)
                 self.tree_menu.addSeparator()
 
                 # Copy name to clipboard
@@ -2975,7 +3041,7 @@ class TreeExplorer(TreeDisplayBase):
                         "Open with Markdown Viewer", self.tree_menu
                     )
                     action_open_markdown.triggered.connect(open_markdown)
-                    icon = functions.create_icon("tango_icons/text-x-generic.png")
+                    icon = functions.create_icon("tango_icons/markdown.png")
                     action_open_markdown.setIcon(icon)
                     self.tree_menu.addAction(action_open_markdown)
 
@@ -3015,6 +3081,44 @@ class TreeExplorer(TreeDisplayBase):
                 TreeExplorer.ItemType.DISK,
             ]:
                 self.tree_menu.addAction(open_in_explorer_action)
+
+                # Open in terminal
+                terminal_path = functions.resolve_terminal_directory(
+                    item.attributes.path,
+                    item.attributes.itype
+                    in [
+                        TreeExplorer.ItemType.DIRECTORY,
+                        TreeExplorer.ItemType.BASE_DIRECTORY,
+                        TreeExplorer.ItemType.DISK,
+                    ],
+                )
+
+                def open_in_terminal():
+                    self.main_form.open_terminal_in_directory(
+                        terminal_path, self._parent
+                    )
+
+                open_in_terminal_action = qt.QAction("Open in Terminal", self.tree_menu)
+                open_in_terminal_action.setIcon(
+                    functions.create_icon("tango_icons/utilities-terminal.png")
+                )
+                open_in_terminal_action.triggered.connect(open_in_terminal)
+                self.tree_menu.addAction(open_in_terminal_action)
+
+                # Open in external terminal
+                def open_in_external_terminal():
+                    self.main_form.open_external_terminal(terminal_path)
+
+                open_in_external_terminal_action = qt.QAction(
+                    "Open in External Terminal", self.tree_menu
+                )
+                open_in_external_terminal_action.setIcon(
+                    functions.create_icon("tango_icons/utilities-terminal.png")
+                )
+                open_in_external_terminal_action.triggered.connect(
+                    open_in_external_terminal
+                )
+                self.tree_menu.addAction(open_in_external_terminal_action)
 
             # Copy item name to clipboard
             def copy_item_name_to_clipboard():

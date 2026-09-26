@@ -113,6 +113,8 @@ class SessionGuiManipulator(qt.QTreeView):
         # Connect the signals
         self.doubleClicked.connect(self.__item_double_clicked)
         self.itemDelegate().closeEditor.connect(self.__item_editing_closed)
+        # Initialize the currently edited item reference
+        self.__edit_item = None
 
     def clean_model(self):
         if self.model() != None:
@@ -162,7 +164,7 @@ class SessionGuiManipulator(qt.QTreeView):
                 self.reset_locks()
                 # Item is a session
                 old_item_name = item.name
-                new_item_name = self.indexWidget(item.index()).text()
+                new_item_name = item.text()
                 item_chain = self.__get_node_chain(item)
                 # Rename
                 group = settings.get_sessions().get_group(item_chain)
@@ -188,7 +190,7 @@ class SessionGuiManipulator(qt.QTreeView):
                 settings.load()
                 # Item is a group
                 old_group_name = item.name
-                new_group_name = self.indexWidget(item.index()).text()
+                new_group_name = item.text()
                 item_chain = self.__get_node_chain(item)
                 # Rename the group
                 parent_group = settings.get_sessions().get_group(item_chain)
@@ -213,8 +215,8 @@ class SessionGuiManipulator(qt.QTreeView):
                 pass
             elif changed_item.type == ItemType.EMPTY_SESSION:
                 if len(changed_item.text()) < 3:
-                    # Disconnect the signal
-                    self.itemDelegate().closeEditor.disconnect()
+                    # Clear the editing reference so __item_editing_closed becomes a no-op
+                    self.__edit_item = None
                     # Remove the item from the tree
                     if changed_item.parent() is not None:
                         changed_item.parent().removeRow(changed_item.row())
@@ -229,14 +231,14 @@ class SessionGuiManipulator(qt.QTreeView):
                     # Update item
                     changed_item.type = ItemType.SESSION
                     changed_item.setEditable(False)
-                    # Adjust the name to the new one, by getting the QLineEdit at the model index
-                    session_name = self.indexWidget(item.index()).text()
+                    # Adjust the name to the new one, by getting the standard item text
+                    session_name = item.text()
                     session_chain = self.__get_node_chain(item)
                     # Add session through the main window and check the result
                     if not self.main_form.sessions.add(session_name, session_chain):
                         ## Error occured, remove session item from tree widget
-                        # Disconnect the signal
-                        self.itemDelegate().closeEditor.disconnect()
+                        # Clear the editing reference so __item_editing_closed becomes a no-op
+                        self.__edit_item = None
                         # Remove the item from the tree
                         if changed_item.parent() is not None:
                             changed_item.parent().removeRow(changed_item.row())
@@ -245,11 +247,24 @@ class SessionGuiManipulator(qt.QTreeView):
                     # Refresh the session tree
                     self.refresh_display()
             elif changed_item.type == ItemType.EMPTY_GROUP:
+                if len(changed_item.text()) < 3:
+                    # Clear the editing reference so __item_editing_closed becomes a no-op
+                    self.__edit_item = None
+                    # Remove the item from the tree
+                    if changed_item.parent() is not None:
+                        changed_item.parent().removeRow(changed_item.row())
+                    else:
+                        self.tree_model.removeRow(changed_item.row())
+                    # Display message
+                    message = "Group must have at least 3 characters in it's name!"
+                    self.main_form.display.repl_display_message(
+                        message, message_type=constants.MessageType.WARNING
+                    )
                 # When the item's name is changed it refires the itemChanged signal,
                 # so a check of one of the properties is necessary to not repeat the operation
-                if item.name == "":
-                    # Adjust the name to the new one, by getting the QLineEdit at the model index
-                    group_name = self.indexWidget(item.index()).text()
+                elif item.name == "":
+                    # Adjust the name to the new one, by getting the standard item text
+                    group_name = item.text()
                     group_chain = self.__get_node_chain(item)
                     # Set the item attributes
                     item.name = group_name
@@ -258,6 +273,8 @@ class SessionGuiManipulator(qt.QTreeView):
                     settings.get_sessions().add_group(group_name, group_chain)
                     # Save the sessions
                     settings.get_sessions().store_sessions()
+                    # Refresh the session tree
+                    self.refresh_display()
                 # Update the type
                 changed_item.type = ItemType.GROUP
 
@@ -267,6 +284,9 @@ class SessionGuiManipulator(qt.QTreeView):
         """
         item = self.__edit_item
         self.__edit_item = None
+        # Check if the item was already handled/removed by __item_changed
+        if item is None:
+            return
         # Check change
         if item.type == ItemType.EMPTY_GROUP:
             if len(item.text()) < 3:
@@ -295,6 +315,16 @@ class SessionGuiManipulator(qt.QTreeView):
         """
         # Reset the all locks/flags
         self.reset_locks()
+        # Remember which groups are currently expanded
+        expanded_chains = self.__expanded_group_chains()
+        # Rebuild the tree from the stored sessions
+        if self.tree_model is not None:
+            self.__populate_model()
+        # Re-expand the groups that were expanded before the refresh
+        for chain in expanded_chains:
+            node = self.__find_group_node(chain)
+            if node is not None:
+                self.expand(node.index())
         # Update the main window menu
         self.main_form.sessions.update_menu()
 
@@ -515,6 +545,15 @@ class SessionGuiManipulator(qt.QTreeView):
         self.setUniformRowHeights(True)
         # Connect the tree model signals
         self.tree_model.itemChanged.connect(self.__item_changed)
+        # Populate the model from the stored sessions
+        self.__populate_model()
+
+    def __populate_model(self):
+        """
+        (Re)build the tree contents from the stored sessions
+        """
+        # Clear the existing rows (if any)
+        self.tree_model.removeRows(0, self.tree_model.rowCount())
         # font = qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"), qt.QFont.Bold)
         font = qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
 
@@ -549,6 +588,49 @@ class SessionGuiManipulator(qt.QTreeView):
         # Process the groups
         main_session_group = settings.get("stored_sessions")["main"]
         process_group(main_session_group, self.tree_model, create_menu=False)
+
+    def __expanded_group_chains(self):
+        """
+        Return the list of group name-chains of the currently expanded groups
+        """
+        chains = []
+        if self.tree_model is not None:
+            self.__collect_expanded_chains(self.tree_model.invisibleRootItem(), [], chains)
+        return chains
+
+    def __collect_expanded_chains(self, node, prefix, chains):
+        for i in range(node.rowCount()):
+            child = node.child(i)
+            if child is None:
+                continue
+            if child.type == ItemType.GROUP:
+                chain = prefix + [child.text()]
+                if self.isExpanded(child.index()):
+                    chains.append(chain)
+                self.__collect_expanded_chains(child, chain, chains)
+
+    def __find_group_node(self, chain):
+        """
+        Find the group item matching the given group name-chain, or None
+        """
+        if self.tree_model is None:
+            return None
+        node = self.tree_model.invisibleRootItem()
+        for name in chain:
+            found = None
+            for i in range(node.rowCount()):
+                child = node.child(i)
+                if (
+                    child is not None
+                    and child.type == ItemType.GROUP
+                    and child.text() == name
+                ):
+                    found = child
+                    break
+            if found is None:
+                return None
+            node = found
+        return node
 
     def add_corner_buttons(self):
         # Edit session

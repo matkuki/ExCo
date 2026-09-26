@@ -198,6 +198,7 @@ __LANGUAGE_ICON_MAP = {
     "javascript": "language_icons/logo_javascript.png",
     "js": "language_icons/logo_javascript.png",  # alias
     "makefile": "language_icons/logo_makefile.png",
+    "markdown": "tango_icons/markdown.png",
     "octave": "language_icons/logo_octave.png",
     "pascal": "language_icons/logo_pascal.png",
     "postscript": "language_icons/logo_postscript.png",
@@ -2430,6 +2431,43 @@ def open_item_in_explorer(path):
         # No error
         return True
     return False
+
+
+def open_terminal_in_directory(directory: str) -> bool:
+    """
+    Open a terminal in the given directory.
+    Return True if the terminal was opened successfully.
+
+    """
+    if os.path.isdir(directory) == False:
+        return False
+    try:
+        if data.on_windows == True:
+            creationflags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0)
+            subprocess.Popen(
+                ["cmd.exe"],
+                cwd=directory,
+                creationflags=creationflags,
+            )
+        else:
+            import settings
+
+            subprocess.Popen([settings.get("terminal")], cwd=directory)
+    except:
+        return False
+    # No error
+    return True
+
+
+def resolve_terminal_directory(path: str, is_directory: bool) -> str:
+    """
+    Return the directory that a terminal should open in for the given path.
+    If the path is a file, its parent directory is returned.
+
+    """
+    if is_directory == True:
+        return path
+    return os.path.dirname(path)
 
 
 def get_edges_to_widget(widget, widget_window, size, offset=(0, 0)):

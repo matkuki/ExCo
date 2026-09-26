@@ -65,6 +65,7 @@ class Terminal(qt.QWidget):
         main_form: Any,
         name: str,
         shell: Optional[Union[str, List[str]]] = None,
+        cwd: Optional[str] = None,
     ) -> None:
         super().__init__(parent)
         self.name = name
@@ -105,9 +106,13 @@ class Terminal(qt.QWidget):
 
         self.backend: Optional[TerminalBackend] = create_terminal_backend(
             shell=shell,
+            cwd=cwd,
             dimensions=(CONSOLE_HEIGHT, CONSOLE_WIDTH),
         )
         self.backend.spawn()
+
+        if cwd is not None and os.path.isdir(cwd):
+            self.current_working_directory = cwd
 
         self._process_exited: bool = False
         self._last_title: Optional[str] = None
@@ -274,7 +279,9 @@ class Terminal(qt.QWidget):
                 ):
                     path = path[1:]
                 if os.path.isdir(path):
-                    self.current_working_directory = path
+                    if path != self.current_working_directory:
+                        self.current_working_directory = path
+                        self.__cwd_changed()
                     osc7_applied = True
             except Exception as ex:
                 self.__report_error("OSC 7 cwd", ex)
@@ -319,9 +326,29 @@ class Terminal(qt.QWidget):
                 elif bash_match:
                     directory = bash_match.group(1).strip()
                 if directory is not None and os.path.isdir(directory):
-                    self.current_working_directory = directory
+                    if directory != self.current_working_directory:
+                        self.current_working_directory = directory
+                        self.__cwd_changed()
         except Exception as ex:
             self.__report_error("prompt cwd parse", ex)
+
+    def __cwd_changed(self) -> None:
+        """
+        Persist the terminal's new working directory into the saved layout.
+
+        Called from the OSC 7 and prompt-parsing paths after the
+        'current_working_directory' actually changes, so the on-disk layout
+        stays in sync with the shell even between unrelated layout changes.
+        """
+        if self._process_exited or self.main_form is None:
+            return
+        view: Any = getattr(self.main_form, "view", None)
+        layout_save: Any = getattr(view, "layout_save", None)
+        if layout_save is not None:
+            try:
+                layout_save()
+            except Exception as ex:
+                self.__report_error("cwd layout save", ex)
 
     def __report_error(self, context: str, error: Exception) -> None:
         """Report a terminal error through the main window display."""

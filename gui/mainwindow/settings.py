@@ -17,12 +17,82 @@ import os
 from typing import Optional, TYPE_CHECKING
 
 import constants
+import functions
 import gui.contextmenu
 import qt
 import settings
 
 if TYPE_CHECKING:
     from gui.mainwindow import MainWindow
+
+
+class RecentFilesFilter(qt.QLineEdit):
+    """
+    Search box embedded at the top of the Recent Files menu.
+    Filters the file actions live while typing; Enter opens the
+    first visible file and pressing Down moves focus into the menu.
+    """
+
+    def __init__(self, menu: qt.QMenu) -> None:
+        super().__init__(menu)
+        self.__menu = menu
+        self.setPlaceholderText("Search recent files\u2026")
+        self.setClearButtonEnabled(True)
+        self.__clear_button = self.findChild(qt.QToolButton)
+        self.__close_icon = qt.QIcon()
+        self.__close_hover_icon = qt.QIcon()
+        self._apply_close_icons()
+        if self.__clear_button is not None:
+            self.__clear_button.installEventFilter(self)
+        self.textChanged.connect(self.__filter_actions)
+        self.returnPressed.connect(self.__activate_first)
+
+    def _apply_close_icons(self) -> None:
+        theme = settings.get_theme()
+        self.__close_icon = qt.QIcon(functions.get_resource_file(theme["close-image"]))
+        self.__close_hover_icon = qt.QIcon(
+            functions.get_resource_file(theme["close-hover-image"])
+        )
+        if self.__clear_button is not None:
+            self.__clear_button.setIcon(self.__close_icon)
+
+    def eventFilter(self, object: qt.QObject, event: qt.QEvent) -> bool:  # type: ignore[override]
+        if object is self.__clear_button:
+            if event.type() == qt.QEvent.Type.Enter:
+                self.__clear_button.setIcon(self.__close_hover_icon)
+            elif event.type() == qt.QEvent.Type.Leave:
+                self.__clear_button.setIcon(self.__close_icon)
+        return False
+
+    def __filter_actions(self, text: str) -> None:
+        query = text.strip().lower()
+        for action in self.__menu.actions():
+            if isinstance(action, qt.QWidgetAction) or action.isSeparator():
+                continue
+            path = str(action.data() or "")
+            file_name = os.path.basename(path)
+            visible = query == "" or query in path.lower() or query in file_name.lower()
+            action.setVisible(visible)
+
+    def __visible_file_actions(self):
+        for action in self.__menu.actions():
+            if isinstance(action, qt.QWidgetAction) or action.isSeparator():
+                continue
+            if action.isVisible():
+                yield action
+
+    def __activate_first(self) -> None:
+        for action in self.__visible_file_actions():
+            action.trigger()
+            return
+
+    def keyPressEvent(self, event: qt.QKeyEvent) -> None:  # type: ignore[override]
+        if event.key() == qt.Qt.Key.Key_Down:
+            for action in self.__visible_file_actions():
+                self.__menu.setActiveAction(action)
+                self.__menu.setFocus()
+                return
+        super().keyPressEvent(event)
 
 
 class Settings:
@@ -61,13 +131,34 @@ class Settings:
             settings.add_recent_file(new_file)
         # Refresh the menubar recent list
         recent_files_menu = self._parent.recent_files_menu
+        if recent_files_menu is None:
+            return
         # !!Clear all of the actions from the menu OR YOU'LL HAVE MEMORY LEAKS!!
         for action in recent_files_menu.actions():
             recent_files_menu.removeAction(action)
+            if isinstance(action, qt.QWidgetAction):
+                widget = action.defaultWidget()
+                if widget is not None:
+                    widget.setParent(None)
+                widget.deleteLater()
             action.setParent(None)
             action.deleteLater()
             action = None
         recent_files_menu.clear()
+        # Reset the search box reference
+        recent_files_menu._filter_widget = None
+        # Add the search box as the first menu item
+        if settings.get("recent_files"):
+            filter_widget = RecentFilesFilter(recent_files_menu)
+            filter_action = qt.QWidgetAction(recent_files_menu)
+            filter_action.setDefaultWidget(filter_widget)
+            recent_files_menu.addAction(filter_action)
+            recent_files_menu.addSeparator()
+            recent_files_menu._filter_widget = filter_widget
+        # Reset the filter and focus the search box every time the menu opens
+        if not getattr(recent_files_menu, "_filter_wired", False):
+            recent_files_menu._filter_wired = True
+            recent_files_menu.aboutToShow.connect(self._reset_recent_filter)
         # Add the new recent files list to the menu
         for recent_file in reversed(settings.get("recent_files")):
             # Iterate in the reverse order, so that the last file will be displayed
@@ -80,6 +171,7 @@ class Settings:
                     os.path.splitdrive(recent_file)[1][-30:]
                 )
             new_file_action = qt.QAction(recent_file_name, recent_files_menu)
+            new_file_action.setData(recent_file)
             new_file_action.setStatusTip("Open: {}".format(recent_file))
             # Create a function reference for opening the recent file
             temp_function = functools.partial(new_file_function, recent_file)
@@ -88,6 +180,17 @@ class Settings:
 
     def clear_recent_list(self) -> None:
         settings.clear_recent_files()
+
+    def _reset_recent_filter(self) -> None:
+        """Clear and focus the recent-files search box when its menu opens"""
+        recent_files_menu = self._parent.recent_files_menu
+        if recent_files_menu is None:
+            return
+        filter_widget = getattr(recent_files_menu, "_filter_widget", None)
+        if isinstance(filter_widget, RecentFilesFilter):
+            filter_widget._apply_close_icons()
+            filter_widget.clear()
+            filter_widget.setFocus()
 
     def restore(self) -> None:
         """Restore the previously stored settings"""

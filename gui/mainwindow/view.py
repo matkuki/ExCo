@@ -797,11 +797,14 @@ QSplitter::handle {{
                                 # Newer layouts persist the shell; fall back to
                                 # the default when restoring older ones.
                                 shell = widget_data[1] if len(widget_data) > 2 else None
-                                new_terminal = new_tabs.terminal_add(shell=shell)
+                                # Spawn directly in the stored directory when it
+                                # still exists, otherwise use the default.
                                 if working_path is not None and os.path.isdir(
                                     working_path
                                 ):
-                                    new_terminal.set_cwd(working_path)
+                                    new_tabs.terminal_add(shell=shell, cwd=working_path)
+                                else:
+                                    new_tabs.terminal_add(shell=shell)
 
                             elif cls == constants.SpecialTabNames.Messages.value:
                                 self._parent.repl_messages_tab = (

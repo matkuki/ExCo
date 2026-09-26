@@ -341,14 +341,24 @@ class Sessions:
     def get_sessions(self) -> dict:
         return self.__sessions
 
-    def create_empty_session(self, name="", chain=[], layout=""):
+    def create_empty_session(self, name="", chain=None, layout=""):
+        if chain is None:
+            chain = []
         return {
             "name": name,
             "chain": chain,
             "layout": layout,
         }
 
-    def create_empty_session_group(self, name="", chain=[], groups={}, sessions={}):
+    def create_empty_session_group(
+        self, name="", chain=None, groups=None, sessions=None
+    ):
+        if chain is None:
+            chain = []
+        if groups is None:
+            groups = {}
+        if sessions is None:
+            sessions = {}
         return {"name": name, "chain": chain, "groups": groups, "sessions": sessions}
 
     def add_session(

@@ -307,6 +307,11 @@
       "bold": false,
       "background": "#ff3465a4"
     },
+    "blockquote": {
+      "color": "#ff6cab9d",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
     "blockregex": {
       "color": "#ff3f7f3f",
       "bold": false,
@@ -374,6 +379,21 @@
     },
     "clipproperty": {
       "color": "#ffa3c2da",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
+    "codebackticks": {
+      "color": "#ffc4bbb8",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
+    "codeblock": {
+      "color": "#ffc4bbb8",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
+    "codedoublebackticks": {
+      "color": "#ffc4bbb8",
       "bold": false,
       "background": "#ff3465a4"
     },
@@ -597,6 +617,16 @@
       "bold": false,
       "background": "#ff3465a4"
     },
+    "emphasisasterisks": {
+      "color": "#ffeeeeec",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
+    "emphasisunderscores": {
+      "color": "#ffeeeeec",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
     "entity": {
       "color": "#ff800080",
       "bold": false,
@@ -707,6 +737,36 @@
       "bold": false,
       "background": "#ff3465a4"
     },
+    "header1": {
+      "color": "#ffa3c2da",
+      "bold": true,
+      "background": "#ff3465a4"
+    },
+    "header2": {
+      "color": "#ffa3c2da",
+      "bold": true,
+      "background": "#ff3465a4"
+    },
+    "header3": {
+      "color": "#ffa3c2da",
+      "bold": true,
+      "background": "#ff3465a4"
+    },
+    "header4": {
+      "color": "#ffa3c2da",
+      "bold": true,
+      "background": "#ff3465a4"
+    },
+    "header5": {
+      "color": "#ffa3c2da",
+      "bold": true,
+      "background": "#ff3465a4"
+    },
+    "header6": {
+      "color": "#ffa3c2da",
+      "bold": true,
+      "background": "#ff3465a4"
+    },
     "heredocument": {
       "color": "#ffc4bbb8",
       "bold": false,
@@ -734,6 +794,11 @@
     },
     "highlightedidentifier": {
       "color": "#ff407090",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
+    "horizontalrule": {
+      "color": "#ff6cab9d",
       "bold": false,
       "background": "#ff3465a4"
     },
@@ -1152,6 +1217,11 @@
       "bold": false,
       "background": "#ff3465a4"
     },
+    "link": {
+      "color": "#ff5abcd8",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
     "literal": {
       "color": "#ff7f7f00",
       "bold": false,
@@ -1268,6 +1338,11 @@
       "background": "#ff3465a4"
     },
     "operator": {
+      "color": "#ffeeeeec",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
+    "orderedlistitem": {
       "color": "#ffeeeeec",
       "bold": false,
       "background": "#ff3465a4"
@@ -1409,6 +1484,11 @@
     },
     "pragma": {
       "color": "#ffc07f40",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
+    "prechar": {
+      "color": "#ff6cab9d",
       "bold": false,
       "background": "#ff3465a4"
     },
@@ -1737,6 +1817,11 @@
       "bold": false,
       "background": "#ff3465a4"
     },
+    "strikeout": {
+      "color": "#ff6cab9d",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
     "string": {
       "color": "#ffc4bbb8",
       "bold": false,
@@ -1760,6 +1845,16 @@
     "stringvariable": {
       "color": "#ffcc3300",
       "bold": false,
+      "background": "#ff3465a4"
+    },
+    "strongemphasisasterisks": {
+      "color": "#ffeeeeec",
+      "bold": true,
+      "background": "#ff3465a4"
+    },
+    "strongemphasisunderscores": {
+      "color": "#ffeeeeec",
+      "bold": true,
       "background": "#ff3465a4"
     },
     "subroutineprototype": {
@@ -1924,6 +2019,11 @@
     },
     "unknowntag": {
       "color": "#ff1f76e4",
+      "bold": false,
+      "background": "#ff3465a4"
+    },
+    "unorderedlistitem": {
+      "color": "#ffeeeeec",
       "bold": false,
       "background": "#ff3465a4"
     },
@@ -2093,6 +2193,8 @@
   "right-arrow-image": "feather/air-light-grey/chevron-right.svg",
   "right-arrow-menu-disabled-image": "feather/black/chevron-right.svg",
   "right-arrow-menu-image": "feather/air-light-grey/chevron-right.svg",
+  "scroller-down-image": "feather/air-light-grey/chevron-down.svg",
+  "scroller-up-image": "feather/air-light-grey/chevron-up.svg",
   "scrollbar": {
     "background": "#295a88",
     "handle": "#1a3956",

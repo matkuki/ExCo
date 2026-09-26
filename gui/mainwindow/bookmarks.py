@@ -43,7 +43,7 @@ class Bookmarks:
             self.marks[i] = {
                 "editor": None,
                 "line": None,
-                "marker-handle": None,
+                "handle": None,
             }
 
     def add(self, editor: CustomEditor, line: int) -> Optional[int]:
@@ -54,7 +54,6 @@ class Bookmarks:
             if self.marks[i]["editor"] is None and self.marks[i]["line"] is None:
                 self.marks[i]["editor"] = editor
                 self.marks[i]["line"] = line
-                self.marks[i]["handle"] = None
                 self._parent.display.repl_display_success(
                     "Bookmark '{:d}' was added!".format(i),
                 )
@@ -63,11 +62,33 @@ class Bookmarks:
             self._parent.display.repl_display_error("All ten bookmarks are occupied!")
             return None
 
-    def add_mark_by_number(self, editor: CustomEditor, line: int, mark_number: int) -> None:
+    def add_mark_by_number(
+        self, editor: CustomEditor, line: int, mark_number: int
+    ) -> None:
         # Bookmarks should only work in editors
         if isinstance(editor, CustomEditor) == False or editor.embedded == True:
             return
-        # Clear the selected marker if it is not empty
+        if self.bounds_check(mark_number) == False:
+            return
+        # The CustomEditor.bookmarks / MainWindow attributes are typed None in
+        # the QScintilla and MainWindow stubs; reach them through Any locals.
+        editor_bookmarks: Any = editor.bookmarks
+        parent: Any = self._parent
+        # Toggle-off: pressing the same number again at the same line removes
+        # the bookmark, consistent with the toggle_at_line() behaviour
+        if (
+            self.marks[mark_number]["editor"] == editor
+            and self.marks[mark_number]["line"] == line
+        ):
+            editor_bookmarks.remove_marker_at_line(line)
+            self.marks[mark_number]["editor"] = None
+            self.marks[mark_number]["line"] = None
+            self.marks[mark_number]["handle"] = None
+            parent.display.repl_display_success(
+                "Bookmark '{:d}' was removed!".format(mark_number)
+            )
+            return
+        # Clear the selected marker slot if it is not empty
         if (
             self.marks[mark_number]["editor"] is not None
             and self.marks[mark_number]["line"] is not None
@@ -78,22 +99,31 @@ class Bookmarks:
             self.marks[mark_number]["editor"] = None
             self.marks[mark_number]["line"] = None
             self.marks[mark_number]["handle"] = None
-        # Check if there is a bookmark already at the selected editor line
+        # If the same bookmark is already stored under a different number,
+        # remove it first so the editor line ends up with a single marker
         for i in range(10):
-            if self.marks[i]["editor"] == editor and self.marks[i]["line"] == line:
-                self.marks[i]["editor"].bookmarks.toggle_at_line(self.marks[i]["line"])
-                break
+            if i != mark_number:
+                if self.marks[i]["editor"] == editor and self.marks[i]["line"] == line:
+                    self.marks[i]["editor"].bookmarks.toggle_at_line(
+                        self.marks[i]["line"]
+                    )
+                    break
         # Set and store the marker on the editor
-        handle = editor.bookmarks.add_marker_at_line(line)
+        handle = editor_bookmarks.add_marker_at_line(line)
         self.marks[mark_number]["editor"] = editor
         self.marks[mark_number]["line"] = line
         self.marks[mark_number]["handle"] = handle
-        self._parent.display.repl_display_success("Bookmark '{:d}' was added!".format(mark_number))
+        parent.display.repl_display_success(
+            "Bookmark '{:d}' was added!".format(mark_number)
+        )
 
     def clear(self) -> None:
         cleared_any = False
         for i in range(10):
-            if self.marks[i]["editor"] is not None and self.marks[i]["line"] is not None:
+            if (
+                self.marks[i]["editor"] is not None
+                and self.marks[i]["line"] is not None
+            ):
                 self.marks[i]["editor"].bookmarks.toggle_at_line(self.marks[i]["line"])
                 self.marks[i]["editor"] = None
                 self.marks[i]["line"] = None
@@ -116,7 +146,9 @@ class Bookmarks:
                 self.marks[i]["editor"] = None
                 self.marks[i]["line"] = None
                 self.marks[i]["handle"] = None
-                self._parent.display.repl_display_success("Bookmark '{:d}' was removed!".format(i))
+                self._parent.display.repl_display_success(
+                    "Bookmark '{:d}' was removed!".format(i)
+                )
                 break
         else:
             self._parent.display.repl_display_error("Bookmark not found!")
@@ -165,7 +197,10 @@ class Bookmarks:
     def goto(self, mark_number: int) -> None:
         if self.bounds_check(mark_number) == False:
             return
-        if self.marks[mark_number]["editor"] is None and self.marks[mark_number]["line"] is None:
+        if (
+            self.marks[mark_number]["editor"] is None
+            and self.marks[mark_number]["line"] is None
+        ):
             self._parent.display.repl_display_warning(
                 "Bookmark '{:d}' is empty!".format(mark_number)
             )

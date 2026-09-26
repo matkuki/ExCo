@@ -1011,7 +1011,7 @@ class MainWindow(qt.QMainWindow):
             for file in files:
                 self.open_file(file, tab_widget)
 
-    def open_file(self, file=None, tab_widget=None, save_layout=False):
+    def open_file(self, file=None, tab_widget=None, save_layout=False, index=None):
         """
         Read file contents into a TabWidget
         """
@@ -1048,7 +1048,7 @@ class MainWindow(qt.QMainWindow):
 
             # Add new scintilla document tab to the basic widget
             new_tab = tab_widget.editor_add_document(
-                in_file, "file", bypass_check=False
+                in_file, "file", bypass_check=False, index=index
             )
             # Set the icon if it was set by the lexer
             new_tab.internals.update_icon(new_tab)
@@ -1195,7 +1195,9 @@ class MainWindow(qt.QMainWindow):
             self.display.repl_display_error(message)
             self.display.write_to_statusbar("File cannot be read!", 3000)
 
-    def open_file_markdown(self, file_path, tab_widget=None, save_layout=False):
+    def open_file_markdown(
+        self, file_path, tab_widget=None, save_layout=False, index=None
+    ):
         # Check if file exists
         if os.path.isfile(file_path) == False:
             self.display.repl_display_message(
@@ -1215,7 +1217,7 @@ class MainWindow(qt.QMainWindow):
             tab_widget = self.get_largest_window()
 
         # Add new markdown viewer document
-        new_tab = tab_widget.markdown_add(file_path)
+        new_tab = tab_widget.markdown_add(file_path, index=index)
         # Update the icon
         new_tab.internals.update_icon(new_tab)
 
@@ -1237,6 +1239,46 @@ class MainWindow(qt.QMainWindow):
             message = "File cannot be read!"
             self.display.repl_display_error(message)
             self.display.write_to_statusbar("File cannot be read!", 3000)
+
+    def open_terminal_in_directory(self, directory, tab_widget=None):
+        # Check if the directory exists
+        if os.path.isdir(directory) == False:
+            message = "Directory does not exist: {}".format(directory)
+            self.display.repl_display_message(
+                message, message_type=constants.MessageType.ERROR
+            )
+            self.display.write_to_statusbar("Directory does not exist!", 3000)
+            return
+
+        if tab_widget is None:
+            tab_widget = self.get_window_by_indication()
+            if tab_widget is None:
+                tab_widget = self.get_largest_window()
+
+        # Spawn the integrated terminal in the directory
+        new_terminal = tab_widget.terminal_add(cwd=directory)
+        if new_terminal is not None:
+            tab_widget.currentWidget().setFocus()
+            return new_terminal
+
+    def open_external_terminal(self, directory):
+        # Check if the directory exists
+        if os.path.isdir(directory) == False:
+            message = "Directory does not exist: {}".format(directory)
+            self.display.repl_display_message(
+                message, message_type=constants.MessageType.ERROR
+            )
+            self.display.write_to_statusbar("Directory does not exist!", 3000)
+            return
+        # Spawn the external terminal in the directory
+        if functions.open_terminal_in_directory(directory) == True:
+            self.display.write_to_statusbar(
+                "Terminal opened in: {}".format(directory), 3000
+            )
+        else:
+            message = "Could not open terminal in: {}".format(directory)
+            self.display.repl_display_error(message)
+            self.display.write_to_statusbar("Could not open the terminal!", 3000)
 
     def open_markdown_preview(self, file_path=None):
         # If no path is given, use the indicated tab

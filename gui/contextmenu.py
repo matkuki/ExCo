@@ -7,6 +7,7 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import traceback
+from typing import Any
 
 import qt
 import data
@@ -49,52 +50,61 @@ class ContextMenu(gui.menu.Menu):
             raise Exception("Unknown menu type: '{}'".format(menu_type))
 
     def create_plain_actions(self):
-        action_names = (
-            "copy",
-            "cut",
-            "paste",
-            "line_copy",
-            "undo",
-            "redo",
-            "line_duplicate",
-            "line_transpose",
-            "line_cut",
-            "line_delete",
-            "select_all",
-            "special_to_uppercase",
-            "special_to_lowercase",
-            "show_edge",
-            "toggle_line_endings",
-            "goto_to_end",
-            "goto_to_start",
-            "special_indent_to_cursor",
-            "open_in_browser",
+        self.__create_actions(("copy", "cut", "paste", "select_all"))
+        self.addSeparator()
+        self.__create_actions(("undo", "redo"))
+        self.addSeparator()
+        self.__create_submenu(
+            "Line operations",
+            (
+                "line_copy",
+                "line_cut",
+                "line_delete",
+                "line_duplicate",
+                "line_transpose",
+            ),
         )
-        self.__create_actions(action_names)
+        self.__create_submenu(
+            "Case conversion",
+            ("special_to_uppercase", "special_to_lowercase"),
+        )
+        self.__create_submenu("Document", ("show_edge", "toggle_line_endings"))
+        self.__create_submenu(
+            "Go to",
+            ("goto_to_start", "goto_to_end", "special_indent_to_cursor"),
+        )
+        self.addSeparator()
+        self.__create_actions(("open_in_browser",))
+        self.__add_markdown_viewer_action()
 
     def create_special_actions(self):
-        action_names = (
-            "copy",
-            "cut",
-            "paste",
-            "line_copy",
-            "undo",
-            "redo",
-            "line_duplicate",
-            "open_in_browser",
-            "line_cut",
-            "line_delete",
-            "select_all",
-            "special_to_uppercase",
-            "special_to_lowercase",
-            "comment_uncomment",
-            "toggle_line_endings",
-            "goto_to_end",
-            "goto_to_start",
-            "special_indent_to_cursor",
-            "create_node_tree",
+        self.__create_actions(("copy", "cut", "paste", "select_all"))
+        self.addSeparator()
+        self.__create_actions(("undo", "redo"))
+        self.addSeparator()
+        self.__create_submenu(
+            "Line operations",
+            (
+                "line_copy",
+                "line_cut",
+                "line_delete",
+                "line_duplicate",
+                "toggle_line_endings",
+            ),
         )
-        self.__create_actions(action_names)
+        self.__create_submenu(
+            "Case conversion",
+            ("special_to_uppercase", "special_to_lowercase"),
+        )
+        self.__create_submenu(
+            "Go to",
+            ("goto_to_start", "goto_to_end", "special_indent_to_cursor"),
+        )
+        self.__create_submenu(
+            "Tools",
+            ("comment_uncomment", "create_node_tree", "open_in_browser"),
+        )
+        self.__add_markdown_viewer_action()
 
     def create_multiline_repl_actions(self):
         action_names = (
@@ -109,22 +119,60 @@ class ContextMenu(gui.menu.Menu):
         )
         self.__create_actions(action_names)
 
-    def __create_actions(self, action_names):
+    def __create_submenu(self, title: str, action_names: tuple) -> None:
+        submenu = gui.menu.Menu(title, self)
+        self.__create_actions(action_names, target=submenu)
+        self.addMenu(submenu)
+
+    def __create_actions(self, action_names, target=None):
+        if target is None:
+            target = self
         for an in action_names:
-            name, function, icon, keys, status_tip = data.global_function_information[an]
-            action = qt.QAction(name, self)
+            name, function, icon, keys, status_tip = data.global_function_information[
+                an
+            ]
+            action = qt.QAction(name, target)
             action.setToolTip(status_tip)
             action.setStatusTip(status_tip)
             action.setIcon(functions.create_icon(icon))
             if function is not None:
                 action.triggered.connect(function)
             action.setEnabled(True)
-            self.addAction(action)
+            target.addAction(action)
+
+    def __add_markdown_viewer_action(self) -> None:
+        """
+        Append an 'Open with Markdown Viewer' action for editors
+        that currently hold a Markdown document
+        """
+        parent = self.parent()
+        if parent is None:
+            return
+        file_path = getattr(parent, "save_path", "")
+        if file_path == "":
+            return
+        if functions.get_file_type(file_path) != "markdown":
+            return
+        action = qt.QAction("Open with Markdown Viewer", self)
+        main_form: Any = self.main_form
+
+        def open_markdown() -> None:
+            main_form.open_file_markdown(file_path)
+
+        action.triggered.connect(open_markdown)
+        action.setIcon(functions.create_icon("tango_icons/markdown.png"))
+        self.addSeparator()
+        self.addAction(action)
 
     def clear_items(self):
         for a in self.actions():
             a.triggered.disconnect()
             a.setParent(None)
+            if a.menu() is not None:
+                submenu = a.menu()
+                for sub_action in submenu.actions():
+                    sub_action.triggered.disconnect()
+                    sub_action.setParent(None)
 
     def popup_at_cursor(self):
         click_global_position = qt.QCursor.pos()
@@ -276,7 +324,9 @@ class ContextMenuHex(qt.QGroupBox):
         """
         ContextMenuHex.standard_buttons = dict(ContextMenuHex.stored_standard_buttons)
         ContextMenuHex.special_buttons = dict(ContextMenuHex.stored_special_buttons)
-        ContextMenuHex.horizontal_buttons = dict(ContextMenuHex.stored_horizontal_buttons)
+        ContextMenuHex.horizontal_buttons = dict(
+            ContextMenuHex.stored_horizontal_buttons
+        )
 
     @staticmethod
     def get_settings():
@@ -301,7 +351,9 @@ class ContextMenuHex(qt.QGroupBox):
             button_positions.extend(self.horizontal_button_positions)
         hex_x_size = ContextButton.HEX_IMAGE_SIZE[0] * self.x_scale
         hex_y_size = ContextButton.HEX_IMAGE_SIZE[1] * self.y_scale
-        window_size = self.parent().size() - functions.create_size(hex_x_size, hex_y_size)
+        window_size = self.parent().size() - functions.create_size(
+            hex_x_size, hex_y_size
+        )
         min_x = 0
         min_y = 0
         max_x = 0
@@ -358,8 +410,12 @@ class ContextMenuHex(qt.QGroupBox):
             # Set the button size and location
             button.set_offset(
                 (
-                    self.offset[0] + button_position[0] * self.x_scale / 0.8 + total_offset[0],
-                    self.offset[1] + button_position[1] * self.y_scale / 0.8 + total_offset[1],
+                    self.offset[0]
+                    + button_position[0] * self.x_scale / 0.8
+                    + total_offset[0],
+                    self.offset[1]
+                    + button_position[1] * self.y_scale / 0.8
+                    + total_offset[1],
                 )
             )
             button.dim()
@@ -377,7 +433,9 @@ class ContextMenuHex(qt.QGroupBox):
         self.functions_type = "horizontal"
 
     def create_multiline_repl_buttons(self):
-        inner_buttons = [ContextMenuHex.horizontal_buttons[str(x)] for x in range(19, 26)]
+        inner_buttons = [
+            ContextMenuHex.horizontal_buttons[str(x)] for x in range(19, 26)
+        ]
         self.create_buttons(inner_buttons)
         self.functions_type = "horizontal"
 
@@ -486,7 +544,8 @@ class ContextButton(gui.custombuttons.CustomButton):
         self.setAutoFillBackground(True)
         p = self.palette()
         p.setColor(
-            self.backgroundRole(), qt.QColor(settings.get_theme()["context-menu-background"])
+            self.backgroundRole(),
+            qt.QColor(settings.get_theme()["context-menu-background"]),
         )
         self.setPalette(p)
 
@@ -507,15 +566,19 @@ class ContextButton(gui.custombuttons.CustomButton):
             # Execute the function if it was initialized
             if self.function is not None:
                 if components.actionfilter.ActionFilter.click_drag_action is not None:
-                    function_name = (
-                        components.actionfilter.ActionFilter.click_drag_action.function.__name__
-                    )
+                    function_name = components.actionfilter.ActionFilter.click_drag_action.function.__name__
                     if self._parent.functions_type == "standard":
-                        ContextMenuHex.standard_buttons[str(self.number)] = function_name
+                        ContextMenuHex.standard_buttons[str(self.number)] = (
+                            function_name
+                        )
                     elif self._parent.functions_type == "plain":
-                        ContextMenuHex.standard_buttons[str(self.number)] = function_name
+                        ContextMenuHex.standard_buttons[str(self.number)] = (
+                            function_name
+                        )
                     elif self._parent.functions_type == "horizontal":
-                        ContextMenuHex.horizontal_buttons[str(self.number)] = function_name
+                        ContextMenuHex.horizontal_buttons[str(self.number)] = (
+                            function_name
+                        )
                     elif self._parent.functions_type == "special":
                         ContextMenuHex.special_buttons[str(self.number)] = function_name
                     # Show the newly added function
@@ -571,7 +634,7 @@ class ContextButton(gui.custombuttons.CustomButton):
 Context menu helper functions
 """
 HEX_STYLE = False
-function_list = {}
+function_list: dict = {}
 
 
 def create(parent=None, main_form=None, offset=(0, 0), _type=None):

@@ -2,3 +2,7 @@
 The Tango base icon theme is released to the Public Domain.
 
 The Tango base icon theme is made possible by the Tango Desktop Project.
+
+The 32x32 PNG editions bundled here were rasterized from
+tango-icon-theme-0.8.90 via the nigeltao/tango-icon-library-pngs
+repository (Public Domain).

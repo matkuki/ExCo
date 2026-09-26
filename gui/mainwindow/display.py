@@ -808,6 +808,8 @@ class Display:
         text_2: str,
         text_name_1: Optional[str] = None,
         text_name_2: Optional[str] = None,
+        text_path_1: Optional[str] = None,
+        text_path_2: Optional[str] = None,
     ) -> None:
         """
         Display the difference between two texts in a TextDiffer
@@ -821,7 +823,16 @@ class Display:
         parent = self._parent
         largest_window = parent.get_largest_window()
         # Create and initialize a text differ
-        text_differ = TextDiffer(largest_window, parent, text_1, text_2, text_name_1, text_name_2)
+        text_differ = TextDiffer(
+            largest_window,
+            parent,
+            text_1,
+            text_2,
+            text_name_1,
+            text_name_2,
+            text_path_1,
+            text_path_2,
+        )
         # Find the "DIFF(...)" tab in the basic widgets and close it
         diff_tab_string = "DIFF("
         diff_tab = parent.get_tab_by_string_in_name(diff_tab_string)
@@ -1040,6 +1051,14 @@ class Display:
             "Change document lexer to: Matlab",
             "language_icons/logo_matlab.png",
             create_lexer(lexers.Matlab, "Matlab"),
+            lexers_menu,
+        )
+        Markdown_action = create_action(
+            "Markdown",
+            None,
+            "Change document lexer to: Markdown",
+            "tango_icons/markdown.png",
+            create_lexer(lexers.Markdown, "Markdown"),
             lexers_menu,
         )
         NIM_action = create_action(
@@ -1264,6 +1283,7 @@ class Display:
         lexers_menu.addAction(LUA_action)
         lexers_menu.addAction(MAKEFILE_action)
         lexers_menu.addAction(MATLAB_action)
+        lexers_menu.addAction(Markdown_action)
         lexers_menu.addAction(NIM_action)
         lexers_menu.addAction(OBERON_action)
         lexers_menu.addAction(Octave_action)
