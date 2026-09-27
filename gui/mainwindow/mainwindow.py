@@ -1196,7 +1196,7 @@ class MainWindow(qt.QMainWindow):
             self.display.write_to_statusbar("File cannot be read!", 3000)
 
     def open_file_markdown(
-        self, file_path, tab_widget=None, save_layout=False, index=None
+        self, file_path, tab_widget=None, save_layout=False, index=None, line=None
     ):
         # Check if file exists
         if os.path.isfile(file_path) == False:
@@ -1217,7 +1217,7 @@ class MainWindow(qt.QMainWindow):
             tab_widget = self.get_largest_window()
 
         # Add new markdown viewer document
-        new_tab = tab_widget.markdown_add(file_path, index=index)
+        new_tab = tab_widget.markdown_add(file_path, index=index, line=line)
         # Update the icon
         new_tab.internals.update_icon(new_tab)
 

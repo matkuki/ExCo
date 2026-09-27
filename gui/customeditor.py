@@ -532,7 +532,10 @@ class CustomEditor(BaseEditor):
 
             def switch_to_markdown():
                 index = self._parent.indexOf(self)
-                self._parent.switch_to_markdown_view(index)
+                if index < 0:
+                    return
+                first_visible = self.firstVisibleLine() + 1
+                self._parent.switch_to_markdown_view(index, first_visible)
 
             self.internals.add_corner_button(
                 "tango_icons/document-print-preview.png",

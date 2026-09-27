@@ -200,12 +200,9 @@ class Sessions:
         """
         if session_group_chain is None:
             session_group_chain = []
-        try:
-            session = settings.get_sessions().get_session(
-                session_name, list(session_group_chain)
-            )
-        except KeyError:
-            session = None
+        session = settings.get_sessions().get_session(
+            session_name, list(session_group_chain)
+        )
         if session is None:
             # Session was not found
             message = "Session '{}/{}' was not found!".format(

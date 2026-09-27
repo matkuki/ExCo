@@ -39,6 +39,8 @@ editor = {
         "end_of_line_mode": 2,
         "maximum_highlights": 300,
         "tab_width": 4,
+        "text_differ_async_line_limit": 20000,  # diff above this many total
+        # lines is computed on a worker thread instead of the GUI thread
         "word_wrap": False,
         "zoom_factor": 0,
         "makefile_uses_tabs": True,

@@ -7,6 +7,7 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import enum
+from typing import Any
 
 import components.actionfilter
 import components.internals
@@ -47,13 +48,13 @@ class SessionGuiManipulator(qt.QTreeView):
 
     # Class variables
     parent = None
-    main_form = None
+    main_form: Any = None
     current_icon = None
     internals = None
     name = ""
     savable = constants.CanSave.NO
     last_clicked_session = None
-    tree_model = None
+    tree_model: Any = None
     edit_flag = False
     session_groupbox = None
     # Icons
@@ -145,9 +146,13 @@ class SessionGuiManipulator(qt.QTreeView):
         session_item = self.tree_model.itemFromIndex(model_index)
         if session_item.type == ItemType.SESSION:
             # Open the session
+            session_chain = self.__get_node_chain(session_item)
             session = settings.get_sessions().get_session(
-                session_item.text(), self.__get_node_chain(session_item)
+                session_item.text(), session_chain
             )
+            if session is None:
+                self.__report_unresolved(session_chain, session_item.text())
+                return
             self.main_form.sessions.restore(session)
         elif session_item.type == ItemType.GROUP:
             pass
@@ -168,6 +173,10 @@ class SessionGuiManipulator(qt.QTreeView):
                 item_chain = self.__get_node_chain(item)
                 # Rename
                 group = settings.get_sessions().get_group(item_chain)
+                if group is None or old_item_name not in group["sessions"]:
+                    self.__report_unresolved(item_chain, old_item_name)
+                    self.refresh_display()
+                    return
                 session = group["sessions"].pop(old_item_name)
                 item.name = new_item_name
                 item.setEditable(False)
@@ -194,6 +203,10 @@ class SessionGuiManipulator(qt.QTreeView):
                 item_chain = self.__get_node_chain(item)
                 # Rename the group
                 parent_group = settings.get_sessions().get_group(item_chain)
+                if parent_group is None or old_group_name not in parent_group["groups"]:
+                    self.__report_unresolved(item_chain, old_group_name)
+                    self.refresh_display()
+                    return
                 group = parent_group["groups"].pop(old_group_name)
                 item.name = new_group_name
                 item.setEditable(False)
@@ -337,6 +350,20 @@ class SessionGuiManipulator(qt.QTreeView):
         chain.reverse()
         return chain
 
+    def __report_unresolved(
+        self, item_chain: list[str], item_name: str | None = None
+    ) -> None:
+        """
+        Report a session or group that could not be resolved in the store
+        """
+        target = list(item_chain)
+        if item_name is not None:
+            target.append(item_name)
+        message = "Could not find '{}'!".format("/".join(target))
+        self.main_form.display.repl_display_message(
+            message, message_type=constants.MessageType.ERROR
+        )
+
     def __get_current_group(self):
         if self.selectedIndexes() != []:
             selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
@@ -404,9 +431,11 @@ class SessionGuiManipulator(qt.QTreeView):
         selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
         # Check the selected item type
         if selected_item.type == ItemType.GROUP:
-            remove_group = settings.get_sessions().get_group(
-                self.__get_node_chain(selected_item) + [selected_item.text()]
-            )
+            group_chain = self.__get_node_chain(selected_item) + [selected_item.text()]
+            remove_group = settings.get_sessions().get_group(group_chain)
+            if remove_group is None:
+                self.__report_unresolved(group_chain)
+                return
             # Check if the group has subgroups
             group_name_with_chain = "{}/{}".format(
                 "/".join(remove_group["chain"]), remove_group["name"]
@@ -444,9 +473,13 @@ class SessionGuiManipulator(qt.QTreeView):
                     message, message_type=constants.MessageType.ERROR
                 )
         elif selected_item.type == ItemType.SESSION:
+            session_chain = self.__get_node_chain(selected_item)
             remove_session = settings.get_sessions().get_session(
-                selected_item.text(), self.__get_node_chain(selected_item)
+                selected_item.text(), session_chain
             )
+            if remove_session is None:
+                self.__report_unresolved(session_chain, selected_item.text())
+                return
             session_name_with_chain = "{}/{}".format(
                 "/".join(remove_session["chain"]), remove_session["name"]
             )
@@ -499,11 +532,17 @@ class SessionGuiManipulator(qt.QTreeView):
             )
             return
         elif selected_item.type == ItemType.SESSION:
+            session_chain = self.__get_node_chain(selected_item)
             selected_session = settings.get_sessions().get_session(
-                selected_item.text(), self.__get_node_chain(selected_item)
+                selected_item.text(), session_chain
             )
+            if selected_session is None:
+                self.__report_unresolved(session_chain, selected_item.text())
+                return
             # Adding a session that is already stored will overwrite it
-            self.main_form.sessions.add(selected_session["name"], selected_session["chain"])
+            self.main_form.sessions.add(
+                selected_session["name"], selected_session["chain"]
+            )
             # Refresh the tree
             self.refresh_display()
 
@@ -511,7 +550,7 @@ class SessionGuiManipulator(qt.QTreeView):
         self.edit(item.index())
         self.__edit_item = item
 
-    def edit_item(self):
+    def edit_item(self) -> None:
         """
         Edit the selected session or group name
         """
@@ -527,8 +566,10 @@ class SessionGuiManipulator(qt.QTreeView):
             selected_item.setEditable(True)
             selected_item.name = selected_item.text()
             self.__start_editing_item(selected_item)
-        # Set the editing flag
-        self.edit_flag = True
+            # Lock the corner buttons for the duration of the edit. This has to
+            # stay inside the branch above: a row that no editor is opened for
+            # would otherwise never get a closeEditor to clear the lock.
+            self.edit_flag = True
 
     def show_sessions(self):
         """

@@ -1085,9 +1085,9 @@ QTabBar::tab:selected {{
         self.setCurrentIndex(new_hexview_tab_index)
         return self.widget(new_hexview_tab_index)
 
-    def markdown_add(self, file_path, index=None):
+    def markdown_add(self, file_path, index=None, line=None):
         # Initialize the markdown viewer
-        new_markdown = MarkdownViewer(file_path, self, self.main_form)
+        new_markdown = MarkdownViewer(file_path, self, self.main_form, line=line)
         tab_text = new_markdown.name
         if index is None:
             new_markdown_tab_index = self.addTab(new_markdown, tab_text)
@@ -1097,8 +1097,12 @@ QTabBar::tab:selected {{
         self.setCurrentIndex(new_markdown_tab_index)
         return self.widget(new_markdown_tab_index)
 
-    def switch_to_markdown_view(self, index):
-        """Close the editor tab at 'index' and open a markdown viewer in its place"""
+    def switch_to_markdown_view(self, index, line=None):
+        """Close the editor tab at 'index' and open a markdown viewer in its place
+
+        'line' is the 1-based first line visible in the editor, used to give
+        the markdown viewer a comparable starting position.
+        """
         if index is None or index < 0 or index >= self.count():
             return
         widget = self.widget(index)
@@ -1109,6 +1113,8 @@ QTabBar::tab:selected {{
                 "Document has no file on disk!", 3000
             )
             return
+        if line is None:
+            line = widget.firstVisibleLine() + 1
         file_path = widget.save_path
         # Close the editor (prompting for modified documents) first
         if self.close_tab(index) == False:
@@ -1117,7 +1123,7 @@ QTabBar::tab:selected {{
         # Open the markdown viewer in the same position
         insert_index = min(index, self.count())
         self.main_form.open_file_markdown(
-            file_path, tab_widget=self, index=insert_index
+            file_path, tab_widget=self, index=insert_index, line=line
         )
 
     def switch_to_editor_view(self, index):

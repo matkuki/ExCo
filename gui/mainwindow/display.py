@@ -28,7 +28,7 @@ from gui.menu import Menu
 from gui.replindicator import ReplIndicator
 from gui.sessionguimanipulator import SessionGuiManipulator
 from gui.systempathmanipulator import SystemPathManipulator
-from gui.textdiffer import TextDiffer
+from gui.textdiffer import TextDiffer, diff_tab_text
 from gui.themeindicator import ThemeIndicator
 
 
@@ -841,7 +841,7 @@ class Display:
             diff_tab._parent.close_tab(diff_tab_index)
         # Add the created text differ to the main window
         diff_index = largest_window.addTab(
-            text_differ, "DIFF({} / {})".format(text_name_1, text_name_2)
+            text_differ, diff_tab_text(text_name_1, text_name_2)
         )
         # Set focus to the text differ tab
         largest_window.setCurrentIndex(diff_index)

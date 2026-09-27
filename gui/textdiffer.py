@@ -7,7 +7,8 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import difflib
-import functools
+import threading
+import traceback
 from typing import Any, NamedTuple
 
 import constants
@@ -104,42 +105,56 @@ def compute_diff_rows(text_1: str, text_2: str) -> DiffResult:
     ranges_2: list[list[tuple[int, int]]] = []
     line_counter_1 = 1
     line_counter_2 = 1
+
+    def emit(
+        line_1: str,
+        line_2: str,
+        number_1: str,
+        number_2: str,
+        style_1: int | None,
+        style_2: int | None,
+        range_1: list[tuple[int, int]] | None = None,
+        range_2: list[tuple[int, int]] | None = None,
+    ) -> None:
+        """Append one aligned diff row to the result columns."""
+        rows_1.append(line_1)
+        rows_2.append(line_2)
+        numbers_1.append(number_1)
+        numbers_2.append(number_2)
+        styles_1.append(style_1)
+        styles_2.append(style_2)
+        ranges_1.append(range_1 if range_1 is not None else [])
+        ranges_2.append(range_2 if range_2 is not None else [])
+
     matcher = difflib.SequenceMatcher(a=lines_1, b=lines_2, autojunk=False)
     for opcode, i_1, i_2, j_1, j_2 in matcher.get_opcodes():
         if opcode == "equal":
             for index in range(i_1, i_2):
                 line = lines_1[index]
-                rows_1.append(line)
-                rows_2.append(line)
-                numbers_1.append(str(line_counter_1))
-                numbers_2.append(str(line_counter_2))
-                styles_1.append(None)
-                styles_2.append(None)
-                ranges_1.append([])
-                ranges_2.append([])
+                emit(line, line, str(line_counter_1), str(line_counter_2), None, None)
                 line_counter_1 += 1
                 line_counter_2 += 1
         elif opcode == "delete":
             for index in range(i_1, i_2):
-                rows_1.append(lines_1[index])
-                rows_2.append("")
-                numbers_1.append(str(line_counter_1))
-                numbers_2.append("")
-                styles_1.append(DIFF_UNIQUE_1)
-                styles_2.append(None)
-                ranges_1.append([])
-                ranges_2.append([])
+                emit(
+                    lines_1[index],
+                    "",
+                    str(line_counter_1),
+                    "",
+                    DIFF_UNIQUE_1,
+                    None,
+                )
                 line_counter_1 += 1
         elif opcode == "insert":
             for index in range(j_1, j_2):
-                rows_1.append("")
-                rows_2.append(lines_2[index])
-                numbers_1.append("")
-                numbers_2.append(str(line_counter_2))
-                styles_1.append(None)
-                styles_2.append(DIFF_UNIQUE_2)
-                ranges_1.append([])
-                ranges_2.append([])
+                emit(
+                    "",
+                    lines_2[index],
+                    "",
+                    str(line_counter_2),
+                    None,
+                    DIFF_UNIQUE_2,
+                )
                 line_counter_2 += 1
         elif opcode == "replace":
             side_1 = lines_1[i_1:i_2]
@@ -147,36 +162,38 @@ def compute_diff_rows(text_1: str, text_2: str) -> DiffResult:
             for index in range(min(len(side_1), len(side_2))):
                 line_1 = side_1[index]
                 line_2 = side_2[index]
-                rows_1.append(line_1)
-                rows_2.append(line_2)
-                numbers_1.append(str(line_counter_1))
-                numbers_2.append(str(line_counter_2))
-                styles_1.append(DIFF_SIMILAR)
-                styles_2.append(DIFF_SIMILAR)
                 range_1, range_2 = _diff_ranges(line_1, line_2)
-                ranges_1.append(range_1)
-                ranges_2.append(range_2)
+                emit(
+                    line_1,
+                    line_2,
+                    str(line_counter_1),
+                    str(line_counter_2),
+                    DIFF_SIMILAR,
+                    DIFF_SIMILAR,
+                    range_1,
+                    range_2,
+                )
                 line_counter_1 += 1
                 line_counter_2 += 1
             for index in range(min(len(side_1), len(side_2)), len(side_1)):
-                rows_1.append(side_1[index])
-                rows_2.append("")
-                numbers_1.append(str(line_counter_1))
-                numbers_2.append("")
-                styles_1.append(DIFF_UNIQUE_1)
-                styles_2.append(None)
-                ranges_1.append([])
-                ranges_2.append([])
+                emit(
+                    side_1[index],
+                    "",
+                    str(line_counter_1),
+                    "",
+                    DIFF_UNIQUE_1,
+                    None,
+                )
                 line_counter_1 += 1
             for index in range(min(len(side_1), len(side_2)), len(side_2)):
-                rows_1.append("")
-                rows_2.append(side_2[index])
-                numbers_1.append("")
-                numbers_2.append(str(line_counter_2))
-                styles_1.append(None)
-                styles_2.append(DIFF_UNIQUE_2)
-                ranges_1.append([])
-                ranges_2.append([])
+                emit(
+                    "",
+                    side_2[index],
+                    "",
+                    str(line_counter_2),
+                    None,
+                    DIFF_UNIQUE_2,
+                )
                 line_counter_2 += 1
     return DiffResult(
         rows_1,
@@ -188,6 +205,14 @@ def compute_diff_rows(text_1: str, text_2: str) -> DiffResult:
         ranges_1,
         ranges_2,
     )
+
+
+def diff_tab_text(text_1_name: str, text_2_name: str) -> str:
+    """Format the caption shown on a text-difference tab.
+
+    Shared by tab creation and swap_sides so the two cannot drift apart.
+    """
+    return "DIFF({:s} / {:s})".format(text_1_name, text_2_name)
 
 
 class TextDiffer(qt.QWidget):
@@ -207,10 +232,15 @@ class TextDiffer(qt.QWidget):
     text_2_name: str = ""
     text_1_path: str | None = None
     text_2_path: str | None = None
+    # File-type keyword each pane's lexer was resolved from ("text" for an
+    # unsaved or unmapped document). Stored so a theme change can re-apply the
+    # same lexer instead of resetting both panes to plain text.
+    _lexer_1: str = "text"
+    _lexer_2: str = "text"
+    # Emitted by the diff worker thread as (generation, result). Queued to the
+    # GUI thread, where _diff_computed applies it.
+    diff_computed = qt.pyqtSignal(object)
     # Class constants
-    DEFAULT_FONT = qt.QFont(
-        settings.get("current_font_name"), settings.get("current_font_size")
-    )
     MARGIN_STYLE = qt.QsciScintilla.STYLE_LINENUMBER
     INDICATOR_UNIQUE_1 = 1
     Indicator_Unique_1_Color = qt.QColor(0x72, 0x9F, 0xCF, 80)
@@ -248,37 +278,74 @@ class TextDiffer(qt.QWidget):
     diff_stat_similar: qt.QLabel
     swap_button: qt.QPushButton
     re_diff_button: qt.QPushButton
+    next_unique_1_button: qt.QPushButton
+    next_unique_2_button: qt.QPushButton
+    next_similar_button: qt.QPushButton
     # Indicator ranges painted on each editor (position, length)
     _indicator_ranges_1: list[tuple[int, int]]
     _indicator_ranges_2: list[tuple[int, int]]
+    # Set once shutdown() (or __del__) has detached the editors, so teardown is
+    # idempotent and a second call is a cheap no-op
+    _torn_down: bool = False
+    # Monotonic counter identifying the most recent compare() request. A worker
+    # result whose generation is stale is dropped instead of applied.
+    _diff_generation: int = 0
+    # Set in shutdown() so a running worker stops instead of emitting into a
+    # widget that is going away
+    _worker_stop: threading.Event
+    _worker_thread: threading.Thread | None = None
+    # Default cap, overridable by the "text_differ_async_line_limit" editor
+    # setting. Below the cap the diff is computed inline, which keeps small
+    # comparisons instantaneous and off the event loop entirely.
+    DIFF_ASYNC_LINE_LIMIT_DEFAULT = 20000
+
+    def _detach_editors(self) -> None:
+        """
+        Break the editor->differ back-references.
+
+        The editors outlive this call only until Qt destroys them with their
+        parent, so nothing here may touch the child widgets' own state: the
+        event filter and the four signal connections are what would keep the
+        differ alive, and both have to go for the widget to be collectable.
+        A running diff worker is a referrer too, and would otherwise be able to
+        emit into a widget that is being torn down.
+        """
+        if self._torn_down:
+            return
+        self._torn_down = True
+        self._stop_diff_worker()
+        for editor, scn_slot, cursor_slot in (
+            (self.editor_1, self._scn_updateui_1, self._cursor_change_1),
+            (self.editor_2, self._scn_updateui_2, self._cursor_change_2),
+        ):
+            try:
+                editor.removeEventFilter(self)
+                editor.SCN_UPDATEUI.disconnect(scn_slot)
+                editor.cursorPositionChanged.disconnect(cursor_slot)
+            except (RuntimeError, TypeError):
+                # The editor is already finalized, or this slot was never
+                # connected on this instance (the differ is built through
+                # __new__ in the test suite).
+                pass
+
+    def shutdown(self) -> None:
+        """
+        Release the differ's resources when its tab is closed.
+
+        tabwidget.close_tab() prefers an explicit shutdown() over the legacy
+        __del__ convention, so this is the teardown path in normal use.
+        """
+        self._detach_editors()
+        self.deleteLater()
 
     def __del__(self):
+        # Safety net for a differ that is dropped without close_tab() ever
+        # calling shutdown(). Real teardown is shutdown(); this only detaches
+        # the back-references and never mutates the child editors, so running
+        # it late (during collection) cannot leave a None where a method is
+        # expected.
         try:
-            self.editor_1.mousePressEvent = None
-            self.editor_1.wheelEvent = None
-            self.editor_2.mousePressEvent = None
-            self.editor_2.wheelEvent = None
-            self.editor_1.actual_parent = None
-            self.editor_2.actual_parent = None
-            self.editor_1.__del__()
-            self.editor_2.__del__()
-            self.editor_1 = None
-            self.editor_2 = None
-            self.focused_editor = None
-            self.splitter.setParent(None)
-            self.splitter = None
-            self.main_layout = None
-            self._parent = None
-            self.main_form = None
-            self.internals = None
-            # Clean up self
-            self.setParent(None)
-            self.deleteLater()
-            """
-            The actual clean up will occur when the next garbage collection
-            cycle is executed, probably because of the nested functions and
-            the focus decorator.
-            """
+            self._detach_editors()
         except Exception:
             pass
 
@@ -319,13 +386,12 @@ class TextDiffer(qt.QWidget):
         self.current_icon = functions.create_icon("tango_icons/compare-text.png")
         # Set the name of the differ widget
         if text_1_name is not None and text_2_name is not None:
-            self.name = "Text difference: {:s} / {:s}".format(text_1_name, text_2_name)
             self.text_1_name = text_1_name
             self.text_2_name = text_2_name
         else:
-            self.name = "Text difference"
             self.text_1_name = "TEXT 1"
             self.text_2_name = "TEXT 2"
+        self.name = self._diff_title()
         # Initialize diff icons
         self.icon_unique_1 = functions.create_icon("tango_icons/diff-unique-1.png")
         self.icon_unique_2 = functions.create_icon("tango_icons/diff-unique-2.png")
@@ -336,8 +402,7 @@ class TextDiffer(qt.QWidget):
         self.init_editor(self.editor_1)
         self.editor_2 = CustomEditor(self, main_form)
         self.init_editor(self.editor_2)
-        self.editor_1.choose_lexer("text")
-        self.editor_2.choose_lexer("text")
+        self._resolve_pane_lexers()
         self.splitter.addWidget(self.editor_1)
         self.splitter.addWidget(self.editor_2)
         self.main_layout = qt.QVBoxLayout()
@@ -362,27 +427,14 @@ class TextDiffer(qt.QWidget):
         self.editor_1.embedded = True
         self.editor_2.embedded = True
 
-        # Add decorators to each editors mouse clicks and mouse wheel scrolls
-        def focus_decorator(function_to_decorate, focused_editor):
-            def decorated_function(*args, **kwargs):
-                self.focused_editor = focused_editor
-                function_to_decorate(*args, **kwargs)
-
-            return decorated_function
-
-        def redefine_event_handler(editor: qt.QsciScintilla, method_name: str) -> None:
-            if hasattr(editor, method_name):
-                setattr(
-                    editor,
-                    method_name,
-                    focus_decorator(getattr(editor, method_name), editor),
-                )
-
+        # Track which editor the user last interacted with, so that navigation
+        # and the mirrored scroll follow the pane under the mouse. The differ's
+        # setFocus() forwards focus *into* self.focused_editor, so the pointer
+        # has to be updated before focus settles; an event filter does that
+        # without replacing any method on the editor.
+        self._torn_down = False
         for editor in (self.editor_1, self.editor_2):
-            redefine_event_handler(editor, "mousePressEvent")
-            redefine_event_handler(editor, "wheelEvent")
-        # Add corner buttons
-        self.add_corner_buttons()
+            editor.installEventFilter(self)
         # Focus the first editor on initialization
         self.focused_editor = self.editor_1
         self.focused_editor.setFocus()
@@ -393,11 +445,12 @@ class TextDiffer(qt.QWidget):
         self._indicator_ranges_2 = []
         # Initialize the scroll synchronization guard
         self._syncing_scroll = False
+        # Initialize the off-thread diff plumbing
+        self._worker_stop = threading.Event()
+        self._diff_generation = 0
+        self.diff_computed.connect(self._diff_computed)
         # Set the theme
         self.set_theme(settings.get_theme())
-        # Set editor functions that have to be propagated from the TextDiffer
-        # to the child editor
-        self._init_editor_functions()
         # Bind the next-difference keyboard shortcuts
         self._create_navigation_shortcuts()
         # Request a jump to the first difference as the text is opened
@@ -439,6 +492,42 @@ class TextDiffer(qt.QWidget):
         )
 
         toolbar_layout.addStretch()
+
+        self.next_unique_1_button = qt.QPushButton(self.toolbar)
+        self.next_unique_1_button.setObjectName("text_differ_action_button")
+        self.next_unique_1_button.setIcon(
+            functions.create_icon("tango_icons/diff-unique-1.png")
+        )
+        self.next_unique_1_button.setToolTip(
+            "Scroll to next unique line\nin document: '{:s}'".format(self.text_1_name)
+        )
+        self.next_unique_1_button.setFlat(True)
+        self.next_unique_1_button.clicked.connect(self.find_next_unique_1)
+        toolbar_layout.addWidget(self.next_unique_1_button)
+
+        self.next_unique_2_button = qt.QPushButton(self.toolbar)
+        self.next_unique_2_button.setObjectName("text_differ_action_button")
+        self.next_unique_2_button.setIcon(
+            functions.create_icon("tango_icons/diff-unique-2.png")
+        )
+        self.next_unique_2_button.setToolTip(
+            "Scroll to next unique line\nin document: '{:s}'".format(self.text_2_name)
+        )
+        self.next_unique_2_button.setFlat(True)
+        self.next_unique_2_button.clicked.connect(self.find_next_unique_2)
+        toolbar_layout.addWidget(self.next_unique_2_button)
+
+        self.next_similar_button = qt.QPushButton(self.toolbar)
+        self.next_similar_button.setObjectName("text_differ_action_button")
+        self.next_similar_button.setIcon(
+            functions.create_icon("tango_icons/diff-similar.png")
+        )
+        self.next_similar_button.setToolTip(
+            "Scroll to next similar line\nin both documents"
+        )
+        self.next_similar_button.setFlat(True)
+        self.next_similar_button.clicked.connect(self.find_next_similar)
+        toolbar_layout.addWidget(self.next_similar_button)
 
         self.swap_button = qt.QPushButton(self.toolbar)
         self.swap_button.setObjectName("text_differ_action_button")
@@ -562,14 +651,22 @@ QWidget#text_differ_vline {{
         self._set_side_label(self.label_1, self.text_1_name)
         self._set_side_label(self.label_2, self.text_2_name)
 
+    def _diff_title(self) -> str:
+        """Build the widget name for the current side assignment."""
+        if self.text_1_name and self.text_2_name:
+            return "Text difference: {:s} / {:s}".format(
+                self.text_1_name, self.text_2_name
+            )
+        return "Text difference"
+
     def _open_side_1(self) -> None:
         """Open the first compared document in a real editor."""
-        if self.text_1_path is not None:
+        if self.text_1_path:
             self.main_form.open_file(self.text_1_path)
 
     def _open_side_2(self) -> None:
         """Open the second compared document in a real editor."""
-        if self.text_2_path is not None:
+        if self.text_2_path:
             self.main_form.open_file(self.text_2_path)
 
     def re_diff(self) -> None:
@@ -588,14 +685,25 @@ QWidget#text_differ_vline {{
         self.text_1, self.text_2 = self.text_2, self.text_1
         self.text_1_name, self.text_2_name = self.text_2_name, self.text_1_name
         self.text_1_path, self.text_2_path = self.text_2_path, self.text_1_path
+        # Each pane's lexer belongs to the document in it, so it has to follow
+        # the swap: after swapping, pane 1 holds the document whose path is
+        # now text_1_path.
+        self._lexer_1, self._lexer_2 = self._lexer_2, self._lexer_1
+        self._reapply_pane_lexers()
         self._set_side_label(self.label_1, self.text_1_name)
         self._set_side_label(self.label_2, self.text_2_name)
-        self.editor_1.setMarkerBackgroundColor(
-            self.Indicator_Unique_1_Color, self.marker_unique_1
+        # The tab caption and the widget name name the two documents, so they
+        # have to follow the swap as well.
+        self.name = self._diff_title()
+        self._parent.set_tab_name(
+            self, diff_tab_text(self.text_1_name, self.text_2_name)
         )
-        self.editor_2.setMarkerBackgroundColor(
-            self.Indicator_Unique_2_Color, self.marker_unique_2
-        )
+        # The margin symbols carry each side's own icon. Redefine them
+        # crosswise, in place, so they keep matching the background accents
+        # that _apply_diff_colors repaints below.
+        self.editor_1.markerDefine(self._image_unique_2, self.marker_unique_symbol_1)
+        self.editor_2.markerDefine(self._image_unique_1, self.marker_unique_symbol_2)
+        self._apply_diff_colors()
         self.compare(self.text_1, self.text_2)
 
     def _create_navigation_shortcuts(self) -> None:
@@ -727,29 +835,17 @@ QWidget#text_differ_vline {{
         """Signal that fires when cursor position changes in one of the editors"""
         self.main_form.display.update_cursor_position(cursor_line, cursor_column)
 
-    def _init_editor_functions(self):
-        """
-        Initialize the editor functions that are called on the TextDiffer widget,
-        but need to be executed on one of the editors
-        """
-
-        # Find text function propagated to the focused editor
-        def enabled_function(function_name, *args, **kwargs):
-            # Get the function
-            function = getattr(self.focused_editor, function_name)
-            # Call the function, leaving out the "function name" argument
-            function(*args, **kwargs)
-
-        enabled_functions = [
-            "find_text",
-        ]
-        # Check methods
-        for function_name in enabled_functions:
-            setattr(
-                self,
-                function_name,
-                functools.partial(enabled_function, function_name),
-            )
+    def find_text(
+        self,
+        search_text: str,
+        case_sensitive: bool = False,
+        search_forward: bool = True,
+        regular_expression: bool = False,
+    ) -> Any:
+        """Forward a find request to the currently focused editor."""
+        return self.focused_editor.find_text(
+            search_text, case_sensitive, search_forward, regular_expression
+        )
 
     def mousePressEvent(self, event):
         """Overloaded mouse click event"""
@@ -763,6 +859,24 @@ QWidget#text_differ_vline {{
         self.main_form.view.hide_all_overlay_widgets()
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
+
+    def eventFilter(self, object: qt.QObject, event: qt.QEvent) -> bool:  # type: ignore[override]
+        """
+        Record which editor the user last interacted with.
+
+        Installed on both editors, this replaces the per-editor
+        mousePressEvent/wheelEvent wrappers that used to be grafted on as
+        instance attributes. Returning False leaves the event to the editor
+        itself, so the only difference from the old wrappers is that no method
+        on the editor is ever shadowed and nothing has to be undone in a
+        destructor.
+        """
+        if object in (self.editor_1, self.editor_2) and event.type() in (
+            qt.QEvent.Type.MouseButtonPress,
+            qt.QEvent.Type.Wheel,
+        ):
+            self.focused_editor = object
+        return super().eventFilter(object, event)
 
     def setFocus(self):
         """Overridden focus event"""
@@ -796,6 +910,38 @@ QWidget#text_differ_vline {{
         editor.setMarginMarkerMask(1, ~qt.QsciScintillaBase.SC_MASK_FOLDERS)
         editor.setMarginMarkerMask(2, 0x0)
 
+    def _apply_diff_colors(self) -> None:
+        """Push the current diff colours into the markers and indicators.
+
+        Markers are created once, in init_markers, so a theme switch has to
+        re-apply the colours. Otherwise the highlight backgrounds keep painting
+        with the previous theme's accents, while the toolbar accents below
+        them have already changed.
+        """
+        sides: list[tuple[CustomEditor, qt.QColor, int, int]] = [
+            (
+                self.editor_1,
+                self.Indicator_Unique_1_Color,
+                self.marker_unique_1,
+                self.marker_similar_1,
+            ),
+            (
+                self.editor_2,
+                self.Indicator_Unique_2_Color,
+                self.marker_unique_2,
+                self.marker_similar_2,
+            ),
+        ]
+        for editor, unique_color, unique_marker, similar_marker in sides:
+            # Background colors only for the background markers
+            editor.setMarkerBackgroundColor(unique_color, unique_marker)
+            editor.setMarkerBackgroundColor(
+                self.Indicator_Similar_Color, similar_marker
+            )
+            editor.setIndicatorForegroundColor(
+                self.Indicator_Similar_Color, self.INDICATOR_SIMILAR
+            )
+
     def init_markers(self):
         """Initialize all markers for showing diff symbols"""
         # Set the images
@@ -804,24 +950,21 @@ QWidget#text_differ_vline {{
         image_unique_2 = functions.create_pixmap("tango_icons/diff-unique-2.png")
         image_similar = functions.create_pixmap("tango_icons/diff-similar.png")
         # Scale the images to a smaller size
-        image_unique_1 = image_unique_1.scaled(image_scale_size)
-        image_unique_2 = image_unique_2.scaled(image_scale_size)
-        image_similar = image_similar.scaled(image_scale_size)
+        self._image_unique_1 = image_unique_1.scaled(image_scale_size)
+        self._image_unique_2 = image_unique_2.scaled(image_scale_size)
+        self._image_similar = image_similar.scaled(image_scale_size)
         # Markers for editor 1
         self.marker_unique_1 = self.editor_1.markerDefine(
             qt.QsciScintilla.MarkerSymbol.Background, 0
         )
-        self.marker_unique_symbol_1 = self.editor_1.markerDefine(image_unique_1, 1)
+        self.marker_unique_symbol_1 = self.editor_1.markerDefine(
+            self._image_unique_1, 1
+        )
         self.marker_similar_1 = self.editor_1.markerDefine(
             qt.QsciScintilla.MarkerSymbol.Background, 2
         )
-        self.marker_similar_symbol_1 = self.editor_1.markerDefine(image_similar, 3)
-        # Set background colors only for the background markers
-        self.editor_1.setMarkerBackgroundColor(
-            self.Indicator_Unique_1_Color, self.marker_unique_1
-        )
-        self.editor_1.setMarkerBackgroundColor(
-            self.Indicator_Similar_Color, self.marker_similar_1
+        self.marker_similar_symbol_1 = self.editor_1.markerDefine(
+            self._image_similar, 3
         )
         # Margins for editor 1
         self.init_margin(
@@ -835,17 +978,14 @@ QWidget#text_differ_vline {{
         self.marker_unique_2 = self.editor_2.markerDefine(
             qt.QsciScintilla.MarkerSymbol.Background, 0
         )
-        self.marker_unique_symbol_2 = self.editor_2.markerDefine(image_unique_2, 1)
+        self.marker_unique_symbol_2 = self.editor_2.markerDefine(
+            self._image_unique_2, 1
+        )
         self.marker_similar_2 = self.editor_2.markerDefine(
             qt.QsciScintilla.MarkerSymbol.Background, 2
         )
-        self.marker_similar_symbol_2 = self.editor_2.markerDefine(image_similar, 3)
-        # Set background colors only for the background markers
-        self.editor_2.setMarkerBackgroundColor(
-            self.Indicator_Unique_2_Color, self.marker_unique_2
-        )
-        self.editor_2.setMarkerBackgroundColor(
-            self.Indicator_Similar_Color, self.marker_similar_2
+        self.marker_similar_symbol_2 = self.editor_2.markerDefine(
+            self._image_similar, 3
         )
         # Margins for editor 2
         self.init_margin(
@@ -855,6 +995,7 @@ QWidget#text_differ_vline {{
             self.marker_similar_2,
             self.marker_similar_symbol_2,
         )
+        self._apply_diff_colors()
 
     def init_indicator(self, editor, indicator, color):
         """
@@ -866,12 +1007,11 @@ QWidget#text_differ_vline {{
         editor.setIndicatorForegroundColor(color, indicator)
         editor.SendScintilla(qt.QsciScintillaBase.SCI_SETINDICATORCURRENT, indicator)
 
-    def init_editor(self, editor):
+    def init_editor(self, editor: CustomEditor) -> None:
         """Initialize all of the PlainEditor settings for difference displaying"""
         editor.setLexer(None)
         editor.setUtf8(True)
         editor.setIndentationsUseTabs(False)
-        editor.setFont(self.DEFAULT_FONT)
         editor.setBraceMatching(qt.QsciScintilla.BraceMatch.SloppyBraceMatch)
         editor.setMatchedBraceBackgroundColor(qt.QColor(255, 153, 0))
         editor.setAcceptDrops(False)
@@ -880,6 +1020,40 @@ QWidget#text_differ_vline {{
         )
         editor.setReadOnly(True)
         editor.savable = constants.CanSave.NO
+
+    @staticmethod
+    def _pane_lexer(path: str | None) -> str:
+        """
+        Resolve a pane's file-type keyword from its source path.
+
+        get_file_type() is the same helper the editor tabs use, so a diff pane
+        highlights exactly like the editor that would open the same file.
+        check_content=False skips the shebang/XML sniffing, which would open
+        the file on disk; the differ already holds the text, and a difference
+        between an unsaved buffer and a file should read as the file's type.
+        An absent or unmapped path yields "text", which is also what
+        choose_lexer() falls back to for an unknown keyword.
+        """
+        if not path:
+            return "text"
+        return functions.get_file_type(path, check_content=False)
+
+    def _resolve_pane_lexers(self) -> None:
+        """Resolve and install the lexer for each pane."""
+        self._lexer_1 = self._pane_lexer(self.text_1_path)
+        self._lexer_2 = self._pane_lexer(self.text_2_path)
+        self.editor_1.choose_lexer(self._lexer_1)
+        self.editor_2.choose_lexer(self._lexer_2)
+
+    def _reapply_pane_lexers(self) -> None:
+        """
+        Re-install the panes' own lexers, e.g. after a theme change.
+
+        set_theme() reconfigures the editors from scratch and would otherwise
+        put both panes back to plain text, losing the per-side highlighting.
+        """
+        self.editor_1.choose_lexer(self._lexer_1)
+        self.editor_2.choose_lexer(self._lexer_2)
 
     def set_margin_text(self, editor, line, text):
         """Set the editor's margin text at the selected line"""
@@ -898,6 +1072,96 @@ QWidget#text_differ_vline {{
         else:
             self._indicator_ranges_2.append((start_position, length))
 
+    def _async_line_limit(self) -> int:
+        """Line-count cap above which the diff is computed off the GUI thread."""
+        editor_settings: Any = settings.get("editor")
+        # .get with a default, not [key]: the on-disk settings file is written
+        # by older versions and load_settings() overwrites the nested dict
+        # wholesale, so the key can legitimately be absent at runtime.
+        limit = editor_settings.get(
+            "text_differ_async_line_limit", self.DIFF_ASYNC_LINE_LIMIT_DEFAULT
+        )
+        try:
+            return int(limit)
+        except (TypeError, ValueError):
+            return self.DIFF_ASYNC_LINE_LIMIT_DEFAULT
+
+    def _needs_worker(self, text_1: str, text_2: str) -> bool:
+        """
+        Decide whether this comparison is large enough to be worth a thread.
+
+        Counting newlines is exact for the cap and, unlike splitlines(), does
+        not allocate an intermediate list of every line just to measure them.
+        """
+        line_count = text_1.count("\n") + text_2.count("\n")
+        return line_count > self._async_line_limit()
+
+    def _set_busy(self, busy: bool) -> None:
+        """
+        Show that a large diff is being computed, in the existing footer chips.
+
+        No new widget: the three statistics labels are already the differ's
+        status line, and _update_stats overwrites them when the result lands.
+        """
+        for label in (
+            self.diff_stat_unique_1,
+            self.diff_stat_unique_2,
+            self.diff_stat_similar,
+        ):
+            label.setText("computing..." if busy else "")
+            label.setToolTip("")
+
+    def _start_worker(self, text_1: str, text_2: str, generation: int) -> None:
+        """
+        Compute the difference on a worker thread.
+
+        compute_diff_rows is pure -- it touches no widget and no GUI state -- so
+        the whole diff can run off the event loop. Only the result crosses back,
+        through a queued signal, and it is applied on the GUI thread.
+        """
+        self._set_busy(True)
+        self._worker_thread = threading.Thread(
+            target=self._worker_entry,
+            args=(text_1, text_2, generation),
+            daemon=True,
+        )
+        self._worker_thread.start()
+
+    def _worker_entry(self, text_1: str, text_2: str, generation: int) -> None:
+        """Worker body: compute the diff and hand the result back."""
+        try:
+            result: DiffResult = compute_diff_rows(text_1, text_2)
+        except Exception:
+            # A worker thread must not raise into the Qt main loop; report on
+            # the GUI thread like any other failure.
+            traceback.print_exc()
+            return
+        if self._worker_stop.is_set():
+            return
+        self.diff_computed.emit((generation, result))
+
+    def _diff_computed(self, payload: Any) -> None:
+        """
+        GUI-thread slot applying a worker result.
+
+        The generation check drops a result that a newer compare() has already
+        superseded, so a slow diff of large documents cannot overwrite a
+        fresher one that was requested while it was running.
+        """
+        generation, result = payload
+        if generation != self._diff_generation or self._torn_down:
+            return
+        self._set_busy(False)
+        self._apply_result(result)
+
+    def _stop_diff_worker(self) -> None:
+        """Stop any in-flight diff worker and detach the result signal."""
+        self._worker_stop.set()
+        try:
+            self.diff_computed.disconnect(self._diff_computed)
+        except (TypeError, RuntimeError):
+            pass
+
     def compare(self, text_1: str | None, text_2: str | None) -> None:
         """Compare two text strings and display the difference"""
         if text_1 is None or text_2 is None:
@@ -905,8 +1169,26 @@ QWidget#text_differ_vline {{
         # Store the original text
         self.text_1 = text_1
         self.text_2 = text_2
-        # Create the difference
-        result = compute_diff_rows(text_1, text_2)
+        # A new request supersedes any worker result still in flight
+        self._diff_generation += 1
+        generation = self._diff_generation
+        # Large comparisons go to a worker so the event loop keeps running;
+        # everything else is computed inline, which is both faster and
+        # synchronous for the caller.
+        if self._needs_worker(text_1, text_2):
+            self._start_worker(text_1, text_2, generation)
+            return
+        self._set_busy(False)
+        self._apply_result(compute_diff_rows(text_1, text_2))
+
+    def _apply_result(self, result: DiffResult) -> None:
+        """
+        Paint a computed difference. Runs only on the GUI thread.
+
+        Everything here -- markers, margin text, indicators, the status messages
+        and the first-difference jump -- touches widgets, so none of it may be
+        reached from a worker.
+        """
         # Clear the previous run's markers, margin texts and indicator ranges
         self.editor_1.markerDeleteAll(self.marker_unique_1)
         self.editor_1.markerDeleteAll(self.marker_unique_symbol_1)
@@ -1065,13 +1347,19 @@ QWidget#text_differ_vline {{
         self.editor_2.goto_line(next_diff_line + 1, skip_repl_focus=False)
 
     def find_next_similar(self) -> None:
-        """Find and scroll to the next similar line"""
-        self.focused_editor = self.editor_1
-        cursor_line, cursor_index = self.editor_1.getCursorPosition()
-        next_diff_line = self.editor_1.markerFindNext(cursor_line + 1, MASK_SIMILAR)
+        """Find and scroll to the next similar line, starting from the
+        currently focused side.
+
+        focused_editor is deliberately left alone: setFocus() re-focuses it and
+        the cursor-change handlers use it to decide which side is driving, so
+        overwriting it here would move the caret to the other pane.
+        """
+        editor = self.focused_editor
+        cursor_line, cursor_index = editor.getCursorPosition()
+        next_diff_line = editor.markerFindNext(cursor_line + 1, MASK_SIMILAR)
         if next_diff_line == -1:
             # Wrap around to the start of the document
-            next_diff_line = self.editor_1.markerFindNext(0, MASK_SIMILAR)
+            next_diff_line = editor.markerFindNext(0, MASK_SIMILAR)
             if next_diff_line == -1:
                 self.main_form.display.repl_display_message(
                     "No further similar lines found between the documents!",
@@ -1087,26 +1375,6 @@ QWidget#text_differ_vline {{
             )
         self.editor_1.goto_line(next_diff_line + 1, skip_repl_focus=False)
         self.editor_2.goto_line(next_diff_line + 1, skip_repl_focus=False)
-
-    def add_corner_buttons(self):
-        # Unique 1 button
-        self.internals.add_corner_button(
-            functions.create_icon("tango_icons/diff-unique-1.png"),
-            "Scroll to next unique line\nin document: '{:s}'".format(self.text_1_name),
-            self.find_next_unique_1,
-        )
-        # Unique 2 button
-        self.internals.add_corner_button(
-            functions.create_icon("tango_icons/diff-unique-2.png"),
-            "Scroll to next unique line\nin document: '{:s}'".format(self.text_2_name),
-            self.find_next_unique_2,
-        )
-        # Similar button
-        self.internals.add_corner_button(
-            functions.create_icon("tango_icons/diff-similar.png"),
-            "Scroll to next similar line\nin both documents",
-            self.find_next_similar,
-        )
 
     def set_theme(self, theme: dict[str, Any]) -> None:
         self.Indicator_Unique_1_Color = qt.QColor(
@@ -1146,8 +1414,14 @@ QWidget#text_differ_vline {{
             editor.SendScintilla(
                 qt.QsciScintillaBase.SCI_SETCARETFORE, qt.QColor(theme["cursor"])
             )
-            editor.choose_lexer("text")
+            # Re-install this pane's own lexer, resolved from its path. A bare
+            # "text" here would silently drop the per-side highlighting on
+            # every theme change.
+            editor.choose_lexer(
+                self._lexer_1 if editor is self.editor_1 else self._lexer_2
+            )
 
         set_editor_theme(self.editor_1)
         set_editor_theme(self.editor_2)
+        self._apply_diff_colors()
         self._apply_toolbar_theme(theme)

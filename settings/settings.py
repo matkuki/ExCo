@@ -17,7 +17,7 @@ import copy
 import threading
 import traceback
 from collections import UserDict
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import data
 import filefunctions
@@ -445,39 +445,58 @@ class Sessions:
         # Sort the stored sessions
         self.__sessions = sorted_sessions
 
-    def get_session(self, name, chain):
+    def get_session(self, name: str, chain: List[str]) -> Optional[Dict[str, Any]]:
+        """
+        Look up a stored session by name and ancestor group chain.
+
+        Returns None when a group in the chain is missing or when the group
+        holds no session of that name.
+        """
+        group = self.get_group(chain)
+        if group is None:
+            return None
+        return group["sessions"].get(name)
+
+    def get_group(self, chain: List[str]) -> Optional[Dict[str, Any]]:
+        """
+        Look up a stored group by its ancestor group chain.
+
+        Returns None when any group in the chain is missing, instead of
+        raising KeyError out of a Qt slot.
+        """
         # Update sessions
         self.__parent.load_settings()
 
-        session = None
-        group = self.__sessions["main"]
+        group = self.__sessions.get("main")
+        if group is None:
+            return None
         for c in chain:
-            group = group["groups"][c]
-        if name in group["sessions"].keys():
-            session = group["sessions"][name]
-        return session
-
-    def get_group(self, chain):
-        # Update sessions
-        self.__parent.load_settings()
-
-        group = self.__sessions["main"]
-        for c in chain:
-            group = group["groups"][c]
+            group = group["groups"].get(c)
+            if group is None:
+                return None
         return group
 
-    def rename_group(self, group, new_group_name):
-        def rename_first_group(grp, new_name, in_level):
-            if in_level < len(grp["chain"]):
-                return
-            grp["chain"][in_level] = new_name
-            for k, v in grp["groups"].items():
-                rename_first_group(v, new_name, in_level)
-            for k, v in grp["sessions"].items():
-                v["chain"][in_level] = new_name
+    def rename_group(self, group: Dict[str, Any], new_group_name: str) -> None:
+        """
+        Rename a group and rewrite the ancestor chains of all its descendants.
 
-        level = len(group["chain"]) - 1
-        rename_first_group(group, new_group_name, level)
+        A group is never a member of its own chain: the chain holds the
+        ancestor groups only. The group's own name therefore sits at index
+        len(group["chain"]) of every descendant chain, while the group
+        itself is shorter than that index and has to be left alone.
+        """
+
+        def rewrite_chain(grp: Dict[str, Any], new_name: str, in_level: int) -> None:
+            if in_level < len(grp["chain"]):
+                grp["chain"][in_level] = new_name
+            for child_group in grp["groups"].values():
+                rewrite_chain(child_group, new_name, in_level)
+            for session in grp["sessions"].values():
+                if in_level < len(session["chain"]):
+                    session["chain"][in_level] = new_name
+
+        level = len(group["chain"])
+        rewrite_chain(group, new_group_name, level)
         group["name"] = new_group_name
 
 
