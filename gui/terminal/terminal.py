@@ -461,14 +461,14 @@ class Terminal(qt.QWidget):
 
     def update_style(self) -> None:
         self.setStyleSheet(
-            f"""
-QWidget {{
+            """
+QWidget {
     background: transparent;
     border: none;
     margin: 0px;
     spacing: 0px;
     padding: 0px;
-}}
+}
         """
         )
         self.view.update_style()

@@ -36,7 +36,7 @@ def create_terminal_backend(
     cwd: Optional[str] = None,
     env: Optional[Dict[str, str]] = None,
     dimensions: Tuple[int, int] = (24, 80),
-) -> TerminalBackend:
+) -> "TerminalBackend":
     """
     Create the appropriate PTY backend for the current platform.
 

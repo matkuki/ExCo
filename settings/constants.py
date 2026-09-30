@@ -31,6 +31,8 @@ Settings tables
 editor = {
     "default": {
         "autocompletion": False,
+        "auto_copy_on_select": False,  # copy a finished terminal/editor
+        # selection to the clipboard automatically
         "brace_color": "#80ff9900",
         "cursor_line_visible": False,
         "edge_marker_color": "#ffb4b4b4",

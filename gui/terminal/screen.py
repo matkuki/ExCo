@@ -42,6 +42,10 @@ MOUSE_DRAG_MODE: int = 1002
 MOUSE_MOVE_MODE: int = 1003
 MOUSE_SGR_MODE: int = 1006
 
+# Focus reporting private mode: the terminal reports CSI I / CSI O to the
+# application when the viewport gains / loses focus (xterm 1004).
+FOCUS_REPORT_MODE: int = 1004
+
 # Bracketed paste private mode
 BRACKETED_PASTE_MODE: int = 2004
 
@@ -206,6 +210,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
     @property
     def bracketed_paste(self) -> bool:
         return self._mode_is(BRACKETED_PASTE_MODE)
+
+    @property
+    def focus_report(self) -> bool:
+        return self._mode_is(FOCUS_REPORT_MODE)
 
     # ------------------------------------------------------------------
     # OSC (title / icon / cwd / hyperlink)

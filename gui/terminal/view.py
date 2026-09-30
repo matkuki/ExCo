@@ -11,7 +11,9 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      Paints the pyte screen (and styled scrollback history) cell by cell,
 ##      with incremental repaints driven by the screen's dirty-line set.
 
+import functools
 import math
+import os
 
 import data
 import functions
@@ -77,6 +79,9 @@ class TerminalView(qt.QWidget):
 
         self.setFocusPolicy(qt.Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
+        # Accept file/text drops so dragging a path into the terminal sends
+        # it to the shell instead of the main window's drop-to-open handler.
+        self.setAcceptDrops(True)
 
         # Monospace font and its measured cell size
         self._style_fonts: Dict[Tuple[bool, bool, bool, bool], qt.QFont] = {}
@@ -97,9 +102,39 @@ class TerminalView(qt.QWidget):
         # Selection state (start/end cells in stack coordinates)
         self._selection: Optional[Selection] = None
         self._selection_active: bool = False
+        # Cell the current left-press started on; hyperlink activation on
+        # release requires the press and release to share a cell.
+        self._press_cell: Optional[Tuple[int, int]] = None
         # Shift-bypass of mouse tracking: while Shift is held, mouse events
         # drive native selection / scrollback scroll instead of reports.
         self._shift_selecting: bool = False
+        # TUI right-click state: inside a mouse-capturing app the right
+        # button is forwarded (press + release) so the app acts on it.
+        # _tui_right_synth is set when a short synthetic drag first replayed
+        # the native selection into the app, giving opencode the text it needs
+        # to copy and draw its own toast. Both flags span press -> release ->
+        # contextMenuEvent (Windows order) and are consumed there.
+        self._tui_right_forwarded: bool = False
+        self._tui_right_synth: bool = False
+
+        # Triple-click (line selection) tracking: a double-click arms a
+        # single-shot timer timed to the system double-click interval; a
+        # third press while it still runs selects the whole line instead of
+        # starting a drag.
+        self._double_clicked: bool = False
+        self._triple_click_timer: qt.QTimer = qt.QTimer(self)
+        self._triple_click_timer.setSingleShot(True)
+        self._triple_click_timer.setInterval(int(qt.QApplication.doubleClickInterval()))
+        self._triple_click_timer.timeout.connect(self._triple_click_expired)
+
+        # Drag auto-scroll: while a selection is dragged past the top or
+        # bottom edge this timer scrolls the scrollback one row per tick and
+        # extends the selection into the newly revealed rows.
+        self._autoscroll_timer: qt.QTimer = qt.QTimer(self)
+        self._autoscroll_timer.setInterval(50)
+        self._autoscroll_timer.timeout.connect(self._tick_autoscroll)
+        self._autoscroll_dir: int = 0
+        self._autoscroll_pos: Optional[qt.QPointF] = None
 
         # Last painted cursor row (for clearing the previous cursor position)
         self._last_cursor_y: Optional[int] = None
@@ -122,11 +157,35 @@ class TerminalView(qt.QWidget):
         ] = {}
         self._color_cache: Dict[str, qt.QColor] = {}
 
+        # OSC 8 hyperlinks: the screen records spans in stack coordinates;
+        # this per-cell {stack_row: {column: uri}} index is rebuilt only when
+        # the span list changes. _link_version is (len, id of tail) so a
+        # moved/redrawn link (new tail object) still invalidates it.
+        self._link_index: Dict[int, Dict[int, str]] = {}
+        self._link_version: Optional[Tuple[int, Optional[int]]] = None
+
         # Scrollbar
         self._scrollbar: qt.QScrollBar = qt.QScrollBar(qt.Qt.Orientation.Vertical, self)
         self._scrollbar.setRange(0, 0)
         self._scrollbar.valueChanged.connect(self._scroll_to_value)
         self._scrollbar.hide()
+
+        # In-terminal "Copied to clipboard" toast: shown for the copies Ex.Co.
+        # performs itself (native-selection auto-copy, the menu's Copy action).
+        # A mouse-capturing TUI's right-click is forwarded to the app, which
+        # draws its own banner (opencode), so Ex.Co. shows nothing for it.
+        # Drawn over the grid; mouse-transparent so it never steals a click.
+        self._copy_toast: qt.QLabel = qt.QLabel("", self)
+        self._copy_toast.setAlignment(qt.Qt.AlignmentFlag.AlignCenter)
+        self._copy_toast.setAttribute(
+            qt.Qt.WidgetAttribute.WA_TransparentForMouseEvents
+        )
+        self._copy_toast.hide()
+        self._copy_toast_timer: qt.QTimer = qt.QTimer(self)
+        self._copy_toast_timer.setSingleShot(True)
+        self._copy_toast_timer.setInterval(1300)
+        self._copy_toast_timer.timeout.connect(self._copy_toast.hide)
+        self._style_copy_toast()
 
     def event(self, event: Optional[qt.QEvent]) -> bool:
         # Claim every key for the shell: accepting ShortcutOverride vetoes
@@ -186,6 +245,7 @@ class TerminalView(qt.QWidget):
         self._default_fg: qt.QColor = qt.QColor(theme["fonts"]["default"]["color"])
         self._default_bg: qt.QColor = qt.QColor(theme["fonts"]["default"]["background"])
         self._measure_font()
+        self._style_copy_toast()
 
     def _measure_font(self) -> None:
         font_metrics: qt.QFontMetricsF = qt.QFontMetricsF(self._font)
@@ -234,6 +294,7 @@ class TerminalView(qt.QWidget):
         rows: int
         cols, rows = self._terminal_size()
         self.resize_event.emit(cols, rows)
+        self._place_copy_toast()
         return super().resizeEvent(event)
 
     # ------------------------------------------------------------------
@@ -492,14 +553,14 @@ class TerminalView(qt.QWidget):
                 if needs_clip:
                     painter.restore()
 
-    def _cell_font(self, cell: Any) -> qt.QFont:
+    def _cell_font(self, cell: Any, link: bool = False) -> qt.QFont:
         """Styled font for a cell, drawn from a small cache keyed on the
-        style flags (bold/italic/underline/strike) so painting does not
-        allocate a fresh QFont for every cell."""
+        style flags (bold/italic/underline/strike) and the OSC 8 hyperlink
+        state, so painting does not allocate a fresh QFont for every cell."""
         key: Tuple[bool, bool, bool, bool] = (
             cell.bold,
             cell.italics,
-            cell.underscore,
+            cell.underscore or link,
             cell.strikethrough,
         )
         font: Optional[qt.QFont] = self._style_fonts.get(key)
@@ -509,7 +570,7 @@ class TerminalView(qt.QWidget):
                 font.setBold(True)
             if cell.italics:
                 font.setItalic(True)
-            if cell.underscore:
+            if cell.underscore or link:
                 font.setUnderline(True)
             if cell.strikethrough:
                 font.setStrikeOut(True)
@@ -519,6 +580,7 @@ class TerminalView(qt.QWidget):
     def _cell_style(
         self, cell: Any, y: int, x: int
     ) -> Tuple[qt.QColor, qt.QColor, qt.QFont]:
+        link: bool = self._link_at_stack(self._stack_row(y), x) is not None
         key: Tuple[Any, ...] = (
             cell.bg,
             cell.fg,
@@ -528,6 +590,7 @@ class TerminalView(qt.QWidget):
             cell.strikethrough,
             cell.reverse,
             self._is_selected(y, x),
+            link,
         )
         style: Optional[Tuple[qt.QColor, qt.QColor, qt.QFont]] = self._style_cache.get(
             key
@@ -538,7 +601,7 @@ class TerminalView(qt.QWidget):
             fg: qt.QColor = self._resolve_color(cell.fg, True)
             if reverse:
                 fg, bg = bg, fg
-            font: qt.QFont = self._cell_font(cell)
+            font: qt.QFont = self._cell_font(cell, link=link)
             if self._is_selected(y, x):
                 fg, bg = bg, fg
             style = (fg, bg, font)
@@ -637,6 +700,35 @@ class TerminalView(qt.QWidget):
         y = max(0, min(y, lines - 1))
         return self._stack_row(y), x
 
+    def _selection_viewport_corners(
+        self,
+    ) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
+        """Normalized selection corners mapped to (row, col) viewport cells
+        for a synthetic drag, or None when no part of the selection is above
+        the visible region. Off-screen corners are clamped onto the bottom
+        edge so the replay still spans the visible highlight."""
+        bounds: Optional[Selection] = self._selection_bounds()
+        if bounds is None:
+            return None
+        r0, c0, r1, c1 = cast(Tuple[int, int, int, int], bounds)
+        if (r0, c0) > (r1, c1):
+            r0, c0, r1, c1 = r1, c1, r0, c0
+        screen: ExtendedScreen = self.terminal.term_screen
+        lines: int = screen.lines
+        top: int = self._history_len() - self._scroll_offset
+        v_r0: int = r0 - top
+        v_r1: int = r1 - top
+        # Entire selection lives outside the viewport: forward the plain
+        # right-click instead of replaying a drag that would not match what
+        # the user sees.
+        if v_r0 < 0 and v_r1 < 0:
+            return None
+        if v_r0 > lines - 1 and v_r1 > lines - 1:
+            return None
+        v_r0 = max(0, min(v_r0, lines - 1))
+        v_r1 = max(0, min(v_r1, lines - 1))
+        return (v_r0, c0), (v_r1, c1)
+
     def _selection_bounds(self) -> Optional[Selection]:
         """Normalize _selection to (r0, c0, r1, c1); a bare anchor is a
         single-cell selection. Returns None when there is no selection."""
@@ -694,17 +786,72 @@ class TerminalView(qt.QWidget):
         if text:
             application: Any = data.application
             application.clipboard().setText(text)
+            self._show_copy_toast()
+
+    def _style_copy_toast(self) -> None:
+        """Theme the "Copied to clipboard" panel from the terminal's default
+        foreground/background so it stays readable on any palette."""
+        toast: Optional[qt.QLabel] = getattr(self, "_copy_toast", None)
+        if toast is None:
+            return
+        fg: qt.QColor = qt.QColor(self._default_fg)
+        bg: qt.QColor = qt.QColor(self._default_bg)
+        toast.setStyleSheet(
+            "background-color: rgba({0},{1},{2},235);"
+            "color: rgba({3},{4},{5},255);"
+            "border: 1px solid rgba({3},{4},{5},150);"
+            "border-radius: 4px;"
+            "padding: 2px 10px;".format(
+                bg.red(),
+                bg.green(),
+                bg.blue(),
+                fg.red(),
+                fg.green(),
+                fg.blue(),
+            )
+        )
+
+    def _place_copy_toast(self) -> None:
+        """Centre the copy toast at the top of the viewport (or re-centre it
+        after a resize) while it is visible."""
+        if not self._copy_toast.isVisibleTo(self):
+            return
+        self._copy_toast.adjustSize()
+        self._copy_toast.move(
+            max((self.width() - self._copy_toast.width()) // 2, 0),
+            max(int(self._char_height * 0.75), 4),
+        )
+        self._copy_toast.raise_()
+
+    def _show_copy_toast(self) -> None:
+        """Show the transient "Copied to clipboard" panel and (re)arm its
+        hide timer."""
+        self._copy_toast.setText("Copied to clipboard")
+        self._copy_toast.show()
+        self._place_copy_toast()
+        self._copy_toast_timer.stop()
+        self._copy_toast_timer.start()
 
     def paste(self) -> None:
-        application: Any = data.application
-        text: str = application.clipboard().text()
+        text: str = self._paste_source()
         if text:
             if self.terminal.term_screen.bracketed_paste:
                 text = "\x1b[200~" + text + "\x1b[201~"
             self.paste_event.emit(text)
 
+    def _paste_source(self) -> str:
+        """Text for a paste: the current selection, falling back to the
+        clipboard (the X11 primary-selection convention shared by the
+        middle-click paste and the context menu's Paste action)."""
+        selected: str = self._selection_text()
+        if selected:
+            return selected
+        application: Any = data.application
+        return application.clipboard().text()
+
     def _start_selection(self, position: qt.QPointF) -> None:
         self._selection = self._pos_cell(position)
+        self._press_cell = self._pos_cell(position)
         self._selection_active = True
         self.update()
 
@@ -738,14 +885,85 @@ class TerminalView(qt.QWidget):
         bounds: Optional[Selection] = self._selection_bounds()
         if bounds is None:
             return
+        bare_anchor: bool = (
+            isinstance(self._selection, tuple) and len(self._selection) == 2
+        )
         r0, c0, r1, c1 = cast(Tuple[int, int, int, int], bounds)
-        if (r0, c0) == (r1, c1):
-            # Plain click without drag: no selection, so the shell cursor
-            # stays/returns to the active text line.
+        if bare_anchor:
+            # A plain click without drag: no selection, so the shell cursor
+            # stays/returns to the active text line. A resolved word/line
+            # selection or a real drag is a 4-tuple and survives even when it
+            # spans exactly one cell (e.g. a single-char word double-click).
             self._selection = None
         elif (r0, c0) > (r1, c1):
             self._selection = (r1, c1, r0, c0)
+        if self._selection is not None and self._auto_copy_enabled():
+            self.copy_selection()
         self.update()
+
+    def _auto_copy_enabled(self) -> bool:
+        """True when a finished selection is copied to the clipboard on
+        release. Behind the ``editor.auto_copy_on_select`` setting (default
+        off); the editor facade is shared with the main editor widgets."""
+        editor_settings: Any = settings.get("editor")
+        return bool(editor_settings.get("auto_copy_on_select", False))
+
+    def _cell_blank(self, row: Any, x: int) -> bool:
+        """True when the cell holds no visible glyph: a plain space, or the
+        empty trailing cell of a wide glyph."""
+        char: str = row[x].data or ""
+        return char == "" or char.isspace()
+
+    def _word_range(
+        self, position: qt.QPointF
+    ) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+        """Return (start_cell, end_cell) of the whitespace-delimited word
+        under *position*. Both cells share the clicked stack row; the range
+        always includes the clicked cell (which may be a single glyph)."""
+        stack_row, col = self._pos_cell(position)
+        row: Any = self._stack_row_cells(stack_row)
+        columns: int = self.terminal.term_screen.columns
+        start: int = col
+        while start > 0 and not self._cell_blank(row, start - 1):
+            start -= 1
+        end: int = col
+        while end < columns - 1 and not self._cell_blank(row, end + 1):
+            end += 1
+        return (stack_row, start), (stack_row, end)
+
+    def _select_word(self, position: qt.QPointF) -> None:
+        """Select the word under *position* (double-click). Clicking blank
+        space collapses the pending selection instead."""
+        stack_row, col = self._pos_cell(position)
+        row: Any = self._stack_row_cells(stack_row)
+        if self._cell_blank(row, col):
+            self._selection = None
+            self._selection_active = False
+            self.update()
+            return
+        start, end = self._word_range(position)
+        self._selection = (start[0], start[1], end[0], end[1])
+        self._selection_active = True
+        self.update()
+
+    def _select_line(self, position: qt.QPointF) -> None:
+        """Select the whole physical line under *position* (triple-click).
+        Trailing blanks are already trimmed by _selection_text."""
+
+        stack_row: int = self._pos_cell(position)[0]
+        columns: int = self.terminal.term_screen.columns
+        self._selection = (stack_row, 0, stack_row, columns - 1)
+        self._selection_active = True
+        self.update()
+
+    def _arm_triple_click(self) -> None:
+        """Arm the requirement that a third press within the system
+        double-click interval selects a whole line."""
+        self._double_clicked = True
+        self._triple_click_timer.start()
+
+    def _triple_click_expired(self) -> None:
+        self._double_clicked = False
 
     # ------------------------------------------------------------------
     # Mouse
@@ -755,6 +973,67 @@ class TerminalView(qt.QWidget):
         x: int = int(position.x() / self._char_width)
         y: int = int(position.y() / self._char_height)
         return x, y
+
+    def _refresh_link_index(self) -> None:
+        """Rebuild the cell->URI lookup from screen.hyperlink_spans when the
+        span list changed. Spans are recorded in stack coordinates (draw()
+        logs the absolute cursor position), so the index maps a stack_row to
+        {column: uri} and renders identically over scrollback history."""
+        screen: ExtendedScreen = self.terminal.term_screen
+        spans: List[Tuple[Tuple[int, int], Tuple[int, int], str]] = (
+            screen.hyperlink_spans
+        )
+        version: Tuple[int, Optional[int]] = (
+            len(spans),
+            id(spans[-1]) if spans else None,
+        )
+        if version == self._link_version:
+            return
+        index: Dict[int, Dict[int, str]] = {}
+        columns: int = screen.columns
+        for (r0, c0), (r1, c1), uri in spans:
+            for r in range(r0, r1 + 1):
+                start: int = c0 if r == r0 else 0
+                end: int = c1 if r == r1 else columns - 1
+                for x in range(start, end + 1):
+                    index.setdefault(r, {})[x] = uri
+        self._link_index = index
+        self._link_version = version
+
+    def _link_at_stack(self, stack_row: int, x: int) -> Optional[str]:
+        """URI of the hyperlink covering stack cell (stack_row, x), if any."""
+        if stack_row < 0:
+            return None
+        self._refresh_link_index()
+        row_index: Optional[Dict[int, str]] = self._link_index.get(stack_row)
+        if row_index is None:
+            return None
+        return row_index.get(x)
+
+    def _hyperlink_at(self, position: qt.QPointF) -> Optional[str]:
+        stack_row: int
+        x: int
+        stack_row, x = self._pos_cell(position)
+        return self._link_at_stack(stack_row, x)
+
+    def _maybe_activate_hyperlink(self, position: qt.QPointF) -> None:
+        """Open the URI under the release cell when this left press was a
+        plain click on the spot: press and release in the same cell, no drag,
+        no surviving selection and not part of a double/triple-click. Drags
+        keep their selection (which trumps the open) and are blocked anyway."""
+        if self._double_clicked:
+            return
+        press_cell: Optional[Tuple[int, int]] = self._press_cell
+        self._press_cell = None
+        if press_cell is None:
+            return
+        if self._pos_cell(position) != press_cell:
+            return
+        if self._selection is not None:
+            return
+        uri: Optional[str] = self._hyperlink_at(position)
+        if uri is not None:
+            functions.open_url(uri)
 
     def _mouse_button_code(self, button: qt.Qt.MouseButton) -> int:
         if button == qt.Qt.MouseButton.LeftButton:
@@ -773,6 +1052,8 @@ class TerminalView(qt.QWidget):
         pressed: bool = True,
         wheel: bool = False,
         motion: bool = False,
+        horizontal: bool = False,
+        drag: bool = False,
     ) -> None:
         """Emit a mouse report to the application when a mouse mode is set."""
         screen: ExtendedScreen = self.terminal.term_screen
@@ -781,20 +1062,43 @@ class TerminalView(qt.QWidget):
         cx: int = x + 1
         cy: int = y + 1
         if wheel:
-            code: int = 64 if button > 0 else 65
+            if horizontal:
+                # Horizontal wheel: xterm buttons 66 (left) / 67 (right)
+                code: int = 67 if button > 0 else 66
+            else:
+                # Vertical wheel: xterm buttons 4 (up, 64) / 5 (down, 65)
+                code = 64 if button > 0 else 65
         elif motion:
             # Motion without a button pressed (mode 1003)
             code = 35
+        elif drag:
+            # Motion with a button held (drag): the SGR motion bit (32) OR'd
+            # with the held button, emitted as a release-style 'm' pressRelease
+            # -- the xterm/WezTerm convention openTUI's own MockMouse also
+            # produces. openTUI's core only grows its selection from these
+            # "drag" events; forwarding the button alone (a burst of downs) is
+            # what left opencode with no selectable region to copy and no
+            # "Copied to clipboard" toast. Without SGR the distinction is
+            # inexpressible, so fall back to the plain button code.
+            code = (32 | button) if screen.sgr_mouse else button
         elif pressed:
             code = button
+        elif screen.sgr_mouse:
+            # SGR (1006) marks the release with the SAME button number in a
+            # lowercase 'm' (the xterm/WeZTerm convention). openTUI reads
+            # button = raw & 3, so keeping the number is what actually unbinds
+            # the held button on release; the old button+3 encoding left the
+            # app's "pressed" set dirty.
+            code = button
         else:
-            # Release: button number + 3 (left=3, middle=4, right=5)
+            # X10-style has no release marker: the release uses button + 3
+            # (left=3, middle=4, right=5).
             code = button + 3
         if screen.sgr_mouse:
-            # SGR (1006): CSI < b ; x ; y M/m
-            self.send_text.emit(
-                "\x1b[<{};{};{}{}".format(code, cx, cy, "M" if pressed else "m")
-            )
+            # SGR (1006): CSI < b ; x ; y M/m. Motion-drags use the lowercase
+            # 'm' pressRelease like the xterm/WezTerm convention.
+            press_char: str = "M" if (pressed and not drag) else "m"
+            self.send_text.emit("\x1b[<{};{};{}{}".format(code, cx, cy, press_char))
         else:
             # X10-style: CSI M b+32 x+32 y+32. The encoding is limited to
             # 223 columns/rows; larger coordinates are clipped, matching
@@ -804,51 +1108,238 @@ class TerminalView(qt.QWidget):
             cy = min(cy, 223)
             self.send_text.emit("\x1b[M" + chr(code + 32) + chr(cx + 32) + chr(cy + 32))
 
-    def mousePressEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
+    def _handle_click_focus(self) -> None:
+        """Grab focus and announce it, then match the editor widgets: any
+        click outside the overlays closes the settings panel and the
+        function wheel."""
         self.setFocus()
         self.focused.emit()
-        # Match the editor widgets: any click outside the overlays closes
-        # the settings panel and the function wheel.
         main_form: Any = getattr(self.terminal, "main_form", None)
         if main_form is not None:
             view: Any = getattr(main_form, "view", None)
             if view is not None and hasattr(view, "hide_all_overlay_widgets"):
                 view.hide_all_overlay_widgets()
-        if self.terminal.term_screen.mouse_mode != 0:
+
+    def mousePressEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
+        self._handle_click_focus()
+        # Ctrl+click opens the hyperlink under the pointer in every mouse
+        # mode: a mouse-capturing TUI (vim, htop) must not be able to
+        # swallow a deliberate link click.
+        if (
+            event.button() == qt.Qt.MouseButton.LeftButton
+            and event.modifiers() & qt.Qt.KeyboardModifier.ControlModifier
+        ):
+            uri: Optional[str] = self._hyperlink_at(event.position())
+            if uri is not None:
+                functions.open_url(uri)
+                # A deliberate link click is not a press the app should ever
+                # see: drop the anchor so the release reports nothing.
+                self._press_cell = None
+                event.accept()
+                return
+        screen: ExtendedScreen = self.terminal.term_screen
+        if screen.mouse_mode != 0:
+            # A new press inside a mouse-capturing app starts a fresh
+            # gesture; the previous gesture's right-click flags are gone.
+            self._tui_right_forwarded = False
+            self._tui_right_synth = False
             if event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier:
                 # Shift bypass: the app never sees the event, so native
                 # selection works inside mouse-capturing TUIs (OpenCode, ...).
                 self._shift_selecting = True
                 self._last_motion_cell = None
                 if event.button() == qt.Qt.MouseButton.LeftButton:
-                    self._start_selection(event.position())
+                    self._press_select(event.position())
                 event.accept()
                 return
             self._shift_selecting = False
             self._last_motion_cell = None
-            button: int = self._mouse_button_code(event.button())
+            if event.button() == qt.Qt.MouseButton.MiddleButton:
+                # Middle-click paste: the decided default makes the selection
+                # (falling back to the clipboard) the paste source, exactly
+                # like the menu's Paste action, even while an app captures
+                # the mouse.
+                self.paste()
+                event.accept()
+                return
+            if event.button() == qt.Qt.MouseButton.RightButton:
+                # The TUI owns the right button (WezTerm parity): forward press
+                # and release so the app performs its own copy and draws its own
+                # toast (opencode's "Copied to clipboard"). opencode clears its
+                # own selection at the drag's release (copy-on-select), so before
+                # the forward it must be rebuilt: replay the native selection as a
+                # short synthetic left-drag between the two selection corners, then
+                # hand the right-click to the app while it still "holds" the left
+                # button. With no native selection the click forwards alone; if the
+                # selection is entirely off-screen it falls back to that too.
+                rx: int
+                ry: int
+                rx, ry = self._mouse_cell(event.position())
+                if self._selection is not None:
+                    corners: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = (
+                        self._selection_viewport_corners()
+                    )
+                    if corners is not None:
+                        (r0, c0), (r1, c1) = corners
+                        # Replay the native selection as a real left-drag the
+                        # way openTUI's MockMouse builds one (down at one
+                        # corner, then SGR motion-drags stepping to the other,
+                        # keeping the button held). The corner-pair-only burst
+                        # produced "down" events openTUI never grows a
+                        # selection from, leaving its renderer selection
+                        # empty -- and with it opencode's copy-on-select (and
+                        # its "Copied to clipboard" toast) silent.
+                        self._mouse_report(0, c0, r0, pressed=True)
+                        for step in range(1, 6):
+                            sr: int = r0 + round((r1 - r0) * step / 5)
+                            sc: int = c0 + round((c1 - c0) * step / 5)
+                            self._mouse_report(0, sc, sr, drag=True)
+                        self._tui_right_synth = True
+                self._tui_right_forwarded = True
+                self._mouse_report(2, rx, ry, pressed=True)
+                event.accept()
+                return
+            # A left press is reported immediately (a standard terminal
+            # forwards the gesture) and anchors the native selection overlay
+            # drawn on top; the drag follows as SGR motion-drags (see
+            # mouseMoveEvent), so opencode builds its own selection and draws
+            # its "Copied to clipboard" toast on release, while the
+            # highlighted overlay gives the right-click a selection to replay
+            # into the app.
             x: int
             y: int
             x, y = self._mouse_cell(event.position())
-            self._mouse_report(button, x, y, pressed=True)
+            self._mouse_report(0, x, y, pressed=True)
+            self._press_select(event.position())
+            event.accept()
+            return
+        if event.button() == qt.Qt.MouseButton.MiddleButton:
+            self.paste()
             event.accept()
             return
         if event.button() == qt.Qt.MouseButton.LeftButton:
-            self._start_selection(event.position())
+            self._press_select(event.position())
         # A right-click keeps the selection so the context menu's Copy
         # action stays enabled; the next left-press starts a new selection.
         # Accept the press so the ignored default QWidget handling does not
         # propagate it up to the tab widget (which would steal focus)
         event.accept()
 
+    def _press_select(self, position: qt.QPointF) -> None:
+        """Start a selection on a left press, honouring a triple-click: a
+        third press within the double-click interval selects the whole line
+        instead of starting a drag."""
+        if self._double_clicked:
+            self._select_line(position)
+            self._double_clicked = False
+            self._triple_click_timer.stop()
+        else:
+            self._start_selection(position)
+
+    def mouseDoubleClickEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
+        if event.button() != qt.Qt.MouseButton.LeftButton:
+            event.ignore()
+            return super().mouseDoubleClickEvent(event)
+        self._handle_click_focus()
+        self._select_word(event.position())
+        self._arm_triple_click()
+        event.accept()
+
     def focusInEvent(self, event: qt.QFocusEvent) -> None:  # type: ignore[override]
         self.focused.emit()
+        if self.terminal.term_screen.focus_report:
+            self.send_text.emit("\x1b[I")
         return super().focusInEvent(event)
 
+    def focusOutEvent(self, event: qt.QFocusEvent) -> None:  # type: ignore[override]
+        if self.terminal.term_screen.focus_report:
+            self.send_text.emit("\x1b[O")
+        return super().focusOutEvent(event)
+
+    def _tick_autoscroll(self) -> None:
+        """One drag-auto-scroll tick: scroll a row toward the edge the
+        pointer left, then extend the selection into the revealed row."""
+        if not self._selection_active:
+            self._autoscroll_timer.stop()
+            return
+        if self._autoscroll_dir > 0:
+            self._scroll_up(1)
+        elif self._autoscroll_dir < 0:
+            self._scroll_down(1)
+        pos: Optional[qt.QPointF] = self._autoscroll_pos
+        if pos is not None:
+            self._update_selection(pos)
+
+    def _stop_autoscroll(self) -> None:
+        self._autoscroll_timer.stop()
+        self._autoscroll_dir = 0
+        self._autoscroll_pos = None
+
+    def _update_selection_with_autoscroll(self, position: qt.QPointF) -> None:
+        """Extend a dragged selection, auto-scrolling when the pointer leaves
+        the top or bottom edge: each tick scrolls one row and the selection
+        is extended into the newly revealed row at the clamped edge."""
+        y: float = position.y()
+        if y < 0.0:
+            self._autoscroll_dir = 1
+            self._autoscroll_pos = qt.QPointF(position.x(), 0.0)
+        elif y > float(self.height()):
+            self._autoscroll_dir = -1
+            self._autoscroll_pos = qt.QPointF(
+                position.x(), max(0.0, float(self.height()) - 1.0)
+            )
+        else:
+            self._autoscroll_dir = 0
+            self._autoscroll_pos = position
+        if self._autoscroll_dir != 0:
+            if not self._autoscroll_timer.isActive():
+                # Prime the first tick immediately so an edge crossing feels
+                # responsive, then let the timer sustain the scroll.
+                self._autoscroll_timer.start()
+            self._tick_autoscroll()
+        else:
+            self._autoscroll_timer.stop()
+            self._update_selection(position)
+
     def mouseMoveEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
+        # Hover feedback: a pointing hand over a hyperlink, an I-beam over
+        # selected cells, the default arrow everywhere else. Both the
+        # selection I-beam and the link hand are computed for the hover cell
+        # so a link inside a selected region still reads as selected.
+        hover_col: int = int(event.position().x() / self._char_width)
+        hover_row: int = int(event.position().y() / self._char_height)
+        if self._link_at_stack(
+            self._stack_row(hover_row), hover_col
+        ) is not None and not self._is_selected(hover_row, hover_col):
+            self.setCursor(qt.Qt.CursorShape.PointingHandCursor)
+        else:
+            self.setCursor(
+                qt.Qt.CursorShape.IBeamCursor
+                if self._is_selected(hover_row, hover_col)
+                else qt.Qt.CursorShape.ArrowCursor
+            )
         screen: ExtendedScreen = self.terminal.term_screen
         if self._shift_selecting:
-            self._update_selection(event.position())
+            self._update_selection_with_autoscroll(event.position())
+            return super().mouseMoveEvent(event)
+        if screen.mouse_mode != 0 and event.buttons() & qt.Qt.MouseButton.LeftButton:
+            # A left-held drag inside a mouse-capturing TUI keeps the native
+            # selection overlay (the highlight that survives for the
+            # right-click copy) and, when the app asked for drag/move
+            # tracking (1002/1003), forwards the motion as SGR drags
+            # (motion bit 32, the xterm/WezTerm convention). openTUI only
+            # builds its selection from those "drag" events, so this is what
+            # lets opencode draw its own "Copied to clipboard" toast on
+            # release. Button-only (1000) apps get no motion, exactly like a
+            # standard terminal
+            self._update_selection_with_autoscroll(event.position())
+            if screen.mouse_mode >= 2:
+                drag_col: int
+                drag_row: int
+                drag_col, drag_row = self._mouse_cell(event.position())
+                if (drag_col, drag_row) != self._last_motion_cell:
+                    self._last_motion_cell = (drag_col, drag_row)
+                    self._mouse_report(0, drag_col, drag_row, drag=True)
             return super().mouseMoveEvent(event)
         if screen.mouse_mode == 3:
             x: int
@@ -860,25 +1351,26 @@ class TerminalView(qt.QWidget):
                 return super().mouseMoveEvent(event)
             self._last_motion_cell = (x, y)
             buttons: qt.Qt.MouseButton = event.buttons()
-            if buttons & qt.Qt.MouseButton.LeftButton:
-                self._mouse_report(0, x, y, pressed=True)
-            elif buttons & qt.Qt.MouseButton.MiddleButton:
-                self._mouse_report(1, x, y, pressed=True)
+            if buttons & qt.Qt.MouseButton.MiddleButton:
+                self._mouse_report(1, x, y, drag=True)
             elif buttons & qt.Qt.MouseButton.RightButton:
-                self._mouse_report(2, x, y, pressed=True)
+                self._mouse_report(2, x, y, drag=True)
             else:
                 # Motion without buttons: X10 code 35 or SGR code 35.
                 self._mouse_report(0, x, y, motion=True)
             return super().mouseMoveEvent(event)
-        if screen.mouse_mode == 2 and event.buttons() & qt.Qt.MouseButton.LeftButton:
-            x, y = self._mouse_cell(event.position())
-            self._mouse_report(0, x, y, pressed=True)
-            return super().mouseMoveEvent(event)
         if event.buttons() & qt.Qt.MouseButton.LeftButton:
-            self._update_selection(event.position())
+            self._update_selection_with_autoscroll(event.position())
         return super().mouseMoveEvent(event)
 
+    def leaveEvent(self, event: Optional[qt.QEvent]) -> None:  # type: ignore[override]
+        # Reset the hover cursor state when the pointer leaves the viewport;
+        # otherwise the I-beam from _selection-aware mouseMoveEvent lingers.
+        self.setCursor(qt.Qt.CursorShape.ArrowCursor)
+        return super().leaveEvent(event)
+
     def mouseReleaseEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
+        self._stop_autoscroll()
         if self._shift_selecting:
             self._shift_selecting = False
             if event.button() == qt.Qt.MouseButton.LeftButton:
@@ -886,6 +1378,29 @@ class TerminalView(qt.QWidget):
             event.accept()
             return
         if self.terminal.term_screen.mouse_mode != 0:
+            if event.button() == qt.Qt.MouseButton.RightButton:
+                # Complete the forwarded right-click: the app performs its own
+                # copy on this mouse-up and draws its toast (opencode). A
+                # synthetic drag earlier left the left button "held" in the
+                # app's parser (its selection already copied on the right
+                # release), so release it with a trailing left-up; the native
+                # overlay is cleared too, matching the copy-and-clear
+                # convention. The flags are consumed by contextMenuEvent.
+                rx: int
+                ry: int
+                rx, ry = self._mouse_cell(event.position())
+                self._mouse_report(2, rx, ry, pressed=False)
+                if self._tui_right_synth:
+                    self._mouse_report(0, rx, ry, pressed=False)
+                    self._clear_selection()
+                event.accept()
+                return
+            # Close the native selection overlay (a bare click collapses to
+            # nothing, a real drag keeps its highlight) and forward the
+            # release so the app completes the gesture it pressed: without
+            # this mouse-up, opencode never runs its copy handler and never
+            # draws the "Copied to clipboard" toast.
+            self._end_selection()
             button: int = self._mouse_button_code(event.button())
             x: int
             y: int
@@ -895,7 +1410,29 @@ class TerminalView(qt.QWidget):
             return
         if event.button() == qt.Qt.MouseButton.LeftButton:
             self._end_selection()
+            self._maybe_activate_hyperlink(event.position())
         event.accept()
+
+    def _wheel_steps(self, delta: int) -> int:
+        """
+        Accumulate a wheel angle delta and return the number of full
+        120-degree steps it produced (negative for the reverse direction).
+
+        High-resolution devices (touchpads) deliver many small angleDelta
+        values; summing them yields one step per accumulated 120 eighth-degrees
+        and the remainder stays for the next event. Shared by the scrollback
+        path and the wheel-report path, so both scroll and report one line per
+        genuine step.
+        """
+        if delta == 0:
+            return 0
+        self._wheel_accumulator += delta
+        steps: int = int(abs(self._wheel_accumulator) // 120)
+        if steps == 0:
+            return 0
+        direction: int = 1 if self._wheel_accumulator > 0 else -1
+        self._wheel_accumulator -= steps * 120 * direction
+        return steps * direction
 
     def _wheel_scroll(self, delta: int) -> None:
         """
@@ -905,42 +1442,108 @@ class TerminalView(qt.QWidget):
         values; the previous 'int(delta / 120)' truncated them to zero, so
         touchpad scrolling stayed dead until a full-size delta arrived.
         """
-        if delta == 0:
-            return
-        self._wheel_accumulator += delta
-        steps: int = int(abs(self._wheel_accumulator) // 120)
-        if steps == 0:
-            return
-        direction: int = 1 if self._wheel_accumulator > 0 else -1
-        self._wheel_accumulator -= steps * 120 * direction
-        if direction > 0:
+        steps: int = self._wheel_steps(delta)
+        if steps > 0:
             self._scroll_up(steps)
-        else:
-            self._scroll_down(steps)
+        elif steps < 0:
+            self._scroll_down(-steps)
 
     def wheelEvent(self, event: qt.QWheelEvent) -> None:  # type: ignore[override]
-        delta: int = event.angleDelta().y()
+        delta_y: int = event.angleDelta().y()
+        delta_x: int = event.angleDelta().x()
         if self.terminal.term_screen.mouse_mode != 0:
             if event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier:
                 # Shift bypass: scroll the history instead of reporting the
                 # wheel to the app.
-                self._wheel_scroll(delta)
+                self._wheel_scroll(delta_y)
                 event.accept()
                 return
             x: int
             y: int
             x, y = self._mouse_cell(event.position())
-            self._mouse_report(1 if delta > 0 else 0, x, y, pressed=True, wheel=True)
+            # One report per accumulated 120-degree step, so fractional
+            # touchpad deltas are forwarded at the same rate the scrollback
+            # path scrolls them.
+            steps: int = self._wheel_steps(delta_y)
+            if steps != 0:
+                self._mouse_report(
+                    1 if steps > 0 else 0, x, y, pressed=True, wheel=True
+                )
+            if delta_x != 0:
+                self._mouse_report(
+                    1 if delta_x > 0 else 0,
+                    x,
+                    y,
+                    pressed=True,
+                    wheel=True,
+                    horizontal=True,
+                )
             event.accept()
             return
-        self._wheel_scroll(delta)
+        self._wheel_scroll(delta_y)
         event.accept()
 
-    def contextMenuEvent(self, event: qt.QContextMenuEvent) -> None:  # type: ignore[override]
-        if self.terminal.term_screen.mouse_mode != 0:
+    def _drop_path_quoted(self, path: str) -> str:
+        """Shell-escaped form of a dropped path: single path kept bare,
+        any whitespace wrapped in double quotes so the shell does not split
+        it into two arguments."""
+        if " " in path or "\t" in path:
+            return '"' + path + '"'
+        return path
+
+    def dragEnterEvent(self, event: qt.QDragEnterEvent) -> None:  # type: ignore[override]
+        mime: Optional[qt.QMimeData] = event.mimeData()
+        if mime is not None and (mime.hasUrls() or mime.hasText()):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: qt.QDropEvent) -> None:  # type: ignore[override]
+        mime: Optional[qt.QMimeData] = event.mimeData()
+        if mime is None:
             event.ignore()
             return
+        if mime.hasUrls():
+            pieces: List[str] = [
+                self._drop_path_quoted(url.toLocalFile().replace("/", os.sep))
+                for url in mime.urls()
+                if url.toLocalFile()
+            ]
+            text: str = " ".join(pieces)
+        else:
+            text = mime.text()
+        if text:
+            # Reuse the paste channel: UTF-8-sanitized in the terminal slot
+            # and wrapped in bracketed-paste markers when the app asked for
+            # them, exactly like a middle-click or menu paste.
+            self.paste_event.emit(text)
+        event.acceptProposedAction()
+
+    def contextMenuEvent(self, event: qt.QContextMenuEvent) -> None:  # type: ignore[override]
+        screen: ExtendedScreen = self.terminal.term_screen
+        if screen.mouse_mode != 0 and not (
+            event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier
+        ):
+            # A mouse-capturing TUI owns the right button: the press and
+            # release were already forwarded (mousePressEvent/mouseReleaseEvent)
+            # so the app performs its own copy and draws its own toast
+            # (opencode's "Copied to clipboard"). Ex.Co. raises no menu, copies
+            # nothing and pastes nothing here; that keeps the app from also
+            # opening a menu or pasting on top of the forwarded gesture. The
+            # gesture is over, so consume the flags. Shift+right-click still
+            # raises the native menu below.
+            self._tui_right_forwarded = False
+            self._tui_right_synth = False
+            event.accept()
+            return
         context_menu: Any = gui.menu.Menu(parent=self)
+        uri: Optional[str] = self._hyperlink_at(qt.QPointF(event.pos()))
+        if uri is not None:
+            open_action: qt.QAction = qt.QAction("Open Link", self)
+            open_action.setToolTip("Open the hyperlink in the browser")
+            open_action.triggered.connect(functools.partial(functions.open_url, uri))
+            context_menu.addAction(open_action)
+            context_menu.addSeparator()
         copy_action: qt.QAction = qt.QAction("Copy", self)
         copy_action.setToolTip("Copy the selection to the clipboard")
         copy_action.setIcon(functions.create_icon("tango_icons/edit-copy.png"))

@@ -7,17 +7,17 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import enum
-from typing import Any
+from typing import Any, Callable
 
 import components.actionfilter
 import components.internals
 import constants
-import data
 import settings
 import functions
 import qt
 
 from gui.dialogs import *
+import gui.menu
 
 """
 -------------------------------------------------
@@ -33,9 +33,17 @@ class ItemType(enum.Enum):
     EMPTY_GROUP = enum.auto()
 
 
-class SessionGuiManipulator(qt.QTreeView):
+class SessionGuiManipulator(qt.QWidget):
     """
     GUI object for easier user editing of sessions
+
+    The tab widget itself is a plain container holding a QTreeView and a
+    footer bar, because the actions cannot live inside the tree: a
+    QAbstractScrollArea keeps owning its own viewport even after a QLayout
+    is installed on it, so a child laid out in that layout is centred over
+    the scrollable area rather than reserved a strip at the bottom. The
+    container's QVBoxLayout gives the tree the remaining height and pins
+    the footer flush underneath it.
     """
 
     class SessionItem(qt.QStandardItem):
@@ -47,7 +55,6 @@ class SessionGuiManipulator(qt.QTreeView):
         type = None
 
     # Class variables
-    parent = None
     main_form: Any = None
     current_icon = None
     internals = None
@@ -55,29 +62,26 @@ class SessionGuiManipulator(qt.QTreeView):
     savable = constants.CanSave.NO
     last_clicked_session = None
     tree_model: Any = None
+    tree_menu: Any = None
     edit_flag = False
-    session_groupbox = None
-    # Icons
-    node_icon_group = None
-    node_icon_session = None
-    icon_session_add = None
-    icon_session_remove = None
-    icon_session_overwrite = None
-    icon_group_add = None
-    icon_session_edit = None
+    # Icons, all set in __init__ before the tree model or the footer needs
+    # them, hence no None default here.
+    node_icon_group: qt.QIcon
+    node_icon_session: qt.QIcon
+    icon_session_add: qt.QIcon
+    icon_session_remove: qt.QIcon
+    icon_session_overwrite: qt.QIcon
+    icon_group_add: qt.QIcon
+    icon_session_edit: qt.QIcon
 
     def __del__(self):
         try:
             # Disconnect signals
-            self.doubleClicked.disconnect()
+            self.tree.doubleClicked.disconnect()
             # Clean up main references
             self._parent = None
             self.main_form = None
             self.internals = None
-            if self.session_groupbox != None:
-                self.session_groupbox.setParent(None)
-                self.session_groupbox.deleteLater()
-                self.session_groupbox = None
             # Clean up self
             self.setParent(None)
             self.deleteLater()
@@ -89,8 +93,13 @@ class SessionGuiManipulator(qt.QTreeView):
         # Initialize the superclass
         super().__init__(parent)
         # Initialize components
+        # Nothing in this module calls into Internals any more, but the tab
+        # still has to own one: the generic tab machinery reaches for
+        # `tab.internals` without checking (thebox.get_id, mainwindow
+        # update_icon, view.update_tab_widget, tabwidget.update_corner_widget,
+        # thesquid.restyle_corner_button_icons). Only add_corner_button was
+        # used from here, and that moved to the footer bar.
         self.internals = components.internals.Internals(parent=self, tab_widget=parent)
-        self.add_corner_buttons()
         # Store the reference to the parent TabWidget from the "forms" module
         self._parent = parent
         # Store the reference to the MainWindow form from the "forms" module
@@ -101,45 +110,87 @@ class SessionGuiManipulator(qt.QTreeView):
         self.current_icon = functions.create_icon("tango_icons/sessions.png")
         # Store name of self
         self.name = "Session editing tree display"
+        # Create the tree display that holds the sessions. It is a child of
+        # this container so that the footer bar can sit below it.
+        self.tree: qt.QTreeView = qt.QTreeView(self)
+        self.tree.setFont(settings.get_current_font())
         # Enable node expansion on double click
-        self.setExpandsOnDoubleClick(True)
+        self.tree.setExpandsOnDoubleClick(True)
+        # Mouse presses are delivered to the viewport of a scroll area, while
+        # focus events go to the tree itself, so both are watched. Bookkeeping
+        # that used to live in mousePressEvent moves into this filter: the
+        # container never sees either event.
+        self.tree.installEventFilter(self)
+        self.tree.viewport().installEventFilter(self)
         # Set the node icons
         self.node_icon_group = functions.create_icon("tango_icons/folder.png")
         self.node_icon_session = functions.create_icon("tango_icons/sessions.png")
         self.icon_session_add = functions.create_icon("tango_icons/session-add.png")
-        self.icon_session_remove = functions.create_icon("tango_icons/session-remove.png")
-        self.icon_session_overwrite = functions.create_icon("tango_icons/session-overwrite.png")
+        self.icon_session_remove = functions.create_icon(
+            "tango_icons/session-remove.png"
+        )
+        self.icon_session_overwrite = functions.create_icon(
+            "tango_icons/session-overwrite.png"
+        )
         self.icon_group_add = functions.create_icon("tango_icons/folder-add.png")
         self.icon_session_edit = functions.create_icon("tango_icons/session-edit.png")
         # Connect the signals
-        self.doubleClicked.connect(self.__item_double_clicked)
-        self.itemDelegate().closeEditor.connect(self.__item_editing_closed)
+        self.tree.doubleClicked.connect(self.__item_double_clicked)
+        self.tree.itemDelegate().closeEditor.connect(self.__item_editing_closed)
+        # Right click context menu, carrying the same actions as the footer
+        self.tree.setContextMenuPolicy(qt.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self.__show_context_menu)
         # Initialize the currently edited item reference
         self.__edit_item = None
+        # Assemble the container: tree on top, footer bar underneath
+        self.main_layout: qt.QVBoxLayout = qt.QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.main_layout)
+        self.main_layout.addWidget(self.tree)
+        self._create_footer()
+        # Set the theme
+        self.set_theme(settings.get_theme())
 
-    def clean_model(self):
-        if self.model() != None:
-            self.model().setParent(None)
-            self.setModel(None)
+    def eventFilter(self, object: qt.QObject, event: qt.QEvent) -> bool:  # type: ignore[override]
+        """
+        Track the interaction the container never sees itself.
 
-    def mousePressEvent(self, event):
-        """Function connected to the clicked signal of the tree display"""
-        super().mousePressEvent(event)
-        # Set the focus
-        self.setFocus()
-        # Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self._parent
-        # Set Save/SaveAs buttons in the menubar
-        self._parent._set_save_status()
-        # Reset the click&drag context menu action
-        components.actionfilter.ActionFilter.clear_action()
+        A press inside the tree reaches the viewport of the scroll area and a
+        focus change reaches the view, so neither mousePressEvent nor FocusIn
+        on the container would ever be called. Each event type is handled for
+        exactly one of the two objects: a scroll area propagates viewport
+        presses to itself as well, and accepting both would run the
+        bookkeeping twice.
+        """
+        event_type = event.type()
+        if (
+            event_type == qt.QEvent.Type.MouseButtonPress
+            and object is self.tree.viewport()
+        ):
+            # Set the focus on the tree
+            self.tree.setFocus()
+            # Set the last focused widget to the parent basic widget
+            self.main_form.last_focused_widget = self._parent
+            # Set Save/SaveAs buttons in the menubar
+            self._parent._set_save_status()
+            # Reset the click&drag context menu action
+            components.actionfilter.ActionFilter.clear_action()
+        elif event_type == qt.QEvent.Type.FocusIn and object is self.tree:
+            # Check indication
+            self.main_form.view.indication_check()
+        return super().eventFilter(object, event)
 
-    def setFocus(self):
-        """Overridden focus event"""
-        # Execute the supeclass focus function
-        super().setFocus()
-        # Check indication
-        self.main_form.view.indication_check()
+    def clean_model(self) -> None:
+        model: Any = self.tree.model()
+        if model is not None:
+            model.setParent(None)
+            self.tree.setModel(None)
+
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
+        """Forward the focus request, and its reason, to the inner tree"""
+        self.tree.setFocus(reason)
 
     def __item_double_clicked(self, model_index):
         """Callback connected to the treeview's 'clicked' signal"""
@@ -216,7 +267,9 @@ class SessionGuiManipulator(qt.QTreeView):
                 settings.get_sessions().store_sessions()
                 # Display successful group deletion
                 self.main_form.display.repl_display_message(
-                    "Group '{}' was renamed to '{}'!".format(old_group_name, new_group_name),
+                    "Group '{}' was renamed to '{}'!".format(
+                        old_group_name, new_group_name
+                    ),
                     message_type=constants.MessageType.SUCCESS,
                 )
                 # Refresh the session tree
@@ -337,7 +390,7 @@ class SessionGuiManipulator(qt.QTreeView):
         for chain in expanded_chains:
             node = self.__find_group_node(chain)
             if node is not None:
-                self.expand(node.index())
+                self.tree.expand(node.index())
         # Update the main window menu
         self.main_form.sessions.update_menu()
 
@@ -365,15 +418,20 @@ class SessionGuiManipulator(qt.QTreeView):
         )
 
     def __get_current_group(self):
-        if self.selectedIndexes() != []:
-            selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
+        if self.tree.selectedIndexes() != []:
+            selected_item = self.tree_model.itemFromIndex(
+                self.tree.selectedIndexes()[0]
+            )
             if selected_item.type == ItemType.SESSION:
                 chain = self.__get_node_chain(selected_item)
                 if len(chain) > 0:
                     return selected_item.parent()
                 else:
                     return None
-            elif selected_item.type == ItemType.GROUP or selected_item.type == ItemType.EMPTY_GROUP:
+            elif (
+                selected_item.type == ItemType.GROUP
+                or selected_item.type == ItemType.EMPTY_GROUP
+            ):
                 return selected_item
             else:
                 return None
@@ -396,7 +454,7 @@ class SessionGuiManipulator(qt.QTreeView):
             parent_group.appendRow(empty_group_node)
         else:
             self.tree_model.appendRow(empty_group_node)
-        self.scrollTo(empty_group_node.index())
+        self.tree.scrollTo(empty_group_node.index())
         # Start editing the new empty group
         self.__start_editing_item(empty_group_node)
 
@@ -414,10 +472,10 @@ class SessionGuiManipulator(qt.QTreeView):
         parent_group = self.__get_current_group()
         if parent_group is not None:
             parent_group.appendRow(empty_session_node)
-            self.expand(parent_group.index())
+            self.tree.expand(parent_group.index())
         else:
             self.tree_model.appendRow(empty_session_node)
-        self.scrollTo(empty_session_node.index())
+        self.tree.scrollTo(empty_session_node.index())
         # Start editing the new empty session
         self.__start_editing_item(empty_session_node)
 
@@ -426,9 +484,9 @@ class SessionGuiManipulator(qt.QTreeView):
         if self.edit_flag == True:
             return
         # Check if an item is selected
-        if self.selectedIndexes() == []:
+        if self.tree.selectedIndexes() == []:
             return
-        selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
+        selected_item = self.tree_model.itemFromIndex(self.tree.selectedIndexes()[0])
         # Check the selected item type
         if selected_item.type == ItemType.GROUP:
             group_chain = self.__get_node_chain(selected_item) + [selected_item.text()]
@@ -520,9 +578,9 @@ class SessionGuiManipulator(qt.QTreeView):
         if self.edit_flag == True:
             return
         # Check if a session is selected
-        if self.selectedIndexes() == []:
+        if self.tree.selectedIndexes() == []:
             return
-        selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
+        selected_item = self.tree_model.itemFromIndex(self.tree.selectedIndexes()[0])
         # Check the selected item type
         if selected_item.type == ItemType.GROUP:
             # Show message that groups cannot be overwritten
@@ -547,7 +605,7 @@ class SessionGuiManipulator(qt.QTreeView):
             self.refresh_display()
 
     def __start_editing_item(self, item):
-        self.edit(item.index())
+        self.tree.edit(item.index())
         self.__edit_item = item
 
     def edit_item(self) -> None:
@@ -557,16 +615,19 @@ class SessionGuiManipulator(qt.QTreeView):
         if self.edit_flag == True:
             return
         # Check if an item is selected
-        if self.selectedIndexes() == []:
+        if self.tree.selectedIndexes() == []:
             return
-        selected_item = self.tree_model.itemFromIndex(self.selectedIndexes()[0])
+        selected_item = self.tree_model.itemFromIndex(self.tree.selectedIndexes()[0])
 
         # Check the selected item type
-        if selected_item.type == ItemType.GROUP or selected_item.type == ItemType.SESSION:
+        if (
+            selected_item.type == ItemType.GROUP
+            or selected_item.type == ItemType.SESSION
+        ):
             selected_item.setEditable(True)
             selected_item.name = selected_item.text()
             self.__start_editing_item(selected_item)
-            # Lock the corner buttons for the duration of the edit. This has to
+            # Lock the footer buttons for the duration of the edit. This has to
             # stay inside the branch above: a row that no editor is opened for
             # would otherwise never get a closeEditor to clear the lock.
             self.edit_flag = True
@@ -580,10 +641,10 @@ class SessionGuiManipulator(qt.QTreeView):
         # Initialize the display
         self.tree_model = qt.QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["SESSIONS"])
-        self.header().hide()
+        self.tree.header().hide()
         #        self.clean_model()
-        self.setModel(self.tree_model)
-        self.setUniformRowHeights(True)
+        self.tree.setModel(self.tree_model)
+        self.tree.setUniformRowHeights(True)
         # Connect the tree model signals
         self.tree_model.itemChanged.connect(self.__item_changed)
         # Populate the model from the stored sessions
@@ -596,7 +657,9 @@ class SessionGuiManipulator(qt.QTreeView):
         # Clear the existing rows (if any)
         self.tree_model.removeRows(0, self.tree_model.rowCount())
         # font = qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"), qt.QFont.Bold)
-        font = qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
+        font = qt.QFont(
+            settings.get("current_font_name"), settings.get("current_font_size")
+        )
 
         ## Create the Sessions menu
         # Group processing function
@@ -606,7 +669,9 @@ class SessionGuiManipulator(qt.QTreeView):
                 item_group_node = self.SessionItem(in_group["name"])
                 item_group_node.setFont(font)
                 item_group_node.my_parent = self
-                item_group_node.name = in_group["chain"][-1] if len(in_group["chain"]) > 0 else ""
+                item_group_node.name = (
+                    in_group["chain"][-1] if len(in_group["chain"]) > 0 else ""
+                )
                 item_group_node.type = ItemType.GROUP
                 item_group_node.setEditable(False)
                 item_group_node.setIcon(self.node_icon_group)
@@ -617,7 +682,9 @@ class SessionGuiManipulator(qt.QTreeView):
             for g, v in sorted(in_group["groups"].items(), key=lambda x: x[0].lower()):
                 process_group(v, item_group_node)
             # Add the sessions
-            for s, v in sorted(in_group["sessions"].items(), key=lambda x: x[0].lower()):
+            for s, v in sorted(
+                in_group["sessions"].items(), key=lambda x: x[0].lower()
+            ):
                 item_session_node = self.SessionItem(s)
                 item_session_node.my_parent = self
                 item_session_node.name = s
@@ -636,7 +703,9 @@ class SessionGuiManipulator(qt.QTreeView):
         """
         chains = []
         if self.tree_model is not None:
-            self.__collect_expanded_chains(self.tree_model.invisibleRootItem(), [], chains)
+            self.__collect_expanded_chains(
+                self.tree_model.invisibleRootItem(), [], chains
+            )
         return chains
 
     def __collect_expanded_chains(self, node, prefix, chains):
@@ -646,7 +715,7 @@ class SessionGuiManipulator(qt.QTreeView):
                 continue
             if child.type == ItemType.GROUP:
                 chain = prefix + [child.text()]
-                if self.isExpanded(child.index()):
+                if self.tree.isExpanded(child.index()):
                     chains.append(chain)
                 self.__collect_expanded_chains(child, chain, chains)
 
@@ -673,28 +742,210 @@ class SessionGuiManipulator(qt.QTreeView):
             node = found
         return node
 
-    def add_corner_buttons(self):
+    def _create_footer(self) -> None:
+        """
+        Create the footer bar that carries the session actions.
+
+        Laid out and styled to match the text differ's footer exactly: the
+        same 28px height, the same margins and spacing, the same flat
+        action buttons and the same thin separators between button groups.
+        """
+        self.footer: qt.QWidget = qt.QWidget(self)
+        self.footer.setObjectName("session_editor_footer")
+        self.footer.setFixedHeight(28)
+        self.footer_layout: qt.QHBoxLayout = qt.QHBoxLayout()
+        self.footer_layout.setContentsMargins(8, 2, 8, 2)
+        self.footer_layout.setSpacing(8)
+        self.footer.setLayout(self.footer_layout)
+        # The differ keeps its badges and stats on the left, so the actions
+        # are pushed to the right here with a stretch
+        self.footer_layout.addStretch()
+        self._footer_buttons: list[qt.QPushButton] = []
         # Edit session
-        self.internals.add_corner_button(
-            "tango_icons/session-edit.png", "Edit the selected item", self.edit_item
+        self._add_footer_button(
+            self.icon_session_edit, "Edit the selected item", self.edit_item
         )
         # Overwrite session
-        self.internals.add_corner_button(
-            "tango_icons/session-overwrite.png",
+        self._add_footer_button(
+            self.icon_session_overwrite,
             "Overwrite the selected session",
             self.overwrite_session,
         )
+        self._make_vline()
         # Add group
-        self.internals.add_corner_button(
-            "tango_icons/folder-add.png", "Add a new group", self.add_empty_group
+        self._add_footer_button(
+            self.icon_group_add, "Add a new group", self.add_empty_group
         )
         # Add session
-        self.internals.add_corner_button(
-            "tango_icons/session-add.png", "Add a new session", self.add_empty_session
+        self._add_footer_button(
+            self.icon_session_add, "Add a new session", self.add_empty_session
         )
+        self._make_vline()
         # Remove session/group
-        self.internals.add_corner_button(
-            "tango_icons/session-remove.png",
+        self._add_footer_button(
+            self.icon_session_remove,
             "Remove the selected session/group",
             self.remove_item,
         )
+        self.main_layout.addWidget(self.footer)
+
+    def _add_footer_button(
+        self, icon: qt.QIcon, tooltip: str, function: Callable[[], Any]
+    ) -> None:
+        """Add a flat, icon-only action button to the footer bar."""
+        button = qt.QPushButton(self.footer)
+        button.setObjectName("session_editor_action_button")
+        button.setIcon(icon)
+        button.setToolTip(tooltip)
+        button.setFlat(True)
+        button.clicked.connect(function)
+        self.footer_layout.addWidget(button)
+        self._footer_buttons.append(button)
+
+    def _make_vline(self) -> None:
+        """Add a thin vertical separator to the footer bar."""
+        line = qt.QWidget(self.footer)
+        line.setObjectName("session_editor_vline")
+        line.setFixedWidth(1)
+        self.footer_layout.addWidget(line)
+
+    def _apply_footer_theme(self, theme: dict[str, Any]) -> None:
+        """
+        Style the footer bar with the colours of the active theme.
+
+        The differ derives its three badges from the diff accent colours;
+        the sessions have no equivalent, so only the neutral bar, the button
+        border and the hover state are themed here.
+        """
+        background = theme["linemargin"]["background"]
+        border = theme["scrollbar"]["handle"]
+        button_border = theme["indication"]["passiveborder"]
+        hover = theme["indication"]["hover"]
+        self.footer.setStyleSheet(
+            """
+#session_editor_footer {{
+    background-color: {};
+    border-top: 1px solid {};
+}}
+QPushButton#session_editor_action_button {{
+    background: transparent;
+    border: none;
+    padding: 1px 3px;
+}}
+QPushButton#session_editor_action_button {{
+    border: 1px solid {};
+    border-radius: 3px;
+}}
+QPushButton#session_editor_action_button:hover {{
+    background: {};
+}}
+QWidget#session_editor_vline {{
+    background-color: {};
+    min-width: 1px;
+    max-width: 1px;
+}}
+""".format(
+                background,
+                border,
+                button_border,
+                hover,
+                border,
+            )
+        )
+
+    def set_theme(self, theme: dict[str, Any]) -> None:
+        self._apply_footer_theme(theme)
+
+    def _context_action(
+        self, menu: qt.QMenu, text: str, icon: qt.QIcon, function: Callable[[], Any]
+    ) -> None:
+        """Add an action to the context menu."""
+        action = qt.QAction(text, menu)
+        action.setIcon(icon)
+        action.triggered.connect(function)
+        menu.addAction(action)
+
+    def _build_context_menu(self, index: qt.QModelIndex | None) -> qt.QMenu:
+        """
+        Build the context menu for a right click at *index*.
+
+        This mirrors the footer bar, restricted to what makes sense where
+        the click landed: the background of the tree offers the two creation
+        actions, an item offers the actions that apply to it, and a group
+        also offers the creation actions, which fill that group. Overwrite is
+        meaningless for a group, so it is left out there instead of failing
+        once it is triggered. A half-created row (an empty group or session
+        that is being typed) can only sensibly be dropped.
+        """
+        menu = gui.menu.Menu(self)
+        item = None
+        if index is not None and index.isValid() and self.tree_model is not None:
+            item = self.tree_model.itemFromIndex(index)
+        # The background of the tree
+        if item is None:
+            self._context_action(
+                menu, "Add group", self.icon_group_add, self.add_empty_group
+            )
+            self._context_action(
+                menu, "Add session", self.icon_session_add, self.add_empty_session
+            )
+            return menu
+        # A row that is still being typed in
+        if item.type in (ItemType.EMPTY_SESSION, ItemType.EMPTY_GROUP):
+            self._context_action(
+                menu, "Remove", self.icon_session_remove, self.remove_item
+            )
+            return menu
+        # A stored group or session
+        self._context_action(menu, "Edit name", self.icon_session_edit, self.edit_item)
+        if item.type == ItemType.SESSION:
+            self._context_action(
+                menu, "Overwrite", self.icon_session_overwrite, self.overwrite_session
+            )
+        else:
+            # A group can hold more, and the right click has already selected
+            # it, so these land inside the group that was clicked.
+            menu.addSeparator()
+            self._context_action(
+                menu, "Add group", self.icon_group_add, self.add_empty_group
+            )
+            self._context_action(
+                menu, "Add session", self.icon_session_add, self.add_empty_session
+            )
+        menu.addSeparator()
+        self._context_action(menu, "Remove", self.icon_session_remove, self.remove_item)
+        return menu
+
+    def _select_for_context_menu(self, index: qt.QModelIndex) -> None:
+        """
+        Move the selection onto the item that was right clicked.
+
+        The context menu triggers the very same handlers the footer bar
+        does, and those act on the current selection, so without this a
+        right click would edit or remove whatever happened to be selected
+        before. A click on the background clears the selection instead, so
+        that the two creation actions add at the top level rather than
+        inside a group that merely was selected.
+        """
+        if index.isValid():
+            selection_model: Any = self.tree.selectionModel()
+            selection_model.select(
+                index,
+                qt.QItemSelectionModel.SelectionFlag.ClearAndSelect
+                | qt.QItemSelectionModel.SelectionFlag.Rows,
+            )
+            self.tree.setCurrentIndex(index)
+        else:
+            self.tree.clearSelection()
+            self.tree.setCurrentIndex(qt.QModelIndex())
+
+    def __show_context_menu(self, position: qt.QPoint) -> None:
+        """Show the context menu for a right click at *position*."""
+        index = self.tree.indexAt(position)
+        self._select_for_context_menu(index)
+        if self.tree_menu is not None:
+            self.tree_menu.setParent(None)
+            self.tree_menu = None
+        self.tree_menu = self._build_context_menu(index)
+        viewport: Any = self.tree.viewport()
+        self.tree_menu.popup(viewport.mapToGlobal(position))
