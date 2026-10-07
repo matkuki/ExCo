@@ -1015,9 +1015,7 @@ QWidget#text_differ_vline {{
         editor.setBraceMatching(qt.QsciScintilla.BraceMatch.SloppyBraceMatch)
         editor.setMatchedBraceBackgroundColor(qt.QColor(255, 153, 0))
         editor.setAcceptDrops(False)
-        editor.setEolMode(
-            qt.QsciScintilla.EolMode(settings.get("editor")["end_of_line_mode"])
-        )
+        editor.setEolMode(qt.QsciScintilla.EolMode.EolUnix)
         editor.setReadOnly(True)
         editor.savable = constants.CanSave.NO
 

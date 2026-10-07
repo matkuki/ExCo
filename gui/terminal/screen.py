@@ -64,6 +64,12 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         # also clears keyboard_flags, so it lives here too.
         self.pending_scroll: int = 0
         self.keyboard_flags: int = 0
+        # Bumped whenever an absolute index into history.top could start
+        # pointing at different content: the bounded deque overflowing (index)
+        # or the scrollback being emptied (_reset_history). The view records it
+        # with a selection and drops that selection once it moves on. Declared
+        # here because pyte's reset() runs inside super().__init__() below.
+        self.history_generation: int = 0
         super().__init__(*args, **kwargs)
         # Alternate screen state
         self._alt_saved: Optional[Dict[str, Any]] = None
@@ -146,6 +152,13 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         # frozen; scrolled-out lines simply disappear.
         scrolled: bool = self._full_screen_margins() and self.cursor.y == self.lines - 1
         if self._alt_saved is None:
+            # pyte appends the scrolled-out row to history.top, a bounded
+            # deque that then silently drops its leftmost row -- so every
+            # absolute index into it shifts. This is the only point where the
+            # pre-append length is observable.
+            maxlen: Optional[int] = self.history.top.maxlen
+            if scrolled and maxlen is not None and len(self.history.top) >= maxlen:
+                self.history_generation += 1
             super().index()
         else:
             pyte_screens.Screen.index(self)
@@ -282,6 +295,13 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
 
     def bell(self, *args: Any) -> None:
         self.bell_triggered = True
+
+    def _reset_history(self) -> None:
+        # The single funnel for an emptied scrollback: both reset() and
+        # erase_in_display(3) reach it, and every stored history index is
+        # invalid afterwards.
+        self.history_generation += 1
+        super()._reset_history()
 
     def reset(self) -> None:
         self.keyboard_flags = 0

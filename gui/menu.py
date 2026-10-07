@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import uuid
 import qt
 import data
+import settings
 
 from gui.stylesheets import *
 
@@ -36,8 +37,6 @@ class Menu(qt.QMenu):
         Menu.menu_cache[self._id] = self
         # Set options
         self.setToolTipsVisible(True)
-        # Set default font
-        self.setFont(settings.get_current_font())
         # Update style
         self.update_style()
 
@@ -46,7 +45,8 @@ class Menu(qt.QMenu):
         self.update_style()
 
     def update_style(self):
-        pass
+        # Set the default font
+        self.setFont(settings.get_menu_font())
 
 
 class MenuBar(qt.QMenuBar):
@@ -56,5 +56,5 @@ class MenuBar(qt.QMenuBar):
         self.update_style()
 
     def update_style(self):
-        # Set the default font
-        self.setFont(settings.get_current_font())
+        # Set the font from the menu font setting
+        self.setFont(settings.get_menu_font())

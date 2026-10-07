@@ -40,14 +40,22 @@ class TheSquid:
 
     @staticmethod
     def update_styles():
+        from gui.menu import Menu
+
+        Menu.update_styles()
+
         if TheSquid.main_form == None:
             # Do not update if the main form is not initialized
             return
         TheSquid.update_objects()
 
-        if settings.get("custom_menu_font") != None:
-            for action in TheSquid.main_form.menubar.stored_actions:
-                action.setFont(qt.QFont(*settings.get("custom_menu_font")))
+        menu_font = settings.get_menu_font()
+        menubar = getattr(TheSquid.main_form, "menubar", None)
+        if menubar is not None:
+            if hasattr(menubar, "update_style"):
+                menubar.update_style()
+            for action in getattr(menubar, "stored_actions", []):
+                action.setFont(menu_font)
 
         windows = TheSquid.main_form.get_all_windows()
 
@@ -59,12 +67,15 @@ class TheSquid:
                     if settings.get("custom_menu_scale") != None:
                         window.widget(i).corner_widget.setIconSize(
                             qt.QSize(
-                                settings.get("custom_menu_scale"), settings.get("custom_menu_scale")
+                                settings.get("custom_menu_scale"),
+                                settings.get("custom_menu_scale"),
                             )
                         )
                     else:
                         window.widget(i).corner_widget.setIconSize(qt.QSize(16, 16))
                 if hasattr(window.widget(i), "internals"):
                     window.widget(i).internals.restyle_corner_button_icons()
-                if isinstance(window.widget(i), TheSquid.__module_customeditor.TreeDisplayBase):
+                if isinstance(
+                    window.widget(i), TheSquid.__module_customeditor.TreeDisplayBase
+                ):
                     window.widget(i).update_styles()

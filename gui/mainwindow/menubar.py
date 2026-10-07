@@ -1087,12 +1087,26 @@ def init_menubar(self) -> None:
                     message, message_type=constants.MessageType.ERROR
                 )
 
+        def focus_tree_filter() -> None:
+            """Focus the filter bar on the currently active tree tab."""
+            tab = self.get_used_tab()
+            if hasattr(tab, "focus_filter"):
+                tab.focus_filter()
+
         node_tree_action = create_action(
             "Create/reload node tree (C / Nim / Python / ...)",
             settings.get("keyboard-shortcuts")["general"]["node_tree"],
             "Create a node tree for the code for the currently selected document (C / Nim / Python / ...)",
             "tango_icons/edit-node-tree.png",
             create_node_tree,
+        )
+
+        filter_tree_action = create_action(
+            "Focus tree filter",
+            settings.get("keyboard-shortcuts")["general"]["filter_tree"],
+            "Focus the filter field of the current tree (explorer or node tree)",
+            None,
+            focus_tree_filter,
         )
 
         def special_goto_line() -> None:
@@ -1394,6 +1408,7 @@ def init_menubar(self) -> None:
         edit_menu.addAction(to_uppercase_action)
         edit_menu.addAction(to_lowercase_action)
         edit_menu.addAction(node_tree_action)
+        edit_menu.addAction(filter_tree_action)
         edit_menu.addAction(reload_file_action)
         edit_menu.addAction(open_in_browser_action)
         edit_menu.addAction(reset_context_menu_action)
@@ -2258,12 +2273,14 @@ def init_menubar(self) -> None:
 
         # === Code formatting ===
         # Menu
-        formatting_menu = tools_menu.addMenu("Formatting")
+        formatting_menu = Menu("Formatting", tools_menu)
+        tools_menu.addMenu(formatting_menu)
         temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
         formatting_menu.setIcon(temp_icon)
 
         # Python
-        formatting_menu_python = formatting_menu.addMenu("Python")
+        formatting_menu_python = Menu("Python", formatting_menu)
+        formatting_menu.addMenu(formatting_menu_python)
         temp_icon = functions.create_icon("language_icons/logo_python.png")
         formatting_menu_python.setIcon(temp_icon)
 
@@ -2322,7 +2339,8 @@ def init_menubar(self) -> None:
             formatting_menu_python.addAction(format_python_action)
 
         # C / C++
-        formatting_menu_c_cpp = formatting_menu.addMenu("C/C++")
+        formatting_menu_c_cpp = Menu("C/C++", formatting_menu)
+        formatting_menu.addMenu(formatting_menu_c_cpp)
         temp_icon = functions.create_icon("language_icons/logo_c_cpp.png")
         formatting_menu_c_cpp.setIcon(temp_icon)
 
@@ -2361,7 +2379,8 @@ def init_menubar(self) -> None:
             formatting_menu_c_cpp.addAction(format_c_cpp_clang_format_action)
 
         # Zig
-        formatting_menu_zip = formatting_menu.addMenu("Zig")
+        formatting_menu_zip = Menu("Zig", formatting_menu)
+        formatting_menu.addMenu(formatting_menu_zip)
         temp_icon = functions.create_icon("language_icons/logo_zig.png")
         formatting_menu_zip.setIcon(temp_icon)
 
@@ -2383,7 +2402,8 @@ def init_menubar(self) -> None:
         formatting_menu_zip.addAction(format_zig_action)
 
         # Nim
-        formatting_menu_nim = formatting_menu.addMenu("Nim")
+        formatting_menu_nim = Menu("Nim", formatting_menu)
+        formatting_menu.addMenu(formatting_menu_nim)
         temp_icon = functions.create_icon("language_icons/logo_nim.png")
         formatting_menu_nim.setIcon(temp_icon)
 
@@ -2407,7 +2427,8 @@ def init_menubar(self) -> None:
 
         # === Analyzing ===
         # Menu
-        analyzing_menu = tools_menu.addMenu("Analyzing")
+        analyzing_menu = Menu("Analyzing", tools_menu)
+        tools_menu.addMenu(analyzing_menu)
         temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
         analyzing_menu.setIcon(temp_icon)
 
@@ -2437,7 +2458,8 @@ def init_menubar(self) -> None:
 
         # === Pretty printing ===
         # Menu
-        pretty_print_menu = tools_menu.addMenu("Petty printing")
+        pretty_print_menu = Menu("Petty printing", tools_menu)
+        tools_menu.addMenu(pretty_print_menu)
         temp_icon = functions.create_icon("tango_icons/view-edge-marker.png")
         pretty_print_menu.setIcon(temp_icon)
 

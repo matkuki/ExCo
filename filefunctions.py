@@ -107,7 +107,9 @@ def replace_text_in_files_enum(
                     return_files[file].append(i)
                 else:
                     return_files[file] = [i]
-                file_text_list[i] = re.sub(compiled_search_re, replace_text, file_text_list[i])
+                file_text_list[i] = re.sub(
+                    compiled_search_re, replace_text, file_text_list[i]
+                )
         # Write the replaced text back to the file
         replaced_text = "\n".join(file_text_list)
         write_to_file(replaced_text, file)
@@ -115,7 +117,9 @@ def replace_text_in_files_enum(
     return return_files
 
 
-def find_files_by_name(search_filename, search_dir, case_sensitive=False, search_subdirs=True):
+def find_files_by_name(
+    search_filename, search_dir, case_sensitive=False, search_subdirs=True
+):
     """
     Find file with search_filename string in its name in the specified directory.
     """
@@ -151,7 +155,9 @@ def find_files_by_name(search_filename, search_dir, case_sensitive=False, search
     return found_file_list
 
 
-def _walk_text_files(search_dir, search_subdirs=True, file_filter=None, cancel_flag=None):
+def _walk_text_files(
+    search_dir, search_subdirs=True, file_filter=None, cancel_flag=None
+):
     """Yield text file paths in search_dir matching file_filter."""
     if not os.path.isdir(search_dir):
         return
@@ -229,7 +235,9 @@ def find_files_with_text_enum(
     elif search_text == "":
         return "Cannot search for empty string!"
 
-    text_file_list = list(_walk_text_files(search_dir, search_subdirs, file_filter, cancel_flag))
+    text_file_list = list(
+        _walk_text_files(search_dir, search_subdirs, file_filter, cancel_flag)
+    )
 
     return_file_dict = {}
     for file in text_file_list:
@@ -258,7 +266,9 @@ def test_text_file(file_with_path):
     # Try to read all of the lines in the file, return None if there is an error
     # (using Grace Hopper's/Alex Martelli's forgivness/permission principle)
     try:
-        file = open(file_with_path, "r", encoding=locale.getpreferredencoding(), errors="strict")
+        file = open(
+            file_with_path, "r", encoding=locale.getpreferredencoding(), errors="strict"
+        )
         # Read only a couple of lines in the file
         for line in itertools.islice(file, 10):
             line = line
@@ -271,7 +281,9 @@ def test_text_file(file_with_path):
         test_encodings = ["utf-8", "ascii", "utf-16", "utf-32", "iso-8859-1", "latin-1"]
         for current_encoding in test_encodings:
             try:
-                file = open(file_with_path, "r", encoding=current_encoding, errors="strict")
+                file = open(
+                    file_with_path, "r", encoding=current_encoding, errors="strict"
+                )
                 # Read only a couple of lines in the file
                 for line in itertools.islice(file, 10):
                     line = line
@@ -420,6 +432,27 @@ def read_file_to_string(file_with_path):
                 # Error occured while reading the file, skip to next encoding
                 continue
     # Error, no encoding was correct
+    return None
+
+
+def detect_file_eol(file_with_path: str) -> str | None:
+    """Detect the dominant line ending of a file by reading raw bytes,
+    so the result is not affected by universal-newline translation.
+    Returns None when the file contains no line ends at all."""
+    try:
+        with open(file_with_path, "rb") as file:
+            chunk = file.read(1024 * 1024)
+    except:
+        return None
+    crlf_count = chunk.count(b"\r\n")
+    lf_count = chunk.count(b"\n") - crlf_count
+    cr_count = chunk.count(b"\r") - crlf_count
+    if crlf_count > 0 and crlf_count >= lf_count and crlf_count >= cr_count:
+        return "\r\n"
+    if lf_count > 0 and lf_count >= cr_count:
+        return "\n"
+    if cr_count > 0:
+        return "\r"
     return None
 
 

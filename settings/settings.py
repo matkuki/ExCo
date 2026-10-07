@@ -244,31 +244,24 @@ class SettingsManipulator:
         if data.platform == "Windows":
             new_file = new_file.replace("\\", "/")
 
+        max_count = self.get("max-number-of-recent-files")
         current_list = self.get("recent_files").copy()
 
-        # Check recent files list length
-        while len(current_list) > self.get("max-number-of-recent-files"):
-            # The recent files list is to long
+        # Trim the list down to the maximum allowed length
+        while len(current_list) > max_count:
             current_list.pop(0)
-        # Check if he new file is already in the list
-        if new_file in self.get("recent_files"):
-            # Check if the file is already at the top
-            if current_list.index(new_file) == (
-                self.get("max-number-of-recent-files") - 1
-            ):
-                return
-            # Remove the old file with the same name as the new file from the list
-            try:
-                while True:
-                    pop_index = current_list.index(new_file)
-                    current_list.pop(pop_index)
-            except ValueError:
-                pass
-            # Add the new file to the end of the list
-            current_list.append(new_file)
-        else:
-            # The new file is not in the list, append it to the end of the list
-            current_list.append(new_file)
+
+        # The file is already at the top, nothing changes
+        if current_list and current_list[-1] == new_file:
+            return
+
+        # Remove every existing occurrence, then push the file to the top
+        while new_file in current_list:
+            current_list.remove(new_file)
+        current_list.append(new_file)
+        # Keep the list within the maximum length after the append
+        while len(current_list) > max_count:
+            current_list.pop(0)
 
         self.set("recent_files", current_list)
 
@@ -718,6 +711,27 @@ class SettingsStorage(UserDict):
             )
             raise KeyError(f"'{key}' not found in settings.")
 
+    def _deep_merge(self, base: dict, overlay: dict) -> dict:
+        """
+        Recursively merge *overlay* into *base*, returning the result.
+
+        Keys present in *overlay* overwrite those in *base*. When both values are
+        dicts, they are merged recursively rather than replaced, so that new
+        keys added to a default nested dict (e.g. a new keyboard shortcut) are
+        preserved even when the user's saved settings predate them.
+        """
+        result = dict(base)
+        for key, value in overlay.items():
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
+                result[key] = self._deep_merge(result[key], value)
+            else:
+                result[key] = value
+        return result
+
     def update(self, other=None, _initial_load=False, **kwargs) -> None:
         """
         Overrides the update method to save settings only if the data truly changes.
@@ -744,10 +758,12 @@ class SettingsStorage(UserDict):
                     and isinstance(self.data[key], dict)
                     and isinstance(value, dict)
                 ):
-                    self.data[key].update(value)
-                    _changed = True
-                    if key not in changed_keys:
-                        changed_keys.append(key)
+                    merged = self._deep_merge(self.data[key], value)
+                    if merged != self.data[key]:
+                        self.data[key] = merged
+                        _changed = True
+                        if key not in changed_keys:
+                            changed_keys.append(key)
                 else:
                     _set_item_and_check_change(key, value)
 
@@ -757,10 +773,12 @@ class SettingsStorage(UserDict):
                 and isinstance(self.data[key], dict)
                 and isinstance(value, dict)
             ):
-                self.data[key].update(value)
-                _changed = True
-                if key not in changed_keys:
-                    changed_keys.append(key)
+                merged = self._deep_merge(self.data[key], value)
+                if merged != self.data[key]:
+                    self.data[key] = merged
+                    _changed = True
+                    if key not in changed_keys:
+                        changed_keys.append(key)
             else:
                 _set_item_and_check_change(key, value)
 

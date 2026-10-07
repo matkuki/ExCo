@@ -7,142 +7,106 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import re
+from typing import Any, Callable
+
+# All three line-end forms in one pattern, so "\r\n" is treated as a single
+# line end instead of a lone "\r" followed by a lone "\n".
+_LINE_END_REGEX = re.compile(r"\r\n|\r|\n")
+
+
+def split_lines(text: str) -> list[str]:
+    """Split text into lines on CRLF, CR or LF line ends."""
+    return _LINE_END_REGEX.split(text)
+
+
+def eol_string(mode: int) -> str:
+    """Return the line-end string for a QsciScintilla EolMode value
+    (0 = Windows CRLF, 1 = Mac CR, 2 = Unix LF)."""
+    if mode == 0:
+        return "\r\n"
+    if mode == 1:
+        return "\r"
+    return "\n"
 
 
 class LineList(list):
     """
     List object that will hold the lines of the CustomEditor.
     It's a subclassed Python built-in list object for easier text manipulation.
+
+    Indexing is standard Python (0-based, slice stops are exclusive).
+    Every write forwards the change to the parent editor document.
     """
 
     # Class variables
-    _parent = None
+    _parent: Any = None
 
     """
     Class functions/methods
     """
 
-    def __init__(self, parent, initial_text):
+    def __init__(self, parent: Any, initial_text: Any) -> None:
         """Overridden init function"""
         # Initialize superclass
         super().__init__()
         # Set the reference to the parent object
         self._parent = parent
-        # Check if initial text is valid
-        if initial_text:
-            # Update the list of lines
+        # Set the initial content (an empty string is one empty line,
+        # exactly like the editor document it mirrors)
+        if isinstance(initial_text, str):
             self.update_text_to_list(initial_text)
 
-    def __getitem__(self, key):
-        """Overridden list method that returns the specified line(item)"""
-        # Check if the value is an int or a slice
-        if isinstance(key, int):
-            # Create a new key variable, because key is ReadOnly
-            actual_key = key
-            # Check if the key is lower than 1
-            if actual_key == 0:
-                actual_key = 1
-            # Check if the key is greater than 0
-            if actual_key > 0:
-                actual_key -= 1
-            # Return the line string
-            return super().__getitem__(actual_key)
-        elif isinstance(key, slice):
-            # Create new key variables, because key is ReadOnly
-            key_min = key.start
-            key_max = key.stop
-            # Check the lower bound of the slice is 0
-            if key_min == None:
-                key_min = 0
-            # Check if the key is greater than 0
-            if key_min > 0:
-                key_min -= 1
-            key_slice = slice(key_min, key_max)
-            return super().__getitem__(key_slice)
-        # The key is an invalid type
-        return None
-
-    def __setitem__(self, key, value):
-        """Overridden list method that sets the specified line(item) to a value"""
+    def __setitem__(self, key: Any, value: Any) -> None:
+        """Overridden list method that sets the specified line(item) and
+        forwards the change to the parent editor document"""
         # Check if the value is a string or a list
         if isinstance(value, str) == False and isinstance(value, list) == False:
             raise Exception("Value has to be a list or a string!")
-        # Check if the value is a string or a list
+        # Set a single line
         if isinstance(value, str):
-            # Try to set the line
+            if isinstance(key, int) == False:
+                raise Exception("A string value needs an integer index!")
+            # Translate the possibly negative index to a positive one
+            actual_key = key if key >= 0 else len(self) + key
             try:
-                # Create a new key variable, because key is ReadOnly
-                actual_key = key
-                # Check if the key is 0
-                if actual_key == 0:
-                    actual_key = 1
-                # Check if the key is greater than 0
-                if actual_key > 0:
-                    actual_key -= 1
-                # Set the line
-                super().__setitem__(actual_key, value)
-            except:
+                super().__setitem__(key, value)
+            except IndexError:
                 self.append(value, update_parent=False)
-            # Update the custom editor document text
-            self._parent.set_line(value, key)
-        else:
-            # The value is a list
-            # Create new key variables, because key is ReadOnly
-            key_min = key.start
-            key_max = key.stop
-            # Check if the lower boundary of the slice is 0
-            if key_min == 0:
-                key_min = 1
-            # Check boundary order
-            if key_max < key_min:
-                raise Exception(
-                    "First index has to be higher than the second!"
-                    + " {}(max) > {}(min)".format(key_max, key_min)
-                )
-            # Check the boundaries
-            if len(value) != (key_max - key_min + 1):
-                raise Exception("Ranges of assignment don't match!")
-            # Insert the range into the custom list object
-            super().__setitem__(slice(key_min - 1, key_max), value)
-            # Adjust the line numbers to standard(0..lines()-1) numbering
-            line_from = key_min - 1
-            line_to = key_max - 1
-            # Set the new lines in the custom editor document
-            self._parent.set_lines(line_from, line_to, value)
+            # Update the custom editor document text (line numbers are 1-based)
+            self._parent.set_line(value, actual_key + 1)
+            return
+        # The value is a list, so the key has to be a slice
+        if isinstance(key, slice) == False:
+            raise Exception("A list value needs a slice!")
+        if all(isinstance(item, str) for item in value) == False:
+            raise Exception("All value list items must be strings!")
+        # Resolve the slice bounds against the current length
+        start, stop, step = key.indices(len(self))
+        if step != 1:
+            raise Exception("Slice steps are not supported!")
+        # Check the boundaries - slice length is (stop - start)
+        if len(value) != stop - start:
+            raise Exception("Ranges of assignment don't match!")
+        # Insert the range into the custom list object
+        super().__setitem__(slice(start, stop), value)
+        # Set the new lines in the custom editor document
+        if stop > start:
+            self._parent.set_lines(start, stop, value)
 
-    def __iadd__(self, value):
-        """Overloaded '+=' operator"""
-        raise Exception("'+=' operator not implemented yet!")
+    # In-place operators not implemented; delegating to base list would change
+# the list without notifying the parent editor.
 
-    def __isub__(self, value):
-        """Overloaded '-=' operator"""
-        raise Exception("'-=' operator not implemented yet!")
-
-    def __imul__(self, value):
-        """Overloaded '*=' operator"""
-        raise Exception("'*=' operator not implemented yet!")
-
-    def _setitem(self, key, value):
+    def _setitem(self, key: int, value: Any) -> None:
         """Set the item at position-key, without updating the scintilla document"""
         # Check if the value is a string
         if isinstance(value, str) == False:
             return
-        # Try to set the line
         try:
-            # Create a new key variable, because key is ReadOnly
-            actual_key = key
-            # Check if the key is 0
-            if actual_key == 0:
-                actual_key = 1
-            # Check if the key is greater than 0
-            if actual_key > 0:
-                actual_key -= 1
-            # Set the line
-            super().__setitem__(actual_key, value)
-        except:
+            super().__setitem__(key, value)
+        except IndexError:
             self.append(value, update_parent=False)
 
-    def _update_list_to_text(self, scroll_to_line=None):
+    def _update_list_to_text(self, scroll_to_line: int | None = None) -> None:
         """Update the list of lines to the parent CustomEditor document"""
         # Merge the list into a single string with the
         # newline character as the delimiter
@@ -155,7 +119,7 @@ class LineList(list):
         # Scroll to the desired line of the document
         self._parent.setCursorPosition(scroll_to_line, 0)
 
-    def append(self, value, update_parent=True):
+    def append(self, value: Any, update_parent: bool = True) -> None:
         """
         Overloaded list append method
         Special arguments:
@@ -181,7 +145,7 @@ class LineList(list):
         if update_parent == True:
             self._update_list_to_text()
 
-    def extend(self, value, update_parent=True):
+    def extend(self, value: Any, update_parent: bool = True) -> None:
         """
         Overloaded list extend method
         Special arguments:
@@ -204,42 +168,42 @@ class LineList(list):
         if update_parent == True:
             self._update_list_to_text()
 
-    def insert(self, index, value, update_parent=True):
-        """Overloaded insert method"""
+    def insert(self, index: Any, value: Any, update_parent: bool = True) -> None:
+        """Overloaded insert method (0-based index, like list.insert)"""
         # Check the insert index type
         if isinstance(index, int) == False:
             raise Exception("Insert index parameter must be an integer!")
         # Check the insert value type
         if isinstance(value, str) == False:
             raise Exception("Insert parameter must be a string!")
-        # Correct and check the index
-        index -= 1
-        if index < 0:
-            index = 0
+        # Translate the possibly negative index to a positive one
+        actual_index = index if index >= 0 else len(self) + index
         # Insert the item
         super().insert(index, value)
         # Check if updating the parent document is needed
         if update_parent == True:
-            self._update_list_to_text(index)
+            self._update_list_to_text(max(actual_index, 0))
 
-    def pop(self, index=None, update_parent=True):
-        """Overloaded pop method"""
-        # Check the insert index type
-        if isinstance(index, int) == False:
+    def pop(self, index: Any = None, update_parent: bool = True) -> Any:
+        """Overloaded pop method (0-based index, like list.pop)"""
+        # Check the pop index type
+        if index is not None and isinstance(index, int) == False:
             raise Exception("Pop index parameter must be an integer!")
-        # Correct and check the index
-        index -= 1
-        if index < 0:
-            index = 0
-        # Pop out the item
-        return_item = super().pop(index)
+        if index is None:
+            return_item = super().pop()
+            scroll_to_line = max(len(self), 0)
+        else:
+            # Translate the possibly negative index to a positive one
+            actual_index = index if index >= 0 else len(self) + index
+            return_item = super().pop(index)
+            scroll_to_line = max(actual_index, 0)
         # Check if updating the parent document is needed
         if update_parent == True:
-            self._update_list_to_text(index)
+            self._update_list_to_text(scroll_to_line)
         # Return the poped line
         return return_item
 
-    def remove(self, item, update_parent=True):
+    def remove(self, item: Any, update_parent: bool = True) -> None:
         """Overloaded remove method"""
         # Check the insert index type
         if isinstance(item, str) == False:
@@ -247,18 +211,14 @@ class LineList(list):
         # Check if item exists
         if not (item in self):
             raise Exception("Cannot remove item! Item is not in the list!")
-        else:
-            index = self.index(item) - 1
-            # Check the index
-            if index < 0:
-                index = 0
+        index = self.index(item)
         # Remove the item
         super().remove(item)
         # Check if updating the parent document is needed
         if update_parent == True:
-            self._update_list_to_text(index)
+            self._update_list_to_text(max(index - 1, 0))
 
-    def reverse(self, update_parent=True):
+    def reverse(self, update_parent: bool = True) -> None:
         """Overloaded reverse method"""
         # Reverse the list
         super().reverse()
@@ -266,15 +226,18 @@ class LineList(list):
         if update_parent == True:
             self._update_list_to_text()
 
-    def sort(self, update_parent=True):
+    def sort(
+        self,
+        key: Callable[[str], Any] | None = None,
+        reverse: bool = False,
+        update_parent: bool = True,
+    ) -> None:
         """Overloaded sort method"""
-        # Sort the list
-        super().sort()
-        # Check if updating the parent document is needed
-        if update_parent == True:
+        super().sort(key=key, reverse=reverse)
+        if update_parent:
             self._update_list_to_text()
 
-    def update_text_to_list(self, update_text):
+    def update_text_to_list(self, update_text: Any) -> None:
         """Update the list from a string"""
         # Check if the value is a string
         if isinstance(update_text, str) == False:
@@ -282,16 +245,21 @@ class LineList(list):
         # Empty the list
         self._clear()
         # Set the new content
-        self.extend(re.split("\n", update_text), update_parent=False)
+        self.extend(split_lines(update_text), update_parent=False)
 
-    def get_absolute_cursor_position(self):
-        """Get the absolute cursor position"""
+    def get_absolute_cursor_position(self) -> int:
+        """Get the absolute cursor position in characters, where every
+        line end counts as one LF character.
+        NOTE:
+            This function returns the actual length of characters,
+            NOT the length of bytes!
+        """
         line, index = self._parent.getCursorPosition()
         absolute_position = 0
         for i in range(line):
-            absolute_position += len(self[i])
-        absolute_position += index + 1
+            absolute_position += len(self[i]) + 1
+        absolute_position += index
         return absolute_position
 
-    def _clear(self):
+    def _clear(self) -> None:
         del self[:]

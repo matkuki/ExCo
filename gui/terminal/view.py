@@ -20,7 +20,7 @@ import functions
 import gui.menu
 import qt
 import settings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union, cast
 from wcwidth import wcwidth
 
 from gui.terminal.screen import ExtendedScreen
@@ -94,6 +94,17 @@ class TerminalView(qt.QWidget):
 
         # Cursor blink
         self._blink_phase: bool = True
+        # SGR-5 (blink) cells blink on their own phase, independent of the
+        # cursor's: a hidden cursor or a steady DECSCUSR style must not stop
+        # text from blinking, and the two must not share a phase - parking the
+        # shared one on 'visible' (so a cursor that reappears is never caught
+        # mid-blink) would freeze the text instead.
+        self._sgr_blink_phase: bool = True
+        # Viewport rows carrying SGR-5 (blink) cells, recorded as a byproduct
+        # of painting (see _paint_cells) and consumed by _on_blink. A row is
+        # only ever added or removed by a paint, so the set always describes
+        # the rows actually on screen - live buffer and scrollback alike.
+        self._blink_rows: Set[int] = set()
         self._blink_timer: qt.QTimer = qt.QTimer(self)
         self._blink_timer.setInterval(self.BLINK_INTERVAL_MS)
         self._blink_timer.timeout.connect(self._on_blink)
@@ -138,6 +149,20 @@ class TerminalView(qt.QWidget):
 
         # Last painted cursor row (for clearing the previous cursor position)
         self._last_cursor_y: Optional[int] = None
+
+        # Whether the last repaint batch saw the alternate screen, so entering
+        # it can be told apart from simply being in it (see schedule_repaint).
+        self._was_in_alt: bool = self._in_alt()
+
+        # Selection tracking to survive history overflow. pyte's history.top is a
+        # bounded deque, so an overflow (or a scrollback clear) shifts every
+        # absolute stack_row index a selection is expressed in. The screen's
+        # history_generation is recorded alongside the selection and compared
+        # on every repaint; once it has moved on, the stored rows no longer
+        # delimit the text that was selected. Recording history.top's *length*
+        # would not do: it also grows when the user merely scrolls up, which
+        # shifts nothing and would drop the selection on every new line.
+        self._sel_hist_gen: Optional[int] = None
 
         # Last reported mouse-motion cell (mode 1003 throttle)
         self._last_motion_cell: Optional[Tuple[int, int]] = None
@@ -375,6 +400,21 @@ class TerminalView(qt.QWidget):
         lines: int = screen.lines
         if self._in_alt():
             self._scroll_offset = 0
+            if not self._was_in_alt:
+                # Just entered the alternate screen. A selection made on the
+                # normal screen is expressed in that screen's stack rows and
+                # would now highlight whatever the app happens to draw there,
+                # so drop it. Only on the transition: selecting *inside* a
+                # mouse-capturing TUI is supported (the Shift bypass and the
+                # plain-drag overlay both rely on it).
+                self._clear_selection()
+        if self._selection is not None or self._selection_active:
+            # The scrollback shifted under the selection (it overflowed or was
+            # cleared), so its stored rows no longer delimit the text the user
+            # selected. Copying would hand over whatever now occupies them.
+            if self._sel_hist_gen != self._history_generation():
+                self._clear_selection()
+        self._was_in_alt = self._in_alt()
         if self._scroll_offset > 0:
             # History grew / content shifted; repaint everything visible.
             self.update()
@@ -408,30 +448,34 @@ class TerminalView(qt.QWidget):
         if not self.isVisible():
             return
         screen: ExtendedScreen = self.terminal.term_screen
-        if screen.cursor.hidden:
-            # Reset the phase so the cursor is immediately visible when it
-            # reappears instead of staying hidden for up to one blink period.
-            self._blink_phase = True
-            return
-        if not screen.cursor_blink:
-            # Steady cursor (DECSCUSR even param): nothing to blink.
-            self._blink_phase = True
-            return
-        self._blink_phase = not self._blink_phase
-        # Only the cursor cells (previous + current row) change on a blink
-        # toggle; no need to repaint the whole viewport.
         lines: int = screen.lines
-        if self._last_cursor_y is not None and 0 <= self._last_cursor_y < lines:
-            self.update(self._row_band(self._last_cursor_y))
-        if 0 <= screen.cursor.y < lines:
-            self.update(self._row_band(screen.cursor.y))
-        # SGR-5 blink-attributed cells elsewhere on screen toggle with the
-        # phase too; repaint the rows that carry one (the scan is cheap and
-        # runs once per blink period).
-        for y in range(lines):
-            row: Any = screen.buffer.get(y)
-            if row is not None and any(cell.blink for cell in row.values()):
-                self.update(self._row_band(y))
+        # SGR-5 cells blink on their own phase, driven only by the rows that
+        # actually carry one. This is deliberately independent of the cursor
+        # below: a hidden cursor, or a steady DECSCUSR style, must not stop
+        # text from blinking. The set is maintained by the paint pass, so this
+        # is O(blinking rows) - and, unlike a rescan of 'screen.buffer', it
+        # covers scrollback rows too: a blinking line that has scrolled out of
+        # the live buffer is still on screen and would otherwise freeze
+        # mid-phase.
+        if self._blink_rows:
+            self._sgr_blink_phase = not self._sgr_blink_phase
+            for y in self._blink_rows:
+                if 0 <= y < lines:
+                    self.update(self._row_band(y))
+        # The cursor blinks unless it is hidden or the application asked for a
+        # steady style (DECSCUSR with an even parameter). Only the cursor cells
+        # (previous + current row) change on its phase toggle; no need to
+        # repaint the whole viewport.
+        if not screen.cursor.hidden and screen.cursor_blink:
+            self._blink_phase = not self._blink_phase
+            if self._last_cursor_y is not None and 0 <= self._last_cursor_y < lines:
+                self.update(self._row_band(self._last_cursor_y))
+            if 0 <= screen.cursor.y < lines:
+                self.update(self._row_band(screen.cursor.y))
+        else:
+            # Park on the visible phase, so a cursor that reappears - or a
+            # style change back to a blinking one - is never caught mid-blink.
+            self._blink_phase = True
 
     def flash(self) -> None:
         """Visual bell: briefly lighten the viewport."""
@@ -495,6 +539,11 @@ class TerminalView(qt.QWidget):
         x: int = 0
         last_pen: Optional[qt.QColor] = None
         last_font: Optional[qt.QFont] = None
+        # Whether any cell of this row carries SGR-5 blink. The paint loop
+        # already reads 'blink' off every cell it lays out (see the run loop
+        # below), so tracking it here costs one assignment per cell and keeps
+        # _on_blink from having to rescan the grid on every tick.
+        row_blinks: bool = False
         while x < columns:
             cell: Any = row[x]
             style: Tuple[qt.QColor, qt.QColor, qt.QFont] = self._cell_style(cell, y, x)
@@ -503,6 +552,10 @@ class TerminalView(qt.QWidget):
             needs_clip: bool = False
             while x < columns:
                 current: Any = row[x]
+                if current.blink:
+                    # Recorded before the style break below, so the cell that
+                    # ends the run is counted too.
+                    row_blinks = True
                 if self._cell_style(current, y, x) != style:
                     break
                 char_w: int = wcwidth(current.data)
@@ -515,7 +568,7 @@ class TerminalView(qt.QWidget):
                     x += 2
                     continue
                 char: str = current.data
-                if char == "" or (current.blink and not self._blink_phase):
+                if char == "" or (current.blink and not self._sgr_blink_phase):
                     char = " "
                     char_w = 1
                 if char_w == 2:
@@ -552,6 +605,13 @@ class TerminalView(qt.QWidget):
                 )
                 if needs_clip:
                     painter.restore()
+        # Publish (or retract) this row for the blink tick. Retracting matters
+        # as much as publishing: a row whose blinking cells were overwritten
+        # must stop being repainted on every phase toggle.
+        if row_blinks:
+            self._blink_rows.add(y)
+        else:
+            self._blink_rows.discard(y)
 
     def _cell_font(self, cell: Any, link: bool = False) -> qt.QFont:
         """Styled font for a cell, drawn from a small cache keyed on the
@@ -612,8 +672,11 @@ class TerminalView(qt.QWidget):
         screen: ExtendedScreen = self.terminal.term_screen
         if self._scroll_offset != 0 or screen.cursor.hidden:
             return
-        if self._selection is not None:
-            return
+        # A live selection deliberately does NOT suppress the cursor: it
+        # outlives the gesture (only a bare anchor is cleared on release), so
+        # hiding it left the shell with no visible cursor at all while the
+        # user typed.  The block style below paints its own inversion, so it
+        # stays legible on a highlighted cell.
         x: int = screen.cursor.x
         y: int = screen.cursor.y
         if y >= screen.lines or x >= screen.columns:
@@ -689,6 +752,12 @@ class TerminalView(qt.QWidget):
     # ------------------------------------------------------------------
     # Selection
     # ------------------------------------------------------------------
+
+    def _history_generation(self) -> int:
+        """The screen's history_generation, stamped onto a selection when it is
+        made so a later shift of the scrollback can be detected."""
+        screen: ExtendedScreen = self.terminal.term_screen
+        return screen.history_generation
 
     def _pos_cell(self, position: qt.QPointF) -> Tuple[int, int]:
         screen: ExtendedScreen = self.terminal.term_screen
@@ -849,11 +918,55 @@ class TerminalView(qt.QWidget):
         application: Any = data.application
         return application.clipboard().text()
 
+    def _snap_col(self, stack_row: int, col: int, forward: bool) -> int:
+        """Widen a selection edge so it lands on a whole glyph.
+
+        A double-width glyph covers two cells, the second left empty as its
+        stub. An edge starting on a stub would paint only half of its glyph
+        and an edge stopping on a glyph would leave half of it unpainted --
+        and because the stub contributes no character to the copied text,
+        the glyph would be dropped from the copy as well."""
+        row: Any = self._stack_row_cells(stack_row)
+        columns: int = self.terminal.term_screen.columns
+        if forward:
+            if col + 1 < columns and row[col + 1].data == "":
+                if wcwidth(row[col].data or "") == 2:
+                    return col + 1
+            return col
+        owner: Optional[int] = self._wide_stub_owner(row, col)
+        return col if owner is None else owner
+
     def _start_selection(self, position: qt.QPointF) -> None:
-        self._selection = self._pos_cell(position)
+        stack_row, col = self._pos_cell(position)
+        self._selection = (
+            stack_row,
+            self._snap_col(stack_row, col, forward=False),
+        )
         self._press_cell = self._pos_cell(position)
         self._selection_active = True
+        self._sel_hist_gen = self._history_generation()
         self.update()
+
+    def _extend_selection(self, position: qt.QPointF) -> bool:
+        """Grow the existing selection to *position* (Shift+click; Shift+drag
+        reuses the same anchor through _update_selection). Returns False when
+        there is nothing to extend, so the caller starts a fresh selection.
+
+        The anchor stays the endpoint the gesture originally pressed on, which
+        is what _update_selection already uses for a drag -- picking the
+        nearest endpoint here instead would make a press alone and a
+        press-then-drag re-anchor differently. Shift+click inside the range
+        therefore trims it toward the anchor, as shift+Home does in an
+        editor."""
+        start: Optional[Selection] = self._selection
+        if start is None or len(start) == 2:
+            # Only a bare anchor is there, so there is no range to grow; the
+            # caller falls back to a plain click.
+            return False
+        self._selection_active = True
+        self._press_cell = self._pos_cell(position)
+        self._update_selection(position)
+        return True
 
     def _clear_selection(self) -> None:
         """
@@ -867,6 +980,7 @@ class TerminalView(qt.QWidget):
         )
         self._selection = None
         self._selection_active = False
+        self._sel_hist_gen = None
         if had_selection:
             self.update()
 
@@ -877,7 +991,17 @@ class TerminalView(qt.QWidget):
         if start is None:
             return
         end: Tuple[int, int] = self._pos_cell(position)
-        self._selection = (start[0], start[1], end[0], end[1])
+        anchor_row, anchor_col = start[0], start[1]
+        end_row, end_col = end
+        if (end_row, end_col) < (anchor_row, anchor_col):
+            # Dragged up and/or left of the anchor, so the anchor is now the
+            # far edge and has to widen forwards rather than backwards.
+            anchor_col = self._snap_col(anchor_row, anchor_col, forward=True)
+            end_col = self._snap_col(end_row, end_col, forward=False)
+        else:
+            end_col = self._snap_col(end_row, end_col, forward=True)
+        self._selection = (anchor_row, anchor_col, end_row, end_col)
+        self._sel_hist_gen = self._history_generation()
         self.update()
 
     def _end_selection(self) -> None:
@@ -905,6 +1029,12 @@ class TerminalView(qt.QWidget):
         """True when a finished selection is copied to the clipboard on
         release. Behind the ``editor.auto_copy_on_select`` setting (default
         off); the editor facade is shared with the main editor widgets."""
+        screen: ExtendedScreen = self.terminal.term_screen
+        if screen.mouse_mode != 0:
+            # A mouse-capturing application owns the copy/selection semantics
+            # (e.g. opencode draws its own "Copied to clipboard" toast on its
+            # own copy). Avoid double-copying when a TUI drag was forwarded.
+            return False
         editor_settings: Any = settings.get("editor")
         return bool(editor_settings.get("auto_copy_on_select", False))
 
@@ -913,6 +1043,28 @@ class TerminalView(qt.QWidget):
         empty trailing cell of a wide glyph."""
         char: str = row[x].data or ""
         return char == "" or char.isspace()
+
+    def _wide_stub_owner(self, row: Any, x: int) -> Optional[int]:
+        """Column of the wide glyph whose trailing stub sits at *x*, else None.
+
+        pyte keeps a double-width glyph in one cell and leaves the next cell
+        empty as its continuation, so that empty cell is part of a visible
+        character rather than whitespace."""
+        if x <= 0 or row[x].data != "":
+            return None
+        previous: str = row[x - 1].data or ""
+        return x - 1 if wcwidth(previous) == 2 else None
+
+    def _word_boundary(self, row: Any, x: int) -> bool:
+        """True when the cell at *x* ends the word being scanned: real
+        whitespace, or any empty cell that is not a wide glyph's stub.
+
+        Without the stub exemption every double-width glyph terminates a word,
+        so a space-free script (CJK) could only ever be selected one character
+        at a time."""
+        if self._wide_stub_owner(row, x) is not None:
+            return False
+        return self._cell_blank(row, x)
 
     def _word_range(
         self, position: qt.QPointF
@@ -923,11 +1075,16 @@ class TerminalView(qt.QWidget):
         stack_row, col = self._pos_cell(position)
         row: Any = self._stack_row_cells(stack_row)
         columns: int = self.terminal.term_screen.columns
+        # Clicking the stub half of a wide glyph selects the word that glyph
+        # belongs to, exactly as clicking the glyph itself does.
+        owner: Optional[int] = self._wide_stub_owner(row, col)
+        if owner is not None:
+            col = owner
         start: int = col
-        while start > 0 and not self._cell_blank(row, start - 1):
+        while start > 0 and not self._word_boundary(row, start - 1):
             start -= 1
         end: int = col
-        while end < columns - 1 and not self._cell_blank(row, end + 1):
+        while end < columns - 1 and not self._word_boundary(row, end + 1):
             end += 1
         return (stack_row, start), (stack_row, end)
 
@@ -936,6 +1093,9 @@ class TerminalView(qt.QWidget):
         space collapses the pending selection instead."""
         stack_row, col = self._pos_cell(position)
         row: Any = self._stack_row_cells(stack_row)
+        owner: Optional[int] = self._wide_stub_owner(row, col)
+        if owner is not None:
+            col = owner
         if self._cell_blank(row, col):
             self._selection = None
             self._selection_active = False
@@ -944,6 +1104,7 @@ class TerminalView(qt.QWidget):
         start, end = self._word_range(position)
         self._selection = (start[0], start[1], end[0], end[1])
         self._selection_active = True
+        self._sel_hist_gen = self._history_generation()
         self.update()
 
     def _select_line(self, position: qt.QPointF) -> None:
@@ -954,6 +1115,7 @@ class TerminalView(qt.QWidget):
         columns: int = self.terminal.term_screen.columns
         self._selection = (stack_row, 0, stack_row, columns - 1)
         self._selection_active = True
+        self._sel_hist_gen = self._history_generation()
         self.update()
 
     def _arm_triple_click(self) -> None:
@@ -1149,7 +1311,10 @@ class TerminalView(qt.QWidget):
                 self._shift_selecting = True
                 self._last_motion_cell = None
                 if event.button() == qt.Qt.MouseButton.LeftButton:
-                    self._press_select(event.position())
+                    # Shift extends the overlay selection rather than
+                    # restarting it; with none, it starts a fresh one.
+                    if not self._extend_selection(event.position()):
+                        self._press_select(event.position())
                 event.accept()
                 return
             self._shift_selecting = False
@@ -1218,7 +1383,15 @@ class TerminalView(qt.QWidget):
             event.accept()
             return
         if event.button() == qt.Qt.MouseButton.LeftButton:
-            self._press_select(event.position())
+            shifted: bool = bool(
+                event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier
+            )
+            # Shift extends what is already selected instead of throwing it
+            # away and starting over; with nothing selected it stays a plain
+            # click. (Inside a mouse-capturing TUI Shift means "bypass" and
+            # returns above.)
+            if not (shifted and self._extend_selection(event.position())):
+                self._press_select(event.position())
         # A right-click keeps the selection so the context menu's Copy
         # action stays enabled; the next left-press starts a new selection.
         # Accept the press so the ignored default QWidget handling does not

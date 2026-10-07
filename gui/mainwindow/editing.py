@@ -188,22 +188,35 @@ class Editing:
     """
 
     def run_focused_widget_method(
-        self, method_name: str, argument_list: List[Any], window_name: Optional[str] = None
+        self,
+        method_name: str,
+        argument_list: List[Any],
+        window_name: Optional[str] = None,
     ) -> None:
         """Execute a focused widget method"""
+        display: Any = self._parent.display
         # Get the current widget
         #            widget = self._parent.get_tab_by_focus()
         widget = self._parent.get_tab_by_indication()
         # None-check the current widget in the selected window
-        if widget is not None:
-            method = getattr(widget, method_name)
-            # Argument list has to be preceded by the '*' character
-            method(*argument_list)
-        else:
+        if widget is None:
             message = "No document in focused window!"
-            self._parent.display.repl_display_message(
+            display.repl_display_message(
                 message, message_type=constants.MessageType.WARNING
             )
+            return
+        # Non-editor tabs (trees, terminals, viewers) don't implement
+        # every document operation this wrapper can be asked to run
+        method = getattr(widget, method_name, None)
+        if method is None:
+            message = "'" + type(widget).__name__ + "' does not support '"
+            message += method_name + "()'"
+            display.repl_display_message(
+                message, message_type=constants.MessageType.WARNING
+            )
+            return
+        # Argument list has to be preceded by the '*' character
+        method(*argument_list)
 
     def find(
         self,

@@ -14,6 +14,7 @@ import re
 import shutil
 import stat
 import subprocess
+import threading
 import time
 import traceback
 import types
@@ -24,7 +25,9 @@ from typing import *
 
 import components.actionfilter
 import components.internals
+import components.osclipboard
 import components.thesquid
+import components.treefilter
 import constants
 import data
 import functions
@@ -67,9 +70,469 @@ def _compare_names(first: str, second: str) -> int:
 _sort_key = cmp_to_key(_compare_names)
 
 
+def _format_size(size_bytes: int) -> str:
+    """
+    A human readable size with dot thousands separators, e.g. '55.55 kB'.
+
+    Byte counts below 1 kB stay exact with grouped thousands; anything larger
+    is shown in kB/MB/GB/TB with a decimal point - '1.234.567 B' becomes
+    '1.18 MB' - and grows up to the next unit at 1024.
+    """
+    size: float = float(size_bytes)
+    for unit in ("B", "kB", "MB", "GB", "TB"):
+        if size < 1024.0:
+            if unit == "B":
+                return "{} B".format(f"{int(size):,}".replace(",", "."))
+            return "{:.2f} {}".format(size, unit)
+        size /= 1024.0
+    return "{:.2f} PB".format(size)
+
+
+def _tooltip_lines(path: str, info: os.stat_result, size_text: str | None) -> str:
+    """
+    The metadata tooltip lines for a stat'ed *path*, size line from *size_text*.
+
+    A file gets its own stat-based size when none is given; a directory is
+    expected to pass its recursive total, because walking that tree is the
+    expensive part and happens lazily on hover instead.
+    """
+    if size_text is None and stat.S_ISREG(info.st_mode):
+        size_text = _format_size(int(info.st_size))
+
+    def _when(stamp: float) -> str:
+        return time.strftime("%Y-%m-%d %H:%M", time.localtime(stamp))
+
+    lines: list[str] = [path]
+    if size_text is not None:
+        lines.append("Size: " + size_text)
+    lines.append("Created: {}".format(_when(float(info.st_ctime))))
+    lines.append("Modified: {}".format(_when(float(info.st_mtime))))
+    lines.append("Accessed: {}".format(_when(float(info.st_atime))))
+    return "\n".join(lines)
+
+
+def _tooltip_text(path: str, size_text: str | None) -> str | None:
+    """The metadata tooltip for *path* with the already-computed *size_text*."""
+    try:
+        info: os.stat_result = os.stat(path)
+    except OSError:
+        return None
+    return _tooltip_lines(path, info, size_text)
+
+
+# A directory tooltip shows the total of everything under it, which usually
+# means walking a whole tree. That walk now happens only once, on the first
+# hover over the directory, and it is bounded, so a single huge subdirectory
+# cannot stall the listing or the tooltip. A truncated result is shown with
+# a '>' prefix rather than as if it were exact.
+_MAX_DIR_SIZE_ENTRIES: int = 50_000
+
+
+def _scan_directory_size(path: str) -> tuple[int, bool] | None:
+    """
+    Total regular-file size under *path*, or None when the tree is unreadable.
+
+    Returns (total_bytes, truncated); a truncated scan stopped at
+    _MAX_DIR_SIZE_ENTRIES files and so is only a lower bound.
+    """
+    total: int = 0
+    scanned: int = 0
+    try:
+        for root, _dirs, files in os.walk(path, followlinks=False):
+            for name in files:
+                if scanned >= _MAX_DIR_SIZE_ENTRIES:
+                    return total, True
+                scanned += 1
+                try:
+                    total += os.path.getsize(os.path.join(root, name))
+                except OSError:
+                    pass
+    except OSError:
+        return None
+    return total, False
+
+
 def remove_readonly(func: Any, path: str, excinfo: Any) -> None:
     os.chmod(path, stat.S_IWRITE)
     func(path)
+
+
+class TreeTabBase(qt.QWidget):
+    """
+    Container shared by the tree tabs: a filter bar on top, the tree below.
+
+    The trees used to *be* the tab, which left nowhere to put a filter. A
+    QTreeView cannot host a sibling widget - anything added to its layout is
+    drawn inside the scroll area, so a bar lands centred over the rows instead
+    of above them - so the tab is an ordinary widget holding the bar and the
+    view.
+
+    The view keeps everything Qt delivers to the tree (delegate, key release,
+    mouse presses), because that is what has to happen on the widget that
+    receives the events. The forwarding block below re-implements the view calls
+    the handlers already make, so they keep reading the model directly: a filter
+    on a QStandardItemModel hides rows in place, so a model index and a view
+    index are the same index and there is nothing to translate.
+
+    `findChildren(qt.QTreeView)` therefore finds the view, not the tab.
+    """
+
+    # Class variables
+    main_form: Any = None
+    _parent: qt.QWidget = None
+    name: str = ""
+    savable: constants.CanSave = constants.CanSave.NO
+    tree_menu: Any = None
+    internals: components.internals.Internals | None = None
+    # Relayed from the view, which is where the events arrive. Kept here
+    # because these signals used to live on the tree tab itself.
+    key_release_signal = qt.pyqtSignal(str, dict)
+    doubleClicked = qt.pyqtSignal(qt.QModelIndex)
+    expanded = qt.pyqtSignal(qt.QModelIndex)
+    # Set by _assemble()
+    tree: qt.QTreeView = None  # type: ignore[assignment]
+    filter_bar: Any = None
+    row_filter: Any = None
+
+    def __init__(self, parent: qt.QWidget | None, main_form: Any, name: str) -> None:
+        """Initialization"""
+        super().__init__(parent)
+        self._parent = parent
+        self.main_form = main_form
+        self.name = name
+        self.setFont(settings.get_current_font())
+
+    def _assemble(self, placeholder: str) -> None:
+        """Put the filter bar above the tree, in the tab's own layout"""
+        self.main_layout: qt.QVBoxLayout = qt.QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        self.setLayout(self.main_layout)
+        self.filter_bar = components.treefilter.TreeFilterBar(self, placeholder)
+        self.filter_bar.filter_changed.connect(self.set_filter_text)
+        self.filter_bar.focus_in.connect(self.__filter_bar_focus_in)
+        self.main_layout.addWidget(self.filter_bar)
+        self.main_layout.addWidget(self.tree)
+        # Relay the view's own signals, so code that connects to the tab keeps
+        # working now that the tree lives inside it.
+        self.tree.doubleClicked.connect(self.doubleClicked)
+        self.tree.expanded.connect(self.expanded)
+
+    def set_filter_text(self, text: str) -> None:
+        """Filter the tree with *text*"""
+        self.row_filter.set_filter_text(text)
+
+    def __filter_bar_focus_in(self) -> None:
+        """A click on the filter field is focus, so check the indication."""
+        self.main_form.view.indication_check()
+
+    def filter_text(self) -> str:
+        """The active query, trimmed"""
+        return self.row_filter.filter_text()
+
+    def focus_filter(self) -> None:
+        """Put the keyboard focus in the filter field"""
+        self.filter_bar.focus_filter()
+
+    def clear_filter(self) -> None:
+        """Empty the filter field"""
+        self.filter_bar.clear_filter()
+
+    def update_filter_styles(self) -> None:
+        """Re-apply the theme to the bar after a theme change"""
+        self.filter_bar.apply_theme(settings.get_theme())
+
+    def _model_changed(self, model: qt.QStandardItemModel | None) -> None:
+        """Hand the new model to the row filter"""
+        self.row_filter.attach(model, self.tree)
+
+    """
+    View forwarding
+    """
+
+    def setModel(self, model: qt.QAbstractItemModel | None) -> None:
+        """Point the view at *model* and let the row filter follow it.
+
+        The filter lives on the tab, so this is the one place that hands a new
+        model over: a rebuilt node tree or file listing comes back filtered.
+        """
+        self.tree.setModel(model)
+        if isinstance(model, qt.QStandardItemModel):
+            self.row_filter.attach(model, self.tree)
+        else:
+            # clean_model() hands over None. Letting go here stops the filter
+            # from holding model signals on a model nothing shows any more.
+            self.row_filter.detach()
+
+    def model(self) -> qt.QAbstractItemModel | None:
+        return self.tree.model()
+
+    def header(self) -> qt.QHeaderView:
+        return self.tree.header()
+
+    def expand(self, index: qt.QModelIndex) -> None:
+        self.tree.expand(index)
+
+    def collapse(self, index: qt.QModelIndex) -> None:
+        self.tree.collapse(index)
+
+    def isExpanded(self, index: qt.QModelIndex) -> bool:
+        return self.tree.isExpanded(index)
+
+    def expandAll(self) -> None:
+        self.tree.expandAll()
+
+    def collapseAll(self) -> None:
+        self.tree.collapseAll()
+
+    def scrollTo(
+        self,
+        index: qt.QModelIndex,
+        hint: qt.QAbstractItemView.ScrollHint = qt.QAbstractItemView.ScrollHint.EnsureVisible,
+    ) -> None:
+        self.tree.scrollTo(index, hint)
+
+    def selectedIndexes(self) -> list[qt.QModelIndex]:
+        return self.tree.selectedIndexes()
+
+    def currentIndex(self) -> qt.QModelIndex:
+        return self.tree.currentIndex()
+
+    def selectionModel(self) -> qt.QItemSelectionModel | None:
+        return self.tree.selectionModel()
+
+    def setCurrentIndex(self, index: qt.QModelIndex) -> None:
+        self.tree.setCurrentIndex(index)
+
+    def setSelectionMode(self, mode: qt.QAbstractItemView.SelectionMode) -> None:
+        self.tree.setSelectionMode(mode)
+
+    def setSelectionBehavior(
+        self, behavior: qt.QAbstractItemView.SelectionBehavior
+    ) -> None:
+        self.tree.setSelectionBehavior(behavior)
+
+    def setUniformRowHeights(self, uniform: bool) -> None:
+        self.tree.setUniformRowHeights(uniform)
+
+    def setAnimated(self, enable: bool) -> None:
+        self.tree.setAnimated(enable)
+
+    def setExpandsOnDoubleClick(self, enable: bool) -> None:
+        self.tree.setExpandsOnDoubleClick(enable)
+
+    def setObjectName(self, name: str) -> None:
+        # Both halves carry the name: the sheet's rules are written against the
+        # tree, and the container is what the tab holds.
+        super().setObjectName(name)
+        self.tree.setObjectName(name)
+
+    def setIconSize(self, size: qt.QSize) -> None:
+        self.tree.setIconSize(size)
+
+    def setEditTriggers(self, triggers: qt.QAbstractItemView.EditTrigger) -> None:
+        self.tree.setEditTriggers(triggers)
+
+    def setItemDelegate(self, delegate: qt.QAbstractItemDelegate) -> None:
+        self.tree.setItemDelegate(delegate)
+
+    def setItemDelegateForColumn(
+        self, column: int, delegate: qt.QAbstractItemDelegate
+    ) -> None:
+        self.tree.setItemDelegateForColumn(column, delegate)
+
+    def itemDelegate(self) -> qt.QAbstractItemDelegate | None:
+        return self.tree.itemDelegate()
+
+    def resizeColumnToContents(self, column: int) -> None:
+        self.tree.resizeColumnToContents(column)
+
+    def indexAt(self, position: qt.QPoint) -> qt.QModelIndex:
+        return self.tree.indexAt(position)
+
+    def visualRect(self, index: qt.QModelIndex) -> qt.QRect:
+        return self.tree.visualRect(index)
+
+    def visualItemRect(self, item: qt.QTreeWidgetItem) -> qt.QRect:
+        return self.tree.visualItemRect(item)
+
+    def setSelection(
+        self,
+        selection: qt.QItemSelection,
+        command: qt.QItemSelectionModel.SelectionFlag,
+    ) -> None:
+        self.tree.setSelection(selection, command)
+
+    def edit(self, index: qt.QModelIndex) -> None:
+        self.tree.edit(index)
+
+    def clearSelection(self) -> None:
+        self.tree.clearSelection()
+
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
+        self.tree.setFocus(reason)
+
+    def setFocusPolicy(self, policy: qt.Qt.FocusPolicy) -> None:
+        self.tree.setFocusPolicy(policy)
+
+    def setStyleSheet(self, style: str) -> None:
+        super().setStyleSheet(style)
+        self.tree.setStyleSheet(style)
+
+    def setEnabled(self, enabled: bool) -> None:
+        super().setEnabled(enabled)
+        self.tree.setEnabled(enabled)
+
+    def setFont(self, font: qt.QFont) -> None:
+        super().setFont(font)
+        if self.tree is not None:
+            self.tree.setFont(font)
+
+    def viewport(self) -> qt.QWidget:
+        return self.tree.viewport()
+
+    def horizontalScrollBar(self) -> qt.QScrollBar:
+        return self.tree.horizontalScrollBar()
+
+    def verticalScrollBar(self) -> qt.QScrollBar:
+        return self.tree.verticalScrollBar()
+
+    def scrollPosition(self) -> qt.QPoint:
+        return self.tree.scrollPosition()
+
+    def setScrollPosition(self, position: qt.QPoint) -> None:
+        self.tree.setScrollPosition(position)
+
+    def horizontalScrollbarAction(
+        self, action: qt.QAbstractItemView.ScrollBarAction
+    ) -> None:
+        self.tree.horizontalScrollbarAction(action)
+
+
+class TreeViewBase(qt.QTreeView):
+    """
+    The view half of a tree tab: the behaviour Qt delivers to the tree itself.
+
+    A plain widget has no rows, so the scroll area, the delegate, the key
+    release bookkeeping and the mouse presses all belong here. The container
+    forwards the rest.
+    """
+
+    # Custom item delegate
+    class CustomItemDelegate(qt.QStyledItemDelegate):
+        def helpEvent(
+            self,
+            event: qt.QHelpEvent | None,
+            view: qt.QAbstractItemView | None,
+            option: qt.QStyleOptionViewItem,
+            index: qt.QModelIndex,
+        ) -> bool:
+            # The explorer tooltips are resolved lazily per row (the recursive
+            # directory size lives on a worker thread), so the container tab
+            # answers the tooltip request instead of the item having one set.
+            # Tabs without a resolver (the node tree, the sessions tree) keep
+            # the default QStyledItemDelegate behaviour.
+            if event is not None and view is not None and view.parent() is not None:
+                if event.type() == qt.QEvent.Type.ToolTip:
+                    resolve = getattr(view.parent(), "_resolve_item_tooltip", None)
+                    if resolve is not None:
+                        model: qt.QAbstractItemModel | None = index.model()
+                        item: qt.QStandardItem | None = (
+                            model.itemFromIndex(index)
+                            if isinstance(model, qt.QStandardItemModel)
+                            else None
+                        )
+                        if item is not None:
+                            text: str | None = resolve(item, event.globalPos())
+                            if text is not None:
+                                qt.QToolTip.showText(event.globalPos(), text, view)
+                                return True
+            return super().helpEvent(event, view, option, index)
+
+        def createEditor(
+            self,
+            parent: qt.QWidget,
+            option: qt.QStyleOptionViewItem,
+            index: qt.QModelIndex,
+        ) -> qt.QWidget:
+            editor = qt.QLineEdit(parent)
+            editor.setStyleSheet(StyleSheetLineEdit.standard())
+            return editor
+
+        def setEditorData(self, editor: qt.QWidget, index: qt.QModelIndex) -> None:
+            editor.setText(index.data())
+
+        def setModelData(
+            self,
+            editor: qt.QWidget,
+            model: qt.QAbstractItemModel,
+            index: qt.QModelIndex,
+        ) -> None:
+            model.setData(index, editor.text())
+
+    # Signals
+    key_release_signal = qt.pyqtSignal(str, dict)
+
+    # Class variables
+    main_form: Any = None
+    _parent: qt.QWidget = None
+    name: str = ""
+    key_release_lock: bool = False
+    default_menu_font: qt.QFont | None = None
+    # Set by the container: what to do about a press and a key release.
+    pressed_handler: Any = None
+    key_release_handler: Any = None
+
+    def mousePressEvent(self, event: qt.QMouseEvent) -> None:
+        """Forwarded to the tab, which owns the focus and save bookkeeping"""
+        super().mousePressEvent(event)
+        if self.pressed_handler is not None:
+            self.pressed_handler(event)
+
+    def eventFilter(self, object: qt.QObject, event: qt.QEvent) -> bool:
+        if not self.key_release_lock:
+            # Check for keyboard releases
+            if event.type() == qt.QEvent.Type.KeyRelease:
+                key = data.keys[event.key()]
+                modifiers = event.modifiers()
+                modifier_shift = (
+                    modifiers & qt.Qt.KeyboardModifier.ShiftModifier
+                ) == qt.Qt.KeyboardModifier.ShiftModifier
+                modifier_control = (
+                    modifiers & qt.Qt.KeyboardModifier.ControlModifier
+                ) == qt.Qt.KeyboardModifier.ControlModifier
+                modifier_alt = (
+                    modifiers & qt.Qt.KeyboardModifier.AltModifier
+                ) == qt.Qt.KeyboardModifier.AltModifier
+                modifier_meta = (
+                    modifiers & qt.Qt.KeyboardModifier.MetaModifier
+                ) == qt.Qt.KeyboardModifier.MetaModifier
+                modifier_keypad = (
+                    modifiers & qt.Qt.KeyboardModifier.KeypadModifier
+                ) == qt.Qt.KeyboardModifier.KeypadModifier
+                modifier_dict = {
+                    "shift": modifier_shift,
+                    "control": modifier_control,
+                    "alt": modifier_alt,
+                    "meta": modifier_meta,
+                    "keypad": modifier_keypad,
+                }
+                # Emit a signal for a keyrelease
+                self.key_release_signal.emit(key, modifier_dict)
+                if self.key_release_handler is not None:
+                    self.key_release_handler(key, modifier_dict)
+
+        return super().eventFilter(object, event)
+
+    def lock_key_release(self) -> None:
+        """Stop emitting key releases while a modal child is up"""
+        self.key_release_lock = True
+
+    def unlock_key_release(self) -> None:
+        """Resume emitting key releases"""
+        self.key_release_lock = False
 
 
 class Directory:
@@ -103,7 +566,7 @@ class Directory:
         self.item.appendRow(file_item)
 
 
-class TreeDisplay(qt.QTreeView):
+class TreeDisplay(TreeTabBase):
     # Class variables
     parent: qt.QWidget = None
     main_form: Any = None
@@ -139,6 +602,11 @@ class TreeDisplay(qt.QTreeView):
                 self.doubleClicked.disconnect()
                 self.expanded.disconnect()
             except:
+                pass
+            # Let go of the rows the filter hid
+            try:
+                self.row_filter.detach()
+            except Exception:
                 pass
             # Clean up the file watcher
             try:
@@ -176,20 +644,21 @@ class TreeDisplay(qt.QTreeView):
 
     def __init__(self, parent: qt.QWidget = None, main_form=None) -> None:
         """Initialization"""
-        # Initialize the superclass
-        super().__init__(parent)
-        # Set default font
-        self.setFont(settings.get_current_font())
+        # Initialize the superclass: the filter bar and the tree it filters
+        super().__init__(parent, main_form, "Tree display")
         # Initialize components
         self.internals = components.internals.Internals(
             parent=parent, tab_widget=parent
         )
-        # Store the reference to the parent
-        self._parent = parent
-        # Store the reference to the main form
-        self.main_form = main_form
-        # Store name of self
-        self.name = "Tree display"
+        # The tree, and the filter bar above it
+        self.tree = TreeViewBase(self)
+        self.tree.main_form = main_form
+        self.tree._parent = parent
+        self.tree.name = self.name
+        self.tree.key_release_lock = False
+        self._assemble("Filter nodes")
+        # The rows are hidden in place, so a model index is a view index
+        self.row_filter = components.treefilter.HiddenRowFilter(self, None)
         # Disable node expansion on double click
         self.setExpandsOnDoubleClick(False)
         # Connect the click and doubleclick signal
@@ -247,6 +716,15 @@ class TreeDisplay(qt.QTreeView):
         self.folder_icon = functions.create_icon("tango_icons/folder.png")
         self.goto_icon = functions.create_icon("tango_icons/edit-goto.png")
 
+        # Install event filter. The key releases arrive at the view, so the
+        # filter is installed on the view as well.
+        self.tree.installEventFilter(self.tree)
+        # Set the item delegate
+        self.tree.setItemDelegate(TreeViewBase.CustomItemDelegate())
+        # Presses are delivered to the view, and the handler needs the tab's
+        # references.
+        self.tree.pressed_handler = self._on_mouse_pressed
+
         # Set the icon size for every node
         self.update_icon_size()
 
@@ -290,27 +768,21 @@ class TreeDisplay(qt.QTreeView):
         else:
             return self.node_icons["unknown"]
 
-    def setFocus(self) -> None:
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
         """Overridden focus event"""
         # Execute the supeclass focus function
-        super().setFocus()
+        super().setFocus(reason)
         # Check indication
         self.main_form.view.indication_check()
 
-    def mousePressEvent(self, event):
-        """Function connected to the clicked signal of the tree display"""
-        super().mousePressEvent(event)
-        # Set the focus
-        self.setFocus()
-        # Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self._parent
-        # Set Save/SaveAs buttons in the menubar
-        self._parent._set_save_status()
-        # Get the index of the clicked item and execute the item's procedure
+    def _on_mouse_pressed(self, event: qt.QMouseEvent) -> None:
+        """Bookkeeping for a press on the tree, called from the view.
 
-    def mousePressEvent(self, event: qt.QMouseEvent) -> None:
-        """Function connected to the clicked signal of the tree display"""
-        super().mousePressEvent(event)
+        The view calls super() on itself first, so this must not: it would go
+        to the tab, which is a plain widget and never sees the press.
+        """
         # Set the focus
         self.setFocus()
         # Set the last focused widget to the parent basic widget
@@ -2395,32 +2867,15 @@ if data.platform == "Windows":
     import win32con
 
 
-class TreeDisplayBase(qt.QTreeView):
-    # Custom item delegate
-    class CustomItemDelegate(qt.QStyledItemDelegate):
-        def createEditor(
-            self,
-            parent: qt.QWidget,
-            option: qt.QStyleOptionViewItem,
-            index: qt.QModelIndex,
-        ) -> qt.QWidget:
-            editor = qt.QLineEdit(parent)
-            editor.setStyleSheet(StyleSheetLineEdit.standard())
-            return editor
+class TreeDisplayBase(TreeTabBase):
+    """
+    Container for a file-explorer style tree tab.
 
-        def setEditorData(self, editor: qt.QWidget, index: qt.QModelIndex) -> None:
-            editor.setText(index.data())
-
-        def setModelData(
-            self,
-            editor: qt.QWidget,
-            model: qt.QAbstractItemModel,
-            index: qt.QModelIndex,
-        ) -> None:
-            model.setData(index, editor.text())
-
-    # Signals
-    key_release_signal = qt.pyqtSignal(str, dict)
+    The tree itself is a TreeViewBase child: it is what receives the key
+    releases, the mouse presses and the delegate callbacks, so the event filter
+    and the press handler live on the view and reach the tab through the
+    references below.
+    """
 
     # Class variables
     _parent: qt.QWidget = None
@@ -2429,7 +2884,7 @@ class TreeDisplayBase(qt.QTreeView):
     savable: constants.CanSave = constants.CanSave.NO
     tree_menu: Any = None
     internals: components.internals.Internals | None = None
-    key_release_lock: bool = False
+    default_menu_font: qt.QFont | None = None
 
     def __del__(self) -> None:
         try:
@@ -2454,8 +2909,8 @@ class TreeDisplayBase(qt.QTreeView):
                 pass
             # Disconnect signals
             try:
-                self.doubleClicked.disconnect()
-                self.expanded.disconnect()
+                self.tree.doubleClicked.disconnect()
+                self.tree.expanded.disconnect()
             except:
                 pass
             self._parent = None
@@ -2464,68 +2919,84 @@ class TreeDisplayBase(qt.QTreeView):
             if self.tree_menu is not None:
                 self.tree_menu.setParent(None)
                 self.tree_menu = None
+            # The rows were hidden by the filter, not deleted: un-hide them
+            # before the view goes, so a re-attached tab is not blank.
+            try:
+                self.row_filter.detach()
+            except Exception:
+                pass
             # Clean up self
             self.setParent(None)
             self.deleteLater()
-        except:
+        except Exception:
             pass
 
-    def __init__(self, parent: qt.QWidget, main_form, name: str) -> None:
+    def __init__(self, parent: qt.QWidget, main_form: Any, name: str) -> None:
         # Initialize the superclass
-        super().__init__(parent)
-        # Set default font
-        self.setFont(settings.get_current_font())
+        super().__init__(parent, main_form, name)
         # Initialize everything else
-        self._parent = parent
-        self.main_form = main_form
-        self.name = name
         self.internals = components.internals.Internals(
             parent=parent, tab_widget=parent
         )
-        self.key_release_lock = False
+        # Set default font
+        self.setFont(settings.get_current_font())
+        # The tree, and the filter bar above it
+        self.tree = TreeViewBase(self)
+        self.tree.main_form = main_form
+        self.tree._parent = parent
+        self.tree.name = name
+        self.tree.key_release_lock = False
+        self._assemble("Filter files")
+        # The rows are hidden in place, so a model index is a view index
+        self.row_filter = components.treefilter.HiddenRowFilter(
+            self, self._always_visible_row
+        )
         # Set the icon size for every node
         self.update_icon_size()
         # Set the nodes to be animated on expand/contract
-        self.setAnimated(True)
+        self.tree.setAnimated(True)
         # Disable node expansion on double click
-        self.setExpandsOnDoubleClick(False)
-        # Install event filter
-        self.installEventFilter(self)
+        self.tree.setExpandsOnDoubleClick(False)
+        # Install event filter. The key releases arrive at the view, so the
+        # filter is installed on the view as well.
+        self.tree.installEventFilter(self.tree)
         # Set the item delegate
-        self.setItemDelegate(self.CustomItemDelegate())
+        self.tree.setItemDelegate(TreeViewBase.CustomItemDelegate())
+        # Relay the view's key releases to the tab's own signal
+        self.tree.key_release_signal.connect(self.key_release_signal)
+        # Presses and key releases are delivered to the view, and both handlers
+        # need the tab's references.
+        self.tree.key_release_handler = self._on_key_release
+        self.tree.pressed_handler = self._on_mouse_pressed
 
-    def eventFilter(self, object: qt.QObject, event: qt.QEvent) -> bool:
-        if not self.key_release_lock:
-            # Check for keyboard releases
-            if event.type() == qt.QEvent.Type.KeyRelease:
-                key = data.keys[event.key()]
-                modifiers = event.modifiers()
-                modifier_shift = (
-                    modifiers & qt.Qt.KeyboardModifier.ShiftModifier
-                ) == qt.Qt.KeyboardModifier.ShiftModifier
-                modifier_control = (
-                    modifiers & qt.Qt.KeyboardModifier.ControlModifier
-                ) == qt.Qt.KeyboardModifier.ControlModifier
-                modifier_alt = (
-                    modifiers & qt.Qt.KeyboardModifier.AltModifier
-                ) == qt.Qt.KeyboardModifier.AltModifier
-                modifier_meta = (
-                    modifiers & qt.Qt.KeyboardModifier.MetaModifier
-                ) == qt.Qt.KeyboardModifier.MetaModifier
-                modifier_keypad = (
-                    modifiers & qt.Qt.KeyboardModifier.KeypadModifier
-                ) == qt.Qt.KeyboardModifier.KeypadModifier
-                modifier_dict = {
-                    "shift": modifier_shift,
-                    "control": modifier_control,
-                    "alt": modifier_alt,
-                    "meta": modifier_meta,
-                    "keypad": modifier_keypad,
-                }
-                # Emit a signal for a keyrelease
-                self.key_release_signal.emit(key, modifier_dict)
+    def _always_visible_row(self, item: qt.QStandardItem) -> bool:
+        """Whether *item* bypasses the filter. Overridden per tree."""
+        return False
 
-        return super().eventFilter(object, event)
+    @qt.pyqtSlot(str, dict)
+    def _on_key_release(self, key: str, modifiers: dict[str, bool]) -> None:
+        """The view saw a key release. Subclasses act on it."""
+        return None
+
+    def _on_mouse_pressed(self, event: qt.QMouseEvent) -> None:
+        """The view saw a press. Clear a selection that hit nothing."""
+        index = self.tree.indexAt(event.pos())
+        if index.isValid() == False:
+            self.tree.clearSelection()
+        # Set the focus
+        self.setFocus()
+        # Set the last focused widget to the parent basic widget
+        self.main_form.last_focused_widget = self._parent
+        # Set Save/SaveAs buttons in the menubar
+        self._parent._set_save_status()
+        # Reset the click&drag context menu action
+        components.actionfilter.ActionFilter.clear_action()
+
+    def _lock_key_release(self) -> None:
+        self.tree.lock_key_release()
+
+    def _unlock_key_release(self) -> None:
+        self.tree.unlock_key_release()
 
     """
     Private/Internal functions
@@ -2569,40 +3040,20 @@ class TreeDisplayBase(qt.QTreeView):
         for i in range(self.model().rowCount()):
             self.resizeColumnToContents(i)
 
-    def _lock_key_release(self) -> None:
-        self.key_release_lock = True
-
-    def _unlock_key_release(self) -> None:
-        self.key_release_lock = False
-
     """
     Overridden functions
     """
 
-    def setFocus(self) -> None:
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
         """
         Overridden focus event
         """
         # Execute the supeclass focus function
-        super().setFocus()
+        super().setFocus(reason)
         # Check indication
         self.main_form.view.indication_check()
-
-    def mousePressEvent(self, event: qt.QMouseEvent) -> None:
-        """Function connected to the clicked signal of the tree display"""
-        super().mousePressEvent(event)
-        # Clear the selection if the index is invalid
-        index = self.indexAt(event.pos())
-        if index.isValid() == False:
-            self.clearSelection()
-        # Set the focus
-        self.setFocus()
-        # Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self._parent
-        # Set Save/SaveAs buttons in the menubar
-        self._parent._set_save_status()
-        # Reset the click&drag context menu action
-        components.actionfilter.ActionFilter.clear_action()
 
     """
     Public functions
@@ -2611,6 +3062,7 @@ class TreeDisplayBase(qt.QTreeView):
     def update_styles(self) -> None:
         self.update_icon_size()
         self.setFont(settings.get_current_font())
+        self.update_filter_styles()
 
     def update_icon_size(self) -> None:
         self.setIconSize(
@@ -2655,7 +3107,13 @@ class TreeExplorer(TreeDisplayBase):
     open_file_signal = qt.pyqtSignal(str)
     open_file_hex_signal = qt.pyqtSignal(str)
     open_file_markdown_signal = qt.pyqtSignal(str)
-    open_directory_signal = qt.pyqtSignal()
+    # A worker-thread directory-size scan finished (path, full tooltip text).
+    __tooltip_ready = qt.pyqtSignal(str, object)
+    # Instance variables (set in __init__)
+    __tooltip_cache: dict[str, str]
+    __tooltip_inflight: set[str]
+    __tooltip_complete: set[str]
+    __tooltip_current: tuple[str, qt.QPoint] | None
 
     # Attributes
     current_viewed_directory: str | None = None
@@ -2663,9 +3121,18 @@ class TreeExplorer(TreeDisplayBase):
     base_item: qt.QStandardItem | None = None
     added_item: qt.QStandardItem | None = None
     renamed_item: qt.QStandardItem | None = None
+    # The cut/copy clipboard is deliberately shared by every explorer tab, so
+    # an item cut in one tab can be pasted into another. Only a cut that
+    # actually moved something releases it -- the sources are gone by then --
+    # while a copy keeps it, so the same selection can be pasted into as many
+    # directories as wanted. The same items are published on the system
+    # clipboard (see components.osclipboard), which is what lets the OS file
+    # manager paste them, and its own copies and cuts are pasted from here.
     cut_items: list[types.SimpleNamespace] | None = None
     copy_items: list[types.SimpleNamespace] | None = None
     open_in_explorer_text: str = "Open in explorer"
+    _refresh_in_progress: bool = False
+    __last_changed_path: str | None = None
     # Instance variables (set in __init__)
     project_icon: qt.QIcon
     file_icon: qt.QIcon
@@ -2673,7 +3140,7 @@ class TreeExplorer(TreeDisplayBase):
     disk_icon: qt.QIcon
     computer: qt.QIcon
     goto_icon: qt.QIcon
-    proxy_model: qt.QSortFilterProxyModel
+    directory_changed_timer: qt.QTimer
 
     def __init__(self, parent: qt.QWidget, main_form: Any) -> None:
         # Initialize the superclass
@@ -2689,7 +3156,7 @@ class TreeExplorer(TreeDisplayBase):
         self.computer = functions.create_icon("tango_icons/computer.png")
         self.goto_icon = functions.create_icon("tango_icons/edit-goto.png")
         # Connect signals
-        self.doubleClicked.connect(self.__item_double_click)
+        self.tree.doubleClicked.connect(self.__item_double_click)
         self.key_release_signal.connect(self.__keyrelease_slot)
         # Internals
         self.internals.set_icon(
@@ -2698,39 +3165,59 @@ class TreeExplorer(TreeDisplayBase):
         # File watcher: to watch for displayed directory modifications
         self.__file_watcher = qt.QFileSystemWatcher(self)
         self.__file_watcher.directoryChanged.connect(self.__directory_changed)
-        self.__file_watcher.fileChanged.connect(self.__file_changed)
-        self._refresh_in_progress = False
+        self.directory_changed_timer = qt.QTimer(self)
+        self.directory_changed_timer.setInterval(50)
+        self.directory_changed_timer.setSingleShot(True)
+        self.directory_changed_timer.timeout.connect(self.__directory_process)
+        # Tooltips resolve lazily on first hover: the stat is cheap, the
+        # recursive directory size runs on a worker thread. The caches are
+        # cleared on every listing, so a stale size never survives a refresh.
+        self.__tooltip_cache = {}
+        self.__tooltip_inflight = set()
+        self.__tooltip_complete = set()
+        self.__tooltip_current = None
+        self.__tooltip_ready.connect(self.on_tooltip_ready)
 
-        # Searching / filtering initialization
-        # Proxy model for filtering
-        self.proxy_model = qt.QSortFilterProxyModel()
-        self.proxy_model.setSourceModel(self.model())
-        self.proxy_model.setFilterCaseSensitivity(qt.Qt.CaseSensitivity.CaseInsensitive)
-        self.proxy_model.setRecursiveFilteringEnabled(
-            True
-        )  # Crucial for tree filtering
-        self.setModel(self.proxy_model)
+    def _always_visible_row(self, item: qt.QStandardItem) -> bool:
+        """
+        The rows the filter must never hide.
+
+        The drive rows on the Windows view are the only way back to a disk, and
+        the navigation rows are the only way to leave the current directory; a
+        filter that hid either would strand the user. The rows being created or
+        renamed are on screen for the user to type into, so they stay too.
+
+        The base directory row is deliberately *not* in the list. It is the one
+        top-level row of a listing rather than a row among siblings, and an
+        exempt row takes its whole subtree with it - exempting it would leave
+        the filter with nothing to do. It stays by the ordinary rule: while a
+        descendant matches.
+        """
+        if not hasattr(item, "attributes"):
+            return False
+        itype = getattr(item.attributes, "itype", None)
+        if itype is None:
+            return False
+        return itype in (
+            TreeExplorer.ItemType.DISK,
+            TreeExplorer.ItemType.COMPUTER,
+            TreeExplorer.ItemType.ONE_UP_DIRECTORY,
+            TreeExplorer.ItemType.NEW_FILE,
+            TreeExplorer.ItemType.NEW_DIRECTORY,
+            TreeExplorer.ItemType.RENAME_FILE,
+            TreeExplorer.ItemType.RENAME_DIRECTORY,
+        )
 
     @qt.pyqtSlot(str)
     def __directory_changed(self, path: str) -> None:
         if self._refresh_in_progress:
             return
         self.__last_changed_path = path
-        if hasattr(self, "directory_changed_timer"):
-            self.directory_changed_timer.stop()
-        else:
-            self.directory_changed_timer = qt.QTimer(self._parent)
-            self.directory_changed_timer.setInterval(50)
-            self.directory_changed_timer.setSingleShot(True)
-            self.directory_changed_timer.timeout.connect(self.__directory_process)
         self.directory_changed_timer.start(100)
 
     def __directory_process(self) -> None:
-        self.display_directory(self.__last_changed_path, scroll_restore=True)
-
-    @qt.pyqtSlot(str)
-    def __file_changed(self, path: str) -> None:
-        pass
+        if self.__last_changed_path is not None:
+            self.display_directory(self.__last_changed_path, scroll_restore=True)
 
     @qt.pyqtSlot(str, dict)
     def __keyrelease_slot(self, key: str, modifiers: dict[str, bool]) -> None:
@@ -2773,16 +3260,16 @@ class TreeExplorer(TreeDisplayBase):
             itype=itype, path=path, hidden=hidden, disk=disk, hide_menu=hide_menu
         )
 
-    def __is_hidden_item(self, item: str) -> bool:
+    def __is_hidden_item(self, path: str) -> bool:
         try:
             if data.platform == "Windows":
-                attribute: int = win32api.GetFileAttributes(item)
+                attribute: int = win32api.GetFileAttributes(path)
                 hidden: bool = bool(
                     attribute
                     & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
                 )
             else:
-                hidden = os.path.basename(item).startswith(".")
+                hidden = os.path.basename(path).startswith(".")
             return hidden
         except:
             return False
@@ -2804,6 +3291,8 @@ class TreeExplorer(TreeDisplayBase):
         searched_item: str = editor.text()
         root: qt.QStandardItem = self.model().invisibleRootItem()
         for it in self.iterate_items(root):
+            if it is None or not hasattr(it, "attributes"):
+                continue
             if (
                 it.text() == searched_item
                 and it.attributes.itype == TreeExplorer.ItemType.FILE
@@ -2838,20 +3327,27 @@ class TreeExplorer(TreeDisplayBase):
         self._unlock_key_release()
 
     def _safely_remove_row(self, item: qt.QStandardItem) -> bool:
-        index = item.index()
-        if not isinstance(index, qt.QModelIndex):
+        parent: qt.QStandardItem | None = item.parent()
+        if parent is None:
             return False
-        row = index.row()
-        if row < 0 or row >= self.base_item.rowCount():
+        row: int = item.row()
+        if row < 0 or row >= parent.rowCount():
             return False
-        self.base_item.removeRow(row)
+        parent.removeRow(row)
         return True
 
-    def __item_changed(self, item: qt.QStandardItem) -> None:
+    def __item_changed(self, item: qt.QStandardItem, role: int = -1) -> None:
         """
         Callback connected to the displays
         QStandardItemModel 'itemChanged' signal
         """
+        # Hiding a row is a filter decision, not an edit. This handler is
+        # connected to the source model, so it sees every write the filter
+        # makes. It cannot recognise them from the role argument - PyQt6 hands
+        # an itemChanged slot a role of -1 whatever changed - so it asks the
+        # filter whether it is inside its own write.
+        if self.row_filter.is_applying:
+            return
         if not hasattr(item, "attributes"):
             return
         if (
@@ -3197,8 +3693,7 @@ class TreeExplorer(TreeDisplayBase):
                     TreeExplorer.ItemType.DIRECTORY,
                     TreeExplorer.ItemType.BASE_DIRECTORY,
                 ]
-                or TreeExplorer.cut_items is not None
-                or TreeExplorer.copy_items is not None
+                or self.__has_pasteable_items()
             ):
                 self.tree_menu.addSeparator()
             # Cut item
@@ -3227,10 +3722,7 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action.triggered.connect(self.__paste_items)
             icon = functions.create_icon("tango_icons/edit-paste.png")
             paste_item_action.setIcon(icon)
-            if (
-                TreeExplorer.cut_items is not None
-                or TreeExplorer.copy_items is not None
-            ):
+            if self.__has_pasteable_items():
                 self.tree_menu.addAction(paste_item_action)
 
             # Rename item
@@ -3243,7 +3735,7 @@ class TreeExplorer(TreeDisplayBase):
 
                 def rename_item():
                     if len(self.selectedIndexes()) > 1:
-                        self.main_form.display.display_warning(
+                        self.main_form.display.repl_display_warning(
                             "Renaming allows only one item at a time!"
                         )
                         return
@@ -3276,10 +3768,7 @@ class TreeExplorer(TreeDisplayBase):
             paste_item_action.triggered.connect(self.__paste_items)
             icon = functions.create_icon("tango_icons/edit-paste.png")
             paste_item_action.setIcon(icon)
-            if (
-                TreeExplorer.cut_items is not None
-                or TreeExplorer.copy_items is not None
-            ):
+            if self.__has_pasteable_items():
                 self.tree_menu.addAction(paste_item_action)
         # Add the actions that are on every menu
         # Separator
@@ -3429,6 +3918,82 @@ class TreeExplorer(TreeDisplayBase):
             return (None, constants.DialogResult.SkipAll)
         return (None, constants.DialogResult.No)
 
+    def __clipboard_key(self, path: str) -> str:
+        return os.path.normcase(os.path.abspath(path))
+
+    def __item_from_path(self, path: str) -> types.SimpleNamespace:
+        return self.__create_item_attribute(
+            TreeExplorer.ItemType.DIRECTORY
+            if os.path.isdir(path)
+            else TreeExplorer.ItemType.FILE,
+            path,
+        )
+
+    def __in_app_clipboard(self) -> tuple[list[types.SimpleNamespace], bool]:
+        """The items of the in-app clipboard and whether they are to be
+        moved."""
+        if TreeExplorer.cut_items is not None:
+            return (TreeExplorer.cut_items, True)
+        return (TreeExplorer.copy_items or [], False)
+
+    def __has_pasteable_items(self) -> bool:
+        """Whether a paste would have anything to paste.
+
+        The system clipboard counts too, since the OS file manager's own
+        copies and cuts land there."""
+        if TreeExplorer.cut_items is not None or TreeExplorer.copy_items is not None:
+            return True
+        try:
+            return components.osclipboard.get_files() is not None
+        except Exception:
+            return False
+
+    def __collect_paste_items(self) -> tuple[list[types.SimpleNamespace], bool] | None:
+        """Resolve what a paste should work on: the items and whether they
+        are to be moved, or None when there is nothing at all.
+
+        The system clipboard is asked first, so items copied or cut in the
+        OS file manager paste here as well. When it holds exactly the items
+        of the in-app clipboard that list wins, since it also knows what
+        each item is, which the paths alone cannot tell."""
+        try:
+            system: tuple[list[str], bool] | None = components.osclipboard.get_files()
+        except Exception:
+            system = None
+        in_app: list[types.SimpleNamespace]
+        is_cut: bool
+        in_app, is_cut = self.__in_app_clipboard()
+        if system is None:
+            return (in_app, is_cut) if in_app else None
+        paths: list[str]
+        move: bool
+        paths, move = system
+        if in_app and {self.__clipboard_key(p) for p in paths} == {
+            self.__clipboard_key(i.path) for i in in_app
+        }:
+            return (in_app, is_cut)
+        return ([self.__item_from_path(path) for path in paths], move)
+
+    def __publish_to_system_clipboard(
+        self, items: list[types.SimpleNamespace], move: bool
+    ) -> None:
+        """Hand the items to the system clipboard, so that the OS file
+        manager can paste them.
+
+        Best effort: the in-app clipboard remains the source of truth, so a
+        clipboard that cannot be written only costs the OS interop."""
+        try:
+            components.osclipboard.set_files([i.path for i in items], move)
+        except Exception:
+            self.main_form.display.repl_display_error(traceback.format_exc())
+
+    def __release_system_clipboard(self) -> None:
+        """Empty the system clipboard once a cut consumed its sources."""
+        try:
+            components.osclipboard.clear_files()
+        except Exception:
+            self.main_form.display.repl_display_error(traceback.format_exc())
+
     def __paste_items(self) -> None:
         if self.current_viewed_directory is None:
             self.main_form.display.repl_display_message(
@@ -3436,25 +4001,35 @@ class TreeExplorer(TreeDisplayBase):
             )
             return
         try:
-            items: list[types.SimpleNamespace]
-            if TreeExplorer.cut_items is not None:
-                items = TreeExplorer.cut_items
-            elif TreeExplorer.copy_items is not None:
-                items = TreeExplorer.copy_items
-            else:
-                self.main_form.display.display_error(
+            collected: tuple[list[types.SimpleNamespace], bool] | None
+            collected = self.__collect_paste_items()
+            if collected is None:
+                self.main_form.display.repl_display_error(
                     "Copy AND Cut items list is empty!\n"
                     + "Cannot perform this action!"
                 )
                 return
+            items: list[types.SimpleNamespace]
+            is_cut: bool
+            items, is_cut = collected
             force_overwrite: bool = False
             force_copy: bool = False
             force_skip: bool = False
+            pasted_count: int = 0
+            skipped_count: int = 0
             for it in items:
                 path: str = it.path
                 itype: "TreeExplorer.ItemType" = it.itype
                 base_name: str = os.path.basename(path)
                 new_path: str = os.path.join(self.current_viewed_directory, base_name)
+                if functions.are_paths_same(path, new_path):
+                    self.main_form.display.repl_display_warning(
+                        "Skipped '{}': it is already in this directory!".format(
+                            base_name
+                        )
+                    )
+                    skipped_count += 1
+                    continue
                 is_symlink = os.path.islink(path)
                 if os.path.lexists(new_path):
                     if force_overwrite:
@@ -3476,6 +4051,7 @@ class TreeExplorer(TreeDisplayBase):
                 else:
                     destination = new_path
                 if destination is None:
+                    skipped_count += 1
                     continue
                 if itype in [
                     TreeExplorer.ItemType.DIRECTORY,
@@ -3499,7 +4075,7 @@ class TreeExplorer(TreeDisplayBase):
                         os.rename(temporary, destination)
                     else:
                         shutil.copytree(path, destination)
-                    if TreeExplorer.cut_items is not None:
+                    if is_cut:
                         if is_symlink:
                             os.remove(path)
                         else:
@@ -3510,18 +4086,39 @@ class TreeExplorer(TreeDisplayBase):
                         os.symlink(target, destination)
                     else:
                         shutil.copy(path, destination)
-                    if TreeExplorer.cut_items is not None:
+                    if is_cut:
                         os.remove(path)
+                pasted_count += 1
         except:
             self.main_form.display.repl_display_error(traceback.format_exc())
-        if TreeExplorer.cut_items is not None:
+            # The clipboard is kept on failure, so the paste can be retried.
+            return
+        if is_cut and pasted_count > 0:
+            # A cut consumed the sources, so it has to release the clipboard;
+            # a copy keeps it, so the same selection can be pasted into
+            # another directory. A paste that landed nothing keeps it either
+            # way, so it can be retried somewhere the paths make sense.
             TreeExplorer.cut_items = None
             TreeExplorer.copy_items = None
+            self.__release_system_clipboard()
+        summary: str = "{} {} of {} item{}".format(
+            "Moved" if is_cut else "Pasted",
+            pasted_count,
+            len(items),
+            "" if len(items) == 1 else "s",
+        )
+        if skipped_count:
+            summary += ", skipped {}".format(skipped_count)
+        self.main_form.display.repl_display_message(summary + ".")
 
     def __copy_items(self) -> None:
         items: list[types.SimpleNamespace] = []
         for i in self.selectedIndexes():
             it: qt.QStandardItem = self.model().itemFromIndex(i)
+            if it is None or not hasattr(it, "attributes"):
+                continue
+            if it.attributes.disk:
+                continue
             if it.attributes.itype in [
                 TreeExplorer.ItemType.FILE,
                 TreeExplorer.ItemType.DIRECTORY,
@@ -3533,6 +4130,7 @@ class TreeExplorer(TreeDisplayBase):
             return
         TreeExplorer.cut_items = None
         TreeExplorer.copy_items = items
+        self.__publish_to_system_clipboard(items, move=False)
         self.main_form.display.repl_display_message("Copied items:")
         for i in items:
             self.main_form.display.repl_display_message(
@@ -3543,6 +4141,10 @@ class TreeExplorer(TreeDisplayBase):
         items: list[types.SimpleNamespace] = []
         for i in self.selectedIndexes():
             it: qt.QStandardItem = self.model().itemFromIndex(i)
+            if it is None or not hasattr(it, "attributes"):
+                continue
+            if it.attributes.disk:
+                continue
             if it.attributes.itype in [
                 TreeExplorer.ItemType.FILE,
                 TreeExplorer.ItemType.DIRECTORY,
@@ -3553,6 +4155,7 @@ class TreeExplorer(TreeDisplayBase):
             return
         TreeExplorer.cut_items = items
         TreeExplorer.copy_items = None
+        self.__publish_to_system_clipboard(items, move=True)
         self.main_form.display.repl_display_message("Cut items:")
         for i in items:
             self.main_form.display.repl_display_message(
@@ -3561,9 +4164,29 @@ class TreeExplorer(TreeDisplayBase):
 
     def __delete_items(self) -> None:
         items: list[types.SimpleNamespace] = []
+        selected: list[types.SimpleNamespace] = []
         for i in self.selectedIndexes():
             item: qt.QStandardItem = self.model().itemFromIndex(i)
-            items.append(item.attributes)
+            if item is None or not hasattr(item, "attributes"):
+                continue
+            selected.append(item.attributes)
+            if item.attributes.disk:
+                continue
+            if item.attributes.itype in [
+                TreeExplorer.ItemType.FILE,
+                TreeExplorer.ItemType.DIRECTORY,
+            ]:
+                items.append(item.attributes)
+        if len(items) == 0:
+            if len(selected) == 0:
+                self.main_form.display.repl_display_warning(
+                    "Nothing selected to delete!"
+                )
+            else:
+                self.main_form.display.repl_display_warning(
+                    "The viewed directory and the drives cannot be deleted!"
+                )
+            return
         message: str = "What would you like to do with the {} selected items?".format(
             len(items)
         )
@@ -3643,6 +4266,8 @@ class TreeExplorer(TreeDisplayBase):
                 indexes = self.selectedIndexes()
             for i in indexes:
                 item: qt.QStandardItem = self.model().itemFromIndex(i)
+                if item is None:
+                    continue
                 self.open_item(item)
         except:
             self.main_form.display.repl_display_error(traceback.format_exc())
@@ -3675,7 +4300,6 @@ class TreeExplorer(TreeDisplayBase):
             TreeExplorer.ItemType.BASE_DIRECTORY,
         ]:
             previous_directory: str | None = self.current_viewed_directory
-            self._clean_model()
             self.display_directory(item.attributes.path, disk=item.attributes.disk)
             if item.attributes.itype == TreeExplorer.ItemType.ONE_UP_DIRECTORY:
                 try:
@@ -3697,7 +4321,15 @@ class TreeExplorer(TreeDisplayBase):
                 self.display_windows_disks()
 
     def display_windows_disks(self) -> None:
-        self._clean_model()
+        """Populate the view with the logical drives of the machine.
+
+        Drive rows are typed as directories so that they navigate like any
+        other folder, and are flagged as disks to keep them out of the
+        cut, copy and delete paths, which would otherwise take a whole drive
+        with them.
+        """
+        if data.platform != "Windows":
+            return
         tree_model: qt.QStandardItemModel = self.__init_tree_model()
         base_item: qt.QStandardItem = self.create_standard_item(
             "Computer", bold=False, icon=self.computer
@@ -3761,11 +4393,110 @@ class TreeExplorer(TreeDisplayBase):
     Overriden events
     """
 
-    def mousePressEvent(self, event: qt.QMouseEvent) -> None:
+    def _resolve_item_tooltip(
+        self, item: qt.QStandardItem, pos: qt.QPoint
+    ) -> str | None:
+        """
+        The tooltip for *item*, resolved when the tooltip is first shown.
+
+        Nothing is computed while the listing is built. The hover itself pays
+        for one stat, which feeds the path, created, modified and accessed
+        lines; the recursive directory size is the expensive part, so the
+        first hover over a directory shows a 'Size: ...' placeholder, computes
+        the total on a worker thread, and swaps the real line in if the
+        tooltip is still showing. Resolved text is cached per path and cleared
+        on every listing.
+        """
+        attributes = getattr(item, "attributes", None)
+        item_path = getattr(attributes, "path", None)
+        itype = getattr(attributes, "itype", None)
+        if not isinstance(item_path, str) or itype not in (
+            TreeExplorer.ItemType.FILE,
+            TreeExplorer.ItemType.DIRECTORY,
+            TreeExplorer.ItemType.BASE_DIRECTORY,
+            TreeExplorer.ItemType.ONE_UP_DIRECTORY,
+        ):
+            return None
+        cached: str | None = self.__tooltip_cache.get(item_path)
+        if cached is not None:
+            self.__tooltip_current = (item_path, pos)
+            return cached
+        try:
+            info: os.stat_result = os.stat(item_path)
+        except OSError:
+            self.__tooltip_complete.add(item_path)
+            return None
+        if itype == TreeExplorer.ItemType.FILE:
+            text: str = _tooltip_lines(item_path, info, None)
+            self.__tooltip_cache[item_path] = text
+            self.__tooltip_complete.add(item_path)
+        else:
+            text = _tooltip_lines(item_path, info, "...")
+            self.__tooltip_cache[item_path] = text
+            if item_path not in self.__tooltip_inflight:
+                self.__tooltip_inflight.add(item_path)
+                thread: threading.Thread = threading.Thread(
+                    target=self.__compute_size_tooltip,
+                    args=(item_path,),
+                    daemon=True,
+                )
+                thread.start()
+        self.__tooltip_current = (item_path, pos)
+        return text
+
+    def __compute_size_tooltip(self, path: str) -> None:
+        """Worker thread: the recursive directory total, then the full tooltip."""
+        scan: tuple[int, bool] | None = _scan_directory_size(path)
+        size_text: str | None
+        if scan is None:
+            size_text = None
+        else:
+            total, truncated = scan
+            size_text = _format_size(total)
+            if truncated:
+                size_text = "> " + size_text
+        self.__tooltip_ready.emit(path, _tooltip_text(path, size_text))
+
+    @qt.pyqtSlot(str, object)
+    def on_tooltip_ready(self, path: str, text: object) -> None:
+        self.__tooltip_inflight.discard(path)
+        if text is not None:
+            self.__tooltip_cache[path] = str(text)
+        self.__tooltip_complete.add(path)
+        if self.__tooltip_current is not None and self.__tooltip_current[0] == path:
+            _path, pos = self.__tooltip_current
+            if qt.QToolTip.isVisible() and text is not None:
+                qt.QToolTip.showText(pos, str(text), self.tree)
+
+    def _on_mouse_pressed(self, event: qt.QMouseEvent) -> None:
+        # The view saw a press: the base class handles the bookkeeping, then
+        # a right press builds the context menu.
+        super()._on_mouse_pressed(event)
         if event.button() == qt.Qt.MouseButton.RightButton:
-            index: qt.QModelIndex = self.indexAt(event.pos())
-            self.__item_right_click(index)
+            self.__apply_right_click(event)
+
+    def mousePressEvent(self, event: qt.QMouseEvent) -> None:
+        # A press that reaches the tab directly (rather than the inner view)
+        # has to build the same menu.
         super().mousePressEvent(event)
+        if event.button() == qt.Qt.MouseButton.RightButton:
+            self.__apply_right_click(event)
+
+    def __apply_right_click(self, event: qt.QMouseEvent) -> None:
+        # The context menu operates on the current selection, so the pressed
+        # row has to be selected before it is built.
+        index: qt.QModelIndex = self.indexAt(event.pos())
+        selection_model: qt.QItemSelectionModel | None = self.selectionModel()
+        if index.isValid() and selection_model is not None:
+            # A right click inside the selection keeps it, a click outside
+            # it narrows the selection to the pressed row.
+            if not selection_model.isSelected(index):
+                selection_model.select(
+                    index,
+                    qt.QItemSelectionModel.SelectionFlag.ClearAndSelect
+                    | qt.QItemSelectionModel.SelectionFlag.Rows,
+                )
+        self.__item_right_click(index)
 
     """
     Public functions
@@ -3788,6 +4519,12 @@ class TreeExplorer(TreeDisplayBase):
         )
 
         self.current_viewed_directory = directory
+        # A new listing invalidates every cached tooltip: sizes may have
+        # changed, and the items themselves are about to be rebuilt.
+        self.__tooltip_cache = {}
+        self.__tooltip_inflight = set()
+        self.__tooltip_complete = set()
+        self.__tooltip_current = None
         tree_model: qt.QStandardItemModel = self.__init_tree_model()
         sd: tuple[str, str] = os.path.splitdrive(directory)
         base_item: qt.QStandardItem

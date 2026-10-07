@@ -14,19 +14,21 @@ attached to the MainWindow instance.
 
 import functools
 import os
+from collections.abc import Iterator
 from typing import Optional, TYPE_CHECKING
 
 import constants
-import functions
 import gui.contextmenu
 import qt
 import settings
+
+from components.filteredit import FilterField
 
 if TYPE_CHECKING:
     from gui.mainwindow import MainWindow
 
 
-class RecentFilesFilter(qt.QLineEdit):
+class RecentFilesFilter(FilterField):
     """
     Search box embedded at the top of the Recent Files menu.
     Filters the file actions live while typing; Enter opens the
@@ -34,35 +36,15 @@ class RecentFilesFilter(qt.QLineEdit):
     """
 
     def __init__(self, menu: qt.QMenu) -> None:
-        super().__init__(menu)
+        super().__init__(menu, "Search recent files\u2026")
         self.__menu = menu
-        self.setPlaceholderText("Search recent files\u2026")
-        self.setClearButtonEnabled(True)
-        self.__clear_button = self.findChild(qt.QToolButton)
-        self.__close_icon = qt.QIcon()
-        self.__close_hover_icon = qt.QIcon()
-        self._apply_close_icons()
-        if self.__clear_button is not None:
-            self.__clear_button.installEventFilter(self)
+        self.__in_repopup = False
         self.textChanged.connect(self.__filter_actions)
         self.returnPressed.connect(self.__activate_first)
 
-    def _apply_close_icons(self) -> None:
-        theme = settings.get_theme()
-        self.__close_icon = qt.QIcon(functions.get_resource_file(theme["close-image"]))
-        self.__close_hover_icon = qt.QIcon(
-            functions.get_resource_file(theme["close-hover-image"])
-        )
-        if self.__clear_button is not None:
-            self.__clear_button.setIcon(self.__close_icon)
-
-    def eventFilter(self, object: qt.QObject, event: qt.QEvent) -> bool:  # type: ignore[override]
-        if object is self.__clear_button:
-            if event.type() == qt.QEvent.Type.Enter:
-                self.__clear_button.setIcon(self.__close_hover_icon)
-            elif event.type() == qt.QEvent.Type.Leave:
-                self.__clear_button.setIcon(self.__close_icon)
-        return False
+    @property
+    def repopuping(self) -> bool:
+        return self.__in_repopup
 
     def __filter_actions(self, text: str) -> None:
         query = text.strip().lower()
@@ -73,8 +55,14 @@ class RecentFilesFilter(qt.QLineEdit):
             file_name = os.path.basename(path)
             visible = query == "" or query in path.lower() or query in file_name.lower()
             action.setVisible(visible)
+        if self.__menu.isVisible():
+            self.__in_repopup = True
+            try:
+                self.__menu.popup(self.__menu.mapToGlobal(self.__menu.rect().topLeft()))
+            finally:
+                self.__in_repopup = False
 
-    def __visible_file_actions(self):
+    def __visible_file_actions(self) -> Iterator[qt.QAction]:
         for action in self.__menu.actions():
             if isinstance(action, qt.QWidgetAction) or action.isSeparator():
                 continue
@@ -188,8 +176,9 @@ class Settings:
             return
         filter_widget = getattr(recent_files_menu, "_filter_widget", None)
         if isinstance(filter_widget, RecentFilesFilter):
-            filter_widget._apply_close_icons()
-            filter_widget.clear()
+            filter_widget.apply_filter_style()
+            if not filter_widget.repopuping:
+                filter_widget.clear()
             filter_widget.setFocus()
 
     def restore(self) -> None:

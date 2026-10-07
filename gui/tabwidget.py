@@ -465,17 +465,13 @@ QTabBar::tab:selected {{
         self.tabBar().installEventFilter(self)
 
     def customize_tab_bar(self):
-        if (
-            settings.get("custom_menu_scale") != None
-            and settings.get("custom_menu_font") != None
-        ):
-            self.tabBar().setFont(qt.QFont(*settings.get("custom_menu_font")))
+        self.tabBar().setFont(settings.get_menu_font())
+        if settings.get("custom_menu_scale") != None:
             new_icon_size = functions.create_size(
                 settings.get("custom_menu_scale"), settings.get("custom_menu_scale")
             )
             self.setIconSize(new_icon_size)
         else:
-            self.tabBar().setFont(settings.get_current_font())
             self.setIconSize(self.default_icon_size)
         self.tabBar().set_style()
 

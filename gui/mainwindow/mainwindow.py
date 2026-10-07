@@ -1072,6 +1072,8 @@ class MainWindow(qt.QMainWindow):
                         )
                     else:
                         new_tab.setText(file_text)
+                    # Pick up the file's line endings for saving
+                    new_tab.update_target_eol(in_file)
                     # Save the layout if needed
                     if save_layout == True:
                         self.view.layout_save()

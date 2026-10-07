@@ -80,7 +80,7 @@ class PlainEditor(gui.baseeditor.BaseEditor):
         # Tabs are spaces by default
         self.setIndentationsUseTabs(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(qt.QsciScintilla.EolMode(settings.get("editor")["end_of_line_mode"]))
+        self.setEolMode(qt.QsciScintilla.EolMode.EolUnix)
         # Initialize the namespace references
         self.hotspots = components.hotspots.Hotspots()
         # Set the initial zoom factor
@@ -93,7 +93,9 @@ class PlainEditor(gui.baseeditor.BaseEditor):
             self.main_form.display.repl_clear_tab()
 
         # Clear messages
-        self.internals.add_corner_button("tango_icons/edit-clear.png", "Clear messages", clear)
+        self.internals.add_corner_button(
+            "tango_icons/edit-clear.png", "Clear messages", clear
+        )
 
     def contextMenuEvent(self, event):
         # Built-in context menu

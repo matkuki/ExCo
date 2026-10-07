@@ -86,6 +86,7 @@ keyboard_shortcuts = {
             "cwd_tree": "F7",
             "cwd_explorer": "Alt+F7",
             "new_cwd_tree": "Ctrl+F7",
+            "filter_tree": "Ctrl+Alt+F",
             "find": "Ctrl+F",
             "find_and_replace": "Ctrl+Shift+F",
             "find_brace": "Ctrl+J",

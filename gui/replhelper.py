@@ -83,7 +83,7 @@ class ReplHelper(qt.QsciScintilla):
         # Disable drops
         self.setAcceptDrops(False)
         # Set line endings to be Unix style ("\n")
-        self.setEolMode(qt.QsciScintilla.EolMode(settings.get("editor")["end_of_line_mode"]))
+        self.setEolMode(qt.QsciScintilla.EolMode.EolUnix)
         # Set the initial zoom factor
         self.zoomTo(settings.get("editor")["zoom_factor"])
         """
@@ -107,7 +107,9 @@ class ReplHelper(qt.QsciScintilla):
         self.prepend_to_lines = functools.partial(CustomEditor.prepend_to_lines, self)
         self.replace_line = functools.partial(CustomEditor.replace_line, self)
         self.get_line = functools.partial(CustomEditor.get_line, self)
-        self.check_line_numbering = functools.partial(CustomEditor.check_line_numbering, self)
+        self.check_line_numbering = functools.partial(
+            CustomEditor.check_line_numbering, self
+        )
         self.text_to_list = functools.partial(CustomEditor.text_to_list, self)
         self.list_to_text = functools.partial(CustomEditor.list_to_text, self)
         # Add the function and connect the signal to update the line/column positions
@@ -227,7 +229,9 @@ class ReplHelper(qt.QsciScintilla):
             _type = "multiline-repl-horizontal"
         else:
             _type = "multiline-repl-normal"
-        self.context_menu = gui.contextmenu.create(self, self.main_form, offset=offset, _type=_type)
+        self.context_menu = gui.contextmenu.create(
+            self, self.main_form, offset=offset, _type=_type
+        )
         self.context_menu.popup_at_cursor()
         event.accept()
 
