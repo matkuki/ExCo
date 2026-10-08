@@ -111,7 +111,7 @@ class View:
         main_groupbox = qt.QGroupBox(self._parent)
         main_groupbox_layout = qt.QVBoxLayout(main_groupbox)
         main_groupbox_layout.addWidget(main_splitter)
-        main_groupbox_layout.setContentsMargins(2, 2, 2, 2)
+        main_groupbox_layout.setContentsMargins(0, 0, 0, 0)
         main_groupbox_layout.setSpacing(0)
         main_groupbox.setLayout(main_groupbox_layout)
         main_groupbox.setObjectName("Main_Groupbox")

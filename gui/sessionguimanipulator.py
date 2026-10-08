@@ -934,7 +934,6 @@ QPushButton#session_editor_action_button {{
 }}
 QPushButton#session_editor_action_button {{
     border: 1px solid {};
-    border-radius: 3px;
 }}
 QPushButton#session_editor_action_button:hover {{
     background: {};

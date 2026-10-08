@@ -24,7 +24,9 @@ class ReplBox(qt.QGroupBox):
         super().__init__(parent)
         self.setObjectName("REPL_Box")
         self.main_form = parent
-        self.repl = ReplLineEdit(self, parent, interpreter_references=interpreter_references)
+        self.repl = ReplLineEdit(
+            self, parent, interpreter_references=interpreter_references
+        )
         self.repl.setObjectName("REPL_line")
         self.repl_helper = ReplHelper(self, parent, self.repl)
         self.repl_helper.setObjectName("REPL_multiline")
@@ -41,7 +43,9 @@ class ReplBox(qt.QGroupBox):
         # Set default font
         self.setFont(settings.get_current_font())
 
-    def set_repl(self, _type: constants.ReplType, language: constants.ReplLanguage) -> None:
+    def set_repl(
+        self, _type: constants.ReplType, language: constants.ReplLanguage
+    ) -> None:
         if language == constants.ReplLanguage.Python:
             self.setTitle("Python Interactive Interpreter (REPL)")
         elif language == constants.ReplLanguage.Hy:
@@ -95,9 +99,8 @@ class ReplBox(qt.QGroupBox):
     font-weight: bold;
     color: {};
     background-color: {};
-    border: 2px solid {};
-    border-radius: 0px;
-    margin-top: 6px;
+    border: 1px solid {};
+    margin-top: 0.5em;
     margin-bottom: 0px;
     margin-left: 0px;
     margin-right: 0px;

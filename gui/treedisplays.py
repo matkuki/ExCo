@@ -3177,6 +3177,135 @@ class TreeExplorer(TreeDisplayBase):
         self.__tooltip_complete = set()
         self.__tooltip_current = None
         self.__tooltip_ready.connect(self.on_tooltip_ready)
+        # Create footer toolbar with action buttons (like session editor)
+        self._create_footer_toolbar()
+
+    def _create_footer_toolbar(self) -> None:
+        """Create the footer toolbar with action buttons (like session editor)."""
+        # Footer widget with horizontal layout
+        self.footer = qt.QWidget(self)
+        self.footer.setObjectName("TreeExplorerFooter")
+        self.footer.setFixedHeight(28)
+        self.footer_layout = qt.QHBoxLayout(self.footer)
+        self.footer_layout.setContentsMargins(8, 2, 8, 2)
+        self.footer_layout.setSpacing(components.treefilter.BAR_SPACING)
+        self.footer_layout.setAlignment(qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter)
+
+        # New file button
+        self._add_footer_button(
+            functions.create_icon("tango_icons/document-new.png"),
+            "New file",
+            self.new_file,
+        )
+        # New directory button
+        self._add_footer_button(
+            functions.create_icon("tango_icons/folder-new.png"),
+            "New directory",
+            self.new_directory,
+        )
+        # Separator
+        self._make_vline()
+        # Refresh button
+        self._add_footer_button(
+            functions.create_icon("tango_icons/view-refresh.png"),
+            "Refresh",
+            self.refresh,
+        )
+
+        # Apply theme-aware styling (border-top only, no side margins)
+        self._apply_footer_theme(settings.get_theme())
+
+        # Add footer to main layout (after the tree)
+        self.main_layout.addWidget(self.footer)
+
+    def _add_footer_button(
+        self,
+        icon: qt.QIcon,
+        tooltip: str,
+        function: Callable[[], Any],
+    ) -> None:
+        """Add a flat, icon-only action button to the footer bar."""
+        button = qt.QPushButton(self.footer)
+        button.setObjectName("tree_explorer_footer_button")
+        button.setIcon(icon)
+        button.setToolTip(tooltip)
+        button.setFlat(True)
+        button.setFixedSize(24, 24)
+        button.setIconSize(qt.QSize(16, 16))
+        button.clicked.connect(function)
+        self.footer_layout.addWidget(button)
+
+    def _make_vline(self) -> None:
+        """Add a thin vertical separator to the footer bar."""
+        line = qt.QWidget(self.footer)
+        line.setObjectName("tree_explorer_vline")
+        line.setFixedWidth(1)
+        self.footer_layout.addWidget(line)
+
+    def _apply_footer_theme(self, theme: dict[str, Any]) -> None:
+        """Style the footer bar with the colours of the active theme."""
+        background = theme["linemargin"]["background"]
+        border = theme["scrollbar"]["handle"]
+        button_border = theme["indication"]["passiveborder"]
+        hover = theme["indication"]["hover"]
+        self.footer.setStyleSheet(
+            f"""
+#TreeExplorerFooter {{
+    background-color: {background};
+    border-top: 1px solid {border};
+}}
+QPushButton#tree_explorer_footer_button {{
+    background: transparent;
+    border: none;
+    padding: 1px 3px;
+}}
+QPushButton#tree_explorer_footer_button {{
+    border: 1px solid {theme["indication"]["passiveborder"]};
+}}
+QPushButton#tree_explorer_footer_button:hover {{
+    background: {hover};
+}}
+QWidget#tree_explorer_vline {{
+    background-color: {theme["scrollbar"]["handle"]};
+    min-width: 1px;
+    max-width: 1px;
+}}
+"""
+        )
+
+    def new_file(self) -> None:
+        """Create a new file in the current directory."""
+        if not self.base_item:
+            return
+        create_file_item = self.create_standard_item(
+            "", bold=False, icon=self.file_icon
+        )
+        create_file_item.attributes = self.__create_item_attribute(
+            TreeExplorer.ItemType.NEW_FILE, self.current_viewed_directory
+        )
+        create_file_item.setEditable(True)
+        self.base_item.appendRow(create_file_item)
+        self.added_item = create_file_item
+        index = create_file_item.index()
+        self.scrollTo(index)
+        self.start_editing_item(index)
+
+    def new_directory(self) -> None:
+        """Create a new directory in the current directory."""
+        if not self.base_item:
+            return
+        create_directory_item = self.create_standard_item(
+            "", bold=False, icon=self.folder_icon
+        )
+        create_directory_item.attributes = self.__create_item_attribute(
+            TreeExplorer.ItemType.NEW_DIRECTORY, self.current_viewed_directory
+        )
+        create_directory_item.setEditable(True)
+        self.base_item.appendRow(create_directory_item)
+        self.added_item = create_directory_item
+        index = create_directory_item.index()
+        self.scrollTo(index)
+        self.start_editing_item(index)
 
     def _always_visible_row(self, item: qt.QStandardItem) -> bool:
         """

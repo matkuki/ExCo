@@ -141,7 +141,6 @@ QPushButton {{
     background-color: {settings.get_theme()["indication"]["passivebackground"]};
     color: {settings.get_theme()["indication"]["font"]};
     border: 1px solid {settings.get_theme()["indication"]["passiveborder"]};
-    border-radius: 4px;
 }}
 QPushButton:hover {{
     background-color: {settings.get_theme()["indication"]["hover"]};
@@ -251,7 +250,7 @@ QToolTip {{
 
 class StyleSheetFrame:
     @staticmethod
-    def standard(background_transparent=False, no_border=True):
+    def standard(background_transparent=False, no_border=False):
         background_color = settings.get_theme()["fonts"]["default"]["background"]
         if background_transparent:
             background_color = "transparent"
@@ -263,6 +262,28 @@ QFrame {{
     background-color: {background_color};
     border: {border};
     spacing: 0px;
+}}
+        """
+        return style_sheet
+
+    @staticmethod
+    def container(background_transparent=False):
+        """Container frame with border collapse support.
+        Outer containers get border, inner containers inherit via QSS descendant rules.
+        """
+        background_color = settings.get_theme()["fonts"]["default"]["background"]
+        if background_transparent:
+            background_color = "transparent"
+        border = f"1px solid {settings.get_theme()['indication']['passiveborder']}"
+        style_sheet = f"""
+QFrame {{
+    background-color: {background_color};
+    border: {border};
+    spacing: 0px;
+}}
+/* Border collapse: inner frames inherit outer border */
+QFrame > QFrame {{
+    border: none;
 }}
         """
         return style_sheet
@@ -322,18 +343,18 @@ class StyleSheetTabWidget:
     def standard():
         style_sheet = """
 TabWidget::pane {{
-    border: 2px solid {};
+    border: 1px solid {};
     background-color: {};
     margin: 0px;
     spacing: 0px;
     padding: 0px;
 }}
 TabWidget[indicated=false]::pane {{
-    border: 2px solid {};
+    border: 1px solid {};
     background-color: {};
 }}
 TabWidget[indicated=true]::pane {{
-    border: 2px solid {};
+    border: 1px solid {};
     background-color: {};
 }}
 TabWidget QToolButton {{
@@ -424,5 +445,122 @@ QLineEdit {{
     font-size: {settings.get("current_font_size")}pt;
     padding: 0px 5px 0px 5px;
 }}
-    """
+        """
         return style_sheet
+
+
+class StyleSheetContainer:
+    """Global container border collapse rules.
+
+    All container widgets (QFrame, QScrollArea, QGroupBox, QScrollBar, etc.)
+    should have single-line borders with collapse behavior when adjacent.
+    """
+
+    @staticmethod
+    def global_rules():
+        passive = settings.get_theme()["indication"]["passiveborder"]
+        return f"""
+/* ===== CONTAINER BORDER COLLAPSE ===== */
+/* All container widgets get single-line borders */
+QFrame#Container, QScrollArea, QGroupBox, QScrollBar {{
+    border: 1px solid {passive};
+}}
+
+/* Border collapse: inner containers inherit outer border */
+QFrame#Container > QFrame, QScrollArea > QWidget, QGroupBox > QFrame {{
+    border: none;
+}}
+
+/* Top bars / filter bars: fixed height (28px), border-bottom only,
+   no side margins so border runs edge-to-edge and aligns with vertical border */
+QWidget#TopBar, QWidget#FilterBar {{
+    border-bottom: 1px solid {passive};
+    border-left: none;
+    border-right: none;
+    border-top: none;
+}}
+
+/* Action footers: fixed height, border-top only */
+QWidget#ActionFooter {{
+    border-top: 1px solid {passive};
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+}}
+
+/* Scroll areas: border on scroll area itself, viewport has no frame */
+QScrollArea {{ border: 1px solid {passive}; }}
+QScrollArea > QWidget {{ border: none; }}
+QScrollArea QWidget {{ border: none; }}
+QAbstractScrollArea {{ border: 1px solid {passive}; }}
+QAbstractScrollArea > QWidget {{ border: none; }}
+
+/* QSplitter handles - single line between panes */
+QSplitter::handle {{
+    background: {passive};
+    width: 1px;
+    height: 1px;
+}}
+QSplitter::handle:horizontal {{ width: 1px; }}
+QSplitter::handle:vertical {{ height: 1px; }}
+
+/* TabWidget pane: 1px border, collapse with adjacent containers */
+TabWidget::pane {{ border: 1px solid {passive}; }}
+TabWidget QWidget {{ border: none; }}
+
+/* QGroupBox: title area gets no extra border, content area inherits */
+QGroupBox {{ border: 1px solid {passive}; margin-top: 0.5em; }}
+QGroupBox::title {{ subcontrol-origin: margin; left: 10px; padding: 0 3px; }}
+QGroupBox > QWidget {{ border: none; }}
+
+/* QScrollBar: no border, handled by scroll area border */
+QScrollBar {{ border: none; }}
+"""
+
+    @staticmethod
+    def top_bar():
+        """Top bar / filter bar: fixed height 28px, border-bottom only."""
+        passive = settings.get_theme()["indication"]["passiveborder"]
+        return f"""
+QWidget#TopBar, QWidget#FilterBar {{
+    border-bottom: 1px solid {passive};
+    border-left: none;
+    border-right: none;
+    border-top: none;
+}}
+"""
+
+    @staticmethod
+    def action_footer():
+        """Action footer: fixed height, border-top only."""
+        passive = settings.get_theme()["indication"]["passiveborder"]
+        return f"""
+QWidget#ActionFooter {{
+    border-top: 1px solid {passive};
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+}}
+"""
+
+    @staticmethod
+    def scroll_area():
+        """Scroll area with collapsed borders."""
+        passive = settings.get_theme()["indication"]["passiveborder"]
+        return f"""
+QScrollArea {{ border: 1px solid {passive}; }}
+QScrollArea > QWidget {{ border: none; }}
+QScrollArea QWidget {{ border: none; }}
+QAbstractScrollArea {{ border: 1px solid {passive}; }}
+QAbstractScrollArea > QWidget {{ border: none; }}
+"""
+
+    @staticmethod
+    def group_box():
+        """QGroupBox with collapsed borders."""
+        passive = settings.get_theme()["indication"]["passiveborder"]
+        return f"""
+QGroupBox {{ border: 1px solid {passive}; margin-top: 0.5em; }}
+QGroupBox::title {{ subcontrol-origin: margin; left: 10px; padding: 0 3px; }}
+QGroupBox > QWidget {{ border: none; }}
+"""

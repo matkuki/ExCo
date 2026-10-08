@@ -469,7 +469,6 @@ QGroupBox {{
     background: transparent;
     color: {color};
     border: 1px solid {passive_border};
-    border-radius: 4px;
     margin-top: 10px;
     padding: 4px 6px 6px 6px;
     font-family: {font_name};
@@ -493,7 +492,6 @@ QLineEdit {{
     background: {passive_background};
     color: {color};
     border: 1px solid {passive_border};
-    border-radius: 3px;
     padding: 2px 5px;
     font-family: {font_name};
     font-size: {font_size}pt;
@@ -505,7 +503,6 @@ QLineEdit[editing=true] {{
 QToolButton {{
     background: transparent;
     border: none;
-    border-radius: 3px;
 }}
 QToolButton:hover {{
     background: {hover};
@@ -514,7 +511,6 @@ QPushButton {{
     background: {passive_background};
     color: {color};
     border: 1px solid {passive_border};
-    border-radius: 3px;
     padding: 3px 12px;
     font-family: {font_name};
     font-size: {font_size}pt;

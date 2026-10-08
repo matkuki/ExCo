@@ -18,6 +18,7 @@ import functions
 import qt
 import settings
 import themes
+from gui.custombuttons import StandardButton
 
 
 class SettingsGuiManipulator(qt.QFrame):
@@ -73,9 +74,9 @@ class SettingsGuiManipulator(qt.QFrame):
         # edge to edge below a hairline. The side margins line up with the
         # settings groups in the scroll area beneath.
         self.__top_bar.setFixedHeight(28)
-        self.__top_layout = qt.QVBoxLayout(self.__top_bar)
+        self.__top_layout = qt.QHBoxLayout(self.__top_bar)
         self.__top_layout.setSpacing(5)
-        self.__top_layout.setContentsMargins(qt.QMargins(0, 0, 0, 2))
+        self.__top_layout.setContentsMargins(qt.QMargins(0, 0, 0, 0))
         self.__shell_layout.addWidget(self.__top_bar)
         self.__scroll = qt.QScrollArea(self)
         self.__scroll.setObjectName("SettingsScroll")
@@ -174,7 +175,8 @@ class SettingsGuiManipulator(qt.QFrame):
             self.__top_bar, "Filter settings\u2026"
         )
         self.__filter_edit.textChanged.connect(self.__apply_settings_filter)
-        self.__top_layout.addWidget(self.__filter_edit)
+        self.__top_layout.addWidget(self.__filter_edit, 1)
+
         # ------------------------------------------------------------------
         # Fonts
         # ------------------------------------------------------------------
@@ -932,7 +934,6 @@ class SettingsGuiManipulator(qt.QFrame):
             "background-color: %s;"
             "color: %s;"
             "border: 1px solid %s;"
-            "border-radius: 3px;"
             "padding: 2px 8px 2px 8px;"
             "}"
             % (
@@ -1037,7 +1038,6 @@ QGroupBox {{
     background: transparent;
     color: {default_color};
     border: 1px solid {passive_border};
-    border-radius: 4px;
     margin-top: 8px;
     padding: 2px 6px 6px 6px;
     font-family: {font_name};
@@ -1055,7 +1055,6 @@ QComboBox, QSpinBox, QLineEdit {{
     background: {passive_background};
     color: {default_color};
     border: 1px solid {passive_border};
-    border-radius: 3px;
     padding: 1px 4px 1px 4px;
     font-family: {font_name};
     font-size: {font_size}pt;
@@ -1127,7 +1126,6 @@ QPushButton {{
     background: {passive_background};
     color: {default_color};
     border: 1px solid {passive_border};
-    border-radius: 3px;
     padding: 2px 8px 2px 8px;
     font-family: {font_name};
     font-size: {font_size}pt;
@@ -1152,7 +1150,6 @@ QCheckBox::indicator {{
     height: 14px;
     background: {passive_background};
     border: 1px solid {passive_border};
-    border-radius: 3px;
 }}
 QCheckBox::indicator:hover {{
     background: {hover};

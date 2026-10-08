@@ -869,7 +869,6 @@ class TerminalView(qt.QWidget):
             "background-color: rgba({0},{1},{2},235);"
             "color: rgba({3},{4},{5},255);"
             "border: 1px solid rgba({3},{4},{5},150);"
-            "border-radius: 4px;"
             "padding: 2px 10px;".format(
                 bg.red(),
                 bg.green(),

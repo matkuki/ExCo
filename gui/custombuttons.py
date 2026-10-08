@@ -118,12 +118,16 @@ class CustomButton(qt.QLabel):
             hex_image_size = CustomButton.HEX_IMAGE_SIZE
             hex_edge_length = 29
             hex_edge_width = 4
-            image = qt.QImage(*hex_image_size, qt.QImage.Format.Format_ARGB32_Premultiplied)
+            image = qt.QImage(
+                *hex_image_size, qt.QImage.Format.Format_ARGB32_Premultiplied
+            )
             image.fill(qt.Qt.GlobalColor.transparent)
             painter = qt.QPainter()
             painter.begin(image)
 
-            hex_builder = components.hexbuilder.HexBuilder(painter, (0, 0), hex_edge_length)
+            hex_builder = components.hexbuilder.HexBuilder(
+                painter, (0, 0), hex_edge_length
+            )
             hex_builder.draw_full_hexagon(
                 (int(hex_image_size[0] / 2) + 1, int(hex_image_size[1] / 2)),
                 qt.QColor(settings.get_theme()["indication"]["passivebackground"]),
@@ -203,7 +207,9 @@ class CustomButton(qt.QLabel):
         # Create and initialize the QPainter that will manipulate the QImage
         button_painter = qt.QPainter(image)
         button_painter.begin()
-        button_painter.setCompositionMode(qt.QPainter.CompositionMode.CompositionMode_SourceOver)
+        button_painter.setCompositionMode(
+            qt.QPainter.CompositionMode.CompositionMode_SourceOver
+        )
         button_painter.setOpacity(input_opacity)
         # Resize the hex image to scale
         hex_image = hex_image.scaled(
@@ -428,7 +434,9 @@ class DoubleButton(CustomButton):
         self.extra_button_stored_opacity = input_opacity
         # Create and initialize the QImage from the stored QPixmap
         button_image = self.extra_button_stored_pixmap
-        image = qt.QImage(button_image.size(), qt.QImage.Format.Format_ARGB32_Premultiplied)
+        image = qt.QImage(
+            button_image.size(), qt.QImage.Format.Format_ARGB32_Premultiplied
+        )
         image.fill(qt.Qt.GlobalColor.transparent)
         # Create and initialize the QPainter that will manipulate the QImage
         button_painter = qt.QPainter(image)
@@ -583,7 +591,6 @@ class CustomCheckBox(qt.QCheckBox):
                 width: {width}px; /* Set width via stylesheet */
                 height: {height}px; /* Set height via stylesheet */
                 border: 1px solid gray;
-                border-radius: 10px; /* Rounded corners */
                 padding: 5px; /* Padding around content */
                 background-color: white; /* Default background color (unchecked) */
             }}

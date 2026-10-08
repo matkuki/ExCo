@@ -616,7 +616,6 @@ QPushButton#text_differ_action_button {{
 QPushButton#text_differ_side_1, QPushButton#text_differ_side_2,
 QPushButton#text_differ_action_button {{
     border: 1px solid {};
-    border-radius: 3px;
 }}
 QPushButton#text_differ_side_1, QPushButton#text_differ_side_2 {{
     font-weight: bold;

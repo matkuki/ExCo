@@ -96,7 +96,7 @@ class MarkdownViewer(qt.QTextBrowser):
         # Theme styling
         self.set_theme(settings.get_theme())
 
-        # Corner buttons: browser preview and back-to-editor switch
+        # Corner buttons: back-to-editor switch and browser preview
         self.add_corner_buttons()
 
         # Link handling
@@ -139,14 +139,14 @@ class MarkdownViewer(qt.QTextBrowser):
             self._parent.switch_to_editor_view(index)
 
         self.internals.add_corner_button(
-            "tango_icons/gnome-web-browser.png",
-            "Open rendered preview in browser",
-            self.open_preview_in_browser,
-        )
-        self.internals.add_corner_button(
             "tango_icons/accessories-text-editor.png",
             "Back to editor view",
             back_to_editor,
+        )
+        self.internals.add_corner_button(
+            "tango_icons/gnome-web-browser.png",
+            "Open rendered preview in browser",
+            self.open_preview_in_browser,
         )
 
     """
