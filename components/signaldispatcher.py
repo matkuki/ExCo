@@ -19,6 +19,10 @@ class GlobalSignalDispatcher(qt.QObject):
     editor_initialized = qt.pyqtSignal(str)
     editor_file_saved_as = qt.pyqtSignal(str)
     editor_deleted = qt.pyqtSignal(str)
+    # Emitted by the global exception hook (functions.exception_hook) so an
+    # uncaught exception can be reported from any thread without quitting the
+    # application.
+    unhandled_exception = qt.pyqtSignal(str)
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

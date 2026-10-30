@@ -2589,25 +2589,88 @@ def output_redirect() -> None:
     sys.stderr = f
 
     # Adapt exception hook for all threads
-    def exception_hook(exctype: type, value: BaseException, trace: TracebackType) -> None:
-        print("-" * 80)
-        print(
-            "".join(traceback.format_exception(exctype, value, trace)),
-            end="",
-        )
-        print("-" * 80)
-        qt.QApplication.quit()
-        # Close file properly
-        if hasattr(sys.stdout, "close"):
-            sys.stdout.close()
-        # Restore original streams before backup
-        sys.stdout = original_output_stream
-        sys.stderr = original_error_stream
-        # Create backup with timestamp
-        output_file_with_date: str = output_get_file_with_timestamp()
-        shutil.copy(output_file, output_file_with_date)
-
     sys.excepthook = exception_hook
+    install_thread_exception_hook()
+
+
+# --- Uncaught exception reporting -------------------------------------------
+# An uncaught exception used to quit the application (so a single inaccessible
+# directory could close the whole editor). The hook below keeps the process
+# alive: the traceback is written to the redirected output file and pushed to
+# the REPL Messages panel through the global signal dispatcher.
+# `_exception_reporting` stops a failure inside the reporter from recursing
+# into the hook, and `_exception_report_count` throttles the panel so an
+# exception raised on every paint cannot flood it (the log still gets all).
+EXCEPTION_REPORT_LIMIT: int = 20
+_exception_report_count: int = 0
+_exception_reporting: bool = False
+
+
+def report_unhandled_exception(text: str) -> None:
+    """Push an uncaught exception to the GUI through the signal dispatcher.
+
+    Emitting a signal is safe from a worker thread: the dispatcher lives on
+    the GUI thread, so the connected slot runs there.
+    """
+    dispatcher: Any = getattr(data, "signal_dispatcher", None)
+    if dispatcher is None:
+        return
+    dispatcher.unhandled_exception.emit(text)
+
+
+def exception_hook(
+    exctype: type, value: BaseException, trace: TracebackType | None
+) -> None:
+    """Global exception hook: log the traceback and keep the application alive."""
+    global _exception_report_count
+    global _exception_reporting
+
+    print("-" * 80)
+    print(
+        "".join(traceback.format_exception(exctype, value, trace)),
+        end="",
+    )
+    print("-" * 80)
+    # The output file is still open, so the traceback has to be flushed to
+    # survive a hard crash (or the app being closed right after).
+    try:
+        if hasattr(sys.stdout, "flush"):
+            sys.stdout.flush()
+    except Exception:
+        pass
+
+    if _exception_reporting:
+        return
+    if _exception_report_count >= EXCEPTION_REPORT_LIMIT:
+        return
+
+    _exception_reporting = True
+    try:
+        _exception_report_count += 1
+        if _exception_report_count == EXCEPTION_REPORT_LIMIT:
+            print(
+                "Unhandled exception limit reached, further exceptions are "
+                "only logged to the output file."
+            )
+        report_unhandled_exception(
+            "".join(traceback.format_exception(exctype, value, trace))
+        )
+    except Exception:
+        # Reporting must never raise back into the hook.
+        pass
+    finally:
+        _exception_reporting = False
+
+
+def install_thread_exception_hook() -> None:
+    """Route exceptions raised in worker threads into the global hook.
+
+    `sys.excepthook` is only called for the main thread, so every
+    `threading.Thread.run` is wrapped. Idempotent: a second call (eg. from a
+    test that redirects output again) must not nest the wrapper.
+    """
+    if getattr(threading.Thread, "_exco_exception_hook_installed", False) is True:
+        return
     init_original: Callable = threading.Thread.__init__
 
     def init(self: threading.Thread, *args: Any, **kwargs: Any) -> None:
@@ -2618,11 +2681,12 @@ def output_redirect() -> None:
             try:
                 run_original(*args2, **kwargs2)
             except Exception:
-                sys.excepthook(*sys.exc_info())
+                exception_hook(*sys.exc_info())
 
         self.run = run_with_except_hook
 
     threading.Thread.__init__ = init  # type: ignore
+    threading.Thread._exco_exception_hook_installed = True  # type: ignore[attr-defined]
 
 
 def output_backup() -> None:

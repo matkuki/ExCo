@@ -3577,8 +3577,10 @@ QWidget#tree_explorer_vline {{
             item.setEditable(False)
             self.added_item = None
 
-    def refresh(self) -> None:
-        self.display_directory(self.current_viewed_directory, scroll_restore=False)
+    def refresh(self) -> bool:
+        return self.display_directory(
+            self.current_viewed_directory, scroll_restore=False
+        )
 
     def __item_right_click(self, model_index: qt.QModelIndex) -> None:
         item: qt.QStandardItem | None = self.model().itemFromIndex(model_index)
@@ -4429,8 +4431,13 @@ QWidget#tree_explorer_vline {{
             TreeExplorer.ItemType.BASE_DIRECTORY,
         ]:
             previous_directory: str | None = self.current_viewed_directory
-            self.display_directory(item.attributes.path, disk=item.attributes.disk)
-            if item.attributes.itype == TreeExplorer.ItemType.ONE_UP_DIRECTORY:
+            displayed: bool = self.display_directory(
+                item.attributes.path, disk=item.attributes.disk
+            )
+            if (
+                displayed
+                and item.attributes.itype == TreeExplorer.ItemType.ONE_UP_DIRECTORY
+            ):
                 try:
                     base_name: str = os.path.split(previous_directory)[1]
                     root: qt.QStandardItem = self.model().invisibleRootItem()
@@ -4633,12 +4640,38 @@ QWidget#tree_explorer_vline {{
 
     def display_directory(
         self, directory: str, disk: bool = False, scroll_restore: bool = False
-    ) -> None:
+    ) -> bool:
+        """Populate the view with the contents of *directory*.
+
+        Return False (after reporting) when the directory cannot be listed,
+        eg. a protected system directory such as 'C:/PerfLogs'. Nothing is
+        committed in that case: the previous listing, the current directory
+        and the file watcher stay exactly as they were, so the view can never
+        end up claiming to show a directory it was never able to read.
+
+        The one exception is a freshly created explorer, which has no model
+        to keep (eg. a restored layout pointing at a now protected folder):
+        it gets a well-formed empty listing instead of no model at all.
+        """
+        readable: bool = True
+        try:
+            lst: list[qt.QStandardItem] = self.create_directory_list(directory)
+        except OSError as error:
+            message = "Cannot open directory '{}':\n  {}".format(
+                directory, error.strerror or error
+            )
+            self.main_form.display.repl_display_error(message)
+            self.main_form.display.write_to_statusbar("Cannot open directory!", 3000)
+            readable = False
+            lst = []
+            if self.model() is not None:
+                return False
+
         self._refresh_in_progress = True
         watched_directories: list[str] = self.__file_watcher.directories()
         if len(watched_directories) > 0:
             self.__file_watcher.removePaths(watched_directories)
-        if os.path.isdir(directory):
+        if readable and os.path.isdir(directory):
             self.__file_watcher.addPath(directory)
         self._refresh_in_progress = False
 
@@ -4654,6 +4687,32 @@ QWidget#tree_explorer_vline {{
         self.__tooltip_inflight = set()
         self.__tooltip_complete = set()
         self.__tooltip_current = None
+        tree_model, base_item = self.__build_directory_model(directory, disk, lst)
+        self.base_item = base_item
+        self.setModel(tree_model)
+        tree_model.itemChanged.connect(self.__item_changed)
+        self.expand(base_item.index())
+        # Make sure the base item is visible
+        self.scroll_and_ensure_item_visible(base_item)
+
+        if scroll_restore:
+
+            def __scroll_restore() -> None:
+                x: int
+                y: int
+                x, y = scroll_position
+                self.horizontalScrollBar().setValue(x)
+                self.verticalScrollBar().setValue(y)
+
+            qt.QTimer.singleShot(0, __scroll_restore)
+
+        self.__update_tab_title()
+        return readable
+
+    def __build_directory_model(
+        self, directory: str, disk: bool, items: list[qt.QStandardItem]
+    ) -> tuple[qt.QStandardItemModel, qt.QStandardItem]:
+        """Build the model holding *items* under the row for *directory*."""
         tree_model: qt.QStandardItemModel = self.__init_tree_model()
         sd: tuple[str, str] = os.path.splitdrive(directory)
         base_item: qt.QStandardItem
@@ -4689,37 +4748,9 @@ QWidget#tree_explorer_vline {{
                 TreeExplorer.ItemType.DISK, directory
             )
             tree_model.appendRow(base_item)
-        try:
-            lst: list[qt.QStandardItem] = self.create_directory_list(directory)
-            for i in lst:
-                base_item.appendRow(i)
-        except:
-            self.main_form.display.repl_display_message(
-                traceback.format_exc(), message_type=constants.MessageType.ERROR
-            )
-            self.main_form.display.repl_display_message(
-                "Error while parsing directory:\n  '{}'".format(directory),
-                message_type=constants.MessageType.ERROR,
-            )
-        self.base_item = base_item
-        self.setModel(tree_model)
-        tree_model.itemChanged.connect(self.__item_changed)
-        self.expand(base_item.index())
-        # Make sure the base item is visible
-        self.scroll_and_ensure_item_visible(base_item)
-
-        if scroll_restore:
-
-            def __scroll_restore() -> None:
-                x: int
-                y: int
-                x, y = scroll_position
-                self.horizontalScrollBar().setValue(x)
-                self.verticalScrollBar().setValue(y)
-
-            qt.QTimer.singleShot(0, __scroll_restore)
-
-        self.__update_tab_title()
+        for item in items:
+            base_item.appendRow(item)
+        return tree_model, base_item
 
     def __update_tab_title(self) -> None:
         if self.parent() is not None and self.parent().parent() is not None:
