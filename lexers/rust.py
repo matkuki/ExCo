@@ -342,8 +342,12 @@ class Rust(BaseLexer):
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
@@ -436,7 +440,9 @@ class Rust(BaseLexer):
 
         # Check if there is a style stretching on from the previous line
         # Only check for multi-line constructs if we're at the start of a line
-        is_start_of_line: bool = start == 0 or editor.text()[start - 1 : start] in "\n\r"
+        is_start_of_line: bool = (
+            start == 0 or editor.text()[start - 1 : start] in "\n\r"
+        )
 
         if is_start_of_line and start > 0:
             previous_style: int = editor.SendScintilla(editor.SCI_GETSTYLEAT, start - 1)
@@ -453,7 +459,9 @@ class Rust(BaseLexer):
                 # Check for byte strings (b"...)
                 last_b_string: int = prev_text.rfind('b"')
                 last_b_string_end: int = (
-                    prev_text.rfind('"', last_b_string + 1) if last_b_string != -1 else -1
+                    prev_text.rfind('"', last_b_string + 1)
+                    if last_b_string != -1
+                    else -1
                 )
                 # Check for regular strings
                 last_string: int = prev_text.rfind('"')
@@ -476,7 +484,11 @@ class Rust(BaseLexer):
                                 raw_string_hash_count += 1
                             else:
                                 break
-                elif raw_pos > last_r_raw_end and raw_pos > last_b_string and raw_pos > last_string:
+                elif (
+                    raw_pos > last_r_raw_end
+                    and raw_pos > last_b_string
+                    and raw_pos > last_string
+                ):
                     raw_stringing = True
                     # Count hash marks
                     if prev_text[raw_pos : raw_pos + 2] == "r#":
@@ -520,7 +532,9 @@ class Rust(BaseLexer):
                 prev_text = editor.text()[:start]
 
                 # Check for block doc comments: /** or /*! without closing */
-                last_doc_block_start: int = max(prev_text.rfind("/**"), prev_text.rfind("/*!"))
+                last_doc_block_start: int = max(
+                    prev_text.rfind("/**"), prev_text.rfind("/*!")
+                )
                 last_block_end = prev_text.rfind("*/")
 
                 # Check for line doc comments: /// or //! followed by newline
@@ -533,7 +547,7 @@ class Rust(BaseLexer):
                 elif last_line_doc != -1:
                     # Check if line doc comment ends at newline (line comment)
                     after_doc: str = prev_text[last_line_doc + 2 :]  # Skip /// or //!
-                    newline_pos: int = after_doc.find("\n")
+                    newline_pos = after_doc.find("\n")
                     if newline_pos == -1:
                         # No newline after - might be at end of file, don't continue
                         pass
@@ -541,7 +555,9 @@ class Rust(BaseLexer):
             elif previous_style == self.styles["Attribute"]:
                 # Check if we're in an attribute (unclosed #[ or #![)
                 prev_text = editor.text()[:start]
-                last_attr_start: int = max(prev_text.rfind("#[["), prev_text.rfind("#![["))
+                last_attr_start: int = max(
+                    prev_text.rfind("#[["), prev_text.rfind("#![[")
+                )
                 last_attr_end: int = prev_text.rfind("]")
 
                 # Only continue if the attribute is unclosed
@@ -551,7 +567,7 @@ class Rust(BaseLexer):
         # Style the tokens accordingly
         i: int = 0
         while i < len(tokens):
-            token: tuple[str, int] = tokens[i]
+            token = tokens[i]
             token_name: str = token[0]
             token_length: int = token[1]
 
@@ -623,7 +639,11 @@ class Rust(BaseLexer):
                 if token_name == "]":
                     attributing = False
             # Character literals (complete tokens from regex)
-            elif token_name.startswith("'") and token_name.endswith("'") and len(token_name) >= 3:
+            elif (
+                token_name.startswith("'")
+                and token_name.endswith("'")
+                and len(token_name) >= 3
+            ):
                 # Character literal 'a', '\n', '\u{1F600}' etc. (complete token)
                 setStyling(token_length, self.styles["CharLiteral"])
             elif token_name == "///":
@@ -662,7 +682,7 @@ class Rust(BaseLexer):
                 # Start of a raw string (r#"..."# or r##"..."##)
                 setStyling(token_length, self.styles["String"])
                 # Count hash marks
-                raw_string_hash_count: int = 0
+                raw_string_hash_count = 0
                 for c in token_name[1:]:
                     if c == "#":
                         raw_string_hash_count += 1
@@ -729,7 +749,9 @@ class Rust(BaseLexer):
                         # Check if it starts with a valid identifier character (not a digit)
                         first_char: str = next_token[0]
                         if not first_char.isdigit() and (
-                            first_char.isalpha() or first_char == "_" or ord(first_char) > 127
+                            first_char.isalpha()
+                            or first_char == "_"
+                            or ord(first_char) > 127
                         ):
                             setStyling(tokens[j][1], self.styles["Function"])
                             i = j
@@ -745,7 +767,9 @@ class Rust(BaseLexer):
                 # Handle numbers - must start with a digit
                 # Strip underscores for validation, but check it's not empty
                 token_without_underscores: str = token_name.replace("_", "")
-                if token_without_underscores and functions.is_number(token_without_underscores):
+                if token_without_underscores and functions.is_number(
+                    token_without_underscores
+                ):
                     setStyling(token_length, self.styles["Number"])
                 else:
                     setStyling(token_length, self.styles["Default"])

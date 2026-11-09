@@ -103,20 +103,23 @@ class SessionGuiManipulator(qt.QWidget):
         """QStandarItem with overridden methods"""
 
         # The session that the standard item will store
-        my_parent = None
-        name = None
-        type = None
+        my_parent: Any = None
+        _parent: Any = None
+        parent_group: Any = None
+        name: str | None = None
+        type: Any = None
 
     # Class variables
     main_form: Any = None
-    current_icon = None
-    internals = None
-    name = ""
+    current_icon: Any = None
+    internals: Any = None
+    name: str = ""
     savable = constants.CanSave.NO
-    last_clicked_session = None
+    last_clicked_session: Any = None
     tree_model: Any = None
     tree_menu: Any = None
-    edit_flag = False
+    edit_flag: bool = False
+    _parent: Any = None
     # Icons, all set in __init__ before the tree model or the footer needs
     # them, hence no None default here.
     node_icon_group: qt.QIcon
@@ -127,7 +130,7 @@ class SessionGuiManipulator(qt.QWidget):
     icon_group_add: qt.QIcon
     icon_session_edit: qt.QIcon
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             # Disconnect signals
             self.tree.doubleClicked.disconnect()
@@ -141,7 +144,7 @@ class SessionGuiManipulator(qt.QWidget):
         except:
             pass
 
-    def __init__(self, parent, main_form):
+    def __init__(self, parent: Any, main_form: Any) -> None:
         """Initialization"""
         # Initialize the superclass
         super().__init__(parent)
@@ -174,7 +177,9 @@ class SessionGuiManipulator(qt.QWidget):
         # that used to live in mousePressEvent moves into this filter: the
         # container never sees either event.
         self.tree.installEventFilter(self)
-        self.tree.viewport().installEventFilter(self)
+        viewport = self.tree.viewport()
+        assert viewport is not None
+        viewport.installEventFilter(self)
         # Filter bar, above the tree
         self.filter_bar = components.treefilter.TreeFilterBar(self, "Filter sessions")
         self.filter_bar.filter_changed.connect(self.tree.set_filter_text)
@@ -193,12 +198,14 @@ class SessionGuiManipulator(qt.QWidget):
         self.icon_session_edit = functions.create_icon("tango_icons/session-edit.png")
         # Connect the signals
         self.tree.doubleClicked.connect(self.__item_double_clicked)
-        self.tree.itemDelegate().closeEditor.connect(self.__item_editing_closed)
+        delegate = self.tree.itemDelegate()
+        assert delegate is not None
+        delegate.closeEditor.connect(self.__item_editing_closed)
         # Right click context menu, carrying the same actions as the footer
         self.tree.setContextMenuPolicy(qt.Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.__show_context_menu)
         # Initialize the currently edited item reference
-        self.__edit_item = None
+        self.__edit_item: SessionGuiManipulator.SessionItem | None = None
         # Whether a deferred refresh is already queued (see __schedule_refresh)
         self._refresh_pending = False
         # Assemble the container: filter bar on top, then the tree, then the
@@ -260,7 +267,7 @@ class SessionGuiManipulator(qt.QWidget):
         """Forward the focus request, and its reason, to the inner tree"""
         self.tree.setFocus(reason)
 
-    def __item_double_clicked(self, model_index):
+    def __item_double_clicked(self, model_index: qt.QModelIndex) -> None:
         """Callback connected to the treeview's 'clicked' signal"""
         session_item = self.tree_model.itemFromIndex(
             self.tree.source_index(model_index)
@@ -278,7 +285,7 @@ class SessionGuiManipulator(qt.QWidget):
         elif session_item.type == ItemType.GROUP:
             pass
 
-    def __item_changed(self, item):
+    def __item_changed(self, item: "SessionGuiManipulator.SessionItem") -> None:
         """
         Callback connected to the displays QStandardItemModel 'itemChanged' signal
         """
@@ -354,8 +361,9 @@ class SessionGuiManipulator(qt.QWidget):
                     # Clear the editing reference so __item_editing_closed becomes a no-op
                     self.__edit_item = None
                     # Remove the item from the tree
-                    if changed_item.parent() is not None:
-                        changed_item.parent().removeRow(changed_item.row())
+                    parent_item = changed_item.parent()
+                    if parent_item is not None:
+                        parent_item.removeRow(changed_item.row())
                     else:
                         self.tree_model.removeRow(changed_item.row())
                     # Display message
@@ -376,8 +384,9 @@ class SessionGuiManipulator(qt.QWidget):
                         # Clear the editing reference so __item_editing_closed becomes a no-op
                         self.__edit_item = None
                         # Remove the item from the tree
-                        if changed_item.parent() is not None:
-                            changed_item.parent().removeRow(changed_item.row())
+                        parent_item = changed_item.parent()
+                        if parent_item is not None:
+                            parent_item.removeRow(changed_item.row())
                         else:
                             self.tree_model.removeRow(changed_item.row())
                     # Refresh the session tree
@@ -387,8 +396,9 @@ class SessionGuiManipulator(qt.QWidget):
                     # Clear the editing reference so __item_editing_closed becomes a no-op
                     self.__edit_item = None
                     # Remove the item from the tree
-                    if changed_item.parent() is not None:
-                        changed_item.parent().removeRow(changed_item.row())
+                    parent_item = changed_item.parent()
+                    if parent_item is not None:
+                        parent_item.removeRow(changed_item.row())
                     else:
                         self.tree_model.removeRow(changed_item.row())
                     # Display message
@@ -414,7 +424,7 @@ class SessionGuiManipulator(qt.QWidget):
                 # Update the type
                 changed_item.type = ItemType.GROUP
 
-    def __item_editing_closed(self, editor, hint):
+    def __item_editing_closed(self, editor: Any, hint: Any) -> None:
         """
         Signal that fires when editing was canceled/ended in an empty session or empty group
         """
@@ -427,21 +437,23 @@ class SessionGuiManipulator(qt.QWidget):
         if item.type == ItemType.EMPTY_GROUP:
             if len(item.text()) < 3:
                 # Remove the item from the tree
-                if item.parent() is not None:
-                    item.parent().removeRow(item.row())
+                parent_item = item.parent()
+                if parent_item is not None:
+                    parent_item.removeRow(item.row())
                 else:
                     self.tree_model.removeRow(item.row())
         elif item.type == ItemType.EMPTY_SESSION:
             if len(item.text()) < 3:
                 # Remove the item from the tree
-                if item.parent() is not None:
-                    item.parent().removeRow(item.row())
+                parent_item = item.parent()
+                if parent_item is not None:
+                    parent_item.removeRow(item.row())
                 else:
                     self.tree_model.removeRow(item.row())
         # Refresh all options
         self.refresh_display()
 
-    def reset_locks(self):
+    def reset_locks(self) -> None:
         # Reset the all locks/flags
         self.edit_flag = False
 
@@ -467,7 +479,7 @@ class SessionGuiManipulator(qt.QWidget):
         self._refresh_pending = False
         self.refresh_display()
 
-    def refresh_display(self):
+    def refresh_display(self) -> None:
         """
         Refresh the displayed session while keeping the expanded groups
         """
@@ -488,7 +500,7 @@ class SessionGuiManipulator(qt.QWidget):
         # Update the main window menu
         self.main_form.sessions.update_menu()
 
-    def __get_node_chain(self, node):
+    def __get_node_chain(self, node: Any) -> list[str]:
         parent = node.parent()
         chain = []
         while parent is not None:
@@ -511,7 +523,7 @@ class SessionGuiManipulator(qt.QWidget):
             message, message_type=constants.MessageType.ERROR
         )
 
-    def __get_current_group(self):
+    def __get_current_group(self) -> "SessionGuiManipulator.SessionItem | None":
         if self.tree.selectedIndexes() != []:
             selected_item = self.tree_model.itemFromIndex(
                 self.tree.source_index(self.tree.selectedIndexes()[0])
@@ -532,7 +544,7 @@ class SessionGuiManipulator(qt.QWidget):
         else:
             return None
 
-    def add_empty_group(self):
+    def add_empty_group(self) -> None:
         # Check for various flags
         if self.edit_flag == True:
             return
@@ -552,7 +564,7 @@ class SessionGuiManipulator(qt.QWidget):
         # Start editing the new empty group
         self.__start_editing_item(empty_group_node)
 
-    def add_empty_session(self):
+    def add_empty_session(self) -> None:
         # Check for various flags
         if self.edit_flag == True:
             return
@@ -573,7 +585,7 @@ class SessionGuiManipulator(qt.QWidget):
         # Start editing the new empty session
         self.__start_editing_item(empty_session_node)
 
-    def remove_item(self):
+    def remove_item(self) -> None:
         # Check for various flags
         if self.edit_flag == True:
             return
@@ -666,7 +678,7 @@ class SessionGuiManipulator(qt.QWidget):
             # Refresh the tree
             self.refresh_display()
 
-    def overwrite_session(self):
+    def overwrite_session(self) -> None:
         """
         Overwrite the selected session
         """
@@ -702,7 +714,7 @@ class SessionGuiManipulator(qt.QWidget):
             # Refresh the tree
             self.refresh_display()
 
-    def __start_editing_item(self, item):
+    def __start_editing_item(self, item: "SessionGuiManipulator.SessionItem") -> None:
         self.tree.edit(self.tree.view_index(item.index()))
         self.__edit_item = item
 
@@ -732,7 +744,7 @@ class SessionGuiManipulator(qt.QWidget):
             # would otherwise never get a closeEditor to clear the lock.
             self.edit_flag = True
 
-    def show_sessions(self):
+    def show_sessions(self) -> None:
         """
         Show the current session in a tree structure
         """
@@ -741,7 +753,9 @@ class SessionGuiManipulator(qt.QWidget):
         # Initialize the display
         self.tree_model = qt.QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["SESSIONS"])
-        self.tree.header().hide()
+        header = self.tree.header()
+        assert header is not None
+        header.hide()
         #        self.clean_model()
         self.tree.setModel(self.tree_model)
         self.tree.setUniformRowHeights(True)
@@ -750,7 +764,7 @@ class SessionGuiManipulator(qt.QWidget):
         # Populate the model from the stored sessions
         self.__populate_model()
 
-    def __populate_model(self):
+    def __populate_model(self) -> None:
         """
         (Re)build the tree contents from the stored sessions
         """
@@ -763,7 +777,9 @@ class SessionGuiManipulator(qt.QWidget):
 
         ## Create the Sessions menu
         # Group processing function
-        def process_group(in_group, in_menu, create_menu=True):
+        def process_group(
+            in_group: Any, in_menu: Any, create_menu: bool = True
+        ) -> None:
             # Create the new group and attach it to the parent menu
             if create_menu:
                 item_group_node = self.SessionItem(in_group["name"])
@@ -797,18 +813,20 @@ class SessionGuiManipulator(qt.QWidget):
         main_session_group = settings.get("stored_sessions")["main"]
         process_group(main_session_group, self.tree_model, create_menu=False)
 
-    def __expanded_group_chains(self):
+    def __expanded_group_chains(self) -> list[list[str]]:
         """
         Return the list of group name-chains of the currently expanded groups
         """
-        chains = []
+        chains: list[list[str]] = []
         if self.tree_model is not None:
             self.__collect_expanded_chains(
                 self.tree_model.invisibleRootItem(), [], chains
             )
         return chains
 
-    def __collect_expanded_chains(self, node, prefix, chains):
+    def __collect_expanded_chains(
+        self, node: Any, prefix: list[str], chains: list[list[str]]
+    ) -> None:
         for i in range(node.rowCount()):
             child = node.child(i)
             if child is None:
@@ -819,7 +837,7 @@ class SessionGuiManipulator(qt.QWidget):
                     chains.append(chain)
                 self.__collect_expanded_chains(child, chain, chains)
 
-    def __find_group_node(self, chain):
+    def __find_group_node(self, chain: list[str]) -> Any:
         """
         Find the group item matching the given group name-chain, or None
         """

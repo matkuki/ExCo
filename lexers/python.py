@@ -56,24 +56,32 @@ class Python(qt.QsciLexerPython):
     # Characters that autoindent one level on pressing Return/Enter
     autoindent_characters: list[str] = [":"]
 
-    def __init__(self, parent: Any = None, additional_keywords: list[str] | None = None) -> None:
+    def __init__(
+        self, parent: Any = None, additional_keywords: list[str] | None = None
+    ) -> None:
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
         # Set default colors
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(
-            qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
+            qt.QFont(
+                settings.get("current_font_name"), settings.get("current_font_size")
+            )
         )
         # Initialize the keyword list
         self.init_kwrds(additional_keywords)
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def init_kwrds(self, additional_keywords: list[str] | None = None):
+    def init_kwrds(self, additional_keywords: list[str] | None = None) -> None:
         # Initialize list with keywords
-        built_ins = keyword.kwlist
+        built_ins = list(keyword.kwlist)
         if hasattr(keyword, "softkwlist"):
             built_ins.extend(keyword.softkwlist)
         for i in builtins.__dict__.keys():
@@ -86,7 +94,7 @@ class Python(qt.QsciLexerPython):
         # Transform list into a single string with spaces between list items
         self._kwrds = " ".join(self._kwrds)
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         for style in self.styles:
             # Papers
             self.setPaper(
@@ -96,7 +104,7 @@ class Python(qt.QsciLexerPython):
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
 
-    def keywords(self, state):
+    def keywords(self, state: int) -> str | None:  # type: ignore[override]
         """
         Overridden method for determining keywords,
         read the QScintilla QsciLexer class documentation on the Riverbank website.
@@ -110,7 +118,20 @@ class Python(qt.QsciLexerPython):
 
 class CustomPython(BaseLexer):
     class Sequence:
-        def __init__(self, start, stop_sequences, stop_characters, style, add_to_style):
+        start: str
+        stop_sequences: list[str]
+        stop_characters: list[str]
+        style: int
+        add_to_style: bool
+
+        def __init__(
+            self,
+            start: str,
+            stop_sequences: list[str],
+            stop_characters: list[str],
+            style: int,
+            add_to_style: bool,
+        ) -> None:
             self.start = start
             self.stop_sequences = stop_sequences
             self.stop_characters = stop_characters
@@ -119,10 +140,10 @@ class CustomPython(BaseLexer):
 
     # Class variables
     # Lexer index counter for Nim styling
-    _index = 0
-    index = 0
+    _index: int = 0
+    index: int = 0
     # Styles
-    styles = {
+    styles: dict[str, int] = {
         "Default": 0,
         "Comment": 1,
         "Number": 2,
@@ -142,8 +163,8 @@ class CustomPython(BaseLexer):
         "CustomKeyword": 16,
     }
     # Styling lists and characters
-    keyword_list = list(set(keyword.kwlist + dir(builtins)))
-    additional_list = []
+    keyword_list: list[str] = list(set(list(keyword.kwlist) + dir(builtins)))
+    additional_list: list[str] = []
     sq = Sequence("'", ["'", "\n"], [], styles["SingleQuotedString"], True)
     dq = Sequence('"', ['"', "\n"], [], styles["DoubleQuotedString"], True)
     edq = Sequence('""', [], [], styles["DoubleQuotedString"], True)
@@ -155,7 +176,7 @@ class CustomPython(BaseLexer):
     comment = Sequence("#", [], ["\n"], styles["Comment"], True)
     dcomment = Sequence("##", [], ["\n"], styles["CommentBlock"], True)
     decorator = Sequence("@", ["\n"], [" "], styles["Decorator"], True)
-    sequence_lists = [
+    sequence_lists: list[Sequence] = [
         sq,
         dq,
         edq,
@@ -168,14 +189,16 @@ class CustomPython(BaseLexer):
         dcomment,
         decorator,
     ]
-    multiline_sequence_list = [tqd, tqs]
-    sequence_start_chrs = [x.start for x in sequence_lists]
+    multiline_sequence_list: list[Sequence] = [tqd, tqs]
+    sequence_start_chrs: list[str] = [x.start for x in sequence_lists]
     # Regular expression split sequence to tokenize text
     splitter = re.compile(r"(\\'|\\\"|\(\*|\*\)|\n|\"+|\'+|\#+|\s+|\w+|\W)")
     # Characters that autoindent one level on pressing Return/Enter
-    autoindent_characters = [":"]
+    autoindent_characters: list[str] = [":"]
 
-    def __init__(self, parent: Any = None, additional_keywords: list[str] | None = None):
+    def __init__(
+        self, parent: Any = None, additional_keywords: list[str] | None = None
+    ) -> None:
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
@@ -189,31 +212,35 @@ class CustomPython(BaseLexer):
         if lexers.nim_lexers_found == True:
             lexers.nim_lexers.python_set_keywords(self.index, additional_keywords)
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def language(self):
+    def language(self) -> str:
         return "Python"
 
-    def description(self, style):
+    def description(self, style: int) -> str:
         if style <= 16:
             description = "Custom lexer for the Python programming languages"
         else:
             description = ""
         return description
 
-    def defaultStyle(self):
+    def defaultStyle(self) -> int:
         return self.styles["Default"]
 
-    def braceStyle(self):
+    def braceStyle(self) -> int:
         return self.styles["Default"]
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         for style in self.styles:
             # Papers
             self.setPaper(
@@ -225,10 +252,10 @@ class CustomPython(BaseLexer):
 
     if lexers.nim_lexers_found == True:
 
-        def __del__(self):
+        def __del__(self) -> None:
             lexers.nim_lexers.python_delete_keywords(self.index)
 
-        def styleText(self, start, end):
+        def styleText(self, start: int, end: int) -> None:
             editor = self.editor()
             if editor is None:
                 return
@@ -237,7 +264,7 @@ class CustomPython(BaseLexer):
 
     else:
 
-        def styleText(self, start, end):
+        def styleText(self, start: int, end: int) -> None:
             editor = self.editor()
             if editor is None:
                 return
@@ -248,16 +275,17 @@ class CustomPython(BaseLexer):
             # Loop optimizations
             setStyling = self.setStyling
             # Initialize comment state and split the text into tokens
-            sequence = None
+            sequence: CustomPython.Sequence | None = None
             tokens = [
-                (token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)
+                (token, len(bytearray(token, "utf-8")))
+                for token in self.splitter.findall(text)
             ]
             # Check if there is a style(comment, string, ...) stretching on from the previous line
             if start != 0:
                 previous_style = editor.SendScintilla(editor.SCI_GETSTYLEAT, start - 1)
-                for i in self.multiline_sequence_list:
-                    if previous_style == i.style:
-                        sequence = i
+                for mseq in self.multiline_sequence_list:
+                    if previous_style == mseq.style:
+                        sequence = mseq
                         break
 
             # Style the tokens accordingly
@@ -280,21 +308,23 @@ class CustomPython(BaseLexer):
                     else:
                         setStyling(token_length, sequence.style)
                 elif token_name in self.sequence_start_chrs:
-                    for i in self.sequence_lists:
-                        if token_name == i.start:
-                            if i.stop_sequences == [] and i.stop_characters == []:
+                    for seq in self.sequence_lists:
+                        if token_name == seq.start:
+                            if seq.stop_sequences == [] and seq.stop_characters == []:
                                 # Skip styling if both stop sequences and stop characters are empty
-                                setStyling(token_length, i.style)
+                                setStyling(token_length, seq.style)
                             else:
                                 # Style the sequence and store the reference to it
-                                sequence = i
-                                if i.add_to_style == True:
+                                sequence = seq
+                                if seq.add_to_style == True:
                                     setStyling(token_length, sequence.style)
                                 else:
                                     if token_name in self.keyword_list:
                                         setStyling(token_length, self.styles["Keyword"])
                                     elif token_name in self.additional_list:
-                                        setStyling(token_length, self.styles["CustomKeyword"])
+                                        setStyling(
+                                            token_length, self.styles["CustomKeyword"]
+                                        )
                                     else:
                                         setStyling(token_length, self.styles["Default"])
                             break

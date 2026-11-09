@@ -35,7 +35,7 @@ PORT = 19991
 PASSWORD = "ExCo"
 
 
-def debug_echo(obj, *messages):
+def debug_echo(obj: Any, *messages: Any) -> None:
     if DEBUG_MODE:
         print(
             "[{}-{}]".format(obj.__class__.__name__, obj.name),
@@ -43,7 +43,7 @@ def debug_echo(obj, *messages):
         )
 
 
-def status_echo(obj, *messages):
+def status_echo(obj: Any, *messages: Any) -> None:
     if STATUS_MODE:
         print(
             "[{}-{}]".format(obj.__class__.__name__, obj.name),
@@ -52,22 +52,22 @@ def status_echo(obj, *messages):
 
 
 class CommClient:
-    connection = None
+    connection: Any = None
     # Callbacks
-    receive_callback = None
+    receive_callback: Any = None
 
-    def __init__(self, name, receive_callback):
+    def __init__(self, name: str, receive_callback: Any) -> None:
         self.running = False
         self.name = name
         self.receive_callback = receive_callback
         functions.create_thread(self.reinitialize)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.running = False
         if self.connection is not None:
             self.connection.close()
 
-    def reinitialize(self):
+    def reinitialize(self) -> None:
         initialized = False
         while initialized == False:
             try:
@@ -81,7 +81,7 @@ class CommClient:
             except Exception as ex:
                 debug_echo(self, "init error, trying again ...")
 
-    def recv_loop(self):
+    def recv_loop(self) -> None:
         try:
             debug_echo(self, "[CommClient] Receiving ...")
             self.running = True
@@ -98,18 +98,18 @@ class CommClient:
             debug_echo(self, "recv loop error:\n{}".format(str(ex)))
             self.reinitialize()
 
-    def send(self, message):
+    def send(self, message: Any) -> None:
         self.connection.send(message)
 
 
 class CommListener:
-    running = False
-    stored_connections = None
-    connection = None
+    running: bool = False
+    stored_connections: list[tuple[Any, Any]] = []
+    connection: Any = None
     # Callbacks
-    stopped_callback = None
+    stopped_callback: Any = None
 
-    def __init__(self, name, stopped_callback):
+    def __init__(self, name: str, stopped_callback: Any) -> None:
         self.running = False
         self.name = name
         self.stored_connections = []
@@ -117,14 +117,14 @@ class CommListener:
         self.stopped_callback = stopped_callback
         functions.create_thread(self.connecting_loop)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.running = False
         if self.connection is not None:
             self.connection.close()
         for c in self.stored_connections:
             c[0].close()
 
-    def connecting_loop(self):
+    def connecting_loop(self) -> None:
         try:
             with multiprocessing.connection.Listener(
                 (ADDRESS, PORT), authkey=PASSWORD.encode("utf-8")
@@ -143,11 +143,11 @@ class CommListener:
             time.sleep(0.1)
             self.stopped_callback()
 
-    def _create_listening_thread(self, connection, last_accepted):
+    def _create_listening_thread(self, connection: Any, last_accepted: Any) -> None:
         self.stored_connections.append((connection, last_accepted))
         functions.create_thread(self._listen, connection, last_accepted)
 
-    def _listen(self, conn, last_accepted):
+    def _listen(self, conn: Any, last_accepted: Any) -> None:
         status_echo(self, "START")
         try:
             while self.running:
@@ -166,11 +166,11 @@ class CommListener:
             self.stored_connections.remove((conn, last_accepted))
         status_echo(self, "END")
 
-    def send(self, message):
+    def send(self, message: Any) -> None:
         for co, info in self.stored_connections:
             co.send(message)
 
-    def close_connections(self):
+    def close_connections(self) -> None:
         for co, info in self.stored_connections:
             co.close()
 
@@ -184,12 +184,12 @@ class IpcCommunicator(qt.QObject):
     received: qt.pyqtSignal = qt.pyqtSignal(object)
 
     # Attributes
-    name = None
-    client = None
-    listener = None
-    comm_thread = None
+    name: str | None = None
+    client: CommClient | None = None
+    listener: CommListener | None = None
+    comm_thread: qt.QThread | None = None
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__()
 
         self.comm_thread = qt.QThread()
@@ -199,30 +199,35 @@ class IpcCommunicator(qt.QObject):
         # Start the process
         self.comm_thread.start()
 
-    def __del__(self):
+    def __del__(self) -> None:
+        assert self.comm_thread is not None
         self.comm_thread.exit()
         del self.client
         del self.listener
 
-    def initialize(self, name):
+    def initialize(self, name: str) -> None:
         self.name = name
         self.client = CommClient(self.name, self.receive)
         self.listener = CommListener(self.name, self.listener_stopped)
 
-    def listener_stopped(self):
+    def listener_stopped(self) -> None:
+        assert self.name is not None
         self.listener = CommListener(self.name, self.listener_stopped)
 
-    def receive(self, message):
+    def receive(self, message: Any) -> None:
         self.received.emit(message)
 
-    def send_to_server(self, message):
+    def send_to_server(self, message: Any) -> None:
+        assert self.client is not None
         self.client.send((self.name, message))
 
-    def multisend(self, message):
+    def multisend(self, message: Any) -> None:
+        assert self.listener is not None
         self.listener.send((self.name, message))
 
     @qt.pyqtSlot(object)
-    def send(self, message):
+    def send(self, message: Any) -> None:
+        assert self.listener is not None
         if self.listener.running == True:
             self.multisend(message)
         else:
@@ -244,34 +249,35 @@ class FileCommunicator(qt.QObject):
     __process_directory_queue: qt.pyqtSignal = qt.pyqtSignal()
 
     # Attributes
-    __name = ""
-    __comm_file_path = None
-    __file_watcher = None
-    __processing_lock = multiprocessing.Lock()
-    __processing_queue = multiprocessing.Queue()
+    __name: str = ""
+    __comm_file_path: str = ""
+    __file_watcher: qt.QFileSystemWatcher | None = None
+    __processing_lock: Any = multiprocessing.Lock()
+    __processing_queue: Any = multiprocessing.Queue()
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__()
 
         self.__name = name
         self.__comm_file_path = components.processcontroller.inbox_path(os.getpid())
 
-        self.__file_watcher = qt.QFileSystemWatcher(self)
-        self.__file_watcher.directoryChanged.connect(self.__directory_changed)
-        self.__file_watcher.fileChanged.connect(self.__file_changed)
-        self.__file_watcher.addPath(data.settings_directory)
+        file_watcher = qt.QFileSystemWatcher(self)
+        file_watcher.directoryChanged.connect(self.__directory_changed)
+        file_watcher.fileChanged.connect(self.__file_changed)
+        file_watcher.addPath(data.settings_directory)
+        self.__file_watcher = file_watcher
 
         self.__process_directory_queue.connect(self.__process_change)
 
-    def __directory_changed(self, path):
+    def __directory_changed(self, path: str) -> None:
         self.__processing_queue.put(path)
         self.__process_directory_queue.emit()
 
-    def __file_changed(self, path):
+    def __file_changed(self, path: str) -> None:
         self.__processing_queue.put(path)
         self.__process_directory_queue.emit()
 
-    def __process_change(self):
+    def __process_change(self) -> None:
         acquired = self.__processing_lock.acquire(block=False)
         if not acquired:
             return
@@ -291,5 +297,3 @@ class FileCommunicator(qt.QObject):
             traceback.print_exc()
         finally:
             self.__processing_lock.release()
-
-

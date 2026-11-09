@@ -40,7 +40,7 @@ class TreeSitterMakefile(TreeSitterLexer):
         "operator": 7,
     }
 
-    symbols = {
+    symbols: dict[str, dict[str, Any]] = {
         "default": {
             "index": styles["default"],
             "items": ("word",),

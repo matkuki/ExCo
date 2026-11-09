@@ -10,6 +10,7 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      'lexer' package initialization
 
 # Try importing the Cython module
+cython_lexers_found: bool
 try:
     import cython_lexers
 
@@ -17,6 +18,7 @@ try:
 except Exception as ex:
     cython_lexers_found = False
 # Try importing the Nim module
+nim_lexers_found: bool
 try:
     import nim_lexers
 
@@ -44,24 +46,24 @@ from lexers.text import *
 from lexers.zig import *
 
 
-def generate_builtin_lexers():
+def generate_builtin_lexers() -> None:
     """
     Set colors for all other lexers by dynamically creating
     derived classes and adding styles to them.
     """
     # Lexers that were manually defined above
-    predefined_lexers = [
+    predefined_lexers: list[str] = [
         "QsciLexerPython",
     ]
     # Themes that are missing when upgrading QScintilla
-    missing_themes = {}
+    missing_themes: dict[str, list[str]] = {}
     # Loop through the Qsci module lexers and adjust them
-    lexer_strings = []
+    lexer_strings: list[str] = []
     for i in data.__dict__.keys():
         if i.startswith("QsciLexer") and len(i) > len("QsciLexer"):
             if not (i in predefined_lexers):
                 lexer_name = i.replace("QsciLexer", "")
-                styles = {}
+                styles: dict[str, int] = {}
                 cls = getattr(data, i)
                 for j in dir(cls):
                     att_value = getattr(cls, j)
@@ -97,16 +99,20 @@ def generate_builtin_lexers():
                     cls_text += "                   missing_themes['{}'].append(style)\n".format(
                         lexer_name
                     )
-                    cls_text += "        if len(missing_themes['{}']) != 0:\n".format(lexer_name)
-                    cls_text += "            print(\"Lexer '{}' missing themes:\")\n".format(
+                    cls_text += "        if len(missing_themes['{}']) != 0:\n".format(
                         lexer_name
                     )
-                    cls_text += "            for mt in missing_themes['{}']:\n".format(lexer_name)
-                    cls_text += "                print('    - ' + mt)\n"
                     cls_text += (
-                        "            raise Exception(\"Lexer '{}' has missing themes!\")\n".format(
+                        "            print(\"Lexer '{}' missing themes:\")\n".format(
                             lexer_name
                         )
+                    )
+                    cls_text += "            for mt in missing_themes['{}']:\n".format(
+                        lexer_name
+                    )
+                    cls_text += "                print('    - ' + mt)\n"
+                    cls_text += "            raise Exception(\"Lexer '{}' has missing themes!\")\n".format(
+                        lexer_name
                     )
                 lexer_strings.append(cls_text)
     exec("\n".join(lexer_strings))

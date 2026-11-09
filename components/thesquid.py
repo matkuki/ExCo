@@ -10,6 +10,7 @@ import importlib
 import math
 import re
 import typing
+from typing import Any
 
 import data
 import settings
@@ -21,12 +22,13 @@ class TheSquid:
     The static object for executing functions that encompass multiple objects.
     """
 
-    main_form = None
-    repl = None
-    repl_helper = None
+    main_form: Any = None
+    repl: Any = None
+    repl_helper: Any = None
+    __module_customeditor: Any = None
 
     @staticmethod
-    def init_objects(main_form):
+    def init_objects(main_form: Any) -> None:
         TheSquid.main_form = main_form
         TheSquid.repl = main_form.repl
         TheSquid.repl_helper = main_form.repl_helper
@@ -34,12 +36,12 @@ class TheSquid:
         TheSquid.__module_customeditor = importlib.import_module("gui.treedisplays")
 
     @staticmethod
-    def update_objects():
+    def update_objects() -> None:
         TheSquid.repl = TheSquid.main_form.repl
         TheSquid.repl_helper = TheSquid.main_form.repl_helper
 
     @staticmethod
-    def update_styles():
+    def update_styles() -> None:
         from gui.menu import Menu
 
         Menu.update_styles()

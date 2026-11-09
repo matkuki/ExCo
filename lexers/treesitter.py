@@ -27,9 +27,12 @@ class TreeSitterBaseLexer(BaseLexer):
     Lexer for styling documents with the tree-sitter library
     """
 
-    symbols: dict[str, int] = {}
+    symbols: dict[str, dict[str, Any]] = {}
+    tree_sitter_lexer: str
+    parser: Any
+    tree: Any
 
-    def __init__(self, name: str, tree_sitter_lexer: Any, parent: Any = None) -> None:
+    def __init__(self, name: str, tree_sitter_lexer: str, parent: Any = None) -> None:
         """
         Overridden initialization
         """
@@ -52,17 +55,17 @@ class TreeSitterBaseLexer(BaseLexer):
 
     def text_modified_callback(
         self,
-        position,
-        modificationType,
-        text,
-        length,
-        added,
-        line,
-        foldLevelNow,
-        foldLevelPrev,
-        token,
-        annotationLinesAdded,
-    ):
+        position: int,
+        modificationType: int,
+        text: str,
+        length: int,
+        added: bool,
+        line: int,
+        foldLevelNow: int,
+        foldLevelPrev: int,
+        token: int,
+        annotationLinesAdded: int,
+    ) -> None:
         editor = self.editor()
         if editor is None:
             return
@@ -107,18 +110,20 @@ class TreeSitterBaseLexer(BaseLexer):
 
         functions.performance_timer_show("CHANGE")
 
-    def generate_tree(self, tree, start_byte, end_byte):
+    def generate_tree(
+        self, tree: Any, start_byte: int, end_byte: int
+    ) -> list[dict[str, Any]]:
         functions.performance_timer_start()
 
         cursor = tree.walk()
-        node_list = []
+        node_list: list[dict[str, Any]] = []
         came_up = False
         level = 0
         while True:
             if not came_up:
-                if cursor.node.start_byte > (start_byte - 50) and cursor.node.start_byte < (
-                    end_byte + 50
-                ):
+                if cursor.node.start_byte > (
+                    start_byte - 50
+                ) and cursor.node.start_byte < (end_byte + 50):
                     new_node = {
                         "type": cursor.node.type,
                         "start": cursor.node.start_byte,
@@ -158,7 +163,7 @@ class TreeSitterBaseLexer(BaseLexer):
 
         return node_list
 
-    def styleText(self, start, end):
+    def styleText(self, start: int, end: int) -> None:
         """
         Main styling function, called everytime text changes
         """
@@ -173,10 +178,10 @@ class TreeSitterBaseLexer(BaseLexer):
         # Loop optimizations
         setStyling = self.setStyling
 
-        spanning = None
-        spanning_end_index = None
-        previous_item = None
-        last_item = None
+        spanning: str | None = None
+        spanning_end_index: int | None = None
+        previous_item: dict[str, Any] | None = None
+        last_item: dict[str, Any] | None = None
         for node in node_list:
             #            print(node)
             if node["start"] < (start - 50):
@@ -196,7 +201,10 @@ class TreeSitterBaseLexer(BaseLexer):
             if spanning is None:
                 for kk, vv in self.symbols.items():
                     if _type in vv["items"]:
-                        if "previous-special" in vv.keys() and previous_item is not None:
+                        if (
+                            "previous-special" in vv.keys()
+                            and previous_item is not None
+                        ):
                             for ps in vv["previous-special"]:
                                 if ps[0] == previous_item["type"]:
                                     setStyling(length, self.symbols[ps[1]]["index"])
@@ -236,7 +244,7 @@ class TreeSitterLexer(TreeSitterBaseLexer):
     """
 
     # Class variables
-    styles = {
+    styles: dict[str, int] = {
         "default": 0,
         "comment": 1,
         "string": 2,
@@ -249,7 +257,7 @@ class TreeSitterLexer(TreeSitterBaseLexer):
         "identifier": 9,
     }
 
-    symbols = {
+    symbols: dict[str, dict[str, Any]] = {
         "comment": {
             "index": styles["comment"],
             "items": ("comment",),
@@ -385,12 +393,12 @@ class TreeSitterLexer(TreeSitterBaseLexer):
     }
 
     # Characters that autoindent one level on pressing Return/Enter
-    autoindents = {
+    autoindents: dict[str, list[str]] = {
         "make": [":"],
         "python": [":"],
     }
 
-    def __init__(self, name, tree_sitter_lexer, parent=None):
+    def __init__(self, name: str, tree_sitter_lexer: str, parent: Any = None) -> None:
         """
         Overridden initialization
         """

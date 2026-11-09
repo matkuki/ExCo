@@ -41,11 +41,11 @@ def set_font(lexer: Any, style_name: str, style_options: dict[str, Any]) -> None
     )
 
 
-_FILE_TYPE_LEXER_MAP = None
-_COMMENT_STYLE_MAP = None
+_FILE_TYPE_LEXER_MAP: dict[str, Any] | None = None
+_COMMENT_STYLE_MAP: dict[type, tuple[bool, str | None, str | None]] | None = None
 
 
-def _ensure_maps():
+def _ensure_maps() -> None:
     global _FILE_TYPE_LEXER_MAP, _COMMENT_STYLE_MAP
     if _FILE_TYPE_LEXER_MAP is not None:
         return
@@ -131,8 +131,9 @@ def _ensure_maps():
     }
 
 
-def get_lexer_from_file_type(file_type):
+def get_lexer_from_file_type(file_type: str) -> tuple[str, Any]:
     _ensure_maps()
+    assert _FILE_TYPE_LEXER_MAP is not None
     current_file_type = file_type
     factory = _FILE_TYPE_LEXER_MAP.get(file_type)
     if factory is not None:
@@ -143,6 +144,9 @@ def get_lexer_from_file_type(file_type):
     return (current_file_type, lexer)
 
 
-def get_comment_style_for_lexer(lexer):
+def get_comment_style_for_lexer(
+    lexer: Any,
+) -> tuple[bool, str | None, str | None]:
     _ensure_maps()
+    assert _COMMENT_STYLE_MAP is not None
     return _COMMENT_STYLE_MAP.get(type(lexer), (False, None, None))

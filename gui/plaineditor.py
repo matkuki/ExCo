@@ -18,6 +18,8 @@ import lexers
 import gui.contextmenu
 import gui.baseeditor
 
+from typing import Any
+
 """
 -----------------------------
 Subclassed QScintilla widget used for displaying REPL messages, Python/C node trees, ...
@@ -27,18 +29,18 @@ Subclassed QScintilla widget used for displaying REPL messages, Python/C node tr
 
 class PlainEditor(gui.baseeditor.BaseEditor):
     # Class variables
-    name = None
-    _parent = None
-    main_form = None
-    current_icon = None
-    internals = None
+    name: str | None = None
+    _parent: Any = None
+    main_form: Any = None
+    current_icon: Any = None
+    internals: Any = None
     savable = constants.CanSave.NO
     # Reference to the custom context menu
-    context_menu = None
+    context_menu: Any = None
     # Namespace references for grouping functionality
-    hotspots = None
+    hotspots: Any = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             self.hotspots = None
             try:
@@ -53,7 +55,7 @@ class PlainEditor(gui.baseeditor.BaseEditor):
             except:
                 pass
             # Clean up the decorated mouse press event
-            self.mousePressEvent = None
+            self.mousePressEvent = None  # type: ignore[method-assign, assignment]
             # Clean up references
             self._parent = None
             self.main_form = None
@@ -64,7 +66,7 @@ class PlainEditor(gui.baseeditor.BaseEditor):
         except:
             pass
 
-    def __init__(self, parent, main_form):
+    def __init__(self, parent: Any, main_form: Any) -> None:
         # Initialize the superclass
         super().__init__()
         # Initialize components
@@ -88,8 +90,8 @@ class PlainEditor(gui.baseeditor.BaseEditor):
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def add_corner_buttons(self):
-        def clear():
+    def add_corner_buttons(self) -> None:
+        def clear() -> None:
             self.main_form.display.repl_clear_tab()
 
         # Clear messages
@@ -97,11 +99,13 @@ class PlainEditor(gui.baseeditor.BaseEditor):
             "tango_icons/edit-clear.png", "Clear messages", clear
         )
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event: qt.QContextMenuEvent | None) -> None:
         # Built-in context menu
         #        super().contextMenuEvent(event)
         self.delete_context_menu()
         # Show a context menu according to the current lexer
+        if event is None:
+            return
         offset = (event.x(), event.y())
         self.context_menu = gui.contextmenu.create(
             self, self.main_form, offset=offset, _type="plain"
@@ -109,12 +113,13 @@ class PlainEditor(gui.baseeditor.BaseEditor):
         self.context_menu.popup_at_cursor()
         event.accept()
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
         """
         Overloaded mouse click event
         """
         # Execute the superclass mouse click event
-        super().mousePressEvent(event)
+        if event is not None:
+            super().mousePressEvent(event)
         # Set focus to the clicked editor
         self.setFocus()
         # Set the last focused widget to the parent basic widget
@@ -124,23 +129,25 @@ class PlainEditor(gui.baseeditor.BaseEditor):
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
 
-    def setFocus(self):
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
         """
         Overridden focus event
         """
         # Execute the supeclass focus function
-        super().setFocus()
+        super().setFocus(reason)
         # Check indication
         self.main_form.view.indication_check()
 
-    def goto_line(self, line_number):
+    def goto_line(self, line_number: int) -> None:
         """Set focus and cursor to the selected line"""
         # Move the cursor to the start of the selected line
         self.setCursorPosition(line_number, 0)
         # Move the first displayed line to the top of the viewving area
         self.SendScintilla(qt.QsciScintillaBase.SCI_GOTOLINE, line_number)
 
-    def convert_case(self, uppercase=False):
+    def convert_case(self, uppercase: bool = False) -> None:
         """Convert selected text in the scintilla document into the selected case letters"""
         # Get the start and end point of the selected text
         start_line, start_index, end_line, end_index = self.getSelection()
@@ -156,7 +163,7 @@ class PlainEditor(gui.baseeditor.BaseEditor):
         # Reselect the previously selected text
         self.setSelection(start_line, start_index, end_line, end_index)
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         # Set the lexer
         self.setLexer(lexers.Text(self))
         # Run the super-class method

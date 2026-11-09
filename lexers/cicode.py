@@ -54,7 +54,7 @@ class CiCode(BaseLexer):
         "Function": 8,
     }
     # Class variables
-    keyword_list = [
+    keyword_list: list[str] = [
         "function",
         "end",
         "if",
@@ -78,7 +78,7 @@ class CiCode(BaseLexer):
         "private",
         "return",
     ]
-    type_list = [
+    type_list: list[str] = [
         "string",
         "object",
         "int",
@@ -86,7 +86,7 @@ class CiCode(BaseLexer):
         "quality",
         "timestamp",
     ]
-    builtin_function_list = [
+    builtin_function_list: list[str] = [
         "abs",
         "acccontrol",
         "accumbrowseclose",
@@ -1154,7 +1154,7 @@ class CiCode(BaseLexer):
         "_objectgetproperty",
         "_objectsetproperty",
     ]
-    operator_list = [
+    operator_list: list[str] = [
         "=",
         "+",
         "-",
@@ -1180,46 +1180,50 @@ class CiCode(BaseLexer):
     strseq = Sequence('"', ['"', "\n"], [], styles["String"], True)
     comment = Sequence("//", [], ["\n"], styles["Comment"], True)
     mcomment = Sequence("/*", ["*/"], [], styles["MultilineComment"], True)
-    sequence_lists = [strseq, comment, mcomment, func]
-    multiline_sequence_list = [mcomment]
-    sequence_start_chrs = [x.start for x in sequence_lists]
+    sequence_lists: list[Sequence] = [strseq, comment, mcomment, func]
+    multiline_sequence_list: list[Sequence] = [mcomment]
+    sequence_start_chrs: list[str] = [x.start for x in sequence_lists]
     #    splitter = re.compile(r"(/\*|\*/|\\\"|\(\*|\*\)|//|\n|\"+|\'+|\#+|\s+|\w+|\W)")
     splitter = re.compile(r"(/\*|\*/|\(\*|\*\)|//|\n|\"+|\'+|\#+|\s+|\w+|\W)")
     # Characters that autoindent one level on pressing Return/Enter
-    autoindent_characters = ["then", "do", ")"]
+    autoindent_characters: list[str] = ["then", "do", ")"]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         """
         Overridden initialization
         """
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def language(self):
+    def language(self) -> str:
         return "CiCode"
 
-    def description(self, style):
+    def description(self, style: int) -> str:
         if style < len(self.styles):
             description = "Custom lexer for the CiCode programming languages"
         else:
             description = ""
         return description
 
-    def defaultStyle(self):
+    def defaultStyle(self) -> int:
         return self.styles["Default"]
 
-    def braceStyle(self):
+    def braceStyle(self) -> int:
         return self.styles["Default"]
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         for style in self.styles:
             # Papers
             self.setPaper(
@@ -1229,7 +1233,7 @@ class CiCode(BaseLexer):
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
 
-    def styleText(self, start, end):
+    def styleText(self, start: int, end: int) -> None:
         """
         Overloaded method for styling text.
         """
@@ -1255,17 +1259,18 @@ class CiCode(BaseLexer):
         stringing = False
         commenting = False
         multiline_commenting = False
-        sequence = None
+        sequence: CiCode.Sequence | None = None
         tokens = [
-            (token.lower(), len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)
+            (token.lower(), len(bytearray(token, "utf-8")))
+            for token in self.splitter.findall(text)
         ]
 
         # Check if there is a style(comment, string, ...) stretching on from the previous line
         if start != 0:
             previous_style = editor.SendScintilla(editor.SCI_GETSTYLEAT, start - 1)
-            for i in self.multiline_sequence_list:
-                if previous_style == i.style:
-                    sequence = i
+            for mseq in self.multiline_sequence_list:
+                if previous_style == mseq.style:
+                    sequence = mseq
                     break
 
         # Style the tokens accordingly
@@ -1288,15 +1293,15 @@ class CiCode(BaseLexer):
                 else:
                     setStyling(token_length, sequence.style)
             elif token_name in self.sequence_start_chrs:
-                for i in self.sequence_lists:
-                    if token_name == i.start:
-                        if i.stop_sequences == [] and i.stop_characters == []:
+                for seq in self.sequence_lists:
+                    if token_name == seq.start:
+                        if seq.stop_sequences == [] and seq.stop_characters == []:
                             # Skip styling if both stop sequences and stop characters are empty
-                            setStyling(token_length, i.style)
+                            setStyling(token_length, seq.style)
                         else:
                             # Style the sequence and store the reference to it
-                            sequence = i
-                            if i.add_to_style == True:
+                            sequence = seq
+                            if seq.add_to_style == True:
                                 setStyling(token_length, sequence.style)
                             else:
                                 if token_name in self.keyword_list:

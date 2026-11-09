@@ -14,7 +14,7 @@ import typing
 
 
 class GridGenerator:
-    directions = {
+    directions: dict[int, str] = {
         0: "up",
         1: "up-right",
         2: "down-right",
@@ -22,30 +22,40 @@ class GridGenerator:
         4: "down-left",
         5: "up-left",
     }
-    steps = None
-    covered_positions = None
-    current_direction = None
-    first_position = None
-    current_position = None
-    grid_type = None
-    horizontal_step = None
-    vertical_step = None
+    steps: dict[str, tuple[float, float]] | None = None
+    covered_positions: list[tuple[float, float]] | None = None
+    current_direction: int | None = None
+    first_position: tuple[float, float] | None = None
+    current_position: tuple[float, float] | None = None
+    grid_type: str | None = None
+    horizontal_step: float | None = None
+    vertical_step: float | None = None
+    grid_columns: int
+    step_direction: str
+    column_counter: int
+    rectangular_grid_row_addition: float
+    scaling: float
+    edge_length: float
 
     def __init__(
         self,
-        starting_position,
-        edge_length,
-        grid_type="circular",
-        grid_columns=5,
-        rectangular_grid_first_step="up-right",
-        rectangular_grid_row_addition=0.0,
-        in_scale=1.0,
-    ):
+        starting_position: tuple[float, float],
+        edge_length: float,
+        grid_type: str = "circular",
+        grid_columns: int = 5,
+        rectangular_grid_first_step: str = "up-right",
+        rectangular_grid_row_addition: float = 0.0,
+        in_scale: float = 1.0,
+    ) -> None:
         self.first_position = (starting_position[0], starting_position[1])
         self.covered_positions = []
         self.add_position(self.first_position)
         self.current_direction = 1
-        if grid_type != "circular" and grid_type != "trapezoid" and grid_type != "rectangular":
+        if (
+            grid_type != "circular"
+            and grid_type != "trapezoid"
+            and grid_type != "rectangular"
+        ):
             raise Exception("Unknown grid type specified!")
         elif grid_type == "trapezoid":
             self.grid_columns = grid_columns
@@ -65,7 +75,9 @@ class GridGenerator:
         )
 
     @staticmethod
-    def init_steps(edge_length, scaling):
+    def init_steps(
+        edge_length: float, scaling: float
+    ) -> tuple[float, float, dict[str, tuple[float, float]]]:
         horizontal_step = (3 * edge_length) / 2
         vertical_step = math.sin(math.pi / 3) * edge_length
         horizontal_step *= scaling
@@ -80,22 +92,27 @@ class GridGenerator:
         }
         return horizontal_step, vertical_step, steps
 
-    def add_position(self, position):
+    def add_position(self, position: tuple[float, float]) -> None:
         self.current_position = position
+        assert self.covered_positions is not None
         self.covered_positions.append(position)
 
-    def get_position(self):
+    def get_position(self) -> tuple[float, float]:
+        assert self.current_position is not None
         return self.current_position
 
-    def next(self):
+    def next(self) -> tuple[float, float] | None:
         if self.grid_type == "circular":
             return self.next_circular()
         elif self.grid_type == "trapezoid":
             return self.next_trapezoid()
         elif self.grid_type == "rectangular":
             return self.next_rectangular()
+        return None
 
-    def next_rectangular(self):
+    def next_rectangular(self) -> tuple[float, float]:
+        assert self.steps is not None
+        assert self.current_position is not None
         self.column_counter += 1
         spacing_step_x = 0
         spacing_step_y = 0
@@ -138,7 +155,9 @@ class GridGenerator:
         self.add_position(new_position)
         return self.get_position()
 
-    def next_trapezoid(self):
+    def next_trapezoid(self) -> tuple[float, float]:
+        assert self.steps is not None
+        assert self.current_position is not None
         self.column_counter += 1
         if self.column_counter == self.grid_columns:
             self.column_counter = 0
@@ -156,7 +175,11 @@ class GridGenerator:
         self.add_position(new_position)
         return self.get_position()
 
-    def next_circular(self):
+    def next_circular(self) -> tuple[float, float]:
+        assert self.steps is not None
+        assert self.covered_positions is not None
+        assert self.current_direction is not None
+        assert self.current_position is not None
         current_direction_name = self.directions[self.current_direction]
         current_step = self.steps[current_direction_name]
         new_position = (

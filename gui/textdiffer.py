@@ -338,7 +338,7 @@ class TextDiffer(qt.QWidget):
         self._detach_editors()
         self.deleteLater()
 
-    def __del__(self):
+    def __del__(self) -> None:
         # Safety net for a differ that is dropped without close_tab() ever
         # calling shutdown(). Real teardown is shutdown(); this only detaches
         # the back-references and never mutates the child editors, so running
@@ -773,17 +773,17 @@ QWidget#text_differ_vline {{
         finally:
             self._syncing_scroll = False
 
-    def _scn_updateui_1(self, sc_update):
+    def _scn_updateui_1(self, sc_update: int) -> None:
         """Propagate scroll changes from the first editor to the second."""
         if sc_update & (self.UPDATE_H_SCROLL | self.UPDATE_V_SCROLL):
             self._sync_scroll(self.editor_1, self.editor_2)
 
-    def _scn_updateui_2(self, sc_update):
+    def _scn_updateui_2(self, sc_update: int) -> None:
         """Propagate scroll changes from the second editor to the first."""
         if sc_update & (self.UPDATE_H_SCROLL | self.UPDATE_V_SCROLL):
             self._sync_scroll(self.editor_2, self.editor_1)
 
-    def _cursor_change_1(self, line, index):
+    def _cursor_change_1(self, line: int, index: int) -> None:
         """
         Function connected to the cursorPositionChanged signal for
         cursor position change detection
@@ -804,7 +804,7 @@ QWidget#text_differ_vline {{
                 finally:
                     self._syncing_scroll = False
 
-    def _cursor_change_2(self, line, index):
+    def _cursor_change_2(self, line: int, index: int) -> None:
         """
         Function connected to the cursorPositionChanged signal for
         cursor position change detection
@@ -825,12 +825,14 @@ QWidget#text_differ_vline {{
                 finally:
                     self._syncing_scroll = False
 
-    def _update_margins(self):
+    def _update_margins(self) -> None:
         """Update the text margin width"""
         self.editor_1.setMarginWidth(0, "0" * len(str(self.editor_1.lines())))
         self.editor_2.setMarginWidth(0, "0" * len(str(self.editor_2.lines())))
 
-    def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
+    def _signal_editor_cursor_change(
+        self, cursor_line: int | None = None, cursor_column: int | None = None
+    ) -> None:
         """Signal that fires when cursor position changes in one of the editors"""
         self.main_form.display.update_cursor_position(cursor_line, cursor_column)
 
@@ -846,7 +848,7 @@ QWidget#text_differ_vline {{
             search_text, case_sensitive, search_forward, regular_expression
         )
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
         """Overloaded mouse click event"""
         # Execute the superclass mouse click event
         super().mousePressEvent(event)
@@ -877,10 +879,12 @@ QWidget#text_differ_vline {{
             self.focused_editor = object
         return super().eventFilter(object, event)
 
-    def setFocus(self):
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
         """Overridden focus event"""
         # Execute the superclass focus function
-        super().setFocus()
+        super().setFocus(reason)
         # Check indication
         self.main_form.view.indication_check()
         # Focus the last focused editor
@@ -888,12 +892,12 @@ QWidget#text_differ_vline {{
 
     def init_margin(
         self,
-        editor,
-        marker_unique,
-        marker_unique_symbol,
-        marker_similar,
-        marker_similar_symbol,
-    ):
+        editor: CustomEditor,
+        marker_unique: int,
+        marker_unique_symbol: int,
+        marker_similar: int,
+        marker_similar_symbol: int,
+    ) -> None:
         """Initialize margin for coloring lines showing diff symbols"""
         editor.setMarginWidth(0, "0")
         # Setting the margin width to 0 makes the marker colour the entire line
@@ -941,7 +945,7 @@ QWidget#text_differ_vline {{
                 self.Indicator_Similar_Color, self.INDICATOR_SIMILAR
             )
 
-    def init_markers(self):
+    def init_markers(self) -> None:
         """Initialize all markers for showing diff symbols"""
         # Set the images
         image_scale_size = functions.create_size(16, 16)
@@ -996,7 +1000,9 @@ QWidget#text_differ_vline {{
         )
         self._apply_diff_colors()
 
-    def init_indicator(self, editor, indicator, color):
+    def init_indicator(
+        self, editor: CustomEditor, indicator: int, color: qt.QColor
+    ) -> None:
         """
         Set the indicator settings
         """
@@ -1052,11 +1058,13 @@ QWidget#text_differ_vline {{
         self.editor_1.choose_lexer(self._lexer_1)
         self.editor_2.choose_lexer(self._lexer_2)
 
-    def set_margin_text(self, editor, line, text):
+    def set_margin_text(self, editor: CustomEditor, line: int, text: str) -> None:
         """Set the editor's margin text at the selected line"""
         editor.setMarginText(line, text, self.MARGIN_STYLE)
 
-    def _set_character_range_indicator(self, editor, line, range_start, range_end):
+    def _set_character_range_indicator(
+        self, editor: CustomEditor, line: int, range_start: int, range_end: int
+    ) -> None:
         """Color a character range of a line with the 'similar' indicator"""
         start_position = editor.positionFromLineIndex(line, range_start)
         end_position = editor.positionFromLineIndex(line, range_end)

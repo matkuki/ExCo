@@ -47,7 +47,7 @@ class Cython(Python):
         "HighlightedIdentifier": 14,
         "Decorator": 15,
     }
-    _c_kwrds = [
+    _c_kwrds: list[str] = [
         "void",
         "char",
         "int",
@@ -59,7 +59,7 @@ class Cython(Python):
         "unsigned",
         "inline",
     ]
-    _cython_kwrds = [
+    _cython_kwrds: list[str] = [
         "by",
         "cdef",
         "cimport",
@@ -87,10 +87,16 @@ class Cython(Python):
         # Initialize superclass
         super().__init__()
         # Set default colors
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(
-            qt.QFont(settings.get("current_font_name"), settings.get("current_font_size"))
+            qt.QFont(
+                settings.get("current_font_name"), settings.get("current_font_size")
+            )
         )
         # Initialize the keyword list
         self.init_kwrds()
@@ -107,7 +113,7 @@ class Cython(Python):
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
 
-    def keywords(self, state):
+    def keywords(self, state: int) -> str | None:  # type: ignore[override]
         """
         Overridden method for determining keywords,
         read the QScintilla QsciLexer class documentation on the Riverbank website.

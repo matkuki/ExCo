@@ -11,9 +11,9 @@ import sys
 import data
 
 
-def check_shortcut_combination(combination_string):
-    keys = []
-    current_key = []
+def check_shortcut_combination(combination_string: str) -> list[str] | None:
+    keys: list[str] = []
+    current_key: list[str] = []
     for c in combination_string:
         if c == "+" and not (len(current_key) == 0):
             if len(current_key) > 0:
@@ -26,8 +26,8 @@ def check_shortcut_combination(combination_string):
             keys.append("".join(current_key))
         else:
             keys = []
-    valid_modifiers = ("ctrl", "shift", "alt")
-    valid_key_names = {
+    valid_modifiers: tuple[str, ...] = ("ctrl", "shift", "alt")
+    valid_key_names: dict[str, str] = {
         "add": "+",
         "plus": "+",
         "minus": "-",
@@ -50,7 +50,8 @@ def check_shortcut_combination(combination_string):
         "insert": "insert",
         "escape": "escape",
     }
-    out_keys = []
+    out_keys: list[str] = []
+    valid: bool = True
     for k in keys:
         key = k.lower()
         if len(key) > 1 and key in valid_modifiers:
@@ -60,6 +61,6 @@ def check_shortcut_combination(combination_string):
         elif len(key) == 1:
             out_keys.append(k)
         else:
-            out_keys = None
+            valid = False
             break
-    return out_keys
+    return out_keys if valid else None

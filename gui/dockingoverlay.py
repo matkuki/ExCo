@@ -12,6 +12,7 @@ import keyword
 import inspect
 import textwrap
 import traceback
+from typing import Any
 
 import qt
 import data
@@ -20,30 +21,31 @@ import functions
 
 
 class DockingOverlay:
-    INFO_POINT_SIZE = (30, 30)
-    parent = None
-    overlay_label = None
-    storage = []
+    INFO_POINT_SIZE: tuple[int, int] = (30, 30)
+    parent: Any = None
+    overlay_label: Any = None
+    storage: list["DockingOverlay.BaseDockLabel"] = []
 
     class BaseDockLabel(qt.QLabel):
-        name = None
-        widget = None
-        initial_position = None
-        expanded_position = None
-        initial_size = None
-        expanded_size = None
+        name: str | None = None
+        widget: Any = None
+        initial_position: tuple[float, float] | None = None
+        expanded_position: tuple[float, float] | None = None
+        initial_size: tuple[float, float] | None = None
+        expanded_size: tuple[float, float] | None = None
+        stored_drag_enter_event: Any = None
 
         def __init__(
             self,
-            name,
-            parent,
-            widget,
-            initial_position,
-            expanded_position,
-            initial_size,
-            expanded_size,
-            image_path,
-        ):
+            name: str,
+            parent: Any,
+            widget: Any,
+            initial_position: tuple[float, float],
+            expanded_position: tuple[float, float],
+            initial_size: tuple[float, float],
+            expanded_size: tuple[float, float],
+            image_path: str,
+        ) -> None:
             super().__init__(parent)
             self.name = name
             self.widget = widget
@@ -92,8 +94,11 @@ QLabel:hover {{
             self.initial_size = initial_size
             self.expanded_size = expanded_size
 
-        def dragEnterEvent(self, event):
+        def dragEnterEvent(self, event: qt.QDragEnterEvent | None) -> None:
+            if event is None:
+                return
             event.accept()
+            assert self.expanded_position is not None and self.expanded_size is not None
             self.setGeometry(
                 int(self.expanded_position[0]),
                 int(self.expanded_position[1]),
@@ -104,7 +109,8 @@ QLabel:hover {{
             self.widget.dragEnterEvent(event)
             return super().dragEnterEvent(event)
 
-        def dragLeaveEvent(self, event):
+        def dragLeaveEvent(self, event: qt.QDragLeaveEvent | None) -> None:
+            assert self.initial_position is not None and self.initial_size is not None
             self.setGeometry(
                 int(self.initial_position[0]),
                 int(self.initial_position[1]),
@@ -114,8 +120,8 @@ QLabel:hover {{
             return super().dragLeaveEvent(event)
 
     class CentralDockLabel(BaseDockLabel):
-        def dropEvent(self, event):
-            main_form = self.parent()
+        def dropEvent(self, event: qt.QDropEvent | None) -> None:
+            main_form: Any = self.parent()
             main_form.display.docking_overlay_hide()
             self.widget.dropEvent(event)
             main_form.view.reindex_all_windows()
@@ -128,8 +134,8 @@ QLabel:hover {{
         original pane's extent; sibling panes are left untouched.
         """
 
-        def dropEvent(self, event):
-            main_form = self.parent()
+        def dropEvent(self, event: qt.QDropEvent | None) -> None:
+            main_form: Any = self.parent()
             main_form.display.docking_overlay_hide()
             box = self.widget.parent()
             # Normalized share (0..1) granted to the dropped pane
@@ -225,7 +231,7 @@ QLabel:hover {{
             return super().dropEvent(event)
 
     @staticmethod
-    def get_scaled_point_size():
+    def get_scaled_point_size() -> tuple[float, float]:
         return (
             DockingOverlay.INFO_POINT_SIZE[0]
             * settings.get("toplevel_menu_scale")
@@ -236,22 +242,22 @@ QLabel:hover {{
         )
 
     @staticmethod
-    def get_scaled_font_size():
+    def get_scaled_font_size() -> float:
         return 10 * settings.get("toplevel_menu_scale") / 100.0
 
     @staticmethod
     def create_dock_point(
-        name,
-        parent,
-        widget,
-        _type,
-        initial_position,
-        expanded_position,
-        initial_size,
-        expanded_size,
-        image_path,
-        store=True,
-    ):
+        name: str,
+        parent: Any,
+        widget: Any,
+        _type: type["DockingOverlay.BaseDockLabel"],
+        initial_position: tuple[float, float],
+        expanded_position: tuple[float, float],
+        initial_size: tuple[float, float],
+        expanded_size: tuple[float, float],
+        image_path: str,
+        store: bool = True,
+    ) -> "DockingOverlay.BaseDockLabel":
         dock_label = _type(
             name,
             parent,
@@ -266,10 +272,10 @@ QLabel:hover {{
             DockingOverlay.storage.append(dock_label)
         return dock_label
 
-    def __init__(self, parent):
+    def __init__(self, parent: Any) -> None:
         self.parent = parent
 
-    def show_on_parent(self, docking_widgets):
+    def show_on_parent(self, docking_widgets: list[Any]) -> None:
         for widget in docking_widgets:
             point_size = DockingOverlay.get_scaled_point_size()
             center, left, right, top, bottom = functions.get_edges_to_widget(
@@ -331,6 +337,9 @@ QLabel:hover {{
                     )
                     exp_size = (widget.geometry().width(), pane_height)
                     name = "bottom"
+                assert name is not None
+                assert exp_pos is not None
+                assert exp_size is not None
                 dock_point = self.create_dock_point(
                     name,
                     self.parent,
@@ -346,7 +355,7 @@ QLabel:hover {{
 
         qt.QCoreApplication.processEvents()
 
-    def hide(self):
+    def hide(self) -> None:
         if self.overlay_label != None:
             self.overlay_label.hide()
 

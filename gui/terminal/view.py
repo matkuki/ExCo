@@ -11,6 +11,7 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      Paints the pyte screen (and styled scrollback history) cell by cell,
 ##      with incremental repaints driven by the screen's dirty-line set.
 
+import bisect
 import functools
 import math
 import os
@@ -20,10 +21,23 @@ import functions
 import gui.menu
 import qt
 import settings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union, cast
-from wcwidth import wcwidth
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
-from gui.terminal.screen import ExtendedScreen
+from gui.terminal.findbar import TerminalFindBar
+from gui.terminal.graphemes import cluster_width
+from gui.terminal.screen import ExtendedScreen, PromptMark
 
 if TYPE_CHECKING:
     from gui.terminal.terminal import Terminal
@@ -31,6 +45,25 @@ if TYPE_CHECKING:
 # A selection is either a bare anchor (start cell) or a (start, end) pair;
 # all cells are (stack_row, column) tuples.
 Selection = Union[Tuple[int, int], Tuple[int, int, int, int]]
+
+
+class RowContext(NamedTuple):
+    """Per-row paint state hoisted out of the per-cell loop.
+
+    _cell_style needs the row's stack index, its OSC 8 link columns, the
+    selection bounds and the find highlights. Deriving them per cell made a
+    full repaint call _history_len/_stack_row/_refresh_link_index and
+    _is_selected twice for every cell, which was about a third of the paint
+    time; the values only change per row, so they are computed once in
+    _row_context.
+    """
+
+    stack_row: int
+    links: Optional[Dict[int, str]]
+    selection: Optional[Tuple[int, int, int, int]]
+    find: Optional[List[Tuple[int, int]]]
+    find_current: Optional[Tuple[int, int]]
+
 
 # ANSI color palettes. 'default' is resolved at render time to the
 # terminal's default foreground/background. The bright variants use the
@@ -51,6 +84,11 @@ FOREGROUND_COLOR_MAP: Dict[str, Optional[qt.QColor]] = {
     "brightbrown": qt.QColor("#ffff55"),
     "brightblue": qt.QColor("#5555ff"),
     "brightmagenta": qt.QColor("#ff55ff"),
+    # pyte's own BG_AIXTERM table spells SGR 105 "bfightmagenta" (graphics.py),
+    # so that is the string a cell carries. Without this alias it fell through
+    # to the hex parser, QColor left it invalid, and fillRect painted the cell
+    # black - a bright-magenta background became the darkest one.
+    "bfightmagenta": qt.QColor("#ff55ff"),
     "brightcyan": qt.QColor("#55ffff"),
     "brightwhite": qt.QColor("#ffffff"),
 }
@@ -68,8 +106,53 @@ class TerminalView(qt.QWidget):
     paste_event = qt.pyqtSignal(str)
     focused = qt.pyqtSignal()
 
-    # Cursor blink period in milliseconds
+    # Cursor blink period in milliseconds (the default for the
+    # terminal-cursor-blink-ms setting, and the fallback when it is unset)
     BLINK_INTERVAL_MS: int = 530
+    # A setting below this would blink too fast to read (and would keep the
+    # repaint timer permanently busy), so the configured rate is clamped.
+    MIN_BLINK_INTERVAL_MS: int = 100
+    # How many whitespace-separated chunks a double-click may bridge over
+    # while looking for a path separator or a path prefix. Bounded so a stray
+    # prose line cannot turn into a whole-line selection.
+    PATH_BRIDGE_CHUNKS: int = 4
+
+    # Bundled monospace families Qt should try, in order, for a glyph the
+    # configured family lacks. Without this list Qt merges in whichever system
+    # font happens to cover the character: '✕' (U+2715, opencode's tab close
+    # button) came from MS UI Gothic at a 13px advance in an 8px cell, and
+    # every following glyph in the run was pushed out of the grid.
+    FALLBACK_FAMILIES: Tuple[str, ...] = ("Source Code Pro", "Inconsolata")
+
+    # Ranges whose glyph *size* is part of what the character means, so the
+    # font's own ink box must be kept: block elements encode fill height
+    # (U+2581-U+2588 lower blocks), braille patterns are a fixed dot grid, and
+    # shape glyphs come in named sizes. opencode's working indicator is a
+    # size-coded trail (U+25A0 'black square' active vs U+2B1D 'very small
+    # square' inactive; or U+2B25/U+25C6/U+2B29/U+2B2A diamonds), and growing
+    # the fallback 2px square to the cap height made every inactive cell as big
+    # as the active one. U+2715 'multiplication x' is deliberately outside: it
+    # is a symbol, not a size.
+    SIZE_SEMANTIC_RANGES: Tuple[Tuple[int, int], ...] = (
+        (0x2500, 0x257F),  # box drawing
+        (0x2580, 0x259F),  # block elements
+        (0x25A0, 0x25FF),  # geometric shapes
+        (0x2800, 0x28FF),  # braille patterns
+        (0x2B00, 0x2BFF),  # miscellaneous symbols and arrows
+    )
+
+    # Bounds for the per-cell memo caches (see _cell_style / _resolve_color /
+    # _glyph_shape). A truecolour animation - opencode's "Free token limit
+    # reached" shimmer, a gradient spinner - puts a brand-new fg/bg string in
+    # every animated cell on every frame, so an unbounded memo gained one entry
+    # per cell per frame: measured 7,200 style + 7,200 colour entries and
+    # +3.6 MB of RSS for each 160x45 frame, i.e. a terminal that grew by ~100 MB
+    # a minute and slowed down until it was unusable. A cap far above any static
+    # palette (a theme uses tens of colours) only ever trips under exactly that
+    # animation, and a bulk clear costs one repaint, never correctness.
+    STYLE_CACHE_LIMIT: int = 4096
+    COLOR_CACHE_LIMIT: int = 4096
+    GLYPH_SHAPE_LIMIT: int = 4096
 
     def __init__(
         self, terminal: "Terminal", parent: Optional[qt.QWidget] = None
@@ -82,6 +165,17 @@ class TerminalView(qt.QWidget):
         # Accept file/text drops so dragging a path into the terminal sends
         # it to the shell instead of the main window's drop-to-open handler.
         self.setAcceptDrops(True)
+
+        # Theme colours before any OSC 10/11 override; _load_style resolves the
+        # effective defaults from both and reports the palette to the screen so
+        # its OSC queries answer with the colours actually painted.
+        self._theme_fg: qt.QColor = qt.QColor("#000000")
+        self._theme_bg: qt.QColor = qt.QColor("#ffffff")
+        # Session-only font zoom driven by the context menu (the persisted
+        # size stays in settings; the menu adjusts this terminal for now).
+        self._font_zoom: float = 0.0
+        # Screen palette generation already reflected in the caches below.
+        self._palette_version: int = 0
 
         # Monospace font and its measured cell size
         self._style_fonts: Dict[Tuple[bool, bool, bool, bool], qt.QFont] = {}
@@ -106,13 +200,17 @@ class TerminalView(qt.QWidget):
         # the rows actually on screen - live buffer and scrollback alike.
         self._blink_rows: Set[int] = set()
         self._blink_timer: qt.QTimer = qt.QTimer(self)
-        self._blink_timer.setInterval(self.BLINK_INTERVAL_MS)
+        self._blink_timer.setInterval(self._cursor_blink_interval())
         self._blink_timer.timeout.connect(self._on_blink)
         self._blink_timer.start()
 
         # Selection state (start/end cells in stack coordinates)
         self._selection: Optional[Selection] = None
         self._selection_active: bool = False
+        # Rectangular (column) selection, started with Alt+left-drag. The
+        # stored cells are still a normal anchor/end pair; this flag only
+        # changes how they resolve into selected cells and copied text.
+        self._block_selection: bool = False
         # Cell the current left-press started on; hyperlink activation on
         # release requires the press and release to share a cell.
         self._press_cell: Optional[Tuple[int, int]] = None
@@ -153,6 +251,20 @@ class TerminalView(qt.QWidget):
         # Whether the last repaint batch saw the alternate screen, so entering
         # it can be told apart from simply being in it (see schedule_repaint).
         self._was_in_alt: bool = self._in_alt()
+
+        # Inline-image QImage cache, keyed by Placement.serial (not id(): a
+        # freed placement's address is reused). A placement's pixels never
+        # change, so the cache only has to be pruned when the screen's image
+        # store version moves on (add / delete / clear).
+        self._image_cache: Dict[int, qt.QImage] = {}
+        self._image_version: int = -1
+
+        # History generation already accounted for while anchoring a scrolled
+        # view (see _anchor_scrollback). The delta is the number of rows the
+        # bounded deque dropped since the last repaint; the last length seen
+        # tells an overflow (length unchanged) from a cleared scrollback.
+        self._hist_gen: int = self._history_generation()
+        self._hist_seen: int = self._history_len()
 
         # Selection tracking to survive history overflow. pyte's history.top is a
         # bounded deque, so an overflow (or a scrollback clear) shifts every
@@ -212,6 +324,30 @@ class TerminalView(qt.QWidget):
         self._copy_toast_timer.timeout.connect(self._copy_toast.hide)
         self._style_copy_toast()
 
+        # Scrollback search state (see the Find section). Matches are kept in
+        # stack coordinates, so a hit in the scrollback is addressed exactly
+        # like a hit on the live screen; _find_spans is the per-row column
+        # range the paint pass highlights.
+        self._find_query: str = ""
+        self._find_matches: List[Tuple[int, int]] = []
+        self._find_spans: Dict[int, List[Tuple[int, int]]] = {}
+        self._find_index: int = -1
+        self._find_current_row: int = -1
+        self._find_current_span: Optional[Tuple[int, int]] = None
+        # history_generation the matches were scanned against (a deque
+        # overflow moves every stack row, exactly like a selection).
+        self._find_gen: int = self._history_generation()
+        self._find_bg: qt.QColor = qt.QColor("#ffe082")
+        self._find_current_bg: qt.QColor = qt.QColor("#ffb300")
+        self._find_fg: qt.QColor = qt.QColor("#000000")
+        self._find_bar: TerminalFindBar = TerminalFindBar(self)
+        self._find_bar.query_changed.connect(self._on_find_query)
+        self._find_bar.next_requested.connect(self.find_next)
+        self._find_bar.previous_requested.connect(self.find_previous)
+        self._find_bar.closed.connect(self.close_find)
+        self._find_bar.hide()
+        self._style_find_bar()
+
     def event(self, event: Optional[qt.QEvent]) -> bool:
         # Claim every key for the shell: accepting ShortcutOverride vetoes
         # the main window's QAction shortcuts (Ctrl+P, Ctrl+W, Ctrl+N, ...)
@@ -251,7 +387,38 @@ class TerminalView(qt.QWidget):
             font = qt.QFont(settings.get_editor_font())
         if font_size:
             font.setPointSizeF(font_size)
+        # Session-only zoom from the context menu, applied on top of whatever
+        # size the settings produced (a positive point size means the font is
+        # not pixel-sized, where adding points would be meaningless).
+        if self._font_zoom and font.pointSizeF() > 0:
+            font.setPointSizeF(max(font.pointSizeF() + self._font_zoom, 4.0))
+        # Qt's own fallback picks arbitrary system fonts for glyphs the family
+        # lacks, and those are neither cell-sized nor cell-advanced. Name the
+        # bundled monospace families explicitly: Qt tries them before it
+        # merges in a system font, so symbols like '✕' stay on the grid while
+        # characters no bundled font covers (CJK, emoji) keep working.
+        families: List[str] = [font.family()]
+        available: List[str] = qt.QFontDatabase.families()
+        for fallback in self.FALLBACK_FAMILIES:
+            if fallback != font.family() and fallback in available:
+                families.append(fallback)
+        font.setFamilies(families)
         return font
+
+    def _cursor_blink_interval(self) -> int:
+        """Configured cursor blink half-period, clamped to a readable rate.
+
+        The setting is read once, when the view is built, exactly like the
+        terminal font: a terminal opened afterwards picks up a changed value.
+        """
+        value: Any = settings.get("terminal-cursor-blink-ms")
+        if value is None:
+            return self.BLINK_INTERVAL_MS
+        try:
+            interval: int = int(value)
+        except (TypeError, ValueError):
+            return self.BLINK_INTERVAL_MS
+        return max(interval, self.MIN_BLINK_INTERVAL_MS)
 
     def _load_style(self) -> None:
         """(Re)apply the configured font and theme-derived default colors."""
@@ -267,10 +434,33 @@ class TerminalView(qt.QWidget):
         self._style_cache = {}
         self._color_cache = {}
         theme: Any = settings.get_theme()
-        self._default_fg: qt.QColor = qt.QColor(theme["fonts"]["default"]["color"])
-        self._default_bg: qt.QColor = qt.QColor(theme["fonts"]["default"]["background"])
+        self._theme_fg = qt.QColor(theme["fonts"]["default"]["color"])
+        self._theme_bg = qt.QColor(theme["fonts"]["default"]["background"])
+        self._apply_screen_defaults()
         self._measure_font()
         self._style_copy_toast()
+        self._style_find_bar()
+        self._palette_version = self.terminal.term_screen.palette_version
+
+    def _apply_screen_defaults(self) -> None:
+        """Resolve the effective default foreground/background.
+
+        The theme supplies them unless an application replaced them with
+        OSC 10/11. The view also reports the palette it paints with, so the
+        screen can answer an OSC 4/10/11 query with the colour actually on
+        screen instead of a second, possibly different, palette.
+        """
+        screen: ExtendedScreen = self.terminal.term_screen
+        fg_spec: str = screen.default_fg_override or self._theme_fg.name()
+        bg_spec: str = screen.default_bg_override or self._theme_bg.name()
+        self._default_fg = qt.QColor(fg_spec)
+        self._default_bg = qt.QColor(bg_spec)
+        table: Dict[str, str] = {
+            token: colour.name()
+            for token, colour in FOREGROUND_COLOR_MAP.items()
+            if colour is not None
+        }
+        screen.set_render_colours(table, self._theme_fg.name(), self._theme_bg.name())
 
     def _measure_font(self) -> None:
         font_metrics: qt.QFontMetricsF = qt.QFontMetricsF(self._font)
@@ -278,6 +468,31 @@ class TerminalView(qt.QWidget):
         self._char_height: float = max(
             font_metrics.lineSpacing(), font_metrics.height(), 1.0
         )
+        # Baseline offset inside one row: what AlignVCenter would use for a
+        # rect of this height. Every glyph is drawn from this baseline at its
+        # own cell's x, so a run is never laid out as one string (which let a
+        # fallback glyph's advance shift the rest of the run) and never
+        # clipped by a per-cell rect.
+        self._baseline: float = (
+            self._char_height - font_metrics.height()
+        ) / 2.0 + font_metrics.ascent()
+        # Cap height is the reference size a fallback symbol is grown to: a
+        # family that lacks a glyph often draws the replacement symbol much
+        # smaller than its own letters (Inconsolata's U+2715 is a 5px cross in
+        # a 17px row), so a narrow fallback glyph whose ink is shorter than
+        # this is scaled up to it (see _draw_glyph).
+        self._cap_height: float = max(font_metrics.capHeight(), 0.0)
+        # Glyph coverage/shape caches, keyed on the style font's id; the style
+        # fonts are rebuilt whenever the style is (see _load_style), so the ids
+        # cannot outlive the fonts they describe.
+        self._raw_fonts: Dict[int, Optional[qt.QRawFont]] = {}
+        self._glyph_coverage: Dict[Tuple[int, str], bool] = {}
+        self._glyph_shapes: Dict[
+            Tuple[int, str], Tuple[float, Tuple[float, float, float, float]]
+        ] = {}
+        # The screen converts inline-image pixel sizes to cell spans, so it
+        # needs the same cell metrics the painter uses.
+        self.terminal.term_screen.set_cell_metrics(self._char_width, self._char_height)
 
     def _terminal_size(self) -> Tuple[int, int]:
         cols: int = max(int(self._content_width / self._char_width), 1)
@@ -289,9 +504,32 @@ class TerminalView(qt.QWidget):
         char height is often fractional (e.g. 13.3px), so naive rounding of
         the row rect would leave 1px gaps between adjacent rows that never
         get repainted; floor/ceil guarantees gapless coverage."""
-        top: int = math.floor(y * self._char_height)
-        bottom: int = math.ceil((y + 1) * self._char_height)
+        return self._row_band_span(y, y)
+
+    def _row_band_span(self, first: int, last: int) -> qt.QRect:
+        """Integer rectangle covering rows *first*..*last* inclusively, with
+        the same floor/ceil guarantee as :meth:`_row_band`."""
+        top: int = math.floor(first * self._char_height)
+        bottom: int = math.ceil((last + 1) * self._char_height)
         return qt.QRect(0, top, self._content_width, bottom - top)
+
+    def _repaint_rows(self, rows: Iterable[int], lines: int) -> None:
+        """Invalidate the given rows, coalescing each run of adjacent rows
+        into one rectangle. A frame that dirties a whole viewport otherwise
+        issues one ``QWidget.update(QRect)`` per line, and Qt has to merge
+        those regions itself; a contiguous run is a single band."""
+        valid: List[int] = sorted({y for y in rows if 0 <= y < lines})
+        if not valid:
+            return
+        first: int = valid[0]
+        previous: int = first
+        for y in valid[1:]:
+            if y == previous + 1:
+                previous = y
+                continue
+            self.update(self._row_band_span(first, previous))
+            first = previous = y
+        self.update(self._row_band_span(first, previous))
 
     def _recompute_geometry(self) -> None:
         scrollbar: qt.QScrollBar = self._scrollbar
@@ -308,9 +546,13 @@ class TerminalView(qt.QWidget):
             scrollbar.hide()
         else:
             scrollbar.show()
-        self._content_width = self.width() - (
-            scrollbar_width if self._sb_visible else 0
-        )
+        # Keep the scrollbar's strip out of the grid even while it is hidden.
+        # Shrinking the content only when it appears changed the column count
+        # without emitting a resize (the screen/PTY kept the wider grid), so
+        # the rightmost columns sat underneath the bar as soon as the user
+        # scrolled up - the last characters of every line disappeared.
+        self._content_width = max(self.width() - scrollbar_width, 1)
+        self._place_find_bar()
 
     def resizeEvent(self, event: qt.QResizeEvent) -> None:  # type: ignore[override]
         self._clear_selection()
@@ -318,9 +560,43 @@ class TerminalView(qt.QWidget):
         cols: int
         rows: int
         cols, rows = self._terminal_size()
+        # Capture the stack row the reader is looking at *before* the screen
+        # re-wraps its rows; the reflow map then moves it to wherever that text
+        # ended up. Only meaningful while scrolled back - at the bottom the
+        # cursor's row is the anchor and the screen keeps it visible itself.
+        anchor: Optional[int] = None
+        if self._scroll_offset > 0:
+            anchor = self._stack_row(0)
         self.resize_event.emit(cols, rows)
+        self._anchor_after_reflow(anchor)
         self._place_copy_toast()
+        if getattr(self, "_find_query", ""):
+            # The column count changed, so every recorded match column is
+            # stale; rescan rather than highlight the wrong cells.
+            self._rescan_find()
         return super().resizeEvent(event)
+
+    def _anchor_after_reflow(self, anchor: Optional[int]) -> None:
+        """Put the reader back on the text reflow moved.
+
+        A resize re-wraps the whole stack, so a row index computed before it
+        names different content afterwards. The screen reports the old -> new
+        position map; *anchor* is the stack row that was at the top of the
+        viewport. When its text fell out of the retained stack (the re-wrapped
+        history is longer than the bound) the reader goes back to the live
+        screen instead of dangling past the end.
+        """
+        screen: ExtendedScreen = self.terminal.term_screen
+        result: Optional[Any] = screen.reflow_map
+        screen.reflow_map = None
+        if result is not None and anchor is not None:
+            new_row: Optional[int] = result.map_row(anchor)
+            history_len: int = self._history_len()
+            if new_row is None:
+                self._scroll_offset = 0
+            else:
+                self._scroll_offset = max(0, min(history_len - new_row, history_len))
+        self._refresh_scrollbar()
 
     # ------------------------------------------------------------------
     # Scrollback
@@ -344,6 +620,21 @@ class TerminalView(qt.QWidget):
             return screen.history.top[stack_row]
         return screen.buffer[stack_row - history_len]
 
+    def _row_context(self, viewport_y: int) -> RowContext:
+        """Row-level state shared by every cell of viewport row *viewport_y*."""
+        stack_row: int = self._stack_row(viewport_y)
+        links: Optional[Dict[int, str]] = None
+        if stack_row >= 0:
+            self._refresh_link_index()
+            links = self._link_index.get(stack_row)
+        find: Optional[List[Tuple[int, int]]] = None
+        current: Optional[Tuple[int, int]] = None
+        if self._find_spans:
+            find = self._find_spans.get(stack_row)
+            if stack_row == self._find_current_row:
+                current = self._find_current_span
+        return RowContext(stack_row, links, self._normalized_selection(), find, current)
+
     def _scroll_up(self, rows: int) -> None:
         if self._in_alt():
             return
@@ -358,8 +649,100 @@ class TerminalView(qt.QWidget):
         self._refresh_scrollbar()
         self.update()
 
+    def _scroll_to_top(self) -> None:
+        """Jump to the oldest scrollback row (Shift+Home)."""
+        if self._in_alt():
+            return
+        self._scroll_offset = self._history_len()
+        self._refresh_scrollbar()
+        self.update()
+
+    def _scroll_to_bottom(self) -> None:
+        """Jump back to the live screen (Shift+End)."""
+        if self._in_alt():
+            return
+        self._scroll_offset = 0
+        self._refresh_scrollbar()
+        self.update()
+
+    def _prompt_rows(self, kind: str = "A") -> List[int]:
+        """Stack rows of the OSC 133 marks of *kind*, in emission order.
+
+        A shell that never emitted OSC 133 leaves the list empty, so every
+        navigation surface built on it is inert.
+        """
+        marks: List[PromptMark] = self.terminal.term_screen.prompt_marks
+        return [row for row, _column, mark_kind, _exit in marks if mark_kind == kind]
+
+    def _scroll_to_previous_prompt(self) -> None:
+        """Jump so the previous prompt starts at the top of the viewport."""
+        if self._in_alt():
+            return
+        rows: List[int] = self._prompt_rows("A")
+        if not rows:
+            return
+        anchor: int = self._history_len() - self._scroll_offset
+        index: int = bisect.bisect_left(rows, anchor) - 1
+        if index < 0:
+            return
+        self._scroll_offset = max(
+            0, min(self._history_len() - rows[index], self._history_len())
+        )
+        self._refresh_scrollbar()
+        self.update()
+
+    def _scroll_to_next_prompt(self) -> None:
+        """Jump so the next prompt starts at the top of the viewport."""
+        if self._in_alt():
+            return
+        rows: List[int] = self._prompt_rows("A")
+        if not rows:
+            return
+        anchor: int = self._history_len() - self._scroll_offset
+        index: int = bisect.bisect_right(rows, anchor)
+        if index >= len(rows):
+            return
+        self._scroll_offset = max(
+            0, min(self._history_len() - rows[index], self._history_len())
+        )
+        self._refresh_scrollbar()
+        self.update()
+
     def _page_rows(self) -> int:
         return max(self.terminal.term_screen.lines - 1, 1)
+
+    def _anchor_scrollback(self) -> None:
+        """Keep the text under the reader still when the bounded history drops
+        rows.
+
+        A scrolled-out row is appended to ``history.top``, so a stack index
+        stays valid while the deque merely grows. Once it is full the append
+        drops the leftmost row instead and every remaining row moves one index
+        towards zero; a reader parked in the scrollback would watch the text
+        crawl upwards. The screen counts those drops in ``history_generation``.
+        The offset is measured from the live screen upwards, so following the
+        text means *adding* the delta (a row that moved from index 6 to 5 is
+        one row further back), and a cleared scrollback - the same counter,
+        but with fewer rows left than before - returns to the bottom.
+        """
+        generation: int = self._history_generation()
+        history_len: int = self._history_len()
+        previous_generation: Optional[int] = self._hist_gen
+        previous_len: int = self._hist_seen
+        self._hist_gen = generation
+        self._hist_seen = history_len
+        if previous_generation is None or generation == previous_generation:
+            return
+        if history_len < previous_len:
+            # The scrollback was emptied (CSI 3 J / RIS); there is nothing
+            # left to stay anchored to.
+            self._scroll_offset = 0
+            return
+        if self._scroll_offset > 0:
+            self._scroll_offset = min(
+                self._scroll_offset + (generation - previous_generation),
+                history_len,
+            )
 
     def _refresh_scrollbar(self) -> None:
         if self._in_alt():
@@ -368,7 +751,13 @@ class TerminalView(qt.QWidget):
             self._scrollbar.hide()
             self._recompute_geometry()
             return
+        self._anchor_scrollback()
         history_len: int = self._history_len()
+        # A cleared scrollback (CSI 3 J, RIS) leaves the offset past the new
+        # end, and the slider below is signal-blocked so it cannot correct it.
+        # Without this clamp paintEvent stops at the first negative stack row
+        # and draws nothing until the user scrolls down.
+        self._scroll_offset = max(0, min(self._scroll_offset, history_len))
         self._scrollbar.blockSignals(True)
         self._scrollbar.setRange(0, history_len)
         if not self._scrollbar.isSliderDown():
@@ -398,6 +787,24 @@ class TerminalView(qt.QWidget):
         dirty: Any = screen.dirty
         pending_scroll: int = screen.pending_scroll
         lines: int = screen.lines
+        if screen.palette_version != self._palette_version:
+            # An application set a palette slot or a default colour (OSC
+            # 4/10/11/12) or reset one. Every memoised style may name the old
+            # colour, so the caches are dropped and the whole viewport is
+            # repainted; the theme defaults are re-resolved around the
+            # overrides.
+            self._palette_version = screen.palette_version
+            self._apply_screen_defaults()
+            self._style_cache.clear()
+            self._color_cache.clear()
+            self._style_copy_toast()
+            self._style_find_bar()
+            self.update()
+        if self._find_query and self._find_gen != screen.history_generation:
+            # The scrollback shifted under the highlight (deque overflow or a
+            # clear), so the recorded stack rows no longer point at the text
+            # that matched; rescan it, exactly as the selection is dropped.
+            self._rescan_find()
         if self._in_alt():
             self._scroll_offset = 0
             if not self._was_in_alt:
@@ -425,18 +832,17 @@ class TerminalView(qt.QWidget):
             # cursor and selection overlays are repainted in the same pass.
             self.update()
         else:
-            for y in dirty:
-                if 0 <= y < lines:
-                    self.update(self._row_band(y))
+            rows: List[int] = [y for y in dirty if 0 <= y < lines]
             cursor_y = screen.cursor.y
             if screen.cursor.hidden or cursor_y != self._last_cursor_y:
                 # The cursor moved or vanished: repaint its previous cell so
                 # the old block cursor does not linger (pyte cursor moves do
                 # not mark rows dirty).
                 if self._last_cursor_y is not None and 0 <= self._last_cursor_y < lines:
-                    self.update(self._row_band(self._last_cursor_y))
+                    rows.append(self._last_cursor_y)
                 self._last_cursor_y = cursor_y if not screen.cursor.hidden else None
-            self.update(self._row_band(cursor_y))
+            rows.append(cursor_y)
+            self._repaint_rows(rows, lines)
         dirty.clear()
         # The scroll delta is only meaningful for the chunk just fed; consume
         # it so a second schedule_repaint in the same iteration does not
@@ -459,19 +865,19 @@ class TerminalView(qt.QWidget):
         # mid-phase.
         if self._blink_rows:
             self._sgr_blink_phase = not self._sgr_blink_phase
-            for y in self._blink_rows:
-                if 0 <= y < lines:
-                    self.update(self._row_band(y))
+            self._repaint_rows(self._blink_rows, lines)
         # The cursor blinks unless it is hidden or the application asked for a
         # steady style (DECSCUSR with an even parameter). Only the cursor cells
         # (previous + current row) change on its phase toggle; no need to
         # repaint the whole viewport.
         if not screen.cursor.hidden and screen.cursor_blink:
             self._blink_phase = not self._blink_phase
+            cursor_rows: List[int] = []
             if self._last_cursor_y is not None and 0 <= self._last_cursor_y < lines:
-                self.update(self._row_band(self._last_cursor_y))
+                cursor_rows.append(self._last_cursor_y)
             if 0 <= screen.cursor.y < lines:
-                self.update(self._row_band(screen.cursor.y))
+                cursor_rows.append(screen.cursor.y)
+            self._repaint_rows(cursor_rows, lines)
         else:
             # Park on the visible phase, so a cursor that reappears - or a
             # style change back to a blinking one - is never caught mid-blink.
@@ -492,6 +898,14 @@ class TerminalView(qt.QWidget):
     # ------------------------------------------------------------------
 
     def _resolve_color(self, color_string: str, is_fg: bool) -> qt.QColor:
+        # A palette override (OSC 4) is keyed on exactly the token the cell
+        # carries, so it is resolved before the built-in map: an application
+        # that repaints "red" must change every cell painted red.
+        override: Optional[str] = self.terminal.term_screen.palette_overrides.get(
+            color_string
+        )
+        if override is not None:
+            color_string = override
         if color_string in FOREGROUND_COLOR_MAP:
             color: Optional[qt.QColor] = FOREGROUND_COLOR_MAP[color_string]
             if color is not None:
@@ -505,6 +919,14 @@ class TerminalView(qt.QWidget):
                 color = qt.QColor(color_string)
             else:
                 color = qt.QColor("#" + color_string)
+            if not color.isValid():
+                # An unknown name or a malformed truecolour string leaves
+                # QColor invalid, and fillRect with an invalid colour paints
+                # black - a visible defect (pyte's "bfightmagenta" typo hit
+                # exactly this). Fall back to the cell's default role.
+                return self._default_fg if is_fg else self._default_bg
+            if len(self._color_cache) >= self.COLOR_CACHE_LIMIT:
+                self._color_cache.clear()
             self._color_cache[color_string] = color
         return color
 
@@ -515,27 +937,168 @@ class TerminalView(qt.QWidget):
     def paintEvent(self, event: qt.QPaintEvent) -> None:  # type: ignore[override]
         painter: qt.QPainter = qt.QPainter(self)
         painter.fillRect(event.rect(), self._default_bg)
-        if self._flash:
-            painter.fillRect(event.rect(), qt.QColor(255, 255, 255, 40))
         screen: ExtendedScreen = self.terminal.term_screen
+        # Inline images sit beneath the glyph pass; the painter's clip region
+        # already limits this to the invalidated band.
+        self._paint_images(painter, screen)
         lines: int = screen.lines
         columns: int = screen.columns
         for y in range(lines):
-            stack_row: int = self._stack_row(y)
-            if stack_row < 0:
-                break
             if not event.rect().intersects(self._row_band(y)):
                 continue
-            row: Any = self._stack_row_cells(stack_row)
-            self._paint_cells(painter, y, row, columns)
+            context: RowContext = self._row_context(y)
+            if context.stack_row < 0:
+                break
+            row: Any = self._stack_row_cells(context.stack_row)
+            self._paint_cells(painter, y, row, columns, context)
         self._paint_cursor(painter)
+        if self._flash:
+            # Visual bell: one final wash over the whole viewport, the glyphs
+            # included. Filling only event.rect() behind the grid lit just the
+            # band of a dirty-row repaint, and never the text at all.
+            painter.fillRect(self.rect(), qt.QColor(255, 255, 255, 40))
         painter.end()
 
+    # ------------------------------------------------------------------
+    # Inline images (Kitty graphics / sixel)
+    # ------------------------------------------------------------------
+
+    def _paint_images(self, painter: qt.QPainter, screen: ExtendedScreen) -> None:
+        """Draw the screen's placements beneath the glyph pass.
+
+        Every visible image is re-issued on each paint; the painter's clip
+        region keeps it to the rows Qt actually invalidated, so a one-row
+        repaint still repaints just that slice of an image.
+        """
+        placements: List[Any] = screen.images.placements
+        self._sync_image_cache(placements)
+        if not placements:
+            return
+        top_stack: int = self._history_len() - self._scroll_offset
+        viewport: qt.QRectF = qt.QRectF(self.rect())
+        for placement in sorted(placements, key=lambda item: item.z_index):
+            image: Optional[qt.QImage] = self._image_cache.get(placement.serial)
+            if image is None:
+                continue
+            target: qt.QRectF = self._image_rect(placement, top_stack)
+            if not target.intersects(viewport):
+                continue
+            painter.drawImage(target, image)
+
+    def _image_rect(self, placement: Any, top_stack: int) -> qt.QRectF:
+        """Widget rectangle a placement occupies, clipped later by Qt.
+
+        A protocol-sized placement (Kitty ``c``/``r``) is stretched into its
+        cell box; a pixel-sized one keeps its natural pixel dimensions, so a
+        sixel or a bare Kitty transmission is never resampled to a rounded-up
+        cell boundary.
+        """
+        viewport_row: int = placement.row - top_stack
+        if placement.cell_sized:
+            width: float = placement.columns * self._char_width
+            height: float = placement.rows * self._char_height
+        else:
+            width = float(placement.image.width)
+            height = float(placement.image.height)
+        return qt.QRectF(
+            placement.column * self._char_width,
+            viewport_row * self._char_height,
+            width,
+            height,
+        )
+
+    def _sync_image_cache(self, placements: List[Any]) -> None:
+        """Drop stale entries and decode any placement that has no QImage."""
+        screen: ExtendedScreen = self.terminal.term_screen
+        version: int = screen.images.version
+        if version != self._image_version:
+            self._image_version = version
+            live: Set[int] = {placement.serial for placement in placements}
+            self._image_cache = {
+                key: value for key, value in self._image_cache.items() if key in live
+            }
+        for placement in placements:
+            key: int = placement.serial
+            if key in self._image_cache:
+                continue
+            image: Optional[qt.QImage] = self._qimage_for(placement)
+            if image is not None:
+                self._image_cache[key] = image
+
+    def _qimage_for(self, placement: Any) -> Optional[qt.QImage]:
+        """Decode a placement's pixels into a detached QImage, or None."""
+        data: Any = placement.image
+        if not data.data or data.width <= 0 or data.height <= 0:
+            return None
+        if data.kind == "png":
+            image: qt.QImage = qt.QImage.fromData(data.data, "PNG")
+        elif data.kind == "rgb":
+            image = qt.QImage(
+                data.data,
+                data.width,
+                data.height,
+                data.width * 3,
+                qt.QImage.Format.Format_RGB888,
+            )
+        elif data.kind == "rgba":
+            image = qt.QImage(
+                data.data,
+                data.width,
+                data.height,
+                data.width * 4,
+                qt.QImage.Format.Format_RGBA8888,
+            )
+        else:
+            return None
+        if image.isNull():
+            return None
+        # Detach from the Python buffer so a later store mutation cannot leave
+        # Qt reading freed memory, then honour a Kitty source-rect crop. Kitty
+        # lets w/h default to "rest of the image" when only x/y or one of them
+        # is given.
+        image = image.copy()
+        if (
+            placement.source_x
+            or placement.source_y
+            or placement.source_width
+            or placement.source_height
+        ):
+            source_width: int = (
+                placement.source_width
+                if placement.source_width > 0
+                else image.width() - placement.source_x
+            )
+            source_height: int = (
+                placement.source_height
+                if placement.source_height > 0
+                else image.height() - placement.source_y
+            )
+            if source_width > 0 and source_height > 0:
+                cropped: qt.QImage = image.copy(
+                    qt.QRect(
+                        placement.source_x,
+                        placement.source_y,
+                        source_width,
+                        source_height,
+                    )
+                )
+                if not cropped.isNull():
+                    image = cropped
+        return image
+
     def _paint_cells(
-        self, painter: qt.QPainter, y: int, row: Any, columns: int
+        self,
+        painter: qt.QPainter,
+        y: int,
+        row: Any,
+        columns: int,
+        context: Optional[RowContext] = None,
     ) -> None:
+        if context is None:
+            context = self._row_context(y)
         cell_width: float = self._char_width
         cell_height: float = self._char_height
+        baseline: float = y * cell_height + self._baseline
         x: int = 0
         last_pen: Optional[qt.QColor] = None
         last_font: Optional[qt.QFont] = None
@@ -544,39 +1107,63 @@ class TerminalView(qt.QWidget):
         # below), so tracking it here costs one assignment per cell and keeps
         # _on_blink from having to rescan the grid on every tick.
         row_blinks: bool = False
+        # A style run is resolved one cell ahead: the cell that breaks the run
+        # is measured to detect the break, so its style is carried into the
+        # next run instead of being resolved a second time as that run's first
+        # cell. With per-cell truecolour (an animation) every cell is its own
+        # run, so without the carry-over the pass resolves every cell twice.
+        pending: Optional[Tuple[qt.QColor, qt.QColor, qt.QFont]] = None
         while x < columns:
             cell: Any = row[x]
-            style: Tuple[qt.QColor, qt.QColor, qt.QFont] = self._cell_style(cell, y, x)
-            run_text: List[str] = []
+            style: Tuple[qt.QColor, qt.QColor, qt.QFont]
+            if pending is None:
+                style = self._cell_style(cell, y, x, context)
+            else:
+                style = pending
+                pending = None
+            # (column, character, cell span) for every glyph of this style run.
+            # The columns are kept, rather than only the concatenated text,
+            # because each glyph is drawn into its own cell: drawing the run
+            # as one string lets a fallback glyph's advance (e.g. Inconsolata's
+            # 6px '✕' or MS UI Gothic's 13px one) shift every following glyph
+            # away from the grid, and clipping the string to the run rect cut
+            # the tail of the last character.
+            glyphs: List[Tuple[int, str, int]] = []
             run_start: int = x
-            needs_clip: bool = False
             while x < columns:
                 current: Any = row[x]
                 if current.blink:
                     # Recorded before the style break below, so the cell that
                     # ends the run is counted too.
                     row_blinks = True
-                if self._cell_style(current, y, x) != style:
-                    break
-                char_w: int = wcwidth(current.data)
+                # The run's first cell already has its style (computed above),
+                # so it is not resolved a second time; every following cell is
+                # resolved exactly once, and the one that breaks the run hands
+                # its style to the next run.
+                if x > run_start:
+                    current_style: Tuple[qt.QColor, qt.QColor, qt.QFont] = (
+                        self._cell_style(current, y, x, context)
+                    )
+                    if current_style != style:
+                        pending = current_style
+                        break
+                char_w: int = cluster_width(current.data)
                 # A full-width character and its trailing stub (pyte marks
                 # the stub with empty data) form one atomic unit: absorb the
                 # stub unconditionally so selection or style changes at the
                 # stub can never split the glyph into a one-cell box.
                 if x + 1 < columns and char_w == 2 and row[x + 1].data == "":
-                    run_text.append(current.data)
+                    char: str = current.data
+                    if current.blink and not self._sgr_blink_phase:
+                        char = " "
+                    glyphs.append((x, char, 2))
                     x += 2
                     continue
-                char: str = current.data
+                char = current.data
                 if char == "" or (current.blink and not self._sgr_blink_phase):
                     char = " "
                     char_w = 1
-                if char_w == 2:
-                    # Wide glyph without a stub (last column): it cannot lay
-                    # out at natural width in a one-cell rect, so clip the
-                    # run so the glyph cannot bleed into the neighbor cell.
-                    needs_clip = True
-                run_text.append(char)
+                glyphs.append((x, char, 2 if char_w == 2 else 1))
                 x += 1
             rect: qt.QRectF = qt.QRectF(
                 run_start * cell_width,
@@ -588,23 +1175,22 @@ class TerminalView(qt.QWidget):
                 # The viewport background is already painted in paintEvent;
                 # only runs with a non-default background need a fill.
                 painter.fillRect(rect, style[1])
-            if run_text:
+            if glyphs:
+                font: qt.QFont = style[2]
                 if style[0] != last_pen:
                     painter.setPen(style[0])
                     last_pen = style[0]
-                if style[2] != last_font:
-                    painter.setFont(style[2])
-                    last_font = style[2]
-                if needs_clip:
-                    painter.save()
-                    painter.setClipRect(rect)
-                painter.drawText(
-                    rect,
-                    qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter,
-                    "".join(run_text),
-                )
-                if needs_clip:
-                    painter.restore()
+                if font != last_font:
+                    painter.setFont(font)
+                    last_font = font
+                # A blank cell shows only its background, so skip it - unless
+                # the font decorates it (an underlined or struck-out blank is
+                # part of the line, not a gap).
+                decorated: bool = font.underline() or font.strikeOut()
+                for column, char, cells in glyphs:
+                    if char == " " and not decorated:
+                        continue
+                    self._draw_glyph(painter, font, char, column, cells, baseline)
         # Publish (or retract) this row for the blink tick. Retracting matters
         # as much as publishing: a row whose blinking cells were overwritten
         # must stop being repainted on every phase toggle.
@@ -612,6 +1198,199 @@ class TerminalView(qt.QWidget):
             self._blink_rows.add(y)
         else:
             self._blink_rows.discard(y)
+
+    def _draw_glyph(
+        self,
+        painter: qt.QPainter,
+        font: qt.QFont,
+        char: str,
+        column: int,
+        cells: int,
+        baseline: float,
+    ) -> None:
+        """Draw one glyph at its own cell's origin and the row's baseline.
+
+        No clip rect is involved: a glyph's ink is allowed to overhang its
+        advance (box drawing, blocks, italics) instead of being cut at the
+        cell edge. A glyph the font lacks comes from a fallback family whose
+        sizing has nothing to do with the grid, so it is measured once and
+        fitted into its cell span: scaled down when its advance is wider than
+        the span, and - for a narrow symbol whose ink is shorter than the cap
+        height - scaled up towards that height, because fallback families often
+        draw symbols (e.g. Inconsolata's 5px U+2715) far smaller than their
+        letters. A fitted glyph is positioned by its ink box, centred in the
+        cell, so growing it cannot push it off the cell.
+
+        Glyphs whose size is the message (see SIZE_SEMANTIC_RANGES) are never
+        rescaled in either direction: the font's ink box is the value, so only
+        their horizontal position is corrected.
+        """
+        x: float = column * self._char_width
+        span: float = cells * self._char_width
+        if self._font_has_glyph(font, char):
+            painter.drawText(qt.QPointF(x, baseline), char)
+            return
+        advance: float
+        ink: Tuple[float, float, float, float]
+        advance, ink = self._glyph_shape(font, char)
+        if advance <= 0.0:
+            painter.drawText(qt.QPointF(x, baseline), char)
+            return
+        ink_width: float = ink[2]
+        ink_height: float = ink[3]
+        if self._is_size_semantic(char):
+            if ink_width > 0.0 and ink_height > 0.0:
+                self._draw_natural_centred(painter, char, ink, x, span, baseline)
+            else:
+                painter.drawText(qt.QPointF(x, baseline), char)
+            return
+        scale: float = span / advance if advance > span else 1.0
+        if scale == 1.0 and cells == 1:
+            scale = self._fit_scale(char, ink, span)
+        if scale == 1.0 or ink_width <= 0.0 or ink_height <= 0.0:
+            # Natural size: centre the advance in the cell, as drawing the
+            # glyph into a cell-wide rect used to do.
+            offset: float = max((span - advance) / 2.0, 0.0)
+            if offset == 0.0:
+                painter.drawText(qt.QPointF(x, baseline), char)
+                return
+            painter.save()
+            painter.translate(x + offset, baseline)
+            painter.drawText(qt.QPointF(0.0, 0.0), char)
+            painter.restore()
+            return
+        # Fitted: scale about the ink box's centre and put that centre in the
+        # middle of the cell, so the glyph grows and shrinks symmetrically
+        # instead of climbing away from the baseline.
+        ink_centre_x: float = ink[0] + ink_width / 2.0
+        ink_centre_y: float = ink[1] + ink_height / 2.0
+        row_centre: float = baseline - self._baseline + self._char_height / 2.0
+        painter.save()
+        painter.translate(
+            x + span / 2.0 - ink_centre_x * scale,
+            row_centre - ink_centre_y * scale,
+        )
+        painter.scale(scale, scale)
+        painter.drawText(qt.QPointF(0.0, 0.0), char)
+        painter.restore()
+
+    def _draw_natural_centred(
+        self,
+        painter: qt.QPainter,
+        char: str,
+        ink: Tuple[float, float, float, float],
+        x: float,
+        span: float,
+        baseline: float,
+    ) -> None:
+        """Draw a size-encoded glyph at the font's own size and baseline.
+
+        Only the horizontal position is corrected: a fallback family's advance
+        has nothing to do with the cell, so the ink box is centred in the span
+        (opencode's U+2B25 diamond has an 11px advance in an 8px cell and would
+        otherwise bleed into its neighbour). The glyph is *not* moved
+        vertically, because block elements encode their fill height in where
+        the ink sits relative to the baseline.
+        """
+        ink_centre_x: float = ink[0] + ink[2] / 2.0
+        painter.save()
+        painter.translate(x + span / 2.0 - ink_centre_x, baseline)
+        painter.drawText(qt.QPointF(0.0, 0.0), char)
+        painter.restore()
+
+    def _is_size_semantic(self, char: str) -> bool:
+        """Whether *char*'s ink size is meaningful (see SIZE_SEMANTIC_RANGES)."""
+        code: int = ord(char[0])
+        return any(low <= code <= high for low, high in self.SIZE_SEMANTIC_RANGES)
+
+    def _fit_scale(
+        self, char: str, ink: Tuple[float, float, float, float], span: float
+    ) -> float:
+        """Up-scale factor for a small narrow fallback glyph, at least 1.0.
+
+        The glyph's ink should read at the size of the surrounding letters, so
+        it is grown until it is as tall as the cap height - but never so wide
+        that it loses its margin inside the cell. Glyphs already taller than
+        the cap height (CJK, emoji, heavy symbols) are left alone, and
+        size-encoded symbols never reach this method at all (they are drawn by
+        _draw_natural_centred instead).
+        """
+        ink_width: float = ink[2]
+        ink_height: float = ink[3]
+        if ink_width <= 0.0 or ink_height <= 0.0 or self._cap_height <= 0.0:
+            return 1.0
+        grow: float = self._cap_height / ink_height
+        if grow <= 1.0:
+            return 1.0
+        # One pixel of margin keeps the scaled symbol from touching its
+        # neighbours (a solid 8px-wide cross in an 8px cell reads as a block).
+        width_limit: float = max(span - 1.0, 1.0) / ink_width
+        return max(1.0, min(grow, width_limit))
+
+    def _font_has_glyph(self, font: qt.QFont, char: str) -> bool:
+        """Whether the style font itself covers *char* (no fallback family)."""
+        key: Tuple[int, str] = (id(font), char)
+        covered: Optional[bool] = self._glyph_coverage.get(key)
+        if covered is None:
+            raw: Optional[qt.QRawFont] = self._raw_font(font)
+            if raw is None or not raw.isValid():
+                covered = True
+            else:
+                indexes: List[int] = list(raw.glyphIndexesForString(char))
+                covered = bool(indexes) and indexes[0] != 0
+            self._glyph_coverage[key] = covered
+        return covered
+
+    def _raw_font(self, font: qt.QFont) -> Optional[qt.QRawFont]:
+        key: int = id(font)
+        if key not in self._raw_fonts:
+            try:
+                self._raw_fonts[key] = qt.QRawFont.fromFont(font)
+            except Exception:
+                self._raw_fonts[key] = None
+        return self._raw_fonts[key]
+
+    def _glyph_shape(
+        self, font: qt.QFont, char: str
+    ) -> Tuple[float, Tuple[float, float, float, float]]:
+        """Advance and ink box actually used for *char*, including font merging.
+
+        QFontMetricsF reports the primary family's advance, which is the
+        .notdef width for a glyph the family lacks; shaping the character once
+        gives the fallback's real advance, and the glyph run's raw font knows
+        where the ink actually sits (origin-relative, in pixels). The ink box is
+        empty for a multi-glyph run (ligature/cluster), which leaves the caller
+        with the plain advance.
+        """
+        key: Tuple[int, str] = (id(font), char)
+        shape: Optional[Tuple[float, Tuple[float, float, float, float]]] = (
+            self._glyph_shapes.get(key)
+        )
+        if shape is None:
+            layout: qt.QTextLayout = qt.QTextLayout(char)
+            layout.setFont(font)
+            layout.beginLayout()
+            line: qt.QTextLine = layout.createLine()
+            line.setLineWidth(10000.0)
+            layout.endLayout()
+            advance: float = line.naturalTextWidth()
+            ink: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
+            runs: List[qt.QGlyphRun] = list(line.glyphRuns())
+            if runs:
+                run: qt.QGlyphRun = runs[0]
+                indexes: List[int] = list(run.glyphIndexes())
+                if len(indexes) == 1:
+                    try:
+                        box: qt.QRectF = run.rawFont().boundingRect(indexes[0])
+                    except Exception:
+                        box = qt.QRectF()
+                    if box.width() > 0.0 and box.height() > 0.0:
+                        ink = (box.x(), box.y(), box.width(), box.height())
+            shape = (advance, ink)
+            if len(self._glyph_shapes) >= self.GLYPH_SHAPE_LIMIT:
+                self._glyph_shapes.clear()
+            self._glyph_shapes[key] = shape
+        return shape
 
     def _cell_font(self, cell: Any, link: bool = False) -> qt.QFont:
         """Styled font for a cell, drawn from a small cache keyed on the
@@ -638,9 +1417,32 @@ class TerminalView(qt.QWidget):
         return font
 
     def _cell_style(
-        self, cell: Any, y: int, x: int
+        self,
+        cell: Any,
+        y: int,
+        x: int,
+        context: Optional[RowContext] = None,
     ) -> Tuple[qt.QColor, qt.QColor, qt.QFont]:
-        link: bool = self._link_at_stack(self._stack_row(y), x) is not None
+        """Resolved (fg, bg, font) for a cell, memoised on its style key.
+
+        *context* is the row's hoisted state (see _row_context); when it is
+        omitted - a caller outside the paint loop - the row is described here.
+        """
+        if context is None:
+            context = self._row_context(y)
+        links: Optional[Dict[int, str]] = context.links
+        link: bool = links is not None and x in links
+        selection: Optional[Tuple[int, int, int, int]] = context.selection
+        selected: bool = selection is not None and self._cell_in_selection(
+            selection, context.stack_row, x, self._block_selection
+        )
+        find_spans: Optional[List[Tuple[int, int]]] = context.find
+        matched: bool = find_spans is not None and any(
+            start <= x <= end for start, end in find_spans
+        )
+        current: bool = context.find_current is not None and (
+            context.find_current[0] <= x <= context.find_current[1]
+        )
         key: Tuple[Any, ...] = (
             cell.bg,
             cell.fg,
@@ -649,8 +1451,10 @@ class TerminalView(qt.QWidget):
             cell.underscore,
             cell.strikethrough,
             cell.reverse,
-            self._is_selected(y, x),
+            selected,
             link,
+            matched,
+            current,
         )
         style: Optional[Tuple[qt.QColor, qt.QColor, qt.QFont]] = self._style_cache.get(
             key
@@ -662,9 +1466,25 @@ class TerminalView(qt.QWidget):
             if reverse:
                 fg, bg = bg, fg
             font: qt.QFont = self._cell_font(cell, link=link)
-            if self._is_selected(y, x):
-                fg, bg = bg, fg
+            if matched:
+                # A find hit is a search overlay, so it wins over the selection
+                # highlight: "next match" must stay visible even when the match
+                # lies inside a region the user selected earlier.
+                fg = self._find_fg
+                bg = self._find_current_bg if current else self._find_bg
+            elif selected:
+                # One highlight pair for every selected cell, taken from the
+                # theme's defaults instead of swapping the cell's own colours a
+                # second time: a selected reverse-video cell came out exactly
+                # like unselected plain text, so a selection spanning mixed
+                # content had holes in it. It also keeps the highlight uniform
+                # instead of following each cell's palette.
+                fg, bg = self._default_bg, self._default_fg
             style = (fg, bg, font)
+            # Bounded on purpose: an animation gives every frame a new key (see
+            # STYLE_CACHE_LIMIT). Clearing costs a repaint, not correctness.
+            if len(self._style_cache) >= self.STYLE_CACHE_LIMIT:
+                self._style_cache.clear()
             self._style_cache[key] = style
         return style
 
@@ -685,21 +1505,36 @@ class TerminalView(qt.QWidget):
             return
         row: Any = screen.buffer[y]
         cell: Any = row[x]
-        fg: qt.QColor = self._resolve_color(cell.fg, True)
-        bg: qt.QColor = self._resolve_color(cell.bg, False)
-        if cell.reverse:
-            fg, bg = bg, fg
+        # Resolve the cell exactly as the grid painted it - reverse video, the
+        # selection highlight and the link underline included. Deriving the
+        # colours from the raw cell ignored the selection, so the block cursor
+        # over a selected cell filled with the very colour the highlight had
+        # and disappeared.
+        fg: qt.QColor
+        bg: qt.QColor
+        font: qt.QFont
+        fg, bg, font = self._cell_style(cell, y, x, self._row_context(y))
         cursor_style: str = screen.cursor_style
         char: str = cell.data if cell.data != "" else " "
-        wide: bool = wcwidth(char) == 2
+        wide: bool = cluster_width(char) == 2
         has_stub: bool = wide and x + 1 < screen.columns and row[x + 1].data == ""
+        cells: int = 2 if has_stub else 1
         rect: qt.QRectF = qt.QRectF(
             x * self._char_width,
             y * self._char_height,
-            self._char_width * (2 if has_stub else 1),
+            self._char_width * cells,
             self._char_height,
         )
-        clip_glyph: bool = wide and not has_stub
+        baseline: float = y * self._char_height + self._baseline
+        # OSC 12 may give the cursor its own colour; without it the cursor is
+        # drawn in the cell's painted foreground, as before.
+        cursor_spec: Optional[str] = screen.cursor_colour_override
+        fill: qt.QColor = qt.QColor(cursor_spec) if cursor_spec else fg
+        # An unfocused terminal draws a hollow block: the cell's own glyph is
+        # left untouched and only the outline says where the cursor is, the
+        # convention every mainstream terminal uses so the window that is not
+        # receiving keystrokes does not look like the active one.
+        focused: bool = self.hasFocus()
         if cursor_style == "underline":
             underline: qt.QRectF = qt.QRectF(
                 rect.x(),
@@ -707,19 +1542,10 @@ class TerminalView(qt.QWidget):
                 rect.width(),
                 max(self._char_height * 0.15, 2.0),
             )
-            painter.fillRect(underline, fg)
+            painter.fillRect(underline, fill)
             painter.setPen(fg)
-            painter.setFont(self._cell_font(cell))
-            if clip_glyph:
-                painter.save()
-                painter.setClipRect(rect)
-            painter.drawText(
-                rect,
-                qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter,
-                char,
-            )
-            if clip_glyph:
-                painter.restore()
+            painter.setFont(font)
+            self._draw_glyph(painter, font, char, x, cells, baseline)
         elif cursor_style == "bar":
             bar: qt.QRectF = qt.QRectF(
                 rect.x(),
@@ -727,7 +1553,16 @@ class TerminalView(qt.QWidget):
                 max(self._char_width * 0.15, 2.0),
                 rect.height(),
             )
-            painter.fillRect(bar, fg)
+            painter.fillRect(bar, fill)
+        elif not focused:
+            # Hollow block: outline drawn inside the cell so the grid's own
+            # glyph stays legible. The pen is the block fill colour, so an
+            # OSC 12 override applies to the outline too.
+            pen: qt.QPen = qt.QPen(fill)
+            pen.setWidthF(max(self._char_width * 0.12, 1.0))
+            painter.setPen(pen)
+            painter.setBrush(qt.Qt.BrushStyle.NoBrush)
+            painter.drawRect(rect.adjusted(0.5, 0.5, -0.5, -0.5))
         else:
             # Block cursor inverts the painted cell: fill with the painted
             # foreground and draw the glyph in the painted background so the
@@ -735,19 +1570,10 @@ class TerminalView(qt.QWidget):
             # cells alike.  (Filling with the background and drawing the
             # glyph in the foreground would reproduce the cell exactly and
             # make the cursor invisible.)
-            painter.fillRect(rect, fg)
+            painter.fillRect(rect, fill)
             painter.setPen(bg)
-            painter.setFont(self._cell_font(cell))
-            if clip_glyph:
-                painter.save()
-                painter.setClipRect(rect)
-            painter.drawText(
-                rect,
-                qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter,
-                char,
-            )
-            if clip_glyph:
-                painter.restore()
+            painter.setFont(font)
+            self._draw_glyph(painter, font, char, x, cells, baseline)
 
     # ------------------------------------------------------------------
     # Selection
@@ -809,20 +1635,51 @@ class TerminalView(qt.QWidget):
             return r, c, r, c
         return sel
 
-    def _is_selected(self, y: int, x: int) -> bool:
-        if self._selection is None:
-            return False
-        stack_row: int = self._stack_row(y)
-        if stack_row < 0:
-            return False
+    def _normalized_selection(self) -> Optional[Tuple[int, int, int, int]]:
+        """Selection bounds normalized for a reverse drag, or None.
+
+        A linear selection is a start/end pair in reading order, so a single
+        swap puts it right. A block selection keeps its columns independent
+        of its rows, so a diagonal drag has to be clamped on each axis.
+        """
         bounds: Optional[Selection] = self._selection_bounds()
         if bounds is None:
-            return False
+            return None
         r0, c0, r1, c1 = cast(Tuple[int, int, int, int], bounds)
+        if self._block_selection:
+            return min(r0, r1), min(c0, c1), max(r0, r1), max(c0, c1)
         # Normalize reverse drags (start after end) so the highlight is
         # correct while the mouse is still held down.
         if (r0, c0) > (r1, c1):
             r0, c0, r1, c1 = r1, c1, r0, c0
+        return r0, c0, r1, c1
+
+    def _is_selected(self, y: int, x: int) -> bool:
+        bounds: Optional[Tuple[int, int, int, int]] = self._normalized_selection()
+        if bounds is None:
+            return False
+        return self._cell_in_selection(
+            bounds, self._stack_row(y), x, self._block_selection
+        )
+
+    @staticmethod
+    def _cell_in_selection(
+        bounds: Tuple[int, int, int, int],
+        stack_row: int,
+        x: int,
+        block: bool = False,
+    ) -> bool:
+        """Whether stack cell (stack_row, x) lies inside normalized *bounds*.
+
+        A linear selection also covers the whole width of the rows between
+        its endpoints; a block selection is the rectangle the two corners
+        delimit and covers only those columns.
+        """
+        if stack_row < 0:
+            return False
+        r0, c0, r1, c1 = bounds
+        if block:
+            return r0 <= stack_row <= r1 and c0 <= x <= c1
         if r0 == r1:
             return stack_row == r0 and c0 <= x <= c1
         if r0 < stack_row < r1:
@@ -833,19 +1690,29 @@ class TerminalView(qt.QWidget):
             return x <= c1
         return False
 
+    def _row_text(self, stack_row: int) -> str:
+        """Full text of a stack row, one character per column (a wide glyph's
+        stub contributes nothing, exactly as pyte stores it)."""
+        row: Any = self._stack_row_cells(stack_row)
+        columns: int = self.terminal.term_screen.columns
+        return "".join(row[x].data or "" for x in range(columns))
+
     def _selection_text(self) -> str:
-        bounds: Optional[Selection] = self._selection_bounds()
+        bounds: Optional[Tuple[int, int, int, int]] = self._normalized_selection()
         if bounds is None:
             return ""
-        r0, c0, r1, c1 = cast(Tuple[int, int, int, int], bounds)
-        if (r0, c0) > (r1, c1):
-            r0, c0, r1, c1 = r1, c1, r0, c0
+        r0, c0, r1, c1 = bounds
         columns: int = self.terminal.term_screen.columns
         lines: List[str] = []
         for stack_row in range(r0, r1 + 1):
             row: Any = self._stack_row_cells(stack_row)
-            start: int = c0 if stack_row == r0 else 0
-            end: int = c1 if stack_row == r1 else columns - 1
+            if self._block_selection:
+                # A block keeps the same column window on every row.
+                start: int = c0
+                end: int = min(c1, columns - 1)
+            else:
+                start = c0 if stack_row == r0 else 0
+                end = c1 if stack_row == r1 else columns - 1
             text: str = "".join(row[x].data for x in range(start, end + 1))
             lines.append(text.rstrip())
         return "\n".join(lines)
@@ -856,6 +1723,187 @@ class TerminalView(qt.QWidget):
             application: Any = data.application
             application.clipboard().setText(text)
             self._show_copy_toast()
+
+    def _all_text(self) -> str:
+        """Whole scrollback + screen as text, trailing blank rows dropped (the
+        blank tail below the last printed line is not content)."""
+        screen: ExtendedScreen = self.terminal.term_screen
+        lines: List[str] = []
+        for stack_row in range(self._history_len() + screen.lines):
+            lines.append(self._row_text(stack_row).rstrip())
+        while lines and not lines[-1]:
+            lines.pop()
+        return "\n".join(lines)
+
+    def select_all(self) -> None:
+        """Select the whole stack (scrollback + screen)."""
+        screen: ExtendedScreen = self.terminal.term_screen
+        self._block_selection = False
+        self._selection = (
+            0,
+            0,
+            self._history_len() + screen.lines - 1,
+            screen.columns - 1,
+        )
+        self._selection_active = False
+        self._sel_hist_gen = self._history_generation()
+        self.update()
+
+    def copy_all(self) -> None:
+        text: str = self._all_text()
+        if text:
+            application: Any = data.application
+            application.clipboard().setText(text)
+            self._show_copy_toast()
+
+    def _last_output_text(self) -> str:
+        """The last command's output, from its OSC 133 C mark to its D mark.
+
+        A ``C`` mark records where output began; the following ``D`` marks the
+        next prompt and therefore the end of that output (its column is
+        exclusive, so a mark at column 0 ends before the prompt row). The
+        bottom of the stack stands in while the command is still running.
+
+        Without a ``C`` mark - cmd.exe can only stamp prompts from PROMPT, and
+        PowerShell falls back when PSReadLine is unavailable - the text between
+        the previous two prompt starts is used instead, which is the same
+        region minus the command line itself.
+        """
+        screen: ExtendedScreen = self.terminal.term_screen
+        marks: List[PromptMark] = screen.prompt_marks
+        last_stack_row: int = self._history_len() + screen.lines - 1
+        start_row: int = 0
+        start_column: int = 0
+        end_row: int = 0
+        end_column: Optional[int] = None
+        found: bool = False
+        for index in range(len(marks) - 1, -1, -1):
+            row, column, kind, _exit = marks[index]
+            if kind != "C":
+                continue
+            start_row, start_column = row, column
+            end_row = last_stack_row
+            for later_row, later_column, later_kind, _later_exit in marks[index + 1 :]:
+                if later_kind == "D":
+                    end_row, end_column = later_row, later_column
+                    break
+            found = True
+            break
+        if not found:
+            prompts: List[PromptMark] = [mark for mark in marks if mark[2] == "A"]
+            if len(prompts) < 2:
+                return ""
+            start_row = prompts[-2][0] + 1
+            start_column = 0
+            end_row = prompts[-1][0] - 1
+        if start_column > 0:
+            # A C mark at a column sits at the end of the submitted command
+            # line, not at the start of the output row; the output begins on
+            # the following row (Enter has already moved there).
+            start_row += 1
+            start_column = 0
+        if start_row > last_stack_row or end_row < start_row:
+            return ""
+        end_row = min(end_row, last_stack_row)
+        lines: List[str] = []
+        for row in range(start_row, end_row + 1):
+            text: str = self._row_text(row)
+            if row == start_row:
+                text = text[start_column:]
+            if row == end_row and end_column is not None:
+                text = text[:end_column]
+            lines.append(text.rstrip())
+        while lines and not lines[0]:
+            lines.pop(0)
+        while lines and not lines[-1]:
+            lines.pop()
+        return "\n".join(lines)
+
+    def copy_last_output(self) -> None:
+        """Copy the last command's output to the clipboard."""
+        text: str = self._last_output_text()
+        if text:
+            application: Any = data.application
+            application.clipboard().setText(text)
+            self._show_copy_toast()
+
+    def put_clipboard_text(self, text: str) -> None:
+        """Put *text* on the system clipboard without the copy toast.
+
+        An OSC 52 write comes from the application, not from a user copy, so
+        claiming "Copied to clipboard" would describe something the user did
+        not do.
+        """
+        application: Any = data.application
+        if application is not None:
+            application.clipboard().setText(text)
+
+    def clipboard_text(self) -> str:
+        """The system clipboard's text, or ``""`` without an application."""
+        application: Any = data.application
+        if application is None:
+            return ""
+        return application.clipboard().text()
+
+    def osc52_clipboard_text(self) -> Optional[str]:
+        """Clipboard contents for an OSC 52 read, or None when refused.
+
+        A read is refused while the view does not have focus: an application
+        that never sees the user's keystrokes has no business reading what
+        they copied in another window.
+        """
+        if not self.hasFocus():
+            return None
+        return self.clipboard_text()
+
+    def show_notification(self, title: str, body: str) -> None:
+        """Surface an OSC 9 / 777 notification in the status bar.
+
+        The terminal has no desktop-notification surface of its own and the
+        emulator must never print into its grid, so the app's status line is
+        the display path. Without a main form (a screen-level harness or
+        headless use) the notification is dropped, never raised.
+        """
+        text: str = "{}: {}".format(title, body) if title else body
+        main_form: Any = getattr(self.terminal, "main_form", None)
+        display: Any = getattr(main_form, "display", None)
+        write: Any = getattr(display, "write_to_statusbar", None)
+        if not callable(write):
+            return
+        try:
+            write("Terminal: " + text, 6000)
+        except Exception:
+            # A statusbar that is already torn down (application shutting
+            # down) must not break the PTY reader thread mid-feed.
+            pass
+
+    def _copy_link(self, uri: str) -> None:
+        """Copy a hyperlink's target rather than its visible text."""
+        application: Any = data.application
+        application.clipboard().setText(uri)
+        self._show_copy_toast()
+
+    def clear_scrollback(self) -> None:
+        """Drop the saved lines, keeping the visible screen (xterm CSI 3 J)."""
+        screen: ExtendedScreen = self.terminal.term_screen
+        screen.clear_scrollback()
+        self._scroll_offset = 0
+        self._clear_selection()
+        self._clear_find_highlights()
+        self._refresh_scrollbar()
+        self.update()
+
+    def reset_terminal(self) -> None:
+        """Reset the emulation state (RIS) without restarting the shell."""
+        reset: Any = getattr(self.terminal, "reset_terminal", None)
+        if callable(reset):
+            reset()
+        else:
+            self.terminal.term_screen.reset()
+        self._scroll_offset = 0
+        self._clear_selection()
+        self._clear_find_highlights()
+        self.update()
 
     def _style_copy_toast(self) -> None:
         """Theme the "Copied to clipboard" panel from the terminal's default
@@ -914,8 +1962,7 @@ class TerminalView(qt.QWidget):
         selected: str = self._selection_text()
         if selected:
             return selected
-        application: Any = data.application
-        return application.clipboard().text()
+        return self.clipboard_text()
 
     def _snap_col(self, stack_row: int, col: int, forward: bool) -> int:
         """Widen a selection edge so it lands on a whole glyph.
@@ -929,14 +1976,17 @@ class TerminalView(qt.QWidget):
         columns: int = self.terminal.term_screen.columns
         if forward:
             if col + 1 < columns and row[col + 1].data == "":
-                if wcwidth(row[col].data or "") == 2:
+                if cluster_width(row[col].data or "") == 2:
                     return col + 1
             return col
         owner: Optional[int] = self._wide_stub_owner(row, col)
         return col if owner is None else owner
 
-    def _start_selection(self, position: qt.QPointF) -> None:
+    def _start_selection(self, position: qt.QPointF, block: bool = False) -> None:
+        """Start a linear drag selection, or a block one when *block* is set:
+        Alt+left-drag selects the rectangle the two corners delimit."""
         stack_row, col = self._pos_cell(position)
+        self._block_selection = block
         self._selection = (
             stack_row,
             self._snap_col(stack_row, col, forward=False),
@@ -979,6 +2029,7 @@ class TerminalView(qt.QWidget):
         )
         self._selection = None
         self._selection_active = False
+        self._block_selection = False
         self._sel_hist_gen = None
         if had_selection:
             self.update()
@@ -1018,6 +2069,8 @@ class TerminalView(qt.QWidget):
             # selection or a real drag is a 4-tuple and survives even when it
             # spans exactly one cell (e.g. a single-char word double-click).
             self._selection = None
+            # A block drag that never moved selected nothing either.
+            self._block_selection = False
         elif (r0, c0) > (r1, c1):
             self._selection = (r1, c1, r0, c0)
         if self._selection is not None and self._auto_copy_enabled():
@@ -1052,7 +2105,7 @@ class TerminalView(qt.QWidget):
         if x <= 0 or row[x].data != "":
             return None
         previous: str = row[x - 1].data or ""
-        return x - 1 if wcwidth(previous) == 2 else None
+        return x - 1 if cluster_width(previous) == 2 else None
 
     def _word_boundary(self, row: Any, x: int) -> bool:
         """True when the cell at *x* ends the word being scanned: real
@@ -1065,12 +2118,102 @@ class TerminalView(qt.QWidget):
             return False
         return self._cell_blank(row, x)
 
+    def _chunk_start(self, row: Any, x: int) -> int:
+        """First column of the whitespace-delimited chunk containing *x*."""
+        while x > 0 and not self._word_boundary(row, x - 1):
+            x -= 1
+        return x
+
+    def _chunk_end(self, row: Any, x: int, columns: int) -> int:
+        """Last column of the whitespace-delimited chunk containing *x*."""
+        while x < columns - 1 and not self._word_boundary(row, x + 1):
+            x += 1
+        return x
+
+    @staticmethod
+    def _chunk_text(row: Any, start: int, end: int) -> str:
+        return "".join(row[x].data for x in range(start, end + 1))
+
+    @staticmethod
+    def _has_path_separator(chunk: str) -> bool:
+        return "\\" in chunk or "/" in chunk
+
+    @staticmethod
+    def _is_path_prefix(chunk: str) -> bool:
+        """Whether *chunk* starts like the head of a path.
+
+        A drive (``C:\\``), a UNC share, a rooted POSIX path, a home path or
+        an explicitly relative path is strong enough evidence to bridge the
+        spaces after it; a bare word is not.
+        """
+        if (
+            len(chunk) >= 3
+            and chunk[0].isalpha()
+            and chunk[1] == ":"
+            and chunk[2] in "\\/"
+        ):
+            return True
+        if chunk.startswith(("\\\\", "//", "/", "\\", "~")):
+            return True
+        return chunk.startswith(("./", ".\\", "../", "..\\"))
+
+    def _bridge_right(self, row: Any, end: int, columns: int) -> int:
+        """Extend a selection end past spaces to a chunk with a separator.
+
+        Paths may contain spaces (``C:\\Program Files\\App``). A double-click
+        on any of their chunks should take the whole path, so the scan steps
+        over up to PATH_BRIDGE_CHUNKS chunks and stops at the first one that
+        contains ``\\`` or ``/``. Nothing is bridged when no such chunk turns
+        up, which keeps prose untouched. The limitation is deliberate: a path
+        split after its last separator (``Some Path\\file.txt`` without a
+        prefix) has nothing to bridge towards.
+        """
+        position: int = end + 1
+        for _ in range(self.PATH_BRIDGE_CHUNKS):
+            while position < columns and self._word_boundary(row, position):
+                position += 1
+            if position >= columns:
+                return end
+            chunk_end: int = self._chunk_end(row, position, columns)
+            chunk: str = self._chunk_text(row, position, chunk_end)
+            if self._has_path_separator(chunk):
+                return chunk_end
+            position = chunk_end + 1
+        return end
+
+    def _bridge_left(self, row: Any, start: int) -> int:
+        """Extend a selection start back to a path prefix.
+
+        The clicked chunk may be the tail of a path whose head was split off
+        by spaces (``C:\\Some Path\\file.txt`` clicked on ``file.txt``). Scan
+        back over up to PATH_BRIDGE_CHUNKS chunks for a path prefix and start
+        there. Without a prefix the selection keeps its chunk, so a prose
+        line is not swallowed.
+        """
+        position: int = start - 1
+        for _ in range(self.PATH_BRIDGE_CHUNKS):
+            while position >= 0 and self._word_boundary(row, position):
+                position -= 1
+            if position < 0:
+                return start
+            chunk_start: int = self._chunk_start(row, position)
+            chunk: str = self._chunk_text(row, chunk_start, position)
+            if self._is_path_prefix(chunk):
+                return chunk_start
+            position = chunk_start - 1
+        return start
+
     def _word_range(
         self, position: qt.QPointF
     ) -> Tuple[Tuple[int, int], Tuple[int, int]]:
-        """Return (start_cell, end_cell) of the whitespace-delimited word
-        under *position*. Both cells share the clicked stack row; the range
-        always includes the clicked cell (which may be a single glyph)."""
+        """Return (start_cell, end_cell) of the word under *position*. Both
+        cells share the clicked stack row; the range always includes the
+        clicked cell (which may be a single glyph).
+
+        A word that looks like part of a path may span spaces: see
+        _bridge_left/_bridge_right for the (bounded, deliberately
+        conservative) rules.
+        """
         stack_row, col = self._pos_cell(position)
         row: Any = self._stack_row_cells(stack_row)
         columns: int = self.terminal.term_screen.columns
@@ -1079,12 +2222,12 @@ class TerminalView(qt.QWidget):
         owner: Optional[int] = self._wide_stub_owner(row, col)
         if owner is not None:
             col = owner
-        start: int = col
-        while start > 0 and not self._word_boundary(row, start - 1):
-            start -= 1
-        end: int = col
-        while end < columns - 1 and not self._word_boundary(row, end + 1):
-            end += 1
+        start: int = self._chunk_start(row, col)
+        end: int = self._chunk_end(row, col, columns)
+        chunk: str = self._chunk_text(row, start, end)
+        if self._is_path_prefix(chunk) or self._has_path_separator(chunk):
+            end = self._bridge_right(row, end, columns)
+            start = self._bridge_left(row, start)
         return (stack_row, start), (stack_row, end)
 
     def _select_word(self, position: qt.QPointF) -> None:
@@ -1098,9 +2241,11 @@ class TerminalView(qt.QWidget):
         if self._cell_blank(row, col):
             self._selection = None
             self._selection_active = False
+            self._block_selection = False
             self.update()
             return
         start, end = self._word_range(position)
+        self._block_selection = False
         self._selection = (start[0], start[1], end[0], end[1])
         self._selection_active = True
         self._sel_hist_gen = self._history_generation()
@@ -1112,6 +2257,7 @@ class TerminalView(qt.QWidget):
 
         stack_row: int = self._pos_cell(position)[0]
         columns: int = self.terminal.term_screen.columns
+        self._block_selection = False
         self._selection = (stack_row, 0, stack_row, columns - 1)
         self._selection_active = True
         self._sel_hist_gen = self._history_generation()
@@ -1127,6 +2273,224 @@ class TerminalView(qt.QWidget):
         self._double_clicked = False
 
     # ------------------------------------------------------------------
+    # Find (scrollback search)
+    # ------------------------------------------------------------------
+
+    def open_find(self) -> None:
+        """Show the scrollback find bar and focus its query editor."""
+        self._find_bar.show()
+        self._place_find_bar()
+        self._find_bar.focus_editor()
+        if self._in_alt():
+            # A full-screen application owns this grid; there is no scrollback
+            # of ours under it. Keep the bar open so the message is visible.
+            self._find_bar.set_status("No scrollback here")
+            return
+        if self._find_query:
+            self._rescan_find()
+
+    def close_find(self) -> None:
+        """Hide the bar, drop the highlights and give the shell its focus."""
+        self._find_bar.hide()
+        self._clear_find_highlights()
+        self.setFocus()
+        self.update()
+
+    def find_next(self) -> None:
+        self._step_find(1)
+
+    def find_previous(self) -> None:
+        self._step_find(-1)
+
+    def _rescan_find(self) -> None:
+        """Rebuild the hits after the stack or the grid changed under them.
+
+        A history overflow or a clear shifts every recorded stack row; a
+        resize or a font zoom changes every recorded column. Either way the old
+        matches would highlight whatever now occupies those cells, so they are
+        rescanned and the first visible hit is selected again - leaving the
+        counter on a stale "3 of 12" would be a lie.
+        """
+        if not self._find_query:
+            return
+        self._rebuild_find_matches()
+        self._find_index = -1
+        self._find_current_row = -1
+        self._find_current_span = None
+        if self._find_matches:
+            self.find_next()
+        else:
+            self._find_bar.set_status("No matches")
+            self.update()
+
+    def _clear_find_highlights(self) -> None:
+        self._find_query = ""
+        self._find_matches = []
+        self._find_spans = {}
+        self._find_index = -1
+        self._find_current_row = -1
+        self._find_current_span = None
+        self._find_bar.set_status("")
+
+    def _on_find_query(self, text: str) -> None:
+        """Rescan for a new query and jump to the first visible hit."""
+        self._find_query = text
+        self._find_index = -1
+        self._find_current_row = -1
+        self._find_current_span = None
+        self._rebuild_find_matches()
+        if not text:
+            self._find_bar.set_status("")
+            self.update()
+            return
+        if not self._find_matches:
+            self._find_bar.set_status("No matches")
+            self.update()
+            return
+        self._find_bar.set_status("{} matches".format(len(self._find_matches)))
+        self.find_next()
+
+    def _rebuild_find_matches(self) -> None:
+        """Scan the whole stack for the current query.
+
+        Rows are scanned top to bottom and columns left to right, so the match
+        list is already in navigation order. Case folding is applied per row
+        and only when it preserves the length: a fold that changed the length
+        would shift every column the highlight is drawn at, so such a row is
+        matched case-sensitively instead.
+        """
+        self._find_matches = []
+        self._find_spans = {}
+        self._find_gen = self._history_generation()
+        needle: str = self._find_query
+        if not needle or self._in_alt():
+            return
+        needle_folded: str = needle.lower()
+        screen: ExtendedScreen = self.terminal.term_screen
+        stack_end: int = self._history_len() + screen.lines
+        for stack_row in range(max(stack_end, 0)):
+            text: str = self._row_text(stack_row)
+            folded: str = text.lower()
+            if len(folded) == len(text):
+                haystack: str = folded
+                target: str = needle_folded
+            else:
+                haystack = text
+                target = needle
+            spans: List[Tuple[int, int]] = []
+            start: int = haystack.find(target)
+            while start != -1:
+                spans.append((start, start + len(target) - 1))
+                self._find_matches.append((stack_row, start))
+                start = haystack.find(target, start + 1)
+            if spans:
+                self._find_spans[stack_row] = spans
+
+    def _step_find(self, direction: int) -> None:
+        if not self._find_matches:
+            if self._find_query:
+                self._find_bar.set_status("No matches")
+            return
+        index: int
+        if self._find_index < 0:
+            # First hit after typing: start from the top visible row so a
+            # match already on screen is not skipped.
+            top: int = self._history_len() - self._scroll_offset
+            if direction > 0:
+                index = 0
+                for candidate, (row, _column) in enumerate(self._find_matches):
+                    if row >= top:
+                        index = candidate
+                        break
+            else:
+                index = len(self._find_matches) - 1
+                for candidate in range(len(self._find_matches) - 1, -1, -1):
+                    if self._find_matches[candidate][0] <= top:
+                        index = candidate
+                        break
+        else:
+            index = (self._find_index + direction) % len(self._find_matches)
+        self._select_find_match(index)
+
+    def _select_find_match(self, index: int) -> None:
+        self._find_index = index
+        stack_row: int
+        start: int
+        stack_row, start = self._find_matches[index]
+        end: int = start + len(self._find_query) - 1
+        self._find_current_row = stack_row
+        self._find_current_span = (start, end)
+        self._scroll_to_stack_row(stack_row)
+        self._find_bar.set_status("{} of {}".format(index + 1, len(self._find_matches)))
+        self.update()
+
+    def _scroll_to_stack_row(self, stack_row: int) -> None:
+        """Park the viewport so *stack_row* is its top row, clamped to the
+        scrollback range."""
+        history_len: int = self._history_len()
+        self._scroll_offset = max(0, min(history_len - stack_row, history_len))
+        self._refresh_scrollbar()
+        self.update()
+
+    def _style_find_bar(self) -> None:
+        bar: Optional[TerminalFindBar] = getattr(self, "_find_bar", None)
+        if bar is None:
+            return
+        bar.apply_style(self._default_fg, self._default_bg)
+
+    def _place_find_bar(self) -> None:
+        """Right-align the find strip over the top of the grid, inside the
+        content width (never under the scrollbar)."""
+        bar: Optional[TerminalFindBar] = getattr(self, "_find_bar", None)
+        if bar is None or not bar.isVisibleTo(self):
+            return
+        width: int = min(420, max(self._content_width - 8, 160))
+        bar.setGeometry(
+            max(self._content_width - width - 4, 0),
+            4,
+            width,
+            bar.sizeHint().height(),
+        )
+        bar.raise_()
+
+    # ------------------------------------------------------------------
+    # Font zoom (context menu)
+    # ------------------------------------------------------------------
+
+    def increase_font_size(self) -> None:
+        self._change_font_zoom(1.0)
+
+    def decrease_font_size(self) -> None:
+        self._change_font_zoom(-1.0)
+
+    def reset_font_size(self) -> None:
+        self._change_font_zoom(-self._font_zoom)
+
+    def _change_font_zoom(self, delta: float) -> None:
+        """Grow/shrink this terminal's font for the session.
+
+        The persisted size stays in settings; a menu adjustment is a per-tab
+        view option, like a browser's zoom. Column and row counts change, so
+        the screen and PTY are resized through the normal resize event.
+        """
+        zoom: float = max(-4.0, min(self._font_zoom + delta, 10.0))
+        if zoom == self._font_zoom:
+            return
+        self._font_zoom = zoom
+        self._load_style()
+        self._recompute_geometry()
+        self._place_copy_toast()
+        self._place_find_bar()
+        if self._find_query:
+            self._rescan_find()
+        if self.isVisible():
+            cols: int
+            rows: int
+            cols, rows = self._terminal_size()
+            self.resize_event.emit(cols, rows)
+        self.update()
+
+    # ------------------------------------------------------------------
     # Mouse
     # ------------------------------------------------------------------
 
@@ -1137,9 +2501,11 @@ class TerminalView(qt.QWidget):
 
     def _refresh_link_index(self) -> None:
         """Rebuild the cell->URI lookup from screen.hyperlink_spans when the
-        span list changed. Spans are recorded in stack coordinates (draw()
-        logs the absolute cursor position), so the index maps a stack_row to
-        {column: uri} and renders identically over scrollback history."""
+        span list changed. Spans are recorded in stack coordinates (the screen
+        adds the history length to the cursor row), so the index maps a
+        stack_row to {column: uri} and renders identically over scrollback
+        history; the screen shifts the spans when the bounded deque drops a
+        row, so a scrolled-out link stays on the line it was drawn on."""
         screen: ExtendedScreen = self.terminal.term_screen
         spans: List[Tuple[Tuple[int, int], Tuple[int, int], str]] = (
             screen.hyperlink_spans
@@ -1385,11 +2751,20 @@ class TerminalView(qt.QWidget):
             shifted: bool = bool(
                 event.modifiers() & qt.Qt.KeyboardModifier.ShiftModifier
             )
+            # Alt+left-drag starts a rectangular (column) selection, the
+            # gesture every classic terminal uses. It applies to the primary
+            # screen only: inside a mouse-capturing TUI the app owns the
+            # gesture and Alt is just another modifier to forward.
+            block_drag: bool = bool(
+                event.modifiers() & qt.Qt.KeyboardModifier.AltModifier
+            )
+            if block_drag and not shifted:
+                self._press_select(event.position(), block=True)
             # Shift extends what is already selected instead of throwing it
             # away and starting over; with nothing selected it stays a plain
             # click. (Inside a mouse-capturing TUI Shift means "bypass" and
             # returns above.)
-            if not (shifted and self._extend_selection(event.position())):
+            elif not (shifted and self._extend_selection(event.position())):
                 self._press_select(event.position())
         # A right-click keeps the selection so the context menu's Copy
         # action stays enabled; the next left-press starts a new selection.
@@ -1397,16 +2772,17 @@ class TerminalView(qt.QWidget):
         # propagate it up to the tab widget (which would steal focus)
         event.accept()
 
-    def _press_select(self, position: qt.QPointF) -> None:
+    def _press_select(self, position: qt.QPointF, block: bool = False) -> None:
         """Start a selection on a left press, honouring a triple-click: a
         third press within the double-click interval selects the whole line
-        instead of starting a drag."""
-        if self._double_clicked:
+        instead of starting a drag. A block press never counts as the third
+        click of an armed triple-click."""
+        if not block and self._double_clicked:
             self._select_line(position)
             self._double_clicked = False
             self._triple_click_timer.stop()
         else:
-            self._start_selection(position)
+            self._start_selection(position, block=block)
 
     def mouseDoubleClickEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
         if event.button() != qt.Qt.MouseButton.LeftButton:
@@ -1421,11 +2797,15 @@ class TerminalView(qt.QWidget):
         self.focused.emit()
         if self.terminal.term_screen.focus_report:
             self.send_text.emit("\x1b[I")
+        # The unfocused cursor is hollow, so gaining focus must repaint the
+        # cursor cell even without any output.
+        self.update()
         return super().focusInEvent(event)
 
     def focusOutEvent(self, event: qt.QFocusEvent) -> None:  # type: ignore[override]
         if self.terminal.term_screen.focus_report:
             self.send_text.emit("\x1b[O")
+        self.update()
         return super().focusOutEvent(event)
 
     def _tick_autoscroll(self) -> None:
@@ -1715,6 +3095,10 @@ class TerminalView(qt.QWidget):
             open_action.setToolTip("Open the hyperlink in the browser")
             open_action.triggered.connect(functools.partial(functions.open_url, uri))
             context_menu.addAction(open_action)
+            copy_link_action: qt.QAction = qt.QAction("Copy Link Address", self)
+            copy_link_action.setToolTip("Copy the hyperlink target to the clipboard")
+            copy_link_action.triggered.connect(functools.partial(self._copy_link, uri))
+            context_menu.addAction(copy_link_action)
             context_menu.addSeparator()
         copy_action: qt.QAction = qt.QAction("Copy", self)
         copy_action.setToolTip("Copy the selection to the clipboard")
@@ -1727,6 +3111,70 @@ class TerminalView(qt.QWidget):
         paste_action.triggered.connect(self.paste)
         context_menu.addAction(copy_action)
         context_menu.addAction(paste_action)
+        context_menu.addSeparator()
+        find_action: qt.QAction = qt.QAction("Find…", self)
+        find_action.setToolTip("Search the scrollback (Ctrl+F)")
+        find_action.triggered.connect(self.open_find)
+        select_all_action: qt.QAction = qt.QAction("Select All", self)
+        select_all_action.setToolTip("Select the scrollback and the screen")
+        select_all_action.triggered.connect(self.select_all)
+        copy_all_action: qt.QAction = qt.QAction("Copy All", self)
+        copy_all_action.setToolTip("Copy the scrollback and the screen")
+        copy_all_action.triggered.connect(self.copy_all)
+        context_menu.addAction(find_action)
+        context_menu.addAction(select_all_action)
+        context_menu.addAction(copy_all_action)
+        context_menu.addSeparator()
+        prompt_rows: List[int] = self._prompt_rows("A")
+        anchor_row: int = self._history_len() - self._scroll_offset
+        previous_prompt_action: qt.QAction = qt.QAction("Jump to Previous Prompt", self)
+        previous_prompt_action.setToolTip(
+            "Scroll to the previous OSC 133 prompt (Ctrl+Shift+Up)"
+        )
+        previous_prompt_action.triggered.connect(self._scroll_to_previous_prompt)
+        previous_prompt_action.setEnabled(any(row < anchor_row for row in prompt_rows))
+        next_prompt_action: qt.QAction = qt.QAction("Jump to Next Prompt", self)
+        next_prompt_action.setToolTip(
+            "Scroll to the next OSC 133 prompt (Ctrl+Shift+Down)"
+        )
+        next_prompt_action.triggered.connect(self._scroll_to_next_prompt)
+        next_prompt_action.setEnabled(any(row > anchor_row for row in prompt_rows))
+        last_output_action: qt.QAction = qt.QAction("Copy Last Command Output", self)
+        last_output_action.setToolTip("Copy the output between the last OSC 133 marks")
+        last_output_action.triggered.connect(self.copy_last_output)
+        last_output_action.setEnabled(
+            any(mark[2] == "C" for mark in self.terminal.term_screen.prompt_marks)
+            or len(prompt_rows) >= 2
+        )
+        context_menu.addAction(previous_prompt_action)
+        context_menu.addAction(next_prompt_action)
+        context_menu.addAction(last_output_action)
+        context_menu.addSeparator()
+        clear_action: qt.QAction = qt.QAction("Clear Scrollback", self)
+        clear_action.setToolTip("Drop the saved lines, keep the screen")
+        clear_action.triggered.connect(self.clear_scrollback)
+        clear_action.setEnabled(self._history_len() > 0)
+        reset_action: qt.QAction = qt.QAction("Reset Terminal", self)
+        reset_action.setToolTip("Reset the emulation state, keep the shell running")
+        reset_action.triggered.connect(self.reset_terminal)
+        context_menu.addAction(clear_action)
+        context_menu.addAction(reset_action)
+        context_menu.addSeparator()
+        increase_action: qt.QAction = qt.QAction("Increase Font Size", self)
+        increase_action.setToolTip("Enlarge this terminal's font")
+        increase_action.triggered.connect(self.increase_font_size)
+        decrease_action: qt.QAction = qt.QAction("Decrease Font Size", self)
+        decrease_action.setToolTip("Shrink this terminal's font")
+        decrease_action.triggered.connect(self.decrease_font_size)
+        reset_font_action: qt.QAction = qt.QAction("Reset Font Size", self)
+        reset_font_action.setToolTip(
+            "Return this terminal's font to its configured size"
+        )
+        reset_font_action.triggered.connect(self.reset_font_size)
+        reset_font_action.setEnabled(self._font_zoom != 0.0)
+        context_menu.addAction(increase_action)
+        context_menu.addAction(decrease_action)
+        context_menu.addAction(reset_font_action)
         context_menu.popup(qt.QCursor.pos())
         event.accept()
 
@@ -1810,6 +3258,13 @@ class TerminalView(qt.QWidget):
         alt: qt.Qt.KeyboardModifier = modifiers & qt.Qt.KeyboardModifier.AltModifier
         meta: qt.Qt.KeyboardModifier = modifiers & qt.Qt.KeyboardModifier.MetaModifier
 
+        # Escape closes the find bar even when focus has moved back to the
+        # grid (clicking the terminal leaves the query open and highlighted).
+        if key == qt.Qt.Key.Key_Escape and self._find_bar.isVisible():
+            self.close_find()
+            event.accept()
+            return
+
         # Copy / paste
         if modifiers == (
             qt.Qt.KeyboardModifier.ControlModifier
@@ -1823,6 +3278,18 @@ class TerminalView(qt.QWidget):
                 self.paste()
                 event.accept()
                 return
+
+        # Find in the scrollback. Inside the alternate screen the key belongs
+        # to the application: a full-screen TUI has no scrollback of ours to
+        # search, and Ctrl+F is a common in-app binding.
+        if (
+            not self._in_alt()
+            and modifiers == qt.Qt.KeyboardModifier.ControlModifier
+            and key == qt.Qt.Key.Key_F
+        ):
+            self.open_find()
+            event.accept()
+            return
 
         # Scrollback navigation (only in the primary screen)
         if not self._in_alt():
@@ -1840,6 +3307,22 @@ class TerminalView(qt.QWidget):
                 return
             if not ctrl and not alt and key == qt.Qt.Key.Key_PageDown:
                 self._scroll_down(self._page_rows())
+                event.accept()
+                return
+            if not ctrl and not alt and shift and key == qt.Qt.Key.Key_Home:
+                self._scroll_to_top()
+                event.accept()
+                return
+            if not ctrl and not alt and shift and key == qt.Qt.Key.Key_End:
+                self._scroll_to_bottom()
+                event.accept()
+                return
+            if ctrl and shift and not alt and key == qt.Qt.Key.Key_Up:
+                self._scroll_to_previous_prompt()
+                event.accept()
+                return
+            if ctrl and shift and not alt and key == qt.Qt.Key.Key_Down:
+                self._scroll_to_next_prompt()
                 event.accept()
                 return
 

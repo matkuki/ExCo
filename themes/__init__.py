@@ -6,16 +6,18 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import os
-import qt
-import data
-import time
 import functools
+import os
+import time
 import traceback
+from typing import Any, cast
+
+import data
 import functions
+import qt
 
 
-def get_all():
+def get_all() -> list[dict[str, Any]]:
     theme_files = []
     for item in os.listdir(__get_theme_directory()):
         if item.endswith(".json"):
@@ -28,7 +30,7 @@ def get_all():
     return theme_files
 
 
-def get(theme_name):
+def get(theme_name: str) -> dict[str, Any]:
     file_name = theme_name
     if not theme_name.endswith(".json"):
         file_name = "{}.json".format(theme_name.lower())
@@ -36,7 +38,7 @@ def get(theme_name):
     if not os.path.isfile(file_path):
         raise Exception("[Themes] Theme '{}' does not exist!".format(theme_name))
     try:
-        theme = functions.load_json_file(file_path)
+        theme = cast(dict[str, Any], functions.load_json_file(file_path))
     except Exception as ex:
         print("[Themes] Cannot parse '{}' theme file!".format(file_name))
         raise ex
@@ -44,7 +46,7 @@ def get(theme_name):
     return theme
 
 
-def __get_theme_directory():
+def __get_theme_directory() -> str:
     theme_path = functions.unixify_join(
         data.resources_directory,
         "themes",
@@ -52,7 +54,7 @@ def __get_theme_directory():
     return theme_path
 
 
-def __check_color(field, color_string, prior_keys):
+def __check_color(field: str, color_string: str, prior_keys: tuple[str, ...]) -> None:
     try:
         qt.QColor(color_string)
     except Exception as ex:
@@ -64,7 +66,9 @@ def __check_color(field, color_string, prior_keys):
         raise ex
 
 
-def __check_color_list(field, color_list, prior_keys):
+def __check_color_list(
+    field: str, color_list: list[str], prior_keys: tuple[str, ...]
+) -> None:
     try:
         for color_string in color_list:
             qt.QColor(color_string)
@@ -73,7 +77,7 @@ def __check_color_list(field, color_list, prior_keys):
         raise ex
 
 
-def __check_string(field, string, prior_keys):
+def __check_string(field: str, string: str, prior_keys: tuple[str, ...]) -> None:
     if not isinstance(string, str):
         raise Exception(
             "[Themes] String error: {} / '{}'!".format(
@@ -82,7 +86,7 @@ def __check_string(field, string, prior_keys):
         )
 
 
-def __check_bool(field, boolean, prior_keys):
+def __check_bool(field: str, boolean: bool, prior_keys: tuple[str, ...]) -> None:
     if not isinstance(boolean, bool):
         raise Exception(
             "[Themes] Boolean error: {} / '{}'!".format(
@@ -91,7 +95,11 @@ def __check_bool(field, boolean, prior_keys):
         )
 
 
-def __check_fields(schema, dictionary, prior_keys=()):
+def __check_fields(
+    schema: dict[str, Any],
+    dictionary: dict[str, Any],
+    prior_keys: tuple[str, ...] = (),
+) -> None:
     for k, v in dictionary.items():
         try:
             nested_schema_item = functools.reduce(
@@ -130,7 +138,7 @@ def __check_fields(schema, dictionary, prior_keys=()):
                 raise ex
 
 
-def __check(theme_data):
+def __check(theme_data: dict[str, Any]) -> None:
     performance_timer_starting_count = time.perf_counter()
     schema = {
         "close-hover-image": __check_string,

@@ -20,7 +20,13 @@ class Hotspots:
     Functions for styling text with hotspots (used by CustomEditor and PlainEditor)
     """
 
-    def style(self, editor, index_from, length, color=0xFF0000):
+    def style(
+        self,
+        editor: qt.QsciScintilla,
+        index_from: int,
+        length: int,
+        color: int = 0xFF0000,
+    ) -> None:
         """
         Style the text from/to with a hotspot
         """

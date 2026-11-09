@@ -9,7 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import functools
 import os
 import traceback
-from typing import Any
+from typing import Any, Iterator, cast
 
 import components.actionfilter
 import components.thesquid
@@ -42,13 +42,13 @@ class TabWidget(qt.QTabWidget):
         """
 
         # Reference to the parent widget
-        _parent = None
+        _parent: Any = None
         # Reference to the main form
-        main_form = None
+        main_form: Any = None
         # Reference to the tab menu
-        tab_menu = None
+        tab_menu: Any = None
 
-        def __init__(self, parent):
+        def __init__(self, parent: Any) -> None:
             """
             Initialize the tab bar object
             """
@@ -65,7 +65,7 @@ class TabWidget(qt.QTabWidget):
             # Don't draw the background, only the tabs
             self.setDrawBase(False)
 
-        def set_style(self):
+        def set_style(self) -> None:
             close_image = functions.get_resource_file(
                 settings.get_theme()["close-image"]
             )
@@ -149,19 +149,23 @@ QTabBar::tab:selected {{
             )
             self.setStyleSheet(style)
 
-        def mousePressEvent(self, event):
+        def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
             # Execute the superclass event method
             super().mousePressEvent(event)
+            if event is None:
+                return
             event_button = event.button()
             key_modifiers = qt.QApplication.keyboardModifiers()
 
             self._parent.store_drag_data()
 
-        def contextMenuEvent(self, event):
+        def contextMenuEvent(self, event: qt.QContextMenuEvent | None) -> None:
             # Clean up the old menu
             if self.tab_menu != None:
                 self.tab_menu.setParent(None)
                 self.tab_menu = None
+            if event is None:
+                return
             # Create the popup tab context menu
             menu = self._parent.TabMenu(
                 self,
@@ -181,9 +185,16 @@ QTabBar::tab:selected {{
         Custom menu that appears when right clicking a tab
         """
 
-        def __init__(self, parent, main_form, tab_widget, widget, cursor_position):
+        def __init__(
+            self,
+            parent: Any,
+            main_form: Any,
+            tab_widget: Any,
+            widget: Any,
+            cursor_position: qt.QPoint,
+        ) -> None:
             # Nested function for updating the current working directory
-            def update_cwd():
+            def update_cwd() -> None:
                 # Get the document path
                 path = os.path.dirname(widget.save_path)
                 # Check if the path is not an empty string
@@ -217,7 +228,7 @@ QTabBar::tab:selected {{
             # Add the 'copy file name to clipboard' action
             clipboard_copy_action = qt.QAction("Copy tab name to clipboard", self)
 
-            def clipboard_copy():
+            def clipboard_copy() -> None:
                 cb = data.application.clipboard()
                 cb.clear(mode=cb.Mode.Clipboard)
                 cb.setText(widget.name, mode=cb.Mode.Clipboard)
@@ -233,7 +244,7 @@ QTabBar::tab:selected {{
                     "Copy document path to clipboard", self
                 )
 
-                def clipboard_path_copy():
+                def clipboard_path_copy() -> None:
                     cb = data.application.clipboard()
                     cb.clear(mode=cb.Mode.Clipboard)
                     cb.setText(widget.save_path, mode=cb.Mode.Clipboard)
@@ -263,7 +274,7 @@ QTabBar::tab:selected {{
             # Open path in explorer and hex-view
             if self.__check_for_editor(tab_widget):
                 # Open in Hex-View
-                def open_hex():
+                def open_hex() -> None:
                     file_path = widget.save_path
                     main_form.open_file_hex(file_path)
 
@@ -276,7 +287,7 @@ QTabBar::tab:selected {{
                 # Markdown viewer / preview actions (only for markdown files)
                 if functions.get_file_type(widget.save_path) == "markdown":
                     # Open in Markdown-View
-                    def open_markdown():
+                    def open_markdown() -> None:
                         file_path = widget.save_path
                         main_form.open_file_markdown(file_path)
 
@@ -288,7 +299,7 @@ QTabBar::tab:selected {{
                     self.addAction(action_open_md)
 
                     # Open rendered preview in browser
-                    def open_md_preview():
+                    def open_md_preview() -> None:
                         file_path = widget.save_path
                         main_form.open_markdown_preview(file_path)
 
@@ -303,7 +314,7 @@ QTabBar::tab:selected {{
 
                 open_in_explorer_action = qt.QAction("Open document in explorer", self)
 
-                def open_in_explorer():
+                def open_in_explorer() -> None:
                     path = widget.save_path
                     try:
                         result = functions.open_item_in_explorer(path)
@@ -323,7 +334,7 @@ QTabBar::tab:selected {{
             # Markdown viewer tab
             if isinstance(widget, MarkdownViewer):
                 # Open rendered preview in browser
-                def open_md_preview():
+                def open_md_preview() -> None:
                     main_form.open_markdown_preview(widget.save_path)
 
                 action_md_preview = qt.QAction("Open rendered preview in browser", self)
@@ -344,7 +355,7 @@ QTabBar::tab:selected {{
             )
             self.addAction(close_other_action)
 
-        def __check_for_editor(self, tab_widget):
+        def __check_for_editor(self, tab_widget: Any) -> bool:
             """
             Function for checking is the basic widgets current tab is an editor
             """
@@ -355,9 +366,15 @@ QTabBar::tab:selected {{
                 return False
 
         def __create_diff_action(
-            self, action_name, main_form, compare_tab_1, compare_tab_2
-        ):
-            def difference_function(main_form, compare_tab_1, compare_tab_2):
+            self,
+            action_name: str,
+            main_form: Any,
+            compare_tab_1: Any,
+            compare_tab_2: Any,
+        ) -> qt.QAction:
+            def difference_function(
+                main_form: Any, compare_tab_1: Any, compare_tab_2: Any
+            ) -> None:
                 # Check for text documents in both tabs
                 if (
                     isinstance(compare_tab_1, CustomEditor) == False
@@ -407,32 +424,35 @@ QTabBar::tab:selected {{
 
     # Class variables
     # Name of the basic widget
-    name = ""
+    name: str = ""
     # Reference to the last file that was drag&dropped onto the main  form
-    drag_dropped_file = None
+    drag_dropped_file: str | None = None
     # Drag&Dropped text data
-    drag_text = None
+    drag_text: str | None = None
     # The source widgets of the drag&drop event
-    drag_source = None
+    drag_source: Any = None
     # QMainWindow
-    _parent = None
-    main_form = None
+    _parent: Any = None
+    main_form: Any = None
     # Custom tab bar
-    custom_tab_bar = None
+    custom_tab_bar: Any = None
     # Default font for textboxes
-    default_editor_font = qt.QFont(
+    default_editor_font: qt.QFont = qt.QFont(
         settings.get("current_font_name"), settings.get("current_font_size")
     )
     # Default font and icon size for the tab bar
-    default_tab_font = None
-    default_icon_size = None
+    default_tab_font: Any = None
+    default_icon_size: Any = None
 
     # Tab-bar stuff
-    move_range = None
-    drag_lock = None
-    drag_event_data = None
+    move_range: Any = None
+    drag_lock: bool | None = None
+    drag_event_data: Any = None
 
-    def __init__(self, parent, main_form, box):
+    # Box the tab widget belongs to
+    box: Any = None
+
+    def __init__(self, parent: Any, main_form: Any, box: Any) -> None:
         """Initialization"""
         # Initialize superclass, from which the current class is inherited,
         # THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
@@ -459,13 +479,13 @@ QTabBar::tab:selected {{
         # Connect signal that fires when the tab index changes
         self.currentChanged.connect(self.__signal_editor_tabindex_change)
         # Store the default settings
-        self.default_tab_font = self.tabBar().font()
-        self.default_icon_size = self.tabBar().iconSize()
+        self.default_tab_font = cast(qt.QTabBar, self.tabBar()).font()
+        self.default_icon_size = cast(qt.QTabBar, self.tabBar()).iconSize()
         # Install tab-bar's event filter
-        self.tabBar().installEventFilter(self)
+        cast(qt.QTabBar, self.tabBar()).installEventFilter(self)
 
-    def customize_tab_bar(self):
-        self.tabBar().setFont(settings.get_menu_font())
+    def customize_tab_bar(self) -> None:
+        cast(qt.QTabBar, self.tabBar()).setFont(settings.get_menu_font())
         if settings.get("custom_menu_scale") != None:
             new_icon_size = functions.create_size(
                 settings.get("custom_menu_scale"), settings.get("custom_menu_scale")
@@ -473,9 +493,9 @@ QTabBar::tab:selected {{
             self.setIconSize(new_icon_size)
         else:
             self.setIconSize(self.default_icon_size)
-        self.tabBar().set_style()
+        cast(qt.QTabBar, self.tabBar()).set_style()  # type: ignore[attr-defined]
 
-    def __drag_filter(self, event):
+    def __drag_filter(self, event: Any) -> None:
         self.drag_dropped_file = None
         self.drag_text = None
         self.drag_source = None
@@ -498,11 +518,13 @@ QTabBar::tab:selected {{
             except:
                 return
 
-    def __init_drag_data(self, e):
+    def __init_drag_data(self, e: Any) -> None:
         self.indexTab = self.currentIndex()
-        self.tabRect = self.tabBar().tabRect(self.indexTab)
+        self.tabRect = cast(qt.QTabBar, self.tabBar()).tabRect(self.indexTab)
         self.pixmap = qt.QPixmap(self.tabRect.size())
-        self.tabBar().render(self.pixmap, qt.QPoint(), qt.QRegion(self.tabRect))
+        cast(qt.QTabBar, self.tabBar()).render(
+            self.pixmap, qt.QPoint(), qt.QRegion(self.tabRect)
+        )
         painter = qt.QPainter(self.pixmap)
         painter.setCompositionMode(
             painter.CompositionMode.CompositionMode_DestinationIn
@@ -510,7 +532,7 @@ QTabBar::tab:selected {{
         painter.fillRect(self.pixmap.rect(), qt.QColor(0, 0, 0, 64))
         painter.end()
 
-    def __start_tab_drag(self):
+    def __start_tab_drag(self) -> None:
         index = self.currentIndex()
         if index != -1:
             mime_data = qt.QMimeData()
@@ -527,7 +549,7 @@ QTabBar::tab:selected {{
             drag.exec(qt.Qt.DropAction.CopyAction | qt.Qt.DropAction.MoveAction)
             drag.destroyed.connect(self.__drag_destroyed)
 
-    def store_drag_data(self):
+    def store_drag_data(self) -> None:
         # Store drag information
         current_index = self.currentIndex()
         TabWidget.drag_event_data = {
@@ -537,7 +559,7 @@ QTabBar::tab:selected {{
             "source": self,
         }
 
-    def __drag_destroyed(self, *args):
+    def __drag_destroyed(self, *args: Any) -> None:
         for i in (10, 0):
             mouse_event = qt.QMouseEvent(
                 qt.QEvent.Type.MouseButtonRelease,
@@ -550,12 +572,14 @@ QTabBar::tab:selected {{
             )
             data.application.sendEvent(self.tabBar(), mouse_event)
 
-    def _setmove_range(self):
-        tabRect = self.tabBar().tabRect(self.currentIndex())
-        pos = self.tabBar().mapFromGlobal(qt.QCursor.pos())
+    def _setmove_range(self) -> None:
+        tabRect = cast(qt.QTabBar, self.tabBar()).tabRect(self.currentIndex())
+        pos = cast(qt.QTabBar, self.tabBar()).mapFromGlobal(qt.QCursor.pos())
         self.move_range = pos.x() - tabRect.left(), tabRect.right() - pos.x()
 
-    def eventFilter(self, source, event):
+    def eventFilter(self, source: qt.QObject | None, event: qt.QEvent | None) -> bool:
+        if event is None:
+            return qt.QTabWidget.eventFilter(self, source, event)
         if (
             event.type() == qt.QEvent.Type.KeyPress
             or event.type() == qt.QEvent.Type.KeyRelease
@@ -566,7 +590,7 @@ QTabBar::tab:selected {{
         if source == self.tabBar():
             if (
                 event.type() == qt.QEvent.Type.MouseButtonPress
-                and event.buttons() == qt.Qt.MouseButton.LeftButton
+                and event.buttons() == qt.Qt.MouseButton.LeftButton  # type: ignore[attr-defined]
             ):
                 qt.QTimer.singleShot(0, self._setmove_range)
             elif event.type() == qt.QEvent.Type.MouseButtonRelease:
@@ -574,8 +598,8 @@ QTabBar::tab:selected {{
             elif (
                 event.type() == qt.QEvent.Type.MouseMove and self.move_range is not None
             ):
-                pos = event.pos()
-                if self.tabBar().rect().contains(pos):
+                pos = event.pos()  # type: ignore[attr-defined]
+                if cast(qt.QTabBar, self.tabBar()).rect().contains(pos):
                     self.drag_lock = False
                 else:
                     buttons = data.application.mouseButtons()
@@ -592,15 +616,18 @@ QTabBar::tab:selected {{
                 if (self.move_range is not None) and (pos.x() < self.move_range[0]):
                     return True
                 elif (self.move_range is not None) and (
-                    pos.x() > self.tabBar().width() - self.move_range[1]
+                    pos.x()
+                    > cast(qt.QTabBar, self.tabBar()).width() - self.move_range[1]
                 ):
                     return True
         return qt.QTabWidget.eventFilter(self, source, event)
 
-    def dragEnterEvent(self, event):
+    def dragEnterEvent(self, event: qt.QDragEnterEvent | None) -> None:
         """
         Qt Drag event that fires when you click and drag something onto the basic widget
         """
+        if event is None:
+            return
         self.__drag_filter(event)
 
         if TabWidget.drag_event_data is not None:
@@ -608,10 +635,12 @@ QTabBar::tab:selected {{
             if current_source is not None:
                 TabWidget.drag_event_data["source"] = current_source
 
-    def dropEvent(self, event):
+    def dropEvent(self, event: qt.QDropEvent | None) -> None:
         """
         Qt Drop event
         """
+        if event is None:
+            return
         try:
             if self.drag_dropped_file != None:
                 # Open file in a new scintilla tab
@@ -658,9 +687,9 @@ QTabBar::tab:selected {{
         if hasattr(self.main_form.display, "docking_overlay_hide"):
             self.main_form.display.docking_overlay_hide()
 
-    def enterEvent(self, enter_event):
+    def enterEvent(self, enter_event: qt.QEnterEvent | None) -> None:
         """Event that fires when the focus shifts to the TabWidget"""
-        cw = self.currentWidget()
+        cw: Any = self.currentWidget()
         if cw != None:
             # Check if the current widget is a custom editor or a QTextEdit widget
             if isinstance(cw, CustomEditor):
@@ -670,7 +699,7 @@ QTabBar::tab:selected {{
                 # Display only the QTextEdit name
                 self.main_form.display.write_to_statusbar(cw.name)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
         super().mousePressEvent(event)
         # Set focus to the clicked basic widget
         self.setFocus()
@@ -680,12 +709,17 @@ QTabBar::tab:selected {{
         self.main_form.last_focused_widget = self
         # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
-        if event.button() == qt.Qt.MouseButton.RightButton and self.count() == 0:
+        if (
+            event is not None
+            and event.button() == qt.Qt.MouseButton.RightButton
+            and self.count() == 0
+        ):
             # Show the function wheel if right clicked
             self.main_form.view.show_function_wheel()
         # Display the tab name in the log window
-        if self.currentWidget() != None:
-            tab_name = self.currentWidget().name
+        current = self.currentWidget()
+        if current is not None:
+            tab_name = current.name  # type: ignore[attr-defined]
         else:
             # Clear the cursor positions in the statusbar
             self.main_form.display.update_cursor_position()
@@ -696,10 +730,12 @@ QTabBar::tab:selected {{
         if widget and isinstance(widget, ExternalWidget):
             widget.window_reference.raise_()
 
-    def wheelEvent(self, wheel_event):
+    def wheelEvent(self, wheel_event: qt.QWheelEvent | None) -> None:
         """
         QScintilla mouse wheel rotate event
         """
+        if wheel_event is None:
+            return
         key_modifiers = qt.QApplication.keyboardModifiers()
         delta = wheel_event.angleDelta().y()
         if delta < 0:
@@ -718,34 +754,37 @@ QTabBar::tab:selected {{
             # Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: qt.QResizeEvent | None) -> None:
         """Resize basic widget event"""
         # First execute the superclass resize event function
         super().resizeEvent(event)
-        event.setAccepted(False)
+        if event is not None:
+            event.setAccepted(False)
         # Reposition the close button if needed
         self.close_button_reposition()
 
-    def showEvent(self, event):
+    def showEvent(self, event: qt.QShowEvent | None) -> None:
         super().showEvent(event)
         # Reposition the close button if needed
         self.close_button_reposition()
 
-    def setFocus(self):
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
         """
         Overridden focus event
         """
         # Execute the supeclass focus function
-        super().setFocus()
+        super().setFocus(reason)
         # Check indication
         self.main_form.view.indication_check()
 
-    def setTabText(self, *args, **kwargs):
+    def setTabText(self, *args: Any, **kwargs: Any) -> None:
         super().setTabText(*args, **kwargs)
         # Update window title
         data.signal_dispatcher.update_title.emit()
 
-    def __signal_editor_tabindex_change(self, change_event):
+    def __signal_editor_tabindex_change(self, change_event: Any) -> None:
         """Signal when the tab index changes"""
         # Set Save/SaveAs buttons in the menubar
         self._set_save_status()
@@ -769,14 +808,16 @@ QTabBar::tab:selected {{
         # Update window title
         data.signal_dispatcher.update_title.emit()
 
-    def _signal_editor_tabclose(self, emmited_tab_number, force=False):
+    def _signal_editor_tabclose(
+        self, emmited_tab_number: int, force: bool = False
+    ) -> bool:
         """
         Event that fires when a tab close.
         Returns True if the tab was closed, False if the close was cancelled.
         """
 
         # Nested function for clearing all bookmarks in the document
-        def clear_document_bookmarks():
+        def clear_document_bookmarks() -> None:
             # Check if bookmarks need to be cleared
             if isinstance(self.widget(emmited_tab_number), CustomEditor):
                 self.main_form.bookmarks.remove_editor_all(
@@ -785,15 +826,17 @@ QTabBar::tab:selected {{
 
         # Store the tab reference
         tab = self.widget(emmited_tab_number)
+        if tab is None:
+            return False
         # Check if the document is modified
-        if tab.savable == constants.CanSave.YES:
-            if tab.save_status == constants.FileStatus.MODIFIED and force == False:
+        if tab.savable == constants.CanSave.YES:  # type: ignore[attr-defined]
+            if tab.save_status == constants.FileStatus.MODIFIED and force == False:  # type: ignore[attr-defined]
                 # Display the close notification
                 close_message = "Document '" + self.tabText(emmited_tab_number)
                 close_message += "' has been modified!\nWhat do you wish to do?"
                 reply = CloseEditorDialog.question(close_message)
                 if reply == constants.DialogResult.SaveAndClose.value:
-                    result = tab.save_document()
+                    result = tab.save_document()  # type: ignore[attr-defined]
                     if result == False:
                         return False
                     clear_document_bookmarks()
@@ -818,24 +861,28 @@ QTabBar::tab:selected {{
         # (terminal tabs release their PTY there), fall back to the legacy
         # '__del__' convention for the other tab types
         if hasattr(tab, "shutdown"):
-            tab.shutdown()
+            tab.shutdown()  # type: ignore[attr-defined]
         elif hasattr(tab, "__del__"):
-            tab.__del__()
+            tab.__del__()  # type: ignore[attr-defined]
         # Just in case, decrement the refcount of the tab (that's what del does)
         del tab
         return True
 
-    def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
+    def _signal_editor_cursor_change(
+        self, cursor_line: int | None = None, cursor_column: int | None = None
+    ) -> None:
         """
         Signal that fires when cursor position changes
         """
         sender = self.sender()
-        index = sender.positionFromLineIndex(cursor_line, cursor_column)
+        index = sender.positionFromLineIndex(  # type: ignore[union-attr, attr-defined]
+            cursor_line, cursor_column
+        )
         self.main_form.display.update_cursor_position(cursor_line, cursor_column, index)
 
-    def _set_save_status(self):
+    def _set_save_status(self) -> None:
         """Enable/disable save/saveas buttons in the menubar"""
-        cw = self.currentWidget()
+        cw: Any = self.currentWidget()
         if cw != None:
             # Check if the current widget is a custom editor or a QTextEdit widget
             if isinstance(cw, CustomEditor):
@@ -852,7 +899,7 @@ QTabBar::tab:selected {{
         if self.count() == 0:
             self.main_form.set_save_file_state(False)
 
-    def _signal_text_changed(self, widget: qt.QWidget):
+    def _signal_text_changed(self, widget: Any) -> None:
         """Signal that is emmited when the document text changes"""
         # Check if the current widget is valid
         if widget is None:
@@ -866,24 +913,27 @@ QTabBar::tab:selected {{
         # Update margin width
         self.editor_update_margin()
 
-    def set_text_changed(self, index):
+    def set_text_changed(self, index: int) -> None:
         if not "*" in self.tabText(index):
             self.setTabText(index, f"*{self.tabText(index)}*")
 
-    def reset_text_changed(self, index=None):
+    def reset_text_changed(self, index: int | None = None) -> None:
         """Reset the changed status of the current widget (remove the * symbols from the tab name)"""
         # Update the save status of the current widget
         if index is None:
             index = self.currentIndex()
-        if self.widget(index).savable == constants.CanSave.YES:
-            self.widget(index).save_status = constants.FileStatus.OK
+        widget = self.widget(index)
+        if widget is None:
+            return
+        if widget.savable == constants.CanSave.YES:  # type: ignore[attr-defined]
+            widget.save_status = constants.FileStatus.OK  # type: ignore[attr-defined]
             self.setTabText(index, self.tabText(index).strip("*"))
             # Anchor the Scintilla save point so that a later undo/redo back to
             # this state fires SCN_SAVEPOINTREACHED and clears the asterisk.
-            self.widget(index).anchor_savepoint()
+            widget.anchor_savepoint()  # type: ignore[attr-defined]
 
-    def _set_wait_animation(self, index, show):
-        tabBar = self.tabBar()
+    def _set_wait_animation(self, index: int, show: bool) -> None:
+        tabBar = cast(qt.QTabBar, self.tabBar())
         if show:
             lbl = qt.QLabel(self)
             movie = qt.QMovie(
@@ -904,7 +954,7 @@ QTabBar::tab:selected {{
         else:
             tabBar.setTabButton(index, qt.QTabBar.ButtonPosition.LeftSide, None)
 
-    def close_tab(self, tab=None, force=False):
+    def close_tab(self, tab: Any = None, force: bool = False) -> bool:
         """Close a tab in the basic widget; returns True if a tab was closed"""
         # Return if there are no tabs open
         if self.count == 0:
@@ -930,39 +980,44 @@ QTabBar::tab:selected {{
                     return self._signal_editor_tabclose(i, force)
             return False
 
-    def zoom_in(self):
+    def zoom_in(self) -> None:
         """Zoom in view function (it is the same for the CustomEditor and QTextEdit)"""
         # Zoom in
         try:
-            self.currentWidget().zoomIn()
+            current = self.currentWidget()
+            if current is not None:
+                current.zoomIn()  # type: ignore[attr-defined]
         except:
             pass
         # Update the margin width
         self.editor_update_margin()
 
-    def zoom_out(self):
+    def zoom_out(self) -> None:
         """Zoom out view function (it is the same for the CustomEditor and QTextEdit)"""
         # Zoom out
         try:
-            self.currentWidget().zoomOut()
+            current = self.currentWidget()
+            if current is not None:
+                current.zoomOut()  # type: ignore[attr-defined]
         except:
             pass
         # Update the margin width
         self.editor_update_margin()
 
-    def zoom_reset(self):
+    def zoom_reset(self) -> None:
         """Reset the zoom to default"""
         # Check is the widget is a scintilla custom editor
-        if isinstance(self.currentWidget(), CustomEditor):
+        current = self.currentWidget()
+        if isinstance(current, CustomEditor):
             # Reset zoom
-            self.currentWidget().zoomTo(0)
+            current.zoomTo(0)  # type: ignore[attr-defined]
             # Update the margin width
             self.editor_update_margin()
-        elif isinstance(self.currentWidget(), qt.QTextEdit):
+        elif isinstance(current, qt.QTextEdit):
             # Reset zoom
-            self.currentWidget().setFont(self.default_editor_font)
+            current.setFont(self.default_editor_font)  # type: ignore[attr-defined]
 
-    def plain_create_document(self, name):
+    def plain_create_document(self, name: str) -> Any:
         """Create a plain vanilla scintilla document"""
         # Initialize the custom editor
         new_scintilla_tab = PlainEditor(self, self.main_form)
@@ -981,8 +1036,8 @@ QTabBar::tab:selected {{
         )
 
         # Customize the mouse click event for the plain document with a decorator
-        def custom_mouse_click(function_to_decorate):
-            def decorated_function(*args, **kwargs):
+        def custom_mouse_click(function_to_decorate: Any) -> Any:
+            def decorated_function(*args: Any, **kwargs: Any) -> None:
                 function_to_decorate(*args, **kwargs)
                 # Set Save/SaveAs buttons in the menubar
                 self._set_save_status()
@@ -990,13 +1045,15 @@ QTabBar::tab:selected {{
             return decorated_function
 
         # Add the custom click decorator to the mouse click function
-        new_scintilla_tab.mousePressEvent = custom_mouse_click(
-            new_scintilla_tab.mousePressEvent
+        setattr(
+            new_scintilla_tab,
+            "mousePressEvent",
+            custom_mouse_click(new_scintilla_tab.mousePressEvent),
         )
         # Return the scintilla reference
         return new_scintilla_tab
 
-    def plain_add_document(self, document_name):
+    def plain_add_document(self, document_name: str) -> Any:
         """Add a plain scintilla document to self(QTabWidget)"""
         # Create new scintilla object
         new_editor_tab = self.plain_create_document(document_name)
@@ -1007,7 +1064,7 @@ QTabBar::tab:selected {{
         # Return the reference to the new added scintilla tab widget
         return self.widget(new_editor_tab_index)
 
-    def editor_create_document(self, file_with_path=None):
+    def editor_create_document(self, file_with_path: str | None = None) -> CustomEditor:
         """Create and initialize a custom scintilla document"""
         # Initialize the custom editor
         new_scintilla_tab = CustomEditor(self, self.main_form, file_with_path)
@@ -1016,8 +1073,12 @@ QTabBar::tab:selected {{
         return new_scintilla_tab
 
     def editor_add_document(
-        self, document_name, type=None, bypass_check=False, index=None
-    ):
+        self,
+        document_name: str,
+        type: str | None = None,
+        bypass_check: bool = False,
+        index: int | None = None,
+    ) -> Any:
         """Check tab type and add a document to self(QTabWidget)"""
         if type == "file":
             ## New tab is a file on disk
@@ -1072,7 +1133,7 @@ QTabBar::tab:selected {{
             # Return the reference to the new added scintilla tab widget
             return self.widget(new_editor_tab_index)
 
-    def hexview_add(self, file_path):
+    def hexview_add(self, file_path: str) -> Any:
         # Initialize the hex-view
         new_hexview = HexView(file_path, self, self.main_form)
         tab_text = "{} (Hex)".format(new_hexview.name)
@@ -1081,7 +1142,9 @@ QTabBar::tab:selected {{
         self.setCurrentIndex(new_hexview_tab_index)
         return self.widget(new_hexview_tab_index)
 
-    def markdown_add(self, file_path, index=None, line=None):
+    def markdown_add(
+        self, file_path: str, index: int | None = None, line: int | None = None
+    ) -> Any:
         # Initialize the markdown viewer
         new_markdown = MarkdownViewer(file_path, self, self.main_form, line=line)
         tab_text = new_markdown.name
@@ -1093,7 +1156,9 @@ QTabBar::tab:selected {{
         self.setCurrentIndex(new_markdown_tab_index)
         return self.widget(new_markdown_tab_index)
 
-    def switch_to_markdown_view(self, index, line=None):
+    def switch_to_markdown_view(
+        self, index: int | None, line: int | None = None
+    ) -> None:
         """Close the editor tab at 'index' and open a markdown viewer in its place
 
         'line' is the 1-based first line visible in the editor, used to give
@@ -1122,7 +1187,7 @@ QTabBar::tab:selected {{
             file_path, tab_widget=self, index=insert_index, line=line
         )
 
-    def switch_to_editor_view(self, index):
+    def switch_to_editor_view(self, index: int | None) -> None:
         """Close the markdown viewer tab at 'index' and open an editor in its place"""
         if index is None or index < 0 or index >= self.count():
             return
@@ -1136,9 +1201,9 @@ QTabBar::tab:selected {{
         insert_index = min(index, self.count())
         self.main_form.open_file(file_path, tab_widget=self, index=insert_index)
 
-    terminal_count = 0
+    terminal_count: int = 0
 
-    def terminal_add(self, shell=None, cwd=None):
+    def terminal_add(self, shell: str | None = None, cwd: str | None = None) -> Any:
         from gui.terminal import Terminal
 
         name = "TERMINAL-{}".format(self.terminal_count)
@@ -1167,7 +1232,7 @@ QTabBar::tab:selected {{
         if parent is not None:
             parent.set_tab_name(terminal, title)
 
-    def tree_create_tab(self, tree_tab_name, tree_type=None):
+    def tree_create_tab(self, tree_tab_name: str, tree_type: Any = None) -> Any:
         """Create and initialize a tree display widget"""
         # Initialize the custom editor
         if tree_type != None:
@@ -1180,7 +1245,7 @@ QTabBar::tab:selected {{
         # Return the reference to the new added tree tab widget
         return new_tree_tab
 
-    def tree_add_tab(self, tree_tab_name, tree_type=None):
+    def tree_add_tab(self, tree_tab_name: str, tree_type: Any = None) -> Any:
         """Create and initialize a tree display widget"""
         # Initialize the custom editor
         new_tree_tab = self.tree_create_tab(tree_tab_name, tree_type)
@@ -1189,7 +1254,7 @@ QTabBar::tab:selected {{
         # Return the reference to the new added tree tab widget
         return self.widget(new_tree_tab_index)
 
-    def terminal_emulator_add(self, tab_name, program):
+    def terminal_emulator_add(self, tab_name: str, program: str) -> Any:
         from gui.terminal import Terminal
 
         new_terminal = Terminal(self, self.main_form, tab_name, shell=program)
@@ -1201,15 +1266,16 @@ QTabBar::tab:selected {{
         )
         return self.widget(new_terminal_tab_index)
 
-    def editor_update_margin(self):
+    def editor_update_margin(self) -> None:
         """
         Update margin width according to the number of lines in the current document
         """
         # Check is the widget is a scintilla custom editor
-        if isinstance(self.currentWidget(), CustomEditor):
-            self.currentWidget().update_margin()
+        current = self.currentWidget()
+        if isinstance(current, CustomEditor):
+            current.update_margin()  # type: ignore[attr-defined]
 
-    def set_tab_name(self, tab, new_text):
+    def set_tab_name(self, tab: Any, new_text: str) -> None:
         """
         Set the name of a tab by passing a reference to it
         """
@@ -1220,14 +1286,16 @@ QTabBar::tab:selected {{
                 self.setTabText(i, new_text)
                 break
 
-    def select_tab(self, direction=constants.Direction.RIGHT):
+    def select_tab(
+        self, direction: constants.Direction = constants.Direction.RIGHT
+    ) -> None:
         """
         Select tab left/right of the currently selected tab
         """
         current_index = self.currentIndex()
         if direction == constants.Direction.RIGHT:
             # Check if the widget is already at the far right
-            if current_index < self.tabBar().count() - 1:
+            if current_index < cast(qt.QTabBar, self.tabBar()).count() - 1:
                 new_index = current_index + 1
                 self.setCurrentIndex(new_index)
         else:
@@ -1236,7 +1304,9 @@ QTabBar::tab:selected {{
                 new_index = current_index - 1
                 self.setCurrentIndex(new_index)
 
-    def move_tab(self, direction=constants.Direction.RIGHT):
+    def move_tab(
+        self, direction: constants.Direction = constants.Direction.RIGHT
+    ) -> None:
         """
         Change the position of the current tab in the basic widget,
         according to the selected direction
@@ -1246,9 +1316,9 @@ QTabBar::tab:selected {{
         # Check the move direction
         if direction == constants.Direction.RIGHT:
             # Check if the widget is already at the far right
-            if current_index < self.tabBar().count() - 1:
+            if current_index < cast(qt.QTabBar, self.tabBar()).count() - 1:
                 new_index = current_index + 1
-                self.tabBar().moveTab(current_index, new_index)
+                cast(qt.QTabBar, self.tabBar()).moveTab(current_index, new_index)
                 # This hack is needed to correctly focus the moved tab
                 self.setCurrentIndex(current_index)
                 self.setCurrentIndex(new_index)
@@ -1256,16 +1326,16 @@ QTabBar::tab:selected {{
             # Check if the widget is already at the far left
             if current_index > 0:
                 new_index = current_index - 1
-                self.tabBar().moveTab(current_index, new_index)
+                cast(qt.QTabBar, self.tabBar()).moveTab(current_index, new_index)
                 # This hack is needed to correctly focus the moved tab
                 self.setCurrentIndex(current_index)
                 self.setCurrentIndex(new_index)
 
-    def update_tab_icon(self, tab):
+    def update_tab_icon(self, tab: Any) -> None:
         if (hasattr(tab, "current_icon") == True) and (tab.current_icon != None):
             self.setTabIcon(self.indexOf(tab), tab.current_icon)
 
-    def _dedup_key(self, widget):
+    def _dedup_key(self, widget: Any) -> tuple[Any, Any]:
         """
         Return the ('check_open_file' type, path) identity key used to avoid
         duplicating a document when a tab is moved into a window that already
@@ -1282,7 +1352,7 @@ QTabBar::tab:selected {{
         else:
             return None, None
 
-    def _dedup_target_index(self, check_type, check_path):
+    def _dedup_target_index(self, check_type: Any, check_path: Any) -> int | None:
         """
         Return the index of an already-open tab in this window that represents
         the same document ('check_type', 'check_path'), or None. Scans only
@@ -1294,7 +1364,7 @@ QTabBar::tab:selected {{
                 return index
         return None
 
-    def _reparent_tab(self, widget, tab_widget):
+    def _reparent_tab(self, widget: Any, tab_widget: Any) -> None:
         """
         Re-point the '_parent' and 'internals' references of a tab that is
         being moved between windows, including any embedded editors it holds
@@ -1314,7 +1384,9 @@ QTabBar::tab:selected {{
             if getattr(widget, "editor_2", None) is not None:
                 self._reparent_tab(widget.editor_2, tab_widget)
 
-    def copy_editor_in(self, source_tab_widget, source_index, focus_name):
+    def copy_editor_in(
+        self, source_tab_widget: Any, source_index: int, focus_name: Any
+    ) -> None:
         """Copy another CustomEditor widget into self"""
         # Create a new reference to the source custom editor
         source_widget = source_tab_widget.widget(source_index)
@@ -1355,7 +1427,7 @@ QTabBar::tab:selected {{
         # Update the margin in the copied widget
         self.editor_update_margin()
 
-    def move_editor_in(self, source_tab_widget, source_index):
+    def move_editor_in(self, source_tab_widget: Any, source_index: int) -> None:
         """Move another CustomEditor widget into self without copying it"""
         moved_widget = source_tab_widget.widget(source_index)
         moved_widget_icon = source_tab_widget.tabIcon(source_index)
@@ -1389,7 +1461,7 @@ QTabBar::tab:selected {{
             self.__signal_editor_tabindex_change(None)
             source_tab_widget.__signal_editor_tabindex_change(None)
 
-    def drag_tab_in(self, source_tab_widget, dragged_widget):
+    def drag_tab_in(self, source_tab_widget: Any, dragged_widget: Any) -> None:
         """
         Drag another gui.forms.customeditor.CustomEditor widget into self without copying it
         """
@@ -1421,13 +1493,16 @@ QTabBar::tab:selected {{
         )
 
         # Update source tab corner buttons
-        def update_source(*args):
+        def update_source(*args: Any) -> None:
             source_tab = source_tab_widget.currentWidget()
-            if getattr(source_tab, "internals", None) is not None:
+            if (
+                source_tab is not None
+                and getattr(source_tab, "internals", None) is not None
+            ):
                 if hasattr(source_tab, "add_corner_buttons"):
-                    source_tab.internals.update_corner_widget(source_tab)
-                    source_tab.internals.remove_corner_groupbox()
-                    source_tab.add_corner_buttons()
+                    source_tab.internals.update_corner_widget(source_tab)  # type: ignore[attr-defined]
+                    source_tab.internals.remove_corner_groupbox()  # type: ignore[attr-defined]
+                    source_tab.add_corner_buttons()  # type: ignore[attr-defined]
 
         qt.QTimer.singleShot(5, update_source)
         # Set focus to the copied widget
@@ -1436,13 +1511,13 @@ QTabBar::tab:selected {{
         tab = self.widget(new_index)
         self._reparent_tab(tab, self)
 
-        def update_new(*args):
-            if getattr(tab, "internals", None) is not None:
-                tab.internals.update_tab_widget(self)
+        def update_new(*args: Any) -> None:
+            if tab is not None and getattr(tab, "internals", None) is not None:
+                tab.internals.update_tab_widget(self)  # type: ignore[attr-defined]
                 if hasattr(tab, "add_corner_buttons"):
-                    tab.internals.update_corner_widget(tab)
-                    tab.internals.remove_corner_groupbox()
-                    tab.add_corner_buttons()
+                    tab.internals.update_corner_widget(tab)  # type: ignore[attr-defined]
+                    tab.internals.remove_corner_groupbox()  # type: ignore[attr-defined]
+                    tab.add_corner_buttons()  # type: ignore[attr-defined]
 
         qt.QTimer.singleShot(10, update_new)
 
@@ -1451,15 +1526,15 @@ QTabBar::tab:selected {{
         self.main_form.view.reindex_all_windows()
         self.main_form.view.set_window_focus(self)
 
-    def tabs(self):
+    def tabs(self) -> Iterator[Any]:
         for i in range(self.count()):
             yield self.widget(i)
 
-    def close_all(self):
+    def close_all(self) -> None:
         for t in self.tabs():
             self.close_tab(t)
 
-    def remove_from_box(self):
+    def remove_from_box(self) -> None:
         main_form = self.main_form
         self.hide()
         self.setParent(None)
@@ -1471,7 +1546,7 @@ QTabBar::tab:selected {{
         # Reindex all tab widgets
         main_form.view.reindex_all_windows()
 
-    def close_button_show(self):
+    def close_button_show(self) -> None:
         if not hasattr(self, "close_overlay"):
             close_button = StandardButton(
                 self,
@@ -1489,29 +1564,30 @@ QTabBar::tab:selected {{
             close_button.setStatusTip(tooltip)
             close_button.set_click_function(self.remove_from_box)
 
-            self.close_overlay = create_groupbox_borderless(self)
+            self.close_overlay = create_groupbox_borderless(parent=self)
             self.close_overlay.setAlignment(
                 qt.Qt.AlignmentFlag.AlignRight | qt.Qt.AlignmentFlag.AlignVCenter
             )
-            self.close_overlay.setLayout(qt.QHBoxLayout())
-            self.close_overlay.layout().addWidget(close_button)
-            self.close_overlay.layout().setAlignment(
+            layout = qt.QHBoxLayout()
+            self.close_overlay.setLayout(layout)
+            layout.addWidget(close_button)
+            layout.setAlignment(
                 qt.Qt.AlignmentFlag.AlignRight | qt.Qt.AlignmentFlag.AlignTop
             )
             self.close_overlay.setParent(self)
         self.close_overlay.show()
         self.close_button_reposition()
 
-    def close_button_hide(self):
+    def close_button_hide(self) -> None:
         if hasattr(self, "close_overlay"):
             self.close_overlay.hide()
 
-    def close_button_reposition(self):
+    def close_button_reposition(self) -> None:
         if hasattr(self, "close_overlay"):
             if self.close_overlay.isVisible():
                 self.close_overlay.resize(self.size())
 
-    def check_close_button(self):
+    def check_close_button(self) -> None:
         # Show the close button
         if self.count() == 0 and len(self.main_form.get_all_windows()) > 1:
             self.close_button_show()

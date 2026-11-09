@@ -6,6 +6,8 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+from typing import Any
+
 import qt
 import data
 
@@ -19,7 +21,9 @@ Subclassed QScintilla widget used for displaying REPL messages, Python/C node tr
 
 
 class BaseEditor(qt.QsciScintilla):
-    def set_theme(self, theme):
+    context_menu: Any = None
+
+    def set_theme(self, theme: dict[str, Any]) -> None:
         if theme["name"] == "Air":
             self.resetFoldMarginColors()
         else:
@@ -29,11 +33,12 @@ class BaseEditor(qt.QsciScintilla):
             )
         self.setMarginsForegroundColor(qt.QColor(theme["linemargin"]["foreground"]))
         self.setMarginsBackgroundColor(qt.QColor(theme["linemargin"]["background"]))
-        if self.lexer() is not None and hasattr(self.lexer(), "get_default_background_color"):
+        lexer: Any = self.lexer()
+        if lexer is not None and hasattr(lexer, "get_default_background_color"):
             self.SendScintilla(
                 qt.QsciScintillaBase.SCI_STYLESETBACK,
                 qt.QsciScintillaBase.STYLE_DEFAULT,
-                self.lexer().get_default_background_color(),
+                lexer.get_default_background_color(),
             )
         else:
             self.SendScintilla(
@@ -46,7 +51,9 @@ class BaseEditor(qt.QsciScintilla):
             qt.QsciScintillaBase.STYLE_LINENUMBER,
             qt.QColor(theme["linemargin"]["background"]),
         )
-        self.SendScintilla(qt.QsciScintillaBase.SCI_SETCARETFORE, qt.QColor(theme["cursor"]))
+        self.SendScintilla(
+            qt.QsciScintillaBase.SCI_SETCARETFORE, qt.QColor(theme["cursor"])
+        )
         self.setCaretLineBackgroundColor(qt.QColor(theme["cursor-line-background"]))
         self.setStyleSheet(
             """
@@ -82,7 +89,7 @@ QListView::item:selected {{
             )
         )
 
-    def delete_context_menu(self):
+    def delete_context_menu(self) -> None:
         # Clean up the context menu
         if self.context_menu is not None:
             self.context_menu.hide()

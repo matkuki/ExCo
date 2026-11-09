@@ -15,6 +15,7 @@ For complete license information of the dependencies, check the 'additional_lice
 ##        - view.TerminalView       -- QPainter grid renderer
 ##        - backend.*               -- pluggable PTY backends
 ##        - screen.*                -- extended pyte screen/stream
+##        - images.*                -- Qt-free Kitty-graphics/sixel decoding
 
 from typing import List
 

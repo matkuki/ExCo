@@ -33,14 +33,10 @@ from gui.themeindicator import ThemeIndicator
 
 
 class Display:
-    """
-    Functions for displaying of various functions such as:
+    """Functions for displaying of various functions such as:
     show_nodes, find_in_open_documents, ...
     (namespace/nested class to MainWindow)
     """
-
-    # Class varibles
-    _parent = None
     # Attribute for storing which type of tab is used for dispaying node trees
     node_view_type = constants.NodeDisplayType.TREE
     # Theme indicator label

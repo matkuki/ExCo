@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import os
 import os.path
 import functools
+from typing import Any
 
 import qt
 import data
@@ -21,9 +22,9 @@ from gui.menu import *
 
 
 class ThemeIndicator(qt.QLabel):
-    theme_menu = None
+    theme_menu: Menu | None = None
 
-    def __init__(self, parent, main_form):
+    def __init__(self, parent: qt.QWidget, main_form: Any) -> None:
         # Initialize superclass
         super().__init__(parent)
         # Store the reference to the parent
@@ -34,18 +35,19 @@ class ThemeIndicator(qt.QLabel):
         # Set default font
         self.setFont(settings.get_current_font())
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: qt.QMouseEvent | None) -> None:
         # Execute the superclass event method
         super().mouseReleaseEvent(event)
         cursor = qt.QCursor.pos()
-        self.theme_menu.popup(cursor)
+        if self.theme_menu is not None:
+            self.theme_menu.popup(cursor)
 
-    def init_theme_menu(self):
+    def init_theme_menu(self) -> None:
         """
         Initialization of the theme menu used by the theme indicator
         """
 
-        def choose_theme(theme):
+        def choose_theme(theme: dict[str, Any]) -> None:
             settings.set("theme", theme["name"])
             self.main_form.view.refresh_theme()
             self.main_form.display.update_theme_taskbar_icon()
@@ -62,7 +64,6 @@ class ThemeIndicator(qt.QLabel):
                 self.theme_menu.removeAction(action)
                 action.setParent(None)
                 action.deleteLater()
-                action = None
         self.theme_menu = Menu(self)
         # Add the description label
         action_theme = qt.QAction("Select theme:", self.theme_menu)
@@ -76,12 +77,12 @@ class ThemeIndicator(qt.QLabel):
             action_theme.setIcon(icon)
             self.theme_menu.addAction(action_theme)
 
-    def set_image(self, image):
+    def set_image(self, image: str) -> None:
         raw_picture = qt.QPixmap(os.path.join(data.resources_directory, image))
         picture = raw_picture.scaled(16, 16, qt.Qt.AspectRatioMode.KeepAspectRatio)
         self.setPixmap(picture)
 
-    def restyle(self):
+    def restyle(self) -> None:
         self.setStyleSheet(
             """
 QLabel { 

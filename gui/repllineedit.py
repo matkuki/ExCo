@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import itertools
 import os
 import re
+from typing import Any
 
 import components.actionfilter
 import constants
@@ -30,31 +31,38 @@ class ReplLineEdit(qt.QLineEdit):
     """
 
     # Class variables  (class variables >> this means that these variables are shared accross instances of this class, until you assign a new value to them, then they become instance variables)
-    __interpreter: interpreter.CustomInterpreter = None  # Custom interpreter used with the REPL
-    __language: constants.ReplLanguage = None  # Language used by the interpreter
+    __interpreter: Any = None  # Custom interpreter used with the REPL
+    __language: constants.ReplLanguage = (
+        constants.ReplLanguage.Python
+    )  # Language used by the interpreter
     # List of characters to use for splitting the compare string for sequences. Minus (-) was taken out because it can appear in path names
-    _comparison_list = [".", "(", " ", "+", "-", "*", "%", ",", '"', "'"]
-    _reduced_comparison_list = ["(", " ", "+", "-", "*", "%", ",", '"', "'"]
+    _comparison_list: list[str] = [".", "(", " ", "+", "-", "*", "%", ",", '"', "'"]
+    _reduced_comparison_list: list[str] = ["(", " ", "+", "-", "*", "%", ",", '"', "'"]
     # Lists of autocompletions grouped by levels
-    _list_first_level_completions = None
-    _list_second_level_completions = None
+    _list_first_level_completions: list[str] | None = None
+    _list_second_level_completions: list[str] | None = None
     # Generator used to cycle through autocompletions
-    _ac_cycler = None
+    _ac_cycler: Any = None
     # Dictionary that holds the current buffer position, the whole buffer list and the currently typed input
-    _input_buffer = {"count": 0, "list": [], "current_input": ""}
+    _input_buffer: dict[str, Any] = {"count": 0, "list": [], "current_input": ""}
     # Flag that when set, make the next REPL evaluation not focus back on the REPL
-    _repl_focus_flag = False
+    _repl_focus_flag: bool = False
 
     # File for history persistence (using a .txt extension now for clarity)
-    _history_file_path = None
+    _history_file_path: str | None = None
     # Max lines to keep in memory for performance
-    _MAX_HISTORY_LINES = 2000
+    _MAX_HISTORY_LINES: int = 2000
 
     """
     Built-in and private functions
     """
 
-    def __init__(self, parent, main_form, interpreter_references=None):
+    def __init__(
+        self,
+        parent: Any,
+        main_form: Any,
+        interpreter_references: Any = None,
+    ) -> None:
         """Initialization"""
         # Initialize superclass class, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
@@ -81,9 +89,11 @@ class ReplLineEdit(qt.QLineEdit):
         self._history_file_path = settings.get("repl_history_filename_with_path")
         self._input_buffer_load()
 
-    def _input_buffer_load(self):
+    def _input_buffer_load(self) -> None:
         """Load the input buffer list from the static history text file."""
-        if not os.path.exists(self._history_file_path):
+        if self._history_file_path is None or not os.path.exists(
+            self._history_file_path
+        ):
             return
 
         try:
@@ -101,9 +111,11 @@ class ReplLineEdit(qt.QLineEdit):
                 )
         except IOError as e:
             # Handle file read errors gracefully
-            self.main_form.display.repl_display_error(f"Error loading REPL history from file: {e}")
+            self.main_form.display.repl_display_error(
+                f"Error loading REPL history from file: {e}"
+            )
 
-    def update_style(self):
+    def update_style(self) -> None:
         # REPL and REPL helper have to be set directly
         self.setStyleSheet(
             """
@@ -123,15 +135,19 @@ QLineEdit[indicated=true] {{
             )
         )
 
-    def indication_set(self):
+    def indication_set(self) -> None:
         self.setProperty("indicated", True)
-        self.style().unpolish(self)
-        self.style().polish(self)
+        style = self.style()
+        assert style is not None
+        style.unpolish(self)
+        style.polish(self)
 
-    def indication_reset(self):
+    def indication_reset(self) -> None:
         self.setProperty("indicated", False)
-        self.style().unpolish(self)
-        self.style().polish(self)
+        style = self.style()
+        assert style is not None
+        style.unpolish(self)
+        style.polish(self)
 
     def set_language(self, language: constants.ReplLanguage) -> None:
         self.__language = language
@@ -142,11 +158,11 @@ QLineEdit[indicated=true] {{
     def get_interpreter(self) -> interpreter.CustomInterpreter:
         return self.__interpreter
 
-    def _get_path_list(self, path_string):
+    def _get_path_list(self, path_string: str) -> list[str]:
         """
         Return a list of all directories and files if the path string is valid
         """
-        path_list = []
+        path_list: list[str] = []
         # Strip the path to the last forwardslash character
         base_path = path_string[: path_string.rfind("/") + 1]
         # Check if the base path string is a valid path
@@ -158,10 +174,12 @@ QLineEdit[indicated=true] {{
         # Return the path item list
         return path_list
 
-    def _filter_keypress(self, key_event):
+    def _filter_keypress(self, key_event: qt.QKeyEvent | None) -> None:
         """
         Filter keypress for appropriate action
         """
+        if key_event is None:
+            return
         pressed_key = key_event.key()
         # Reset the autocompletion cycler
         self._ac_cycler = None
@@ -201,7 +219,9 @@ QLineEdit[indicated=true] {{
                 # Detected ENTER key press, evaluate REPL text
                 self._repl_eval()
 
-    def _repl_eval(self, external_string=None, display_action=True):
+    def _repl_eval(
+        self, external_string: str | None = None, display_action: bool = True
+    ) -> Any:
         """
         Evaluate string entered into the REPL widget
         """
@@ -231,11 +251,17 @@ QLineEdit[indicated=true] {{
                 repl_messages.parent().setCurrentIndex(current_rm_index)
         # Evaluate the REPL text and store the result
         if self.__language == constants.ReplLanguage.Python:
-            eval_return = self.__interpreter.eval_command(current_command, display_action)
+            eval_return = self.__interpreter.eval_command(
+                current_command, display_action
+            )
         elif self.__language == constants.ReplLanguage.Hy:
-            eval_return = self.__interpreter.eval_command_hy(current_command, display_action)
+            eval_return = self.__interpreter.eval_command_hy(
+                current_command, display_action
+            )
         else:
-            raise Exception("Unsupported interpreter language: {}".format(self.__language))
+            raise Exception(
+                "Unsupported interpreter language: {}".format(self.__language)
+            )
         # Save text into the input buffer
         self._input_buffer_add(self.text())
         # Clear the REPL text
@@ -261,7 +287,7 @@ QLineEdit[indicated=true] {{
     REPL autocompletion functions
     """
 
-    def _display_autocompletion(self, ac_list):
+    def _display_autocompletion(self, ac_list: list[str]) -> None:
         """Show the autocompletion in the REPL"""
         # Check if there are no autocompletions and that there is no text after the cursor position
         if len(ac_list) > 0 and self.cursorPosition() == len(self.text()):
@@ -271,7 +297,7 @@ QLineEdit[indicated=true] {{
             # Select the added autocompletion text
             self.setSelection(start_pos, end_pos)
 
-    def _create_ac_cycler(self, autocompletion_list):
+    def _create_ac_cycler(self, autocompletion_list: list[str]) -> None:
         """Create a autocompletion cycler to cycle through all of the autocompletions"""
         if len(autocompletion_list) > 0:
             self._ac_cycler = itertools.cycle(autocompletion_list)
@@ -280,7 +306,7 @@ QLineEdit[indicated=true] {{
         else:
             self._ac_cycler = None
 
-    def _cycle_autocompletion(self):
+    def _cycle_autocompletion(self) -> None:
         """Cycle through autocompletion list"""
         # Return if there are no autocompletions
         if self._ac_cycler == None:
@@ -298,7 +324,7 @@ QLineEdit[indicated=true] {{
             end_pos = self.cursorPosition()
             self.setSelection(ac_start, end_pos)
 
-    def _input_buffer_cycle(self, direction=0):
+    def _input_buffer_cycle(self, direction: int = 0) -> None:
         """Cycle the input buffer into the selected direction"""
         # Check if the input buffer is empty
         if len(self._input_buffer["list"]) == 0:
@@ -320,7 +346,7 @@ QLineEdit[indicated=true] {{
                 self._input_buffer["count"] = 0
                 self.setText(self._input_buffer["current_input"])
 
-    def _input_buffer_add(self, entry):
+    def _input_buffer_add(self, entry: str) -> None:
         """Add a single value to the input buffer and append it to the history file."""
 
         # Check if there is any input text
@@ -346,21 +372,24 @@ QLineEdit[indicated=true] {{
         self._input_buffer["count"] = 0
         self._input_buffer["current_input"] = ""
 
-    def __input_buffer_append_file(self, entry):
+    def __input_buffer_append_file(self, entry: str) -> None:
         """Append a single entry to the history file for fast persistence."""
         try:
             # Open file in append mode ('a')
+            assert self._history_file_path is not None
             with open(self._history_file_path, "a", encoding="utf-8") as f:
                 f.write(entry + "\n")
         except IOError as e:
             # Handle file write errors gracefully
-            self.main_form.display.repl_display_error(f"Error appending REPL history to file: {e}")
+            self.main_form.display.repl_display_error(
+                f"Error appending REPL history to file: {e}"
+            )
 
-    def input_buffer_clear(self):
+    def input_buffer_clear(self) -> None:
         """Clear the input buffer, counter and current saved input"""
         self._input_buffer = {"count": 0, "list": [], "current_input": ""}
 
-    def _get_valid_sequence_list(self, string):
+    def _get_valid_sequence_list(self, string: str) -> list[str]:
         """
         Get the last one or two valid sequence, which will be compared to autocompletion list
         E.G. 1: "print(main.se" returns >> first = "se", second = "main"
@@ -397,16 +426,18 @@ QLineEdit[indicated=true] {{
             current_sequence = self.text()
         return [current_sequence, previous_sequence]
 
-    def _find_autocompletions(self, current_sequences_list):
+    def _find_autocompletions(self, current_sequences_list: list[str]) -> list[str]:
         """Check and display the current autocompletions, if there are any"""
         current_sequence = current_sequences_list[0]
         previous_sequence = current_sequences_list[1]
-        found_list = []
+        found_list: list[str] = []
         if previous_sequence != "":
-            for ref in self._list_second_level_completions:
+            for ref in self._list_second_level_completions or []:
                 if ref.startswith(previous_sequence + "." + current_sequence):
                     # Autocompletion found, delete the part of the autocompletion that is already written
-                    found_list.append(ref.replace(previous_sequence + "." + current_sequence, ""))
+                    found_list.append(
+                        ref.replace(previous_sequence + "." + current_sequence, "")
+                    )
         else:
             # Test if autocompletion is a path or an object
             if "/" in current_sequence or "\\" in current_sequence:
@@ -417,12 +448,14 @@ QLineEdit[indicated=true] {{
                 path_items = self._get_path_list(current_sequence)
                 for item in path_items:
                     if item.startswith(current_sequence):
-                        diff_index = re.search(current_sequence, item).end()
+                        match = re.search(current_sequence, item)
+                        assert match is not None
+                        diff_index = match.end()
                         # Autocompletion found, delete the part of the autocompletion that is already written
                         found_list.append(item[diff_index:])
             else:
                 # Object
-                for ref in self._list_first_level_completions:
+                for ref in self._list_first_level_completions or []:
                     if ref.startswith(current_sequence):
                         # Autocompletion found, delete the part of the autocompletion that is already written.
                         # ONLY THE FIRST INSTANCE OF THE ALREADY WRITTEN PART HAS TO BE REPLACED,
@@ -436,37 +469,43 @@ QLineEdit[indicated=true] {{
     Qt QLineEdit functions
     """
 
-    def event(self, event):
+    def event(self, event: qt.QEvent | None) -> bool:
         """Rereferenced/overloaded main QWidget event, that is executed before all other events of the widget"""
-        if (event.type() == qt.QEvent.Type.KeyPress) and (event.key() == qt.Qt.Key.Key_Tab):
+        if (
+            event is not None
+            and event.type() == qt.QEvent.Type.KeyPress
+            and isinstance(event, qt.QKeyEvent)
+            and event.key() == qt.Qt.Key.Key_Tab
+        ):
             self._cycle_autocompletion()
             return True
         return qt.QLineEdit.event(self, event)
 
-    def _keypress_decorator(func):
+    def _keypress_decorator(func: Any) -> Any:
         """A decorator for the QScintila KeypressEvent, to catch which key was pressed"""
 
-        def key_press(self, *args, **kwargs):
+        def key_press(self: Any, *args: Any, **kwargs: Any) -> None:
             func(self, *args, **kwargs)
             self._filter_keypress(args[0])
 
         return key_press
 
     @_keypress_decorator  # Add decorator to the keypress event
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: qt.QKeyEvent | None) -> None:
         """QScintila keyPressEvent, to catch which key was pressed"""
         # Return the key event
         return qt.QLineEdit.keyPressEvent(self, event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
         super().mousePressEvent(event)
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
 
-    def contextMenuEvent(self, event):
-        event.accept()
+    def contextMenuEvent(self, event: qt.QContextMenuEvent | None) -> None:
+        if event is not None:
+            event.accept()
 
-    def focusInEvent(self, event):
+    def focusInEvent(self, event: qt.QFocusEvent | None) -> None:
         """
         Event that fires when the REPL gets focus
         """
@@ -480,27 +519,33 @@ QLineEdit[indicated=true] {{
         # Hide the function wheel if it is shown
         self.main_form.view.hide_all_overlay_widgets()
         # Ignore the event
-        event.ignore()
+        if event is not None:
+            event.ignore()
         # Return the focus event
-        return qt.QLineEdit.focusInEvent(self, event)
+        qt.QLineEdit.focusInEvent(self, event)
 
-    def setFocus(self):
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
         """Overridden focus event"""
         # Execute the supeclass focus function
-        super().setFocus()
+        super().setFocus(reason)
         # Check indication
         self.main_form.view.indication_check()
 
-    def focusOutEvent(self, event):
+    def focusOutEvent(self, event: qt.QFocusEvent | None) -> None:
         """Event that fires when the REPL loses focus"""
         self.main_form.key_events_unlock()
         # Ignore the event
-        event.ignore()
+        if event is not None:
+            event.ignore()
         # Return the focus event
-        return qt.QLineEdit.focusOutEvent(self, event)
+        qt.QLineEdit.focusOutEvent(self, event)
 
-    def wheelEvent(self, wheel_event):
+    def wheelEvent(self, wheel_event: qt.QWheelEvent | None) -> None:
         """Overridden mouse wheel rotate event"""
+        if wheel_event is None:
+            return
         key_modifiers = qt.QApplication.keyboardModifiers()
         delta = wheel_event.angleDelta().y()
         if delta < 0:
@@ -519,7 +564,7 @@ QLineEdit[indicated=true] {{
             # Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
 
-    def increase_text_size(self):
+    def increase_text_size(self) -> None:
         """Increase size of the REPL text"""
         new_font = self.font()
         if new_font.pointSize() > 32:
@@ -530,7 +575,7 @@ QLineEdit[indicated=true] {{
         self.main_form.view.main_relation = new_font_metric.height() + 48
         self.main_form.view.refresh_main_splitter()
 
-    def decrease_text_size(self):
+    def decrease_text_size(self) -> None:
         """Decrease size of the REPL text"""
         new_font = self.font()
         if new_font.pointSize() < 12:
@@ -545,14 +590,21 @@ QLineEdit[indicated=true] {{
     REPL interactive interpreter functions
     """
 
-    def interpreter_update_references(self, new_references, first_level_list, second_level_list):
+    def interpreter_update_references(
+        self,
+        new_references: dict[str, Any],
+        first_level_list: list[str],
+        second_level_list: list[str],
+    ) -> None:
         """Update the references that can be accessed by the interactive interpreter"""
         # Update the interpreter with the new locals
         self.__interpreter.update_locals(new_references)
         self._list_first_level_completions = first_level_list
         self._list_second_level_completions = second_level_list
         # Extend the primary autocompletion with the useful custom interpreter methods
-        self._list_first_level_completions.extend(self.__interpreter.get_default_references())
+        self._list_first_level_completions.extend(
+            self.__interpreter.get_default_references()
+        )
         # Extend the primary autocompletion with the regular expression dictionary of the REPL CustomInterpreter
         self._list_first_level_completions.extend(self.__interpreter.dict_re_references)
         # The keyword dictionary is different from the references, look in the interpreter module
@@ -562,30 +614,45 @@ QLineEdit[indicated=true] {{
         ]
         self._list_first_level_completions.extend(ext_first_level)
         # Convert lists to sets and back to remove duplicates
-        self._list_first_level_completions = list(set(self._list_first_level_completions))
-        self._list_second_level_completions = list(set(self._list_second_level_completions))
+        self._list_first_level_completions = list(
+            set(self._list_first_level_completions)
+        )
+        self._list_second_level_completions = list(
+            set(self._list_second_level_completions)
+        )
         # Sort the new lists alphabetically
         self._list_first_level_completions.sort()
         self._list_second_level_completions.sort()
 
-    def interpreter_add_references(self, new_references):
+    def interpreter_add_references(self, new_references: list[str]) -> None:
         """Append new references to the existing REPL interpreter references"""
-        self._list_first_level_completions = list(self._list_first_level_completions)
+        self._list_first_level_completions = list(
+            self._list_first_level_completions or []
+        )
         # Extend the primary autocompletions
         self._list_first_level_completions.extend(new_references)
         # Convert list to set and back to remove duplicates
-        self._list_first_level_completions = list(set(self._list_first_level_completions))
+        self._list_first_level_completions = list(
+            set(self._list_first_level_completions)
+        )
         # Sort the new lists alphabetically
         self._list_first_level_completions.sort()
 
-    def interpreter_reset_references(self, new_references, first_level_list, second_level_list):
+    def interpreter_reset_references(
+        self,
+        new_references: dict[str, Any],
+        first_level_list: list[str],
+        second_level_list: list[str],
+    ) -> None:
         """Clear all of the interpreter references and update them with the new ones"""
         # Clear the references
         self.__interpreter.reset_locals()
         # Update the references
-        self.interpreter_update_references(new_references, first_level_list, second_level_list)
+        self.interpreter_update_references(
+            new_references, first_level_list, second_level_list
+        )
 
-    def interpreter_update_windows(self, main, upper, lower):
+    def interpreter_update_windows(self, main: Any, upper: Any, lower: Any) -> None:
         """Update the Main, Upper and Lower window references of the interpreter"""
         self.__interpreter.locals["main"] = main
         self.__interpreter.locals["upper"] = upper
@@ -595,7 +662,7 @@ QLineEdit[indicated=true] {{
     Various ReplLineEdit functions
     """
 
-    def skip_next_repl_focus(self):
+    def skip_next_repl_focus(self) -> None:
         """
         Function that sets the flag that makes the next REPL evaluation
         skip setting focus back to the ReplLineEdit
@@ -603,14 +670,14 @@ QLineEdit[indicated=true] {{
         # Set the skip focus flag
         self._repl_focus_flag = True
 
-    def get_repl_references(self):
+    def get_repl_references(self) -> dict[str, Any]:
         """Create and return a dictionary that holds all the REPL references that will be used in the interpreter module"""
         return dict(
             repl=self,
             interpreter=self.__interpreter,
         )
 
-    def repeat_last_repl_eval(self):
+    def repeat_last_repl_eval(self) -> None:
         """Repeat the last command that was evaluated by the REPL if any"""
         # Check the input buffer
         if len(self._input_buffer["list"]) > 0:
@@ -619,9 +686,11 @@ QLineEdit[indicated=true] {{
             # Evaluate REPL text
             self._repl_eval()
         else:
-            self.main_form.display.write_to_statusbar("No commands in REPL input buffer!", 1000)
+            self.main_form.display.write_to_statusbar(
+                "No commands in REPL input buffer!", 1000
+            )
 
-    def external_eval_request(self, eval_string, calling_widget):
+    def external_eval_request(self, eval_string: str, calling_widget: Any) -> None:
         """An external evaluation request from the ReplHelper or another widget"""
         # Evaluate the external string
         self._repl_eval(eval_string)

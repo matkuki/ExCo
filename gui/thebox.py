@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import functools
 import os
 import traceback
+from typing import Any, cast
 
 import constants
 import data
@@ -40,12 +41,19 @@ class TheBoxSplitterHandle(qt.QSplitterHandle):
 
 
 class TheBox(qt.QSplitter):
-    name = None
-    parent_name = None
-    generated_name = None
-    main_form = None
+    name: str | None = None
+    parent_name: str | None = None
+    generated_name: str | None = None
+    main_form: Any = None
 
-    def __init__(self, name, parent_name, orientation, parent, main_form):
+    def __init__(
+        self,
+        name: str,
+        parent_name: str,
+        orientation: qt.Qt.Orientation,
+        parent: Any,
+        main_form: Any,
+    ) -> None:
         super().__init__(orientation, parent)
         self.main_form = main_form
         self._generate_name(name, parent_name)
@@ -56,12 +64,12 @@ class TheBox(qt.QSplitter):
         # Update style
         self.update_style()
 
-    def createHandle(self):
+    def createHandle(self) -> qt.QSplitterHandle:
         handle = TheBoxSplitterHandle(self.orientation(), self)
         handle.doubleClicked.connect(self.handle_double_clicked)
         return handle
 
-    def _generate_name(self, name, parent_name):
+    def _generate_name(self, name: str, parent_name: str) -> None:
         self.name = name
         self.parent_name = parent_name
         if self.name == "":
@@ -70,23 +78,23 @@ class TheBox(qt.QSplitter):
             self.generated_name = ".".join([parent_name, name])
         self.setObjectName(self.generated_name)
 
-    def _get_number_of_tabs(self):
+    def _get_number_of_tabs(self) -> int:
         count = 0
         for t in self.main_form.get_all_windows():
             if self.generated_name in t.objectName():
                 count += 1
         return count
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return self.count() == 0
 
-    def get_orientation_letter(self):
+    def get_orientation_letter(self) -> str:
         if self.orientation() == qt.Qt.Orientation.Vertical:
             return "V"
         else:
             return "H"
 
-    def update_orientations(self):
+    def update_orientations(self) -> None:
         if self.orientation() == qt.Qt.Orientation.Vertical:
             name = functions.right_replace(self.objectName(), "H", "V", 1)
         else:
@@ -97,7 +105,12 @@ class TheBox(qt.QSplitter):
         if isinstance(parent, TheBox) and parent.objectName() != "Main":
             parent.update_orientations()
 
-    def add_box(self, orientation, index=None, add_tabs=True):
+    def add_box(
+        self,
+        orientation: qt.Qt.Orientation,
+        index: int | None = None,
+        add_tabs: bool = True,
+    ) -> "TheBox":
         if orientation == qt.Qt.Orientation.Vertical:
             name_symbol = "V"
         else:
@@ -108,6 +121,7 @@ class TheBox(qt.QSplitter):
             # Count needed indexes
             new_index = self.count()
             name = f"{name_symbol}{new_index}"
+        assert self.generated_name is not None
         box = TheBox(name, self.generated_name, orientation, self, self.main_form)
         if index is not None:
             self.insertWidget(index, box)
@@ -116,14 +130,16 @@ class TheBox(qt.QSplitter):
         if add_tabs == True:
             tabs_number = self._get_number_of_tabs()
             tab_widget = tabwidget.TabWidget(self, self.main_form, self)
+            assert box.generated_name is not None
             tab_widget.setObjectName(box.generated_name + f".Tabs{tabs_number}")
             box.addWidget(tab_widget)
         functions.process_events()
         return box
 
-    def add_tabs(self, index=None):
+    def add_tabs(self, index: int | None = None) -> tabwidget.TabWidget:
         tabs_number = self._get_number_of_tabs()
         tab_widget = tabwidget.TabWidget(self, self.main_form, self)
+        assert self.generated_name is not None
         tab_widget.setObjectName(self.generated_name + f".Tabs{tabs_number}")
         if index is not None:
             self.insertWidget(index, tab_widget)
@@ -132,7 +148,7 @@ class TheBox(qt.QSplitter):
         functions.process_events()
         return tab_widget
 
-    def rename(self, new_name):
+    def rename(self, new_name: str) -> None:
         current_name = self.objectName()
         self.setObjectName(new_name)
         self.generated_name = new_name
@@ -145,20 +161,24 @@ class TheBox(qt.QSplitter):
             if current_name in on:
                 t.setObjectName(on.replace(current_name, new_name))
 
-    def clear_all(self):
+    def clear_all(self) -> None:
         for i in reversed(range(self.count())):
-            self.widget(i).setParent(None)
+            widget = self.widget(i)
+            if widget is not None:
+                widget.setParent(None)
         for box in self.findChildren(TheBox):
             box.setParent(None)
         functions.process_events()
 
-    def get_child_boxes(self):
+    def get_child_boxes(self) -> dict[Any, Any]:
         import gui.terminal as terminal
 
         classes, inverted_classes = self.main_form.view.get_layout_classes()
-        children = {}
+        children: dict[Any, Any] = {}
         for i in range(self.count()):
             child = self.widget(i)
+            if child is None:
+                continue
             if isinstance(child, TheBox):
                 orientation = child.get_orientation_letter()
                 sizes = child.sizes()
@@ -173,11 +193,14 @@ class TheBox(qt.QSplitter):
                     else sizes,
                 }
             else:
-                tabs = {}
-                for j in range(child.count()):
-                    w = child.widget(j)
-                    tab_text = child.tabText(j)
-                    name = w.name
+                tabs_widget = cast(tabwidget.TabWidget, child)
+                tabs: dict[str, Any] = {}
+                for j in range(tabs_widget.count()):
+                    w = tabs_widget.widget(j)
+                    if w is None:
+                        continue
+                    tab_text = tabs_widget.tabText(j)
+                    name: Any = getattr(w, "name", None)
                     # Custom editor
                     if isinstance(w, customeditor.CustomEditor):
                         name = w.save_path
@@ -185,6 +208,7 @@ class TheBox(qt.QSplitter):
                             name = tab_text
                         line, index = w.getCursorPosition()
                         first_visible_line = w.firstVisibleLine()
+                        assert w.internals is not None
                         tabs[name] = (
                             inverted_classes[w.__class__],
                             j,
@@ -206,6 +230,7 @@ class TheBox(qt.QSplitter):
                     elif isinstance(w, treedisplays.TreeExplorer):
                         # Tree explorer
                         tree_name = "{}-{}".format(name, j)
+                        assert w.internals is not None
                         tabs[tree_name] = (
                             inverted_classes[w.__class__],
                             j,
@@ -218,6 +243,7 @@ class TheBox(qt.QSplitter):
                     elif isinstance(w, hexview.HexView):
                         # Hex-view
                         hexview_name = "{}-{}".format(name, j)
+                        assert w.internals is not None
                         tabs[hexview_name] = (
                             inverted_classes[w.__class__],
                             j,
@@ -229,6 +255,7 @@ class TheBox(qt.QSplitter):
                     elif isinstance(w, markdownviewer.MarkdownViewer):
                         # Markdown viewer
                         markdownviewer_name = "{}-{}".format(name, j)
+                        assert w.internals is not None
                         tabs[markdownviewer_name] = (
                             inverted_classes[w.__class__],
                             j,
@@ -240,6 +267,7 @@ class TheBox(qt.QSplitter):
                     elif isinstance(w, terminal.Terminal):
                         # Terminal
                         terminal_name = "{}-{}".format(name, j)
+                        assert w.internals is not None
                         tabs[terminal_name] = (
                             inverted_classes[w.__class__],
                             j,
@@ -252,24 +280,24 @@ class TheBox(qt.QSplitter):
                     else:
                         # tabs[name] = inverted_classes[w.__class__]
                         pass
-                tabs["CURRENT-INDEX"] = child.currentIndex()
+                tabs["CURRENT-INDEX"] = tabs_widget.currentIndex()
                 children[i] = {"TABS": tabs}
         return children
 
-    def update_style(self):
+    def update_style(self) -> None:
         functions.process_events()
 
     """
     Overridden functions
     """
 
-    def resizeEvent(self, e):
+    def resizeEvent(self, e: qt.QResizeEvent | None) -> None:
         super().resizeEvent(e)
         mouse_buttons = data.application.mouseButtons()
         if mouse_buttons == qt.Qt.MouseButton.LeftButton:
             self.main_form.view.layout_save()
 
-    def splitterMoveEvent(self, index, pos):
+    def splitterMoveEvent(self, index: int, pos: int) -> None:
         mouse_buttons = data.application.mouseButtons()
         if mouse_buttons == qt.Qt.MouseButton.LeftButton:
             self.main_form.view.layout_save()

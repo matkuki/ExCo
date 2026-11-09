@@ -11,16 +11,25 @@ import data
 import settings
 import constants
 
+from typing import Any
+
 from gui.repllineedit import *
 from gui.replhelper import *
 
 
 class ReplBox(qt.QGroupBox):
-    main_form = None
-    repl = None
-    repl_helper = None
+    main_form: Any = None
+    repl: Any = None
+    repl_helper: Any = None
+    repl_state: constants.ReplType = constants.ReplType.SINGLE_LINE
 
-    def __init__(self, parent, interpreter_references, *args, **kwargs):
+    def __init__(
+        self,
+        parent: Any,
+        interpreter_references: Any,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(parent)
         self.setObjectName("REPL_Box")
         self.main_form = parent
@@ -73,19 +82,20 @@ class ReplBox(qt.QGroupBox):
                     new_lang = constants.ReplLanguage(i + 1)
                 self.set_repl(self.repl_state, new_lang)
                 self.main_form.display.repl_indicator.set_language(new_lang)
-                return
+                return new_lang
+        raise Exception("Unsupported REPL language")
 
-    def indication_set(self):
+    def indication_set(self) -> None:
         self.set_style(True)
         self.repl.update_style()
         self.repl.indication_set()
 
-    def indication_reset(self):
+    def indication_reset(self) -> None:
         self.set_style(False)
         self.repl.update_style()
         self.repl.indication_reset()
 
-    def set_style(self, indicated):
+    def set_style(self, indicated: bool) -> None:
         if indicated:
             background = settings.get_theme()["indication"]["activebackground"]
             border = settings.get_theme()["indication"]["activeborder"]

@@ -6,7 +6,7 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-from typing import Any, Callable, Dict
+from typing import TYPE_CHECKING, Any, Callable
 
 import qt
 import themes
@@ -14,7 +14,7 @@ import themes
 from settings.settings import SettingsManipulator, Sessions
 
 __settings_manipulator: SettingsManipulator = SettingsManipulator()
-__theme_cache: Dict[str, Dict[str, Any]] = {}
+__theme_cache: dict[str, dict[str, Any]] = {}
 
 
 def get(name: str) -> Any:
@@ -36,7 +36,7 @@ def disconnect_change(callback: Callable[[str, Any], None]) -> None:
     __settings_manipulator.remove_change_listener(callback)
 
 
-def get_theme() -> dict:
+def get_theme() -> dict[str, Any]:
     theme_name = __settings_manipulator.get("theme")
     if theme_name not in __theme_cache.keys():
         __theme_cache[theme_name] = themes.get(theme_name)
@@ -51,14 +51,14 @@ def set(name: str, value: Any) -> None:
     __settings_manipulator.set(name, value)
 
 
-def get_current_font():
+def get_current_font() -> qt.QFont:
     return qt.QFont(
         __settings_manipulator.get("current_font_name"),
         int(__settings_manipulator.get("current_font_size")),
     )
 
 
-def get_editor_font():
+def get_editor_font() -> qt.QFont:
     return qt.QFont(
         __settings_manipulator.get("current_editor_font_name"),
         int(__settings_manipulator.get("current_editor_font_size")),
@@ -91,16 +91,22 @@ def get_menu_font() -> qt.QFont:
 # This list specifies the names under which the functionality will be
 # exposed as global functions in the current module's namespace.
 # These names form the 'exposed API'.
-exposed_api_names = ["load", "save_last_layout", "add_recent_file"]
+exposed_api_names: list[str] = [
+    "load",
+    "save_last_layout",
+    "add_recent_file",
+    "clear_recent_files",
+]
 
 # This list maps the desired exposed API names to the actual method names
 # on the internal object (which is assumed to be __settings_manipulator).
 # 'method' is the name of the function inside the class/module.
 # 'exposed_function' is the name it will be given in the current global scope.
-exposed_api_map = [
+exposed_api_map: list[dict[str, str]] = [
     {"method": "load_settings", "exposed_function": "load"},
     {"method": "save_last_layout", "exposed_function": "save_last_layout"},
     {"method": "add_recent_file", "exposed_function": "add_recent_file"},
+    {"method": "clear_recent_files", "exposed_function": "clear_recent_files"},
 ]
 
 # --- Dynamic Function Definition ---
@@ -118,10 +124,10 @@ for mapping in exposed_api_map:
     # 1. Define a function factory (maker_proxy) that creates the actual proxy function.
     # This is a critical step to ensure that 'method_name' is captured correctly
     # for each proxy function (a standard Python closure-in-a-loop fix).
-    def make_proxy(method_name):
+    def make_proxy(method_name: str) -> Callable[..., Any]:
         # 2. This inner function (proxy) is the one that will be exposed.
         # It takes any arguments/keyword arguments passed to it.
-        def proxy(*args, **kwargs):
+        def proxy(*args: Any, **kwargs: Any) -> Any:
             # 3. Call the actual method on the internal settings object.
             # 'getattr' is used to look up the method by its string name.
             return getattr(__settings_manipulator, method_name)(*args, **kwargs)
@@ -138,3 +144,16 @@ for mapping in exposed_api_map:
 # After the loop, the current module will have global functions like:
 # load(*args, **kwargs) -> calls __settings_manipulator.load_settings(*args, **kwargs)
 # save_last_layout(*args, **kwargs) -> calls __settings_manipulator.save_last_layout(*args, **kwargs)
+
+# --- Static typing ---
+# The proxies above are created dynamically, so a type checker cannot see them.
+# These stubs declare the same signatures for static analysis only.
+if TYPE_CHECKING:
+
+    def load() -> bool: ...
+
+    def save_last_layout(layout: Any) -> None: ...
+
+    def add_recent_file(new_file: str) -> None: ...
+
+    def clear_recent_files() -> None: ...

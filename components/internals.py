@@ -11,6 +11,7 @@ import math
 import typing
 import importlib
 import traceback
+from typing import Any
 
 import qt
 import data
@@ -23,13 +24,22 @@ class Internals:
     Icon manipulator for a widget inside a basic widget
     """
 
-    _parent = None
-    __tab_widget = None
-    corner_groupbox = None
-    __id_counter = 0
-    __id = None
+    _parent: Any = None
+    __tab_widget: Any = None
+    corner_groupbox: qt.QGroupBox | None = None
+    __id_counter: int = 0
+    __id: int = 0
+    __module_customeditor: Any = None
+    __module_plaineditor: Any = None
+    __module_tabwidget: Any = None
+    __module_textdiffer: Any = None
 
-    def __init__(self, parent=None, tab_widget=None, forced_id=None):
+    def __init__(
+        self,
+        parent: Any = None,
+        tab_widget: Any = None,
+        forced_id: int | None = None,
+    ) -> None:
         self._parent = parent
         self.__tab_widget = tab_widget
         if forced_id:
@@ -43,13 +53,13 @@ class Internals:
         self.__module_tabwidget = importlib.import_module("gui.tabwidget")
         self.__module_textdiffer = importlib.import_module("gui.textdiffer")
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.remove_corner_groupbox()
 
-    def get_id(self):
+    def get_id(self) -> int:
         return self.__id
 
-    def set_icon(self, obj, icon):
+    def set_icon(self, obj: Any, icon: Any) -> None:
         """
         Set the current icon and update it by sending the signal to the
         parent basic widget
@@ -57,10 +67,10 @@ class Internals:
         obj.current_icon = icon
         self.update_icon(obj)
 
-    def update_tab_widget(self, new_tab_widget):
+    def update_tab_widget(self, new_tab_widget: Any) -> None:
         self.__tab_widget = new_tab_widget
 
-    def update_icon(self, obj):
+    def update_icon(self, obj: Any) -> None:
         try:
             self.__tab_widget.parent()
         except:
@@ -84,25 +94,27 @@ class Internals:
         elif hasattr(obj, "_parent") and obj.current_icon is not None:
             obj._parent.update_tab_icon(obj)
 
-    def update_corner_widget(self, obj):
+    def update_corner_widget(self, obj: Any) -> bool | None:
         if self.corner_groupbox is not None:
             try:
                 self.__tab_widget.parent()
             except:
                 self.__del__()
-                return
+                return None
             tab_widget = self.__tab_widget
             self.show_corner_groupbox(tab_widget)
             return True
         else:
             return False
 
-    def remove_corner_groupbox(self):
+    def remove_corner_groupbox(self) -> None:
         if self.corner_groupbox is None:
             return
         self.corner_groupbox = None
 
-    def create_corner_button(self, icon, tooltip, function):
+    def create_corner_button(
+        self, icon: Any, tooltip: str, function: Any
+    ) -> qt.QToolButton:
         button = qt.QToolButton()
         if isinstance(icon, qt.QIcon):
             button.setIcon(icon)
@@ -113,7 +125,13 @@ class Internals:
         button.clicked.connect(function)
         return button
 
-    def add_corner_button(self, icon, tooltip, function, index=None):
+    def add_corner_button(
+        self,
+        icon: Any,
+        tooltip: str,
+        function: Any,
+        index: int | None = None,
+    ) -> int | None:
         try:
             self.__tab_widget.parent()
         except:
@@ -121,10 +139,12 @@ class Internals:
             return None
         # Create the group box for buttons if needed
         reinit = False
-        try:
-            layout = self.corner_groupbox.layout()
-        except:
-            reinit = True
+        layout: qt.QLayout | None = None
+        if self.corner_groupbox is not None:
+            try:
+                layout = self.corner_groupbox.layout()
+            except:
+                reinit = True
         if self.corner_groupbox is None or reinit == True:
             self.corner_groupbox = qt.QGroupBox(self.__tab_widget)
             corner_layout = qt.QHBoxLayout()
@@ -136,44 +156,67 @@ class Internals:
         # Add the button (left-to-right; index 0 is the leftmost button)
         button = self.create_corner_button(icon, tooltip, function)
         layout = self.corner_groupbox.layout()
+        assert isinstance(layout, qt.QBoxLayout)
         button_index = index if index is not None else layout.count()
         layout.insertWidget(button_index, button)
         self._restyle_corner_button_icons(layout)
         return button_index
 
-    def _restyle_corner_button_icons(self, layout):
+    def _restyle_corner_button_icons(self, layout: qt.QLayout) -> None:
         for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if not isinstance(widget, qt.QToolButton):
+                continue
             if settings.get("custom_menu_scale") is not None:
-                layout.itemAt(i).widget().setIconSize(
+                widget.setIconSize(
                     qt.QSize(
                         settings.get("custom_menu_scale"),
                         settings.get("custom_menu_scale"),
                     )
                 )
 
-    def restyle_corner_button_icons(self):
+    def restyle_corner_button_icons(self) -> None:
         if self.corner_groupbox is None:
             return
         layout = self.corner_groupbox.layout()
+        if layout is None:
+            return
         for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if not isinstance(widget, qt.QToolButton):
+                continue
             if settings.get("custom_menu_scale") is not None:
-                layout.itemAt(i).widget().setIconSize(
+                widget.setIconSize(
                     qt.QSize(
                         settings.get("custom_menu_scale"),
                         settings.get("custom_menu_scale"),
                     )
                 )
 
-    def update_corner_button_icon(self, icon, index=0):
+    def update_corner_button_icon(self, icon: Any, index: int = 0) -> None:
         if self.corner_groupbox is None:
             return
         layout = self.corner_groupbox.layout()
+        if layout is None:
+            return
+        item = layout.itemAt(index)
+        if item is None:
+            return
+        widget = item.widget()
+        if not isinstance(widget, qt.QToolButton):
+            return
         if isinstance(icon, qt.QIcon):
-            layout.itemAt(index).widget().setIcon(icon)
+            widget.setIcon(icon)
         else:
-            layout.itemAt(index).widget().setIcon(functions.create_icon(icon))
+            widget.setIcon(functions.create_icon(icon))
 
-    def show_corner_groupbox(self, tab_widget):
+    def show_corner_groupbox(self, tab_widget: Any) -> None:
         if self.corner_groupbox is None:
             return
         try:

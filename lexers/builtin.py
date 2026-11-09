@@ -276,7 +276,7 @@ class AVS(qt.QsciLexerAVS):
 
 
 class Bash(qt.QsciLexerBash):
-    styles = {
+    styles: dict[str, int] = {
         "Backticks": 11,
         "Comment": 2,
         "Default": 0,
@@ -293,11 +293,11 @@ class Bash(qt.QsciLexerBash):
         "SingleQuotedString": 6,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -515,7 +515,7 @@ class Bash(qt.QsciLexerBash):
 
 
 class Batch(qt.QsciLexerBatch):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "Default": 0,
         "ExternalCommand": 5,
@@ -526,11 +526,11 @@ class Batch(qt.QsciLexerBatch):
         "Variable": 6,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -658,7 +658,7 @@ class Batch(qt.QsciLexerBatch):
 
 
 class CMake(qt.QsciLexerCMake):
-    styles = {
+    styles: dict[str, int] = {
         "BlockForeach": 10,
         "BlockIf": 11,
         "BlockMacro": 12,
@@ -676,11 +676,11 @@ class CMake(qt.QsciLexerCMake):
         "Variable": 6,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -913,7 +913,7 @@ class CMake(qt.QsciLexerCMake):
 
 
 class CPP(qt.QsciLexerCPP):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "CommentDoc": 3,
         "CommentDocKeyword": 17,
@@ -972,11 +972,11 @@ class CPP(qt.QsciLexerCPP):
         "VerbatimString": 13,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -1824,7 +1824,7 @@ class CPP(qt.QsciLexerCPP):
 
 
 class CSS(qt.QsciLexerCSS):
-    styles = {
+    styles: dict[str, int] = {
         "AtRule": 12,
         "Attribute": 16,
         "CSS1Property": 6,
@@ -1851,11 +1851,11 @@ class CSS(qt.QsciLexerCSS):
         "Variable": 23,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -2223,7 +2223,7 @@ class CSS(qt.QsciLexerCSS):
 
 
 class CSharp(qt.QsciLexerCSharp):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "CommentDoc": 3,
         "CommentDocKeyword": 17,
@@ -2282,11 +2282,11 @@ class CSharp(qt.QsciLexerCSharp):
         "VerbatimString": 13,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -3134,7 +3134,7 @@ class CSharp(qt.QsciLexerCSharp):
 
 
 class CoffeeScript(qt.QsciLexerCoffeeScript):
-    styles = {
+    styles: dict[str, int] = {
         "BlockRegex": 23,
         "BlockRegexComment": 24,
         "Comment": 1,
@@ -3161,11 +3161,11 @@ class CoffeeScript(qt.QsciLexerCoffeeScript):
         "VerbatimString": 13,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -3533,13 +3533,13 @@ class CoffeeScript(qt.QsciLexerCoffeeScript):
 
 
 class Custom(qt.QsciLexerCustom):
-    styles = {}
+    styles: dict[str, int] = {}
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -3547,7 +3547,7 @@ class Custom(qt.QsciLexerCustom):
 
 
 class D(qt.QsciLexerD):
-    styles = {
+    styles: dict[str, int] = {
         "BackquoteString": 18,
         "Character": 12,
         "Comment": 1,
@@ -3573,11 +3573,11 @@ class D(qt.QsciLexerD):
         "UnclosedString": 11,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -3930,7 +3930,7 @@ class D(qt.QsciLexerD):
 
 
 class Diff(qt.QsciLexerDiff):
-    styles = {
+    styles: dict[str, int] = {
         "AddingPatchAdded": 8,
         "AddingPatchRemoved": 10,
         "Command": 2,
@@ -3945,11 +3945,11 @@ class Diff(qt.QsciLexerDiff):
         "RemovingPatchRemoved": 11,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -4137,7 +4137,7 @@ class Diff(qt.QsciLexerDiff):
 
 
 class Fortran77(qt.QsciLexerFortran77):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "Continuation": 14,
         "Default": 0,
@@ -4155,11 +4155,11 @@ class Fortran77(qt.QsciLexerFortran77):
         "UnclosedString": 5,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -4392,7 +4392,7 @@ class Fortran77(qt.QsciLexerFortran77):
 
 
 class Fortran(qt.QsciLexerFortran):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "Continuation": 14,
         "Default": 0,
@@ -4410,11 +4410,11 @@ class Fortran(qt.QsciLexerFortran):
         "UnclosedString": 5,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -4647,7 +4647,7 @@ class Fortran(qt.QsciLexerFortran):
 
 
 class HTML(qt.QsciLexerHTML):
-    styles = {
+    styles: dict[str, int] = {
         "ASPAtStart": 15,
         "ASPJavaScriptComment": 57,
         "ASPJavaScriptCommentDoc": 59,
@@ -4760,11 +4760,11 @@ class HTML(qt.QsciLexerHTML):
         "XMLTagEnd": 11,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -6422,7 +6422,7 @@ class HTML(qt.QsciLexerHTML):
 
 
 class IDL(qt.QsciLexerIDL):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "CommentDoc": 3,
         "CommentDocKeyword": 17,
@@ -6481,11 +6481,11 @@ class IDL(qt.QsciLexerIDL):
         "VerbatimString": 13,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -7333,7 +7333,7 @@ class IDL(qt.QsciLexerIDL):
 
 
 class JSON(qt.QsciLexerJSON):
-    styles = {
+    styles: dict[str, int] = {
         "CommentBlock": 7,
         "CommentLine": 6,
         "Default": 0,
@@ -7350,11 +7350,11 @@ class JSON(qt.QsciLexerJSON):
         "UnclosedString": 3,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -7572,7 +7572,7 @@ class JSON(qt.QsciLexerJSON):
 
 
 class Java(qt.QsciLexerJava):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "CommentDoc": 3,
         "CommentDocKeyword": 17,
@@ -7631,11 +7631,11 @@ class Java(qt.QsciLexerJava):
         "VerbatimString": 13,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -8483,7 +8483,7 @@ class Java(qt.QsciLexerJava):
 
 
 class JavaScript(qt.QsciLexerJavaScript):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "CommentDoc": 3,
         "CommentDocKeyword": 17,
@@ -8542,11 +8542,11 @@ class JavaScript(qt.QsciLexerJavaScript):
         "VerbatimString": 13,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -9394,7 +9394,7 @@ class JavaScript(qt.QsciLexerJavaScript):
 
 
 class Lua(qt.QsciLexerLua):
-    styles = {
+    styles: dict[str, int] = {
         "BasicFunctions": 13,
         "Character": 7,
         "Comment": 1,
@@ -9417,11 +9417,11 @@ class Lua(qt.QsciLexerLua):
         "UnclosedString": 12,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -9729,7 +9729,7 @@ class Lua(qt.QsciLexerLua):
 
 
 class Makefile(qt.QsciLexerMakefile):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "Default": 0,
         "Error": 9,
@@ -9739,11 +9739,11 @@ class Makefile(qt.QsciLexerMakefile):
         "Variable": 3,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -9856,7 +9856,7 @@ class Makefile(qt.QsciLexerMakefile):
 
 
 class Markdown(qt.QsciLexerMarkdown):
-    styles = {
+    styles: dict[str, int] = {
         "BlockQuote": 15,
         "CodeBackticks": 19,
         "CodeBlock": 21,
@@ -9881,11 +9881,11 @@ class Markdown(qt.QsciLexerMarkdown):
         "UnorderedListItem": 13,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -9908,7 +9908,7 @@ class Markdown(qt.QsciLexerMarkdown):
 
 
 class Matlab(qt.QsciLexerMatlab):
-    styles = {
+    styles: dict[str, int] = {
         "Command": 2,
         "Comment": 1,
         "Default": 0,
@@ -9920,11 +9920,11 @@ class Matlab(qt.QsciLexerMatlab):
         "SingleQuotedString": 5,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -10067,7 +10067,7 @@ class Matlab(qt.QsciLexerMatlab):
 
 
 class Octave(qt.QsciLexerOctave):
-    styles = {
+    styles: dict[str, int] = {
         "Command": 2,
         "Comment": 1,
         "Default": 0,
@@ -10079,11 +10079,11 @@ class Octave(qt.QsciLexerOctave):
         "SingleQuotedString": 5,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -10226,7 +10226,7 @@ class Octave(qt.QsciLexerOctave):
 
 
 class PO(qt.QsciLexerPO):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "Default": 0,
         "Flags": 11,
@@ -10244,11 +10244,11 @@ class PO(qt.QsciLexerPO):
         "Reference": 10,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -10481,7 +10481,7 @@ class PO(qt.QsciLexerPO):
 
 
 class POV(qt.QsciLexerPOV):
-    styles = {
+    styles: dict[str, int] = {
         "BadDirective": 9,
         "Comment": 1,
         "CommentLine": 2,
@@ -10501,11 +10501,11 @@ class POV(qt.QsciLexerPOV):
         "UnclosedString": 7,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -10768,7 +10768,7 @@ class POV(qt.QsciLexerPOV):
 
 
 class Pascal(qt.QsciLexerPascal):
-    styles = {
+    styles: dict[str, int] = {
         "Asm": 14,
         "Character": 12,
         "Comment": 2,
@@ -10786,11 +10786,11 @@ class Pascal(qt.QsciLexerPascal):
         "UnclosedString": 11,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -11023,7 +11023,7 @@ class Pascal(qt.QsciLexerPascal):
 
 
 class Perl(qt.QsciLexerPerl):
-    styles = {
+    styles: dict[str, int] = {
         "Array": 13,
         "BacktickHereDocument": 25,
         "BacktickHereDocumentVar": 62,
@@ -11067,11 +11067,11 @@ class Perl(qt.QsciLexerPerl):
         "Translation": 44,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -11694,7 +11694,7 @@ class Perl(qt.QsciLexerPerl):
 
 
 class PostScript(qt.QsciLexerPostScript):
-    styles = {
+    styles: dict[str, int] = {
         "ArrayParenthesis": 9,
         "BadStringCharacter": 15,
         "Base85String": 14,
@@ -11713,11 +11713,11 @@ class PostScript(qt.QsciLexerPostScript):
         "Text": 12,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -11965,7 +11965,7 @@ class PostScript(qt.QsciLexerPostScript):
 
 
 class Properties(qt.QsciLexerProperties):
-    styles = {
+    styles: dict[str, int] = {
         "Assignment": 3,
         "Comment": 1,
         "Default": 0,
@@ -11974,11 +11974,11 @@ class Properties(qt.QsciLexerProperties):
         "Section": 2,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -12076,7 +12076,7 @@ class Properties(qt.QsciLexerProperties):
 
 
 class Ruby(qt.QsciLexerRuby):
-    styles = {
+    styles: dict[str, int] = {
         "Backticks": 18,
         "ClassName": 8,
         "ClassVariable": 17,
@@ -12110,11 +12110,11 @@ class Ruby(qt.QsciLexerRuby):
         "Symbol": 14,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -12587,7 +12587,7 @@ class Ruby(qt.QsciLexerRuby):
 
 
 class SQL(qt.QsciLexerSQL):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "CommentDoc": 3,
         "CommentDocKeyword": 17,
@@ -12612,11 +12612,11 @@ class SQL(qt.QsciLexerSQL):
         "SingleQuotedString": 7,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -12954,7 +12954,7 @@ class SQL(qt.QsciLexerSQL):
 
 
 class Spice(qt.QsciLexerSpice):
-    styles = {
+    styles: dict[str, int] = {
         "Command": 2,
         "Comment": 8,
         "Default": 0,
@@ -12966,11 +12966,11 @@ class Spice(qt.QsciLexerSpice):
         "Value": 7,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -13113,7 +13113,7 @@ class Spice(qt.QsciLexerSpice):
 
 
 class TCL(qt.QsciLexerTCL):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "CommentBlock": 21,
         "CommentBox": 20,
@@ -13138,11 +13138,11 @@ class TCL(qt.QsciLexerTCL):
         "TkKeyword": 13,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -13480,7 +13480,7 @@ class TCL(qt.QsciLexerTCL):
 
 
 class TeX(qt.QsciLexerTeX):
-    styles = {
+    styles: dict[str, int] = {
         "Command": 4,
         "Default": 0,
         "Group": 2,
@@ -13489,11 +13489,11 @@ class TeX(qt.QsciLexerTeX):
         "Text": 5,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -13591,7 +13591,7 @@ class TeX(qt.QsciLexerTeX):
 
 
 class VHDL(qt.QsciLexerVHDL):
-    styles = {
+    styles: dict[str, int] = {
         "Attribute": 10,
         "Comment": 1,
         "CommentBlock": 15,
@@ -13610,11 +13610,11 @@ class VHDL(qt.QsciLexerVHDL):
         "UnclosedString": 7,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -13862,7 +13862,7 @@ class VHDL(qt.QsciLexerVHDL):
 
 
 class Verilog(qt.QsciLexerVerilog):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "CommentBang": 3,
         "CommentKeyword": 20,
@@ -13903,11 +13903,11 @@ class Verilog(qt.QsciLexerVerilog):
         "UserKeywordSet": 19,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -14485,7 +14485,7 @@ class Verilog(qt.QsciLexerVerilog):
 
 
 class XML(qt.QsciLexerXML):
-    styles = {
+    styles: dict[str, int] = {
         "ASPAtStart": 15,
         "ASPJavaScriptComment": 57,
         "ASPJavaScriptCommentDoc": 59,
@@ -14598,11 +14598,11 @@ class XML(qt.QsciLexerXML):
         "XMLTagEnd": 11,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())
@@ -16260,7 +16260,7 @@ class XML(qt.QsciLexerXML):
 
 
 class YAML(qt.QsciLexerYAML):
-    styles = {
+    styles: dict[str, int] = {
         "Comment": 1,
         "Default": 0,
         "DocumentDelimiter": 6,
@@ -16273,11 +16273,11 @@ class YAML(qt.QsciLexerYAML):
         "TextBlockMarker": 7,
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None) -> None:
         super().__init__()
         self.set_theme(settings.get_theme())
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
         self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
         self.setDefaultFont(settings.get_editor_font())

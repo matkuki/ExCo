@@ -12,6 +12,7 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import re
+from typing import Any
 
 import components.internals
 import constants
@@ -21,7 +22,7 @@ import qt
 import settings
 
 
-def _split_path(path_string):
+def _split_path(path_string: str) -> list[str]:
     """Split a PATH string by the OS path separator, stripping empty segments"""
     if not path_string:
         return []
@@ -30,7 +31,7 @@ def _split_path(path_string):
     ]
 
 
-def get_os_path_entries():
+def get_os_path_entries() -> tuple[list[str], list[str]]:
     """
     Return a (user, system) tuple of the current PATH entries.
     Windows: the user PATH comes from the HKCU registry value, the system
@@ -64,7 +65,9 @@ def get_os_path_entries():
         return _split_path(os.environ.get("PATH", "")), []
 
 
-def apply_os_path_entries(user_entries, system_entries):
+def apply_os_path_entries(
+    user_entries: list[str], system_entries: list[str]
+) -> str | None:
     """
     Persist the given entries to the OS environment AND apply them to the
     current process. Returns None on success or an error string on failure.
@@ -82,7 +85,7 @@ def apply_os_path_entries(user_entries, system_entries):
         return str(ex)
 
 
-def _apply_windows(user_entries, system_entries):
+def _apply_windows(user_entries: list[str], system_entries: list[str]) -> str | None:
     """Persist the user entries to the HKCU value and the system entries to HKLM"""
     import winreg
 
@@ -163,7 +166,7 @@ def _apply_windows(user_entries, system_entries):
     return None
 
 
-def _apply_linux(entries):
+def _apply_linux(entries: list[str]) -> str | None:
     """Persist the entries to the systemd user environment file"""
     conf_directory = os.path.join(os.path.expanduser("~"), ".config", "environment.d")
     os.makedirs(conf_directory, exist_ok=True)
@@ -177,15 +180,18 @@ class SystemPathManipulator(qt.QWidget):
     """Tab widget for editing the PATH environment variable"""
 
     # Name of the tab that hosts this widget
-    TAB_NAME = "PATH"
+    TAB_NAME: str = "PATH"
     # Displayed name (used by the tab widget status bar)
-    name = ""
+    name: str = ""
     # Current tab icon
-    current_icon = None
+    current_icon: Any = None
     # This widget is not savable
     savable = constants.CanSave.NO
 
-    def __init__(self, parent=None, main_form=None):
+    main_form: Any = None
+    internals: Any = None
+
+    def __init__(self, parent: Any = None, main_form: Any = None) -> None:
         """Initialization"""
         super().__init__(parent)
         self.main_form = main_form
@@ -195,12 +201,12 @@ class SystemPathManipulator(qt.QWidget):
         # Set the tab icon
         self.current_icon = functions.create_icon("tango_icons/settings.png")
         self.setFont(settings.get_current_font())
-        self._sections = []
+        self._sections: list[dict[str, Any]] = []
         self._build_ui()
         self._reload()
         self.update_style()
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             self.main_form = None
             self.internals = None
@@ -209,7 +215,7 @@ class SystemPathManipulator(qt.QWidget):
         except:
             pass
 
-    def _build_ui(self):
+    def _build_ui(self) -> None:
         """Create and layout all of the child widgets"""
         main_layout = qt.QVBoxLayout(self)
         main_layout.setContentsMargins(6, 6, 6, 6)
@@ -285,11 +291,13 @@ class SystemPathManipulator(qt.QWidget):
 
         main_layout.addLayout(bottom_layout)
 
-    def _set_status(self, text):
+    def _set_status(self, text: str) -> None:
         """Display a status/feedback message below the list"""
         self._status_label.setText(text)
 
-    def _create_section(self, title, system, add_tooltip):
+    def _create_section(
+        self, title: str, system: bool, add_tooltip: str
+    ) -> dict[str, Any]:
         """Create a titled section group box hosting its own set of path rows"""
         groupbox = qt.QGroupBox(title, self._rows_host)
         group_layout = qt.QVBoxLayout(groupbox)
@@ -322,21 +330,21 @@ class SystemPathManipulator(qt.QWidget):
         self._rows_layout.insertWidget(self._rows_layout.count() - 1, groupbox)
         return section
 
-    def _section_for(self, system):
+    def _section_for(self, system: bool) -> dict[str, Any]:
         """Return the section that hosts entries of the given scope"""
         for section in self._sections:
             if section["system"] == system:
                 return section
         return self._sections[0]
 
-    def _section_containing(self, row):
+    def _section_containing(self, row: Any) -> dict[str, Any] | None:
         """Return the section that currently holds the given row"""
         for section in self._sections:
             if row in section["rows"]:
                 return section
         return None
 
-    def _reload(self):
+    def _reload(self) -> None:
         """Reload all of the rows from the OS PATH value"""
         self._set_status("")
         self._clear_rows()
@@ -354,7 +362,7 @@ class SystemPathManipulator(qt.QWidget):
         else:
             self._set_status("No PATH entries found - use the + button to add one")
 
-    def _clear_rows(self):
+    def _clear_rows(self) -> None:
         """Remove and delete all of the current rows"""
         for section in self._sections:
             for row in section["rows"]:
@@ -363,7 +371,9 @@ class SystemPathManipulator(qt.QWidget):
                 row.deleteLater()
             section["rows"] = []
 
-    def _add_row(self, text="", system=False):
+    def _add_row(
+        self, text: str = "", system: bool = False
+    ) -> "SystemPathManipulator.PathRow":
         """Append a new row to the given section and return its reference"""
         section = self._section_for(system)
         row = SystemPathManipulator.PathRow(
@@ -373,7 +383,7 @@ class SystemPathManipulator(qt.QWidget):
         section["rows_layout"].addWidget(row)
         return row
 
-    def _add_empty_row(self, system=False):
+    def _add_empty_row(self, system: bool = False) -> None:
         """Add a new empty row to the given section and start editing it"""
         # Only one empty path entry is allowed at a time
         for section in self._sections:
@@ -386,7 +396,7 @@ class SystemPathManipulator(qt.QWidget):
         row = self._add_row("", system=system)
         row.start_edit()
 
-    def _remove_row(self, row):
+    def _remove_row(self, row: "SystemPathManipulator.PathRow") -> None:
         """Remove a single row from its section"""
         section = self._section_containing(row)
         if section is not None:
@@ -397,7 +407,7 @@ class SystemPathManipulator(qt.QWidget):
         row.deleteLater()
         self._set_status("")
 
-    def _apply(self):
+    def _apply(self) -> None:
         """Apply the current rows to the OS environment and the current process"""
         user_entries = []
         system_entries = []
@@ -445,7 +455,7 @@ class SystemPathManipulator(qt.QWidget):
             # Refresh the rows from the persisted value
             self._reload()
 
-    def update_style(self):
+    def update_style(self) -> None:
         """Apply the current theme to the widget and its children"""
         theme = settings.get_theme()
         background = theme["fonts"]["default"]["background"]
@@ -524,7 +534,13 @@ QPushButton:hover {{
     class PathRow(qt.QWidget):
         """A single row of the PATH list: path text + edit + remove buttons"""
 
-        def __init__(self, parent, text="", system=False, on_delete=None):
+        def __init__(
+            self,
+            parent: Any,
+            text: str = "",
+            system: bool = False,
+            on_delete: Any = None,
+        ) -> None:
             """Initialization"""
             super().__init__(parent)
             self.system = system
@@ -564,12 +580,14 @@ QPushButton:hover {{
             self.remove_button.clicked.connect(lambda: self._on_delete(self))
             layout.addWidget(self.remove_button)
 
-        def eventFilter(self, obj, event):
+        def eventFilter(self, obj: qt.QObject | None, event: qt.QEvent | None) -> bool:
             """Reject the current edit with the Escape key"""
             if (
                 obj is self.line_edit
+                and event is not None
                 and not self.line_edit.isReadOnly()
                 and event.type() == qt.QEvent.Type.KeyPress
+                and isinstance(event, qt.QKeyEvent)
                 and event.key() == qt.Qt.Key.Key_Escape
             ):
                 self.line_edit.setText(self._original_text)
@@ -577,7 +595,7 @@ QPushButton:hover {{
                 return True
             return super().eventFilter(obj, event)
 
-        def start_edit(self):
+        def start_edit(self) -> None:
             """Enter edit mode for this row"""
             self._original_text = self.line_edit.text()
             self.line_edit.setProperty("editing", True)
@@ -586,13 +604,15 @@ QPushButton:hover {{
             self.line_edit.selectAll()
             self._repolish()
 
-        def _finish_edit(self):
+        def _finish_edit(self) -> None:
             """Leave edit mode, committing the current text"""
             self.line_edit.setReadOnly(True)
             self.line_edit.setProperty("editing", False)
             self._repolish()
 
-        def _repolish(self):
+        def _repolish(self) -> None:
             """Force the stylesheet to pick up the property changes"""
-            self.line_edit.style().unpolish(self.line_edit)
-            self.line_edit.style().polish(self.line_edit)
+            style = self.line_edit.style()
+            assert style is not None
+            style.unpolish(self.line_edit)
+            style.polish(self.line_edit)

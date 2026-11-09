@@ -8,6 +8,8 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import functools
 import keyword
+from typing import Any
+
 import qt
 import data
 import constants
@@ -35,24 +37,24 @@ class ReplHelper(qt.QsciScintilla):
     """
 
     # Class variables
-    main_form = None
-    repl_master = None
+    main_form: Any = None
+    repl_master: Any = None
     # The scintilla api object(qt.QsciAPIs) must be an instace variable, or the underlying c++
     # mechanism deletes the object and the autocompletions compiled with api.prepare() are lost
-    api = None
+    api: Any = None
     # Attribute for indicating if the REPL helper is indicated
-    indicated = False
+    indicated: bool = False
     # Reference to the custom context menu
-    context_menu = None
+    context_menu: Any = None
     # LineList object copied from the CustomEditor object
-    line_list = None
+    line_list: Any = None
     # Interpreter language
 
     """
     Built-in and private functions
     """
 
-    def __init__(self, parent, main_form, repl_master):
+    def __init__(self, parent: Any, main_form: Any, repl_master: Any) -> None:
         # Initialize superclass, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__(parent)
         # Set default font
@@ -93,25 +95,34 @@ class ReplHelper(qt.QsciScintilla):
         # Add the attributes needed to implement the line nist
         self.line_list = components.linelist.LineList(self, self.text())
         # Add the needed functions assigned from the CustomEditor
-        self.set_theme = functools.partial(CustomEditor.set_theme, self)
-        self.set_line = functools.partial(CustomEditor.set_line, self)
-        self.set_lines = functools.partial(CustomEditor.set_lines, self)
+        partial_self: Any = self
+        self.set_theme = functools.partial(CustomEditor.set_theme, partial_self)
+        self.set_line = functools.partial(CustomEditor.set_line, partial_self)
+        self.set_lines = functools.partial(CustomEditor.set_lines, partial_self)
         self.toggle_comment_uncomment = functools.partial(
-            CustomEditor.toggle_comment_uncomment, self
+            CustomEditor.toggle_comment_uncomment, partial_self
         )
-        self.comment_line = functools.partial(CustomEditor.comment_line, self)
-        self.comment_lines = functools.partial(CustomEditor.comment_lines, self)
-        self.uncomment_line = functools.partial(CustomEditor.uncomment_line, self)
-        self.uncomment_lines = functools.partial(CustomEditor.uncomment_lines, self)
-        self.prepend_to_line = functools.partial(CustomEditor.prepend_to_line, self)
-        self.prepend_to_lines = functools.partial(CustomEditor.prepend_to_lines, self)
-        self.replace_line = functools.partial(CustomEditor.replace_line, self)
-        self.get_line = functools.partial(CustomEditor.get_line, self)
+        self.comment_line = functools.partial(CustomEditor.comment_line, partial_self)
+        self.comment_lines = functools.partial(CustomEditor.comment_lines, partial_self)
+        self.uncomment_line = functools.partial(
+            CustomEditor.uncomment_line, partial_self
+        )
+        self.uncomment_lines = functools.partial(
+            CustomEditor.uncomment_lines, partial_self
+        )
+        self.prepend_to_line = functools.partial(
+            CustomEditor.prepend_to_line, partial_self
+        )
+        self.prepend_to_lines = functools.partial(
+            CustomEditor.prepend_to_lines, partial_self
+        )
+        self.replace_line = functools.partial(CustomEditor.replace_line, partial_self)
+        self.get_line = functools.partial(CustomEditor.get_line, partial_self)
         self.check_line_numbering = functools.partial(
-            CustomEditor.check_line_numbering, self
+            CustomEditor.check_line_numbering, partial_self
         )
-        self.text_to_list = functools.partial(CustomEditor.text_to_list, self)
-        self.list_to_text = functools.partial(CustomEditor.list_to_text, self)
+        self.text_to_list = functools.partial(CustomEditor.text_to_list, partial_self)
+        self.list_to_text = functools.partial(CustomEditor.list_to_text, partial_self)
         # Add the function and connect the signal to update the line/column positions
         self.cursorPositionChanged.connect(self._signal_editor_cursor_change)
         # Set the lexer to python
@@ -122,12 +133,16 @@ class ReplHelper(qt.QsciScintilla):
         self.line_list = components.linelist.LineList(self, self.text())
         self.textChanged.connect(self.text_changed)
 
-    def _signal_editor_cursor_change(self, cursor_line=None, cursor_column=None):
+    def _signal_editor_cursor_change(
+        self, cursor_line: int | None = None, cursor_column: int | None = None
+    ) -> None:
         """Signal that fires when cursor position changes"""
         self.main_form.display.update_cursor_position(cursor_line, cursor_column)
 
-    def _filter_keypress(self, key_event):
+    def _filter_keypress(self, key_event: qt.QKeyEvent | None) -> bool:
         """Filter keypress for appropriate action"""
+        if key_event is None:
+            return False
         pressed_key = key_event.key()
         accept_keypress = False
         # Get key modifiers and check if the Ctrl+Enter was pressed
@@ -142,7 +157,7 @@ class ReplHelper(qt.QsciScintilla):
             accept_keypress = True
         return accept_keypress
 
-    def _filter_keyrelease(self, key_event):
+    def _filter_keyrelease(self, key_event: qt.QKeyEvent | None) -> bool:
         """Filter keyrelease for appropriate action"""
         # Only check indication if the current widget is not indicated
         if self.indicated == False:
@@ -154,23 +169,26 @@ class ReplHelper(qt.QsciScintilla):
     Qt QSciScintilla functions
     """
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: qt.QKeyEvent | None) -> None:
         """QScintila keyPressEvent, to catch which key was pressed"""
         # Filter the event
         if self._filter_keypress(event) == False:
             # Execute the superclass method, if the filter ignored the event
-            super().keyPressEvent(event)
+            if event is not None:
+                super().keyPressEvent(event)
 
-    def keyReleaseEvent(self, event):
+    def keyReleaseEvent(self, event: qt.QKeyEvent | None) -> None:
         """QScintila KeyReleaseEvent, to catch which key was released"""
         # Execute the superclass method first, the same trick as in __init__ !
-        super().keyReleaseEvent(event)
+        if event is not None:
+            super().keyReleaseEvent(event)
         # Filter the event
         self._filter_keyrelease(event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
         # Execute the superclass mouse click event
-        super().mousePressEvent(event)
+        if event is not None:
+            super().mousePressEvent(event)
         # Reset the main forms last focused widget
         self.main_form.last_focused_widget = None
         # Set focus to the clicked helper
@@ -183,15 +201,19 @@ class ReplHelper(qt.QsciScintilla):
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
 
-    def setFocus(self):
+    def setFocus(
+        self, reason: qt.Qt.FocusReason = qt.Qt.FocusReason.OtherFocusReason
+    ) -> None:
         """Overridden focus event"""
         # Execute the supeclass focus function
-        super().setFocus()
+        super().setFocus(reason)
         # Check indication
         self.main_form.view.indication_check()
 
-    def wheelEvent(self, wheel_event):
+    def wheelEvent(self, wheel_event: qt.QWheelEvent | None) -> None:
         """Overridden mouse wheel rotate event"""
+        if wheel_event is None:
+            return
         key_modifiers = qt.QApplication.keyboardModifiers()
         delta = wheel_event.angleDelta().y()
         if delta < 0:
@@ -210,7 +232,7 @@ class ReplHelper(qt.QsciScintilla):
             # Propagate(send forward) the wheel event to the parent
             wheel_event.ignore()
 
-    def delete_context_menu(self):
+    def delete_context_menu(self) -> None:
         # Clean up the context menu
         if self.context_menu != None:
             self.context_menu.hide()
@@ -219,10 +241,12 @@ class ReplHelper(qt.QsciScintilla):
             self.context_menu.setParent(None)
             self.context_menu = None
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event: qt.QContextMenuEvent | None) -> None:
         # Built-in context menu
         self.delete_context_menu()
         # Show a context menu according to the current lexer
+        if event is None:
+            return
         offset = (event.x(), event.y())
         height = self.size().height()
         if height < 100:
@@ -235,12 +259,13 @@ class ReplHelper(qt.QsciScintilla):
         self.context_menu.popup_at_cursor()
         event.accept()
 
-    def set_lexer(self):
-        if self.lexer() != None:
-            self.lexer().setParent(None)
+    def set_lexer(self) -> None:
+        current_lexer: Any = self.lexer()
+        if current_lexer is not None:
+            current_lexer.setParent(None)
             self.setLexer(None)
         # Create the new lexer
-        lexer = lexers.Python()
+        lexer: Any = lexers.Python()
         lexer.setParent(self)
         result = lexers.get_comment_style_for_lexer(lexer)
         lexer.open_close_comment_style = result[0]
@@ -252,14 +277,16 @@ class ReplHelper(qt.QsciScintilla):
         self.setLexer(lexer)
         # Set the theme
         self.set_theme(settings.get_theme())
-        self.lexer().set_theme(settings.get_theme())
+        active_lexer: Any = self.lexer()
+        active_lexer.set_theme(settings.get_theme())
 
-    def refresh_lexer(self):
+    def refresh_lexer(self) -> None:
         # Set the theme
         self.set_theme(settings.get_theme())
-        self.lexer().set_theme(settings.get_theme())
+        active_lexer: Any = self.lexer()
+        active_lexer.set_theme(settings.get_theme())
 
-    def text_changed(self):
+    def text_changed(self) -> None:
         """Event that fires when the scintilla document text changes"""
         # Update the line list
         self.line_list.update_text_to_list(self.text())
@@ -268,7 +295,7 @@ class ReplHelper(qt.QsciScintilla):
     ReplHelper autocompletion functions
     """
 
-    def update_autocompletions(self, new_autocompletions=[]):
+    def update_autocompletions(self, new_autocompletions: list[str] = []) -> None:
         """Function for updating the ReplHelper autocompletions"""
         # Set the lexer
         self.refresh_lexer()

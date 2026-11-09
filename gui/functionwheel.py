@@ -7,6 +7,7 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import functools
+from typing import Any
 
 import constants
 import data
@@ -25,22 +26,22 @@ class FunctionWheel(qt.QFrame):
     Overlay helper widget for visually selecting an Ex.Co. function
     """
 
-    SIZE = (640, 560)
+    SIZE: tuple[int, int] = (640, 560)
     # Class variables
-    _parent = None
-    main_form = None
-    background_image = None
-    display_label = None
-    cursor_show_position = None
-    theme_name = None
+    _parent: Any = None
+    main_form: Any = None
+    background_image: Any = None
+    display_label: Any = None
+    cursor_show_position: Any = None
+    theme_name: str | None = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             self._parent = None
             self.main_form = None
 
             # Function for deleting an attribute
-            def delete_attribute(att_name):
+            def delete_attribute(att_name: str) -> None:
                 attr = getattr(self, att_name)
                 attr.setParent(None)
                 attr.deleteLater()
@@ -61,7 +62,7 @@ class FunctionWheel(qt.QFrame):
         except:
             pass
 
-    def __init__(self, parent=None, main_form=None):
+    def __init__(self, parent: Any = None, main_form: Any = None) -> None:
         # Initialize the superclass
         super().__init__(parent)
         # Store the reference to the parent
@@ -95,13 +96,13 @@ class FunctionWheel(qt.QFrame):
         self.scale(1, 1)
         self.update_style()
 
-    def __init_all_buttons(self):
+    def __init_all_buttons(self) -> None:
         """
         Function for calling all button initialization subroutines
         """
         self.button_x_offset = 8
         self.button_y_offset = 8
-        self.button_cache = []
+        self.button_cache: list[Any] = []
         self.__init_file_buttons()
         self.__init_basic_buttons()
         self.__init_advanced_buttons()
@@ -111,7 +112,7 @@ class FunctionWheel(qt.QFrame):
         # Check the states of the hex function buttons
         self.__check_hex_button_states()
 
-    def __init_basic_buttons(self):
+    def __init_basic_buttons(self) -> None:
         # Alias the class references to shorten the names
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
@@ -239,7 +240,7 @@ class FunctionWheel(qt.QFrame):
         ]
         self.__create_buttons_from_list(button_list)
 
-    def __init_advanced_buttons(self):
+    def __init_advanced_buttons(self) -> None:
         # Alias the class references to shorten the names
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
@@ -485,7 +486,7 @@ class FunctionWheel(qt.QFrame):
         ]
         self.__create_buttons_from_list(button_list)
 
-    def __init_file_buttons(self):
+    def __init_file_buttons(self) -> None:
         # Alias the class references to shorten the names
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
@@ -602,7 +603,7 @@ class FunctionWheel(qt.QFrame):
         ]
         self.__create_buttons_from_list(button_list)
 
-    def __init_system_view_buttons(self):
+    def __init_system_view_buttons(self) -> None:
         # Alias the class references to shorten the names
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
@@ -779,7 +780,7 @@ class FunctionWheel(qt.QFrame):
         ]
         self.__create_buttons_from_list(button_list)
 
-    def __init_repl_buttons(self):
+    def __init_repl_buttons(self) -> None:
         # Alias the class references to shorten the names
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
@@ -835,7 +836,7 @@ class FunctionWheel(qt.QFrame):
         ]
         self.__create_buttons_from_list(button_list)
 
-    def __init_special_system_buttons(self):
+    def __init_special_system_buttons(self) -> None:
         # Alias the class references to shorten the names
         form = self.main_form
         menubar_functions = self.main_form.menubar_functions
@@ -875,22 +876,22 @@ class FunctionWheel(qt.QFrame):
         ]
         self.__create_buttons_from_list(button_list)
 
-    def __create_buttons_from_list(self, button_list):
-        def create_click_func(func):
-            def wrapper_click_func(*args):
+    def __create_buttons_from_list(self, button_list: list["ButtonInfo"]) -> None:
+        def create_click_func(func: Any) -> Any:
+            def wrapper_click_func(*args: Any) -> None:
                 self.main_form.view.hide_function_wheel()
                 func()
 
             return wrapper_click_func
 
-        def create_enter_func(text, font):
-            def wrapper_enter_func(*args):
+        def create_enter_func(text: str, font: qt.QFont) -> Any:
+            def wrapper_enter_func(*args: Any) -> None:
                 self.display(text, font)
 
             return wrapper_enter_func
 
-        def create_leave_func(font):
-            def wrapper_leave_func(*args):
+        def create_leave_func(font: qt.QFont) -> Any:
+            def wrapper_leave_func(*args: Any) -> None:
                 self.display("", font)
 
             return wrapper_leave_func
@@ -939,7 +940,7 @@ class FunctionWheel(qt.QFrame):
             )
             self.button_cache.append(init_button)
 
-    def __check_hex_button_states(self):
+    def __check_hex_button_states(self) -> None:
         """
         Check the hex function button states when displaying the function wheel
         """
@@ -988,16 +989,18 @@ class FunctionWheel(qt.QFrame):
             ):
                 # Check if tab is a TextDiffer, enable only the supported functions
                 if (
-                    child_widget.function_text != "Find"
-                    and child_widget.function_text != "Regex Find"
-                    and child_widget.function_text != "Goto Line"
-                    and child_widget.function_text != "Move Tab\nLeft"
-                    and child_widget.function_text != "Move Tab\nRight"
-                    and child_widget.function_text != "Close Current\nTab"
+                    getattr(child_widget, "function_text", None) != "Find"
+                    and getattr(child_widget, "function_text", None) != "Regex Find"
+                    and getattr(child_widget, "function_text", None) != "Goto Line"
+                    and getattr(child_widget, "function_text", None) != "Move Tab\nLeft"
+                    and getattr(child_widget, "function_text", None)
+                    != "Move Tab\nRight"
+                    and getattr(child_widget, "function_text", None)
+                    != "Close Current\nTab"
                 ):
                     child_widget.setEnabled(False)
 
-    def hideEvent(self, event):
+    def hideEvent(self, event: qt.QHideEvent | None) -> None:
         """
         Overridden widget hide event
         """
@@ -1007,7 +1010,7 @@ class FunctionWheel(qt.QFrame):
             if last_widget.currentWidget() is not None:
                 last_widget.currentWidget().setFocus()
 
-    def display(self, string, font):
+    def display(self, string: str, font: qt.QFont) -> None:
         """
         Display string in the display label
         """
@@ -1020,7 +1023,7 @@ class FunctionWheel(qt.QFrame):
         # Display the string
         self.display_label.setText(string)
 
-    def hide(self):
+    def hide(self) -> None:
         """
         Hide the function wheel overlay
         """
@@ -1035,7 +1038,7 @@ class FunctionWheel(qt.QFrame):
         self.setVisible(False)
         self.setEnabled(False)
 
-    def show(self):
+    def show(self) -> None:
         """
         Show the function wheel overlay
         """
@@ -1047,7 +1050,9 @@ class FunctionWheel(qt.QFrame):
         self.center(self.size())
         self.setFocus()
 
-    def scale(self, width_scale_factor=1, height_scale_factor=1):
+    def scale(
+        self, width_scale_factor: float = 1, height_scale_factor: float = 1
+    ) -> None:
         """
         Scale the size of the function wheel and all of its child widgets
         """
@@ -1060,7 +1065,8 @@ class FunctionWheel(qt.QFrame):
         )
         self.setGeometry(rectangle)
         # Scale all of the function wheel child widgets
-        for button in self.children():
+        for child in self.children():
+            button: Any = child
             geo = button.geometry()
             new_topLeft = functions.create_point(
                 int(geo.topLeft().x() * width_scale_factor),
@@ -1074,7 +1080,7 @@ class FunctionWheel(qt.QFrame):
         # Center to main form
         self.center(self.size())
 
-    def center(self, size):
+    def center(self, size: qt.QSize) -> None:
         """
         Center the function wheel to the main form,
         according to the size parameter
@@ -1086,7 +1092,7 @@ class FunctionWheel(qt.QFrame):
         rectangle = functions.create_rect(rectangle_top_left, rectangle_size)
         self.setGeometry(rectangle)
 
-    def update_style(self):
+    def update_style(self) -> None:
         self.setStyleSheet(
             f"""
 QFrame {{
@@ -1119,22 +1125,22 @@ class ButtonInfo:
 
     def __init__(
         self,
-        input_name,
-        input_geometry,
-        input_pixmap,
-        input_function,
-        input_function_text,
-        input_font=qt.QFont(
+        input_name: str,
+        input_geometry: tuple[int, int, int, int],
+        input_pixmap: Any,
+        input_function: Any,
+        input_function_text: str,
+        input_font: qt.QFont = qt.QFont(
             settings.get("current_font_name"), 14, weight=qt.QFont.Weight.Bold
         ),
-        input_focus_last_widget=constants.HexButtonFocus.NONE,
-        input_no_tab_focus_disable=False,
-        input_no_document_focus_disable=True,
-        input_check_last_tab_type=False,
-        input_extra_button=None,
-        input_check_text_differ=False,
-        input_tool_tip=None,
-    ):
+        input_focus_last_widget: Any = constants.HexButtonFocus.NONE,
+        input_no_tab_focus_disable: bool = False,
+        input_no_document_focus_disable: bool = True,
+        input_check_last_tab_type: bool = False,
+        input_extra_button: Any = None,
+        input_check_text_differ: bool = False,
+        input_tool_tip: str | None = None,
+    ) -> None:
         # Initialize the attributes
         self.name = input_name
         self.geometry = input_geometry

@@ -21,7 +21,7 @@ import functions
 import lexers
 import qt
 import settings
-from typing import Any
+from typing import Any, Callable
 
 import gui.contextmenu
 from gui.baseeditor import BaseEditor
@@ -60,8 +60,8 @@ class CustomEditor(BaseEditor):
     # Current tab icon
     current_icon = None
     # Layout index of the 'Change lexer' corner button (rightmost button)
-    _lexer_button_index = 0
-    internals = None
+    _lexer_button_index: int = 0
+    internals: components.internals.Internals | None = None
     # Comment character/s that will be used in comment/uncomment functions
     comment_string = None
     # Oberon/Modula-2/CP have the begin('(*')/end('*)') commenting style,
@@ -92,11 +92,11 @@ class CustomEditor(BaseEditor):
     Built-in and private functions
     """
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             # Clean up references
-            self.line_list._parent = None
-            self.line_list._clear()
+            self.line_list._parent = None  # type: ignore[attr-defined]
+            self.line_list._clear()  # type: ignore[attr-defined]
             self._parent = None
             self.main_form = None
             # Disconnect signals
@@ -108,14 +108,14 @@ class CustomEditor(BaseEditor):
                 pass
             # Clean up namespaces
             self.hotspots = None
-            self.bookmarks.parent = None
+            self.bookmarks.parent = None  # type: ignore[attr-defined]
             self.bookmarks = None
-            self.keyboard.parent = None
+            self.keyboard.parent = None  # type: ignore[attr-defined]
             self.keyboard = None
             # Clean up special functions
-            self.find = None
+            self.find = None  # type: ignore[assignment]
             self.save = None
-            self.clear = None
+            self.clear = None  # type: ignore[assignment]
             self.highlight = None
             # Clean up the corner widget
             self.current_icon = None
@@ -134,7 +134,9 @@ class CustomEditor(BaseEditor):
         if not qt.sip.isdeleted(data.signal_dispatcher):
             data.signal_dispatcher.editor_deleted.emit(self.save_path)
 
-    def __init__(self, parent, main_form, file_with_path=None):
+    def __init__(
+        self, parent: Any, main_form: Any, file_with_path: str | None = None
+    ) -> None:
         """
         Initialize the scintilla widget
         """
@@ -257,7 +259,7 @@ class CustomEditor(BaseEditor):
         # Signal file initialization
         data.signal_dispatcher.editor_initialized.emit(self.save_path)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         """
         Special/magic method that is called everytime an attribute of
         the CustomEditor class is set.
@@ -273,13 +275,13 @@ class CustomEditor(BaseEditor):
                     raise Exception("All value list items must be strings!")
                 text = self.list_to_text(value)
                 self.set_all_text(text)
-                self.line_list.update_text_to_list(text)
+                self.line_list.update_text_to_list(text)  # type: ignore[union-attr]
                 # Cancel the assignment
                 return
         # Call the superclasses/original __setattr__() special method
         super().__setattr__(name, value)
 
-    def update_variable_settings(self):
+    def update_variable_settings(self) -> None:
         """These are global settings that are saved every time a setting is
         changed."""
         editor_settings = settings.get("editor")
@@ -341,17 +343,17 @@ class CustomEditor(BaseEditor):
 
     def __text_modified(
         self,
-        position,
-        modificationType,
-        text,
-        length,
-        added,
-        line,
-        foldLevelNow,
-        foldLevelPrev,
-        token,
-        annotationLinesAdded,
-    ):
+        position: int,
+        modificationType: int,
+        text: str,
+        length: int,
+        added: int,
+        line: int,
+        foldLevelNow: int,
+        foldLevelPrev: int,
+        token: int,
+        annotationLinesAdded: int,
+    ) -> None:
         lexer = self.lexer()
         if lexer is not None:
             if hasattr(lexer, "text_modified_callback"):
@@ -377,7 +379,7 @@ class CustomEditor(BaseEditor):
         self._saved_text_hash = self._document_hash()
         self.SendScintilla(self.SCI_SETSAVEPOINT)
 
-    def __savepoint_reached(self):
+    def __savepoint_reached(self) -> None:
         """Document was undone/redone back to the anchored save point.
 
         Clear the edited-asterisk and the MODIFIED status only when the content
@@ -394,7 +396,7 @@ class CustomEditor(BaseEditor):
         if index != -1:
             self._parent.setTabText(index, self._parent.tabText(index).strip("*"))
 
-    def __savepoint_left(self):
+    def __savepoint_left(self) -> None:
         """Document left the save point: ensure it is marked modified.
 
         The regular text change handler already marks the document dirty on
@@ -408,33 +410,33 @@ class CustomEditor(BaseEditor):
         if index != -1:
             self._parent.set_text_changed(index)
 
-    def _init_special_functions(self):
+    def _init_special_functions(self) -> None:
         """Initialize the methods for document manipulation"""
         # Set references to the special functions
-        self.find = self.find_text
-        self.save = self.save_document
-        self.clear = self.clear_editor
-        self.highlight = self.highlight_text
+        self.find = self.find_text  # type: ignore[assignment]
+        self.save = self.save_document  # type: ignore[assignment]
+        self.clear = self.clear_editor  # type: ignore[assignment]
+        self.highlight = self.highlight_text  # type: ignore[assignment]
 
-    def _filter_keypress(self, key_event):
+    def _filter_keypress(self, key_event: Any) -> bool:
         """Filter keypress for appropriate action"""
         # pressed_key = key_event.key()
         accept_keypress = False
         return accept_keypress
 
-    def _init_bookmark_marker(self):
+    def _init_bookmark_marker(self) -> None:
         """Initialize the marker for the bookmarks"""
         image_scale_size = functions.create_size(16, 16)
         bookmark_image = functions.create_pixmap("tango_icons/bookmark.png")
         bookmark_image = bookmark_image.scaled(image_scale_size)
         self.bookmark_marker = self.markerDefine(bookmark_image, 1)
 
-    def __margin_clicked(self, margin, line, state):
+    def __margin_clicked(self, margin: int, line: int, state: int) -> None:
         """Signal for a mouseclick on the margin"""
         # Adjust line index to the line list indexing (1..lines)
         adjusted_line = line + 1
         # Add/remove bookmark
-        self.bookmarks.toggle_at_line(adjusted_line)
+        self.bookmarks.toggle_at_line(adjusted_line)  # type: ignore[union-attr]
 
     def _sync_bookmark_lines(self) -> None:
         """Re-read the stored bookmark line numbers from the markers' actual
@@ -457,7 +459,7 @@ class CustomEditor(BaseEditor):
             else:
                 marks[i]["line"] = line
 
-    def __lines_changed(self):
+    def __lines_changed(self) -> None:
         """
         Signal that fires when the number of lines changes
         """
@@ -465,7 +467,7 @@ class CustomEditor(BaseEditor):
 
     selection_lock = False
 
-    def __selection_changed(self):
+    def __selection_changed(self) -> None:
         """
         Signal that fires when selected text changes
         """
@@ -491,40 +493,40 @@ class CustomEditor(BaseEditor):
         """
         self._parent._signal_editor_cursor_change(cursor_line, cursor_column)
 
-    def _skip_next_repl_focus(self):
+    def _skip_next_repl_focus(self) -> None:
         """
         Private function that is used to skip focusing the REPL after
         executing a REPL command, which I use to skip the REPL focusing
         when using the goto_line function for example.
         """
         # Disable REPL focus after the REPL evaluation
-        self.main_form.repl.skip_next_repl_focus()
+        self.main_form.repl.skip_next_repl_focus()  # type: ignore[union-attr]
         # Set focus to the basic widget that holds this document
-        self.main_form.view.set_window_focus(self._parent)
+        self.main_form.view.set_window_focus(self._parent)  # type: ignore[union-attr]
 
-    def add_corner_buttons(self):
-        def show_lexer_menu():
-            def set_lexer(lexer, lexer_name):
+    def add_corner_buttons(self) -> None:
+        def show_lexer_menu() -> None:
+            def set_lexer(lexer: Any, lexer_name: str) -> None:
                 try:
                     self.clear_lexer()
                     # Initialize and set the new lexer
                     lexer_instance = lexer()
                     self.set_lexer(lexer_instance, lexer_name)
                     # Change the corner widget (button) icon
-                    self.internals.update_corner_button_icon(
+                    self.internals.update_corner_button_icon(  # type: ignore[union-attr]
                         self.current_icon, index=self._lexer_button_index
                     )
-                    self.internals.update_icon(self)
+                    self.internals.update_icon(self)  # type: ignore[union-attr]
                     # Display the lexer change
                     message = "Lexer changed to: {}".format(lexer_name)
-                    self.main_form.display.repl_display_message(message)
+                    self.main_form.display.repl_display_message(message)  # type: ignore[union-attr]
                 except Exception as ex:
                     message = "Error with lexer selection!\n"
                     message += "Select a window widget with an opened document first."
-                    self.main_form.display.repl_display_error(message)
-                    self.main_form.display.write_to_statusbar(message)
+                    self.main_form.display.repl_display_error(message)  # type: ignore[union-attr]
+                    self.main_form.display.write_to_statusbar(message)  # type: ignore[union-attr]
 
-            lexers_menu = self.main_form.display.create_lexers_menu(
+            lexers_menu = self.main_form.display.create_lexers_menu(  # type: ignore[union-attr]
                 "Change lexer", set_lexer
             )
             cursor = qt.QCursor.pos()
@@ -533,21 +535,21 @@ class CustomEditor(BaseEditor):
         # Markdown view switch (only for markdown files); leftmost button
         if functions.get_file_type(self.save_path) == "markdown":
 
-            def switch_to_markdown():
+            def switch_to_markdown() -> None:
                 index = self._parent.indexOf(self)
                 if index < 0:
                     return
                 first_visible = self.firstVisibleLine() + 1
                 self._parent.switch_to_markdown_view(index, first_visible)
 
-            self.internals.add_corner_button(
+            self.internals.add_corner_button(  # type: ignore[union-attr]
                 "tango_icons/document-print-preview.png",
                 "Switch to Markdown view",
                 switch_to_markdown,
             )
 
         # Edit session (rightmost button)
-        self._lexer_button_index = self.internals.add_corner_button(
+        self._lexer_button_index = self.internals.add_corner_button(  # type: ignore[union-attr,assignment]
             self.current_icon, "Change the current lexer", show_lexer_menu
         )
 
@@ -555,20 +557,20 @@ class CustomEditor(BaseEditor):
     Qt QSciScintilla functions
     """
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: qt.QKeyEvent | None) -> None:
         """QScintila keyPressEvent, to catch which key was pressed"""
         # Hide the context menu if it is shown
         if self.context_menu != None:
             self.delete_context_menu()
         # Filter out TAB and SHIFT+TAB key combinations to override
         # the default indent/unindent functionality
-        key = event.key()
+        key = event.key()  # type: ignore[union-attr]
         if key == qt.Qt.Key.Key_Tab:
             self.custom_indent()
         elif key == qt.Qt.Key.Key_Backtab:
             self.custom_unindent()
         elif key == qt.Qt.Key.Key_Enter or key == qt.Qt.Key.Key_Return:
-            super().keyPressEvent(event)
+            super().keyPressEvent(event)  # type: ignore[arg-type]
             # Check for autoindent character list
             if hasattr(self.lexer(), "autoindent_characters"):
                 current_line = self.getCursorPosition()[0]
@@ -576,7 +578,7 @@ class CustomEditor(BaseEditor):
                 # the top of the document
                 if current_line < 1:
                     return
-                previous_line = self.line_list[current_line - 1]
+                previous_line = self.line_list[current_line - 1]  # type: ignore[index]
                 # Check that the last line is valid
                 if len(previous_line) == 0:
                     return
@@ -585,21 +587,22 @@ class CustomEditor(BaseEditor):
                 last_character = previous_line.rstrip()[-1]
                 last_word = previous_line.split()[-1].lower()
                 if (
-                    last_character in self.lexer().autoindent_characters
-                    or last_word in self.lexer().autoindent_characters
+                    last_character in self.lexer().autoindent_characters  # type: ignore[attr-defined]
+                    or last_word in self.lexer().autoindent_characters  # type: ignore[attr-defined]
                 ):
-                    line = self.line_list[current_line]
+                    line = self.line_list[current_line]  # type: ignore[index]
                     stripped_line = line.strip()
                     if stripped_line == "":
-                        self.line_list[current_line] = (
+                        self.line_list[current_line] = (  # type: ignore[index]
                             line + " " * settings.get("editor")["tab_width"]
                         )
                         self.setCursorPosition(
-                            current_line, len(self.line_list[current_line])
+                            current_line,
+                            len(self.line_list[current_line]),  # type: ignore[index]
                         )
                     else:
                         whitespace = len(line) - len(line.lstrip())
-                        self.line_list[current_line] = (
+                        self.line_list[current_line] = (  # type: ignore[index]
                             " " * whitespace
                             + " " * settings.get("editor")["tab_width"]
                             + stripped_line
@@ -612,23 +615,23 @@ class CustomEditor(BaseEditor):
                         )
         else:
             # Execute the superclass method first, the same trick as in __init__ !
-            super().keyPressEvent(event)
+            super().keyPressEvent(event)  # type: ignore[arg-type]
             # Filter the event
             self._filter_keypress(event)
 
-    def keyReleaseEvent(self, event):
+    def keyReleaseEvent(self, event: qt.QKeyEvent | None) -> None:
         """
         QScintila KeyReleaseEvent, to catch which key was released
         """
         # Execute the superclass method first, the same trick as in __init__ !
         super().keyReleaseEvent(event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
         """
         Overloaded mouse click event
         """
         # Execute the superclass method first, the same trick as in __init__ !
-        super().mousePressEvent(event)
+        super().mousePressEvent(event)  # type: ignore[arg-type]
         # Set focus to the clicked editor
         self.setFocus()
         # Set Save/SaveAs buttons in the menubar
@@ -637,17 +640,17 @@ class CustomEditor(BaseEditor):
         line = self.getCursorPosition()[0]
         column = self.getCursorPosition()[1]
         index = self.positionFromLineIndex(line, column)
-        self.main_form.display.update_cursor_position(line, column, index)
+        self.main_form.display.update_cursor_position(line, column, index)  # type: ignore[union-attr]
         # Set the last focused widget to the parent basic widget
-        self.main_form.last_focused_widget = self._parent
+        self.main_form.last_focused_widget = self._parent  # type: ignore[union-attr]
         # Hide the function wheel if it is shown
-        self.main_form.view.hide_all_overlay_widgets()
+        self.main_form.view.hide_all_overlay_widgets()  # type: ignore[union-attr]
         # Hide the context menu if it is shown
         self.delete_context_menu()
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event: qt.QContextMenuEvent | None) -> None:
         # Built-in context menu
         #        super().contextMenuEvent(event)
         # If the parent is a text differ return from this function
@@ -655,42 +658,42 @@ class CustomEditor(BaseEditor):
             return
         self.delete_context_menu()
         # Show a context menu according to the current lexer
-        offset = (event.x(), event.y())
+        offset = (event.x(), event.y())  # type: ignore[union-attr]
         self.context_menu = gui.contextmenu.create(
             self, self.main_form, offset=offset, _type="special"
         )
         self.context_menu.popup_at_cursor()
-        event.accept()
+        event.accept()  # type: ignore[union-attr]
 
-    def wheelEvent(self, event):
+    def wheelEvent(self, event: qt.QWheelEvent | None) -> None:
         """Mouse scroll event of the custom editor"""
         key_modifiers = qt.QApplication.keyboardModifiers()
         if key_modifiers != qt.Qt.KeyboardModifier.ControlModifier:
             # Execute the superclass method
-            super().wheelEvent(event)
+            super().wheelEvent(event)  # type: ignore[arg-type]
         else:
             # Ignore the event, it will be propageted up to the parent objects
-            event.ignore()
+            event.ignore()  # type: ignore[union-attr]
 
-    def text_changed(self):
+    def text_changed(self) -> None:
         """Event that fires when the scintilla document text changes"""
         # Update the line list
-        self.line_list.update_text_to_list(self.text())
+        self.line_list.update_text_to_list(self.text())  # type: ignore[union-attr]
         # Update the line count list with a list comprehention
         self.line_count = [line for line in range(1, self.lines() + 1)]
         # Execute the parent basic widget signal
         self._parent._signal_text_changed(self)
 
-    def setFocus(self):
+    def setFocus(self) -> None:  # type: ignore[override]
         """Overridden focus event"""
         # Execute the supeclass focus function
         super().setFocus()
         # Check the save button status of the menubar
         self._parent._set_save_status()
         # Check indication
-        self.main_form.view.indication_check()
+        self.main_form.view.indication_check()  # type: ignore[union-attr]
 
-    def replaceSelectedText(self, *args, **kwargs):
+    def replaceSelectedText(self, *args: Any, **kwargs: Any) -> None:
         # Let Scintilla move the bookmark markers along with the edited text
         # instead of re-anchoring them at their old line numbers, then re-sync
         # the stored line numbers with the markers' actual positions. This
@@ -704,7 +707,7 @@ class CustomEditor(BaseEditor):
     Line manipulation functions
     """
 
-    def goto_line(self, line_number, skip_repl_focus=True):
+    def goto_line(self, line_number: int, skip_repl_focus: bool = True) -> None:
         """Set focus and cursor to the selected line"""
         # Check if the selected line is within the line boundaries of the current document
         line_number = self.check_line_numbering(line_number)
@@ -716,19 +719,19 @@ class CustomEditor(BaseEditor):
         if skip_repl_focus == True:
             self._skip_next_repl_focus()
 
-    def goto_index(self, index):
+    def goto_index(self, index: int) -> None:
         self.SendScintilla(self.SCI_GOTOPOS, index)
         line, line_index = self.lineIndexFromPosition(index)
         self.set_first_visible_line(line - 10)
         self.setFocus()
 
-    def set_first_visible_line(self, line_number):
+    def set_first_visible_line(self, line_number: int) -> None:
         """Move the top of the viewing area to the selected line"""
         if line_number < 0:
             line_number = 0
         self.SendScintilla(qt.QsciScintillaBase.SCI_SETFIRSTVISIBLELINE, line_number)
 
-    def remove_line(self, line_number):
+    def remove_line(self, line_number: int) -> None:
         """Remove a line from the custom editor"""
         # Check if the selected line is within the line boundaries of the current document
         line_number = self.check_line_numbering(line_number)
@@ -794,7 +797,7 @@ class CustomEditor(BaseEditor):
         if line_to > line_from:
             self.setCursorPosition(line_to - 1, 0)
 
-    def set_all_text(self, text):
+    def set_all_text(self, text: str | list[str]) -> None:
         """
         Set the entire scintilla document text with a single select/replace routine.
         This function was added, because "setText()" function from Qscintilla
@@ -809,11 +812,11 @@ class CustomEditor(BaseEditor):
         # Replace it with the new text
         self.replaceSelectedText(text)
 
-    def get_line_number(self):
+    def get_line_number(self) -> int:
         """return the line on which the cursor is"""
         return self.getCursorPosition()[0] + 1
 
-    def get_line(self, line_number):
+    def get_line(self, line_number: int) -> str:
         """Return the text of the selected line in the scintilla document"""
         line_text = self.text(line_number - 1)
         return line_text.rstrip("\r\n")
@@ -829,16 +832,16 @@ class CustomEditor(BaseEditor):
             line_to = len(self.line_list) if self.line_list else 0
         return list(self.line_list[line_from:line_to]) if self.line_list else []
 
-    def get_absolute_cursor_position(self):
+    def get_absolute_cursor_position(self) -> int:
         """
         Get the absolute cursor position using the line list
         NOTE:
             This function returns the actual length of characters,
             NOT the length of bytes!
         """
-        return self.line_list.get_absolute_cursor_position()
+        return self.line_list.get_absolute_cursor_position()  # type: ignore[union-attr]
 
-    def append_to_line(self, append_text, line_number):
+    def append_to_line(self, append_text: str, line_number: int) -> None:
         """Add text to the back of the line"""
         # Check if the appending text is valid
         if append_text != "" and append_text != None:
@@ -847,7 +850,7 @@ class CustomEditor(BaseEditor):
                 self.get_line(line_number).rstrip() + append_text, line_number
             )
 
-    def append_to_lines(self, *args, **kwds):
+    def append_to_lines(self, *args: Any, **kwds: Any) -> None:
         """Add text to the back of the line range"""
         # Check the arguments and keyword arguments
         appending_text = ""
@@ -877,7 +880,7 @@ class CustomEditor(BaseEditor):
             line_from = sel_line_from + 1
             line_to = sel_line_to + 1
         else:
-            self.main_form.display.write_to_statusbar(
+            self.main_form.display.write_to_statusbar(  # type: ignore[union-attr]
                 "Wrong arguments to 'append' function!", 1000
             )
             return
@@ -887,7 +890,7 @@ class CustomEditor(BaseEditor):
                 line_from - 1, line_to, lambda line: line + appending_text
             )
 
-    def prepend_to_line(self, append_text, line_number):
+    def prepend_to_line(self, append_text: str, line_number: int) -> None:
         """Add text to the front of the line"""
         # Check if the appending text is valid
         if append_text != "" and append_text != None:
@@ -896,7 +899,7 @@ class CustomEditor(BaseEditor):
                 append_text + self.get_line(line_number).rstrip(), line_number
             )
 
-    def prepend_to_lines(self, *args, **kwds):
+    def prepend_to_lines(self, *args: Any, **kwds: Any) -> None:
         """Add text to the front of the line range"""
         # Check the arguments and keyword arguments
         prepending_text = ""
@@ -926,7 +929,7 @@ class CustomEditor(BaseEditor):
             line_from = sel_line_from + 1
             line_to = sel_line_to + 1
         else:
-            self.main_form.display.write_to_statusbar(
+            self.main_form.display.write_to_statusbar(  # type: ignore[union-attr]
                 "Wrong arguments to 'prepend' function!", 1000
             )
             return
@@ -936,43 +939,46 @@ class CustomEditor(BaseEditor):
                 line_from - 1, line_to, lambda line: prepending_text + line
             )
 
-    def _comment_lines_internal(self, line_from, line_to):
+    def _comment_lines_internal(self, line_from: int, line_to: int) -> None:
         """Comment lines line_from..line_to (1-based, inclusive) according to the currently set lexer."""
-        if self.lexer().open_close_comment_style == True:
-            self.prepend_to_lines(self.lexer().comment_string, line_from, line_to)
-            self.append_to_lines(self.lexer().end_comment_string, line_from, line_to)
+        if self.lexer().open_close_comment_style == True:  # type: ignore[attr-defined]
+            self.prepend_to_lines(self.lexer().comment_string, line_from, line_to)  # type: ignore[attr-defined]
+            self.append_to_lines(self.lexer().end_comment_string, line_from, line_to)  # type: ignore[attr-defined]
         else:
-            self.prepend_to_lines(self.lexer().comment_string, line_from, line_to)
+            self.prepend_to_lines(self.lexer().comment_string, line_from, line_to)  # type: ignore[attr-defined]
 
-    def comment_line(self, line_number=None):
+    def comment_line(self, line_number: int | None = None) -> None:
         """Comment a single line according to the currently set lexer"""
         if line_number == None:
             line_number = self.getCursorPosition()[0] + 1
         self._comment_lines_internal(line_number, line_number)
         self.setCursorPosition(line_number - 1, 0)
 
-    def comment_lines(self, line_from=0, line_to=0):
+    def comment_lines(self, line_from: int = 0, line_to: int = 0) -> None:
         """Comment lines according to the currently set lexer"""
         if line_from == line_to:
             return
         self._comment_lines_internal(line_from, line_to)
-        line_to_length = len(self.line_list[line_to - 1])
+        line_to_length = len(self.line_list[line_to - 1])  # type: ignore[index]
         self.setSelection(line_to - 1, line_to_length, line_from - 1, 0)
 
-    def _uncomment_line_text(self, line_text):
+    def _uncomment_line_text(self, line_text: str) -> str:
         """Return uncommented version of a line's text, or unchanged if not commented."""
-        if not line_text.lstrip().startswith(self.lexer().comment_string):
+        if not line_text.lstrip().startswith(self.lexer().comment_string):  # type: ignore[attr-defined]
             return line_text
-        if self.lexer().open_close_comment_style == True:
-            result = line_text.replace(self.lexer().comment_string, "", 1)
+        if self.lexer().open_close_comment_style == True:  # type: ignore[attr-defined]
+            result = line_text.replace(self.lexer().comment_string, "", 1)  # type: ignore[attr-defined]
             result = functions.right_replace(
-                result, self.lexer().end_comment_string, "", 1
+                result,
+                self.lexer().end_comment_string,  # type: ignore[attr-defined]
+                "",
+                1,
             )
             return result
         else:
-            return line_text.replace(self.lexer().comment_string, "", 1)
+            return line_text.replace(self.lexer().comment_string, "", 1)  # type: ignore[attr-defined]
 
-    def uncomment_line(self, line_number=None):
+    def uncomment_line(self, line_number: int | None = None) -> None:
         """Uncomment a single line according to the currently set lexer"""
         if line_number == None:
             line_number = self.getCursorPosition()[0] + 1
@@ -981,18 +987,18 @@ class CustomEditor(BaseEditor):
             self.replace_line(new_text, line_number)
             self.setCursorPosition(line_number - 1, 0)
 
-    def uncomment_lines(self, line_from, line_to):
+    def uncomment_lines(self, line_from: int, line_to: int) -> None:
         """Uncomment lines according to the currently set lexer"""
         if line_from == line_to:
             return
-        selected_lines = self.line_list[line_from - 1 : line_to]
+        selected_lines = self.line_list[line_from - 1 : line_to]  # type: ignore[index]
         for i in range(len(selected_lines)):
             selected_lines[i] = self._uncomment_line_text(selected_lines[i])
-        self.line_list[line_from - 1 : line_to] = selected_lines
-        line_to_length = len(self.line_list[line_to - 1])
+        self.line_list[line_from - 1 : line_to] = selected_lines  # type: ignore[index]
+        line_to_length = len(self.line_list[line_to - 1])  # type: ignore[index]
         self.setSelection(line_to - 1, line_to_length, line_from - 1, 0)
 
-    def indent_lines_to_cursor(self):
+    def indent_lines_to_cursor(self) -> None:
         """
         Indent selected lines to the current cursor position in the document.
         P.S.:   Ex.Co. uses spaces as tabs by default, so if you copy text that
@@ -1005,8 +1011,8 @@ class CustomEditor(BaseEditor):
         # Test if indenting one or many lines
         if self.getSelection() == (-1, -1, -1, -1):
             line_number = cursor_position[0]
-            line = self.line_list[line_number].lstrip()
-            self.line_list[line_number] = indent_space + line
+            line = self.line_list[line_number].lstrip()  # type: ignore[index]
+            self.line_list[line_number] = indent_space + line  # type: ignore[index]
         else:
             # Get the first and last selected line (0-based, inclusive)
             start_line_number = self.getSelection()[0]
@@ -1042,7 +1048,7 @@ class CustomEditor(BaseEditor):
             # Restore cursor back to the original position
             self.setCursorPosition(cursor_position[0], cursor_position[1])
 
-    def custom_indent(self):
+    def custom_indent(self) -> None:
         """
         Scintila indents line-by-line, which is very slow for a large amount of lines. Try indenting 20000 lines.
         This is a custom indentation function that indents all lines in one operation.
@@ -1059,10 +1065,10 @@ class CustomEditor(BaseEditor):
             line_number, position = self.getCursorPosition()
             # Check if the indentation is the first function
             # that is exected in an empty editor
-            if len(self.line_list) == 0:
+            if len(self.line_list) == 0:  # type: ignore[arg-type]
                 line_text = ""
             else:
-                line_text = self.line_list[line_number]
+                line_text = self.line_list[line_number]  # type: ignore[index]
             # Check if there is no text before the cursor position in the current line
             if line_text[:position].strip() == "":
                 for i, ch in enumerate(line_text):
@@ -1071,7 +1077,7 @@ class CustomEditor(BaseEditor):
                         diff = tab_width - (i % tab_width)
                         adding_text = diff * " "
                         new_line = adding_text + line_text
-                        self.line_list[line_number] = new_line
+                        self.line_list[line_number] = new_line  # type: ignore[index]
                         self.setCursorPosition(line_number, i + diff)
                         break
                 else:
@@ -1079,14 +1085,14 @@ class CustomEditor(BaseEditor):
                     diff = tab_width - (position % tab_width)
                     adding_text = diff * " "
                     new_line = line_text[:position] + adding_text + line_text[position:]
-                    self.line_list[line_number] = new_line
+                    self.line_list[line_number] = new_line  # type: ignore[index]
                     self.setCursorPosition(line_number, len(new_line))
             else:
                 # There is text before the cursor
                 diff = tab_width - (position % tab_width)
                 adding_text = diff * " "
                 new_line = line_text[:position] + adding_text + line_text[position:]
-                self.line_list[line_number] = new_line
+                self.line_list[line_number] = new_line  # type: ignore[index]
                 self.setCursorPosition(line_number, position + diff)
         else:
             # MULTILINE INDENT - indent all visually selected lines regardless of end column
@@ -1100,12 +1106,12 @@ class CustomEditor(BaseEditor):
             else:
                 line_to = selection[2] + 1
             # Get the selected line list
-            lines = self.line_list[line_from:line_to]
+            lines = self.line_list[line_from:line_to]  # type: ignore[index]
             # Set the indentation width
             indentation_string = tab_width * " "
 
             # Smart indentation that tabs to tab-width columns
-            def indent_func(line):
+            def indent_func(line: str) -> str:
                 if line.strip() != "":
                     if line.startswith(" "):
                         leading_spaces = len(line) - len(line.lstrip())
@@ -1120,7 +1126,7 @@ class CustomEditor(BaseEditor):
             for i, line in enumerate(lines):
                 lines[i] = indent_func(line)
             # Set the new line list in one operation
-            self.line_list[line_from:line_to] = lines
+            self.line_list[line_from:line_to] = lines  # type: ignore[index]
             # Set the selection again according to which line was selected before the indent
             if selected_line == selection[0]:
                 # This part is also to mimic the default indent functionality of Scintilla
@@ -1145,7 +1151,7 @@ class CustomEditor(BaseEditor):
                 select_from, select_from_length, select_to, select_to_length
             )
 
-    def custom_unindent(self):
+    def custom_unindent(self) -> None:
         """
         Scintila unindents line-by-line, which is very slow for a large amount of lines. Try unindenting 20000 lines.
         This is a custom unindentation function that unindents all lines in one operation.
@@ -1158,7 +1164,7 @@ class CustomEditor(BaseEditor):
         selection = self.getSelection()
         if selection == (-1, -1, -1, -1):
             line_number, position = self.getCursorPosition()
-            line_text = self.line_list[line_number]
+            line_text = self.line_list[line_number]  # type: ignore[index]
             if line_text == "":
                 return
             elif line_text.strip() == "":
@@ -1167,7 +1173,7 @@ class CustomEditor(BaseEditor):
                 if diff == 0:
                     diff = tab_width
                 new_length = len(line_text) - diff
-                self.line_list[line_number] = self.line_list[line_number][:new_length]
+                self.line_list[line_number] = self.line_list[line_number][:new_length]  # type: ignore[index]
                 self.setCursorPosition(line_number, new_length)
             else:
                 if line_text[0] != " ":
@@ -1185,7 +1191,7 @@ class CustomEditor(BaseEditor):
                             diff = i % tab_width
                             if diff == 0:
                                 diff = tab_width
-                            self.line_list[line_number] = self.line_list[line_number][
+                            self.line_list[line_number] = self.line_list[line_number][  # type: ignore[index]
                                 diff:
                             ]
                             self.setCursorPosition(line_number, i - diff)
@@ -1208,10 +1214,10 @@ class CustomEditor(BaseEditor):
             else:
                 line_to = selection[2] + 1
             # Get the selected line list
-            lines = self.line_list[line_from:line_to]
+            lines = self.line_list[line_from:line_to]  # type: ignore[index]
 
             # Smart unindentation that unindents each line to the nearest tab column
-            def unindent_func(line):
+            def unindent_func(line: str) -> str:
                 if line.startswith(" "):
                     leading_spaces = len(line) - len(line.lstrip())
                     diff = leading_spaces % tab_width
@@ -1224,7 +1230,7 @@ class CustomEditor(BaseEditor):
             for i, line in enumerate(lines):
                 lines[i] = unindent_func(line)
             # Set the new line list in one operation
-            self.line_list[line_from:line_to] = lines
+            self.line_list[line_from:line_to] = lines  # type: ignore[index]
             # Set the selection again according to which line was selected before the indent
             if selected_line == selection[0]:
                 if selection[3] == 0:
@@ -1255,11 +1261,11 @@ class CustomEditor(BaseEditor):
         """Convert a list of lines to one string joined with LF"""
         return "\n".join(line_list)
 
-    def toggle_comment_uncomment(self):
+    def toggle_comment_uncomment(self) -> None:
         """Toggle commenting for the selected lines"""
         # Check if the document is a valid programming language
-        if self.lexer().comment_string == None:
-            self.main_form.display.repl_display_message(
+        if self.lexer().comment_string == None:  # type: ignore[attr-defined]
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "Lexer '{}' has no comment abillity!".format(self.lexer().language()),
                 message_type=constants.MessageType.WARNING,
             )
@@ -1273,7 +1279,7 @@ class CustomEditor(BaseEditor):
             line_number = self.getCursorPosition()[0] + 1
             line_text = self.get_line(line_number)
             # Un/comment only the current line (no arguments un/comments current line)
-            if line_text.lstrip().startswith(self.lexer().comment_string):
+            if line_text.lstrip().startswith(self.lexer().comment_string):  # type: ignore[attr-defined]
                 self.uncomment_line()
             else:
                 self.comment_line()
@@ -1281,20 +1287,22 @@ class CustomEditor(BaseEditor):
             # Text is selected
             start_line_number = self.getSelection()[0] + 1
             first_selected_chars = self.selectedText()[
-                0 : len(self.lexer().comment_string)
+                0 : len(
+                    self.lexer().comment_string  # type: ignore[attr-defined]
+                )
             ]
             end_line_number = self.getSelection()[2] + 1
             # Choose un/commenting according to the first line in selection
-            if first_selected_chars == self.lexer().comment_string:
+            if first_selected_chars == self.lexer().comment_string:  # type: ignore[attr-defined]
                 self.uncomment_lines(start_line_number, end_line_number)
             else:
                 self.comment_lines(start_line_number, end_line_number)
 
-    def for_each_line(self, in_func):
+    def for_each_line(self, in_func: Callable[[str], str]) -> None:
         """Apply function 'in_func' to lines"""
         # Check that in_func is really a function
         if callable(in_func) == False:
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "'for_each_line' argument has to be a function!",
                 message_type=constants.MessageType.ERROR,
             )
@@ -1308,7 +1316,7 @@ class CustomEditor(BaseEditor):
             try:
                 new_line_list = []
                 function_returns_none = False
-                for line in self.line_list:
+                for line in self.line_list:  # type: ignore[union-attr]
                     new_line = in_func(line)
                     if new_line == None:
                         function_returns_none = True
@@ -1316,9 +1324,9 @@ class CustomEditor(BaseEditor):
                     new_line_list.append(new_line)
                 if function_returns_none == False:
                     # Assign the new list over the old one
-                    self.line_list = new_line_list
+                    self.line_list = new_line_list  # type: ignore[assignment]
             except Exception as ex:
-                self.main_form.display.repl_display_message(
+                self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                     "'for_each_line' has an error:\n" + str(ex),
                     message_type=constants.MessageType.ERROR,
                 )
@@ -1333,7 +1341,7 @@ class CustomEditor(BaseEditor):
                 # Apply the function to the lines
                 new_line_list = []
                 function_returns_none = False
-                for line in self.line_list[start_line_number:end_line_number]:
+                for line in self.line_list[start_line_number:end_line_number]:  # type: ignore[index]
                     new_line = in_func(line)
                     if new_line == None:
                         function_returns_none = True
@@ -1341,21 +1349,21 @@ class CustomEditor(BaseEditor):
                     new_line_list.append(new_line)
                 if function_returns_none == False:
                     # Assign the new list over the old one
-                    self.line_list[start_line_number:end_line_number] = new_line_list
+                    self.line_list[start_line_number:end_line_number] = new_line_list  # type: ignore[index]
             except Exception as ex:
-                self.main_form.display.repl_display_message(
+                self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                     "'for_each_line' has an error:\n" + str(ex),
                     message_type=constants.MessageType.ERROR,
                 )
                 return
 
-    def remove_empty_lines(self):
+    def remove_empty_lines(self) -> None:
         new_line_list = []
-        for line in self.line_list:
+        for line in self.line_list:  # type: ignore[union-attr]
             if line.strip() != "":
                 new_line_list.append(line)
         # Assign the new list over the old one
-        self.line_list = new_line_list
+        self.line_list = new_line_list  # type: ignore[assignment]
 
     """
     Search and replace functions
@@ -1363,11 +1371,11 @@ class CustomEditor(BaseEditor):
 
     def find_text(
         self,
-        search_text,
-        case_sensitive=False,
-        search_forward=True,
-        regular_expression=False,
-    ):
+        search_text: str,
+        case_sensitive: bool = False,
+        search_forward: bool = True,
+        regular_expression: bool = False,
+    ) -> bool:
         """
         (SAME AS THE QSciScintilla.find, BUT THIS RETURNS A RESULT)
         Function to find an occurance of text in the current tab of a basic widget:
@@ -1376,7 +1384,7 @@ class CustomEditor(BaseEditor):
             ! THERE IS A BUG WHEN SEARCHING FOR UNICODE STRINGS, THESE ARE ALWAYS CASE SENSITIVE
         """
 
-        def focus_entire_found_text():
+        def focus_entire_found_text() -> None:
             """
             Nested function for selection the entire found text
             """
@@ -1412,7 +1420,7 @@ class CustomEditor(BaseEditor):
                     self.setCursorPosition(0, result_start)
                     self.setSelection(0, result_start, 0, result_end)
                     # Return successful find
-                    return constants.SearchResult.FOUND
+                    return constants.SearchResult.FOUND  # type: ignore[return-value]
                 else:
                     # Begin a new search from the top of the document
                     search_result = re.search(compiled_search_re, self.text())
@@ -1422,50 +1430,50 @@ class CustomEditor(BaseEditor):
                         result_end = result_start + len(search_result.group(0))
                         self.setCursorPosition(0, result_start)
                         self.setSelection(0, result_start, 0, result_end)
-                        self.main_form.display.write_to_statusbar(
+                        self.main_form.display.write_to_statusbar(  # type: ignore[union-attr]
                             "Reached end of document, started from the top again!"
                         )
                         # Return cycled find
-                        return constants.SearchResult.CYCLED
+                        return constants.SearchResult.CYCLED  # type: ignore[return-value]
                     else:
-                        self.main_form.display.write_to_statusbar("Text was not found!")
-                        return constants.SearchResult.NOT_FOUND
+                        self.main_form.display.write_to_statusbar("Text was not found!")  # type: ignore[union-attr]
+                        return constants.SearchResult.NOT_FOUND  # type: ignore[return-value]
             else:
                 # Move the cursor one character back when searching backard
                 # to not catch the same search result again
                 cursor_position = self.get_absolute_cursor_position()
                 search_text = self.text()[:cursor_position]
                 # Regex search from the absolute position to the end for the search expression
-                search_result = [
+                search_result = [  # type: ignore[assignment]
                     m for m in re.finditer(compiled_search_re, search_text)
                 ]
                 if search_result != []:
                     # Select the found expression
-                    result_start = search_result[-1].start()
-                    result_end = search_result[-1].end()
+                    result_start = search_result[-1].start()  # type: ignore[union-attr,index]
+                    result_end = search_result[-1].end()  # type: ignore[union-attr,index]
                     self.setCursorPosition(0, result_start)
                     self.setSelection(0, result_start, 0, result_end)
                     # Return successful find
-                    return constants.SearchResult.FOUND
+                    return constants.SearchResult.FOUND  # type: ignore[return-value]
                 else:
                     # Begin a new search from the top of the document
-                    search_result = [
+                    search_result = [  # type: ignore[assignment]
                         m for m in re.finditer(compiled_search_re, self.text())
                     ]
                     if search_result != []:
                         # Select the found expression
-                        result_start = search_result[-1].start()
-                        result_end = search_result[-1].end()
+                        result_start = search_result[-1].start()  # type: ignore[union-attr,index]
+                        result_end = search_result[-1].end()  # type: ignore[union-attr,index]
                         self.setCursorPosition(0, result_start)
                         self.setSelection(0, result_start, 0, result_end)
-                        self.main_form.display.write_to_statusbar(
+                        self.main_form.display.write_to_statusbar(  # type: ignore[union-attr]
                             "Reached end of document, started from the top again!"
                         )
                         # Return cycled find
-                        return constants.SearchResult.CYCLED
+                        return constants.SearchResult.CYCLED  # type: ignore[return-value]
                     else:
-                        self.main_form.display.write_to_statusbar("Text was not found!")
-                        return constants.SearchResult.NOT_FOUND
+                        self.main_form.display.write_to_statusbar("Text was not found!")  # type: ignore[union-attr]
+                        return constants.SearchResult.NOT_FOUND  # type: ignore[return-value]
         else:
             # Move the cursor one character back when searching backard
             # to not catch the same search result again
@@ -1473,7 +1481,7 @@ class CustomEditor(BaseEditor):
                 line, index = self.getCursorPosition()
                 self.setCursorPosition(line, index - 1)
             # "findFirst" is the QScintilla function for finding text in a document
-            search_result = self.findFirst(
+            search_result = self.findFirst(  # type: ignore[assignment]
                 search_text, False, case_sensitive, False, False, forward=search_forward
             )
             if search_result == False:
@@ -1483,7 +1491,7 @@ class CustomEditor(BaseEditor):
                     s_line = 0
                     s_index = 0
                 else:
-                    s_line = len(self.line_list) - 1
+                    s_line = len(self.line_list) - 1  # type: ignore[arg-type]
                     s_index = len(self.text())
                 inner_result = self.findFirst(
                     search_text,
@@ -1496,32 +1504,32 @@ class CustomEditor(BaseEditor):
                     index=s_index,
                 )
                 if inner_result == False:
-                    self.main_form.display.write_to_statusbar("Text was not found!")
-                    return constants.SearchResult.NOT_FOUND
+                    self.main_form.display.write_to_statusbar("Text was not found!")  # type: ignore[union-attr]
+                    return constants.SearchResult.NOT_FOUND  # type: ignore[return-value]
                 else:
-                    self.main_form.display.write_to_statusbar(
+                    self.main_form.display.write_to_statusbar(  # type: ignore[union-attr]
                         "Reached end of document, started from the other end again!"
                     )
                     focus_entire_found_text()
                     # Return cycled find
-                    return constants.SearchResult.CYCLED
+                    return constants.SearchResult.CYCLED  # type: ignore[return-value]
             else:
                 # Found text
-                self.main_form.display.write_to_statusbar(
+                self.main_form.display.write_to_statusbar(  # type: ignore[union-attr]
                     'Found text: "' + search_text + '"'
                 )
                 focus_entire_found_text()
                 # Return successful find
-                return constants.SearchResult.FOUND
+                return constants.SearchResult.FOUND  # type: ignore[return-value]
 
     def find_all(
         self,
-        search_text,
-        case_sensitive=False,
-        regular_expression=False,
-        text_to_bytes=False,
-        whole_words=False,
-    ):
+        search_text: str,
+        case_sensitive: bool = False,
+        regular_expression: bool = False,
+        text_to_bytes: bool = False,
+        whole_words: bool = False,
+    ) -> list[tuple[int, int, int]]:
         """Find all instances of a string and return a list of (line, index_start, index_end)"""
         # Find all instances of the search string and return the list
         matches = functions.index_strings_in_text(
@@ -1536,12 +1544,12 @@ class CustomEditor(BaseEditor):
 
     def find_and_replace(
         self,
-        search_text,
-        replace_text,
-        case_sensitive=False,
-        search_forward=True,
-        regular_expression=False,
-    ):
+        search_text: str,
+        replace_text: str,
+        case_sensitive: bool = False,
+        search_forward: bool = True,
+        regular_expression: bool = False,
+    ) -> None:
         """Find next instance of the search string and replace it with the replace string"""
         if regular_expression == True:
             # Check if expression exists in the document
@@ -1562,14 +1570,14 @@ class CustomEditor(BaseEditor):
                 # Replace selected text with replace text
                 self.replaceSelectedText(replacement)
                 # Select the newly replaced text
-                self.main_form.display.repl_display_message(replacement)
+                self.main_form.display.repl_display_message(replacement)  # type: ignore[union-attr]
                 self.setSelection(
                     saved_selection[0],
                     saved_selection[1],
                     saved_selection[2],
                     saved_selection[1] + len(replacement),
                 )
-                return True
+                return True  # type: ignore[return-value]
             else:
                 # Search text not found
                 self.main_form.display.write_to_statusbar("Text was not found!")
@@ -1589,15 +1597,19 @@ class CustomEditor(BaseEditor):
                     saved_selection[2],
                     saved_selection[1] + len(replace_text),
                 )
-                return True
+                return True  # type: ignore[return-value]
             else:
                 # Search text not found
                 self.main_form.display.write_to_statusbar("Text was not found!")
                 return False
 
     def replace_all(
-        self, search_text, replace_text, case_sensitive=False, regular_expression=False
-    ):
+        self,
+        search_text: str,
+        replace_text: str,
+        case_sensitive: bool = False,
+        regular_expression: bool = False,
+    ) -> None:
         """
         Replace all occurences of a string in a scintilla document
         """
@@ -1625,7 +1637,7 @@ class CustomEditor(BaseEditor):
                 compiled_search_re = re.compile(search_text, re.IGNORECASE)
             search_result = re.search(compiled_search_re, self.text())
         else:
-            search_result = self.find_text(search_text, case_sensitive)
+            search_result = self.find_text(search_text, case_sensitive)  # type: ignore[assignment]
         if search_result == constants.SearchResult.NOT_FOUND:
             message = "No matches were found in '{}'!".format(file_name)
             self.main_form.display.repl_display_message(
@@ -1666,14 +1678,14 @@ class CustomEditor(BaseEditor):
                     < settings.get("editor")["maximum_highlights"]
                 ):
                     message = "{} replacements:".format(file_name)
-                    self.main_form.display.repl_display_message(
+                    self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                         message, message_type=constants.MessageType.SUCCESS
                     )
                     for match in corrected_matches:
                         line = self.lineIndexFromPosition(match[1])[0] + 1
                         index = self.lineIndexFromPosition(match[1])[1]
                         message = "    replacement made in line:{:d}".format(line)
-                        self.main_form.display.repl_display_message(
+                        self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                             message, message_type=constants.MessageType.SUCCESS
                         )
                 else:
@@ -1681,16 +1693,16 @@ class CustomEditor(BaseEditor):
                         len(corrected_matches), file_name
                     )
                     message += "Too many to list individually!"
-                    self.main_form.display.repl_display_message(
+                    self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                         message, message_type=constants.MessageType.WARNING
                     )
                 # Highlight and display the line difference between the old and new texts
-                self.highlight_raw(corrected_matches)
+                self.highlight_raw(corrected_matches)  # type: ignore[arg-type]
             else:
                 # Display the replacements in the REPL tab
                 if len(matches) < settings.get("editor")["maximum_highlights"]:
                     message = "{} replacements:".format(file_name)
-                    self.main_form.display.repl_display_message(
+                    self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                         message, message_type=constants.MessageType.SUCCESS
                     )
                     for match in matches:
@@ -1699,7 +1711,7 @@ class CustomEditor(BaseEditor):
                         message = '    replaced "{}" in line:{:d} column:{:d}'.format(
                             search_text, line, index
                         )
-                        self.main_form.display.repl_display_message(
+                        self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                             message, message_type=constants.MessageType.SUCCESS
                         )
                 else:
@@ -1707,7 +1719,7 @@ class CustomEditor(BaseEditor):
                         len(matches), file_name
                     )
                     message += "Too many to list individually!"
-                    self.main_form.display.repl_display_message(
+                    self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                         message, message_type=constants.MessageType.WARNING
                     )
                 # Highlight and display the replaced text
@@ -1719,13 +1731,17 @@ class CustomEditor(BaseEditor):
             message += (
                 "Change the search/replace string or change the case sensitivity!"
             )
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 message, message_type=constants.MessageType.ERROR
             )
 
     def replace_in_selection(
-        self, search_text, replace_text, case_sensitive=False, regular_expression=False
-    ):
+        self,
+        search_text: str,
+        replace_text: str,
+        case_sensitive: bool = False,
+        regular_expression: bool = False,
+    ) -> None:
         """Replace all occurences of a string in the current selection in the scintilla document"""
         # Get the start and end point of the selected text
         start_line, start_index, end_line, end_index = self.getSelection()
@@ -1743,11 +1759,11 @@ class CustomEditor(BaseEditor):
             self.setSelection(start_line, start_index, new_end_line, new_end_index)
         else:
             message = "No replacements were made!"
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 message, message_type=constants.MessageType.WARNING
             )
 
-    def replace_entire_text(self, new_text):
+    def replace_entire_text(self, new_text: str) -> None:
         """
         Replace the entire text of the document
         """
@@ -1756,7 +1772,7 @@ class CustomEditor(BaseEditor):
         # Replace the text with the new
         self.replaceSelectedText(new_text)
 
-    def convert_case(self, uppercase=False):
+    def convert_case(self, uppercase: bool = False) -> None:
         """
         Convert selected text in the scintilla document into the selected case letters
         """
@@ -1779,8 +1795,11 @@ class CustomEditor(BaseEditor):
     """
 
     def highlight_text(
-        self, highlight_text, case_sensitive=False, regular_expression=False
-    ):
+        self,
+        highlight_text: str,
+        case_sensitive: bool = False,
+        regular_expression: bool = False,
+    ) -> None:
         """
         Highlight all instances of the selected text with a selected colour
         """
@@ -1794,17 +1813,17 @@ class CustomEditor(BaseEditor):
         if matches:
             # Use the raw highlight function to set the highlight indicators
             self.highlight_raw(matches)
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "{:d} matches highlighted".format(len(matches))
             )
             # Set the cursor to the first highlight (I don't like this feature)
         #            self.find_text(highlight_text, case_sensitive, True, regular_expression)
         else:
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "No matches found!", message_type=constants.MessageType.WARNING
             )
 
-    def highlight_raw(self, highlight_list):
+    def highlight_raw(self, highlight_list: list[tuple[int, int, int]]) -> None:
         """
         Core highlight function that uses Scintilla messages to style indicators.
         QScintilla's fillIndicatorRange function is to slow for large numbers of
@@ -1815,12 +1834,15 @@ class CustomEditor(BaseEditor):
         scintilla_command = qt.QsciScintillaBase.SCI_INDICATORFILLRANGE
         for highlight in highlight_list:
             start = highlight[1]
-            length = highlight[3] - highlight[1]
+            length = highlight[3] - highlight[1]  # type: ignore[misc]
             self.SendScintilla(scintilla_command, start, length)
 
     def _highlight_selected_text(
-        self, highlight_text, case_sensitive=False, regular_expression=False
-    ):
+        self,
+        highlight_text: str,
+        case_sensitive: bool = False,
+        regular_expression: bool = False,
+    ) -> None:
         """
         Same as the highlight_text function, but adapted for the use
         with the __selection_changed functionality.
@@ -1840,7 +1862,7 @@ class CustomEditor(BaseEditor):
             # Use the raw highlight function to set the highlight indicators
             self.highlight_raw(matches)
 
-    def clear_highlights(self):
+    def clear_highlights(self) -> None:
         """Clear all highlighted text"""
         # Clear the highlight indicators
         self.clearIndicatorRange(
@@ -1863,7 +1885,7 @@ class CustomEditor(BaseEditor):
             0, 0, self.lines(), self.lineLength(self.lines() - 1), self.FIND_INDICATOR
         )
 
-    def clear_selection_highlights(self):
+    def clear_selection_highlights(self) -> None:
         # Clear the selection indicators
         self.clearIndicatorRange(
             0,
@@ -1873,7 +1895,7 @@ class CustomEditor(BaseEditor):
             self.SELECTION_INDICATOR,
         )
 
-    def _set_indicator(self, indicator, fore_color):
+    def _set_indicator(self, indicator: int, fore_color: str) -> None:
         """
         Set the indicator settings
         """
@@ -1883,7 +1905,7 @@ class CustomEditor(BaseEditor):
         self.setIndicatorForegroundColor(qt.QColor(fore_color), indicator)
         self.SendScintilla(qt.QsciScintillaBase.SCI_SETINDICATORCURRENT, indicator)
 
-    def set_indicator(self, indicator):
+    def set_indicator(self, indicator: str) -> None:
         """
         Select the indicator that will be used for use with
         Scintilla's indicator functionality
@@ -1913,7 +1935,7 @@ class CustomEditor(BaseEditor):
     Various CustomEditor functions
     """
 
-    def check_line_numbering(self, line_number):
+    def check_line_numbering(self, line_number: int) -> int:
         """
         Check if the line number is in the bounds of the current document
         and return the filtered line number
@@ -1927,7 +1949,12 @@ class CustomEditor(BaseEditor):
             line_number = self.lines() - 1
         return line_number
 
-    def save_document(self, saveas=False, encoding="utf-8", line_ending=None):
+    def save_document(
+        self,
+        saveas: bool = False,
+        encoding: str = "utf-8",
+        line_ending: str | None = None,
+    ) -> bool:
         """
         Save a document to a file
         """
@@ -1946,7 +1973,7 @@ class CustomEditor(BaseEditor):
             )
             # PyQt6's getOpenFileNames returns a tuple (files_list, selected_filter),
             # so pass only the files to the function
-            temp_save_path = temp_save_path[0]
+            temp_save_path = temp_save_path[0]  # type: ignore[assignment]
             # Check if the user has selected a file
             if temp_save_path == "":
                 return False
@@ -1954,7 +1981,7 @@ class CustomEditor(BaseEditor):
             if data.platform == "Windows":
                 temp_save_path = functions.unixify_path(temp_save_path)
             # Save the chosen file name to the document "save_path" attribute
-            self.save_path = temp_save_path
+            self.save_path = temp_save_path  # type: ignore[assignment]
         # Set the tab name by filtering it out from the QFileDialog result
         self.name = os.path.basename(self.save_path)
         # Change the displayed name of the tab in the basic widget
@@ -1971,7 +1998,7 @@ class CustomEditor(BaseEditor):
         else:
             # The line ending has to be a string
             if isinstance(line_ending, str) == False:
-                self.main_form.display.repl_display_message(
+                self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                     "Line ending has to be a string!",
                     message_type=constants.MessageType.ERROR,
                 )
@@ -1995,10 +2022,10 @@ class CustomEditor(BaseEditor):
                 file_type = functions.get_file_type(self.save_path)
                 self.choose_lexer(file_type)
             # Update the settings manipulator with the new file
-            self.main_form.settings.update_recent_list(self.save_path)
+            self.main_form.settings.update_recent_list(self.save_path)  # type: ignore[union-attr]
             # Signal file saved to add to PathWatcher if not already monitored
             if hasattr(self.main_form, "tools"):
-                path_watcher = self.main_form.tools.path_watcher
+                path_watcher = self.main_form.tools.path_watcher  # type: ignore[union-attr]
                 if self.save_path not in path_watcher.monitored_files:
                     data.signal_dispatcher.editor_file_saved_as.emit(self.save_path)
             return True
@@ -2006,37 +2033,37 @@ class CustomEditor(BaseEditor):
             # Saving has failed
             error_message = "Error while trying to write file to disk:\n"
             error_message += str(save_result)
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 error_message, message_type=constants.MessageType.ERROR
             )
-            self.main_form.display.write_to_statusbar(
+            self.main_form.display.write_to_statusbar(  # type: ignore[union-attr]
                 "Saving to file failed, check path and disk space!"
             )
             return False
 
-    def refresh_lexer(self):
+    def refresh_lexer(self) -> None:
         """
         Refresh the current lexer (used by themes)
         """
         self.set_theme(settings.get_theme())
-        self.lexer().set_theme(settings.get_theme())
+        self.lexer().set_theme(settings.get_theme())  # type: ignore[attr-defined]
 
-    def choose_lexer(self, file_type):
+    def choose_lexer(self, file_type: str) -> None:
         """
         Choose the lexer from the file type parameter for the scintilla document
         """
         # Set the lexer for syntax highlighting according to file type
         self.current_file_type, lexer = lexers.get_lexer_from_file_type(file_type)
         # Check if a lexer was chosen
-        if lexer != None:
+        if lexer is not None:
             self.set_lexer(lexer, file_type)
         else:
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "Error while setting the lexer!",
                 message_type=constants.MessageType.ERROR,
             )
 
-    def clear_lexer(self):
+    def clear_lexer(self) -> None:
         """
         Remove the lexer from the editor
         """
@@ -2045,7 +2072,7 @@ class CustomEditor(BaseEditor):
             self.lexer().setParent(None)
             self.setLexer(None)
 
-    def set_lexer(self, lexer, file_type):
+    def set_lexer(self, lexer: qt.QsciLexer, file_type: str) -> None:
         """
         Function that actually sets the lexer
         """
@@ -2057,9 +2084,9 @@ class CustomEditor(BaseEditor):
         lexer.setDefaultFont(settings.get_editor_font())
         # Set the comment options
         result = lexers.get_comment_style_for_lexer(lexer)
-        lexer.open_close_comment_style = result[0]
-        lexer.comment_string = result[1]
-        lexer.end_comment_string = result[2]
+        lexer.open_close_comment_style = result[0]  # type: ignore[attr-defined]
+        lexer.comment_string = result[1]  # type: ignore[attr-defined]
+        lexer.end_comment_string = result[2]  # type: ignore[attr-defined]
         # Set indentation style
         lexer.setAutoIndentStyle(
             qt.QsciScintilla.AiOpening or qt.QsciScintilla.AiOpening
@@ -2083,48 +2110,48 @@ class CustomEditor(BaseEditor):
         # Get the icon according to the file type
         self.current_icon = functions.get_language_file_icon(file_type)
         # Update the icon on the parent basic widget
-        self.internals.update_icon(self)
+        self.internals.update_icon(self)  # type: ignore[union-attr]
         # Set the theme
         self.set_theme(settings.get_theme())
         # Update corner icons
-        self.internals.update_corner_button_icon(
+        self.internals.update_corner_button_icon(  # type: ignore[union-attr]
             self.current_icon, index=self._lexer_button_index
         )
-        self.internals.update_icon(self)
+        self.internals.update_icon(self)  # type: ignore[union-attr]
         # Check for special lexer functionality
         qt.QTimer.singleShot(10, self.__check_special_lexer_functionality)
 
-    def __check_special_lexer_functionality(self):
+    def __check_special_lexer_functionality(self) -> None:
         if isinstance(self.lexer(), lexers.nim.Nim):
             pass
 
-    def reset_brace_matching(self):
+    def reset_brace_matching(self) -> None:
         # Reset the brace matching color
         self.setBraceMatching(qt.QsciScintilla.BraceMatch.SloppyBraceMatch)
 
     #        self.setMatchedBraceBackgroundColor(qt.QColor(settings.get("editor")['brace_color']))
     #        self.setMatchedBraceForegroundColor(settings.get_theme()["fonts"]["default"]["color"])
 
-    def clear_editor(self):
+    def clear_editor(self) -> None:
         """Clear the text from the scintilla document"""
         self.SendScintilla(qt.QsciScintillaBase.SCI_CLEARALL)
 
-    def tabs_to_spaces(self):
+    def tabs_to_spaces(self) -> None:
         """Convert all tab(\t) characters to spaces"""
         spaces = " " * settings.get("editor")["tab_width"]
         self.setText(self.text().replace("\t", spaces))
 
-    def undo_all(self):
+    def undo_all(self) -> None:
         """Repeat undo until there is something to undo"""
         while self.isUndoAvailable() == True:
             self.undo()
 
-    def redo_all(self):
+    def redo_all(self) -> None:
         """Repeat redo until there is something to redo"""
         while self.isRedoAvailable() == True:
             self.redo()
 
-    def update_margin(self):
+    def update_margin(self) -> None:
         """
         Update margin width according to the number of lines in the document
         """
@@ -2132,7 +2159,7 @@ class CustomEditor(BaseEditor):
         # Set margin width
         self.setMarginWidth(0, str(line_count) + "0")
 
-    def edge_marker_show(self):
+    def edge_marker_show(self) -> None:
         """Show the marker at the specified column number"""
         # Set the marker color to blue
         marker_color = settings.get("editor")["edge_marker_color"]
@@ -2143,18 +2170,18 @@ class CustomEditor(BaseEditor):
         self.setEdgeColumn(marker_column)
         self.setEdgeMode(qt.QsciScintilla.EdgeMode.EdgeLine)
 
-    def edge_marker_hide(self):
+    def edge_marker_hide(self) -> None:
         """Hide the column marker"""
         self.setEdgeMode(qt.QsciScintilla.EdgeMode.EdgeNone)
 
-    def edge_marker_toggle(self):
+    def edge_marker_toggle(self) -> None:
         """Toggle edge marker display"""
         if self.edgeMode() == qt.QsciScintilla.EdgeMode.EdgeNone:
             self.edge_marker_show()
         else:
             self.edge_marker_hide()
 
-    def reset_text_changed(self):
+    def reset_text_changed(self) -> None:
         self.update_document_modification_time()
 
         # Reset text changed indication
@@ -2179,9 +2206,9 @@ class CustomEditor(BaseEditor):
         choice either the "end_of_line_mode" setting is used as the fallback.
         """
         detected = functions.detect_file_eol(file_with_path)
-        if detected != None:
+        if detected is not None:
             self._target_eol = detected
-        elif self._target_eol == None:
+        elif self._target_eol is None:
             self._target_eol = components.linelist.eol_string(
                 int(settings.get("editor")["end_of_line_mode"])
             )
@@ -2219,13 +2246,13 @@ class CustomEditor(BaseEditor):
         finally:
             self.SendScintilla(self.SCI_ENDUNDOACTION)
 
-    def reload_file(self):
+    def reload_file(self) -> None:
         """
         Reload current document from disk
         """
         # Check if file was loaded from or saved to disk
         if self.save_path == "":
-            self.main_form.display.write_to_statusbar(
+            self.main_form.display.write_to_statusbar(  # type: ignore[union-attr]
                 "Document has no file on disk!", 3000
             )
             return
@@ -2233,10 +2260,10 @@ class CustomEditor(BaseEditor):
         try:
             disk_file_text = functions.read_file_to_string(self.save_path)
         except:
-            self.main_form.display.write_to_statusbar("Error reloading file!", 3000)
+            self.main_form.display.write_to_statusbar("Error reloading file!", 3000)  # type: ignore[union-attr]
             return
         if disk_file_text is None:
-            self.main_form.display.write_to_statusbar("Error reading file!", 3000)
+            self.main_form.display.write_to_statusbar("Error reading file!", 3000)  # type: ignore[union-attr]
             return
         # Pick up the file's line endings first, so even a change that only
         # touches line endings (nothing to reload below) is remembered for the
@@ -2288,7 +2315,7 @@ class CustomEditor(BaseEditor):
         self.reset_text_changed()
         self.modification_time = os.path.getmtime(self.save_path)
 
-    def copy(self):
+    def copy(self) -> None:
         super().copy()
         selected_text = self.selectedText()
         if selected_text:
@@ -2296,9 +2323,9 @@ class CustomEditor(BaseEditor):
             cb.clear(mode=cb.Mode.Clipboard)
             cb.setText(selected_text, mode=cb.Mode.Clipboard)
 
-    def copy_self(self, new_editor):
+    def copy_self(self, new_editor: CustomEditor | None) -> None:
         """Copy everything needed from self to the destination editor"""
-        if new_editor == None:
+        if new_editor is None:
             return
         # Copy all of the settings
         lexer_copy = self.lexer().__class__(new_editor)
@@ -2306,7 +2333,7 @@ class CustomEditor(BaseEditor):
         new_editor.setText(self.text())
         new_editor._target_eol = self._target_eol
 
-    def toggle_wordwrap(self):
+    def toggle_wordwrap(self) -> None:
         """
         Toggle word wrap on/off.
         Wrap modes:
@@ -2328,34 +2355,34 @@ class CustomEditor(BaseEditor):
             self.setWrapMode(qt.QsciScintilla.WrapMode.WrapWord)
             self.setWrapVisualFlags(qt.QsciScintilla.WrapVisualFlag.WrapFlagByText)
             self.setWrapIndentMode(qt.QsciScintilla.WrapIndentMode.WrapIndentSame)
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "Line wrapping ON", message_type=constants.MessageType.WARNING
             )
         else:
             self.setWrapMode(qt.QsciScintilla.WrapMode.WrapNone)
             self.setWrapVisualFlags(qt.QsciScintilla.WrapVisualFlag.WrapFlagNone)
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "Line wrapping OFF", message_type=constants.MessageType.WARNING
             )
 
-    def toggle_line_endings(self):
+    def toggle_line_endings(self) -> None:
         """Set the visibility of the End-Of-Line character"""
-        if self.eolVisibility() == True:
+        if self.eolVisibility() is True:
             self.setEolVisibility(False)
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "EOL characters hidden", message_type=constants.MessageType.WARNING
             )
         else:
             self.setEolVisibility(True)
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "EOL characters shown", message_type=constants.MessageType.WARNING
             )
 
-    def set_cursor_line_visibility(self, new_state):
+    def set_cursor_line_visibility(self, new_state: bool) -> None:
         self.setCaretLineVisible(new_state)
-        if new_state == True:
-            if "cursor-line-background" not in settings.get_theme().keys():
-                self.main_form.display.repl_display_message(
+        if new_state is True:
+            if "cursor-line-background" not in settings.get_theme():
+                self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                     "'cursor-line-background' color is not defined in the current theme!",
                     message_type=constants.MessageType.ERROR,
                 )
@@ -2364,15 +2391,15 @@ class CustomEditor(BaseEditor):
                     qt.QColor(settings.get_theme()["cursor-line-background"])
                 )
 
-    def toggle_cursor_line_highlighting(self):
+    def toggle_cursor_line_highlighting(self) -> None:
         new_state = bool(not self.SendScintilla(self.SCI_GETCARETLINEVISIBLE))
         self.set_cursor_line_visibility(new_state)
-        if new_state == True:
-            self.main_form.display.repl_display_message(
+        if new_state is True:
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "Cursor line highlighted", message_type=constants.MessageType.WARNING
             )
         else:
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 "Cursor line not highlighted",
                 message_type=constants.MessageType.WARNING,
             )
@@ -2381,13 +2408,13 @@ class CustomEditor(BaseEditor):
     CustomEditor autocompletion functions
     """
 
-    def init_autocompletions(self, new_autocompletions=[]):
+    def init_autocompletions(self, new_autocompletions: list = []) -> None:
         """Set the initial autocompletion functionality for the document"""
         self.autocompletion_disable()
 
     autocompletions_connected = False
 
-    def autocompletion_enable(self, new_autocompletions=[]):
+    def autocompletion_enable(self, new_autocompletions: list = []) -> None:
         """Function for enabling the CustomEditor autocompletions"""
         # Set how many characters must be typed for the autocompletion popup to appear
         self.setAutoCompletionThreshold(1)
@@ -2404,31 +2431,31 @@ class CustomEditor(BaseEditor):
 
     splitter = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
 
-    def _correct_autocompletion(self, *args):
+    def _correct_autocompletion(self, *args: Any) -> None:
         word, from_index, to_index, length = args
         word = word.decode("utf-8")
         current_line = self.getCursorPosition()[0]
-        line = self.line_list[current_line]
+        line = self.line_list[current_line]  # type: ignore[index]
         for token in self.splitter.findall(self.text()):
             if token.lower() == word.lower():
-                self.line_list[current_line] = token.join(line.rsplit(word, 1))
-                self.setCursorPosition(current_line, len(self.line_list[current_line]))
+                self.line_list[current_line] = token.join(line.rsplit(word, 1))  # type: ignore[index]
+                self.setCursorPosition(current_line, len(self.line_list[current_line]))  # type: ignore[index]
                 break
 
-    def autocompletion_disable(self):
+    def autocompletion_disable(self) -> None:
         """Disable the CustomEditor autocompletions"""
         self.setAutoCompletionSource(qt.QsciScintilla.AutoCompletionSource.AcsNone)
 
-    def set_autocompletion(self, state):
+    def set_autocompletion(self, state: bool) -> None:
         if state:
             self.autocompletion_enable()
         else:
             self.autocompletion_disable()
 
-    def autocompletion_toggle(self):
+    def autocompletion_toggle(self) -> None:
         """Enable/disable autocompletions for the CustomEditor"""
         # Initilize the document name for displaying
-        if self.save_path == None or self.save_path == "":
+        if self.save_path is None or self.save_path == "":
             document_name = self._parent.tabText(self._parent.currentIndex())
         else:
             document_name = os.path.basename(self.save_path)
@@ -2439,19 +2466,19 @@ class CustomEditor(BaseEditor):
         ):
             self.autocompletion_disable()
             message = "Autocompletions DISABLED in {}".format(document_name)
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 message, message_type=constants.MessageType.WARNING
             )
-            self.main_form.display.write_to_statusbar("Autocompletions DISABLED")
+            self.main_form.display.write_to_statusbar("Autocompletions DISABLED")  # type: ignore[union-attr]
         else:
             self.autocompletion_enable()
             message = "Autocompletions ENABLED in {}".format(document_name)
-            self.main_form.display.repl_display_message(
+            self.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 message, message_type=constants.MessageType.SUCCESS
             )
-            self.main_form.display.write_to_statusbar("Autocompletions ENABLED")
+            self.main_form.display.write_to_statusbar("Autocompletions ENABLED")  # type: ignore[union-attr]
 
-    def set_wordwrap(self, state):
+    def set_wordwrap(self, state: bool) -> None:
         """
         Wrap modes:
             qt.QsciScintilla.WrapMode.WrapNone - Lines are not wrapped.
@@ -2482,14 +2509,14 @@ class Bookmarks:
     Bookmark functionality
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent: CustomEditor) -> None:
         """
         Initialization of the Editing object instance
         """
         # Get the reference to the MainWindow parent object instance
         self._parent = parent
 
-    def toggle(self):
+    def toggle(self) -> None:
         """
         Add/Remove a bookmark at the current line
         """
@@ -2498,7 +2525,7 @@ class Bookmarks:
         # Toggle the bookmark
         self.toggle_at_line(current_line)
 
-    def toggle_at_line(self, line):
+    def toggle_at_line(self, line: int) -> None:
         """
         Toggle a bookmarks at the specified line
         (Line indexing has to be 1..lines)
@@ -2506,27 +2533,27 @@ class Bookmarks:
         # MarkerAdd function needs the standard line indexing
         scintilla_line = line - 1
         # Check if the line is already bookmarked
-        bookmarks: _mainwindow_.MainWindow.Bookmarks = self._parent.main_form.bookmarks
+        bookmarks: Any = self._parent.main_form.bookmarks  # type: ignore[union-attr]
         if bookmarks.check(self._parent, line) is None:
             new_marker_index = bookmarks.add(self._parent, line)
             if new_marker_index is not None:
                 handle = self._parent.markerAdd(
                     scintilla_line, self._parent.bookmark_marker
                 )
-                self._parent.main_form.bookmarks.marks[new_marker_index]["handle"] = (
+                self._parent.main_form.bookmarks.marks[new_marker_index]["handle"] = (  # type: ignore[union-attr]
                     handle
                 )
         else:
-            self._parent.main_form.bookmarks.remove_by_reference(self._parent, line)
+            self._parent.main_form.bookmarks.remove_by_reference(self._parent, line)  # type: ignore[union-attr]
             self._parent.markerDelete(scintilla_line, self._parent.bookmark_marker)
 
-    def add_marker_at_line(self, line):
+    def add_marker_at_line(self, line: int) -> int:
         # MarkerAdd function needs the standard line indexing
         scintilla_line = line - 1
         handle = self._parent.markerAdd(scintilla_line, self._parent.bookmark_marker)
         return handle
 
-    def remove_marker_at_line(self, line):
+    def remove_marker_at_line(self, line: int) -> None:
         # MarkerAdd function needs the standard line indexing
         scintilla_line = line - 1
         self._parent.markerDelete(scintilla_line, self._parent.bookmark_marker)
@@ -2548,7 +2575,7 @@ class Keyboard:
     scintilla_keys = None
     valid_modifiers = None
 
-    def init_bindings(self):
+    def init_bindings(self) -> None:
         self.bindings = {
             "Down": qt.QsciScintillaBase.SCI_LINEDOWN,
             "Down+Shift": qt.QsciScintillaBase.SCI_LINEDOWNEXTEND,
@@ -2709,7 +2736,7 @@ class Keyboard:
             qt.QsciScintillaBase.SCMOD_META,
         ]
 
-    def __init__(self, parent):
+    def __init__(self, parent: CustomEditor) -> None:
         """
         Initialization of the Keyboard object instance
         """
@@ -2720,10 +2747,10 @@ class Keyboard:
         self.clear_all_keys()
         bindings = self.bindings
         set_key_combination = self.set_key_combination
-        for keys in bindings:
-            set_key_combination(keys, bindings[keys])
+        for keys in bindings:  # type: ignore[union-attr]
+            set_key_combination(keys, bindings[keys])  # type: ignore[index]
 
-    def _parse_key_string(self, key_string):
+    def _parse_key_string(self, key_string: str) -> int:
         """
         Parse a '+' delimited string for a key combination
         """
@@ -2750,8 +2777,8 @@ class Keyboard:
         if len(split_keys) == 0:
             raise ValueError("Key string has to have a base character!")
         if len(base_key) != 1:
-            if base_key in self.scintilla_keys:
-                key_combination = self.scintilla_keys[base_key]
+            if base_key in self.scintilla_keys:  # type: ignore[operator]
+                key_combination = self.scintilla_keys[base_key]  # type: ignore[index]
             else:
                 raise ValueError("Unknown base key!")
         else:
@@ -2761,38 +2788,40 @@ class Keyboard:
                 key_combination += m << 16
         return key_combination
 
-    def _check_keys(self, key, modifier=None):
+    def _check_keys(self, key: str | int, modifier: int | None = None) -> int:
         """Check the validity of the key and modifier"""
-        if isinstance(key, str) == True:
-            if len(key) != 1:
+        if isinstance(key, str) is True:
+            if len(key) != 1:  # type: ignore[arg-type]
                 if modifier != None:
                     raise ValueError(
                         "modifier argument has to be 'None' with a key string!"
                     )
                 # key argument is going to be parsed as a combination
-                key = self._parse_key_string(key)
+                key = self._parse_key_string(key)  # type: ignore[arg-type]
             else:
-                if key in self.scintilla_keys:
-                    key = self.scintilla_keys[key]
+                if key in self.scintilla_keys:  # type: ignore[operator]
+                    key = self.scintilla_keys[key]  # type: ignore[index]
                 else:
-                    key = ord(key)
+                    key = ord(key)  # type: ignore[arg-type]
         if modifier == None:
             key_combination = key
         else:
-            if not (modifier in self.valid_modifiers):
+            if not (modifier in self.valid_modifiers):  # type: ignore[operator]
                 raise ValueError(
                     "The keyboard modifier is not valid: {}".format(modifier)
                 )
-            key_combination = key + (modifier << 16)
-        return key_combination
+            key_combination = key + (modifier << 16)  # type: ignore[operator]
+        return key_combination  # type: ignore[return-value]
 
-    def clear_all_keys(self):
+    def clear_all_keys(self) -> None:
         """
         Clear all mappings from the internal Scintilla mapping table
         """
-        self._parent.SendScintilla(qt.QsciScintillaBase.SCI_CLEARALLCMDKEYS)
+        self._parent.SendScintilla(qt.QsciScintillaBase.SCI_CLEARALLCMDKEYS)  # type: ignore[union-attr]
 
-    def clear_key_combination(self, key, modifier=None):
+    def clear_key_combination(
+        self, key: str | int, modifier: int | None = None
+    ) -> None:
         """
         Clear the key combination from the internal Scintilla Mapping
         Raw example of clearing the CTRL+X (Cut text function) combination:
@@ -2804,15 +2833,17 @@ class Keyboard:
         try:
             key_combination = self._check_keys(key, modifier)
         except Exception as ex:
-            self._parent.main_form.display.repl_display_message(
+            self._parent.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 str(ex), message_type=constants.MessageType.ERROR
             )
             return
-        self._parent.SendScintilla(
+        self._parent.SendScintilla(  # type: ignore[union-attr]
             qt.QsciScintillaBase.SCI_CLEARCMDKEY, key_combination
         )
 
-    def set_key_combination(self, key, command, modifier=None):
+    def set_key_combination(
+        self, key: str | int, command: int, modifier: int | None = None
+    ) -> None:
         """
         Assign a key combination to a command.
         Parameters:
@@ -2829,10 +2860,10 @@ class Keyboard:
         try:
             key_combination = self._check_keys(key, modifier)
         except Exception as ex:
-            self._parent.main_form.display.repl_display_message(
+            self._parent.main_form.display.repl_display_message(  # type: ignore[union-attr]
                 str(ex), message_type=constants.MessageType.ERROR
             )
             return
-        self._parent.SendScintilla(
+        self._parent.SendScintilla(  # type: ignore[union-attr]
             qt.QsciScintillaBase.SCI_ASSIGNCMDKEY, key_combination, command
         )

@@ -31,7 +31,7 @@ import yapf
 def pretty_print_json(
     input_string: str,
     sort_keys: bool = True,
-    key_sort_function: Callable[[str], Any] = None,
+    key_sort_function: Callable[[str], Any] | None = None,
 ) -> str:
     """
     Pretty print JSON with optional key sorting.
@@ -62,7 +62,7 @@ def pretty_print_json(
     return pretty_json
 
 
-def sort_json_keys_recursive(obj):
+def sort_json_keys_recursive(obj: Any) -> Any:
     """
     Recursively sort JSON keys using OrderedDict for consistent ordering.
     """
@@ -82,7 +82,10 @@ def sort_json_keys_custom(obj: Any, key_sort_function: Callable[[str], Any]) -> 
     """
     if isinstance(obj, dict):
         sorted_keys = sorted(obj.keys(), key=key_sort_function)
-        return {key: sort_json_keys_custom(obj[key], key_sort_function) for key in sorted_keys}
+        return {
+            key: sort_json_keys_custom(obj[key], key_sort_function)
+            for key in sorted_keys
+        }
     elif isinstance(obj, list):
         return [sort_json_keys_custom(item, key_sort_function) for item in obj]
     else:
@@ -107,10 +110,10 @@ def pretty_print_xml(input_string: str) -> str:
     return pretty_xml
 
 
-def pretty_print_html_python_stdlib(input_string):
+def pretty_print_html_python_stdlib(input_string: str) -> str:
     # Validate HTML
     class HTMLValidator(html.parser.HTMLParser):
-        def error(self, message):
+        def error(self, message: str) -> None:
             raise ValueError("Invalid HTML: " + message)
 
     validator = HTMLValidator()
@@ -121,7 +124,9 @@ def pretty_print_html_python_stdlib(input_string):
     # Pretty-print HTML
     try:
         dom = xml.dom.minidom.parseString(unescaped_input)
-        pretty_html = dom.toprettyxml(indent="  ", newl="\n", encoding="UTF-8").decode("UTF-8")
+        pretty_html = dom.toprettyxml(indent="  ", newl="\n", encoding="UTF-8").decode(
+            "UTF-8"
+        )
         return pretty_html
     except Exception as e:
         raise ValueError("Error in pretty-printing HTML: " + str(e))
@@ -252,9 +257,7 @@ def format_nim_file(file_path: str) -> bool:
         )
     except subprocess.CalledProcessError as e:
         # This occurs if 'nph --format' itself encounters an error (e.g., invalid Nim syntax)
-        error_message: str = (
-            f"Nim formatting (nph) failed with exit code {e.returncode} for file {file_path}:\n"
-        )
+        error_message: str = f"Nim formatting (nph) failed with exit code {e.returncode} for file {file_path}:\n"
         if e.stderr:
             error_message += f"STDERR:\n{e.stderr}\n"
 
@@ -290,7 +293,9 @@ def format_python_code(code: str, library: str) -> str:
 
     else:
         # Raise a ValueError for unrecognized formatter names
-        raise ValueError(f"[PYTHON-CODE-FORMATTING] Unknown formatting library selected: {library}")
+        raise ValueError(
+            f"[PYTHON-CODE-FORMATTING] Unknown formatting library selected: {library}"
+        )
 
     # Sort and format imports using isort with Black compatibility
     formatted_code = isort.code(formatted_code, config=isort.Config(profile="black"))
@@ -322,7 +327,7 @@ def __format_tag_with_attributes_on_separate_lines(
         opening: str = f"{indent_str}<{tag_name}>"
     else:
         # Complex case - attributes on separate lines
-        opening: str = f"{indent_str}<{tag_name}"
+        opening = f"{indent_str}<{tag_name}"
         attr_indent: int = indent + len(tag_name) + 1  # +1 for the "<"
         attr_indent_str: str = " " * attr_indent
 
@@ -370,7 +375,9 @@ def __format_tag_with_attributes_on_separate_lines(
     return result
 
 
-def custom_format_html_document_beautifulsoup(html: str, preserve_doctype: bool = True) -> str:
+def custom_format_html_document_beautifulsoup(
+    html: str, preserve_doctype: bool = True
+) -> str:
     """Format an entire HTML document with attributes on separate lines.
 
     Args:
@@ -426,7 +433,7 @@ class RuffCommand(enum.Enum):
     VERSION = "version"
     HELP = "help"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
@@ -589,7 +596,9 @@ def format_ruff_python(code: str) -> str:
 
     if exit_code != 0:
         error_message = stderr.strip() if stderr else "Unknown Ruff formatting error."
-        raise RuntimeError(f"Ruff formatting failed with exit code {exit_code}:\n{error_message}")
+        raise RuntimeError(
+            f"Ruff formatting failed with exit code {exit_code}:\n{error_message}"
+        )
     return formatted_code_output  # This now contains the modified file content
 
 
@@ -764,7 +773,9 @@ def parse_nim_file(file_path: str) -> Dict[str, List[Dict[str, Any]]]:
     try:
         command: list[str] = ["ntagger", "--private", file_path]
 
-        programs_path = os.path.normpath(os.path.join(data.resources_directory, "programs"))
+        programs_path = os.path.normpath(
+            os.path.join(data.resources_directory, "programs")
+        )
         os.environ["PATH"] = programs_path + os.pathsep + os.environ.get("PATH", "")
 
         result: subprocess.CompletedProcess[str] = subprocess.run(

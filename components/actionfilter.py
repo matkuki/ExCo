@@ -22,31 +22,35 @@ class ActionFilter(qt.QObject):
     """
 
     # Timers
-    click_timer = None
-    reset_timer = None
-    click_drag_action = None
+    click_timer: qt.QTimer | None = None
+    reset_timer: qt.QTimer | None = None
+    click_drag_action: qt.QAction | None = None
 
     # Overridden filter method
-    def eventFilter(self, receiver, event):
+    def eventFilter(  # type: ignore[override]
+        self, receiver: qt.QMenu, event: qt.QEvent
+    ) -> bool:
         if event.type() == qt.QEvent.Type.MouseButtonPress:
             cursor = qt.QCursor.pos()
             cursor = cursor - receiver.pos()
-            if receiver.actionAt(cursor) != None:
-                action = receiver.actionAt(cursor)
-                if hasattr(action, "pixmap") and action.pixmap is None:
+            action = receiver.actionAt(cursor)
+            if action is not None:
+                pixmap = getattr(action, "pixmap", None)
+                if pixmap is None:
                     return super().eventFilter(receiver, event)
 
                 # Create the click&drag detect timer
-                def click_and_drag():
-                    def hide_parents(obj):
+                def click_and_drag() -> None:
+                    def hide_parents(obj: qt.QWidget) -> None:
                         obj.hide()
-                        if obj.parent() != None and (isinstance(obj.parent(), gui.menu.Menu)):
-                            hide_parents(obj.parent())
+                        parent = obj.parent()
+                        if parent is not None and isinstance(parent, gui.menu.Menu):
+                            hide_parents(parent)
 
                     hide_parents(receiver)
                     ActionFilter.click_timer = None
-                    if hasattr(action, "pixmap"):
-                        cursor = qt.QCursor(action.pixmap)
+                    if pixmap is not None:
+                        cursor = qt.QCursor(pixmap)
                         data.application.setOverrideCursor(cursor)
                         ActionFilter.click_drag_action = action
 
@@ -60,7 +64,7 @@ class ActionFilter(qt.QObject):
         return super().eventFilter(receiver, event)
 
     @staticmethod
-    def clear_action():
+    def clear_action() -> None:
         data.application.restoreOverrideCursor()
         click_timer = ActionFilter.click_timer
         reset_timer = ActionFilter.reset_timer

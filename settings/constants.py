@@ -6,6 +6,8 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
+from typing import Any
+
 import data
 import functions
 
@@ -316,7 +318,7 @@ settings_filename = {
     "mark-2": "exco.mk2.ini",
     "mark-3": "exco.mk3.ini",
 }
-default_settings = {
+default_settings: dict[str, Any] = {
     "application-directory": data.application_directory,
     "resources-directory": data.resources_directory,
     "settings_filename_with_path": functions.unixify_join(
@@ -332,6 +334,10 @@ default_settings = {
     "terminal-history": 1000,  # Scrollback lines of the integrated terminal emulator
     "terminal-font-name": None,  # Font for the integrated terminal emulator (None = editor font)
     "terminal-font-size": None,  # Font size for the integrated terminal emulator (None = editor font size)
+    "terminal-cursor-blink-ms": 530,  # Cursor blink half-period for the integrated terminal emulator
+    "terminal-notifications": False,  # Let OSC 9/777 show a desktop notification in the statusbar
+    "terminal-osc52-write": True,  # Let an application (OSC 52) write the system clipboard
+    "terminal-osc52-read": False,  # Let a focused application (OSC 52) read the system clipboard
     "tree_display_icon_size": 16,  # Default tree display icon size
     "current_font_name": "Selawik",
     "current_font_size": 10,

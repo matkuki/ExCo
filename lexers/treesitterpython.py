@@ -43,7 +43,7 @@ class TreeSitterPython(TreeSitterLexer):
         "functionmethodname": 10,
     }
 
-    symbols = {
+    symbols: dict[str, dict[str, Any]] = {
         "default": {
             "index": styles["default"],
             "items": ("identifier",),

@@ -23,5 +23,5 @@ sip = PyQt6.sip
 
 from PyQt6.Qsci import *
 from PyQt6.QtCore import *
-from PyQt6.QtGui import *
+from PyQt6.QtGui import *  # type: ignore[no-redef]
 from PyQt6.QtWidgets import *

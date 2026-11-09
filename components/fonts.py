@@ -19,9 +19,9 @@ import settings
 import functions
 
 
-def __get_fonts_from_resources():
+def __get_fonts_from_resources() -> list[str]:
     directory = data.fonts_directory
-    font_file_list = []
+    font_file_list: list[str] = []
     for root, dirs, files in os.walk(directory):
         for file in files:
             item = functions.unixify_join(root, file)
@@ -30,7 +30,7 @@ def __get_fonts_from_resources():
     return font_file_list
 
 
-def set_application_font(name, size):
+def set_application_font(name: str, size: int) -> None:
     name = settings.get("current_font_name")
     # Load the fonts from 'resources/fonts'
     font_file_list = __get_fonts_from_resources()
@@ -39,7 +39,7 @@ def set_application_font(name, size):
 
     # Check if font is properly loaded
     search_font_name = name.lower()
-    font_found = False
+    font_found: bool = False
     # The QFontDatabase class has now only static member functions. The constructor has been
     # deprecated.
     for fontname in qt.QFontDatabase.families():

@@ -39,7 +39,7 @@ class Oberon(BaseLexer):
     }
 
     # Class variables
-    keyword_list = [
+    keyword_list: list[str] = [
         "ARRAY",
         "IMPORT",
         "RETURN",
@@ -75,7 +75,7 @@ class Oberon(BaseLexer):
         "IF",
         "REPEAT",
     ]
-    types_list = [
+    types_list: list[str] = [
         "BOOLEAN",
         "CHAR",
         "SHORTINT",
@@ -85,38 +85,42 @@ class Oberon(BaseLexer):
         "LONGREAL",
         "SET",
     ]
-    splitter = re.compile(r"(\(\*|\*\)|\s+|\w+|\W)")
+    splitter: re.Pattern[str] = re.compile(r"(\(\*|\*\)|\s+|\w+|\W)")
 
     def __init__(self, parent: Any = None) -> None:
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def language(self):
+    def language(self) -> str:
         return "Oberon/Modula-2/Component Pascal"
 
-    def description(self, style):
+    def description(self, style: int) -> str:
         if style <= 7:
             description = "Custom lexer for the Oberon/Oberon-2/Modula/Modula-2/Component Pascal programming languages"
         else:
             description = ""
         return description
 
-    def defaultStyle(self):
+    def defaultStyle(self) -> int:
         return self.styles["Default"]
 
-    def braceStyle(self):
+    def braceStyle(self) -> int:
         return self.styles["Default"]
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         for style in self.styles:
             # Papers
             self.setPaper(
@@ -126,7 +130,7 @@ class Oberon(BaseLexer):
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
 
-    def styleText(self, start, end):
+    def styleText(self, start: int, end: int) -> None:
         """
         Overloaded method for styling text.
         NOTE:
@@ -164,7 +168,8 @@ class Oberon(BaseLexer):
             commenting = False
             stringing = False
             tokens = [
-                (token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)
+                (token, len(bytearray(token, "utf-8")))
+                for token in self.splitter.findall(text)
             ]
             # Check if there is a style(comment, string, ...) stretching on from the previous line
             if start != 0:
@@ -205,7 +210,9 @@ class Oberon(BaseLexer):
                 elif i > 1 and tokens[i - 2][0] == "MODULE":
                     # Module name (beginning)
                     setStyling(token[1], MOD)
-                elif (i > 1 and tokens[i - 2][0] == "END") and (len(tokens) - 1 >= i + 1):
+                elif (i > 1 and tokens[i - 2][0] == "END") and (
+                    len(tokens) - 1 >= i + 1
+                ):
                     # Module or procedure name (name)
                     if ";" in tokens[i + 1][0]:
                         # Procedure end

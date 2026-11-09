@@ -9,6 +9,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import re
 import math
 import typing
+from typing import Any, Iterator
 
 import qt
 import data
@@ -17,28 +18,30 @@ from .gridgenerator import *
 
 
 class HexBuilder:
-    first_position = None
-    painter = None
-    edge_length = None
-    scale = None
+    first_position: tuple[float, float]
+    painter: qt.QPainter
+    edge_length: float
+    scale: float
 
-    fill_color = None
-    line_width = None
-    line_color = None
+    fill_color: qt.QColor
+    line_width: int | float
+    line_color: qt.QColor
 
-    steps = None
-    horizontal_step = None
-    vertical_step = None
-    grid_positions = None
+    steps: dict[str, tuple[float, float]]
+    horizontal_step: float
+    vertical_step: float
+    grid_positions: list[tuple[float, float]]
 
-    painted_hex_counter = 0
-    SHOW_FIELD_NUMBERS = False
+    painted_hex_counter: int = 0
+    SHOW_FIELD_NUMBERS: bool = False
 
     # List of already painted lines
-    stored_lines = []
+    stored_lines: list[tuple[tuple[int, int], tuple[int, int]]] = []
 
     @staticmethod
-    def generate_hexagon_points(edge_length, offset_position):
+    def generate_hexagon_points(
+        edge_length: float, offset_position: tuple[float, float]
+    ) -> Iterator[tuple[float, float]]:
         """Generator for coordinates in a hexagon."""
         x, y = offset_position
         points = []
@@ -53,14 +56,14 @@ class HexBuilder:
 
     def __init__(
         self,
-        painter,
-        first_position,
-        edge_length,
-        scale=1.0,
-        fill_color=qt.QColor(255, 255, 255),
-        line_width=1,
-        line_color=qt.QColor(255, 255, 255),
-    ):
+        painter: qt.QPainter,
+        first_position: tuple[float, float],
+        edge_length: float,
+        scale: float = 1.0,
+        fill_color: qt.QColor = qt.QColor(255, 255, 255),
+        line_width: int = 1,
+        line_color: qt.QColor = qt.QColor(255, 255, 255),
+    ) -> None:
         self.set_first_position(first_position)
         self.painter = painter
         self.scale = scale
@@ -77,7 +80,7 @@ class HexBuilder:
         self.stored_lines = []
 
     @staticmethod
-    def get_single_hex_size(edge_length, line_width):
+    def get_single_hex_size(edge_length: float, line_width: int) -> tuple[float, float]:
         width = None
         height = None
         width = 2 * edge_length
@@ -86,11 +89,11 @@ class HexBuilder:
         height += 2 * line_width
         return (width, height)
 
-    def set_first_position(self, first_position):
+    def set_first_position(self, first_position: tuple[float, float]) -> None:
         self.first_position = first_position
         self.grid_positions = [first_position]
 
-    def create_grid(self, *array_grid):
+    def create_grid(self, *array_grid: Any) -> None:
         self.draw()
         paint_all_edges = [False]
         if isinstance(array_grid[0], bool):
@@ -109,7 +112,9 @@ class HexBuilder:
                 )
         # Paint the edges as needed
         number_of_steps = len(GridGenerator.directions)
-        steps = [self.steps[GridGenerator.directions[x]] for x in range(number_of_steps)]
+        steps = [
+            self.steps[GridGenerator.directions[x]] for x in range(number_of_steps)
+        ]
         positions = [(int(x[0]), int(x[1])) for x in self.grid_positions]
         for j, gp in enumerate(self.grid_positions):
             paint_edge = [True, True, True, True, True, True]
@@ -130,11 +135,11 @@ class HexBuilder:
                 shadow=True,
             )
 
-    def next_step_draw(self, direction):
+    def next_step_draw(self, direction: int) -> None:
         self.next_step_move(direction)
         self.draw()
 
-    def next_step_move(self, direction):
+    def next_step_move(self, direction: int) -> tuple[float, float]:
         next_step = self.steps[GridGenerator.directions[direction]]
         last_position = self.grid_positions[-1]
         self.grid_positions.append(
@@ -142,7 +147,7 @@ class HexBuilder:
         )
         return self.grid_positions[-1]
 
-    def draw(self):
+    def draw(self) -> None:
         self.draw_filled_hexagon(
             position=self.grid_positions[-1],
             fill_color=self.fill_color,
@@ -152,12 +157,12 @@ class HexBuilder:
 
     def draw_line_hexagon_no_double_paint(
         self,
-        position,
-        line_width,
-        line_color,
-        paint_enabled=[True, True, True, True, True, True],
-        shadow=False,
-    ):
+        position: tuple[float, float],
+        line_width: int | float,
+        line_color: qt.QColor,
+        paint_enabled: list[bool] = [True, True, True, True, True, True],
+        shadow: bool = False,
+    ) -> None:
         qpainter = self.painter
 
         if line_width == 0:
@@ -169,13 +174,15 @@ class HexBuilder:
         pen.setWidth(int(line_width))
         pen.setColor(line_color)
         qpainter.setPen(pen)
-        hex_points = list(HexBuilder.generate_hexagon_points(self.edge_length, position))
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
-        hex_points = [(int(x - x_correction), int(y - y_correction)) for x, y in hex_points]
-        hex_lines = []
+        hex_points = [
+            (int(x - x_correction), int(y - y_correction))
+            for x, y in HexBuilder.generate_hexagon_points(self.edge_length, position)
+        ]
+        hex_lines: list[qt.QLine] = []
 
-        def line_test(in_line):
+        def line_test(in_line: tuple[tuple[int, int], tuple[int, int]]) -> bool:
             DIFF = 3
             line = in_line
             reversed_line = (line[1], line[0])
@@ -248,12 +255,12 @@ class HexBuilder:
 
     def draw_line_hexagon(
         self,
-        position,
-        line_width,
-        line_color,
-        paint_enabled=[True, True, True, True, True, True],
-        shadow=False,
-    ):
+        position: tuple[float, float],
+        line_width: int | float,
+        line_color: qt.QColor,
+        paint_enabled: list[bool] = [True, True, True, True, True, True],
+        shadow: bool = False,
+    ) -> None:
         qpainter = self.painter
 
         if line_width == 0:
@@ -265,11 +272,13 @@ class HexBuilder:
         pen.setWidth(int(line_width))
         pen.setColor(line_color)
         qpainter.setPen(pen)
-        hex_points = list(HexBuilder.generate_hexagon_points(self.edge_length, position))
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
-        hex_points = [(int(x - x_correction), int(y - y_correction)) for x, y in hex_points]
-        hex_lines = []
+        hex_points = [
+            (int(x - x_correction), int(y - y_correction))
+            for x, y in HexBuilder.generate_hexagon_points(self.edge_length, position)
+        ]
+        hex_lines: list[qt.QLine] = []
 
         for i in range(len(hex_points)):
             if paint_enabled[i] == False:
@@ -305,7 +314,12 @@ class HexBuilder:
             else:
                 qpainter.drawLines(*hex_lines)
 
-    def draw_filled_hexagon(self, position, fill_color, number=None):
+    def draw_filled_hexagon(
+        self,
+        position: tuple[float, float],
+        fill_color: qt.QColor,
+        number: int | None = None,
+    ) -> None:
         qpainter = self.painter
 
         pen = qt.QPen(qt.Qt.PenStyle.SolidLine)
@@ -314,10 +328,12 @@ class HexBuilder:
         brush.setColor(fill_color)
         qpainter.setBrush(brush)
         qpainter.setPen(pen)
-        hex_points = list(HexBuilder.generate_hexagon_points(self.edge_length, position))
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
-        hex_points = [(int(x - x_correction), int(y - y_correction)) for x, y in hex_points]
+        hex_points = [
+            (int(x - x_correction), int(y - y_correction))
+            for x, y in HexBuilder.generate_hexagon_points(self.edge_length, position)
+        ]
         hex_qpoints = [functions.create_point(*x) for x in hex_points]
         qpainter.drawPolygon(*hex_qpoints)
 
@@ -330,11 +346,17 @@ class HexBuilder:
             qpainter.setPen(pen)
 
             font_metric = qt.QFontMetrics(font)
-            x = int(position[0] - font_metric.width(str(number)) / 2)
+            x = int(position[0] - font_metric.horizontalAdvance(str(number)) / 2)
             y = int(position[1] + font_metric.height() / 4)
             qpainter.drawText(functions.create_point(x, y), str(number))
 
-    def draw_full_hexagon(self, position, fill_color, line_width, line_color):
+    def draw_full_hexagon(
+        self,
+        position: tuple[float, float],
+        fill_color: qt.QColor,
+        line_width: int | float,
+        line_color: qt.QColor,
+    ) -> None:
         qpainter = self.painter
 
         pen = qt.QPen(qt.Qt.PenStyle.SolidLine)
@@ -345,14 +367,22 @@ class HexBuilder:
         brush.setColor(fill_color)
         qpainter.setBrush(brush)
         qpainter.setPen(pen)
-        hex_points = list(HexBuilder.generate_hexagon_points(self.edge_length, position))
         x_correction = self.edge_length / 2
         y_correction = self.edge_length / (2 * math.tan(math.radians(30)))
-        hex_points = [(int(x - x_correction), int(y - y_correction)) for x, y in hex_points]
+        hex_points = [
+            (int(x - x_correction), int(y - y_correction))
+            for x, y in HexBuilder.generate_hexagon_points(self.edge_length, position)
+        ]
         hex_qpoints = [functions.create_point(*x) for x in hex_points]
         qpainter.drawPolygon(*hex_qpoints)
 
-    def draw_full_hexagon_with_shadow(self, position, fill_color, line_width, line_color):
+    def draw_full_hexagon_with_shadow(
+        self,
+        position: tuple[float, float],
+        fill_color: qt.QColor,
+        line_width: int | float,
+        line_color: qt.QColor,
+    ) -> None:
         qpainter = self.painter
 
         self.draw_filled_hexagon(position, fill_color)
@@ -364,12 +394,14 @@ class HexBuilder:
         self.draw_line_hexagon(position, line_width * 1.5, shadow_1_color)
         self.draw_line_hexagon(position, line_width, line_color)
 
-    def get_last_position(self):
+    def get_last_position(self) -> tuple[float, float]:
         return self.grid_positions[-1]
 
-    def generate_square_grid_list(self, row_length, count):
+    def generate_square_grid_list(
+        self, row_length: int, count: int
+    ) -> list[tuple[int, bool]]:
         row_counter = 1
-        grid_list = []
+        grid_list: list[tuple[int, bool]] = []
         direction = False
         add_down_step = False
         for i in range(count - 1):

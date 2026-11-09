@@ -91,9 +91,10 @@ class Terminal(qt.QWidget):
         self.term_screen.set_mode(pyte.modes.DECAWM)
         self.stream: ExtendedStream = ExtendedStream(self.term_screen)
         # Terminal-initiated responses (e.g. the Kitty keyboard protocol
-        # query reply) are written back to the PTY through the same path
-        # as user input.
+        # query reply, or an OSC 4/10/11/12 colour query) are written back to
+        # the PTY through the same path as user input.
         self.stream.respond = self.__input_sent
+        self.term_screen.respond = self.__input_sent
 
         # Incremental UTF-8 decoder for the PTY byte path: a multi-byte
         # character split across two read chunks must carry over instead of
@@ -148,6 +149,11 @@ class Terminal(qt.QWidget):
         # through to base QWidget handling (focus navigation).
         self.setFocusProxy(self.view)
 
+        # OSC 9 / 777 notifications and OSC 52 clipboard: the screen only
+        # parses, the view owns both surfaces (status line, system
+        # clipboard).
+        self._install_osc_surfaces()
+
         # Add the widgets to a vertical layout
         layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -155,6 +161,27 @@ class Terminal(qt.QWidget):
         layout.addWidget(self.view)
 
         self.update_style()
+
+    def _install_osc_surfaces(self) -> None:
+        """Wire the screen's OSC 9/777 and OSC 52 hooks to this view.
+
+        The screen only parses; the view owns both surfaces (the status line
+        and the system clipboard). The flags mirror the settings, so an
+        application can neither pop UI nor read the clipboard unless the user
+        allowed it. Changing a setting applies to terminals opened afterwards.
+        """
+        self.term_screen.notifications_enabled = bool(
+            settings.get("terminal-notifications")
+        )
+        self.term_screen.notification_handler = self.view.show_notification
+        self.term_screen.clipboard_write_enabled = bool(
+            settings.get("terminal-osc52-write")
+        )
+        self.term_screen.clipboard_read_enabled = bool(
+            settings.get("terminal-osc52-read")
+        )
+        self.term_screen.clipboard_write = self.view.put_clipboard_text
+        self.term_screen.clipboard_read = self.view.osc52_clipboard_text
 
     def __del__(self) -> None:
         # Last-resort safety net; the explicit teardown path is shutdown().
@@ -442,6 +469,24 @@ class Terminal(qt.QWidget):
 
     def get_cwd(self) -> Optional[str]:
         return self.current_working_directory
+
+    def reset_terminal(self) -> None:
+        """Reset the emulation state (RIS) while leaving the shell running.
+
+        The sequence is fed through the stream rather than calling
+        ``term_screen.reset()`` directly, so it takes exactly the path an
+        application sending ESC c takes: pyte resets modes, margins and tabs,
+        the extended screen also drops the alternate screen, hyperlinks and an
+        OSC-painted palette, and the view repaints through the usual path.
+        """
+        self.stream.feed("\x1bc")
+        self.term_screen.dirty = set(range(self.term_screen.lines))
+        if self._last_title:
+            # RIS clears the title, which the tab title was following; put the
+            # terminal's own name back instead of leaving a stale one.
+            self._last_title = None
+            self.title_changed.emit(self.name)
+        self.view.schedule_repaint()
 
     def set_cwd(self, directory: str) -> None:
         # Quote the directory so paths containing spaces survive the shell

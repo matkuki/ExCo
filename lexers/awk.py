@@ -8,6 +8,8 @@ For complete license information of the dependencies, check the 'additional_lice
 
 from __future__ import annotations
 
+from typing import Any
+
 import keyword
 import builtins
 import re
@@ -130,8 +132,12 @@ class AWK(BaseLexer):
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
@@ -194,7 +200,10 @@ class AWK(BaseLexer):
         # Initialize various states and split the text into tokens
         stringing = False
         commenting = False
-        tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
+        tokens = [
+            (token, len(bytearray(token, "utf-8")))
+            for token in self.splitter.findall(text)
+        ]
         # Style the tokens accordingly
         for i, token in enumerate(tokens):
             if commenting == True:

@@ -15,7 +15,7 @@ import functions
 
 class StyleSheetStatusbar:
     @staticmethod
-    def standard():
+    def standard() -> str:
         style_sheet = """
 QStatusBar {{
     background-color: {};
@@ -46,7 +46,7 @@ QLabel {{
 
 class StyleSheetScrollbar:
     @staticmethod
-    def horizontal():
+    def horizontal() -> str:
         width = 10
         height = 10
         color_background = settings.get_theme()["scrollbar"]["background"]
@@ -87,7 +87,7 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
         return style_sheet
 
     @staticmethod
-    def vertical():
+    def vertical() -> str:
         width = 10
         height = 10
         color_background = settings.get_theme()["scrollbar"]["background"]
@@ -128,14 +128,14 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
         return style_sheet
 
     @staticmethod
-    def full():
+    def full() -> str:
         style_sheet = StyleSheetScrollbar.horizontal() + StyleSheetScrollbar.vertical()
         return style_sheet
 
 
 class StyleSheetButton:
     @staticmethod
-    def standard():
+    def standard() -> str:
         style_sheet = f"""
 QPushButton {{
     background-color: {settings.get_theme()["indication"]["passivebackground"]};
@@ -163,7 +163,7 @@ QPushButton:pressed {{
 
 class StyleSheetMenu:
     @staticmethod
-    def standard():
+    def standard() -> str:
         style_sheet = """
 QMenu {{
     background-color: {};
@@ -208,7 +208,7 @@ QMenu::right-arrow:disabled  {{
 
 class StyleSheetMenuBar:
     @staticmethod
-    def standard():
+    def standard() -> str:
         style_sheet = """
 QMenuBar {{
     background-color: {};
@@ -235,7 +235,7 @@ QMenuBar::item:selected {{
 
 class StyleSheetTooltip:
     @staticmethod
-    def standard():
+    def standard() -> str:
         style_sheet = f"""
 QToolTip {{
     font-family: {settings.get("current_font_name")};
@@ -250,7 +250,7 @@ QToolTip {{
 
 class StyleSheetFrame:
     @staticmethod
-    def standard(background_transparent=False, no_border=False):
+    def standard(background_transparent: bool = False, no_border: bool = False) -> str:
         background_color = settings.get_theme()["fonts"]["default"]["background"]
         if background_transparent:
             background_color = "transparent"
@@ -267,7 +267,7 @@ QFrame {{
         return style_sheet
 
     @staticmethod
-    def container(background_transparent=False):
+    def container(background_transparent: bool = False) -> str:
         """Container frame with border collapse support.
         Outer containers get border, inner containers inherit via QSS descendant rules.
         """
@@ -291,7 +291,7 @@ QFrame > QFrame {{
 
 class StyleSheetTable:
     @staticmethod
-    def standard():
+    def standard() -> str:
         border_width = 1
         padding = 0
         spacing = 0
@@ -340,7 +340,7 @@ QHeaderView::section {{
 
 class StyleSheetTabWidget:
     @staticmethod
-    def standard():
+    def standard() -> str:
         style_sheet = """
 TabWidget::pane {{
     border: 1px solid {};
@@ -386,7 +386,7 @@ TabWidget QToolButton:hover {{
 
 class StyleSheetTreeWidget:
     @staticmethod
-    def standard():
+    def standard() -> str:
         if settings.get_theme()["name"] != "Air":
             shrink_icon = os.path.join(
                 data.resources_directory, "feather/air-light-grey/chevron-down.svg"
@@ -434,7 +434,7 @@ QTreeView::item:selected {{
 
 class StyleSheetLineEdit:
     @staticmethod
-    def standard():
+    def standard() -> str:
         style_sheet = f"""
 QLineEdit {{
     text-align: left;
@@ -457,7 +457,7 @@ class StyleSheetContainer:
     """
 
     @staticmethod
-    def global_rules():
+    def global_rules() -> str:
         passive = settings.get_theme()["indication"]["passiveborder"]
         return f"""
 /* ===== CONTAINER BORDER COLLAPSE ===== */
@@ -518,7 +518,7 @@ QScrollBar {{ border: none; }}
 """
 
     @staticmethod
-    def top_bar():
+    def top_bar() -> str:
         """Top bar / filter bar: fixed height 28px, border-bottom only."""
         passive = settings.get_theme()["indication"]["passiveborder"]
         return f"""
@@ -531,7 +531,7 @@ QWidget#TopBar, QWidget#FilterBar {{
 """
 
     @staticmethod
-    def action_footer():
+    def action_footer() -> str:
         """Action footer: fixed height, border-top only."""
         passive = settings.get_theme()["indication"]["passiveborder"]
         return f"""
@@ -544,7 +544,7 @@ QWidget#ActionFooter {{
 """
 
     @staticmethod
-    def scroll_area():
+    def scroll_area() -> str:
         """Scroll area with collapsed borders."""
         passive = settings.get_theme()["indication"]["passiveborder"]
         return f"""
@@ -556,7 +556,7 @@ QAbstractScrollArea > QWidget {{ border: none; }}
 """
 
     @staticmethod
-    def group_box():
+    def group_box() -> str:
         """QGroupBox with collapsed borders."""
         passive = settings.get_theme()["indication"]["passiveborder"]
         return f"""

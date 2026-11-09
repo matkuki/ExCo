@@ -8,8 +8,11 @@ For complete license information of the dependencies, check the 'additional_lice
 
 import os
 import os.path
+from typing import Any
+
 import qt
 import data
+import settings
 import components.actionfilter
 
 
@@ -24,15 +27,17 @@ class MessageLogger(qt.QWidget):
     """Simple subclass for displaying log messages"""
 
     class MessageTextBox(qt.QTextEdit):
-        def contextMenuEvent(self, event):
-            event.accept()
+        def contextMenuEvent(self, event: qt.QContextMenuEvent | None) -> None:
+            if event is not None:
+                event.accept()
 
     # Controls and variables of the log window  (class variables >> this means that these variables are shared accross instances of this class)
-    displaybox = None  # QTextEdit that will display log messages
-    layout = None  # The layout of the log window
-    parent = None
+    displaybox: "MessageLogger.MessageTextBox | None" = (
+        None  # QTextEdit that will display log messages
+    )
+    log_layout: qt.QGridLayout | None = None  # The layout of the log window
 
-    def __init__(self, parent):
+    def __init__(self, parent: qt.QWidget) -> None:
         """Initialization routine"""
         # Initialize superclass, from which the current class is inherited, THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
         super().__init__()
@@ -40,7 +45,7 @@ class MessageLogger(qt.QWidget):
         # Initialize the log window
         self.setWindowTitle("LOGGING WINDOW")
         self.resize(500, 300)
-        self.setWindowFlags(qt.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(qt.Qt.WindowType.WindowStaysOnTopHint)
         # Set default font
         self.setFont(settings.get_current_font())
 
@@ -48,14 +53,14 @@ class MessageLogger(qt.QWidget):
         self.displaybox = MessageLogger.MessageTextBox(self)
         self.displaybox.setReadOnly(True)
         # Make displaybox click/doubleclick event also fire the log window click/doubleclick method
-        self.displaybox.mousePressEvent = self._event_mousepress
-        self.displaybox.mouseDoubleClickEvent = self._event_mouse_doubleclick
-        self.keyPressEvent = self._keypress
+        self.displaybox.mousePressEvent = self._event_mousepress  # type: ignore[assignment]
+        self.displaybox.mouseDoubleClickEvent = self._event_mouse_doubleclick  # type: ignore[assignment]
+        self.keyPressEvent = self._keypress  # type: ignore[assignment]
 
         # Initialize layout
-        self.layout = qt.QGridLayout()
-        self.layout.addWidget(self.displaybox)
-        self.setLayout(self.layout)
+        self.log_layout = qt.QGridLayout()
+        self.log_layout.addWidget(self.displaybox)
+        self.setLayout(self.log_layout)
 
         self.append_message("Ex.Co. debug log window loaded")
         self.append_message("LOGGING Mode is enabled")
@@ -65,26 +70,29 @@ class MessageLogger(qt.QWidget):
         if os.path.isfile(data.application_icon) == True:
             self.setWindowIcon(qt.QIcon(data.application_icon))
 
-    def _event_mouse_doubleclick(self, mouse_event):
+    def _event_mouse_doubleclick(self, mouse_event: qt.QMouseEvent | None) -> None:
         """Rereferenced/overloaded displaybox doubleclick event"""
         self.clear_log()
 
-    def _event_mousepress(self, mouse_event):
+    def _event_mousepress(self, mouse_event: qt.QMouseEvent | None) -> None:
         """Rereferenced/overloaded displaybox click event"""
         # Reset the click&drag context menu action
         components.actionfilter.ActionFilter.clear_action()
 
-    def _keypress(self, key_event):
+    def _keypress(self, key_event: qt.QKeyEvent | None) -> None:
         """Rereferenced/overloaded MessageLogger keypress event"""
+        if key_event is None:
+            return
         pressed_key = key_event.key()
-        if pressed_key == qt.Qt.Key_Escape:
+        if pressed_key == qt.Qt.Key.Key_Escape:
             self.close()
 
-    def clear_log(self):
+    def clear_log(self) -> None:
         """Clear all messages from the log display"""
-        self.displaybox.clear()
+        if self.displaybox is not None:
+            self.displaybox.clear()
 
-    def append_message(self, *args, **kwargs):
+    def append_message(self, *args: Any, **kwargs: Any) -> None:
         """Adds a message as a string to the log display if logging mode is enabled"""
         if len(args) > 1:
             message = " ".join(args)
@@ -94,10 +102,12 @@ class MessageLogger(qt.QWidget):
         if isinstance(message, str) == False:
             message = str(message)
         # Check if logging mode is enabled
-        if data.logging_mode == True:
+        if data.logging_mode == True and self.displaybox is not None:
             self.displaybox.append(message)
         # Bring cursor to the current message (this is in a QTextEdit not QScintilla)
+        if self.displaybox is None:
+            return
         cursor = self.displaybox.textCursor()
-        cursor.movePosition(qt.QTextCursor.End)
-        cursor.movePosition(qt.QTextCursor.StartOfLine)
+        cursor.movePosition(qt.QTextCursor.MoveOperation.End)
+        cursor.movePosition(qt.QTextCursor.MoveOperation.StartOfLine)
         self.displaybox.setTextCursor(cursor)

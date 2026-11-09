@@ -17,7 +17,7 @@ import copy
 import threading
 import traceback
 from collections import UserDict
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, cast
 
 import data
 import filefunctions
@@ -34,27 +34,28 @@ class SettingsManipulator:
 
     __error_lock: bool = False
 
-    def __error_check(self) -> None:
+    def __error_check(self) -> bool:
         if self.__error_lock:
             raise Exception("[Settings] An error occurred during loading of settings!")
+        return False
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Set the current active settings file path
-        self.active_settings_file = functions.unixify_join(
+        self.active_settings_file: str = functions.unixify_join(
             data.settings_directory, settings.constants.settings_filename["mark-3"]
         )
-        active_settings_file_exists = self.check_settings_file(
+        active_settings_file_exists: str | None = self.check_settings_file(
             self.active_settings_file
         )
 
         # Create storage
-        self.storage = SettingsStorage(
+        self.storage: SettingsStorage = SettingsStorage(
             file_path=self.active_settings_file,
             default_settings=settings.constants.default_settings,
         )
 
         # Create the session manipulator
-        self.sessions = Sessions(self)
+        self.sessions: Sessions = Sessions(self)
 
         # Create the settings file path
         functions.create_directory(data.settings_directory)
@@ -62,7 +63,7 @@ class SettingsManipulator:
 
         # Check if the settings file exists
         if active_settings_file_exists is None:
-            old_files = {}
+            old_files: dict[str, str] = {}
             for k, v in settings.constants.settings_filename.items():
                 old_files[k] = functions.unixify_join(data.settings_directory, v)
             if os.path.isfile(old_files["mark-2"]):
@@ -80,10 +81,13 @@ class SettingsManipulator:
         self.load_settings()
 
     def __load_mk0(self, old_file_path: str) -> None:
+        oldsettings: Any = None
         try:
-            import settings.old.settings as oldsettings
+            import settings.old.settings as oldsettings_module
+
+            oldsettings = oldsettings_module
         except Exception:
-            oldsettings = None
+            pass
         if oldsettings is None:
             self.sessions.set_sessions(self.sessions.get_sessions())
             return
@@ -97,23 +101,25 @@ class SettingsManipulator:
 
     def __load_mk1(self, old_file_path: str) -> None:
         # Load data from file
-        settings_data = functions.load_json_file(old_file_path)
+        settings_data: dict[str, Any] = cast(
+            dict[str, Any], functions.load_json_file(old_file_path)
+        )
         # Update storage
         self.storage.update_without_saving(settings_data)
         # Overwrite settings with the active settings file
         self.set("settings_filename_with_path", self.active_settings_file)
 
-        def recurse_groups(item):
+        def recurse_groups(item: dict[str, Any]) -> None:
             # Sessions
             if "sessions" in item.keys():
                 for k, v in item["sessions"].items():
-                    new_session = {
+                    new_session: dict[str, Any] = {
                         "name": v["name"],
                         "chain": v["chain"],
                         "layout": None,
                     }
                     layout = json.loads(settings.constants.default_layout)
-                    windows = {
+                    windows: dict[str, Any] = {
                         "main-window-files": layout["BOXES"]["0"]["BOX-H"]["0"][
                             "BOX-V"
                         ]["0"]["TABS"],
@@ -155,7 +161,9 @@ class SettingsManipulator:
 
     def __load_mk2(self, old_file_path: str) -> None:
         # Load data from file
-        settings_data = functions.load_json_file(old_file_path)
+        settings_data: dict[str, Any] = cast(
+            dict[str, Any], functions.load_json_file(old_file_path)
+        )
         # Update storage
         self.storage.update_without_saving(settings_data)
         # Overwrite settings with the active settings file
@@ -185,34 +193,30 @@ class SettingsManipulator:
         """
         self.storage.remove_change_listener(callback)
 
-    def check_settings_file(self, settings_file_path: str):
+    def check_settings_file(self, settings_file_path: str) -> str | None:
         """
         Check if the settings file exists
         """
         return functions.test_text_file(settings_file_path)
 
-    def get_settings_file(self):
+    def get_settings_file(self) -> str:
         return self.get("settings_filename_with_path")
 
-    def clear_recent_files(self):
+    def clear_recent_files(self) -> None:
         if self.__error_check():
             return
 
-        settings_data = functions.load_json_file(
-            self.get("settings_filename_with_path")
-        )
-        # Load the session data from the file to have it up-to-date
-        stored_sessions = settings_data["stored_sessions"]
-        self.sessions.set_sessions(stored_sessions)
+        self.set("recent_files", [])
 
-    def load_settings(self):
+    def load_settings(self) -> bool:
         """
         Load all setting from the settings file
         """
         try:
             # Load data from file
-            settings_data = functions.load_json_file(
-                self.get("settings_filename_with_path")
+            settings_data: dict[str, Any] = cast(
+                dict[str, Any],
+                functions.load_json_file(self.get("settings_filename_with_path")),
             )
 
             # Update storage
@@ -233,7 +237,7 @@ class SettingsManipulator:
             # Return error
             return False
 
-    def add_recent_file(self, new_file):
+    def add_recent_file(self, new_file: str) -> None:
         """
         Add a new file to the recent file list
         """
@@ -244,8 +248,8 @@ class SettingsManipulator:
         if data.platform == "Windows":
             new_file = new_file.replace("\\", "/")
 
-        max_count = self.get("max-number-of-recent-files")
-        current_list = self.get("recent_files").copy()
+        max_count: int = self.get("max-number-of-recent-files")
+        current_list: list[str] = self.get("recent_files").copy()
 
         # Trim the list down to the maximum allowed length
         while len(current_list) > max_count:
@@ -265,7 +269,7 @@ class SettingsManipulator:
 
         self.set("recent_files", current_list)
 
-    def save_last_layout(self, layout):
+    def save_last_layout(self, layout: Any) -> None:
         if self.__error_check():
             return
 
@@ -277,16 +281,16 @@ class SettingsManipulator:
 
 
 class Sessions:
-    def __init__(self, parent: SettingsManipulator):
+    def __init__(self, parent: SettingsManipulator) -> None:
         # Store the parent reference
-        self.__parent = parent
+        self.__parent: SettingsManipulator = parent
 
         # Initialize an empty sessions list
-        self.__sessions: dict = {"main": self.create_empty_session_group()}
+        self.__sessions: dict[str, Any] = {"main": self.create_empty_session_group()}
 
-    def check_old_style_sessions(self):
+    def check_old_style_sessions(self) -> bool:
         if "main" not in self.__sessions.keys():
-            new_sessions = {
+            new_sessions: dict[str, Any] = {
                 "main": {
                     "name": "main",
                     "chain": [],
@@ -324,17 +328,19 @@ class Sessions:
             return True
         return False
 
-    def set_sessions(self, new_sessions) -> None:
+    def set_sessions(self, new_sessions: dict[str, Any]) -> None:
         self.__sessions = new_sessions
         self.store_sessions()
 
     def store_sessions(self) -> None:
         self.__parent.set("stored_sessions", self.__sessions)
 
-    def get_sessions(self) -> dict:
+    def get_sessions(self) -> dict[str, Any]:
         return self.__sessions
 
-    def create_empty_session(self, name="", chain=None, layout=""):
+    def create_empty_session(
+        self, name: str = "", chain: list[str] | None = None, layout: Any = ""
+    ) -> dict[str, Any]:
         if chain is None:
             chain = []
         return {
@@ -344,8 +350,12 @@ class Sessions:
         }
 
     def create_empty_session_group(
-        self, name="", chain=None, groups=None, sessions=None
-    ):
+        self,
+        name: str = "",
+        chain: list[str] | None = None,
+        groups: dict[str, Any] | None = None,
+        sessions: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         if chain is None:
             chain = []
         if groups is None:
@@ -356,10 +366,10 @@ class Sessions:
 
     def add_session(
         self,
-        session_name,
-        session_group_chain,
-        layout,
-    ):
+        session_name: str,
+        session_group_chain: list[str],
+        layout: Any,
+    ) -> None:
         """
         Add a new session to the stored session list
         """
@@ -377,7 +387,7 @@ class Sessions:
         # Save the new settings
         self.store_sessions()
 
-    def add_group(self, group_name, group_chain):
+    def add_group(self, group_name: str, group_chain: list[str]) -> None:
         """
         Add a new group to the stored session list
         """
@@ -393,7 +403,7 @@ class Sessions:
         # Save the new settings
         self.store_sessions()
 
-    def remove_session(self, session_to_remove):
+    def remove_session(self, session_to_remove: dict[str, Any]) -> bool:
         """
         Remove a session from the stored session list
         """
@@ -409,7 +419,7 @@ class Sessions:
         # Signal that the session was not removed
         return False
 
-    def remove_group(self, remove_group):
+    def remove_group(self, remove_group: dict[str, Any]) -> bool:
         """
         Remove an entire group from the stored session list
         """
@@ -426,19 +436,19 @@ class Sessions:
         # Signal that the group was not removed
         return False
 
-    def sort_sessions(self):
+    def sort_sessions(self) -> None:
         """
         Sort the stored sessions alphabetically by name
         """
         # Create a new empty dict
-        sorted_sessions = {}
+        sorted_sessions: dict[str, Any] = {}
         # Add sorted keys
         for k in sorted(self.__sessions.keys(), key=lambda x: x.lower()):
             sorted_sessions[k] = self.__sessions[k]
         # Sort the stored sessions
         self.__sessions = sorted_sessions
 
-    def get_session(self, name: str, chain: List[str]) -> Optional[Dict[str, Any]]:
+    def get_session(self, name: str, chain: list[str]) -> dict[str, Any] | None:
         """
         Look up a stored session by name and ancestor group chain.
 
@@ -450,7 +460,7 @@ class Sessions:
             return None
         return group["sessions"].get(name)
 
-    def get_group(self, chain: List[str]) -> Optional[Dict[str, Any]]:
+    def get_group(self, chain: list[str]) -> dict[str, Any] | None:
         """
         Look up a stored group by its ancestor group chain.
 
@@ -469,7 +479,7 @@ class Sessions:
                 return None
         return group
 
-    def rename_group(self, group: Dict[str, Any], new_group_name: str) -> None:
+    def rename_group(self, group: dict[str, Any], new_group_name: str) -> None:
         """
         Rename a group and rewrite the ancestor chains of all its descendants.
 
@@ -479,7 +489,7 @@ class Sessions:
         itself is shorter than that index and has to be left alone.
         """
 
-        def rewrite_chain(grp: Dict[str, Any], new_name: str, in_level: int) -> None:
+        def rewrite_chain(grp: dict[str, Any], new_name: str, in_level: int) -> None:
             if in_level < len(grp["chain"]):
                 grp["chain"][in_level] = new_name
             for child_group in grp["groups"].values():
@@ -493,7 +503,7 @@ class Sessions:
         group["name"] = new_group_name
 
 
-class SettingsStorage(UserDict):
+class SettingsStorage(UserDict[str, Any]):
     """
     A simple settings manager that loads/saves settings from a JSON file.
     Settings are saved to the file only when a value genuinely changes,
@@ -506,9 +516,9 @@ class SettingsStorage(UserDict):
     def __init__(
         self,
         file_path: str,
-        default_settings: Dict[str, Any],
+        default_settings: dict[str, Any],
         print_func: Callable[[str], None] = print,
-    ):
+    ) -> None:
         """
         Initializes the Settings manager.
 
@@ -524,11 +534,11 @@ class SettingsStorage(UserDict):
                                                            Defaults to the built-in print().
         """
         super().__init__()
-        self.file_path = file_path
+        self.file_path: str = file_path
         if default_settings is None:
             raise Exception("Default settings are needed here!")
-        self.__default_settings = default_settings
-        self.__print = print_func
+        self.__default_settings: dict[str, Any] = default_settings
+        self.__print: Callable[[str], None] = print_func
         # Callbacks invoked as callback(key, value) after any real setting change
         self.change_listeners: list[Callable[[str, Any], None]] = []
 
@@ -711,7 +721,9 @@ class SettingsStorage(UserDict):
             )
             raise KeyError(f"'{key}' not found in settings.")
 
-    def _deep_merge(self, base: dict, overlay: dict) -> dict:
+    def _deep_merge(
+        self, base: dict[str, Any], overlay: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Recursively merge *overlay* into *base*, returning the result.
 
@@ -732,7 +744,9 @@ class SettingsStorage(UserDict):
                 result[key] = value
         return result
 
-    def update(self, other=None, _initial_load=False, **kwargs) -> None:
+    def update(  # type: ignore[override]
+        self, other: Any = None, _initial_load: bool = False, **kwargs: Any
+    ) -> None:
         """
         Overrides the update method to save settings only if the data truly changes.
         If a value is a dictionary and the existing item is also a dictionary,
@@ -741,7 +755,7 @@ class SettingsStorage(UserDict):
         _changed = False
         changed_keys: list[str] = []
 
-        def _set_item_and_check_change(key, value):
+        def _set_item_and_check_change(key: str, value: Any) -> None:
             nonlocal _changed, changed_keys
             if key in self.data and self.data[key] == value:
                 return
@@ -787,7 +801,7 @@ class SettingsStorage(UserDict):
             for key in changed_keys:
                 self._notify_change(key)
 
-    def update_without_saving(self, other=None, **kwargs) -> None:
+    def update_without_saving(self, other: Any = None, **kwargs: Any) -> None:
         """
         Updates the settings without triggering a save operation.
         Useful for batch updates where you'll manually call save() later.

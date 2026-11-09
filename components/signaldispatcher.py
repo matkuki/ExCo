@@ -6,8 +6,10 @@ For more information check the 'LICENSE.txt' file.
 For complete license information of the dependencies, check the 'additional_licenses' directory.
 """
 
-import qt
+from typing import Any
+
 import data
+import qt
 
 
 class GlobalSignalDispatcher(qt.QObject):
@@ -24,5 +26,5 @@ class GlobalSignalDispatcher(qt.QObject):
     # application.
     unhandled_exception = qt.pyqtSignal(str)
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

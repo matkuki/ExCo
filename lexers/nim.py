@@ -53,7 +53,7 @@ class Nim(BaseLexer):
     }
 
     # Basic keywords and built-in procedures and templates
-    basic_keyword_list = [
+    basic_keyword_list: list[str] = [
         "as",
         "atomic",
         "bind",
@@ -128,13 +128,13 @@ class Nim(BaseLexer):
         "writeline",
     ]
     # Custom keyword created with templates/macros
-    user_keyword_list = [
+    user_keyword_list: list[str] = [
         "class",
         "namespace",
         "property",
     ]
     # Keywords that define a proc-like definition
-    def_keyword_list = [
+    def_keyword_list: list[str] = [
         "proc",
         "method",
         "func",
@@ -144,7 +144,7 @@ class Nim(BaseLexer):
         "iterator",
     ]
     # Keywords that can define blocks
-    top_keyword_list = [
+    top_keyword_list: list[str] = [
         "block",
         "const",
         "export",
@@ -158,7 +158,7 @@ class Nim(BaseLexer):
         "when",
     ]
     # Keywords that might be unsafe/dangerous
-    unsafe_keyword_list = [
+    unsafe_keyword_list: list[str] = [
         "asm",
         "addr",
         "cast",
@@ -180,7 +180,7 @@ class Nim(BaseLexer):
         "gc_enable",
     ]
     # Built-in types
-    type_keyword_list = [
+    type_keyword_list: list[str] = [
         "int",
         "int8",
         "int16",
@@ -306,7 +306,7 @@ class Nim(BaseLexer):
         "enum",
     ]
     # Sign operators
-    operator_list = [
+    operator_list: list[str] = [
         "=",
         "+",
         "-",
@@ -329,7 +329,7 @@ class Nim(BaseLexer):
         '"',
     ]
     # Keyword operators
-    keyword_operator_list = [
+    keyword_operator_list: list[str] = [
         "and",
         "or",
         "not",
@@ -343,17 +343,21 @@ class Nim(BaseLexer):
         "is",
         "isnot",
     ]
-    splitter = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
+    splitter: re.Pattern[str] = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
     # Characters that autoindent one level on pressing Return/Enter
-    autoindent_characters = [":", "="]
+    autoindent_characters: list[str] = [":", "="]
 
     def __init__(self, parent: Any = None) -> None:
         """Overridden initialization"""
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
@@ -444,7 +448,10 @@ class Nim(BaseLexer):
         pragmaing = False
         case_of = False
         cls_descrition = False
-        tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
+        tokens = [
+            (token, len(bytearray(token, "utf-8")))
+            for token in self.splitter.findall(text)
+        ]
         # Check if there is a style(comment, string, ...) stretching on from the previous line
         if start != 0:
             previous_style = editor.SendScintilla(editor.SCI_GETSTYLEAT, start - 1)
@@ -481,7 +488,11 @@ class Nim(BaseLexer):
                 # Continuation of comment
                 setStyling(token[1], M_DOC)
                 # Check if comment ends
-                if "#" in token[0] and "#" in tokens[i - 1][0] and "]" in tokens[i - 2][0]:
+                if (
+                    "#" in token[0]
+                    and "#" in tokens[i - 1][0]
+                    and "]" in tokens[i - 2][0]
+                ):
                     multi_doc_commenting = False
             elif stringing == True:
                 # Continuation of a string
@@ -581,7 +592,11 @@ class Nim(BaseLexer):
                 setStyling(token[1], TYP)
             elif token[0] == "#":
                 # Start of a comment or documentation comment
-                if len(tokens) > i + 2 and tokens[i + 1][0] == "#" and tokens[i + 2][0] == "[":
+                if (
+                    len(tokens) > i + 2
+                    and tokens[i + 1][0] == "#"
+                    and tokens[i + 2][0] == "["
+                ):
                     setStyling(token[1], M_DOC)
                     multi_doc_commenting = True
                 elif len(tokens) > i + 1 and tokens[i + 1][0] == "#":
@@ -605,7 +620,9 @@ class Nim(BaseLexer):
                 # Number
                 # Check only the first character, because Nim has those weird constants e.g.: 12u8, ...)
                 setStyling(token[1], NUM)
-            elif (i > 1) and (tokens[i - 2][0] in user_kw_list) and token[0][0].isalpha():
+            elif (
+                (i > 1) and (tokens[i - 2][0] in user_kw_list) and token[0][0].isalpha()
+            ):
                 # Class-like definition
                 setStyling(token[1], CLS)
                 cls_descrition = True
@@ -623,7 +640,7 @@ class Nim(BaseLexer):
             else:
                 setStyling(token[1], DEF)
 
-    def styleTextOld(self, start, end):
+    def styleTextOld(self, start: int, end: int) -> None:
         """
         Overloaded method for styling text.
         NOTE:
@@ -681,7 +698,10 @@ class Nim(BaseLexer):
         pragmaing = False
         case_of = False
         cls_descrition = False
-        tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
+        tokens = [
+            (token, len(bytearray(token, "utf-8")))
+            for token in self.splitter.findall(text)
+        ]
         # Check if there is a style(comment, string, ...) stretching on from the previous line
         if start != 0:
             previous_style = editor.SendScintilla(editor.SCI_GETSTYLEAT, start - 1)
@@ -718,7 +738,11 @@ class Nim(BaseLexer):
                 # Continuation of comment
                 setStyling(token[1], M_DOC)
                 # Check if comment ends
-                if "#" in token[0] and "#" in tokens[i - 1][0] and "]" in tokens[i - 2][0]:
+                if (
+                    "#" in token[0]
+                    and "#" in tokens[i - 1][0]
+                    and "]" in tokens[i - 2][0]
+                ):
                     multi_doc_commenting = False
             elif stringing == True:
                 # Continuation of a string
@@ -818,7 +842,11 @@ class Nim(BaseLexer):
                 setStyling(token[1], TYP)
             elif token[0] == "#":
                 # Start of a comment or documentation comment
-                if len(tokens) > i + 2 and tokens[i + 1][0] == "#" and tokens[i + 2][0] == "[":
+                if (
+                    len(tokens) > i + 2
+                    and tokens[i + 1][0] == "#"
+                    and tokens[i + 2][0] == "["
+                ):
                     setStyling(token[1], M_DOC)
                     multi_doc_commenting = True
                 elif len(tokens) > i + 1 and tokens[i + 1][0] == "#":
@@ -842,7 +870,9 @@ class Nim(BaseLexer):
                 # Number
                 # Check only the first character, because Nim has those weird constants e.g.: 12u8, ...)
                 setStyling(token[1], NUM)
-            elif (i > 1) and (tokens[i - 2][0] in user_kw_list) and token[0][0].isalpha():
+            elif (
+                (i > 1) and (tokens[i - 2][0] in user_kw_list) and token[0][0].isalpha()
+            ):
                 # Class-like definition
                 setStyling(token[1], CLS)
                 cls_descrition = True

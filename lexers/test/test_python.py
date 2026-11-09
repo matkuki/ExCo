@@ -6,7 +6,7 @@ This file contains various Python constructs to test syntax highlighting.
 
 import os
 import sys
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Callable
 from dataclasses import dataclass
 from functools import wraps
 
@@ -33,7 +33,7 @@ def fibonacci(n: int) -> int:
 class Animal:
     """Base class for animals."""
 
-    def __init__(self, name: str, species: str):
+    def __init__(self, name: str, species: str) -> None:
         self.name = name
         self.species = species
 
@@ -48,7 +48,7 @@ class Animal:
 class Dog(Animal):
     """Dog class inheriting from Animal."""
 
-    def __init__(self, name: str, breed: str):
+    def __init__(self, name: str, breed: str) -> None:
         super().__init__(name, "Canis familiaris")
         self.breed = breed
 
@@ -62,7 +62,7 @@ class Dog(Animal):
 class Cat(Animal):
     """Cat class inheriting from Animal."""
 
-    def __init__(self, name: str, color: str):
+    def __init__(self, name: str, color: str) -> None:
         super().__init__(name, "Felis catus")
         self.color = color
 
@@ -87,11 +87,11 @@ def process_data(data: Dict[str, Any]) -> List[str]:
     return results
 
 
-def decorator_example(func):
+def decorator_example(func: Callable[..., Any]) -> Callable[..., Any]:
     """Example decorator function."""
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         print(f"Calling {func.__name__}")
         result = func(*args, **kwargs)
         print(f"Finished {func.__name__}")
@@ -106,7 +106,7 @@ def example_function(x: int, y: int = 10) -> int:
     return x + y
 
 
-def main():
+def main() -> None:
     """Main function to demonstrate Python features."""
     # Create instances
     person = Person("John", 30, "john@example.com")

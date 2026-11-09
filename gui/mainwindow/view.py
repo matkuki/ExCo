@@ -55,9 +55,6 @@ class View:
     Functions for manipulating the application appearance
     (namespace/nested class to MainWindow)
     """
-
-    # Class varibles
-    _parent = None
     __stored_layout_standard = None
     __stored_layout_one_window = None
     # Default widths and heights of the windows
@@ -881,7 +878,7 @@ QSplitter::handle {{
                 # last layout survives crashes, not just orderly quits.
                 if settings.get("restore_last_session"):
                     # Proxy exposed dynamically by the settings facade
-                    settings.save_last_layout(layout)  # type: ignore[attr-defined]
+                    settings.save_last_layout(layout)
             except:
                 self._parent.display.repl_display_error(traceback.format_exc())
 

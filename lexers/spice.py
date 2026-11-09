@@ -242,7 +242,7 @@ class CustomSpice(BaseLexer):
             "model",
         ),
     }
-    operator_list = [
+    operator_list: list[str] = [
         "=",
         "+",
         "-",
@@ -263,13 +263,13 @@ class CustomSpice(BaseLexer):
         ":",
         '"',
     ]
-    splitter = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
+    splitter: re.Pattern[str] = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
     # Characters that autoindent one level on pressing Return/Enter
-    autoindent_characters = []
+    autoindent_characters: list[str] = []
     # String start/end tokens
-    tokens_string = ('"',)
+    tokens_string: tuple[str, ...] = ('"',)
     # Comment tokens
-    tokens_comment = []
+    tokens_comment: list[str] = []
 
     def __init__(self, parent: Any = None) -> None:
         """
@@ -279,31 +279,35 @@ class CustomSpice(BaseLexer):
         super().__init__()
         print("INIT")
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
         # Set the theme
         self.set_theme(settings.get_theme())
 
-    def language(self):
+    def language(self) -> str:
         return "Spice"
 
-    def description(self, style):
+    def description(self, style: int) -> str:
         if style < len(self.styles):
             description = "Custom lexer for the Spice circuit languages"
         else:
             description = ""
         return description
 
-    def defaultStyle(self):
+    def defaultStyle(self) -> int:
         return self.styles["Default"]
 
-    def braceStyle(self):
+    def braceStyle(self) -> int:
         return self.styles["Default"]
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: dict[str, Any]) -> None:
         for style in self.styles:
             # Papers
             self.setPaper(
@@ -313,7 +317,7 @@ class CustomSpice(BaseLexer):
             # Fonts
             lexers.set_font(self, style, theme["fonts"][style.lower()])
 
-    def styleText(self, start, end):
+    def styleText(self, start: int, end: int) -> None:
         """
         Overloaded method for styling text.
         """
@@ -341,7 +345,10 @@ class CustomSpice(BaseLexer):
         # Initialize various states and split the text into tokens
         stringing = False
         commenting = False
-        tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
+        tokens = [
+            (token, len(bytearray(token, "utf-8")))
+            for token in self.splitter.findall(text)
+        ]
         # Style the tokens accordingly
         for i, token in enumerate(tokens):
             if commenting == True:

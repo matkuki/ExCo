@@ -23,11 +23,11 @@ ExCo Information Widget for displaying the license, used languages and libraries
 
 class ExCoInfo(qt.QDialog):
     # Class variables
-    name = "Ex.Co. Info"
+    name: str = "Ex.Co. Info"
     savable = constants.CanSave.NO
 
     # Class functions(methods)
-    def __init__(self, parent, app_dir=""):
+    def __init__(self, parent: qt.QWidget, app_dir: str = "") -> None:
         """Initialization routine"""
         # Initialize superclass, from which the current class is inherited,
         # THIS MUST BE DONE SO THAT THE SUPERCLASS EXECUTES ITS __init__ !!!!!!
@@ -37,19 +37,19 @@ class ExCoInfo(qt.QDialog):
         self.setWindowFlags(qt.Qt.WindowType.WindowStaysOnTopHint)
         # Setup the picture
         exco_picture = qt.QPixmap(data.about_image)
-        self.picture = qt.QLabel(self)
+        self.picture: qt.QLabel | None = qt.QLabel(self)
         self.picture.setPixmap(exco_picture)
         self.picture.setGeometry(self.frameGeometry())
         self.picture.setScaledContents(True)
         # Assign events
-        self.picture.mousePressEvent = self._close
-        self.picture.mouseDoubleClickEvent = self._close
+        self.picture.mousePressEvent = self._close  # type: ignore[assignment]
+        self.picture.mouseDoubleClickEvent = self._close  # type: ignore[assignment]
         # Initialize layout
-        self.layout = qt.QGridLayout()
-        self.layout.addWidget(self.picture)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(qt.QMargins(0, 0, 0, 0))
-        self.setLayout(self.layout)
+        self.info_layout: qt.QGridLayout | None = qt.QGridLayout()
+        self.info_layout.addWidget(self.picture)
+        self.info_layout.setSpacing(0)
+        self.info_layout.setContentsMargins(qt.QMargins(0, 0, 0, 0))
+        self.setLayout(self.info_layout)
         # Set the log window icon
         if os.path.isfile(data.application_icon) == True:
             self.setWindowIcon(qt.QIcon(data.application_icon))
@@ -71,9 +71,10 @@ class ExCoInfo(qt.QDialog):
     #        self.setWindowFlags(qt.Qt.WindowType.WindowStaysOnTopHint | qt.Qt.Dialog | qt.Qt.WindowType.FramelessWindowHint)
     #        self.setAttribute(qt.Qt.WidgetAttribute.WA_TranslucentBackground)
 
-    def _close(self, event):
+    def _close(self, event: qt.QMouseEvent | None) -> None:
         """Close the widget"""
-        self.picture.setParent(None)
+        if self.picture is not None:
+            self.picture.setParent(None)
         self.picture = None
-        self.layout = None
+        self.info_layout = None
         self.close()

@@ -123,6 +123,34 @@ class ConPtyBackend(TerminalBackend):
     POWERSHELL_POLICY_STATEMENT: str = (
         "Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force"
     )
+    # OSC 133 shell integration. This block is written to the startup script
+    # but never echoed into the scrollback: it is a multi-line function, and
+    # showing its source above every first prompt would be noise. The prompt
+    # function stamps 'D;<exit-code>' and 'A' before the prompt text; the
+    # PSReadLine Enter handler stamps 'B' and 'C' at the end of the submitted
+    # command line, so the view can copy the region from C to the next D.
+    POWERSHELL_SHELL_INTEGRATION: str = """function global:prompt {
+    $exitCode = 0
+    if (-not $?) {
+        if ($global:LASTEXITCODE -is [int] -and $global:LASTEXITCODE -ne 0) {
+            $exitCode = $global:LASTEXITCODE
+        } else {
+            $exitCode = 1
+        }
+    }
+    $esc = [char]27
+    [Console]::Write("$esc]133;D;$exitCode$esc\\")
+    [Console]::Write("$esc]133;A$esc\\")
+    "PS $($executionContext.SessionState.Path.CurrentLocation)> "
+}
+try {
+    Set-PSReadLineKeyHandler -Key Enter -ScriptBlock {
+        $esc = [char]27
+        [Console]::Write("$esc]133;B$esc\\$esc]133;C$esc\\")
+        [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
+    }
+} catch { }
+"""
 
     def __init__(
         self,
@@ -249,6 +277,7 @@ class ConPtyBackend(TerminalBackend):
                 shown: str = statement.replace("'", "''")
                 handle.write(f"Write-Host '+ {shown}' -ForegroundColor DarkGray\n")
                 handle.write(statement + "\n")
+            handle.write(self.POWERSHELL_SHELL_INTEGRATION + "\n")
         self._init_script_path = path
         return path
 
@@ -290,6 +319,11 @@ class ConPtyBackend(TerminalBackend):
         """
         if self._shell_name in ("cmd.exe", "cmd", "command.com"):
             self.write("@chcp 65001 >nul\r")
+            # OSC 133: 'D' and 'A' are the only marks cmd.exe can stamp, from
+            # PROMPT ($E is its escape code). It has no command hook, so the
+            # output boundary is inferred from the previous prompt instead and
+            # the exit code is not available to PROMPT.
+            self.write('set "PROMPT=$E]133;D$E\\$E]133;A$E\\$P$G"\r')
         elif self._shell_name in _POWERSHELL_NAMES and not self._startup_baked:
             self.write(self.POWERSHELL_POLICY_STATEMENT + "\r")
             for statement in self.POWERSHELL_INIT_STATEMENTS:
@@ -325,6 +359,33 @@ class PtyProcessBackend(TerminalBackend):
     Linux/Unix backend using ptyprocess.
     """
 
+    # OSC 133 hooks for bash. PROMPT_COMMAND runs immediately before PS1 is
+    # printed, so it stamps the previous command's end (with its exit status)
+    # and the new prompt's start at the prompt row. PS0 runs after a command
+    # line is read and before it executes, which is where the command/output
+    # boundary belongs. Shells other than bash inherit the environment
+    # unchanged, and a shell with no OSC 133 at all leaves the marks inert.
+    BASH_PROMPT_HOOK: str = (
+        "__exco_status=$?; "
+        "printf '\\033]133;D;%s\\033\\\\' \"$__exco_status\"; "
+        "printf '\\033]133;A\\033\\\\'; "
+    )
+    BASH_PS0_HOOK: str = "\x1b]133;B\x1b\\\x1b]133;C\x1b\\"
+
+    def _spawn_environment(self, argv: List[str]) -> Optional[Dict[str, str]]:
+        """Return the environment to spawn *argv* with, adding bash hooks."""
+        name: str = os.path.basename(argv[0]).lower() if argv else ""
+        if name not in ("bash", "bash.exe"):
+            return self.env
+        environment: Dict[str, str] = dict(
+            self.env if self.env is not None else os.environ
+        )
+        existing_prompt: str = environment.get("PROMPT_COMMAND", "")
+        environment["PROMPT_COMMAND"] = self.BASH_PROMPT_HOOK + existing_prompt
+        existing_ps0: str = environment.get("PS0", "")
+        environment["PS0"] = self.BASH_PS0_HOOK + existing_ps0
+        return environment
+
     def spawn(self) -> None:
         import shlex
 
@@ -336,7 +397,7 @@ class PtyProcessBackend(TerminalBackend):
         self.process = ptyprocess.PtyProcessUnicode.spawn(
             argv,
             cwd=self.cwd,
-            env=self.env,
+            env=self._spawn_environment(argv),
         )
 
     def isalive(self) -> bool:

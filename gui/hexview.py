@@ -7,7 +7,7 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import qt
 import constants
@@ -20,17 +20,17 @@ from gui.stylesheets import *
 
 class HexView(qt.QFrame):
     # Class variables
-    name = None
-    _parent = None
-    main_form = None
-    current_icon = None
-    internals = None
+    name: str | None = None
+    _parent: Any = None
+    main_form: Any = None
+    current_icon: Any = None
+    internals: Any = None
     savable = constants.CanSave.NO
-    save_path = None
+    save_path: str | None = None
     # Reference to the custom context menu
-    context_menu = None
+    context_menu: Any = None
 
-    def __init__(self, file_path, parent, main_form):
+    def __init__(self, file_path: str, parent: Any, main_form: Any) -> None:
         super().__init__(parent)
         self.name = os.path.basename(file_path)
         self.save_path = file_path
@@ -65,12 +65,12 @@ class HexView(qt.QFrame):
         # Show the file data
         self.reload_file()
 
-    def __initialize_view(self):
+    def __initialize_view(self) -> None:
         # Initialize view element caches
-        self.__cache_views = {}
-        self.__cache_labels = {}
-        self.__cache_buttons = {}
-        self.__cache_comboboxes = {}
+        self.__cache_views: dict[str, Any] = {}
+        self.__cache_labels: dict[str, Any] = {}
+        self.__cache_buttons: dict[str, Any] = {}
+        self.__cache_comboboxes: dict[str, Any] = {}
 
         # Layout
         layout = create_layout(layout=LayoutType.Vertical)
@@ -90,9 +90,10 @@ class HexView(qt.QFrame):
         scroll_area.setWidget(main_view)
         self.__cache_views["main"] = main_view
         main_layout = main_view.layout()
+        assert main_layout is not None
 
         # Table cache
-        self.cache_table = {}
+        self.cache_table: dict[str, Any] = {}
 
         ## Main table
         new_table = HexTable(self, self.main_form)
@@ -107,23 +108,23 @@ class HexView(qt.QFrame):
     Events
     """
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: qt.QKeyEvent | None) -> None:
         super().keyPressEvent(event)
         self.main_form.view.indication_check()
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
         super().mousePressEvent(event)
         self.main_form.view.indication_check()
         self.main_form.last_focused_widget = self._parent
 
-    def hasFocus(self):
+    def hasFocus(self) -> bool:
         return self.cache_table["main"].hasFocus()
 
     """
     General
     """
 
-    def show_file_hex_data(self, byte_data):
+    def show_file_hex_data(self, byte_data: bytes) -> None:
         table = self.cache_table["main"]
 
         # Clean the model
@@ -200,7 +201,8 @@ class HexView(qt.QFrame):
 
         table.setUpdatesEnabled(True)
 
-    def reload_file(self):
+    def reload_file(self) -> None:
+        assert self.save_path is not None
         with open(self.save_path, "rb") as f:
             content = f.read()
         self.show_file_hex_data(content)
@@ -209,7 +211,7 @@ class HexView(qt.QFrame):
         except OSError:
             self.modification_time = None
 
-    def update_style(self):
+    def update_style(self) -> None:
         # Frame
         self.setStyleSheet(StyleSheetFrame.standard())
 
@@ -242,40 +244,50 @@ class HexView(qt.QFrame):
 
 
 class HexTable(qt.QTableView):
-    def __init__(self, parent, main_form):
+    def __init__(self, parent: Any, main_form: Any) -> None:
         super().__init__(parent)
         self.main_form = main_form
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: qt.QKeyEvent | None) -> None:
         super().keyPressEvent(event)
         self.main_form.view.indication_check()
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: qt.QMouseEvent | None) -> None:
         super().mousePressEvent(event)
         self.main_form.view.indication_check()
-        parent = self.parent()
+        parent: Any = self.parent()
         while not hasattr(parent, "_parent"):
             parent = parent.parent()
         self.main_form.last_focused_widget = parent._parent
 
 
 class HexTableModel(qt.QAbstractTableModel):
-    def __init__(self, row_data, parent=None):
+    def __init__(self, row_data: list[list[str]] | None, parent: Any = None) -> None:
         super().__init__(parent)
         self.__row_data = row_data
+        self.__last_index: int = 0
+        self.__headers: dict[int, str] = {}
         if (row_data is not None) and (len(row_data) > 0):
             self.__last_index = len(row_data[0]) - 1
             self.__headers = {0: "Address", self.__last_index: "ASCII"}
             for i in range(len(row_data[0]) - 2):
                 self.__headers[i + 1] = "{:02x}".format(i)
 
-    def rowCount(self, parent=None):
+    def rowCount(self, parent: Any = None) -> int:
+        if self.__row_data is None:
+            return 0
         return len(self.__row_data)
 
-    def columnCount(self, parent=None):
+    def columnCount(self, parent: Any = None) -> int:
+        if self.__row_data is None:
+            return 0
         return len(self.__row_data[0]) if self.rowCount() else 0
 
-    def data(self, index, role=qt.Qt.ItemDataRole.DisplayRole):
+    def data(
+        self, index: qt.QModelIndex, role: int = qt.Qt.ItemDataRole.DisplayRole
+    ) -> Any:
+        if self.__row_data is None:
+            return None
         if role == qt.Qt.ItemDataRole.DisplayRole:
             return self.__row_data[index.row()][index.column()]
 
@@ -288,7 +300,12 @@ class HexTableModel(qt.QAbstractTableModel):
                     qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
                 )
 
-    def headerData(self, section, orientation, role=qt.Qt.ItemDataRole.DisplayRole):
+    def headerData(
+        self,
+        section: int,
+        orientation: qt.Qt.Orientation,
+        role: int = qt.Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if (
             orientation == qt.Qt.Orientation.Horizontal
             and role == qt.Qt.ItemDataRole.DisplayRole

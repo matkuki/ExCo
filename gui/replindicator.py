@@ -9,9 +9,11 @@ For complete license information of the dependencies, check the 'additional_lice
 import os
 import os.path
 import functools
+from typing import Any
 
 import qt
 import data
+import settings
 import constants
 import functions
 import themes
@@ -20,18 +22,18 @@ from gui.menu import *
 
 
 class ReplIndicator(qt.QLabel):
-    ICONS = {
+    ICONS: dict[constants.ReplLanguage, str] = {
         constants.ReplLanguage.Python: "language_icons/logo_python.png",
         constants.ReplLanguage.Hy: "language_icons/logo_hy_cuddles.png",
     }
-    TOOLTIPS = {
+    TOOLTIPS: dict[constants.ReplLanguage, str] = {
         constants.ReplLanguage.Python: "Python programming language",
         constants.ReplLanguage.Hy: "Hy programming language, a LISP dialect",
     }
 
-    selection_menu = None
+    selection_menu: Menu | None = None
 
-    def __init__(self, parent, main_form, repl_box):
+    def __init__(self, parent: qt.QWidget, main_form: Any, repl_box: Any) -> None:
         # Initialize superclass
         super().__init__(parent)
         # Store the reference to the parent
@@ -43,13 +45,14 @@ class ReplIndicator(qt.QLabel):
         # Set default font
         self.setFont(settings.get_current_font())
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: qt.QMouseEvent | None) -> None:
         # Execute the superclass event method
         super().mouseReleaseEvent(event)
         cursor = qt.QCursor.pos()
-        self.selection_menu.popup(cursor)
+        if self.selection_menu is not None:
+            self.selection_menu.popup(cursor)
 
-    def init_selection_menu(self):
+    def init_selection_menu(self) -> None:
         """
         Initialization of the REPL type menu used by the REPL indicator
         """
@@ -61,7 +64,6 @@ class ReplIndicator(qt.QLabel):
                 self.selection_menu.removeAction(action)
                 action.setParent(None)
                 action.deleteLater()
-                action = None
         self.selection_menu = Menu(self)
         # Add the menu label
         action_theme = qt.QAction("Select interpreter:", self.selection_menu)
@@ -70,26 +72,28 @@ class ReplIndicator(qt.QLabel):
         # Add the type actions
         for lang in constants.ReplLanguage:
             action_theme = qt.QAction(lang.name, self.selection_menu)
-            action_theme.triggered.connect(functools.partial(self.choose_repl_type, lang))
+            action_theme.triggered.connect(
+                functools.partial(self.choose_repl_type, lang)
+            )
             icon = functions.create_icon(self.ICONS[lang])
             action_theme.setIcon(icon)
             action_theme.setToolTip(self.TOOLTIPS[lang])
             self.selection_menu.addAction(action_theme)
 
-    def set_image(self, image):
+    def set_image(self, image: str) -> None:
         raw_picture = qt.QPixmap(os.path.join(data.resources_directory, image))
         picture = raw_picture.scaled(16, 16, qt.Qt.AspectRatioMode.KeepAspectRatio)
         self.setPixmap(picture)
 
-    def set_language(self, lang):
+    def set_language(self, lang: constants.ReplLanguage) -> None:
         self.set_image(self.ICONS[lang])
         self.setToolTip(lang.name)
 
-    def choose_repl_type(self, lang):
+    def choose_repl_type(self, lang: constants.ReplLanguage) -> None:
         self.repl_box.set_repl(self.repl_box.repl_state, lang)
         self.set_language(lang)
 
-    def restyle(self):
+    def restyle(self) -> None:
         self.setStyleSheet(
             """
 QLabel { 

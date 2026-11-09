@@ -411,13 +411,13 @@ class SmallBasic(BaseLexer):
         "[",
         "]",
     ]
-    splitter = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
+    splitter: re.Pattern[str] = re.compile(r"(\{\.|\.\}|\#|\'|\"\"\"|\n|\s+|\w+|\W)")
     # Characters that autoindent one level on pressing Return/Enter
-    autoindent_characters = []
+    autoindent_characters: list[str] = []
     # String start/end tokens
-    tokens_string = ('"',)
+    tokens_string: tuple[str, ...] = ('"',)
     # Comment tokens
-    tokens_comment = ["'"]
+    tokens_comment: list[str] = ["'"]
 
     def __init__(self, parent: Any = None) -> None:
         """
@@ -426,8 +426,12 @@ class SmallBasic(BaseLexer):
         # Initialize superclass
         super().__init__()
         # Set the default style values
-        self.setDefaultColor(qt.QColor(settings.get_theme()["fonts"]["default"]["color"]))
-        self.setDefaultPaper(qt.QColor(settings.get_theme()["fonts"]["default"]["background"]))
+        self.setDefaultColor(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["color"])
+        )
+        self.setDefaultPaper(
+            qt.QColor(settings.get_theme()["fonts"]["default"]["background"])
+        )
         self.setDefaultFont(settings.get_editor_font())
         # Reset autoindentation style
         self.setAutoIndentStyle(0)
@@ -480,7 +484,10 @@ class SmallBasic(BaseLexer):
         # Initialize various states and split the text into tokens
         stringing = False
         commenting = False
-        tokens = [(token, len(bytearray(token, "utf-8"))) for token in self.splitter.findall(text)]
+        tokens = [
+            (token, len(bytearray(token, "utf-8")))
+            for token in self.splitter.findall(text)
+        ]
         # Style the tokens accordingly
         for i, token in enumerate(tokens):
             if commenting == True:
@@ -505,7 +512,9 @@ class SmallBasic(BaseLexer):
             elif token[0] in operator_list:
                 setStyling(token[1], self.styles["Operator"])
             elif token[0] in keyword_dictionary["ConsoleFunctions"]:
-                setStyling(token[1], self.styles[self.keyword_remap["ConsoleFunctions"]])
+                setStyling(
+                    token[1], self.styles[self.keyword_remap["ConsoleFunctions"]]
+                )
             elif token[0] in keyword_dictionary["DataFunctions"]:
                 setStyling(token[1], self.styles[self.keyword_remap["DataFunctions"]])
             elif token[0] in keyword_dictionary["DateFunctions"]:
@@ -513,9 +522,13 @@ class SmallBasic(BaseLexer):
             elif token[0] in keyword_dictionary["FileFunctions"]:
                 setStyling(token[1], self.styles[self.keyword_remap["FileFunctions"]])
             elif token[0] in keyword_dictionary["GraphicsFunctions"]:
-                setStyling(token[1], self.styles[self.keyword_remap["GraphicsFunctions"]])
+                setStyling(
+                    token[1], self.styles[self.keyword_remap["GraphicsFunctions"]]
+                )
             elif token[0] in keyword_dictionary["LanguageFunctions"]:
-                setStyling(token[1], self.styles[self.keyword_remap["LanguageFunctions"]])
+                setStyling(
+                    token[1], self.styles[self.keyword_remap["LanguageFunctions"]]
+                )
             elif token[0] in keyword_dictionary["MathFunctions"]:
                 setStyling(token[1], self.styles[self.keyword_remap["MathFunctions"]])
             elif token[0] in keyword_dictionary["StringFunctions"]:
