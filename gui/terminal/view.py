@@ -50,16 +50,14 @@ Selection = Union[Tuple[int, int], Tuple[int, int, int, int]]
 class RowContext(NamedTuple):
     """Per-row paint state hoisted out of the per-cell loop.
 
-    _cell_style needs the row's stack index, its OSC 8 link columns, the
-    selection bounds and the find highlights. Deriving them per cell made a
-    full repaint call _history_len/_stack_row/_refresh_link_index and
-    _is_selected twice for every cell, which was about a third of the paint
-    time; the values only change per row, so they are computed once in
-    _row_context.
+    _cell_style needs the row's stack index, the selection bounds and the find
+    highlights. Deriving them per cell made a full repaint call
+    _history_len/_stack_row/_is_selected twice for every cell, which was about
+    a third of the paint time; the values only change per row, so they are
+    computed once in _row_context.
     """
 
     stack_row: int
-    links: Optional[Dict[int, str]]
     selection: Optional[Tuple[int, int, int, int]]
     find: Optional[List[Tuple[int, int]]]
     find_current: Optional[Tuple[int, int]]
@@ -133,6 +131,21 @@ class TerminalView(qt.QWidget):
     # the fallback 2px square to the cap height made every inactive cell as big
     # as the active one. U+2715 'multiplication x' is deliberately outside: it
     # is a symbol, not a size.
+    # Braille pattern U+2800..U+28FF: bit n of the codepoint offset is the dot
+    # at (column, row) of the cell's 2x4 dot grid (Unicode order: the left
+    # column's three upper dots, the right column's three, then the two lower
+    # ones).
+    BRAILLE_DOTS: Tuple[Tuple[int, int], ...] = (
+        (0, 0),
+        (0, 1),
+        (0, 2),
+        (1, 0),
+        (1, 1),
+        (1, 2),
+        (0, 3),
+        (1, 3),
+    )
+
     SIZE_SEMANTIC_RANGES: Tuple[Tuple[int, int], ...] = (
         (0x2500, 0x257F),  # box drawing
         (0x2580, 0x259F),  # block elements
@@ -151,6 +164,12 @@ class TerminalView(qt.QWidget):
     # palette (a theme uses tens of colours) only ever trips under exactly that
     # animation, and a bulk clear costs one repaint, never correctness.
     STYLE_CACHE_LIMIT: int = 4096
+    # Faint (SGR 2) text is the foreground mixed this far towards the cell's
+    # background.
+    FAINT_MIX: float = 0.5
+    # Longest a synchronized-output frame (mode 2026) may be held back. A
+    # program that opens one and never closes it must not freeze the screen.
+    SYNC_OUTPUT_TIMEOUT_MS: int = 200
     COLOR_CACHE_LIMIT: int = 4096
     GLYPH_SHAPE_LIMIT: int = 4096
 
@@ -203,6 +222,14 @@ class TerminalView(qt.QWidget):
         self._blink_timer.setInterval(self._cursor_blink_interval())
         self._blink_timer.timeout.connect(self._on_blink)
         self._blink_timer.start()
+        # Synchronized output (mode 2026): while the program is mid-frame the
+        # painting is held back; the timer is the safety net (see
+        # schedule_repaint).
+        self._sync_pending: bool = False
+        self._sync_timer: qt.QTimer = qt.QTimer(self)
+        self._sync_timer.setSingleShot(True)
+        self._sync_timer.setInterval(self.SYNC_OUTPUT_TIMEOUT_MS)
+        self._sync_timer.timeout.connect(self._end_sync_output)
 
         # Selection state (start/end cells in stack coordinates)
         self._selection: Optional[Selection] = None
@@ -293,13 +320,6 @@ class TerminalView(qt.QWidget):
             Tuple[Any, ...], Tuple[qt.QColor, qt.QColor, qt.QFont]
         ] = {}
         self._color_cache: Dict[str, qt.QColor] = {}
-
-        # OSC 8 hyperlinks: the screen records spans in stack coordinates;
-        # this per-cell {stack_row: {column: uri}} index is rebuilt only when
-        # the span list changes. _link_version is (len, id of tail) so a
-        # moved/redrawn link (new tail object) still invalidates it.
-        self._link_index: Dict[int, Dict[int, str]] = {}
-        self._link_version: Optional[Tuple[int, Optional[int]]] = None
 
         # Scrollbar
         self._scrollbar: qt.QScrollBar = qt.QScrollBar(qt.Qt.Orientation.Vertical, self)
@@ -490,6 +510,9 @@ class TerminalView(qt.QWidget):
         self._glyph_shapes: Dict[
             Tuple[int, str], Tuple[float, Tuple[float, float, float, float]]
         ] = {}
+        # Braille dot patterns, one path per pattern, in cell coordinates; they
+        # depend on the cell size, so they are rebuilt with the metrics.
+        self._braille_paths: Dict[int, qt.QPainterPath] = {}
         # The screen converts inline-image pixel sizes to cell spans, so it
         # needs the same cell metrics the painter uses.
         self.terminal.term_screen.set_cell_metrics(self._char_width, self._char_height)
@@ -623,17 +646,13 @@ class TerminalView(qt.QWidget):
     def _row_context(self, viewport_y: int) -> RowContext:
         """Row-level state shared by every cell of viewport row *viewport_y*."""
         stack_row: int = self._stack_row(viewport_y)
-        links: Optional[Dict[int, str]] = None
-        if stack_row >= 0:
-            self._refresh_link_index()
-            links = self._link_index.get(stack_row)
         find: Optional[List[Tuple[int, int]]] = None
         current: Optional[Tuple[int, int]] = None
         if self._find_spans:
             find = self._find_spans.get(stack_row)
             if stack_row == self._find_current_row:
                 current = self._find_current_span
-        return RowContext(stack_row, links, self._normalized_selection(), find, current)
+        return RowContext(stack_row, self._normalized_selection(), find, current)
 
     def _scroll_up(self, rows: int) -> None:
         if self._in_alt():
@@ -784,6 +803,18 @@ class TerminalView(qt.QWidget):
         coalesced by Qt into a single paint event.
         """
         screen: ExtendedScreen = self.terminal.term_screen
+        if screen.sync_output:
+            # The program is part-way through a frame (CSI ? 2026 h). Painting
+            # now would show it half drawn, so leave the dirty rows queued and
+            # paint once it ends the frame - or when the timer gives up.
+            self._sync_pending = True
+            if not self._sync_timer.isActive():
+                self._sync_timer.start()
+            return
+        resumed: bool = self._sync_pending
+        if resumed:
+            self._sync_pending = False
+            self._sync_timer.stop()
         dirty: Any = screen.dirty
         pending_scroll: int = screen.pending_scroll
         lines: int = screen.lines
@@ -822,8 +853,10 @@ class TerminalView(qt.QWidget):
             if self._sel_hist_gen != self._history_generation():
                 self._clear_selection()
         self._was_in_alt = self._in_alt()
-        if self._scroll_offset > 0:
-            # History grew / content shifted; repaint everything visible.
+        if self._scroll_offset > 0 or resumed:
+            # History grew / content shifted, or a held-back frame is being
+            # released (its scrolls were consumed while it was held, so the
+            # dirty rows alone do not describe it); repaint everything visible.
             self.update()
         elif pending_scroll != 0:
             # Content scrolled a whole viewport's worth of lines. A full
@@ -849,6 +882,17 @@ class TerminalView(qt.QWidget):
         # trigger another full repaint.
         screen.pending_scroll = 0
         self._refresh_scrollbar()
+
+    def _end_sync_output(self) -> None:
+        """The frame was held back for the full timeout: stop waiting.
+
+        The mode is cleared on the screen as well, so a program that never
+        sends ``CSI ? 2026 l`` is painted normally from here on; its own
+        later reset is then a no-op.
+        """
+        screen: ExtendedScreen = self.terminal.term_screen
+        screen.mode.discard(screen.SYNC_OUTPUT_MODE)
+        self.schedule_repaint()
 
     def _on_blink(self) -> None:
         if not self.isVisible():
@@ -1113,6 +1157,8 @@ class TerminalView(qt.QWidget):
         # cell. With per-cell truecolour (an animation) every cell is its own
         # run, so without the carry-over the pass resolves every cell twice.
         pending: Optional[Tuple[qt.QColor, qt.QColor, qt.QFont]] = None
+        # Style runs whose glyphs are still to be drawn (see below the loop).
+        deferred: List[Tuple[qt.QColor, qt.QFont, List[Tuple[int, str, int]]]] = []
         while x < columns:
             cell: Any = row[x]
             style: Tuple[qt.QColor, qt.QColor, qt.QFont]
@@ -1176,21 +1222,26 @@ class TerminalView(qt.QWidget):
                 # only runs with a non-default background need a fill.
                 painter.fillRect(rect, style[1])
             if glyphs:
-                font: qt.QFont = style[2]
-                if style[0] != last_pen:
-                    painter.setPen(style[0])
-                    last_pen = style[0]
-                if font != last_font:
-                    painter.setFont(font)
-                    last_font = font
-                # A blank cell shows only its background, so skip it - unless
-                # the font decorates it (an underlined or struck-out blank is
-                # part of the line, not a gap).
-                decorated: bool = font.underline() or font.strikeOut()
-                for column, char, cells in glyphs:
-                    if char == " " and not decorated:
-                        continue
-                    self._draw_glyph(painter, font, char, column, cells, baseline)
+                deferred.append((style[0], style[2], glyphs))
+        # Glyphs are drawn only once every background of the row is down. A
+        # glyph's ink may overhang its cell (an italic 'f', a '/', box
+        # drawing), and the next run's background fill, painted afterwards,
+        # would otherwise cut that overhang off.
+        for pen, font, run_glyphs in deferred:
+            if pen != last_pen:
+                painter.setPen(pen)
+                last_pen = pen
+            if font != last_font:
+                painter.setFont(font)
+                last_font = font
+            # A blank cell shows only its background, so skip it - unless
+            # the font decorates it (an underlined or struck-out blank is
+            # part of the line, not a gap).
+            decorated: bool = font.underline() or font.strikeOut()
+            for column, char, cells in run_glyphs:
+                if char == " " and not decorated:
+                    continue
+                self._draw_glyph(painter, font, char, column, cells, baseline)
         # Publish (or retract) this row for the blink tick. Retracting matters
         # as much as publishing: a row whose blinking cells were overwritten
         # must stop being repainted on every phase toggle.
@@ -1225,6 +1276,9 @@ class TerminalView(qt.QWidget):
         rescaled in either direction: the font's ink box is the value, so only
         their horizontal position is corrected.
         """
+        if cells == 1 and len(char) == 1 and 0x2800 <= ord(char) <= 0x28FF:
+            self._draw_braille(painter, ord(char) - 0x2800, column, baseline)
+            return
         x: float = column * self._char_width
         span: float = cells * self._char_width
         if self._font_has_glyph(font, char):
@@ -1272,6 +1326,50 @@ class TerminalView(qt.QWidget):
         )
         painter.scale(scale, scale)
         painter.drawText(qt.QPointF(0.0, 0.0), char)
+        painter.restore()
+
+    def _draw_braille(
+        self, painter: qt.QPainter, bits: int, column: int, baseline: float
+    ) -> None:
+        """Draw a braille pattern as the 2x4 dot grid of its own cell.
+
+        Which of the two dot columns a dot sits in is the message: it is what
+        an animated spinner or a braille chart is made of. A font glyph cannot
+        be trusted with that - the family usually lacks braille, and the
+        fallback's glyph was centred by its ink box like any narrow symbol, so
+        a pattern with dots in only the left column and one with dots in only
+        the right column came out at the *same* x (the second pixel line of
+        Vibe's waiting snake vanished). The dots are painted straight into the
+        cell on a uniform grid instead, so neighbouring cells line up and the
+        result does not depend on any installed font. U+2800 (no dots) paints
+        nothing.
+        """
+        if bits == 0:
+            return
+        path: Optional[qt.QPainterPath] = self._braille_paths.get(bits)
+        if path is None:
+            width: float = self._char_width
+            height: float = self._char_height
+            # Dot centres at 1/4 and 3/4 of the width and 1/8..7/8 of the
+            # height; the radius leaves a gap between neighbouring dots.
+            radius: float = max(0.38 * min(width / 2.0, height / 4.0), 0.75)
+            path = qt.QPainterPath()
+            for bit, (dot_column, dot_row) in enumerate(self.BRAILLE_DOTS):
+                if bits & (1 << bit):
+                    path.addEllipse(
+                        qt.QPointF(
+                            width * (0.25 + 0.5 * dot_column),
+                            height * (0.125 + 0.25 * dot_row),
+                        ),
+                        radius,
+                        radius,
+                    )
+            self._braille_paths[bits] = path
+        colour: qt.QColor = painter.pen().color()
+        painter.save()
+        painter.translate(column * self._char_width, baseline - self._baseline)
+        painter.setRenderHint(qt.QPainter.RenderHint.Antialiasing, True)
+        painter.fillPath(path, colour)
         painter.restore()
 
     def _draw_natural_centred(
@@ -1430,8 +1528,10 @@ class TerminalView(qt.QWidget):
         """
         if context is None:
             context = self._row_context(y)
-        links: Optional[Dict[int, str]] = context.links
-        link: bool = links is not None and x in links
+        # The URI lives on the cell (see screen._Cell), so a link can never
+        # outlive the text it was drawn on: an erase or a redraw drops it.
+        link: bool = getattr(cell, "hyperlink", None) is not None
+        faint: bool = bool(getattr(cell, "faint", False))
         selection: Optional[Tuple[int, int, int, int]] = context.selection
         selected: bool = selection is not None and self._cell_in_selection(
             selection, context.stack_row, x, self._block_selection
@@ -1453,6 +1553,7 @@ class TerminalView(qt.QWidget):
             cell.reverse,
             selected,
             link,
+            faint,
             matched,
             current,
         )
@@ -1465,6 +1566,13 @@ class TerminalView(qt.QWidget):
             fg: qt.QColor = self._resolve_color(cell.fg, True)
             if reverse:
                 fg, bg = bg, fg
+            if faint:
+                mix: float = self.FAINT_MIX
+                fg = qt.QColor.fromRgbF(
+                    fg.redF() * (1.0 - mix) + bg.redF() * mix,
+                    fg.greenF() * (1.0 - mix) + bg.greenF() * mix,
+                    fg.blueF() * (1.0 - mix) + bg.blueF() * mix,
+                )
             font: qt.QFont = self._cell_font(cell, link=link)
             if matched:
                 # A find hit is a search overlay, so it wins over the selection
@@ -2499,43 +2607,20 @@ class TerminalView(qt.QWidget):
         y: int = int(position.y() / self._char_height)
         return x, y
 
-    def _refresh_link_index(self) -> None:
-        """Rebuild the cell->URI lookup from screen.hyperlink_spans when the
-        span list changed. Spans are recorded in stack coordinates (the screen
-        adds the history length to the cursor row), so the index maps a
-        stack_row to {column: uri} and renders identically over scrollback
-        history; the screen shifts the spans when the bounded deque drops a
-        row, so a scrolled-out link stays on the line it was drawn on."""
-        screen: ExtendedScreen = self.terminal.term_screen
-        spans: List[Tuple[Tuple[int, int], Tuple[int, int], str]] = (
-            screen.hyperlink_spans
-        )
-        version: Tuple[int, Optional[int]] = (
-            len(spans),
-            id(spans[-1]) if spans else None,
-        )
-        if version == self._link_version:
-            return
-        index: Dict[int, Dict[int, str]] = {}
-        columns: int = screen.columns
-        for (r0, c0), (r1, c1), uri in spans:
-            for r in range(r0, r1 + 1):
-                start: int = c0 if r == r0 else 0
-                end: int = c1 if r == r1 else columns - 1
-                for x in range(start, end + 1):
-                    index.setdefault(r, {})[x] = uri
-        self._link_index = index
-        self._link_version = version
-
     def _link_at_stack(self, stack_row: int, x: int) -> Optional[str]:
-        """URI of the hyperlink covering stack cell (stack_row, x), if any."""
+        """URI of the hyperlink on stack cell (stack_row, x), if any.
+
+        The URI is a field of the cell itself (see screen._Cell), so it is
+        resolved exactly like any other cell attribute: no side index to
+        rebuild, and no way for a link to survive the text it was drawn on.
+        """
         if stack_row < 0:
             return None
-        self._refresh_link_index()
-        row_index: Optional[Dict[int, str]] = self._link_index.get(stack_row)
-        if row_index is None:
+        row: Any = self._stack_row_cells(stack_row)
+        columns: int = self.terminal.term_screen.columns
+        if x < 0 or x >= columns:
             return None
-        return row_index.get(x)
+        return getattr(row[x], "hyperlink", None)
 
     def _hyperlink_at(self, position: qt.QPointF) -> Optional[str]:
         stack_row: int

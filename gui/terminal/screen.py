@@ -25,12 +25,15 @@ import binascii
 import copy
 import unicodedata
 from collections import deque
+from contextlib import contextmanager
 from typing import (
     Any,
     Callable,
     Deque,
     Dict,
     Generator,
+    Iterable,
+    Iterator,
     List,
     Optional,
     Sequence,
@@ -40,6 +43,7 @@ from typing import (
 
 try:
     import pyte
+    from pyte import charsets as pyte_charsets
     from pyte import graphics as pyte_graphics
     from pyte import modes as pyte_modes
     from pyte import screens as pyte_screens
@@ -53,7 +57,7 @@ On Windows the backend uses pywinpty (ConPTY), on Linux it uses ptyprocess.
 """
     raise ImportError(msg)
 
-from gui.terminal.graphemes import cluster_width, iter_clusters
+from gui.terminal.graphemes import cluster_width, is_combining, iter_clusters
 from gui.terminal.images import ImageStore, Placement
 from gui.terminal.reflow import ReflowResult, reflow
 
@@ -176,6 +180,50 @@ def colour_spec(colour: str) -> str:
     return "rgb:{0}/{1}/{2}".format(text[0:2], text[2:4], text[4:6])
 
 
+def expand_sgr_subparameters(
+    params: List[int], groups: Dict[int, List[str]]
+) -> List[int]:
+    """Turn colon-separated SGR parameters into the semicolon form pyte reads.
+
+    *params* holds the first value of every parameter; *groups* maps a
+    parameter's index to all of its colon-separated parts (as strings, empty
+    meaning "default"). ``38:2::r:g:b`` / ``38:2:cs:r:g:b`` become
+    ``38;2;r;g;b``, ``38:5:n`` becomes ``38;5;n``, an underline style
+    ``4:s`` becomes plain underline (``s`` = 0 switches it off) and the
+    underline colour (58/59) is dropped, since the grid has no such field.
+    """
+
+    def number(text: str) -> int:
+        return min(int(text), 255) if text else 0
+
+    expanded: List[int] = []
+    for index, value in enumerate(params):
+        group: Optional[List[str]] = groups.get(index)
+        if group is None:
+            expanded.append(value)
+            continue
+        if value in (38, 48):
+            rest: List[str] = group[1:]
+            mode: int = number(rest[0]) if rest else 0
+            if mode == 2:
+                channels: List[str] = rest[1:]
+                if len(channels) > 3:
+                    # An explicit colour-space id precedes the channels.
+                    channels = channels[-3:]
+                channels = (channels + ["0", "0", "0"])[:3]
+                expanded.extend([value, 2] + [number(c) for c in channels])
+            elif mode == 5 and len(rest) > 1:
+                expanded.extend([value, 5, number(rest[1])])
+        elif value == 4:
+            style: int = number(group[1]) if len(group) > 1 else 1
+            expanded.append(24 if style == 0 else 4)
+        elif value in (58, 59):
+            continue
+        else:
+            expanded.append(value)
+    return expanded
+
+
 class _TerminalRow(pyte_screens.StaticDefaultDict):
     """A screen row that remembers whether it continues on the next one.
 
@@ -193,6 +241,43 @@ class _TerminalRow(pyte_screens.StaticDefaultDict):
     def __init__(self, default: Any) -> None:
         super().__init__(default)
         self.wrapped: bool = False
+
+
+class _Cell(pyte_screens.Char):
+    """A pyte cell that also carries its OSC 8 hyperlink URI.
+
+    pyte's ``Char`` has no hyperlink field, so the screen used to keep the
+    links in a separate span list in stack coordinates. A span outlives the
+    text it was recorded on: an erase, a redraw over the same cells or an
+    alternate-screen scroll left it pointing at different cells, and the view
+    underlined whatever it covered - stray horizontal lines across the grid.
+
+    Keeping the URI on the cell makes it part of the text. Overwriting or
+    erasing a cell drops it, and scrolling, reflow and history overflow move it
+    with the row, so the underline can never detach from its link.
+
+    ``_replace`` is overridden because the generated one only carries the
+    ``Char`` fields; without it pyte's ``attrs._replace(...)`` would drop the
+    URI on every SGR change. The attribute is only stored when there is a link,
+    so an unlinked cell stays as small as pyte's own ``Char``.
+    """
+
+    hyperlink: Optional[str] = None
+    # SGR 2 (faint / dim). pyte's Char has no such field either, so it rides on
+    # the cell the same way the link does, and is likewise only stored when set.
+    faint: bool = False
+
+    def _replace(self, **kwargs: Any) -> "_Cell":
+        hyperlink: Optional[str] = kwargs.pop(
+            "hyperlink", getattr(self, "hyperlink", None)
+        )
+        faint: bool = kwargs.pop("faint", getattr(self, "faint", False))
+        cell: "_Cell" = super()._replace(**kwargs)
+        if hyperlink is not None:
+            cell.hyperlink = hyperlink
+        if faint:
+            cell.faint = True
+        return cell
 
 
 class ExtendedScreen(pyte_screens.HistoryScreen):
@@ -249,15 +334,16 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         # Alternate screen state
         self._alt_saved: Optional[Dict[str, Any]] = None
         self._alt_modes_active: Set[int] = set()
-        # OSC state
+        # OSC state. The active URI is stamped onto every cell drawn while it
+        # is open (see _Cell and draw), so a hyperlink is part of the text and
+        # disappears with it.
         self.cwd: Optional[str] = None
         self.hyperlink: Optional[str] = None
-        self.hyperlink_spans: List[Tuple[Tuple[int, int], Tuple[int, int], str]] = []
         self._active_hyperlink: Optional[str] = None
-        # OSC 133 shell-integration marks, in the same stack coordinates as
-        # hyperlink spans (history rows below the live screen plus the
-        # viewport row). Bounded because a prompt is recorded on every command
-        # and the list only ever needs to span the retained scrollback.
+        # OSC 133 shell-integration marks, in stack coordinates (history rows
+        # below the live screen plus the viewport row). Bounded because a
+        # prompt is recorded on every command and the list only ever needs to
+        # span the retained scrollback.
         self.prompt_marks: List[PromptMark] = []
         # DECSCUSR state
         self.cursor_style: str = "block"
@@ -295,7 +381,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             "columns": self.columns,
             "lines": self.lines,
         }
-        self.hyperlink_spans.clear()
         self.prompt_marks.clear()
         self.images.clear()
         self.buffer.clear()
@@ -315,7 +400,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self.savepoints = saved["savepoints"]
         self.margins = saved["margins"]
         self._alt_saved = None
-        self.hyperlink_spans.clear()
         self.prompt_marks.clear()
         self.images.clear()
         self.dirty.update(range(self.lines))
@@ -360,6 +444,18 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             if not self._alt_modes_active:
                 self._leave_alt_screen()
 
+    #: The last graphic cluster drawn, for REP (``CSI Ps b``).
+    _last_graphic: str = ""
+
+    #: pyte stores a private mode shifted left by 5 bits.
+    SYNC_OUTPUT_MODE: int = 2026 << 5
+
+    @property
+    def sync_output(self) -> bool:
+        """True between ``CSI ? 2026 h`` and ``CSI ? 2026 l``: the program is
+        mid-frame, so the view holds back painting until it is complete."""
+        return self.SYNC_OUTPUT_MODE in self.mode
+
     def _full_screen_margins(self) -> bool:
         """True when the scrolling region spans the whole screen."""
         top: int
@@ -367,10 +463,30 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         top, bottom = self.margins or pyte_screens.Margins(0, self.lines - 1)
         return top == 0 and bottom == self.lines - 1
 
+    def _tint_blank_rows(self, rows: Iterable[int]) -> None:
+        """Give the rows a scroll just opened the cursor's background colour.
+
+        pyte opens a scrolled-in row empty, so it falls back to the default
+        cell. xterm fills it with the current background (BCE), which is what
+        a full-screen program that sets a background and then scrolls (a
+        status band, a coloured pager) relies on. Only the row's *default*
+        cell is tinted - the row holds no cells yet - so nothing is stored.
+        """
+        bg: str = self.cursor.attrs.bg
+        if bg == "default":
+            return
+        blank: Any = self.default_char._replace(bg=bg)
+        for y in rows:
+            self.buffer[y].default = blank
+
     def index(self) -> None:
         # While the alternate screen is active, keep the scrollback history
         # frozen; scrolled-out lines simply disappear.
         scrolled: bool = self._full_screen_margins() and self.cursor.y == self.lines - 1
+        bottom_margin: int = (self.margins or pyte_screens.Margins(0, self.lines - 1))[
+            1
+        ]
+        at_bottom: bool = self.cursor.y == bottom_margin
         if self._alt_saved is None:
             # pyte appends the scrolled-out row to history.top, a bounded
             # deque that then silently drops its leftmost row -- so every
@@ -380,8 +496,7 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             if scrolled and maxlen is not None and len(self.history.top) >= maxlen:
                 self.history_generation += 1
                 # The append below drops the oldest row, so every remaining
-                # stack row (and the hyperlink spans recorded there) moves up.
-                self._shift_hyperlink_spans(1)
+                # stack row (and the prompt marks recorded there) moves up.
                 self._shift_prompt_marks(1)
                 self.images.shift(1)
             super().index()
@@ -392,12 +507,18 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
                 # up one, so every placement's stack row does too. Entering the
                 # alternate screen already cleared the primary screen's images.
                 self.images.shift(1)
+        if at_bottom:
+            self._tint_blank_rows((bottom_margin,))
         if scrolled:
             self.pending_scroll += 1
 
     def reverse_index(self) -> None:
         scrolled: bool = self._full_screen_margins() and self.cursor.y == 0
+        top_margin: int = (self.margins or pyte_screens.Margins(0, self.lines - 1))[0]
+        at_top: bool = self.cursor.y == top_margin
         super().reverse_index()
+        if at_top:
+            self._tint_blank_rows((top_margin,))
         if scrolled:
             self.pending_scroll -= 1
 
@@ -415,8 +536,44 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             row.wrapped = True
         super().linefeed()
 
+    @contextmanager
+    def _erasing(self) -> Iterator[None]:
+        """Make pyte's erase stamp blanks with the background colour only.
+
+        pyte fills erased cells with the whole of ``cursor.attrs``. A program
+        that switched on underline (SGR 4) or strike-through (SGR 9) and then
+        cleared a line, or left an OSC 8 link open, therefore got blanks that
+        the view paints as decorated - a bare foreground-coloured horizontal
+        line across the cleared area. Real terminals keep only the background
+        (BCE), so that is all the blank inherits here.
+        """
+        attrs: Any = self.cursor.attrs
+        self.cursor.attrs = self.default_char._replace(bg=attrs.bg)
+        try:
+            yield
+        finally:
+            self.cursor.attrs = attrs
+
+    def erase_characters(self, count: Optional[int] = None) -> None:
+        self._blank_split_head(self.cursor.y, self.cursor.x)
+        with self._erasing():
+            super().erase_characters(count)
+
     def erase_in_display(self, how: int = 0, *args: Any, **kwargs: Any) -> None:
-        super().erase_in_display(how, *args, **kwargs)
+        with self._erasing():
+            super().erase_in_display(how, *args, **kwargs)
+            # A row a scroll tinted keeps that colour as its default cell, and
+            # pyte only rewrites the cells a row holds; the rows erased whole
+            # take the erase colour instead.
+            if how == 0:
+                whole: range = range(self.cursor.y + 1, self.lines)
+            elif how == 1:
+                whole = range(0, self.cursor.y)
+            else:
+                whole = range(self.lines)
+            blank: Any = self.default_char._replace(bg=self.cursor.attrs.bg)
+            for y in whole:
+                self.buffer[y].default = blank
         # Blanking cells destroys the text a wrap mark described, and pyte
         # erases in place, so the marks have to be dropped by hand.
         if how == 0:
@@ -431,7 +588,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
                 row.wrapped = False
 
     def erase_in_line(self, how: int = 0, *args: Any, **kwargs: Any) -> None:
-        super().erase_in_line(how, *args, **kwargs)
+        if how == 0:
+            self._blank_split_head(self.cursor.y, self.cursor.x)
+        with self._erasing():
+            super().erase_in_line(how, *args, **kwargs)
         row: Any = self.buffer.get(self.cursor.y)
         if row is not None:
             row.wrapped = False
@@ -442,7 +602,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         bottom: int
         top, bottom = self.margins or pyte_screens.Margins(0, self.lines - 1)
         full: bool = top == 0 and bottom == self.lines - 1 and self.cursor.y == top
+        start: int = self.cursor.y
         super().insert_lines(count)
+        if top <= start <= bottom:
+            self._tint_blank_rows(range(start, min(start + count, bottom + 1)))
         if full:
             self.pending_scroll -= count
 
@@ -452,7 +615,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         bottom: int
         top, bottom = self.margins or pyte_screens.Margins(0, self.lines - 1)
         full: bool = top == 0 and bottom == self.lines - 1 and self.cursor.y == top
+        start = self.cursor.y
         super().delete_lines(count)
+        if top <= start <= bottom:
+            self._tint_blank_rows(range(max(start, bottom - count + 1), bottom + 1))
         if full:
             self.pending_scroll += count
 
@@ -478,7 +644,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             return  # No changes.
         if self._alt_saved is not None:
             super().resize(lines, columns)
-            self.hyperlink_spans.clear()
             self.prompt_marks.clear()
             return
         result: Optional[ReflowResult] = self._reflow_rows(
@@ -491,7 +656,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         )
         if result is None:
             super().resize(lines, columns)
-            self.hyperlink_spans.clear()
             self.prompt_marks.clear()
             return
         self._apply_reflow(result, lines, columns)
@@ -549,7 +713,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         cursor.x = result.cursor_col
         cursor.y = result.cursor_row
         self.dirty.update(range(lines))
-        self._remap_hyperlink_spans(result)
         self._remap_prompt_marks(result)
         self.images.remap(result)
 
@@ -563,32 +726,13 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         default: Any = self.default_char
         row: _TerminalRow = _TerminalRow(default)
         for x, cell in enumerate(cells):
-            if cell != default:
+            # A hyperlink makes a cell part of the text even when its
+            # attributes equal the default char (a linked space), so it is
+            # kept rather than dropped as padding.
+            if cell != default or getattr(cell, "hyperlink", None):
                 row[x] = cell
         row.wrapped = wrapped
         return row
-
-    def _remap_hyperlink_spans(self, result: ReflowResult) -> None:
-        """Move the recorded OSC 8 spans onto the re-wrapped rows.
-
-        Spans are already in stack coordinates, so the same position map that
-        moves the cursor moves them. A span whose text fell out of the retained
-        stack is dropped; one whose first row did is clipped to the top row.
-        """
-        if not self.hyperlink_spans:
-            return
-        remapped: List[Tuple[Tuple[int, int], Tuple[int, int], str]] = []
-        for (r0, c0), (r1, c1), uri in self.hyperlink_spans:
-            start: Optional[Tuple[int, int]] = result.map_position(r0, c0)
-            end: Optional[Tuple[int, int]] = result.map_position(r1, c1)
-            if end is None:
-                continue
-            if start is None:
-                start = (0, 0)
-            if end < start:
-                continue
-            remapped.append((start, end, uri))
-        self.hyperlink_spans = remapped[: self.MAX_HYPERLINK_SPANS]
 
     def _remap_prompt_marks(self, result: ReflowResult) -> None:
         """Move OSC 133 marks onto the re-wrapped stack.
@@ -654,13 +798,18 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
                 self.cwd = param
         if code == "8":
             # OSC 8 - hyperlink: "params;uri". An empty URI terminates the
-            # active link; previously drawn spans are retained for hover.
+            # active link. The URI is stamped onto the cells drawn while it is
+            # open (see draw/_Cell), so it is not kept as a separate span.
             parts = param.split(";", 1)
             if len(parts) == 2:
                 params, uri = parts
                 self._active_hyperlink = uri or None
             else:
                 self._active_hyperlink = None
+            # Keep the erase/insert attribute template in step immediately: a
+            # link that closes must not be re-stamped onto the blanks of the
+            # next \x1b[K.
+            self._sync_hyperlink_attrs()
         if code == "133":
             # OSC 133 - shell-integration marks: "A", "B", "C",
             # "D;<exit-code>", optionally followed by additional fields the
@@ -706,11 +855,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         no state behind and every navigation surface stays inert.
 
         Marks use stack coordinates (history rows below the live screen plus
-        the viewport row) exactly like hyperlink spans, so they keep pointing
-        at their line when the bounded history deque drops rows. The alternate
-        screen has no scrollback and is cleared on both transitions, so a mark
-        arriving there is discarded rather than left pointing into a buffer
-        that is about to disappear.
+        the viewport row), so they keep pointing at their line when the bounded
+        history deque drops rows. The alternate screen has no scrollback and is
+        cleared on both transitions, so a mark arriving there is discarded
+        rather than left pointing into a buffer that is about to disappear.
         """
         if self.in_alt_screen:
             return
@@ -982,7 +1130,7 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         pyte's own ``erase_in_display(3)`` also blanks the display, which is
         not what a "clear scrollback" command should do, so only the history
         funnel runs here. It bumps ``history_generation`` and drops the
-        hyperlink spans, exactly as the CSI form does.
+        stack-coordinate marks, exactly as the CSI form does.
         """
         self._reset_history()
 
@@ -1044,73 +1192,71 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self.cursor.y = max(0, target)
         self.cursor.x = 0
 
-    # Maximum retained hyperlink spans. A TUI redraws its links every frame,
-    # so the list is capped (oldest dropped) to keep memory and the view's
-    # per-paint index bounded.
-    MAX_HYPERLINK_SPANS: int = 1000
+    def _sync_hyperlink_attrs(self) -> None:
+        """Keep ``cursor.attrs.hyperlink`` equal to the active OSC 8 URI.
 
-    def _shift_hyperlink_spans(self, rows: int) -> None:
-        """Move every recorded span up by *rows* dropped history rows.
+        pyte stamps every cell it writes with ``cursor.attrs``, including the
+        blanks from an erase or an insert, so the URI has to live there too and
+        not only on the cells this screen draws itself. It also has to be
+        removed the moment the link closes, or erasing a linked line would
+        re-stamp the link onto the blanks.
 
-        Spans are stored in stack coordinates (history rows below the live
-        screen plus the viewport row), so dropping the leftmost history row
-        moves the remaining ones up by one. A span that no longer has a row
-        left is gone with the text it described.
+        The attribute is left as pyte's own ``Char`` whenever no link is open:
+        a ``_Cell`` carries the space for an instance ``__dict__``, and the
+        whole screen (and scrollback) is stamped from here, so an idle
+        ``_Cell`` would cost every cell a few bytes for nothing.
         """
-        if not self.hyperlink_spans or rows <= 0:
+        attrs: Any = self.cursor.attrs
+        if self._active_hyperlink is None:
+            if isinstance(attrs, _Cell):
+                if not attrs.faint:
+                    self.cursor.attrs = pyte_screens.Char(*attrs)
+                elif attrs.hyperlink is not None:
+                    # Faint keeps the cell type, but the link has ended.
+                    self.cursor.attrs = attrs._replace(hyperlink=None)
             return
-        shifted: List[Tuple[Tuple[int, int], Tuple[int, int], str]] = []
-        for (r0, c0), (r1, c1), uri in self.hyperlink_spans:
-            r0 -= rows
-            r1 -= rows
-            if r1 < 0:
+        if not isinstance(attrs, _Cell):
+            attrs = _Cell(*attrs)
+        if attrs.hyperlink != self._active_hyperlink:
+            attrs = attrs._replace(hyperlink=self._active_hyperlink)
+        self.cursor.attrs = attrs
+
+    def select_graphic_rendition(self, *attrs: int) -> None:
+        """pyte's SGR plus faint (2), which pyte has no field for.
+
+        The parameters are walked in order, skipping the arguments of an
+        extended colour (``38;5;n`` / ``38;2;r;g;b``), so the ``2`` of a
+        truecolour sequence is not taken for "faint". 0 and 22 clear it.
+        """
+        faint: bool = bool(getattr(self.cursor.attrs, "faint", False))
+        params: Tuple[int, ...] = attrs or (0,)
+        index: int = 0
+        while index < len(params):
+            value: int = params[index]
+            if value in (38, 48) and index + 1 < len(params):
+                index += 3 if params[index + 1] == 5 else 5
                 continue
-            if r0 < 0:
-                # The span's first row fell off; what is left of it starts at
-                # the beginning of the new top row.
-                r0 = 0
-                c0 = 0
-            shifted.append(((r0, c0), (r1, c1), uri))
-        self.hyperlink_spans = shifted
+            if value == 2:
+                faint = True
+            elif value in (0, 22):
+                faint = False
+            index += 1
+        super().select_graphic_rendition(*attrs)
+        current: Any = self.cursor.attrs
+        if faint != bool(getattr(current, "faint", False)):
+            if not isinstance(current, _Cell):
+                current = _Cell(*current)
+            self.cursor.attrs = current._replace(faint=faint)
+            if not faint:
+                self._sync_hyperlink_attrs()
 
     def draw(self, data: str) -> None:
         self._drawing = True
         try:
-            if self._active_hyperlink is not None:
-                # Stack coordinates, not screen rows: the view looks a cell up by
-                # its place in the whole history + screen stack, and a screen row
-                # number changes as soon as the first line scrolls out.
-                start_row: int = len(self.history.top) + self.cursor.y
-                start_column: int = self.cursor.x
-                generation_before: int = self.history_generation
-                self._draw_clusters(data)
-                # A wrap inside draw() scrolls a row into history. While the deque
-                # still grows that moves the screen rows up by exactly as much as
-                # the history length grows, so a stack row is unchanged; once the
-                # deque is full the append drops its oldest row instead and every
-                # stack row moves up by one (the screen counts the drops in
-                # history_generation). The start of this span was captured before
-                # that happened, so it follows the drops here.
-                start_row -= self.history_generation - generation_before
-                end: Tuple[int, int] = (
-                    len(self.history.top) + self.cursor.y,
-                    self.cursor.x,
-                )
-                if (start_row, start_column) != end:
-                    if start_row < 0:
-                        # The span's first rows fell off the scrollback; what is
-                        # left of it starts at the beginning of the top row.
-                        start_row = 0
-                        start_column = 0
-                    self.hyperlink_spans.append(
-                        ((start_row, start_column), end, self._active_hyperlink)
-                    )
-                    if len(self.hyperlink_spans) > self.MAX_HYPERLINK_SPANS:
-                        del self.hyperlink_spans[
-                            : len(self.hyperlink_spans) - self.MAX_HYPERLINK_SPANS
-                        ]
-            else:
-                self._draw_clusters(data)
+            # Stamp the active OSC 8 URI onto the cursor attributes, so every
+            # cell written by this chunk carries it.
+            self._sync_hyperlink_attrs()
+            self._draw_clusters(data)
         finally:
             self._drawing = False
 
@@ -1135,6 +1281,22 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             rows.append("".join(text))
         return rows
 
+    def _blank_split_head(self, y: int, x: int) -> None:
+        """If column *x* of row *y* is the trailing stub of a wide glyph and
+        is about to be overwritten or erased, blank the glyph's head too.
+
+        Left alone, the head keeps its two-cell glyph, which the view then
+        draws across the cell that replaced the stub (a wide pair with an
+        ``x`` typed over the stub of the first showed as a glyph under it).
+        """
+        if x <= 0 or x >= self.columns:
+            return
+        line: Any = self.buffer[y]
+        stub: Any = line.get(x)
+        head: Any = line.get(x - 1)
+        if stub is not None and stub.data == "" and head is not None:
+            line[x - 1] = head._replace(data=" ")
+
     def _draw_clusters(self, data: str) -> None:
         """Draw a chunk one grapheme cluster at a time.
 
@@ -1146,15 +1308,49 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         whole chunk* on a zero-width codepoint it cannot combine.
         """
         for cluster in iter_clusters(data):
-            if len(cluster) == 1:
+            if len(cluster) == 1 and not (
+                is_combining(cluster) and cluster_width(cluster) == 0
+            ):
+                if self.cursor.x < self.columns and cluster_width(cluster) > 0:
+                    self._blank_split_head(self.cursor.y, self.cursor.x)
                 super().draw(cluster)
+                if cluster.isprintable():
+                    self._last_graphic = cluster
                 continue
             width: int = cluster_width(cluster)
             if width < 0:
                 # pyte stops drawing the rest of the chunk at an unprintable
                 # codepoint; keep that, rather than skipping just this unit.
                 return
+            if self.cursor.x < self.columns and width > 0:
+                self._blank_split_head(self.cursor.y, self.cursor.x)
             self._draw_cluster(cluster, width)
+            if width > 0:
+                self._last_graphic = cluster
+
+    def repeat_character(self, count: Optional[int] = None) -> None:
+        """REP (``CSI Ps b``): draw the last graphic character *count* more
+        times. ncurses emits it for long runs of one character, so ignoring it
+        drops those characters. The count is capped at one screenful: a
+        hostile or corrupt value must not stall the GUI thread."""
+        if not self._last_graphic:
+            return
+        times: int = min(count or 1, self.columns * self.lines)
+        self._draw_clusters(self._last_graphic * times)
+
+    def cursor_forward_tab(self, count: Optional[int] = None) -> None:
+        """CHT (``CSI Ps I``): move forward *count* tab stops."""
+        for _ in range(count or 1):
+            self.tab()
+
+    def cursor_back_tab(self, count: Optional[int] = None) -> None:
+        """CBT (``CSI Ps Z``): move back *count* tab stops (to column 0 at
+        the left edge)."""
+        if self.cursor.x == self.columns:
+            self.cursor.x -= 1
+        for _ in range(count or 1):
+            stops: List[int] = [stop for stop in self.tabstops if stop < self.cursor.x]
+            self.cursor.x = max(stops) if stops else 0
 
     def _draw_cluster(self, cluster: str, width: int) -> None:
         """Store one multi-codepoint cluster in a single cell.
@@ -1224,11 +1420,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
     def _reset_history(self) -> None:
         # The single funnel for an emptied scrollback: both reset() and
         # erase_in_display(3) reach it, and every stored history index is
-        # invalid afterwards. Spans are stack-coordinate based, so they point
-        # at text that no longer exists.
+        # invalid afterwards. Prompt marks are stack-coordinate based, so they
+        # point at text that no longer exists; hyperlinks live on the cells and
+        # go with them.
         self.history_generation += 1
-        if hasattr(self, "hyperlink_spans"):
-            self.hyperlink_spans.clear()
         if hasattr(self, "prompt_marks"):
             self.prompt_marks.clear()
         if hasattr(self, "images"):
@@ -1244,8 +1439,6 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self.cursor_style = "block"
         self.cursor_blink = True
         self.bell_triggered = False
-        if hasattr(self, "hyperlink_spans"):
-            self.hyperlink_spans.clear()
         if hasattr(self, "prompt_marks"):
             self.prompt_marks.clear()
         if hasattr(self, "images"):
@@ -1265,6 +1458,13 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             self.cursor_colour_override = None
             self.palette_version += 1
         super().reset()
+        # pyte starts with G1 on the DEC special graphics set, which is why a
+        # stray SO used to be ignored in UTF-8 mode. SO/SI are honoured now,
+        # so G1 starts as ASCII (as in xterm) and only an explicit designation
+        # (ESC ) 0) turns it into line drawing.
+        self.g1_charset = pyte_charsets.LAT1_MAP
+        # The last graphic cluster drawn, for REP (CSI Ps b).
+        self._last_graphic = ""
         # pyte's reset() keeps the buffer's factory, so it has to be installed
         # here too: a RIS mid-session must not leave pyte's plain rows behind.
         buffer: Any = self.buffer
@@ -1294,7 +1494,17 @@ class ExtendedStream(pyte_streams.Stream):
       - APC and DCS payloads are captured and dispatched to ``screen.apc``
         (Kitty graphics) and ``screen.dcs`` (sixel) instead of only being
         swallowed.
+
+    The CSI table also maps REP (``b``), CHT (``I``) and CBT (``Z``), which
+    pyte leaves out.
     """
+
+    csi: Dict[str, str] = {
+        **pyte_streams.Stream.csi,
+        "b": "repeat_character",
+        "I": "cursor_forward_tab",
+        "Z": "cursor_back_tab",
+    }
 
     def __init__(self, listener: Any) -> None:
         super().__init__(listener)
@@ -1365,7 +1575,12 @@ class ExtendedStream(pyte_streams.Stream):
                         self.select_other_charset((yield None))
                     elif char in "()":
                         code = yield None
-                        if self.use_utf8:
+                        # xterm honours the DEC special graphics ("0") and
+                        # ASCII ("B") designations in UTF-8 mode too, and
+                        # ncurses programs rely on it for their line
+                        # drawing. The national and IBM PC maps would corrupt
+                        # real UTF-8 text, so they stay ignored there.
+                        if self.use_utf8 and code not in "0B":
                             continue
                         listener.define_charset(code, mode=char)
                     elif char in "PX^_":
@@ -1426,14 +1641,13 @@ class ExtendedStream(pyte_streams.Stream):
                     continue
 
             if char in basic:
-                if (
-                    char == pyte.control.SI or char == pyte.control.SO
-                ) and self.use_utf8:
-                    continue
                 basic_dispatch[char]()
             elif char == CSI_C1:
                 params: List[int] = []
                 current: str = ""
+                # Colon-separated sub-parameters (ITU T.416), keyed by the
+                # index of the parameter they belong to: "38:2::255:0:0".
+                groups: Dict[int, List[str]] = {}
                 private: bool = False
                 while True:
                     char = yield None
@@ -1480,15 +1694,29 @@ class ExtendedStream(pyte_streams.Stream):
                         break
                     elif char.isdigit():
                         current += char
+                    elif char == ":":
+                        # A sub-parameter separator is not a final byte: the
+                        # sequence goes on, and the digits that follow belong
+                        # to it (otherwise "4:3m" ended at ':' and "3m" was
+                        # drawn as text).
+                        groups.setdefault(len(params), []).append(current)
+                        current = ""
                     elif char == "$":
                         yield None
                         break
                     else:
-                        parameterless: bool = not params and not current
-                        params.append(min(int(current or 0), 9999))
+                        parameterless: bool = not params and not current and not groups
+                        group: Optional[List[str]] = groups.get(len(params))
+                        if group is not None:
+                            group.append(current)
+                            params.append(min(int(group[0] or 0), 9999))
+                        else:
+                            params.append(min(int(current or 0), 9999))
                         if char == ";":
                             current = ""
                         else:
+                            if groups and char == "m" and not private:
+                                params = expand_sgr_subparameters(params, groups)
                             if private and char == "u":
                                 # Kitty keyboard protocol query (CSI ? u):
                                 # answer with the supported flags (1 =
