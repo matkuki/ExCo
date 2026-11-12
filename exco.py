@@ -95,6 +95,24 @@ def parse_arguments():
     return parsed_options
 
 
+def _configure_altgr_platform() -> None:
+    """Let Windows report AltGr as Qt.GroupSwitchModifier.
+
+    Windows delivers AltGr as Ctrl+Alt, so a menu shortcut on that
+    combination (Ctrl+Alt+F = focus tree filter) matches the character
+    keydown and consumes it: the layout character ('[' on the Slovenian
+    layout) never reaches the editor. The platform option has to be in
+    place before the QApplication is created.
+    """
+    if sys.platform != "win32":
+        return
+    platform = os.environ.get("QT_QPA_PLATFORM", "")
+    if platform in ("", "windows"):
+        os.environ["QT_QPA_PLATFORM"] = "windows:altgr"
+    elif platform.startswith("windows:") and "altgr" not in platform.split(":"):
+        os.environ["QT_QPA_PLATFORM"] = platform + ":altgr"
+
+
 def main():
     """
     Main function of Ex.Co.
@@ -125,6 +143,7 @@ def main():
         file_arguments = None
 
     # Create QT application, needed to use QT forms
+    _configure_altgr_platform()
     app = qt.QApplication(sys.argv)
     # Save the Qt application to the global reference
     data.application = app
