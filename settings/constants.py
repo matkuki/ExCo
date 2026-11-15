@@ -339,6 +339,7 @@ default_settings: dict[str, Any] = {
     "terminal-osc52-write": True,  # Let an application (OSC 52) write the system clipboard
     "terminal-osc52-read": False,  # Let a focused application (OSC 52) read the system clipboard
     "tree_display_icon_size": 16,  # Default tree display icon size
+    "tree_explorer_vcs_status": True,  # Show git/Mercurial state in the tree explorer
     "current_font_name": "Selawik",
     "current_font_size": 10,
     "current_editor_font_name": "Source Code Pro",

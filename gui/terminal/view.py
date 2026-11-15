@@ -988,7 +988,17 @@ class TerminalView(qt.QWidget):
         lines: int = screen.lines
         columns: int = screen.columns
         for y in range(lines):
-            if not event.rect().intersects(self._row_band(y)):
+            # A row is painted when the invalidated area touches it *or a
+            # neighbour*: a glyph's ink may hang into the next row (a tall
+            # fallback box-drawing glyph, an italic descender) or the one
+            # above. The fill above erased that ink in a band repaint of the
+            # neighbour alone - a TUI updating one bordered row left the
+            # borders of the rows around it chopped. Qt clips the paint to the
+            # invalidated region, so only the overhanging ink of a neighbour
+            # is redrawn; its own backgrounds fall outside the clip.
+            if not event.rect().intersects(
+                self._row_band_span(max(y - 1, 0), min(y + 1, lines - 1))
+            ):
                 continue
             context: RowContext = self._row_context(y)
             if context.stack_row < 0:
@@ -1039,11 +1049,21 @@ class TerminalView(qt.QWidget):
         """
         viewport_row: int = placement.row - top_stack
         if placement.cell_sized:
-            width: float = placement.columns * self._char_width
-            height: float = placement.rows * self._char_height
+            # A one-sided c/r placement carries its aspect-correct extent in
+            # fractional cells; stretching it to the whole-cell span distorted
+            # it by up to a cell.
+            width: float = (
+                placement.exact_columns or placement.columns
+            ) * self._char_width
+            height: float = (placement.exact_rows or placement.rows) * self._char_height
         else:
-            width = float(placement.image.width)
-            height = float(placement.image.height)
+            # Natural size of what is drawn: the crop, not the whole image
+            # (the cropped QImage was otherwise stretched to the full size).
+            source_width: int
+            source_height: int
+            source_width, source_height = placement.source_size()
+            width = float(source_width)
+            height = float(source_height)
         return qt.QRectF(
             placement.column * self._char_width,
             viewport_row * self._char_height,
@@ -1101,33 +1121,22 @@ class TerminalView(qt.QWidget):
         # lets w/h default to "rest of the image" when only x/y or one of them
         # is given.
         image = image.copy()
-        if (
-            placement.source_x
-            or placement.source_y
-            or placement.source_width
-            or placement.source_height
-        ):
-            source_width: int = (
-                placement.source_width
-                if placement.source_width > 0
-                else image.width() - placement.source_x
-            )
-            source_height: int = (
-                placement.source_height
-                if placement.source_height > 0
-                else image.height() - placement.source_y
-            )
-            if source_width > 0 and source_height > 0:
-                cropped: qt.QImage = image.copy(
-                    qt.QRect(
-                        placement.source_x,
-                        placement.source_y,
-                        source_width,
-                        source_height,
-                    )
+        source_width: int
+        source_height: int
+        source_width, source_height = placement.source_size()
+        if (source_width, source_height) != (image.width(), image.height()):
+            # The same clamped rectangle the screen sized the placement with
+            # (Placement.source_size), so the crop and its box always agree.
+            cropped: qt.QImage = image.copy(
+                qt.QRect(
+                    placement.source_x,
+                    placement.source_y,
+                    source_width,
+                    source_height,
                 )
-                if not cropped.isNull():
-                    image = cropped
+            )
+            if not cropped.isNull():
+                image = cropped
         return image
 
     def _paint_cells(
@@ -1301,6 +1310,19 @@ class TerminalView(qt.QWidget):
         scale: float = span / advance if advance > span else 1.0
         if scale == 1.0 and cells == 1:
             scale = self._fit_scale(char, ink, span)
+        row_centre: float = baseline - self._baseline + self._char_height / 2.0
+        if scale < 1.0 and (ink_width <= 0.0 or ink_height <= 0.0):
+            # Too wide for its span, but without an ink box to centre on: a
+            # multi-glyph run (an emoji sequence or flag the fallback cannot
+            # ligate) has none. It still has to shrink to its span, or it is
+            # drawn at full advance across the neighbouring cells; it is scaled
+            # about the row's centre so it stays vertically in the row.
+            painter.save()
+            painter.translate(x, row_centre + (baseline - row_centre) * scale)
+            painter.scale(scale, scale)
+            painter.drawText(qt.QPointF(0.0, 0.0), char)
+            painter.restore()
+            return
         if scale == 1.0 or ink_width <= 0.0 or ink_height <= 0.0:
             # Natural size: centre the advance in the cell, as drawing the
             # glyph into a cell-wide rect used to do.
@@ -1318,7 +1340,6 @@ class TerminalView(qt.QWidget):
         # instead of climbing away from the baseline.
         ink_centre_x: float = ink[0] + ink_width / 2.0
         ink_centre_y: float = ink[1] + ink_height / 2.0
-        row_centre: float = baseline - self._baseline + self._char_height / 2.0
         painter.save()
         painter.translate(
             x + span / 2.0 - ink_centre_x * scale,
@@ -1605,9 +1626,13 @@ class TerminalView(qt.QWidget):
         # hiding it left the shell with no visible cursor at all while the
         # user typed.  The block style below paints its own inversion, so it
         # stays legible on a highlighted cell.
-        x: int = screen.cursor.x
+        # After the last column is drawn pyte parks the cursor at 'columns'
+        # (the pending wrap: the next character goes to the next row). Every
+        # terminal still shows the cursor on the last cell then; returning
+        # here made it vanish at the end of any exactly full line.
+        x: int = min(screen.cursor.x, screen.columns - 1)
         y: int = screen.cursor.y
-        if y >= screen.lines or x >= screen.columns:
+        if y >= screen.lines or x < 0:
             return
         if screen.cursor_blink and not self._blink_phase:
             return
@@ -1799,11 +1824,52 @@ class TerminalView(qt.QWidget):
         return False
 
     def _row_text(self, stack_row: int) -> str:
-        """Full text of a stack row, one character per column (a wide glyph's
-        stub contributes nothing, exactly as pyte stores it)."""
+        """Full text of a stack row (a wide glyph's stub contributes nothing,
+        exactly as pyte stores it).
+
+        A string index is *not* a column: a stub adds no character and a
+        multi-codepoint cluster adds several. Use :meth:`_row_text_columns`
+        or :meth:`_row_text_range` wherever columns matter.
+        """
         row: Any = self._stack_row_cells(stack_row)
         columns: int = self.terminal.term_screen.columns
         return "".join(row[x].data or "" for x in range(columns))
+
+    def _row_text_columns(self, stack_row: int) -> Tuple[str, List[int], List[int]]:
+        """Row text plus, per character, the first and last screen column of
+        the cell it was drawn in.
+
+        A wide glyph's character spans its own column and its stub's, and every
+        codepoint of a cluster maps to the cluster's one cell, so a text match
+        can be converted back to the cells the paint pass highlights. Treating
+        the string index as a column put every find hit after a CJK character
+        or an emoji cluster on the wrong cells.
+        """
+        row: Any = self._stack_row_cells(stack_row)
+        columns: int = self.terminal.term_screen.columns
+        characters: List[str] = []
+        first: List[int] = []
+        last: List[int] = []
+        for x in range(columns):
+            data: str = row[x].data or ""
+            if not data:
+                continue
+            end: int = x
+            if cluster_width(data) == 2 and x + 1 < columns and row[x + 1].data == "":
+                end = x + 1
+            for character in data:
+                characters.append(character)
+                first.append(x)
+                last.append(end)
+        return "".join(characters), first, last
+
+    def _row_text_range(self, stack_row: int, start: int, end: int) -> str:
+        """Text of the cells in columns ``start <= x < end`` of a stack row."""
+        row: Any = self._stack_row_cells(stack_row)
+        columns: int = self.terminal.term_screen.columns
+        return "".join(
+            row[x].data or "" for x in range(max(start, 0), min(end, columns))
+        )
 
     def _selection_text(self) -> str:
         bounds: Optional[Tuple[int, int, int, int]] = self._normalized_selection()
@@ -1913,13 +1979,16 @@ class TerminalView(qt.QWidget):
         if start_row > last_stack_row or end_row < start_row:
             return ""
         end_row = min(end_row, last_stack_row)
+        columns: int = screen.columns
         lines: List[str] = []
         for row in range(start_row, end_row + 1):
-            text: str = self._row_text(row)
-            if row == start_row:
-                text = text[start_column:]
-            if row == end_row and end_column is not None:
-                text = text[:end_column]
+            # The mark columns are screen columns, so the row is cut by cell,
+            # not by string index (a wide glyph before the mark would shift it).
+            first_column: int = start_column if row == start_row else 0
+            stop_column: int = (
+                end_column if row == end_row and end_column is not None else columns
+            )
+            text: str = self._row_text_range(row, first_column, stop_column)
             lines.append(text.rstrip())
         while lines and not lines[0]:
             lines.pop(0)
@@ -2477,7 +2546,10 @@ class TerminalView(qt.QWidget):
         screen: ExtendedScreen = self.terminal.term_screen
         stack_end: int = self._history_len() + screen.lines
         for stack_row in range(max(stack_end, 0)):
-            text: str = self._row_text(stack_row)
+            text: str
+            first: List[int]
+            last: List[int]
+            text, first, last = self._row_text_columns(stack_row)
             folded: str = text.lower()
             if len(folded) == len(text):
                 haystack: str = folded
@@ -2488,8 +2560,13 @@ class TerminalView(qt.QWidget):
             spans: List[Tuple[int, int]] = []
             start: int = haystack.find(target)
             while start != -1:
-                spans.append((start, start + len(target) - 1))
-                self._find_matches.append((stack_row, start))
+                # Text indices -> screen columns (see _row_text_columns). Two
+                # hits inside one multi-codepoint cell land on the same cell
+                # and are reported once.
+                span: Tuple[int, int] = (first[start], last[start + len(target) - 1])
+                if not spans or spans[-1][0] != span[0]:
+                    spans.append(span)
+                    self._find_matches.append((stack_row, span[0]))
                 start = haystack.find(target, start + 1)
             if spans:
                 self._find_spans[stack_row] = spans
@@ -2525,7 +2602,13 @@ class TerminalView(qt.QWidget):
         stack_row: int
         start: int
         stack_row, start = self._find_matches[index]
+        # The span was converted to screen columns by the scan; recomputing
+        # it from the query length would undo that after a wide glyph.
         end: int = start + len(self._find_query) - 1
+        for span_start, span_end in self._find_spans.get(stack_row, []):
+            if span_start == start:
+                end = span_end
+                break
         self._find_current_row = stack_row
         self._find_current_span = (start, end)
         self._scroll_to_stack_row(stack_row)
@@ -2603,8 +2686,19 @@ class TerminalView(qt.QWidget):
     # ------------------------------------------------------------------
 
     def _mouse_cell(self, position: qt.QPointF) -> Tuple[int, int]:
-        x: int = int(position.x() / self._char_width)
-        y: int = int(position.y() / self._char_height)
+        """Viewport (column, row) of *position*, clamped onto the grid.
+
+        The widget is wider and taller than the grid (the scrollbar strip, the
+        partial row/column left over by the cell size) and a drag
+        keeps reporting outside the widget, so an unclamped cell sent column
+        ``columns + 1``, row ``lines + 1`` or 0 to the application - none of
+        which exists. xterm reports the nearest edge cell instead.
+        """
+        screen: ExtendedScreen = self.terminal.term_screen
+        x: int = math.floor(position.x() / self._char_width)
+        y: int = math.floor(position.y() / self._char_height)
+        x = max(0, min(x, screen.columns - 1))
+        y = max(0, min(y, screen.lines - 1))
         return x, y
 
     def _link_at_stack(self, stack_row: int, x: int) -> Optional[str]:
@@ -2614,12 +2708,15 @@ class TerminalView(qt.QWidget):
         resolved exactly like any other cell attribute: no side index to
         rebuild, and no way for a link to survive the text it was drawn on.
         """
-        if stack_row < 0:
+        screen: ExtendedScreen = self.terminal.term_screen
+        # Bounds first: the hover passes cells from the gutter below the last
+        # row, and reading screen.buffer[lines] would insert a row into pyte's
+        # defaultdict just by looking.
+        if stack_row < 0 or stack_row >= self._history_len() + screen.lines:
+            return None
+        if x < 0 or x >= screen.columns:
             return None
         row: Any = self._stack_row_cells(stack_row)
-        columns: int = self.terminal.term_screen.columns
-        if x < 0 or x >= columns:
-            return None
         return getattr(row[x], "hyperlink", None)
 
     def _hyperlink_at(self, position: qt.QPointF) -> Optional[str]:
@@ -3117,6 +3214,18 @@ class TerminalView(qt.QWidget):
                 )
             event.accept()
             return
+        screen: ExtendedScreen = self.terminal.term_screen
+        if self._in_alt() and screen.alternate_scroll:
+            # Alternate scroll (xterm 1007): there is no scrollback of ours on
+            # the alternate screen, so the wheel used to do nothing in less or
+            # man. Send cursor up/down instead, the system's lines per step.
+            steps = self._wheel_steps(delta_y)
+            if steps != 0:
+                sequence: str = self._cursor_key_sequence("A" if steps > 0 else "B", 1)
+                lines_per_step: int = max(int(qt.QApplication.wheelScrollLines()), 1)
+                self.send_text.emit(sequence * (abs(steps) * lines_per_step))
+            event.accept()
+            return
         self._wheel_scroll(delta_y)
         event.accept()
 
@@ -3326,6 +3435,15 @@ class TerminalView(qt.QWidget):
             return "\x1b[1;{}{}".format(mod_param, letter)
         return "\x1b[{}".format(letter)
 
+    def _cursor_key_sequence(self, letter: str, mod_param: int) -> str:
+        """Arrow / Home / End key: SS3 form under DECCKM, CSI form otherwise.
+
+        A modified key is always CSI 1 ; <mod> <letter>, as in xterm.
+        """
+        if mod_param <= 1 and self.terminal.term_screen.app_cursor_keys:
+            return "\x1bO" + letter
+        return self._csi_sequence(letter, mod_param)
+
     def _tilde_sequence(self, code: str, mod_param: int) -> str:
         if mod_param > 1:
             return "\x1b[{};{}~".format(code, mod_param)
@@ -3414,17 +3532,17 @@ class TerminalView(qt.QWidget):
         # Cursor keys and editing keys
         output: Optional[str] = None
         if key == qt.Qt.Key.Key_Up:
-            output = self._csi_sequence("A", mod_param)
+            output = self._cursor_key_sequence("A", mod_param)
         elif key == qt.Qt.Key.Key_Down:
-            output = self._csi_sequence("B", mod_param)
+            output = self._cursor_key_sequence("B", mod_param)
         elif key == qt.Qt.Key.Key_Left:
-            output = self._csi_sequence("D", mod_param)
+            output = self._cursor_key_sequence("D", mod_param)
         elif key == qt.Qt.Key.Key_Right:
-            output = self._csi_sequence("C", mod_param)
+            output = self._cursor_key_sequence("C", mod_param)
         elif key == qt.Qt.Key.Key_Home:
-            output = self._csi_sequence("H", mod_param)
+            output = self._cursor_key_sequence("H", mod_param)
         elif key == qt.Qt.Key.Key_End:
-            output = self._csi_sequence("F", mod_param)
+            output = self._cursor_key_sequence("F", mod_param)
         elif key == qt.Qt.Key.Key_PageUp:
             output = self._tilde_sequence("5", mod_param)
         elif key == qt.Qt.Key.Key_PageDown:
@@ -3449,7 +3567,9 @@ class TerminalView(qt.QWidget):
             else:
                 output = base
         elif key == qt.Qt.Key.Key_Backspace:
-            output = "\x7f"
+            # Alt+Backspace is ESC DEL (readline's backward-kill-word); a bare
+            # DEL deleted one character instead.
+            output = "\x1b\x7f" if alt and not ctrl else "\x7f"
         elif key in (qt.Qt.Key.Key_Return, qt.Qt.Key.Key_Enter):
             if ctrl and not alt and not meta:
                 # Ctrl+Enter: Windows Terminal sends a line feed (Ctrl+J)

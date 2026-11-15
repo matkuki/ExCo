@@ -2347,6 +2347,14 @@ def __check(theme_data: dict[str, Any]) -> None:
         },
         "table-header": __check_color,
         "tooltip": __check_string,
+        "vcscolors": {
+            "conflict": __check_color,
+            "modified": __check_color,
+            "added": __check_color,
+            "deleted": __check_color,
+            "untracked": __check_color,
+            "ignored": __check_color,
+        },
         "yesnodialog-background": __check_color,
         "yesnodialog-edge": __check_color,
     }

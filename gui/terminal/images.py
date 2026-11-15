@@ -28,7 +28,7 @@ For complete license information of the dependencies, check the 'additional_lice
 import base64
 import binascii
 import math
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from gui.terminal.reflow import ReflowResult
 
@@ -331,6 +331,8 @@ class Placement:
         "cell_sized",
         "cursor_policy",
         "serial",
+        "exact_rows",
+        "exact_columns",
     )
 
     def __init__(
@@ -349,6 +351,8 @@ class Placement:
         cell_sized: bool,
         cursor_policy: int = 0,
         serial: int = 0,
+        exact_rows: float = 0.0,
+        exact_columns: float = 0.0,
     ) -> None:
         self.image: ImageData = image
         self.placement_id: int = placement_id
@@ -364,6 +368,42 @@ class Placement:
         self.cell_sized: bool = cell_sized
         self.cursor_policy: int = cursor_policy
         self.serial: int = serial
+        # The drawn extent in (fractional) cells when only one of Kitty's c/r
+        # was given and the other follows the aspect ratio; 0.0 means "use
+        # the whole rows/columns span". rows/columns stay whole cells for the
+        # scroll/overflow bookkeeping.
+        self.exact_rows: float = exact_rows
+        self.exact_columns: float = exact_columns
+
+    def source_size(self) -> Tuple[int, int]:
+        """Pixel size of the region drawn (see :func:`crop_size`)."""
+        return crop_size(
+            self.image,
+            self.source_x,
+            self.source_y,
+            self.source_width,
+            self.source_height,
+        )
+
+
+def crop_size(
+    image: ImageData, x: int, y: int, width: int, height: int
+) -> Tuple[int, int]:
+    """Pixel size of a Kitty ``x``/``y``/``w``/``h`` crop of *image*.
+
+    A crop that names no width/height runs to the image's edge, one that runs
+    past the edge is clamped to it, and a crop that leaves nothing falls back
+    to the whole image (the view then draws it uncropped).
+    """
+    crop_width: int = image.width - x
+    crop_height: int = image.height - y
+    if width > 0:
+        crop_width = min(width, crop_width)
+    if height > 0:
+        crop_height = min(height, crop_height)
+    if crop_width <= 0 or crop_height <= 0:
+        return image.width, image.height
+    return crop_width, crop_height
 
 
 class _KittyChunk:
@@ -449,6 +489,69 @@ class ImageStore:
         self._chunk = None
         if had_content:
             self.version += 1
+
+    def take_placements(self) -> List[Placement]:
+        """Detach and return every placement (entering the alternate screen).
+
+        The primary screen's images belong to its own rows, which the
+        alternate screen hides but does not destroy. They are handed back
+        with :meth:`put_placements` on the way out. The store object itself is
+        kept, so placement serials stay unique and the view's serial-keyed
+        QImage cache can never confuse an old placement with a new one.
+        """
+        taken: List[Placement] = self.placements
+        self.placements = []
+        self._chunk = None
+        if taken:
+            self.version += 1
+        return taken
+
+    def put_placements(self, placements: List[Placement]) -> None:
+        """Replace the placements with *placements* (leaving the alternate
+        screen: whatever the application drew there is discarded)."""
+        changed: bool = bool(self.placements or placements)
+        self.placements = list(placements)
+        self._chunk = None
+        if changed:
+            self.version += 1
+
+    def move_band(
+        self, first_row: int, last_row: int, delta: int, keep_partial: bool
+    ) -> None:
+        """Move placements anchored in stack rows *first_row*..*last_row* by
+        *delta* inside that band (a region scroll, RI, IL or DL).
+
+        One pushed out of the band went with the rows that left it and is
+        dropped - except, with *keep_partial*, one pushed above the band's top
+        that still reaches into it, which the view clips like a partly
+        visible glyph (a full-screen scroll of the alternate screen).
+        """
+        if delta == 0 or not self.placements:
+            return
+        kept: List[Placement] = []
+        for placement in self.placements:
+            if first_row <= placement.row <= last_row:
+                placement.row += delta
+                if placement.row > last_row:
+                    continue
+                if placement.row < first_row and not (
+                    keep_partial and placement.row + max(placement.rows, 1) > first_row
+                ):
+                    continue
+            kept.append(placement)
+        if len(kept) != len(self.placements):
+            self.version += 1
+        self.placements = kept
+
+    def offset_rows(self, first_row: int, delta: int) -> None:
+        """Move every placement anchored at or below *first_row* by *delta*.
+
+        For a scroll that moved only part of the stack: the rows below a
+        scrolling region stay on screen while their stack index changes.
+        """
+        for placement in self.placements:
+            if placement.row >= first_row:
+                placement.row += delta
 
     def shift(self, rows: int) -> None:
         """Move placements up by *rows* dropped history rows.
@@ -631,11 +734,32 @@ class ImageStore:
         columns: int = max(0, _parse_number(control.get("c", "0")))
         rows: int = max(0, _parse_number(control.get("r", "0")))
         cell_sized: bool = bool(columns > 0 or rows > 0)
-        if columns <= 0 or rows <= 0:
+        source_x: int = max(0, _parse_number(control.get("x", "0")))
+        source_y: int = max(0, _parse_number(control.get("y", "0")))
+        source_width: int = max(0, _parse_number(control.get("w", "0")))
+        source_height: int = max(0, _parse_number(control.get("h", "0")))
+        # The drawn region is the crop, so its size - not the whole image's -
+        # decides the span and the aspect ratio.
+        width: int
+        height: int
+        width, height = crop_size(
+            image, source_x, source_y, source_width, source_height
+        )
+        exact_rows: float = 0.0
+        exact_columns: float = 0.0
+        if columns > 0 and rows <= 0 and width > 0 and height > 0:
+            # Only c: Kitty derives the height from the aspect ratio. Taking
+            # the pixel height's own row count instead stretched the image.
+            exact_rows = columns * self.cell_width * height / width / self.cell_height
+            rows = max(1, int(math.ceil(exact_rows - 1e-9)))
+        elif rows > 0 and columns <= 0 and width > 0 and height > 0:
+            exact_columns = rows * self.cell_height * width / height / self.cell_width
+            columns = max(1, int(math.ceil(exact_columns - 1e-9)))
+        elif columns <= 0 or rows <= 0:
             # A pixel-only image gets its span from the cell metrics, so the
             # scroll/overflow bookkeeping knows how many rows it covers.
-            if image.width > 0 and image.height > 0:
-                span_rows, span_columns = self._cell_span(image.width, image.height)
+            if width > 0 and height > 0:
+                span_rows, span_columns = self._cell_span(width, height)
                 rows = rows or span_rows
                 columns = columns or span_columns
             else:
@@ -649,13 +773,15 @@ class ImageStore:
             rows,
             columns,
             _parse_number(control.get("z", "0")),
-            max(0, _parse_number(control.get("x", "0"))),
-            max(0, _parse_number(control.get("y", "0"))),
-            max(0, _parse_number(control.get("w", "0"))),
-            max(0, _parse_number(control.get("h", "0"))),
+            source_x,
+            source_y,
+            source_width,
+            source_height,
             cell_sized,
             _parse_number(control.get("C", "0")),
             self._allocate_serial(),
+            exact_rows,
+            exact_columns,
         )
         # Re-placing the same (image, placement) moves it instead of stacking
         # a second copy, which is what a TUI redrawing an animation expects.
@@ -675,6 +801,12 @@ class ImageStore:
     def _delete(self, control: Dict[str, str]) -> None:
         """Apply a Kitty ``a=d`` delete request."""
         what: str = control.get("d", "a")
+        # An uppercase target (A/I/P) deletes the same placements and also
+        # frees the transmitted data nothing references any more. Only the
+        # lowercase forms used to be recognised, so d=A - what a viewer sends
+        # to clear its images - left every image on screen.
+        free: bool = what.isupper()
+        what = what.lower()
         image_id: int = _parse_number(control.get("i", "0"))
         placement_id: int = _parse_number(control.get("p", "0"))
         before: int = len(self.placements)
@@ -703,6 +835,16 @@ class ImageStore:
             # Cursor-, frame-, z- and coordinate-based deletes are not
             # supported; ignore them rather than guessing.
             return
+        if free:
+            referenced: Set[int] = {
+                placement.image.image_id for placement in self.placements
+            }
+            for stored_id in list(self._images):
+                if stored_id in referenced:
+                    continue
+                if image_id > 0 and stored_id != image_id:
+                    continue
+                del self._images[stored_id]
         if len(self.placements) != before:
             self.version += 1
 

@@ -20,6 +20,9 @@ class GlobalSignalDispatcher(qt.QObject):
     update_title = qt.pyqtSignal()
     editor_initialized = qt.pyqtSignal(str)
     editor_file_saved_as = qt.pyqtSignal(str)
+    # Every successful save of an editor document (path), unlike
+    # editor_file_saved_as which only fires for a file not yet monitored.
+    editor_file_saved = qt.pyqtSignal(str)
     editor_deleted = qt.pyqtSignal(str)
     # Emitted by the global exception hook (functions.exception_hook) so an
     # uncaught exception can be reported from any thread without quitting the

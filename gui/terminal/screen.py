@@ -23,6 +23,8 @@ For complete license information of the dependencies, check the 'additional_lice
 import base64
 import binascii
 import copy
+import inspect
+import re
 import unicodedata
 from collections import deque
 from contextlib import contextmanager
@@ -36,6 +38,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Pattern,
     Sequence,
     Set,
     Tuple,
@@ -76,6 +79,16 @@ FOCUS_REPORT_MODE: int = 1004
 
 # Bracketed paste private mode
 BRACKETED_PASTE_MODE: int = 2004
+
+# Application cursor keys (DECCKM): arrows and Home/End are sent as SS3
+# (ESC O A) instead of CSI (ESC [ A) while it is set.
+APP_CURSOR_KEYS_MODE: int = 1
+
+# Alternate scroll (xterm 1007): on the alternate screen, with no mouse
+# reporting, the wheel is sent as cursor-up/down keys so a pager (less, man)
+# scrolls. On by default, as in Windows Terminal, VTE and kitty; an
+# application can switch it off with CSI ? 1007 l.
+ALTERNATE_SCROLL_MODE: int = 1007
 
 # Largest DCS/APC payload the parser will buffer (bytes). Kitty graphics and
 # sixel arrive through this branch; anything larger is consumed and dropped.
@@ -123,6 +136,19 @@ MAX_NOTIFICATION_BODY: int = 480
 # end; exit_code is only meaningful for "D" and None when the shell omitted
 # it (cmd.exe cannot report the code from PROMPT).
 PromptMark = Tuple[int, int, str, Optional[int]]
+
+
+def _accepts_keywords(function: Any) -> bool:
+    """Whether *function* takes ``**kwargs`` (pyte's private=True keyword)."""
+    if function is None:
+        return False
+    try:
+        parameters: Any = inspect.signature(function).parameters.values()
+    except (TypeError, ValueError):
+        return False
+    return any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters
+    )
 
 
 def parse_colour_spec(spec: str) -> Optional[str]:
@@ -241,6 +267,11 @@ class _TerminalRow(pyte_screens.StaticDefaultDict):
     def __init__(self, default: Any) -> None:
         super().__init__(default)
         self.wrapped: bool = False
+        # Trailing cells of a wrapped row that hold no text: a two-cell glyph
+        # that did not fit in the last column went to the next row and left
+        # the last cell behind. Reflow joins those cells as zero-width, or a
+        # resize would turn the gap into a space inside the logical line.
+        self.wrap_filler: int = 0
 
 
 class _Cell(pyte_screens.Char):
@@ -331,6 +362,9 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         # view; None when the last resize did not reflow.
         self.reflow_map: Optional[ReflowResult] = None
         super().__init__(*args, **kwargs)
+        # pyte's Screen.__init__ rebuilds the mode set *after* calling
+        # reset(), so the default-on alternate scroll is added again here.
+        self.mode.add(ALTERNATE_SCROLL_MODE << 5)
         # Alternate screen state
         self._alt_saved: Optional[Dict[str, Any]] = None
         self._alt_modes_active: Set[int] = set()
@@ -380,9 +414,14 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             "margins": self.margins,
             "columns": self.columns,
             "lines": self.lines,
+            # The primary screen's OSC 133 marks and inline images are part of
+            # its rows, which the alternate screen only hides. Clearing them
+            # here meant a single vim or less session lost every earlier
+            # prompt for navigation and "Copy Last Command Output".
+            "prompt_marks": list(self.prompt_marks),
+            "placements": self.images.take_placements(),
         }
         self.prompt_marks.clear()
-        self.images.clear()
         self.buffer.clear()
         self.cursor_position()
         self.erase_in_display(2)
@@ -400,8 +439,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self.savepoints = saved["savepoints"]
         self.margins = saved["margins"]
         self._alt_saved = None
-        self.prompt_marks.clear()
-        self.images.clear()
+        # Restored before any reflow below, so the re-wrap remaps them along
+        # with the rows they belong to; the alt screen's own images go.
+        self.prompt_marks = list(saved["prompt_marks"])
+        self.images.put_placements(saved["placements"])
         self.dirty.update(range(self.lines))
         if (old_columns, old_lines) == (self.columns, self.lines):
             return
@@ -483,30 +524,57 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         # While the alternate screen is active, keep the scrollback history
         # frozen; scrolled-out lines simply disappear.
         scrolled: bool = self._full_screen_margins() and self.cursor.y == self.lines - 1
-        bottom_margin: int = (self.margins or pyte_screens.Margins(0, self.lines - 1))[
-            1
-        ]
+        top_margin: int
+        bottom_margin: int
+        top_margin, bottom_margin = self.margins or pyte_screens.Margins(
+            0, self.lines - 1
+        )
         at_bottom: bool = self.cursor.y == bottom_margin
         if self._alt_saved is None:
-            # pyte appends the scrolled-out row to history.top, a bounded
-            # deque that then silently drops its leftmost row -- so every
-            # absolute index into it shifts. This is the only point where the
-            # pre-append length is observable.
+            # pyte's HistoryScreen saves the region's top row for *any*
+            # scrolling region, so a program scrolling rows 5..20 pushed
+            # mid-screen lines into the scrollback. xterm only saves a line
+            # that leaves the top of the screen, i.e. when the region starts
+            # on the first row; any other region scrolls without history.
+            saves: bool = at_bottom and top_margin == 0
+            # The append goes to history.top, a bounded deque that then
+            # silently drops its leftmost row -- so every absolute index into
+            # it shifts. This is the only point where the pre-append length is
+            # observable, and it applies to every saving scroll, not only a
+            # full-screen one (a status-line region scrolls into history too).
             maxlen: Optional[int] = self.history.top.maxlen
-            if scrolled and maxlen is not None and len(self.history.top) >= maxlen:
+            history_before: int = len(self.history.top)
+            overflow: bool = saves and maxlen is not None and history_before >= maxlen
+            if overflow:
                 self.history_generation += 1
                 # The append below drops the oldest row, so every remaining
                 # stack row (and the prompt marks recorded there) moves up.
                 self._shift_prompt_marks(1)
                 self.images.shift(1)
-            super().index()
+            if at_bottom and not saves:
+                pyte_screens.Screen.index(self)
+                # A region that does not start on the first row scrolls in
+                # place: its rows move up and its top row is gone.
+                self._move_screen_band(top_margin, bottom_margin, -1)
+            else:
+                super().index()
+            if saves and bottom_margin < self.lines - 1:
+                # Rows below the region (a status line) did not move on
+                # screen, but the row the scroll saved still lengthened the
+                # stack above them: their stack index rose by one relative to
+                # the uniform shift above (+1 without an overflow, 0 with
+                # one). Move their marks and images back onto them.
+                threshold: int = history_before + bottom_margin + (0 if overflow else 1)
+                self._offset_prompt_marks(threshold, 1)
+                self.images.offset_rows(threshold, 1)
         else:
             pyte_screens.Screen.index(self)
-            if scrolled:
-                # The alternate screen has no history to grow: every row moves
-                # up one, so every placement's stack row does too. Entering the
-                # alternate screen already cleared the primary screen's images.
-                self.images.shift(1)
+            if at_bottom:
+                # The alternate screen has no history to grow: the region's
+                # rows move up one, and so do the placements on them - for any
+                # region, not only a full-screen one. Entering the alternate
+                # screen stashed the primary screen's images.
+                self._move_screen_band(top_margin, bottom_margin, -1)
         if at_bottom:
             self._tint_blank_rows((bottom_margin,))
         if scrolled:
@@ -514,10 +582,23 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
 
     def reverse_index(self) -> None:
         scrolled: bool = self._full_screen_margins() and self.cursor.y == 0
-        top_margin: int = (self.margins or pyte_screens.Margins(0, self.lines - 1))[0]
+        top_margin: int
+        bottom_margin: int
+        top_margin, bottom_margin = self.margins or pyte_screens.Margins(
+            0, self.lines - 1
+        )
         at_top: bool = self.cursor.y == top_margin
-        super().reverse_index()
+        # Not HistoryScreen.reverse_index: that one stashes the row pushed off
+        # the bottom in history.bottom, pyte's forward-paging buffer, which
+        # this terminal never pages through. A single RI at the top (less,
+        # vim, a shell redrawing upwards) then left history.bottom non-empty
+        # for good, and _reflow_rows refuses to re-wrap while it is, so every
+        # later resize fell back to pyte's clipping resize and dropped the
+        # prompt marks.
+        pyte_screens.Screen.reverse_index(self)
         if at_top:
+            # The region's rows moved down one; its bottom row is gone.
+            self._move_screen_band(top_margin, bottom_margin, 1)
             self._tint_blank_rows((top_margin,))
         if scrolled:
             self.pending_scroll -= 1
@@ -560,6 +641,10 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             super().erase_characters(count)
 
     def erase_in_display(self, how: int = 0, *args: Any, **kwargs: Any) -> None:
+        if how not in (0, 1, 2, 3):
+            # pyte leaves its erase interval unbound for any other Ps and
+            # raises UnboundLocalError; xterm ignores the sequence.
+            return
         with self._erasing():
             super().erase_in_display(how, *args, **kwargs)
             # A row a scroll tinted keeps that colour as its default cell, and
@@ -586,8 +671,12 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             row: Any = self.buffer.get(y)
             if row is not None:
                 row.wrapped = False
+                row.wrap_filler = 0
 
     def erase_in_line(self, how: int = 0, *args: Any, **kwargs: Any) -> None:
+        if how not in (0, 1, 2):
+            # As in erase_in_display: pyte raises on any other Ps.
+            return
         if how == 0:
             self._blank_split_head(self.cursor.y, self.cursor.x)
         with self._erasing():
@@ -595,6 +684,7 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         row: Any = self.buffer.get(self.cursor.y)
         if row is not None:
             row.wrapped = False
+            row.wrap_filler = 0
 
     def insert_lines(self, count: Optional[int] = None) -> None:
         count = count or 1
@@ -605,6 +695,9 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         start: int = self.cursor.y
         super().insert_lines(count)
         if top <= start <= bottom:
+            # Rows at and below the cursor moved down; the ones pushed past
+            # the bottom margin are gone.
+            self._move_screen_band(start, bottom, count)
             self._tint_blank_rows(range(start, min(start + count, bottom + 1)))
         if full:
             self.pending_scroll -= count
@@ -618,6 +711,9 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         start = self.cursor.y
         super().delete_lines(count)
         if top <= start <= bottom:
+            # The deleted rows are gone with whatever sat on them; the rows
+            # below moved up into their place.
+            self._move_screen_band(start, bottom, -count)
             self._tint_blank_rows(range(max(start, bottom - count + 1), bottom + 1))
         if full:
             self.pending_scroll += count
@@ -716,12 +812,16 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self._remap_prompt_marks(result)
         self.images.remap(result)
 
-    def _row_from_cells(self, cells: Sequence[Any], wrapped: bool) -> _TerminalRow:
+    def _row_from_cells(
+        self, cells: Sequence[Any], wrapped: bool, filler: int = 0
+    ) -> _TerminalRow:
         """Build a sparse row from reflow's padded cell list.
 
         Padding cells are the default char, which a sparse row already yields
         for a missing column, so they are not stored: a full scrollback of
-        dense rows would cost an order of magnitude more memory.
+        dense rows would cost an order of magnitude more memory. *filler* is
+        how many trailing cells only pad a wrapped row before a wide glyph
+        that moved to the next one (see _TerminalRow.wrap_filler).
         """
         default: Any = self.default_char
         row: _TerminalRow = _TerminalRow(default)
@@ -732,6 +832,7 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             if cell != default or getattr(cell, "hyperlink", None):
                 row[x] = cell
         row.wrapped = wrapped
+        row.wrap_filler = filler if wrapped else 0
         return row
 
     def _remap_prompt_marks(self, result: ReflowResult) -> None:
@@ -779,6 +880,16 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
     @property
     def focus_report(self) -> bool:
         return self._mode_is(FOCUS_REPORT_MODE)
+
+    @property
+    def app_cursor_keys(self) -> bool:
+        """DECCKM: cursor keys are sent in their SS3 (application) form."""
+        return self._mode_is(APP_CURSOR_KEYS_MODE)
+
+    @property
+    def alternate_scroll(self) -> bool:
+        """xterm 1007: the wheel scrolls an alt-screen app via cursor keys."""
+        return self._mode_is(ALTERNATE_SCROLL_MODE)
 
     # ------------------------------------------------------------------
     # OSC (title / icon / cwd / hyperlink)
@@ -876,6 +987,48 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         self.prompt_marks.append((row, self.cursor.x, kind, exit_code))
         if len(self.prompt_marks) > self.MAX_PROMPT_MARKS:
             del self.prompt_marks[: len(self.prompt_marks) - self.MAX_PROMPT_MARKS]
+
+    def _move_screen_band(self, top: int, bottom: int, delta: int) -> None:
+        """Screen rows *top*..*bottom* moved by *delta* inside that band.
+
+        pyte moves row objects for a region scroll, RI, IL and DL without any
+        history involved, and the OSC 133 marks and inline images anchored on
+        those rows (stack row = len(history.top) + y) were left where they
+        were - on whatever text moved under them. They follow their rows now;
+        one pushed out of the band is gone with its row. Only on the alternate
+        screen may an image pushed above the very first row stay, partly
+        visible: on the primary screen the row above is history, and the image
+        would sit on unrelated text there.
+        """
+        if delta == 0:
+            return
+        base: int = len(self.history.top)
+        first: int = base + top
+        last: int = base + bottom
+        self.images.move_band(
+            first, last, delta, keep_partial=self.in_alt_screen and top == 0
+        )
+        marks: Optional[List[PromptMark]] = getattr(self, "prompt_marks", None)
+        if not marks:
+            return
+        moved: List[PromptMark] = []
+        for row, column, kind, exit_code in marks:
+            if first <= row <= last:
+                row += delta
+                if not first <= row <= last:
+                    continue
+            moved.append((row, column, kind, exit_code))
+        self.prompt_marks = moved
+
+    def _offset_prompt_marks(self, first_row: int, delta: int) -> None:
+        """Move every mark at or below stack row *first_row* by *delta*."""
+        marks: Optional[List[PromptMark]] = getattr(self, "prompt_marks", None)
+        if not marks:
+            return
+        self.prompt_marks = [
+            (row + delta if row >= first_row else row, column, kind, exit_code)
+            for row, column, kind, exit_code in marks
+        ]
 
     def _shift_prompt_marks(self, rows: int) -> None:
         """Move every recorded mark up by *rows* dropped history rows."""
@@ -1124,6 +1277,38 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         if self.respond is not None:
             self.respond("\x1b]{}\x1b\\".format(payload))
 
+    def write_process_input(self, data: str) -> None:
+        """Send a terminal reply (DA1, DSR, CPR) to the application.
+
+        pyte builds these replies but its default ``write_process_input`` is a
+        no-op, so a program that asks for the cursor position (fzf
+        ``--height``) or the device attributes (capability probes) waited for
+        an answer that never came. They leave through the same writer as the
+        OSC and Kitty replies.
+        """
+        if self.respond is not None:
+            self.respond(data)
+
+    def report_device_status(self, mode: int) -> None:
+        """DSR; a cursor-position report never names a column past the grid.
+
+        After the last column is drawn pyte parks the cursor at ``columns``
+        (the pending wrap), and its own report would answer ``columns + 1``.
+        xterm reports the last column there.
+        """
+        if mode != 6:
+            super().report_device_status(mode)
+            return
+        x: int = self.cursor.x
+        if x >= self.columns:
+            self.cursor.x = self.columns - 1
+            try:
+                super().report_device_status(mode)
+            finally:
+                self.cursor.x = x
+            return
+        super().report_device_status(mode)
+
     def clear_scrollback(self) -> None:
         """Drop the saved history, keeping the visible screen (CSI 3 J).
 
@@ -1308,6 +1493,7 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         whole chunk* on a zero-width codepoint it cannot combine.
         """
         for cluster in iter_clusters(data):
+            self._wrap_unfitting_wide(cluster_width(cluster))
             if len(cluster) == 1 and not (
                 is_combining(cluster) and cluster_width(cluster) == 0
             ):
@@ -1328,6 +1514,27 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             if width > 0:
                 self._last_graphic = cluster
 
+    def _wrap_unfitting_wide(self, width: int) -> None:
+        """Send a two-cell glyph that would start in the last column to the
+        next row, as xterm does.
+
+        pyte stores it in the last cell with no room for its stub, so the view
+        painted half of it past the grid's right edge. With autowrap on, the
+        cursor is moved into the pending-wrap state instead; the draw that
+        follows then wraps exactly like any other character reaching the edge
+        (and the row gets its wrap mark). The last cell keeps what it held.
+        """
+        if self.cursor.x != self.columns - 1 or width <= 0:
+            return
+        row: Any = self.buffer[self.cursor.y]
+        if width == 2 and self.columns >= 2 and pyte_modes.DECAWM in self.mode:
+            # The last cell is left behind as filler (see _TerminalRow).
+            row.wrap_filler = 1
+            self.cursor.x = self.columns
+        else:
+            # Anything drawn into the last cell makes it text again.
+            row.wrap_filler = 0
+
     def repeat_character(self, count: Optional[int] = None) -> None:
         """REP (``CSI Ps b``): draw the last graphic character *count* more
         times. ncurses emits it for long runs of one character, so ignoring it
@@ -1336,7 +1543,11 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         if not self._last_graphic:
             return
         times: int = min(count or 1, self.columns * self.lines)
-        self._draw_clusters(self._last_graphic * times)
+        # Through draw(), not _draw_clusters(): only draw() sets _drawing, and
+        # linefeed() marks a row as wrapped only while it is set. A REP that
+        # ran past the margin left an unmarked row, so a resize split the
+        # repeated run into separate lines.
+        self.draw(self._last_graphic * times)
 
     def cursor_forward_tab(self, count: Optional[int] = None) -> None:
         """CHT (``CSI Ps I``): move forward *count* tab stops."""
@@ -1351,6 +1562,48 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
         for _ in range(count or 1):
             stops: List[int] = [stop for stop in self.tabstops if stop < self.cursor.x]
             self.cursor.x = max(stops) if stops else 0
+
+    def scroll_up(self, *params: int) -> None:
+        """SU (``CSI Ps S``): scroll the scrolling region up *Ps* lines.
+
+        pyte has no SU/SD, so the sequence fell through to ``debug()`` and the
+        screen did not move: ncurses scrolls by several lines with it (the
+        xterm terminfo's ``indn``), and a full-screen program's rows came out
+        stale. It is an index at the region's bottom per line with the cursor
+        left where it was, so the history rule (a region starting on the
+        first row saves its lines), the overflow accounting, the marks and
+        images that follow their rows and the BCE tint all come with it.
+        """
+        if len(params) > 1:
+            return
+        self._scroll_region(params[0] if params else 1, up=True)
+
+    def scroll_down(self, *params: int) -> None:
+        """SD (``CSI Ps T``): scroll the scrolling region down *Ps* lines.
+
+        Only the one-parameter form is SD; xterm's five-parameter
+        ``CSI Ps;Ps;Ps;Ps;Ps T`` is mouse highlight tracking, which this
+        terminal does not implement.
+        """
+        if len(params) > 1:
+            return
+        self._scroll_region(params[0] if params else 1, up=False)
+
+    def _scroll_region(self, count: int, up: bool) -> None:
+        top: int
+        bottom: int
+        top, bottom = self.margins or pyte_screens.Margins(0, self.lines - 1)
+        count = max(1, min(count or 1, bottom - top + 1))
+        x: int = self.cursor.x
+        y: int = self.cursor.y
+        self.cursor.y = bottom if up else top
+        for _ in range(count):
+            if up:
+                self.index()
+            else:
+                self.reverse_index()
+        self.cursor.x = x
+        self.cursor.y = y
 
     def _draw_cluster(self, cluster: str, width: int) -> None:
         """Store one multi-codepoint cluster in a single cell.
@@ -1428,6 +1681,13 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             self.prompt_marks.clear()
         if hasattr(self, "images"):
             self.images.clear()
+        saved: Optional[Dict[str, Any]] = getattr(self, "_alt_saved", None)
+        if saved is not None:
+            # A CSI 3 J inside the alternate screen empties the primary
+            # screen's history too, so the marks and images stashed for it
+            # would come back pointing at rows that no longer exist.
+            saved["prompt_marks"] = []
+            saved["placements"] = []
         super()._reset_history()
 
     def reset(self) -> None:
@@ -1458,6 +1718,9 @@ class ExtendedScreen(pyte_screens.HistoryScreen):
             self.cursor_colour_override = None
             self.palette_version += 1
         super().reset()
+        # Alternate scroll is on by default (see ALTERNATE_SCROLL_MODE); pyte's
+        # reset() rebuilt the mode set without it.
+        self.mode.add(ALTERNATE_SCROLL_MODE << 5)
         # pyte starts with G1 on the DEC special graphics set, which is why a
         # stray SO used to be ignored in UTF-8 mode. SO/SI are honoured now,
         # so G1 starts as ASCII (as in xterm) and only an explicit designation
@@ -1495,8 +1758,8 @@ class ExtendedStream(pyte_streams.Stream):
         (Kitty graphics) and ``screen.dcs`` (sixel) instead of only being
         swallowed.
 
-    The CSI table also maps REP (``b``), CHT (``I``) and CBT (``Z``), which
-    pyte leaves out.
+    The CSI table also maps REP (``b``), CHT (``I``), CBT (``Z``) and SU/SD
+    (``S``/``T``), which pyte leaves out.
     """
 
     csi: Dict[str, str] = {
@@ -1504,7 +1767,22 @@ class ExtendedStream(pyte_streams.Stream):
         "b": "repeat_character",
         "I": "cursor_forward_tab",
         "Z": "cursor_back_tab",
+        "S": "scroll_up",
+        "T": "scroll_down",
     }
+
+    # A plain CSI sequence: digits and semicolons, then a final byte. Anything
+    # with a marker or intermediate (? > < = ! space $ :) is not matched and
+    # stays with the state machine.
+    _plain_csi: Pattern[str] = re.compile(r"\x1b\[([0-9;]*)([@-~])")
+    # The finals the fast path may dispatch itself; built lazily (it needs the
+    # listener) and dropped whenever the parser is re-initialised.
+    _fast_csi_table: Optional[Dict[str, Any]] = None
+    # True while the state machine is idle (waiting for the next character),
+    # i.e. an ESC at the current offset starts a fresh sequence.
+    _fsm_idle: bool = True
+    # Switched off by the tests, which compare the fast path with the machine.
+    fast_csi: bool = True
 
     def __init__(self, listener: Any) -> None:
         super().__init__(listener)
@@ -1512,11 +1790,110 @@ class ExtendedStream(pyte_streams.Stream):
         # Kitty keyboard protocol query reply) back to the PTY.
         self.respond: Optional[Callable[[str], None]] = None
 
+    def _initialize_parser(self) -> None:
+        super()._initialize_parser()
+        self._fsm_idle = True
+        self._fast_csi_table = None
+
+    def _build_fast_csi_table(self) -> Dict[str, Any]:
+        """{final byte: bound handler} for the sequences the fast path owns.
+
+        The handlers are fetched exactly as the state machine fetches them
+        (once, from the listener), so a HistoryScreen's event wrapper is
+        involved in the same way. ``s`` and ``u`` are left out because the
+        machine reads a parameterless one as SCOSC / SCORC, and a final the
+        stream has no name for goes to ``debug`` there.
+        """
+        listener: Any = self.listener
+        table: Dict[str, Any] = {
+            final: getattr(listener, name)
+            for final, name in self.csi.items()
+            if final not in "su"
+        }
+        self._fast_csi_table = table
+        return table
+
     def feed(self, data: str) -> None:
+        """pyte's feed loop, but an error no longer drops the rest of the chunk.
+
+        pyte lets an exception from a handler escape ``feed``, so everything
+        after the failing character - up to 4 KB of a read, a whole coalesced
+        flush now - was never drawn. The loop below is pyte 0.8.2's, with the
+        failing step skipped instead: ``_send_to_parser`` has already reset the
+        parser when it re-raises, so parsing resumes at the next character.
+        The first error is raised once the chunk is done, so it is still
+        reported (Terminal shows it in the REPL messages).
+        """
         screen: Any = self.listener
-        if screen is not None:
-            screen.pending_scroll = 0
-        super().feed(data)
+        if screen is None:
+            raise RuntimeError("Listener is not set")
+        screen.pending_scroll = 0
+        send: Any = self._send_to_parser
+        draw: Any = screen.draw
+        match_text: Any = self._text_pattern.match
+        taking_plain_text: Optional[bool] = self._taking_plain_text
+        fsm_idle: bool = self._fsm_idle
+        fast_table: Optional[Dict[str, Any]] = None
+        match_csi: Any = self._plain_csi.match
+        if self.fast_csi:
+            fast_table = self._fast_csi_table or self._build_fast_csi_table()
+        first_error: Optional[Exception] = None
+        length: int = len(data)
+        offset: int = 0
+        while offset < length:
+            if fast_table is not None and fsm_idle and data[offset] == "\x1b":
+                # A full-screen truecolour frame is ~90% escape characters
+                # (a pulsing 160x45 image is ~220 K of them), and the state
+                # machine takes one generator round trip per character.
+                # A plain CSI sequence that is complete in this chunk is
+                # parsed with one regex and dispatched exactly as the machine
+                # would: the same parameters (empty means 0, capped at 9999)
+                # to the same handler. A sequence cut by the end of the chunk
+                # does not match and goes through the machine as before.
+                csi: Any = match_csi(data, offset)
+                if csi is not None:
+                    handler: Any = fast_table.get(csi.group(2))
+                    if handler is not None:
+                        group: str = csi.group(1)
+                        try:
+                            if group:
+                                handler(
+                                    *[
+                                        min(int(item or 0), 9999)
+                                        for item in group.split(";")
+                                    ]
+                                )
+                            else:
+                                handler(0)
+                        except Exception as error:
+                            first_error = first_error or error
+                        offset = csi.end()
+                        taking_plain_text = True
+                        continue
+            if taking_plain_text:
+                match: Any = match_text(data, offset)
+                if match:
+                    start: int
+                    start, offset = match.span()
+                    try:
+                        draw(data[start:offset])
+                    except Exception as error:
+                        first_error = first_error or error
+                else:
+                    taking_plain_text = False
+            else:
+                try:
+                    taking_plain_text = send(data[offset : offset + 1])
+                    fsm_idle = bool(taking_plain_text)
+                except Exception as error:
+                    first_error = first_error or error
+                    taking_plain_text = self._taking_plain_text
+                    fsm_idle = True  # _send_to_parser re-initialised the parser
+                offset += 1
+        self._taking_plain_text = taking_plain_text
+        self._fsm_idle = fsm_idle
+        if first_error is not None:
+            raise first_error
 
     def _parser_fsm(self) -> Generator[Optional[bool], str, None]:
         basic: Any = self.basic
@@ -1558,6 +1935,18 @@ class ExtendedStream(pyte_streams.Stream):
         sharp_dispatch: Any = create_dispatcher(self.sharp)
         escape_dispatch: Any = create_dispatcher(self.escape)
         csi_dispatch: Any = create_dispatcher(self.csi)
+        # Finals whose handler takes the private=True keyword. Most of pyte's
+        # (cursor_up, report_device_status, set_margins, ...) do not, so a
+        # private form such as CSI ? 6 n (DECXCPR), CSI ? 4 m (XTQMODKEYS) or
+        # CSI ? r (XTRESTORE) raised TypeError inside the parser. Those are
+        # ignored instead, as xterm ignores a private sequence it does not
+        # implement. The class attribute is inspected: HistoryScreen hands out
+        # every event wrapped in an inner(*args, **kwargs).
+        private_finals: Set[str] = {
+            final
+            for final, name in self.csi.items()
+            if _accepts_keywords(getattr(type(listener), name, None))
+        }
 
         while True:
             char: str = yield True
@@ -1704,6 +2093,41 @@ class ExtendedStream(pyte_streams.Stream):
                     elif char == "$":
                         yield None
                         break
+                    elif char == "=":
+                        # '=' private marker: the Kitty keyboard protocol's
+                        # "set flags" (CSI = flags ; mode u) and tertiary DA
+                        # (CSI = c). Without this branch the '=' was taken for
+                        # a final byte and the rest ("1;1u") drawn as text.
+                        body: str = ""
+                        nxt = yield None
+                        while nxt.isdigit() or nxt == ";":
+                            body += nxt
+                            nxt = yield None
+                        while not "\x40" <= nxt <= "\x7e" and nxt not in CAN_OR_SUB:
+                            nxt = yield None
+                        if nxt == "u":
+                            fields: List[str] = body.split(";")
+                            value: int = min(int(fields[0] or 0), 9999)
+                            how: int = (
+                                int(fields[1]) if len(fields) > 1 and fields[1] else 1
+                            )
+                            if how == 1:
+                                listener.keyboard_flags = value
+                            elif how == 2:
+                                listener.keyboard_flags |= value
+                            elif how == 3:
+                                listener.keyboard_flags &= ~value
+                        break
+                    elif "\x21" <= char <= "\x2f":
+                        # Any other intermediate byte (DECSTR's '!', DECSCA's
+                        # '"', ...): the sequence is not supported, but it has
+                        # to be consumed through its final byte. Treating the
+                        # intermediate as the final drew the real final byte
+                        # (the 'p' of the CSI ! p that `reset` sends) as text.
+                        nxt = yield None
+                        while not "\x40" <= nxt <= "\x7e" and nxt not in CAN_OR_SUB:
+                            nxt = yield None
+                        break
                     else:
                         parameterless: bool = not params and not current and not groups
                         group: Optional[List[str]] = groups.get(len(params))
@@ -1718,13 +2142,20 @@ class ExtendedStream(pyte_streams.Stream):
                             if groups and char == "m" and not private:
                                 params = expand_sgr_subparameters(params, groups)
                             if private and char == "u":
-                                # Kitty keyboard protocol query (CSI ? u):
-                                # answer with the supported flags (1 =
-                                # disambiguate escape codes).
+                                # Kitty keyboard protocol query (CSI ? u): the
+                                # reply is CSI ? <current flags> u. Answering
+                                # in the push form (CSI > 1 u) with a fixed 1
+                                # handed the application a malformed reply
+                                # that also claimed flags it never enabled.
                                 if self.respond is not None:
-                                    self.respond("\x1b[>1u")
+                                    self.respond(
+                                        "\x1b[?{}u".format(listener.keyboard_flags)
+                                    )
                             elif private:
-                                csi_dispatch[char](*params, private=True)
+                                if char in private_finals or char not in self.csi:
+                                    # An unmapped final goes to debug(), which
+                                    # takes any keyword.
+                                    csi_dispatch[char](*params, private=True)
                             elif parameterless and char == "s":
                                 # SCOSC. pyte maps only ESC 7 to save_cursor,
                                 # so an application that saves the cursor this
@@ -1751,14 +2182,36 @@ class ExtendedStream(pyte_streams.Stream):
                     nxt = yield None
                 param: str = ""
                 if nxt == ";":
+                    # Collected as a list: an OSC 52 payload can be megabytes
+                    # long. Past the cap the rest is consumed but dropped, so
+                    # a sequence that never terminates cannot grow without
+                    # bound; an oversized payload is not dispatched at all.
+                    pieces: List[str] = []
+                    collected: int = 0
+                    overflow: bool = False
                     while True:
                         char = yield None
                         if char == ESC:
                             char += yield None
                         if char in OSC_TERMINATORS:
                             break
-                        else:
-                            param += char
+                        if overflow:
+                            continue
+                        collected += len(char)
+                        if collected > MAX_ESCAPE_PAYLOAD:
+                            overflow = True
+                            pieces = []
+                            continue
+                        pieces.append(char)
+                    if overflow:
+                        continue
+                    param = "".join(pieces)
+                elif nxt == ESC:
+                    # A parameterless OSC ended by ST (ESC \), e.g. the OSC
+                    # 104/110/111/112 resets: the ESC was read as the end of
+                    # the code, so its '\' has to be consumed here or it is
+                    # drawn as a stray backslash.
+                    yield None
                 listener.osc(code, param)
             elif char not in NUL_OR_DEL:
                 draw(char)

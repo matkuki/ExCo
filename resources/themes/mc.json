@@ -2211,6 +2211,14 @@
   },
   "table-header": "#295a88",
   "tooltip": "Midnight Commander",
+  "vcscolors": {
+    "conflict": "#ff6b6b",
+    "modified": "#fce94f",
+    "added": "#8ae234",
+    "deleted": "#ff5555",
+    "untracked": "#ffffff",
+    "ignored": "#b4c7dc"
+  },
   "yesnodialog-background": "#ff3b82c4",
   "yesnodialog-edge": "#ffe6e6e6"
 }

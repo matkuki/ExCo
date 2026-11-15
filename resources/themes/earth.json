@@ -2212,6 +2212,14 @@
   },
   "table-header": "#585a55",
   "tooltip": "Earth",
+  "vcscolors": {
+    "conflict": "#ff6b6b",
+    "modified": "#e6c44a",
+    "added": "#8ae234",
+    "deleted": "#ef2929",
+    "untracked": "#8fb8e8",
+    "ignored": "#9a9a8a"
+  },
   "yesnodialog-background": "#ff898c84",
   "yesnodialog-edge": "#ffe6e6e6"
 }

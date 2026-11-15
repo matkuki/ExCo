@@ -2028,6 +2028,11 @@ class CustomEditor(BaseEditor):
                 path_watcher = self.main_form.tools.path_watcher  # type: ignore[union-attr]
                 if self.save_path not in path_watcher.monitored_files:
                     data.signal_dispatcher.editor_file_saved_as.emit(self.save_path)
+            # Let the tree explorers refresh their VCS state: an in-place
+            # overwrite changes neither the directory nor the repository
+            # metadata, so nothing else would notice the edit.
+            if data.signal_dispatcher is not None:
+                data.signal_dispatcher.editor_file_saved.emit(self.save_path)
             return True
         else:
             # Saving has failed

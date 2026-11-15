@@ -7,7 +7,9 @@ For complete license information of the dependencies, check the 'additional_lice
 """
 
 import ast
+import base64
 import enum
+import html
 import os
 import os.path
 import re
@@ -28,6 +30,7 @@ import components.internals
 import components.osclipboard
 import components.thesquid
 import components.treefilter
+import components.vcsstatus
 import constants
 import data
 import functions
@@ -501,6 +504,37 @@ class TreeViewBase(qt.QTreeView):
                                 qt.QToolTip.showText(event.globalPos(), text, view)
                                 return True
             return super().helpEvent(event, view, option, index)
+
+        def initStyleOption(  # type: ignore[override]
+            self,
+            option: qt.QStyleOptionViewItem,
+            index: qt.QModelIndex,
+        ) -> None:
+            super().initStyleOption(option, index)
+            # A tab that offers `_vcs_decoration` (the explorer) tints a row
+            # and suffixes its state letter. This is done here, on the option,
+            # and never in the model: a model write raises itemChanged, which
+            # the explorer reads as a rename. sizeHint() goes through this
+            # too, so the painted width and the scroll range agree.
+            view: qt.QWidget | None = option.widget  # type: ignore[assignment]
+            tab: Any = view.parent() if view is not None else None
+            decorate: Any = getattr(tab, "_vcs_decoration", None)
+            model: qt.QAbstractItemModel | None = index.model()
+            if decorate is None or not isinstance(model, qt.QStandardItemModel):
+                return
+            item: qt.QStandardItem | None = model.itemFromIndex(index)
+            if item is None:
+                return
+            decoration: tuple[str, qt.QColor] | None = decorate(item)
+            if decoration is None:
+                return
+            letter, color = decoration
+            if letter:
+                option.text = f"{option.text}  {letter}"
+            palette: qt.QPalette = option.palette
+            palette.setColor(qt.QPalette.ColorRole.Text, color)
+            palette.setColor(qt.QPalette.ColorRole.HighlightedText, color)
+            option.palette = palette
 
         def createEditor(
             self,
@@ -3184,13 +3218,145 @@ class TreeDisplayBase(TreeTabBase):
                                 stack.append(child)
 
 
+# How many locations the explorer's back and forward stacks remember.
+NAV_HISTORY_LIMIT: int = 100
+
+
+# --- image preview in the tooltip -----------------------------------------
+# Hovering an image file shows a thumbnail under the usual metadata. The
+# thumbnail is decoded on a worker thread, straight to its target size.
+IMAGE_PREVIEW_WIDTH: int = 320
+IMAGE_PREVIEW_HEIGHT: int = 240
+# Files above this size, and images with more pixels than the second limit
+# (a decompression bomb decodes into gigabytes), are not decoded at all.
+IMAGE_PREVIEW_MAX_BYTES: int = 64 * 1024 * 1024
+IMAGE_PREVIEW_MAX_PIXELS: int = 100_000_000
+# Formats worth a preview. The intersection with what Qt can read is used: the
+# reader list also holds 'pdf' (it renders a page, which is not a thumbnail of
+# the file) and a few formats that are not pictures to anyone.
+IMAGE_PREVIEW_SUFFIXES: frozenset[str] = frozenset(
+    {
+        "png",
+        "jpg",
+        "jpeg",
+        "jfif",
+        "gif",
+        "bmp",
+        "webp",
+        "ico",
+        "svg",
+        "svgz",
+        "tif",
+        "tiff",
+        "tga",
+        "icns",
+    }
+)
+_previewable_suffixes: frozenset[str] | None = None
+
+
+class ImagePreview(NamedTuple):
+    """What the tooltip shows of an image.
+
+    *width* and *height* are the image's own size. *png* is the thumbnail, or
+    empty when the image is too large to decode (the size is still known).
+    """
+
+    width: int
+    height: int
+    png: bytes
+
+
+def _is_previewable_image(path: str) -> bool:
+    """Whether *path* has the suffix of an image Qt can read and we preview."""
+    global _previewable_suffixes
+    if _previewable_suffixes is None:
+        readable: set[str] = {
+            bytes(fmt).decode("ascii", "ignore").lower()
+            for fmt in qt.QImageReader.supportedImageFormats()
+        }
+        _previewable_suffixes = IMAGE_PREVIEW_SUFFIXES & readable
+    return os.path.splitext(path)[1].lstrip(".").lower() in _previewable_suffixes
+
+
+def _build_image_preview(path: str) -> ImagePreview | None:
+    """The thumbnail of the image at *path*, or None when it cannot be read.
+
+    Runs on a worker thread, so it deals in QImage and bytes only (a QPixmap
+    belongs to the GUI thread). The header gives the size without decoding;
+    a larger image is decoded *directly* to the thumbnail size, a smaller one
+    is never enlarged, and an EXIF rotation is applied.
+    """
+    reader: qt.QImageReader = qt.QImageReader(path)
+    reader.setAutoTransform(True)
+    size: qt.QSize = reader.size()
+    if not size.isValid() or size.width() <= 0 or size.height() <= 0:
+        return None
+    width: int = size.width()
+    height: int = size.height()
+    transformation: Any = reader.transformation()
+    if transformation & qt.QImageIOHandler.Transformation.TransformationRotate90:
+        width, height = height, width
+    if width * height > IMAGE_PREVIEW_MAX_PIXELS:
+        return ImagePreview(width, height, b"")
+    if size.width() > IMAGE_PREVIEW_WIDTH or size.height() > IMAGE_PREVIEW_HEIGHT:
+        reader.setScaledSize(
+            size.scaled(
+                IMAGE_PREVIEW_WIDTH,
+                IMAGE_PREVIEW_HEIGHT,
+                qt.Qt.AspectRatioMode.KeepAspectRatio,
+            )
+        )
+    image: qt.QImage = reader.read()
+    if image.isNull():
+        return None
+    buffer: qt.QBuffer = qt.QBuffer()
+    buffer.open(qt.QIODevice.OpenModeFlag.WriteOnly)
+    if not image.save(buffer, "PNG"):
+        return None
+    return ImagePreview(width, height, bytes(buffer.data()))
+
+
+def _rich_preview_tooltip(text: str, preview: ImagePreview) -> str:
+    """The metadata *text* as a rich-text tooltip with the preview under it.
+
+    The text is escaped (a file name may hold '&'), kept on one line per entry
+    as the plain tooltip is, and the thumbnail is embedded as a data: URI so
+    nothing is read from disk again.
+    """
+    body: str = html.escape(text).replace("\n", "<br>")
+    body += "<br>Dimensions: {} x {}".format(preview.width, preview.height)
+    if preview.png:
+        body += '<br><img src="data:image/png;base64,{}">'.format(
+            base64.b64encode(preview.png).decode("ascii")
+        )
+    return '<html><div style="white-space: nowrap">{}</div></html>'.format(body)
+
+
+# Height of the repository line above the footer buttons.
+VCS_ROW_HEIGHT: int = 20
+# Horizontal padding of the repository label, both sides together (the
+# footer stylesheet uses half of it on each side).
+VCS_LABEL_PADDING: int = 8
+
+
+class NavLocation(NamedTuple):
+    """Somewhere the explorer can be: a directory, or the drive list.
+
+    ``path`` is None for the Computer (drives) view. ``disk`` is what
+    ``display_directory`` needs to rebuild a drive's own listing.
+    """
+
+    path: str | None
+    disk: bool = False
+
+
 class TreeExplorer(TreeDisplayBase):
     # Item type enumeration
     class ItemType(enum.Enum):
         FILE = enum.auto()
         DIRECTORY = enum.auto()
         BASE_DIRECTORY = enum.auto()
-        ONE_UP_DIRECTORY = enum.auto()
         DISK = enum.auto()
         NEW_FILE = enum.auto()
         NEW_DIRECTORY = enum.auto()
@@ -3204,11 +3370,15 @@ class TreeExplorer(TreeDisplayBase):
     open_file_markdown_signal = qt.pyqtSignal(str)
     # A worker-thread directory-size scan finished (path, full tooltip text).
     __tooltip_ready = qt.pyqtSignal(str, object)
+    # A worker-thread image thumbnail is ready (path, file signature, preview).
+    __preview_ready = qt.pyqtSignal(str, object, object)
     # Instance variables (set in __init__)
     __tooltip_cache: dict[str, str]
     __tooltip_inflight: set[str]
     __tooltip_complete: set[str]
     __tooltip_current: tuple[str, qt.QPoint] | None
+    __preview_cache: dict[str, tuple[tuple[int, int], ImagePreview | None]]
+    __preview_inflight: set[str]
 
     # Attributes
     current_viewed_directory: str | None = None
@@ -3247,6 +3417,22 @@ class TreeExplorer(TreeDisplayBase):
     computer: qt.QIcon
     goto_icon: qt.QIcon
     directory_changed_timer: qt.QTimer
+    vcs_label: qt.QLabel
+    vcs_row: qt.QWidget
+    vcs_row_layout: qt.QHBoxLayout
+    footer_buttons: qt.QWidget
+    __vcs_menu: Menu | None = None
+    nav_back_button: qt.QPushButton
+    nav_forward_button: qt.QPushButton
+    nav_up_button: qt.QPushButton
+    __nav_back: list[NavLocation]
+    __nav_forward: list[NavLocation]
+    __nav_current: NavLocation | None
+    __nav_traversing: bool
+    __vcs_repo: components.vcsstatus.RepoInfo | None
+    __vcs_key: str | None
+    __vcs_snapshot: components.vcsstatus.StatusSnapshot | None
+    __vcs_fingerprint: int
 
     def __init__(self, parent: qt.QWidget, main_form: Any) -> None:
         # Initialize the superclass
@@ -3283,24 +3469,114 @@ class TreeExplorer(TreeDisplayBase):
         self.__tooltip_complete = set()
         self.__tooltip_current = None
         self.__tooltip_ready.connect(self.on_tooltip_ready)
+        # Image thumbnails for the tooltip: decoded on a worker thread, cached
+        # per file version, cleared with the tooltips on every listing.
+        self.__preview_cache = {}
+        self.__preview_inflight = set()
+        self.__preview_ready.connect(self.on_preview_ready)
+        # Version-control state (git / Mercurial). The shared provider runs
+        # the status command off the GUI thread; the rows are decorated by the
+        # view's delegate through `_vcs_decoration`, never through the model.
+        self.__vcs_repo = None
+        self.__vcs_key = None
+        self.__vcs_snapshot = None
+        self.__vcs_fingerprint = 0
+        vcs_provider = components.vcsstatus.provider()
+        vcs_provider.status_ready.connect(self.__on_vcs_status)
+        vcs_provider.metadata_changed.connect(self.__on_vcs_metadata)
+        if data.signal_dispatcher is not None:
+            data.signal_dispatcher.editor_file_saved.connect(self.__on_editor_saved)
+        # An edit by another program changes nothing a watcher sees, so a
+        # visible explorer compares a cheap fingerprint of its directory.
+        self.__vcs_poll_timer = qt.QTimer(self)
+        self.__vcs_poll_timer.setInterval(components.vcsstatus.POLL_INTERVAL_MS)
+        self.__vcs_poll_timer.timeout.connect(self.__vcs_poll)
+        self.__vcs_poll_timer.start()
+        # Navigation history: where the view has been, and where Back/Forward go
+        self.__nav_back = []
+        self.__nav_forward = []
+        self.__nav_current = None
+        self.__nav_traversing = False
         # Create footer toolbar with action buttons (like session editor)
         self._create_footer_toolbar()
+        self.__update_nav_buttons()
         # The filter is an on-demand tool: start with the bar hidden.
         self.set_filter_bar_visible(False)
 
     def _create_footer_toolbar(self) -> None:
         """Create the footer toolbar with action buttons (like session editor)."""
-        # Footer widget with horizontal layout
+        # The footer is one container (one border-top) holding two rows: the
+        # repository line when there is one, and the 28 px row of buttons.
         self.footer = qt.QWidget(self)
         self.footer.setObjectName("TreeExplorerFooter")
-        self.footer.setFixedHeight(28)
-        self.footer_layout = qt.QHBoxLayout(self.footer)
+        footer_rows = qt.QVBoxLayout(self.footer)
+        footer_rows.setContentsMargins(0, 0, 0, 0)
+        footer_rows.setSpacing(0)
+
+        # The repository line ('git: main · 7b05e612 · 2M 1A'). On a wide tab it
+        # sits at the right end of the button row; on a narrow one it is moved
+        # into this row above the buttons (`__place_vcs_label`), so it never
+        # takes width from them. The row is hidden whenever the label is not
+        # in it, and outside a repository.
+        self.vcs_row = qt.QWidget(self.footer)
+        self.vcs_row.setObjectName("tree_explorer_vcs_row")
+        self.vcs_row.setFixedHeight(VCS_ROW_HEIGHT)
+        self.vcs_row.hide()
+        self.vcs_row_layout = qt.QHBoxLayout(self.vcs_row)
+        self.vcs_row_layout.setContentsMargins(8, 2, 8, 0)
+        self.vcs_row_layout.setSpacing(0)
+        self.vcs_label = qt.QLabel("", self.vcs_row)
+        self.vcs_label.setObjectName("tree_explorer_vcs_label")
+        self.vcs_label.hide()
+        # Ignored, not Preferred, in *both* places: a QLabel asks for its whole
+        # text as a minimum width, which would keep the explorer wide -- and,
+        # inline, would stop it from ever getting narrow enough to move the
+        # label up. It takes the room that is left and clips (the tooltip and
+        # the menu have the full values).
+        self.vcs_label.setSizePolicy(
+            qt.QSizePolicy.Policy.Ignored, qt.QSizePolicy.Policy.Preferred
+        )
+        # The tool name is a link that opens the copy menu
+        self.vcs_label.setTextInteractionFlags(
+            qt.Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
+        self.vcs_label.setOpenExternalLinks(False)
+        self.vcs_label.linkActivated.connect(self.__on_vcs_link)
+        self.vcs_row_layout.addWidget(self.vcs_label)
+        footer_rows.addWidget(self.vcs_row)
+
+        # The row of buttons, with a horizontal layout
+        self.footer_buttons = qt.QWidget(self.footer)
+        self.footer_buttons.setFixedHeight(28)
+        footer_rows.addWidget(self.footer_buttons)
+        self.footer_layout = qt.QHBoxLayout(self.footer_buttons)
         self.footer_layout.setContentsMargins(8, 2, 8, 2)
         self.footer_layout.setSpacing(components.treefilter.BAR_SPACING)
-        self.footer_layout.setAlignment(
-            qt.Qt.AlignmentFlag.AlignLeft | qt.Qt.AlignmentFlag.AlignVCenter
-        )
+        # No setAlignment() on this layout, deliberately: a layout with an
+        # alignment shrinks to its own size hint, and the repository label (when
+        # it is in this row) asks for no width at all (Ignored policy), so it
+        # was laid out 0 px wide and the text was missing. The buttons are
+        # fixed-size and fill the 24 px row exactly, so there is nothing to
+        # align vertically anyway.
 
+        # Navigation: back, forward, up
+        self.nav_back_button = self._add_footer_button(
+            functions.create_icon("tango_icons/go-previous.png"),
+            "Back (Alt+Left)",
+            self.navigate_back,
+        )
+        self.nav_forward_button = self._add_footer_button(
+            functions.create_icon("tango_icons/go-next.png"),
+            "Forward (Alt+Right)",
+            self.navigate_forward,
+        )
+        self.nav_up_button = self._add_footer_button(
+            functions.create_icon("tango_icons/go-up.png"),
+            "Up (Alt+Up)",
+            self.navigate_up,
+        )
+        # Separator
+        self._make_vline()
         # New file button
         self._add_footer_button(
             functions.create_icon("tango_icons/document-new.png"),
@@ -3330,6 +3606,13 @@ class TreeExplorer(TreeDisplayBase):
             self.set_filter_bar_visible,
             checkable=True,
         )
+
+        # The buttons stay packed to the left: this spacer takes the spare width
+        # whenever the repository label is not in this row (it is on the line
+        # above, or hidden). Inline, the label is added with stretch 1 and so
+        # takes it instead -- with no stretch anywhere, a layout of fixed-size
+        # widgets spreads them over the whole width.
+        self.footer_layout.addStretch(0)
 
         # Apply theme-aware styling (border-top only, no side margins)
         self._apply_footer_theme(settings.get_theme())
@@ -3387,6 +3670,9 @@ QPushButton#tree_explorer_footer_button {{
 QPushButton#tree_explorer_footer_button {{
     border: 1px solid {theme["indication"]["passiveborder"]};
 }}
+QPushButton#tree_explorer_footer_button:disabled {{
+    border: 1px solid {theme["scrollbar"]["handle"]};
+}}
 QPushButton#tree_explorer_footer_button:hover {{
     background: {hover};
 }}
@@ -3399,8 +3685,28 @@ QWidget#tree_explorer_vline {{
     min-width: 1px;
     max-width: 1px;
 }}
+QLabel#tree_explorer_vcs_label {{
+    background: transparent;
+    border: none;
+    color: {theme["linemargin"]["foreground"]};
+    padding: 0px {VCS_LABEL_PADDING // 2}px;
+}}
 """
         )
+        # A QSS rule cannot colour the anchors of a rich-text label: that is
+        # the palette's Link role.
+        link_palette: qt.QPalette = self.vcs_label.palette()
+        link_palette.setColor(
+            qt.QPalette.ColorRole.Link, qt.QColor(theme["indication"]["activeborder"])
+        )
+        self.vcs_label.setPalette(link_palette)
+        # An explicit font, because re-parenting a widget under a stylesheet
+        # drops the one it inherited: moved between the rows (`__place_vcs_label`)
+        # the label came out as the application default, 9 pt Sans Serif, next to
+        # a 10 pt Selawik tab. An explicit font survives the move, and it also
+        # keeps `__vcs_label_width` independent of where the label is. This runs
+        # on every style update, so a font change is followed.
+        self.vcs_label.setFont(self.font())
 
     def update_styles(self) -> None:
         """Re-apply the theme to the tree and the footer bar."""
@@ -3447,10 +3753,11 @@ QWidget#tree_explorer_vline {{
         """
         The rows the filter must never hide.
 
-        The drive rows on the Windows view are the only way back to a disk, and
-        the navigation rows are the only way to leave the current directory; a
-        filter that hid either would strand the user. The rows being created or
+        The drive rows on the Windows view are the only way into a disk, and a
+        filter that hid them would strand the user. The rows being created or
         renamed are on screen for the user to type into, so they stay too.
+        (There is no '..' row to protect any more: leaving a directory is the
+        footer's Up button, which no filter can touch.)
 
         The base directory row is deliberately *not* in the list. It is the one
         top-level row of a listing rather than a row among siblings, and an
@@ -3466,7 +3773,6 @@ QWidget#tree_explorer_vline {{
         return itype in (
             TreeExplorer.ItemType.DISK,
             TreeExplorer.ItemType.COMPUTER,
-            TreeExplorer.ItemType.ONE_UP_DIRECTORY,
             TreeExplorer.ItemType.NEW_FILE,
             TreeExplorer.ItemType.NEW_DIRECTORY,
             TreeExplorer.ItemType.RENAME_FILE,
@@ -3501,6 +3807,15 @@ QWidget#tree_explorer_vline {{
         # delete
         if key == "Key_Delete":
             self.__delete_items()
+
+        # Navigation history
+        if modifiers["alt"] == True:
+            if key == "Key_Left":
+                self.navigate_back()
+            elif key == "Key_Right":
+                self.navigate_forward()
+            elif key == "Key_Up":
+                self.navigate_up()
 
     def __init_tree_model(self) -> qt.QStandardItemModel:
         self.horizontalScrollbarAction(1)
@@ -4814,31 +5129,13 @@ QWidget#tree_explorer_vline {{
             return
         if item.attributes.itype in [  # type: ignore[attr-defined]
             TreeExplorer.ItemType.DIRECTORY,
-            TreeExplorer.ItemType.ONE_UP_DIRECTORY,
             TreeExplorer.ItemType.BASE_DIRECTORY,
         ]:
-            previous_directory: str | None = self.current_viewed_directory
             item_attributes: Any = item.attributes  # type: ignore[attr-defined]
-            displayed: bool = self.display_directory(
+            self.display_directory(
                 item_attributes.path,
                 disk=item_attributes.disk,
             )
-            if (
-                displayed
-                and item.attributes.itype == TreeExplorer.ItemType.ONE_UP_DIRECTORY  # type: ignore[attr-defined]
-            ):
-                try:
-                    base_name: str = os.path.split(previous_directory)[1]  # type: ignore[type-var,assignment]
-                    root: qt.QStandardItem = self.model().invisibleRootItem()  # type: ignore[union-attr]
-                    for it in self.iterate_items(root):
-                        if it.text() == base_name:
-                            self.setCurrentIndex(it.index())
-                            qt.QTimer.singleShot(
-                                0, lambda: self.scroll_and_ensure_item_visible(it)
-                            )
-                            break
-                except:
-                    traceback.print_exc()
         if item.attributes.itype == TreeExplorer.ItemType.FILE:  # type: ignore[attr-defined]
             self.open_file_signal.emit(item.attributes.path)  # type: ignore[attr-defined]
         if item.attributes.itype == TreeExplorer.ItemType.DISK:  # type: ignore[attr-defined]
@@ -4879,6 +5176,8 @@ QWidget#tree_explorer_vline {{
         self.setModel(tree_model)
         tree_model.itemChanged.connect(self.__item_changed)
         self.expand(base_item.index())
+        self.__vcs_clear()
+        self.__nav_record(NavLocation(None, True))
 
     def create_directory_list(self, directory: str) -> list[qt.QStandardItem]:
         dir_items: list[qt.QStandardItem] = []
@@ -4922,6 +5221,104 @@ QWidget#tree_explorer_vline {{
     def _resolve_item_tooltip(
         self, item: qt.QStandardItem, pos: qt.QPoint
     ) -> str | None:
+        """The metadata tooltip, a live line with the VCS state, and for an
+        image file its thumbnail (decoded in the background: the first hover
+        shows the text, the picture is swapped in when it is ready)."""
+        text: str | None = self.__resolve_base_tooltip(item, pos)
+        attributes: Any = getattr(item, "attributes", None)
+        path: str | None = getattr(attributes, "path", None)
+        if text is None or not isinstance(path, str):
+            return text
+        self.__start_preview(path, getattr(attributes, "itype", None))
+        return self.__finish_tooltip(path, text)
+
+    def __finish_tooltip(self, path: str, text: str) -> str:
+        """The final tooltip for *path*: the VCS line is added, and when the
+        image preview is ready the whole thing becomes rich text with it."""
+        text = self.__with_vcs_line(path, text)
+        cached: tuple[tuple[int, int], ImagePreview | None] | None = (
+            self.__preview_cache.get(path)
+        )
+        if cached is None or cached[1] is None:
+            return text
+        return _rich_preview_tooltip(text, cached[1])
+
+    def __start_preview(self, path: str, itype: Any) -> None:
+        """Begin decoding a thumbnail for an image file, once per file version.
+
+        The cache entry carries the file's (mtime, size): a file that changed
+        is decoded again, and a stale preview is dropped at once rather than
+        shown until the new one arrives. A failure is cached too, or a broken
+        image would be retried on every hover.
+        """
+        if itype != TreeExplorer.ItemType.FILE or not _is_previewable_image(path):
+            return
+        try:
+            info: os.stat_result = os.stat(path)
+        except OSError:
+            return
+        signature: tuple[int, int] = (info.st_mtime_ns, info.st_size)
+        cached = self.__preview_cache.get(path)
+        if cached is not None:
+            if cached[0] == signature:
+                return
+            del self.__preview_cache[path]
+        if path in self.__preview_inflight:
+            return
+        if info.st_size > IMAGE_PREVIEW_MAX_BYTES:
+            self.__preview_cache[path] = (signature, None)
+            return
+        self.__preview_inflight.add(path)
+        threading.Thread(
+            target=self.__compute_preview, args=(path, signature), daemon=True
+        ).start()
+
+    def __compute_preview(self, path: str, signature: tuple[int, int]) -> None:
+        """Worker thread: decode the thumbnail, then hand it to the GUI thread."""
+        preview: ImagePreview | None = _build_image_preview(path)
+        try:
+            self.__preview_ready.emit(path, signature, preview)
+        except RuntimeError:
+            pass  # the explorer was destroyed while the image decoded
+
+    @qt.pyqtSlot(str, object, object)
+    def on_preview_ready(self, path: str, signature: object, preview: object) -> None:
+        self.__preview_inflight.discard(path)
+        self.__preview_cache[path] = (
+            cast(tuple[int, int], signature),
+            cast("ImagePreview | None", preview),
+        )
+        if preview is None or self.__tooltip_current is None:
+            return
+        if self.__tooltip_current[0] != path:
+            return
+        base: str | None = self.__tooltip_cache.get(path)
+        if base is not None and qt.QToolTip.isVisible():
+            qt.QToolTip.showText(
+                self.__tooltip_current[1], self.__finish_tooltip(path, base), self.tree
+            )
+
+    def __with_vcs_line(self, path: str, text: str) -> str:
+        """*text* with a 'VCS: <state>' line when *path* has a state.
+
+        The row of the repository's own root directory gets the repository
+        block instead: branch, checked-out commit and change counts.
+        """
+        snapshot = self.__vcs_snapshot
+        if snapshot is None or snapshot.error is not None:
+            return text
+        if components.vcsstatus.path_key(path) == components.vcsstatus.path_key(
+            snapshot.root
+        ):
+            return "{}\n\n{}".format(text, self.__vcs_repository_block(snapshot))
+        state = snapshot.state_for(path)
+        if state is None:
+            return text
+        return "{}\nVCS: {} ({})".format(text, state.name.lower(), snapshot.kind)
+
+    def __resolve_base_tooltip(
+        self, item: qt.QStandardItem, pos: qt.QPoint
+    ) -> str | None:
         """
         The tooltip for *item*, resolved when the tooltip is first shown.
 
@@ -4940,7 +5337,6 @@ QWidget#tree_explorer_vline {{
             TreeExplorer.ItemType.FILE,
             TreeExplorer.ItemType.DIRECTORY,
             TreeExplorer.ItemType.BASE_DIRECTORY,
-            TreeExplorer.ItemType.ONE_UP_DIRECTORY,
         ):
             return None
         cached: str | None = self.__tooltip_cache.get(item_path)
@@ -4992,7 +5388,8 @@ QWidget#tree_explorer_vline {{
         if self.__tooltip_current is not None and self.__tooltip_current[0] == path:
             _path, pos = self.__tooltip_current
             if qt.QToolTip.isVisible() and text is not None:
-                qt.QToolTip.showText(pos, str(text), self.tree)
+                shown: str = self.__finish_tooltip(path, str(text))
+                qt.QToolTip.showText(pos, shown, self.tree)
 
     def _on_mouse_pressed(self, event: qt.QMouseEvent) -> None:
         # The view saw a press: the base class handles the bookkeeping, then
@@ -5003,6 +5400,10 @@ QWidget#tree_explorer_vline {{
             self.__apply_right_click(event)
         elif event.button() == qt.Qt.MouseButton.LeftButton:
             self.__root_item_pressed(event)
+        elif event.button() == qt.Qt.MouseButton.BackButton:
+            self.navigate_back()
+        elif event.button() == qt.Qt.MouseButton.ForwardButton:
+            self.navigate_forward()
 
     def mousePressEvent(self, event: qt.QMouseEvent) -> None:  # type: ignore[override]
         # A press that reaches the tab directly (rather than the inner view)
@@ -5084,11 +5485,13 @@ QWidget#tree_explorer_vline {{
         self.__tooltip_inflight = set()
         self.__tooltip_complete = set()
         self.__tooltip_current = None
+        self.__preview_cache = {}
         tree_model, base_item = self.__build_directory_model(directory, disk, lst)
         self.base_item = base_item
         self.setModel(tree_model)
         tree_model.itemChanged.connect(self.__item_changed)
         self.expand(base_item.index())
+        self.__vcs_refresh(directory)
         # Make sure the base item is visible
         self.scroll_and_ensure_item_visible(base_item)
 
@@ -5104,6 +5507,8 @@ QWidget#tree_explorer_vline {{
             qt.QTimer.singleShot(0, __scroll_restore)
 
         self.__update_tab_title()
+        if readable:
+            self.__nav_record(NavLocation(directory, disk))
         return readable
 
     def __build_directory_model(
@@ -5122,20 +5527,12 @@ QWidget#tree_explorer_vline {{
             )
             tree_model.appendRow(base_item)
         elif sd[1] != "" and sd[1] != "\\":
-            parent_dir: str = os.path.abspath(os.path.join(directory, os.pardir))
             base_item = self.create_standard_item(
                 functions.unixify_path(directory), bold=False, icon=self.folder_icon
             )
             base_item.attributes = self.__create_item_attribute(  # type: ignore[attr-defined]
                 TreeExplorer.ItemType.BASE_DIRECTORY, directory
             )
-            up_item: qt.QStandardItem = self.create_standard_item(
-                "..", bold=False, icon=self.folder_icon
-            )
-            up_item.attributes = self.__create_item_attribute(  # type: ignore[attr-defined]
-                TreeExplorer.ItemType.ONE_UP_DIRECTORY, parent_dir, hide_menu=True
-            )
-            base_item.appendRow(up_item)
             tree_model.appendRow(base_item)
         else:
             base_item = self.create_standard_item(
@@ -5148,6 +5545,468 @@ QWidget#tree_explorer_vline {{
         for item in items:
             base_item.appendRow(item)
         return tree_model, base_item
+
+    # ------------------------------------------------------------------
+    # Navigation history (back / forward / up)
+    # ------------------------------------------------------------------
+    def __nav_same(self, first: NavLocation | None, second: NavLocation | None) -> bool:
+        """Whether two locations are the same place ('D:' and 'd:/' are)."""
+        if first is None or second is None:
+            return first is second
+        if first.path is None or second.path is None:
+            return first.path is None and second.path is None
+        return self.__path_key(first.path) == self.__path_key(second.path)
+
+    def __nav_record(self, location: NavLocation) -> None:
+        """The view has just landed on *location*: remember where it was.
+
+        History follows where the view *lands* rather than who asked, so every
+        way of navigating (opening a folder, editing the root path, the main
+        window, a restored layout) is covered, and a refresh -- which lands on
+        the same place -- records nothing. While back/forward are moving
+        through the stacks the stacks are theirs to maintain.
+        """
+        current: NavLocation | None = self.__nav_current
+        if self.__nav_same(current, location):
+            self.__nav_current = location
+        else:
+            if current is not None and not self.__nav_traversing:
+                self.__nav_back.append(current)
+                del self.__nav_back[:-NAV_HISTORY_LIMIT]
+                self.__nav_forward.clear()
+            self.__nav_current = location
+        self.__update_nav_buttons()
+
+    def __nav_go(self, location: NavLocation) -> bool:
+        """Show *location* without recording it as a new navigation."""
+        self.__nav_traversing = True
+        try:
+            if location.path is None:
+                if data.platform != "Windows":
+                    return False
+                self.display_windows_disks()
+                return True
+            return bool(self.display_directory(location.path, disk=location.disk))
+        finally:
+            self.__nav_traversing = False
+
+    def navigate_back(self) -> bool:
+        """Go to the previous location. False when there is none, or it can
+        no longer be shown (the error is reported and the history is kept)."""
+        if not self.__nav_back:
+            return False
+        current: NavLocation | None = self.__nav_current
+        if not self.__nav_go(self.__nav_back[-1]):
+            return False
+        self.__nav_back.pop()
+        if current is not None:
+            self.__nav_forward.append(current)
+        self.__update_nav_buttons()
+        return True
+
+    def navigate_forward(self) -> bool:
+        """Undo the last Back. Same contract as `navigate_back`."""
+        if not self.__nav_forward:
+            return False
+        current: NavLocation | None = self.__nav_current
+        if not self.__nav_go(self.__nav_forward[-1]):
+            return False
+        self.__nav_forward.pop()
+        if current is not None:
+            self.__nav_back.append(current)
+        self.__update_nav_buttons()
+        return True
+
+    def navigate_up(self) -> bool:
+        """Go to the parent directory -- or, from a drive root, to the drive
+        list -- and select the folder the user came from.
+
+        Unlike Back and Forward this is a new navigation: it is pushed on the
+        history like opening a folder.
+        """
+        current: NavLocation | None = self.__nav_current
+        parent: NavLocation | None = self.__nav_parent(current)
+        if current is None or parent is None:
+            return False
+        came_from: str | None = current.path
+        if parent.path is None:
+            self.display_windows_disks()
+            displayed: bool = True
+        else:
+            displayed = bool(self.display_directory(parent.path, disk=parent.disk))
+        if displayed and came_from is not None:
+            self.__select_path(came_from)
+        return displayed
+
+    def __nav_parent(self, location: NavLocation | None) -> NavLocation | None:
+        """The location Up leads to, or None (drive list, filesystem root)."""
+        if location is None or location.path is None:
+            return None
+        parent: str = functions.unixify_path_keep_symlink(
+            os.path.join(location.path, os.pardir)
+        )
+        if self.__path_key(parent) == self.__path_key(location.path):
+            # A root: on Windows the next step up is the list of drives
+            return NavLocation(None, True) if data.platform == "Windows" else None
+        return NavLocation(parent, False)
+
+    def __select_path(self, path: str) -> None:
+        """Select and scroll to the row of *path* in the current listing."""
+        model: qt.QAbstractItemModel | None = self.model()
+        if model is None:
+            return
+        key: str = self.__path_key(path)
+        for item in self.iterate_items(model.invisibleRootItem()):  # type: ignore[attr-defined]
+            candidate: Any = getattr(getattr(item, "attributes", None), "path", None)
+            if isinstance(candidate, str) and self.__path_key(candidate) == key:
+                self.setCurrentIndex(item.index())
+
+                def scroll(row: qt.QStandardItem = item) -> None:
+                    try:
+                        self.scroll_and_ensure_item_visible(row)
+                    except RuntimeError:
+                        pass  # the listing was rebuilt in the meantime
+
+                qt.QTimer.singleShot(0, scroll)
+                return
+
+    @staticmethod
+    def __nav_label(location: NavLocation) -> str:
+        return "Computer" if location.path is None else location.path
+
+    def __update_nav_buttons(self) -> None:
+        """Enable the footer buttons that lead somewhere, and name where."""
+        targets: list[tuple[qt.QPushButton, NavLocation | None, str, str]] = [
+            (
+                self.nav_back_button,
+                self.__nav_back[-1] if self.__nav_back else None,
+                "Back",
+                "Alt+Left",
+            ),
+            (
+                self.nav_forward_button,
+                self.__nav_forward[-1] if self.__nav_forward else None,
+                "Forward",
+                "Alt+Right",
+            ),
+            (
+                self.nav_up_button,
+                self.__nav_parent(self.__nav_current),
+                "Up",
+                "Alt+Up",
+            ),
+        ]
+        for button, target, verb, shortcut in targets:
+            button.setEnabled(target is not None)
+            where: str = "" if target is None else " to " + self.__nav_label(target)
+            button.setToolTip("{}{} ({})".format(verb, where, shortcut))
+
+    def __vcs_clear(self) -> None:
+        """Forget the repository: the listing is not inside one."""
+        self.__vcs_repo = None
+        self.__vcs_key = None
+        self.__vcs_snapshot = None
+        self.__vcs_update_label()
+
+    def __vcs_refresh(self, directory: str) -> None:
+        """Find the repository of *directory* and ask for fresh status.
+
+        The cached snapshot, when there is one, decorates the rows at once so
+        a refresh does not flicker; the answer replaces it a moment later.
+        """
+        self.__vcs_clear()
+        if not settings.get("tree_explorer_vcs_status"):
+            return
+        repo = components.vcsstatus.find_repo(directory)
+        if repo is None:
+            return
+        provider = components.vcsstatus.provider()
+        self.__vcs_repo = repo
+        self.__vcs_key = components.vcsstatus.VcsStatusProvider.key_for(repo, directory)
+        self.__vcs_snapshot = provider.cached(self.__vcs_key)
+        self.__vcs_request(directory, repo)
+        self.__vcs_update_label()
+
+    @qt.pyqtSlot(str)
+    def __on_vcs_metadata(self, root_key: str) -> None:
+        """A commit/checkout changed the repository this tab shows."""
+        repo = self.__vcs_repo
+        directory = self.current_viewed_directory
+        if repo is None or directory is None:
+            return
+        if components.vcsstatus.path_key(repo.root) == root_key:
+            self.__vcs_request(directory, repo)
+
+    @qt.pyqtSlot(str)
+    def __on_editor_saved(self, path: str) -> None:
+        """A document was saved: re-query when it lies in the shown repository.
+
+        Saving overwrites the file in place, which neither the directory
+        watcher nor the repository-metadata watcher can see.
+        """
+        repo = self.__vcs_repo
+        directory = self.current_viewed_directory
+        if repo is None or directory is None:
+            return
+        root: str = components.vcsstatus.path_key(repo.root)
+        saved: str = components.vcsstatus.path_key(path)
+        if saved.startswith(root + os.sep):
+            self.__vcs_request(directory, repo)
+
+    def __vcs_request(
+        self, directory: str, repo: components.vcsstatus.RepoInfo
+    ) -> None:
+        """Ask for fresh status, remembering what the directory looked like.
+
+        The fingerprint is taken *before* the query starts, so an edit made
+        while it runs still differs from it at the next poll.
+        """
+        self.__vcs_fingerprint = components.vcsstatus.directory_fingerprint(
+            directory, self.__vcs_is_ignored
+        )
+        components.vcsstatus.provider().request(directory, repo)
+
+    def __vcs_repository_block(
+        self, snapshot: components.vcsstatus.StatusSnapshot
+    ) -> str:
+        """The repository lines of the root row's tooltip."""
+        lines: list[str] = [
+            "Repository: {}".format(snapshot.kind),
+            "Branch: {}".format(snapshot.branch),
+        ]
+        tracking = snapshot.tracking
+        if tracking is not None and tracking.upstream is not None:
+            lines.append("Upstream: {}".format(tracking.describe()))
+        head = snapshot.head
+        if head is not None:
+            lines.append("Commit: {}".format(head.commit))
+            lines.append("    {}".format(head.subject))
+            lines.append("    {}, {}".format(head.author, head.date))
+            if head.tags:
+                lines.append("Tags: {}".format(", ".join(head.tags)))
+            if head.phase:
+                lines.append("Phase: {}".format(head.phase))
+        lines.append("Changes: {}".format(snapshot.describe_counts()))
+        return "\n".join(lines)
+
+    def __vcs_is_ignored(self, path: str) -> bool:
+        """Whether the snapshot marks *path* ignored (kept out of the poll)."""
+        snapshot = self.__vcs_snapshot
+        if snapshot is None:
+            return False
+        return snapshot.state_for(path) == components.vcsstatus.VcsState.IGNORED
+
+    def __vcs_poll(self) -> None:
+        """Re-query when a file in the listed directory changed on disk.
+
+        Catches an edit by another program (a formatter in the terminal, an
+        external editor), which neither the directory watcher, the metadata
+        watcher nor ExCo's own save signal can see. Only a *visible* explorer
+        polls, and only when the fingerprint moved, so an idle one costs a
+        directory scan every few seconds and no process.
+        """
+        repo = self.__vcs_repo
+        directory = self.current_viewed_directory
+        if repo is None or directory is None or not self.isVisible():
+            return
+        fingerprint: int = components.vcsstatus.directory_fingerprint(
+            directory, self.__vcs_is_ignored
+        )
+        if fingerprint != self.__vcs_fingerprint:
+            self.__vcs_request(directory, repo)
+
+    @qt.pyqtSlot(str, object)
+    def __on_vcs_status(self, key: str, snapshot: Any) -> None:
+        if key != self.__vcs_key:
+            return
+        self.__vcs_snapshot = snapshot
+        self.__vcs_update_label()
+        if self.model() is not None:
+            self.viewport().update()
+            self._resize_horizontal_scrollbar()
+
+    def __vcs_update_label(self) -> None:
+        """Footer label: 'git: main \u00b7 7b05e612 \u00b7 3M 1A 2?', hidden outside a repo.
+
+        The tool name is a link that opens the copy menu (`__on_vcs_link`); the
+        loading and error states are plain text, so nothing there is clickable.
+        """
+        repo = self.__vcs_repo
+        if repo is None:
+            self.vcs_label.hide()
+            self.vcs_row.hide()
+            return
+        snapshot = self.__vcs_snapshot
+        self.vcs_label.setTextFormat(qt.Qt.TextFormat.PlainText)
+        if snapshot is None:
+            self.vcs_label.setText(
+                "{}: {}".format(repo.kind, components.vcsstatus.read_branch(repo))
+            )
+            self.vcs_label.setToolTip(repo.root)
+        elif snapshot.error is not None:
+            self.vcs_label.setText("{} \u00b7 !".format(snapshot.summary()))
+            self.vcs_label.setToolTip("{}\n{}".format(repo.root, snapshot.error))
+        else:
+            self.vcs_label.setTextFormat(qt.Qt.TextFormat.RichText)
+            self.vcs_label.setText(snapshot.summary_rich())
+            self.vcs_label.setToolTip(
+                "{}\nClick '{}' for the branch, commit and more to copy".format(
+                    repo.root, repo.kind
+                )
+            )
+        self.vcs_label.show()
+        self.__place_vcs_label()
+
+    def resizeEvent(self, event: qt.QResizeEvent) -> None:  # type: ignore[override]
+        super().resizeEvent(event)
+        self.__place_vcs_label()
+
+    def __footer_buttons_width(self) -> int:
+        """The width the button row needs by itself, label excluded.
+
+        The buttons and separators have fixed widths, so their minimum widths
+        are their widths -- unlike `width()`, which is meaningless before the
+        widgets have been shown.
+        """
+        layout: qt.QHBoxLayout = self.footer_layout
+        margins: qt.QMargins = layout.contentsMargins()
+        width: int = margins.left() + margins.right()
+        count: int = 0
+        for index in range(layout.count()):
+            widget: qt.QWidget | None = layout.itemAt(index).widget()
+            if widget is None or widget is self.vcs_label:
+                continue
+            width += widget.minimumWidth()
+            count += 1
+        return width + layout.spacing() * max(count - 1, 0)
+
+    def __vcs_label_width(self) -> int:
+        """The width the label's text needs, in whichever row it is.
+
+        Measured here because `QLabel.sizeHint()` is not stable across a
+        re-parenting (450 px before the move, 416 after, for the same text), so
+        deciding from it made the placement flap at the threshold.
+        """
+        label: qt.QLabel = self.vcs_label
+        document: qt.QTextDocument = qt.QTextDocument()
+        document.setDefaultFont(label.font())
+        document.setDocumentMargin(0)
+        if label.textFormat() == qt.Qt.TextFormat.RichText:
+            document.setHtml(label.text())
+        else:
+            document.setPlainText(label.text())
+        return int(document.idealWidth()) + 1 + VCS_LABEL_PADDING
+
+    def __vcs_inline_width(self) -> int:
+        """The tab width from which the label fits in the button row.
+
+        The buttons, then two gaps (before the trailing spacer and between it
+        and the label), then the text.
+        """
+        return (
+            self.__footer_buttons_width()
+            + 2 * self.footer_layout.spacing()
+            + self.__vcs_label_width()
+        )
+
+    def __place_vcs_label(self) -> None:
+        """Put the repository label where it fits.
+
+        At the right end of the button row when the tab is wide enough for the
+        buttons *and* the whole label, otherwise on the line above them. The
+        label's own width asks for nothing (see the size policy), so this
+        decision cannot feed back into the tab's minimum width.
+        """
+        label: qt.QLabel = self.vcs_label
+        inline: bool = self.width() >= self.__vcs_inline_width()
+        in_buttons: bool = self.footer_layout.indexOf(label) >= 0
+        if inline != in_buttons:
+            # A layout re-shows a re-parented widget unless it was explicitly
+            # hidden, which is exactly the state wanted here (no repository).
+            if inline:
+                self.vcs_row_layout.removeWidget(label)
+                # stretch 1: it, not the spacer before it, takes the spare width
+                self.footer_layout.addWidget(label, 1)
+            else:
+                self.footer_layout.removeWidget(label)
+                self.vcs_row_layout.addWidget(label)
+        label.setAlignment(
+            (
+                qt.Qt.AlignmentFlag.AlignRight
+                if inline
+                else qt.Qt.AlignmentFlag.AlignLeft
+            )
+            | qt.Qt.AlignmentFlag.AlignVCenter
+        )
+        self.vcs_row.setVisible(not inline and not label.isHidden())
+
+    def __on_vcs_link(self, link: str) -> None:
+        """The tool name in the footer label was clicked: pop up the copy menu.
+
+        It lists what `StatusSnapshot.copy_entries` offers for the repository
+        (branch, upstream, commit ids, tags, path) and opens upward from the
+        label, since the footer is at the bottom of the tab.
+        """
+        snapshot = self.__vcs_snapshot
+        if link != "vcs:menu" or snapshot is None or snapshot.error is not None:
+            return
+        if self.__vcs_menu is not None:
+            self.__vcs_menu.setParent(None)  # type: ignore[call-overload]
+            self.__vcs_menu.deleteLater()
+        menu: Menu = Menu(self)
+        self.__vcs_menu = menu
+        for entry in snapshot.copy_entries():
+            if entry is None:
+                menu.addSeparator()
+                continue
+            text, value, what = entry
+            # '&' would be taken for a mnemonic marker (a branch may hold one)
+            action: qt.QAction = qt.QAction(text.replace("&", "&&"), menu)
+            action.triggered.connect(
+                lambda checked=False, value=value, what=what: self.__vcs_copy(
+                    value, what
+                )
+            )
+            menu.addAction(action)
+        origin: qt.QPoint = self.vcs_label.mapToGlobal(qt.QPoint(0, 0))
+        origin.setY(origin.y() - menu.sizeHint().height())
+        menu.popup(origin)
+
+    def __vcs_copy(self, value: str, what: str) -> None:
+        """Put *value* on the clipboard and say so in the statusbar."""
+        clipboard = qt.QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setText(value)
+        self.main_form.display.write_to_statusbar("Copied {}".format(what), 3000)
+
+    def _vcs_decoration(self, item: qt.QStandardItem) -> tuple[str, qt.QColor] | None:
+        """(state letter, colour) for the delegate, or None for a clean row.
+
+        Only real files and directories are decorated; the navigation, drive
+        and in-progress rows are not versioned things. An ignored entry is
+        tinted but carries no letter.
+        """
+        snapshot = self.__vcs_snapshot
+        if snapshot is None or snapshot.error is not None:
+            return None
+        attributes = getattr(item, "attributes", None)
+        if attributes is None or attributes.disk:
+            return None
+        if attributes.itype not in (
+            TreeExplorer.ItemType.FILE,
+            TreeExplorer.ItemType.DIRECTORY,
+        ):
+            return None
+        if not isinstance(attributes.path, str):
+            return None
+        state = snapshot.state_for(attributes.path)
+        if state is None:
+            return None
+        color = qt.QColor(components.vcsstatus.theme_color(settings.get_theme(), state))
+        letter: str = (
+            "" if state == components.vcsstatus.VcsState.IGNORED else state.letter
+        )
+        return letter, color
 
     def __update_tab_title(self) -> None:
         if self.parent() is not None and self.parent().parent() is not None:  # type: ignore[union-attr]

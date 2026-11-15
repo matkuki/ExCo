@@ -27,8 +27,10 @@ For complete license information of the dependencies, check the 'additional_lice
 ##      re-slices the source rows instead of copying a single cell - that is
 ##      what a height drag on the window border hits on every event.
 ##
-##      Rows are built through a make_row(cells, wrapped) callback, so this
-##      module never has to know the screen's row class.
+##      Rows are built through a make_row(cells, wrapped, filler) callback, so
+##      this module never has to know the screen's row class. A source row's
+##      optional 'wrap_filler' count marks trailing cells that only pad a
+##      wrapped row before a wide glyph; they are joined as zero-width.
 ##
 ##      No Qt imports on purpose: this is pure state and is tested standalone.
 
@@ -93,10 +95,20 @@ class _LogicalLine:
 
     def append_row(self, row: Any, columns: int) -> None:
         self.row_offsets.append(self.width)
+        # A wrapped row's trailing filler (the cell a two-cell glyph skipped
+        # on its way to the next row) is not text: joined as a one-column
+        # space it put a gap inside the logical line on the next resize.
+        filler: int = 0
+        if getattr(row, "wrapped", False):
+            filler = max(0, min(int(getattr(row, "wrap_filler", 0)), columns))
         for x in range(columns):
             cell: Any = row[x]
             self.cells.append(cell)
-            width: int = cell_width(cell)
+            # Only while the cell is still blank: text an application wrote or
+            # shifted into it later (ICH, a redraw without an erase) is shown,
+            # so it is text and must survive the reflow.
+            is_filler: bool = x >= columns - filler and cell.data in (" ", "")
+            width: int = 0 if is_filler else cell_width(cell)
             self.widths.append(width)
             self.width += width
 
@@ -200,7 +212,7 @@ def reflow(
     cursor_column: int,
     default_char: Any,
     history_maxlen: Optional[int],
-    make_row: Callable[[List[Any], bool], Any],
+    make_row: Callable[[List[Any], bool, int], Any],
 ) -> ReflowResult:
     """Re-wrap the whole stack to *new_columns* x *new_lines*.
 
@@ -208,8 +220,10 @@ def reflow(
     *cursor_row* -- the cursor's row in that same stack.
     *history_maxlen* -- the configured scrollback bound; older rows are
     dropped when the re-wrapped stack needs more history than that.
-    *make_row* -- builds one output row from a padded cell list and its wrap
-    mark, so this module never needs to know the screen's row class.
+    *make_row* -- builds one output row from a padded cell list, its wrap
+    mark and its trailing filler count (cells padding a wrapped row before a
+    wide glyph that did not fit), so this module never needs to know the
+    screen's row class.
     """
     old_columns = max(old_columns, 1)
     new_columns = max(new_columns, 1)
@@ -274,9 +288,12 @@ def reflow(
             if len(current) + width > new_columns:
                 # The next cell does not fit (a full row, or a wide character
                 # that would straddle the margin): pad the row and continue on
-                # a new one, exactly as a real terminal re-wraps it.
-                current.extend([default_char] * (new_columns - len(current)))
-                out.append(make_row(current, True))
+                # a new one, exactly as a real terminal re-wraps it. The pad is
+                # recorded as filler so the next reflow does not join it as
+                # text.
+                filler: int = new_columns - len(current)
+                current.extend([default_char] * filler)
+                out.append(make_row(current, True, filler))
                 content.append(True)
                 starts.append(consumed)
                 current = []
@@ -287,7 +304,7 @@ def reflow(
         has_content: bool = any(cell != default_char for cell in current)
         if len(current) < new_columns:
             current.extend([default_char] * (new_columns - len(current)))
-        out.append(make_row(current, False))
+        out.append(make_row(current, False, 0))
         content.append(has_content)
         line.starts = starts
 
@@ -317,7 +334,7 @@ def reflow(
 
     blanks: List[Any] = [default_char] * new_columns
     while len(out) < start + new_lines:
-        out.append(make_row(list(blanks), False))
+        out.append(make_row(list(blanks), False, 0))
 
     dropped: int = 0
     if history_maxlen is not None and start > history_maxlen:
@@ -345,7 +362,7 @@ def _vertical_reflow(
     cursor_column: int,
     default_char: Any,
     history_maxlen: Optional[int],
-    make_row: Callable[[List[Any], bool], Any],
+    make_row: Callable[[List[Any], bool, int], Any],
 ) -> ReflowResult:
     """Re-window a stack whose column count did not change.
 
@@ -355,7 +372,7 @@ def _vertical_reflow(
     """
     total: int = len(rows)
     if total == 0:
-        rows = [make_row([default_char] * columns, False)]
+        rows = [make_row([default_char] * columns, False, 0)]
         total = 1
     cursor_row = max(0, min(cursor_row, total - 1))
     last_content: int = -1
@@ -374,7 +391,7 @@ def _vertical_reflow(
     screen: List[Any] = list(rows[start : start + new_lines])
     blanks: List[Any] = [default_char] * columns
     while len(screen) < new_lines:
-        screen.append(make_row(list(blanks), False))
+        screen.append(make_row(list(blanks), False, 0))
     cursor_final_row: int = max(0, min(cursor_row - start, new_lines - 1))
     return ReflowResult(
         list(rows[dropped:start]),

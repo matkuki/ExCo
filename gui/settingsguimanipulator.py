@@ -136,6 +136,9 @@ class SettingsGuiManipulator(qt.QFrame):
             "tree_display_icon_size": lambda v: self._set_spin(
                 self.tree_icon_size_spin, int(v)
             ),
+            "tree_explorer_vcs_status": lambda v: self._set_check(
+                self.tree_vcs_checkbox, bool(v)
+            ),
             "standard_button_size": lambda v: self._set_spin(
                 self.button_size_spin, int(v)
             ),
@@ -618,6 +621,15 @@ class SettingsGuiManipulator(qt.QFrame):
             functools.partial(self.__simple_setting, "terminal")
         )
         display_layout.addWidget(self.terminal_program_edit, 2, 1)
+        display_layout.addWidget(qt.QLabel("Tree git/hg status:", display_group), 2, 2)
+        self.tree_vcs_checkbox = qt.QCheckBox(display_group)
+        self.tree_vcs_checkbox.setChecked(
+            bool(settings.get("tree_explorer_vcs_status"))
+        )
+        self.tree_vcs_checkbox.toggled.connect(
+            functools.partial(self.__simple_setting, "tree_explorer_vcs_status")
+        )
+        display_layout.addWidget(self.tree_vcs_checkbox, 2, 3)
         display_layout.setColumnStretch(1, 1)
         display_layout.setColumnStretch(3, 1)
         display_group.setLayout(display_layout)
@@ -633,6 +645,11 @@ class SettingsGuiManipulator(qt.QFrame):
             "ext",
             "linux",
             "external",
+            "git",
+            "hg",
+            "mercurial",
+            "status",
+            "vcs",
         )
 
     def __editor_setting_handler(self, sub_key: str, value: Any) -> None:
