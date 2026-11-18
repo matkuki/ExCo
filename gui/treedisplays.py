@@ -3351,6 +3351,34 @@ class NavLocation(NamedTuple):
     disk: bool = False
 
 
+# Feather glyph per repository-menu entry, keyed by the label prefix that
+# StatusSnapshot.copy_entries emits. Separators (None) and any label that does
+# not start with a known prefix simply carry no icon.
+_VCS_MENU_ICONS: tuple[tuple[str, str], ...] = (
+    ("Copy branch name", "git-branch"),
+    ("Copy bookmark", "bookmark"),
+    ("Copy upstream", "upload-cloud"),
+    ("Copy full commit hash", "hash"),
+    ("Copy short commit hash", "git-commit"),
+    ("Copy tag", "tag"),
+    ("Copy repository path", "folder"),
+)
+
+
+def _feather_icon(name: str) -> qt.QIcon:
+    """A feather glyph that stays visible on this theme's panel backgrounds
+
+    The chrome (footer bar, menus) is light on the Air theme and dark on every
+    other bundled theme, the same split StyleSheetTreeWidget uses for its
+    branch chevrons, so Air takes the mid-grey set and the rest the light-grey
+    one; the black set would disappear on the dark backgrounds.
+    """
+    variant: str = (
+        "air-grey" if settings.get_theme()["name"] == "Air" else "air-light-grey"
+    )
+    return functions.create_icon("feather/{}/{}.svg".format(variant, name))
+
+
 class TreeExplorer(TreeDisplayBase):
     # Item type enumeration
     class ItemType(enum.Enum):
@@ -3421,6 +3449,8 @@ class TreeExplorer(TreeDisplayBase):
     vcs_row: qt.QWidget
     vcs_row_layout: qt.QHBoxLayout
     footer_buttons: qt.QWidget
+    action_button: qt.QPushButton
+    __action_menu: Menu | None = None
     __vcs_menu: Menu | None = None
     nav_back_button: qt.QPushButton
     nav_forward_button: qt.QPushButton
@@ -3577,17 +3607,10 @@ class TreeExplorer(TreeDisplayBase):
         )
         # Separator
         self._make_vline()
-        # New file button
-        self._add_footer_button(
-            functions.create_icon("tango_icons/document-new.png"),
-            "New file",
-            self.new_file,
-        )
-        # New directory button
-        self._add_footer_button(
-            functions.create_icon("tango_icons/folder-new.png"),
-            "New directory",
-            self.new_directory,
+        # Actions (new file / new directory) behind one popup button
+        self.action_button = self._add_footer_action_button(
+            _feather_icon("more-horizontal"),
+            "Action",
         )
         # Separator
         self._make_vline()
@@ -3620,14 +3643,10 @@ class TreeExplorer(TreeDisplayBase):
         # Add footer to main layout (after the tree)
         self.main_layout.addWidget(self.footer)
 
-    def _add_footer_button(
-        self,
-        icon: qt.QIcon,
-        tooltip: str,
-        function: Callable[..., Any],
-        checkable: bool = False,
+    def _create_footer_button(
+        self, icon: qt.QIcon, tooltip: str, checkable: bool = False
     ) -> qt.QPushButton:
-        """Add a flat, icon-only action button to the footer bar."""
+        """Build a flat, icon-only button and put it in the footer bar."""
         button = qt.QPushButton(self.footer)
         button.setObjectName("tree_explorer_footer_button")
         button.setIcon(icon)
@@ -3636,12 +3655,170 @@ class TreeExplorer(TreeDisplayBase):
         button.setCheckable(checkable)
         button.setFixedSize(24, 24)
         button.setIconSize(qt.QSize(16, 16))
+        self.footer_layout.addWidget(button)
+        return button
+
+    def _add_footer_button(
+        self,
+        icon: qt.QIcon,
+        tooltip: str,
+        function: Callable[..., Any],
+        checkable: bool = False,
+    ) -> qt.QPushButton:
+        """Add a flat, icon-only action button to the footer bar."""
+        button = self._create_footer_button(icon, tooltip, checkable)
         if checkable:
             button.toggled.connect(function)
         else:
             button.clicked.connect(function)
-        self.footer_layout.addWidget(button)
         return button
+
+    def _add_footer_action_button(self, icon: qt.QIcon, tooltip: str) -> qt.QPushButton:
+        """Add the footer's Action button: one button that pops up its menu
+
+        The footer sits at the bottom of the tab, so the menu opens upward
+        (the same as the repository label's copy menu).
+        """
+        button = self._create_footer_button(icon, tooltip)
+        button.clicked.connect(lambda checked=False: self.__show_action_menu(button))
+        return button
+
+    def __displayed_directory(self) -> str | None:
+        """The directory the view is listing, or None when it lists none
+
+        Answer it from the model's root row rather than from
+        ``current_viewed_directory``: the Computer (drives) view has a root row
+        without a path, and that variable still holds the folder the drive
+        list was opened from, which is no longer what the view shows.
+        """
+        attributes: Any = getattr(self.base_item, "attributes", None)
+        path: Any = getattr(attributes, "path", None)
+        return path if isinstance(path, str) else None
+
+    def __show_action_menu(self, button: qt.QPushButton) -> None:
+        """The footer's Action menu: the displayed directory's own actions
+
+        It carries the generic options the directory offers in the tree's
+        right-click menu, so they are reachable without right-clicking the
+        root row: create a file or a directory, paste, refresh, open the
+        folder (file explorer / terminal), copy its path and update the CWD.
+        Row-only entries (rename, delete, cut/copy of an item) stay in that
+        item's own menu.
+        """
+        if self.__action_menu is not None:
+            self.__action_menu.setParent(None)  # type: ignore[call-overload]
+            self.__action_menu.deleteLater()
+        menu: Menu = Menu(self)
+        self.__action_menu = menu
+        new_file_action: qt.QAction = qt.QAction("New file", menu)
+        new_file_action.setIcon(functions.create_icon("tango_icons/document-new.png"))
+        new_file_action.triggered.connect(self.new_file)
+        menu.addAction(new_file_action)
+        new_directory_action: qt.QAction = qt.QAction("New directory", menu)
+        new_directory_action.setIcon(
+            functions.create_icon("tango_icons/folder-new.png")
+        )
+        new_directory_action.triggered.connect(self.new_directory)
+        menu.addAction(new_directory_action)
+
+        directory: str | None = self.__displayed_directory()
+        if directory is not None:
+            # Paste, only when the clipboard has something to paste into it
+            if self.__has_pasteable_items():
+                menu.addSeparator()
+                paste_action: qt.QAction = qt.QAction("Paste", menu)
+                paste_action.setIcon(
+                    functions.create_icon("tango_icons/edit-paste.png")
+                )
+                paste_action.triggered.connect(self.__paste_items)
+                menu.addAction(paste_action)
+
+            menu.addSeparator()
+            refresh_action: qt.QAction = qt.QAction("Refresh view", menu)
+            refresh_action.setIcon(
+                functions.create_icon("tango_icons/view-refresh.png")
+            )
+            refresh_action.triggered.connect(self.refresh)
+            menu.addAction(refresh_action)
+
+            def open_in_explorer() -> None:
+                try:
+                    if data.platform == "Windows":
+                        os.startfile(directory)
+                    else:
+                        subprocess.call(["xdg-open", directory])
+                except Exception:
+                    self.main_form.display.repl_display_error(traceback.format_exc())
+
+            explorer_action: qt.QAction = qt.QAction(self.open_in_explorer_text, menu)
+            explorer_action.setIcon(
+                functions.create_icon("tango_icons/document-open.png")
+            )
+            explorer_action.triggered.connect(open_in_explorer)
+            menu.addAction(explorer_action)
+
+            def open_in_terminal() -> None:
+                self.main_form.open_terminal_in_directory(directory, self._parent)
+
+            terminal_action: qt.QAction = qt.QAction("Open in Terminal", menu)
+            terminal_action.setIcon(
+                functions.create_icon("tango_icons/utilities-terminal.png")
+            )
+            terminal_action.triggered.connect(open_in_terminal)
+            menu.addAction(terminal_action)
+
+            def open_in_external_terminal() -> None:
+                self.main_form.open_external_terminal(directory)
+
+            external_terminal_action: qt.QAction = qt.QAction(
+                "Open in External Terminal", menu
+            )
+            external_terminal_action.setIcon(
+                functions.create_icon("tango_icons/utilities-terminal.png")
+            )
+            external_terminal_action.triggered.connect(open_in_external_terminal)
+            menu.addAction(external_terminal_action)
+
+            menu.addSeparator()
+
+            def copy_path() -> None:
+                clipboard = data.application.clipboard()
+                clipboard.clear(mode=clipboard.Mode.Clipboard)
+                clipboard.setText(directory, mode=clipboard.Mode.Clipboard)
+                self.main_form.display.repl_display_message(
+                    'Copied to clipboard: "{}"'.format(directory)
+                )
+
+            copy_path_action: qt.QAction = qt.QAction(
+                "Copy directory path to clipboard", menu
+            )
+            copy_path_action.setIcon(functions.create_icon("tango_icons/edit-copy.png"))
+            copy_path_action.triggered.connect(copy_path)
+            menu.addAction(copy_path_action)
+
+            def update_cwd() -> None:
+                self.main_form.set_cwd(directory)
+
+            cwd_action: qt.QAction = qt.QAction("Update CWD", menu)
+            cwd_action.setIcon(functions.create_icon("tango_icons/update-cwd.png"))
+            cwd_action.triggered.connect(update_cwd)
+            menu.addAction(cwd_action)
+
+            # The root row's editor: only a listing has one (not the drive list)
+            if self.base_item is not None:
+                root_item: qt.QStandardItem = self.base_item
+                change_directory_action: qt.QAction = qt.QAction(
+                    "Change directory", menu
+                )
+                change_directory_action.setIcon(self.goto_icon)
+                change_directory_action.triggered.connect(
+                    lambda checked=False: self.__start_root_edit(root_item)
+                )
+                menu.addAction(change_directory_action)
+
+        origin: qt.QPoint = button.mapToGlobal(qt.QPoint(0, 0))
+        origin.setY(origin.y() - menu.sizeHint().height())
+        menu.popup(origin)
 
     def _make_vline(self) -> None:
         """Add a thin vertical separator to the footer bar."""
@@ -5944,8 +6121,9 @@ QLabel#tree_explorer_vcs_label {{
         """The tool name in the footer label was clicked: pop up the copy menu.
 
         It lists what `StatusSnapshot.copy_entries` offers for the repository
-        (branch, upstream, commit ids, tags, path) and opens upward from the
-        label, since the footer is at the bottom of the tab.
+        (branch, upstream, commit ids, tags, path), each with a feather glyph,
+        and opens upward from the label, since the footer is at the bottom of
+        the tab.
         """
         snapshot = self.__vcs_snapshot
         if link != "vcs:menu" or snapshot is None or snapshot.error is not None:
@@ -5962,6 +6140,9 @@ QLabel#tree_explorer_vcs_label {{
             text, value, what = entry
             # '&' would be taken for a mnemonic marker (a branch may hold one)
             action: qt.QAction = qt.QAction(text.replace("&", "&&"), menu)
+            icon_name: str | None = self.__vcs_menu_icon_name(text)
+            if icon_name is not None:
+                action.setIcon(_feather_icon(icon_name))
             action.triggered.connect(
                 lambda checked=False, value=value, what=what: self.__vcs_copy(
                     value, what
@@ -5971,6 +6152,14 @@ QLabel#tree_explorer_vcs_label {{
         origin: qt.QPoint = self.vcs_label.mapToGlobal(qt.QPoint(0, 0))
         origin.setY(origin.y() - menu.sizeHint().height())
         menu.popup(origin)
+
+    @staticmethod
+    def __vcs_menu_icon_name(text: str) -> str | None:
+        """The feather glyph that belongs to a copy-entry label, if any"""
+        for prefix, icon_name in _VCS_MENU_ICONS:
+            if text.startswith(prefix):
+                return icon_name
+        return None
 
     def __vcs_copy(self, value: str, what: str) -> None:
         """Put *value* on the clipboard and say so in the statusbar."""

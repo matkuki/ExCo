@@ -532,7 +532,8 @@ class CustomEditor(BaseEditor):
             cursor = qt.QCursor.pos()
             lexers_menu.popup(cursor)
 
-        # Markdown view switch (only for markdown files); leftmost button
+        # Markdown view switch and browser preview (only for markdown files);
+        # the two leftmost buttons, keeping the lexer button rightmost
         if functions.get_file_type(self.save_path) == "markdown":
 
             def switch_to_markdown() -> None:
@@ -542,10 +543,19 @@ class CustomEditor(BaseEditor):
                 first_visible = self.firstVisibleLine() + 1
                 self._parent.switch_to_markdown_view(index, first_visible)
 
+            def open_preview_in_browser() -> None:
+                main_form: Any = self.main_form
+                main_form.open_markdown_preview(self.save_path)
+
             self.internals.add_corner_button(  # type: ignore[union-attr]
                 "tango_icons/document-print-preview.png",
                 "Switch to Markdown view",
                 switch_to_markdown,
+            )
+            self.internals.add_corner_button(  # type: ignore[union-attr]
+                "tango_icons/gnome-web-browser.png",
+                "Open rendered preview in browser",
+                open_preview_in_browser,
             )
 
         # Edit session (rightmost button)
