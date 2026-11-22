@@ -2179,6 +2179,9 @@
     "hover": "#d8eaf9",
     "passivebackground": "#f0f0f0",
     "passiveborder": "#a0a0a0",
+    "progressbar": {
+      "chunk": "#ff9ecfa4"
+    },
     "replace": "#5032b4ff",
     "selection": "#64c8c8c8"
   },
@@ -2188,6 +2191,7 @@
     "background": "#ffe0e0e0",
     "foreground": "#ff000000"
   },
+  "menu-separator": "#ff000000",
   "name": "Air",
   "right-arrow-hover-image": "feather/air-blue/chevron-right.svg",
   "right-arrow-image": "feather/air-grey/chevron-right.svg",

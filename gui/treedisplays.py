@@ -166,6 +166,425 @@ def remove_readonly(func: Any, path: str, excinfo: Any) -> None:
     func(path)
 
 
+class _PasteCancelled(Exception):
+    """Raised inside a copy callback when the user cancels a background paste."""
+
+
+class PasteJob(NamedTuple):
+    """One paste item, fully resolved on the GUI thread before work starts."""
+
+    source: str
+    destination: str
+    itype: Any
+    is_cut: bool
+    is_symlink: bool
+    name: str
+
+
+class PasteOutcome(NamedTuple):
+    """What the worker did, handed back to the GUI thread when it finishes."""
+
+    pasted: int
+    skipped: int
+    total: int
+    is_cut: bool
+    cancelled: bool = False
+    error: str | None = None
+    # Identifies the explorer that started this paste: other tabs receive the
+    # same queued signal but must not report or refresh for someone else's copy.
+    owner: object | None = None
+
+
+class _DeleteCancelled(Exception):
+    """Raised inside delete traversal when the user cancels a background delete."""
+
+
+class DeleteJob(NamedTuple):
+    """One delete item, validated on the GUI thread before work starts."""
+
+    path: str
+    itype: Any
+    is_symlink: bool
+    use_recycle_bin: bool
+
+
+class DeleteOutcome(NamedTuple):
+    """What the delete worker did, handed back to the GUI thread."""
+
+    deleted: int
+    total: int
+    cancelled: bool = False
+    errors: tuple[str, ...] = ()
+    deleted_files: tuple[str, ...] = ()
+    owner: object | None = None
+
+
+def _paste_temp_path(path: str) -> str:
+    """A unique sibling '.exco-tmp' staging path for *path*."""
+    directory: str = os.path.dirname(path)
+    base_name: str = os.path.basename(path)
+    counter: int = 1
+    candidate: str = os.path.join(directory, f"{base_name}.exco-tmp")
+    while os.path.lexists(candidate):
+        candidate = os.path.join(directory, f"{base_name}.exco-tmp{counter}")
+        counter += 1
+    return candidate
+
+
+class _PasteCoordinator(qt.QObject):
+    """Owns the shared progress signals and the app-wide operation guard.
+
+    The guard lives here rather than on a ``TreeExplorer`` because a paste
+    consumes the clipboard shared by every explorer tab, and a delete uses the
+    same footer progress row: only one background operation may run at a time.
+    It also outlives a tab, so a worker still running when its tab closes
+    releases the guard.
+    """
+
+    progress = qt.pyqtSignal(int, int, str, object)
+    finished = qt.pyqtSignal(object)
+    delete_progress = qt.pyqtSignal(int, int, str, object)
+    delete_finished = qt.pyqtSignal(object)
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.busy: bool = False
+        self.lock: threading.Lock = threading.Lock()
+        # Connected first: the guard is freed before any tab's UI slot runs.
+        self.finished.connect(self._on_finished)
+        self.delete_finished.connect(self._on_finished)
+
+    @qt.pyqtSlot(object)
+    def _on_finished(self, _outcome: object) -> None:
+        with self.lock:
+            self.busy = False
+
+
+_PASTE: _PasteCoordinator = _PasteCoordinator()
+
+
+class _PasteWorker(threading.Thread):
+    """Perform the file I/O of a paste off the GUI thread.
+
+    It receives only plain data and the module-level signals: no widget, model
+    or clipboard is touched here. Collision dialogs and clipboard access were
+    already resolved by the explorer on the GUI thread before it was started.
+    """
+
+    def __init__(
+        self,
+        jobs: list[PasteJob],
+        is_cut: bool,
+        skipped: int,
+        total: int,
+        cancel_event: threading.Event,
+        owner: object,
+    ) -> None:
+        super().__init__(daemon=True)
+        self.jobs: list[PasteJob] = jobs
+        self.is_cut: bool = is_cut
+        self.skipped: int = skipped
+        self.total: int = total
+        self.cancel_event: threading.Event = cancel_event
+        self.owner: object = owner
+        self.pasted: int = 0
+        self.cancelled: bool = False
+        self._done: int = 0
+        self._size: int = 0
+
+    def run(self) -> None:
+        error: str | None = None
+        try:
+            self._size = self._scan_size()
+            self._report("")
+            for job in self.jobs:
+                if self.cancel_event.is_set():
+                    self.cancelled = True
+                    break
+                self._paste_job(job)
+                self.pasted += 1
+            if not self.cancelled:
+                self._report("")
+        except _PasteCancelled:
+            self.cancelled = True
+        except BaseException:
+            error = traceback.format_exc()
+        try:
+            _PASTE.finished.emit(
+                PasteOutcome(
+                    pasted=self.pasted,
+                    skipped=self.skipped,
+                    total=self.total,
+                    is_cut=self.is_cut,
+                    cancelled=self.cancelled,
+                    error=error,
+                    owner=self.owner,
+                )
+            )
+        except RuntimeError:
+            pass  # no receiver left (only possible during interpreter shutdown)
+
+    def _report(self, name: str) -> None:
+        try:
+            _PASTE.progress.emit(self._done, self._size, name, self.owner)
+        except RuntimeError:
+            pass  # no receiver left (only possible during interpreter shutdown)
+
+    def _scan_size(self) -> int:
+        """Total bytes to copy, so the bar can show real progress."""
+        total: int = 0
+        for job in self.jobs:
+            if self.cancel_event.is_set():
+                break
+            source: str = job.source
+            if job.is_symlink:
+                continue
+            if os.path.isdir(source):
+                for root, _dirs, files in os.walk(source, followlinks=False):
+                    for name in files:
+                        try:
+                            total += os.path.getsize(os.path.join(root, name))
+                        except OSError:
+                            pass
+            else:
+                try:
+                    total += os.path.getsize(source)
+                except OSError:
+                    pass
+        return total
+
+    def _progress_copy2(self, source: str, destination: str) -> None:
+        """``shutil.copytree`` callback that counts bytes and honours Cancel."""
+        if self.cancel_event.is_set():
+            raise _PasteCancelled()
+        size: int = 0
+        try:
+            size = os.path.getsize(source)
+        except OSError:
+            pass
+        shutil.copy2(source, destination)
+        self._done += size
+        self._report(os.path.basename(source))
+
+    def _copy_file(self, source: str, destination: str) -> None:
+        """Top-level file copy: the same ``shutil.copy`` the GUI path used."""
+        if self.cancel_event.is_set():
+            raise _PasteCancelled()
+        size: int = 0
+        try:
+            size = os.path.getsize(source)
+        except OSError:
+            pass
+        shutil.copy(source, destination)
+        self._done += size
+        self._report(os.path.basename(source))
+
+    def _paste_job(self, job: PasteJob) -> None:
+        source: str = job.source
+        destination: str = job.destination
+        is_directory: bool = job.itype in (
+            TreeExplorer.ItemType.DIRECTORY,
+            TreeExplorer.ItemType.BASE_DIRECTORY,
+        )
+        if is_directory:
+            if job.is_symlink:
+                if os.path.isdir(destination):
+                    shutil.rmtree(destination, onerror=remove_readonly)
+                    time.sleep(0.1)
+                target: str = os.readlink(source)
+                os.symlink(target, destination)
+            elif os.path.isdir(destination):
+                temporary: str = _paste_temp_path(destination)
+                try:
+                    shutil.copytree(
+                        source, temporary, copy_function=self._progress_copy2
+                    )
+                except BaseException:
+                    if os.path.isdir(temporary):
+                        shutil.rmtree(temporary, onerror=remove_readonly)
+                    raise
+                shutil.rmtree(destination, onerror=remove_readonly)
+                time.sleep(0.1)
+                os.rename(temporary, destination)
+            else:
+                try:
+                    shutil.copytree(
+                        source, destination, copy_function=self._progress_copy2
+                    )
+                except _PasteCancelled:
+                    if os.path.isdir(destination):
+                        shutil.rmtree(destination, onerror=remove_readonly)
+                    raise
+            if job.is_cut:
+                if job.is_symlink:
+                    os.remove(source)
+                else:
+                    shutil.rmtree(source, onerror=remove_readonly)
+        else:
+            if job.is_symlink:
+                target = os.readlink(source)
+                os.symlink(target, destination)
+            else:
+                try:
+                    self._copy_file(source, destination)
+                except _PasteCancelled:
+                    if os.path.lexists(destination):
+                        os.remove(destination)
+                    raise
+            if job.is_cut:
+                os.remove(source)
+
+
+class _DeleteWorker(threading.Thread):
+    """Delete the resolved items off the GUI thread, reporting progress.
+
+    Like ``_PasteWorker`` it receives plain records only: no widget, model or
+    clipboard is touched here. Progress is byte based for permanent deletes,
+    where files can be removed one at a time; a recycle-bin operation can only
+    report after each whole item, since ``send2trash`` is a single call.
+    """
+
+    def __init__(
+        self,
+        jobs: list[DeleteJob],
+        cancel_event: threading.Event,
+        owner: object,
+    ) -> None:
+        super().__init__(daemon=True)
+        self.jobs: list[DeleteJob] = jobs
+        self.cancel_event: threading.Event = cancel_event
+        self.owner: object = owner
+        self.deleted: int = 0
+        self.cancelled: bool = False
+        self.errors: list[str] = []
+        self.deleted_files: list[str] = []
+        self._done: int = 0
+        self._size: int = 0
+
+    def run(self) -> None:
+        try:
+            self._size = self._scan_size()
+            self._report("")
+            for job in self.jobs:
+                if self.cancel_event.is_set():
+                    self.cancelled = True
+                    break
+                try:
+                    self._delete_job(job)
+                except _DeleteCancelled:
+                    raise
+                except BaseException:
+                    self.errors.append(traceback.format_exc())
+                    continue
+                self.deleted += 1
+                if job.itype == TreeExplorer.ItemType.FILE:
+                    self.deleted_files.append(job.path)
+            if not self.cancelled:
+                self._report("")
+        except _DeleteCancelled:
+            self.cancelled = True
+        except BaseException:
+            self.errors.append(traceback.format_exc())
+        try:
+            _PASTE.delete_finished.emit(
+                DeleteOutcome(
+                    deleted=self.deleted,
+                    total=len(self.jobs),
+                    cancelled=self.cancelled,
+                    errors=tuple(self.errors),
+                    deleted_files=tuple(self.deleted_files),
+                    owner=self.owner,
+                )
+            )
+        except RuntimeError:
+            pass  # no receiver left (only possible during interpreter shutdown)
+
+    def _report(self, name: str) -> None:
+        try:
+            _PASTE.delete_progress.emit(self._done, self._size, name, self.owner)
+        except RuntimeError:
+            pass  # no receiver left (only possible during interpreter shutdown)
+
+    def _job_size(self, job: DeleteJob) -> int:
+        if job.is_symlink:
+            return 0
+        if os.path.isdir(job.path):
+            scanned: tuple[int, bool] | None = _scan_directory_size(job.path)
+            return scanned[0] if scanned is not None else 0
+        try:
+            return os.path.getsize(job.path)
+        except OSError:
+            return 0
+
+    def _scan_size(self) -> int:
+        total: int = 0
+        for job in self.jobs:
+            if self.cancel_event.is_set():
+                break
+            total += self._job_size(job)
+        return total
+
+    @staticmethod
+    def _remove(path: str, remove_function: Any) -> None:
+        try:
+            remove_function(path)
+        except OSError:
+            remove_readonly(remove_function, path, None)
+
+    def _delete_tree(self, path: str) -> None:
+        """Remove a directory bottom-up, checking Cancel between files."""
+        for root, directories, files in os.walk(path, topdown=False, followlinks=False):
+            for name in files:
+                if self.cancel_event.is_set():
+                    raise _DeleteCancelled()
+                file_path: str = os.path.join(root, name)
+                try:
+                    size: int = os.path.getsize(file_path)
+                except OSError:
+                    size = 0
+                self._remove(file_path, os.remove)
+                self._done += size
+                self._report(os.path.basename(file_path))
+            for name in directories:
+                if self.cancel_event.is_set():
+                    raise _DeleteCancelled()
+                directory_path: str = os.path.join(root, name)
+                if os.path.islink(directory_path):
+                    self._remove(directory_path, os.remove)
+                else:
+                    self._remove(directory_path, os.rmdir)
+        if self.cancel_event.is_set():
+            raise _DeleteCancelled()
+        self._remove(path, os.rmdir)
+
+    def _delete_job(self, job: DeleteJob) -> None:
+        path: str = job.path
+        if not os.path.lexists(path):
+            return
+        if job.use_recycle_bin:
+            size: int = self._job_size(job)
+            try:
+                # send2trash's SHCreateItemFromParsingName fails with
+                # E_INVALIDARG on forward-slash paths on Windows.
+                send2trash(path.replace("/", os.sep))
+            except OSError:
+                # send2trash may fail on symlinks; fall back to unlinking the
+                # symlink itself, exactly as the old GUI-thread path did.
+                if not job.is_symlink:
+                    raise
+                self._remove(path, os.remove)
+            self._done += size
+            self._report(os.path.basename(path))
+            return
+        if job.is_symlink or not os.path.isdir(path):
+            size = self._job_size(job)
+            self._remove(path, os.remove)
+            self._done += size
+            self._report(os.path.basename(path))
+            return
+        self._delete_tree(path)
+
+
 class TreeTabBase(qt.QWidget):
     """
     Container shared by the tree tabs: a filter bar on top, the tree below.
@@ -2806,11 +3225,18 @@ class TreeDisplay(TreeTabBase):
             # Add the items to the treeview
             self._add_items_to_tree(tree_model, directory, items)
 
+        def hide_wait() -> None:
+            # The worker's finished signal fires on its last line, so the tab
+            # spinner is cleared before the items are added to the model.
+            parent: Any = self._parent
+            parent._set_wait_animation(parent.indexOf(self), False)
+
         if self.worker_thread is not None:
             self.worker_thread.wait()
         self._parent._set_wait_animation(self._parent.indexOf(self), True)  # type: ignore[attr-defined]
         self.worker_thread = ProcessThread()
         self.worker_thread.setTerminationEnabled(True)
+        self.worker_thread.finished.connect(hide_wait)
         self.worker_thread.finished.connect(completed)
         self.worker_thread.start()
 
@@ -3272,7 +3698,7 @@ def _is_previewable_image(path: str) -> bool:
     global _previewable_suffixes
     if _previewable_suffixes is None:
         readable: set[str] = {
-            bytes(fmt).decode("ascii", "ignore").lower()
+            fmt.data().decode("ascii", "ignore").lower()
             for fmt in qt.QImageReader.supportedImageFormats()
         }
         _previewable_suffixes = IMAGE_PREVIEW_SUFFIXES & readable
@@ -3314,7 +3740,8 @@ def _build_image_preview(path: str) -> ImagePreview | None:
     buffer.open(qt.QIODevice.OpenModeFlag.WriteOnly)
     if not image.save(buffer, "PNG"):
         return None
-    return ImagePreview(width, height, bytes(buffer.data()))
+    png_bytes: bytes = buffer.data().data()
+    return ImagePreview(width, height, png_bytes)
 
 
 def _rich_preview_tooltip(text: str, preview: ImagePreview) -> str:
@@ -3333,8 +3760,13 @@ def _rich_preview_tooltip(text: str, preview: ImagePreview) -> str:
     return '<html><div style="white-space: nowrap">{}</div></html>'.format(body)
 
 
-# Height of the repository line above the footer buttons.
+# Height of the repository line below the footer buttons.
 VCS_ROW_HEIGHT: int = 20
+# Height of the progress row shown while a background paste or delete runs.
+PASTE_PROGRESS_ROW_HEIGHT: int = 24
+# Elision width used before the progress row has been laid out for the first
+# time. Once it has, the label's real width is used instead.
+PROGRESS_LABEL_FALLBACK_WIDTH: int = 160
 # Horizontal padding of the repository label, both sides together (the
 # footer stylesheet uses half of it on each side).
 VCS_LABEL_PADDING: int = 8
@@ -3463,6 +3895,25 @@ class TreeExplorer(TreeDisplayBase):
     __vcs_key: str | None
     __vcs_snapshot: components.vcsstatus.StatusSnapshot | None
     __vcs_fingerprint: int
+    # Shared background-operation state. The workers are deliberately not
+    # QThreads: the coordinator's queued signals deliver results on the GUI
+    # thread.
+    paste_progress_row: qt.QWidget
+    paste_progress_label: qt.QLabel
+    paste_progress_bar: qt.QProgressBar
+    paste_cancel_button: qt.QPushButton
+    __paste_worker: _PasteWorker | None
+    __paste_cancel_event: threading.Event | None
+    __paste_active: bool
+    __paste_destination: str | None
+    __paste_token: object | None
+    # The same hidden footer row and cancel button serve deletes as well.
+    __delete_worker: _DeleteWorker | None
+    __delete_cancel_event: threading.Event | None
+    __delete_active: bool
+    __delete_viewed_directory: str | None
+    __delete_token: object | None
+    __delete_verb: str
 
     def __init__(self, parent: qt.QWidget, main_form: Any) -> None:
         # Initialize the superclass
@@ -3504,6 +3955,23 @@ class TreeExplorer(TreeDisplayBase):
         self.__preview_cache = {}
         self.__preview_inflight = set()
         self.__preview_ready.connect(self.on_preview_ready)
+        # Background pastes report through the shared coordinator, so the
+        # single-paste guard survives a tab being closed mid-copy.
+        self.__paste_worker = None
+        self.__paste_cancel_event = None
+        self.__paste_active = False
+        self.__paste_destination = None
+        self.__paste_token = None
+        self.__delete_worker = None
+        self.__delete_cancel_event = None
+        self.__delete_active = False
+        self.__delete_viewed_directory = None
+        self.__delete_token = None
+        self.__delete_verb = "Deleting"
+        _PASTE.progress.connect(self.on_paste_progress)
+        _PASTE.finished.connect(self.on_paste_finished)
+        _PASTE.delete_progress.connect(self.on_delete_progress)
+        _PASTE.delete_finished.connect(self.on_delete_finished)
         # Version-control state (git / Mercurial). The shared provider runs
         # the status command off the GUI thread; the rows are decorated by the
         # view's delegate through `_vcs_decoration`, never through the model.
@@ -3535,8 +4003,8 @@ class TreeExplorer(TreeDisplayBase):
 
     def _create_footer_toolbar(self) -> None:
         """Create the footer toolbar with action buttons (like session editor)."""
-        # The footer is one container (one border-top) holding two rows: the
-        # repository line when there is one, and the 28 px row of buttons.
+        # The footer is one container (one border-bottom) holding two rows: the
+        # 28 px row of buttons, and the repository line below it when there is one.
         self.footer = qt.QWidget(self)
         self.footer.setObjectName("TreeExplorerFooter")
         footer_rows = qt.QVBoxLayout(self.footer)
@@ -3545,7 +4013,7 @@ class TreeExplorer(TreeDisplayBase):
 
         # The repository line ('git: main · 7b05e612 · 2M 1A'). On a wide tab it
         # sits at the right end of the button row; on a narrow one it is moved
-        # into this row above the buttons (`__place_vcs_label`), so it never
+        # into this row below the buttons (`__place_vcs_label`), so it never
         # takes width from them. The row is hidden whenever the label is not
         # in it, and outside a repository.
         self.vcs_row = qt.QWidget(self.footer)
@@ -3553,7 +4021,7 @@ class TreeExplorer(TreeDisplayBase):
         self.vcs_row.setFixedHeight(VCS_ROW_HEIGHT)
         self.vcs_row.hide()
         self.vcs_row_layout = qt.QHBoxLayout(self.vcs_row)
-        self.vcs_row_layout.setContentsMargins(8, 2, 8, 0)
+        self.vcs_row_layout.setContentsMargins(8, 0, 8, 2)
         self.vcs_row_layout.setSpacing(0)
         self.vcs_label = qt.QLabel("", self.vcs_row)
         self.vcs_label.setObjectName("tree_explorer_vcs_label")
@@ -3561,7 +4029,7 @@ class TreeExplorer(TreeDisplayBase):
         # Ignored, not Preferred, in *both* places: a QLabel asks for its whole
         # text as a minimum width, which would keep the explorer wide -- and,
         # inline, would stop it from ever getting narrow enough to move the
-        # label up. It takes the room that is left and clips (the tooltip and
+        # label down. It takes the room that is left and clips (the tooltip and
         # the menu have the full values).
         self.vcs_label.setSizePolicy(
             qt.QSizePolicy.Policy.Ignored, qt.QSizePolicy.Policy.Preferred
@@ -3573,12 +4041,49 @@ class TreeExplorer(TreeDisplayBase):
         self.vcs_label.setOpenExternalLinks(False)
         self.vcs_label.linkActivated.connect(self.__on_vcs_link)
         self.vcs_row_layout.addWidget(self.vcs_label)
-        footer_rows.addWidget(self.vcs_row)
 
         # The row of buttons, with a horizontal layout
         self.footer_buttons = qt.QWidget(self.footer)
         self.footer_buttons.setFixedHeight(28)
         footer_rows.addWidget(self.footer_buttons)
+        footer_rows.addWidget(self.vcs_row)
+
+        # The progress row is the last one, and hidden until a paste or delete
+        # starts. It must stay last: the repository-line placement checks in
+        # tree_vcs_test.py expect the button and repository rows at 0 and 1,
+        # and a hidden row contributes nothing to the footer's size hint.
+        self.paste_progress_row = qt.QWidget(self.footer)
+        self.paste_progress_row.setObjectName("tree_explorer_paste_progress_row")
+        self.paste_progress_row.setFixedHeight(PASTE_PROGRESS_ROW_HEIGHT)
+        progress_layout: qt.QHBoxLayout = qt.QHBoxLayout(self.paste_progress_row)
+        progress_layout.setContentsMargins(8, 0, 8, 2)
+        progress_layout.setSpacing(components.treefilter.BAR_SPACING)
+        self.paste_progress_label = qt.QLabel("", self.paste_progress_row)
+        self.paste_progress_label.setObjectName("tree_explorer_paste_label")
+        # Unlike the repository label this row has a stretching sibling, so a
+        # stretch factor on the label is essential: without one the bar takes
+        # all the space and the name is never painted. Expanding also keeps the
+        # label's own size hint in the layout calculation; a hard minimum would
+        # force the footer wider than a narrow tab.
+        self.paste_progress_label.setSizePolicy(
+            qt.QSizePolicy.Policy.Expanding, qt.QSizePolicy.Policy.Preferred
+        )
+        self.paste_progress_bar = qt.QProgressBar(self.paste_progress_row)
+        self.paste_progress_bar.setObjectName("tree_explorer_paste_progress")
+        self.paste_progress_bar.setTextVisible(True)
+        self.paste_progress_bar.setAlignment(
+            qt.Qt.AlignmentFlag.AlignHCenter | qt.Qt.AlignmentFlag.AlignVCenter
+        )
+        self.paste_cancel_button = qt.QPushButton("Cancel", self.paste_progress_row)
+        self.paste_cancel_button.setObjectName("tree_explorer_paste_cancel")
+        self.paste_cancel_button.setFixedHeight(18)
+        self.paste_cancel_button.clicked.connect(self.__cancel_operation)
+        progress_layout.addWidget(self.paste_progress_label, 1)
+        progress_layout.addWidget(self.paste_progress_bar, 2)
+        progress_layout.addWidget(self.paste_cancel_button)
+        self.paste_progress_row.hide()
+        footer_rows.addWidget(self.paste_progress_row)
+
         self.footer_layout = qt.QHBoxLayout(self.footer_buttons)
         self.footer_layout.setContentsMargins(8, 2, 8, 2)
         self.footer_layout.setSpacing(components.treefilter.BAR_SPACING)
@@ -3614,14 +4119,6 @@ class TreeExplorer(TreeDisplayBase):
         )
         # Separator
         self._make_vline()
-        # Refresh button
-        self._add_footer_button(
-            functions.create_icon("tango_icons/view-refresh.png"),
-            "Refresh",
-            self.refresh,
-        )
-        # Separator
-        self._make_vline()
         # Show/hide the filter bar
         self.filter_toggle = self._add_footer_button(
             functions.create_icon("tango_icons/system-search.png"),
@@ -3632,16 +4129,17 @@ class TreeExplorer(TreeDisplayBase):
 
         # The buttons stay packed to the left: this spacer takes the spare width
         # whenever the repository label is not in this row (it is on the line
-        # above, or hidden). Inline, the label is added with stretch 1 and so
+        # below, or hidden). Inline, the label is added with stretch 1 and so
         # takes it instead -- with no stretch anywhere, a layout of fixed-size
         # widgets spreads them over the whole width.
         self.footer_layout.addStretch(0)
 
-        # Apply theme-aware styling (border-top only, no side margins)
+        # Apply theme-aware styling (border-bottom only, no side margins)
         self._apply_footer_theme(settings.get_theme())
 
-        # Add footer to main layout (after the tree)
-        self.main_layout.addWidget(self.footer)
+        # Insert the footer above the tree. The filter bar, built by the base
+        # class, stays between them so it appears directly under the footer.
+        self.main_layout.insertWidget(0, self.footer)
 
     def _create_footer_button(
         self, icon: qt.QIcon, tooltip: str, checkable: bool = False
@@ -3676,7 +4174,7 @@ class TreeExplorer(TreeDisplayBase):
     def _add_footer_action_button(self, icon: qt.QIcon, tooltip: str) -> qt.QPushButton:
         """Add the footer's Action button: one button that pops up its menu
 
-        The footer sits at the bottom of the tab, so the menu opens upward
+        The footer sits at the top of the tab, so the menu opens downward
         (the same as the repository label's copy menu).
         """
         button = self._create_footer_button(icon, tooltip)
@@ -3722,24 +4220,21 @@ class TreeExplorer(TreeDisplayBase):
         menu.addAction(new_directory_action)
 
         directory: str | None = self.__displayed_directory()
-        if directory is not None:
-            # Paste, only when the clipboard has something to paste into it
-            if self.__has_pasteable_items():
-                menu.addSeparator()
-                paste_action: qt.QAction = qt.QAction("Paste", menu)
-                paste_action.setIcon(
-                    functions.create_icon("tango_icons/edit-paste.png")
-                )
-                paste_action.triggered.connect(self.__paste_items)
-                menu.addAction(paste_action)
-
+        # Paste, only when the clipboard has something to paste into it
+        if directory is not None and self.__has_pasteable_items():
             menu.addSeparator()
-            refresh_action: qt.QAction = qt.QAction("Refresh view", menu)
-            refresh_action.setIcon(
-                functions.create_icon("tango_icons/view-refresh.png")
-            )
-            refresh_action.triggered.connect(self.refresh)
-            menu.addAction(refresh_action)
+            paste_action: qt.QAction = qt.QAction("Paste", menu)
+            paste_action.setIcon(functions.create_icon("tango_icons/edit-paste.png"))
+            paste_action.triggered.connect(self.__paste_items)
+            menu.addAction(paste_action)
+
+        menu.addSeparator()
+        refresh_action: qt.QAction = qt.QAction("Refresh view", menu)
+        refresh_action.setIcon(functions.create_icon("tango_icons/view-refresh.png"))
+        refresh_action.triggered.connect(self.refresh)
+        menu.addAction(refresh_action)
+
+        if directory is not None:
 
             def open_in_explorer() -> None:
                 try:
@@ -3816,8 +4311,7 @@ class TreeExplorer(TreeDisplayBase):
                 )
                 menu.addAction(change_directory_action)
 
-        origin: qt.QPoint = button.mapToGlobal(qt.QPoint(0, 0))
-        origin.setY(origin.y() - menu.sizeHint().height())
+        origin: qt.QPoint = button.mapToGlobal(qt.QPoint(0, button.height()))
         menu.popup(origin)
 
     def _make_vline(self) -> None:
@@ -3833,22 +4327,29 @@ class TreeExplorer(TreeDisplayBase):
         border = theme["scrollbar"]["handle"]
         button_border = theme["indication"]["passiveborder"]
         hover = theme["indication"]["hover"]
+        progressbar = theme["indication"]["progressbar"]
+        # The bar's percentage is painted over the green chunk as well as the
+        # groove. In three of the four bundled themes the (light) default
+        # foreground gives ~1.5:1 against that chunk, so choose black or white
+        # from the chunk's lightness. This also holds for user-made themes.
+        progress_text: str = (
+            "#000000"
+            if qt.QColor(progressbar["chunk"]).lightness() >= 128
+            else "#ffffff"
+        )
         self.footer.setStyleSheet(
             f"""
 #TreeExplorerFooter {{
     background-color: {background};
-    border-top: 1px solid {border};
+    border-bottom: 1px solid {border};
 }}
 QPushButton#tree_explorer_footer_button {{
     background: transparent;
-    border: none;
+    border: 1px solid {button_border};
     padding: 1px 3px;
 }}
-QPushButton#tree_explorer_footer_button {{
-    border: 1px solid {theme["indication"]["passiveborder"]};
-}}
 QPushButton#tree_explorer_footer_button:disabled {{
-    border: 1px solid {theme["scrollbar"]["handle"]};
+    border: 1px solid {border};
 }}
 QPushButton#tree_explorer_footer_button:hover {{
     background: {hover};
@@ -3858,7 +4359,7 @@ QPushButton#tree_explorer_footer_button:checked {{
     border: 1px solid {theme["indication"]["activeborder"]};
 }}
 QWidget#tree_explorer_vline {{
-    background-color: {theme["scrollbar"]["handle"]};
+    background-color: {border};
     min-width: 1px;
     max-width: 1px;
 }}
@@ -3867,6 +4368,37 @@ QLabel#tree_explorer_vcs_label {{
     border: none;
     color: {theme["linemargin"]["foreground"]};
     padding: 0px {VCS_LABEL_PADDING // 2}px;
+}}
+QWidget#tree_explorer_paste_progress_row {{
+    background-color: {background};
+    border-bottom: 1px solid {border};
+}}
+QLabel#tree_explorer_paste_label {{
+    background: transparent;
+    border: none;
+    color: {theme["linemargin"]["foreground"]};
+}}
+QProgressBar#tree_explorer_paste_progress {{
+    background: {background};
+    border: 1px solid {button_border};
+    color: {progress_text};
+    text-align: center;
+}}
+QProgressBar#tree_explorer_paste_progress::chunk {{
+    background-color: {progressbar["chunk"]};
+}}
+QPushButton#tree_explorer_paste_cancel {{
+    background: transparent;
+    border: 1px solid {button_border};
+    padding: 1px 6px;
+    text-align: center;
+    color: {theme["linemargin"]["foreground"]};
+}}
+QPushButton#tree_explorer_paste_cancel:hover {{
+    background: {hover};
+}}
+QPushButton#tree_explorer_paste_cancel:disabled {{
+    border: 1px solid {border};
 }}
 """
         )
@@ -3958,7 +4490,10 @@ QLabel#tree_explorer_vcs_label {{
 
     @qt.pyqtSlot(str)
     def __directory_changed(self, path: str) -> None:
-        if self._refresh_in_progress:
+        if self._refresh_in_progress or self.__paste_active or self.__delete_active:
+            # A background paste or delete changes the watched directory many
+            # times. Rebuilding the model on each event would fight the worker;
+            # its finish slot refreshes the view exactly once instead.
             return
         self.__last_changed_path = path
         self.directory_changed_timer.start(100)
@@ -4877,14 +5412,7 @@ QLabel#tree_explorer_vcs_label {{
         Build a unique sibling '.exco-tmp' staging path for 'new_path',
         auto-incrementing with a trailing number until the name is free.
         """
-        directory = os.path.dirname(new_path)
-        base_name = os.path.basename(new_path)
-        counter = 1
-        candidate = os.path.join(directory, f"{base_name}.exco-tmp")
-        while os.path.lexists(candidate):
-            candidate = os.path.join(directory, f"{base_name}.exco-tmp{counter}")
-            counter += 1
-        return candidate
+        return _paste_temp_path(new_path)
 
     def __resolve_paste_target(
         self,
@@ -5003,12 +5531,193 @@ QLabel#tree_explorer_vcs_label {{
         except Exception:
             self.main_form.display.repl_display_error(traceback.format_exc())
 
+    def _set_progress_text(self, text: str) -> None:
+        """Show *text* in the progress row, elided to the label's width.
+
+        The full value stays in the tooltip, so a clipped file name can still
+        be inspected. The fallback width is only used before the row has been
+        laid out; afterwards the label's real width drives the elision.
+        """
+        label: qt.QLabel = self.paste_progress_label
+        label.setToolTip(text)
+        width: int = label.width() or PROGRESS_LABEL_FALLBACK_WIDTH
+        label.setText(
+            label.fontMetrics().elidedText(text, qt.Qt.TextElideMode.ElideRight, width)
+        )
+
+    def _reset_progress_row(self) -> None:
+        """Hide the shared row and clear every trace of the last operation."""
+        self.paste_progress_row.hide()
+        self.paste_cancel_button.setEnabled(True)
+        self._set_progress_text("")
+        self.paste_progress_bar.setRange(0, 1)
+        self.paste_progress_bar.setValue(0)
+
+    @qt.pyqtSlot(int, int, str, object)
+    def on_paste_progress(
+        self, done: int, total: int, name: str, owner: object
+    ) -> None:
+        """GUI slot: show the worker's byte progress and the current file."""
+        if owner is not self.__paste_token:
+            return
+        maximum: int = max(total, 1)
+        self.paste_progress_bar.setRange(0, maximum)
+        self.paste_progress_bar.setValue(min(done, maximum))
+        self._set_progress_text("Pasting {}...".format(name) if name else "Pasting...")
+
+    @qt.pyqtSlot(object)
+    def on_paste_finished(self, outcome: object) -> None:
+        """GUI slot: report the result, release a consumed cut, refresh once."""
+        result: PasteOutcome = cast(PasteOutcome, outcome)
+        if result.owner is not self.__paste_token:
+            return  # another tab's paste; the coordinator still freed the guard
+        destination: str | None = self.__paste_destination
+        self._reset_progress_row()
+        self.__paste_worker = None
+        self.__paste_cancel_event = None
+        try:
+            if result.error is not None:
+                self.main_form.display.repl_display_error(result.error)
+            else:
+                summary: str = "{} {} of {} item{}".format(
+                    "Moved" if result.is_cut else "Pasted",
+                    result.pasted,
+                    result.total,
+                    "" if result.total == 1 else "s",
+                )
+                if result.skipped:
+                    summary += ", skipped {}".format(result.skipped)
+                if result.cancelled:
+                    summary += ", cancelled"
+                self.main_form.display.repl_display_message(summary + ".")
+            # A cut consumed the sources, so it has to release the clipboard;
+            # a copy keeps it, so the same selection can be pasted into another
+            # directory. A paste that landed nothing -- or failed or was
+            # cancelled -- keeps it too, so it can be retried.
+            if (
+                result.is_cut
+                and result.pasted > 0
+                and not result.cancelled
+                and result.error is None
+            ):
+                TreeExplorer.cut_items = None
+                TreeExplorer.copy_items = None
+                self.__release_system_clipboard()
+            viewed: str | None = self.current_viewed_directory
+            if (
+                destination is not None
+                and viewed is not None
+                and functions.are_paths_same(destination, viewed)
+            ):
+                self.refresh()
+        finally:
+            self.__paste_active = False
+            self.__paste_destination = None
+            self.__paste_token = None
+
+    def __abort_paste(self) -> None:
+        """Release the guard when preparation fails before the worker starts."""
+        with _PASTE.lock:
+            _PASTE.busy = False
+        self.__paste_active = False
+        self.__paste_destination = None
+        self.__paste_token = None
+        self._reset_progress_row()
+
+    @qt.pyqtSlot(int, int, str, object)
+    def on_delete_progress(
+        self, done: int, total: int, name: str, owner: object
+    ) -> None:
+        """GUI slot: show the delete worker's progress in the shared row."""
+        if owner is not self.__delete_token:
+            return
+        maximum: int = max(total, 1)
+        self.paste_progress_bar.setRange(0, maximum)
+        self.paste_progress_bar.setValue(min(done, maximum))
+        self._set_progress_text(
+            "{} {}...".format(self.__delete_verb, name)
+            if name
+            else "{}...".format(self.__delete_verb)
+        )
+
+    @qt.pyqtSlot(object)
+    def on_delete_finished(self, outcome: object) -> None:
+        """GUI slot: report the delete, release watched files and refresh once."""
+        result: DeleteOutcome = cast(DeleteOutcome, outcome)
+        if result.owner is not self.__delete_token:
+            return
+        viewed: str | None = self.__delete_viewed_directory
+        self._reset_progress_row()
+        self.__delete_worker = None
+        self.__delete_cancel_event = None
+        try:
+            for error in result.errors:
+                self.main_form.display.repl_display_error(error)
+            summary: str = "Deleted {} of {} item{}".format(
+                result.deleted,
+                result.total,
+                "" if result.total == 1 else "s",
+            )
+            if result.cancelled:
+                summary += ", cancelled"
+            self.main_form.display.repl_display_message(summary + ".")
+            for path in result.deleted_files:
+                self.main_form.tools.pathwatcher_remove(path)
+            if (
+                viewed is not None
+                and self.current_viewed_directory is not None
+                and functions.are_paths_same(viewed, self.current_viewed_directory)
+            ):
+                self.refresh()
+        finally:
+            self.__delete_active = False
+            self.__delete_viewed_directory = None
+            self.__delete_token = None
+            self.__delete_verb = "Deleting"
+
+    def __abort_delete(self) -> None:
+        """Release the shared guard when delete preparation fails."""
+        with _PASTE.lock:
+            _PASTE.busy = False
+        self.__delete_active = False
+        self.__delete_viewed_directory = None
+        self.__delete_token = None
+        self.__delete_verb = "Deleting"
+        self._reset_progress_row()
+
+    def __cancel_operation(self) -> None:
+        """Cancel whichever background operation currently owns the row."""
+        if self.__delete_cancel_event is not None:
+            self.__delete_cancel_event.set()
+            self.paste_cancel_button.setEnabled(False)
+        elif self.__paste_cancel_event is not None:
+            self.__paste_cancel_event.set()
+            self.paste_cancel_button.setEnabled(False)
+
+    def __cancel_paste(self) -> None:
+        """Ask the worker to stop between files; it owns the actual cleanup."""
+        self.__cancel_operation()
+
     def __paste_items(self) -> None:
+        """Resolve a paste on the GUI thread, then copy it in the background.
+
+        Clipboard access and the overwrite dialogs must stay on the GUI thread;
+        only the resolved list of jobs crosses to ``_PasteWorker``. The
+        module-level coordinator serialises pastes from every explorer tab,
+        since they all share the one cut/copy clipboard.
+        """
         if self.current_viewed_directory is None:
             self.main_form.display.repl_display_message(
                 "Cannot paste: no directory is currently viewed!"
             )
             return
+        with _PASTE.lock:
+            if _PASTE.busy:
+                self.main_form.display.repl_display_warning(
+                    "Another paste is already in progress!"
+                )
+                return
+            _PASTE.busy = True
         try:
             collected: tuple[list[types.SimpleNamespace], bool] | None
             collected = self.__collect_paste_items()
@@ -5017,20 +5726,22 @@ QLabel#tree_explorer_vcs_label {{
                     "Copy AND Cut items list is empty!\n"
                     + "Cannot perform this action!"
                 )
+                self.__abort_paste()
                 return
             items: list[types.SimpleNamespace]
             is_cut: bool
             items, is_cut = collected
+            destination_dir: str = self.current_viewed_directory
+            jobs: list[PasteJob] = []
             force_overwrite: bool = False
             force_copy: bool = False
             force_skip: bool = False
-            pasted_count: int = 0
             skipped_count: int = 0
             for it in items:
                 path: str = it.path
                 itype: "TreeExplorer.ItemType" = it.itype
                 base_name: str = os.path.basename(path)
-                new_path: str = os.path.join(self.current_viewed_directory, base_name)
+                new_path: str = os.path.join(destination_dir, base_name)
                 if functions.are_paths_same(path, new_path):
                     self.main_form.display.repl_display_warning(
                         "Skipped '{}': it is already in this directory!".format(
@@ -5039,7 +5750,8 @@ QLabel#tree_explorer_vcs_label {{
                     )
                     skipped_count += 1
                     continue
-                is_symlink = os.path.islink(path)
+                is_symlink: bool = os.path.islink(path)
+                destination: str | None
                 if os.path.lexists(new_path):
                     if force_overwrite:
                         destination = new_path
@@ -5062,63 +5774,27 @@ QLabel#tree_explorer_vcs_label {{
                 if destination is None:
                     skipped_count += 1
                     continue
-                if itype in [
-                    TreeExplorer.ItemType.DIRECTORY,
-                    TreeExplorer.ItemType.BASE_DIRECTORY,
-                ]:
-                    if is_symlink:
-                        if os.path.isdir(destination):
-                            shutil.rmtree(destination, onerror=remove_readonly)
-                            time.sleep(0.1)
-                        target = os.readlink(path)
-                        os.symlink(target, destination)
-                    elif os.path.isdir(destination):
-                        temporary = self.__paste_temp_path(destination)
-                        try:
-                            shutil.copytree(path, temporary)
-                        except BaseException:
-                            shutil.rmtree(temporary, onerror=remove_readonly)
-                            raise
-                        shutil.rmtree(destination, onerror=remove_readonly)
-                        time.sleep(0.1)
-                        os.rename(temporary, destination)
-                    else:
-                        shutil.copytree(path, destination)
-                    if is_cut:
-                        if is_symlink:
-                            os.remove(path)
-                        else:
-                            shutil.rmtree(path, onerror=remove_readonly)
-                else:
-                    if is_symlink:
-                        target = os.readlink(path)
-                        os.symlink(target, destination)
-                    else:
-                        shutil.copy(path, destination)
-                    if is_cut:
-                        os.remove(path)
-                pasted_count += 1
-        except:
+                jobs.append(
+                    PasteJob(path, destination, itype, is_cut, is_symlink, base_name)
+                )
+            self.__paste_destination = destination_dir
+            self.__paste_active = True
+            self.paste_cancel_button.setEnabled(True)
+            self._reset_progress_row()
+            self._set_progress_text("Pasting...")
+            self.paste_progress_row.show()
+            cancel_event: threading.Event = threading.Event()
+            self.__paste_cancel_event = cancel_event
+            token: object = object()
+            self.__paste_token = token
+            self.__paste_worker = _PasteWorker(
+                jobs, is_cut, skipped_count, len(items), cancel_event, token
+            )
+            self.__paste_worker.start()
+        except BaseException:
+            self.__abort_paste()
             self.main_form.display.repl_display_error(traceback.format_exc())
             # The clipboard is kept on failure, so the paste can be retried.
-            return
-        if is_cut and pasted_count > 0:
-            # A cut consumed the sources, so it has to release the clipboard;
-            # a copy keeps it, so the same selection can be pasted into
-            # another directory. A paste that landed nothing keeps it either
-            # way, so it can be retried somewhere the paths make sense.
-            TreeExplorer.cut_items = None
-            TreeExplorer.copy_items = None
-            self.__release_system_clipboard()
-        summary: str = "{} {} of {} item{}".format(
-            "Moved" if is_cut else "Pasted",
-            pasted_count,
-            len(items),
-            "" if len(items) == 1 else "s",
-        )
-        if skipped_count:
-            summary += ", skipped {}".format(skipped_count)
-        self.main_form.display.repl_display_message(summary + ".")
 
     def __copy_items(self) -> None:
         items: list[types.SimpleNamespace] = []
@@ -5172,6 +5848,13 @@ QLabel#tree_explorer_vcs_label {{
             )
 
     def __delete_items(self) -> None:
+        """Validate a delete on the GUI thread, then delete in the background.
+
+        The confirmation, the "cannot delete" guards and the path-watcher
+        cleanup all stay here or in the finish slot; only the resolved
+        ``DeleteJob`` records cross to ``_DeleteWorker``. The shared footer row
+        shows progress, and the shared guard keeps a delete from racing a paste.
+        """
         items: list[types.SimpleNamespace] = []
         selected: list[types.SimpleNamespace] = []
         for i in self.selectedIndexes():
@@ -5196,6 +5879,12 @@ QLabel#tree_explorer_vcs_label {{
                     "The viewed directory and the drives cannot be deleted!"
                 )
             return
+        with _PASTE.lock:
+            if _PASTE.busy:
+                self.main_form.display.repl_display_warning(
+                    "Another paste or delete is already in progress!"
+                )
+                return
         message: str = "What would you like to do with the {} selected items?".format(
             len(items)
         )
@@ -5208,9 +5897,15 @@ QLabel#tree_explorer_vcs_label {{
             use_recycle_bin = False
         else:
             return
+        jobs: list[DeleteJob] = []
         for it in items:
             path: str = it.path
-
+            if not os.path.lexists(path):
+                self.main_form.display.repl_display_message(
+                    "Item '{}'\n does not seem to exist!!".format(path),
+                    message_type=constants.MessageType.WARNING,
+                )
+                continue
             if functions.are_paths_same(path, self.current_viewed_directory):
                 self.main_form.display.repl_display_warning(
                     "Cannot delete the path that you are currently viewing!\n"
@@ -5223,49 +5918,39 @@ QLabel#tree_explorer_vcs_label {{
             ):
                 self.main_form.display.repl_display_warning(
                     "Cannot delete a path above the path that you are "
-                    + f"currently viewing!\n"
+                    + "currently viewing!\n"
                     + f"  {path}"
                 )
                 continue
-
-            try:
-                is_file = it.itype == TreeExplorer.ItemType.FILE
-                is_symlink = os.path.islink(path)
-                if os.path.lexists(path):
-                    if use_recycle_bin:
-                        try:
-                            # send2trash's SHCreateItemFromParsingName fails with
-                            # E_INVALIDARG on forward-slash paths on Windows
-                            send2trash(path.replace("/", os.sep))
-                        except OSError:
-                            # send2trash may fail on symlinks (e.g., to system files on Windows)
-                            # Fall back to permanent deletion of the symlink itself
-                            if is_symlink:
-                                os.remove(path)
-                            else:
-                                raise
-                    else:
-                        if is_symlink:
-                            os.remove(path)
-                        elif os.path.isdir(path):
-                            shutil.rmtree(path, onerror=remove_readonly)
-                        else:
-                            os.remove(path)
-                    # Remove from PathWatcher if it was being monitored
-                    if is_file:
-                        self.main_form.tools.pathwatcher_remove(path)
-                else:
-                    self.main_form.display.repl_display_message(
-                        "Item '{}'\n does not seem to exist!!".format(
-                            item.attributes.path  # type: ignore[attr-defined]
-                        ),
-                        message_type=constants.MessageType.WARNING,
-                    )
-            except:
-                traceback.print_exc()
-                self.main_form.display.repl_display_message(
-                    traceback.format_exc(), message_type=constants.MessageType.ERROR
+            jobs.append(
+                DeleteJob(path, it.itype, os.path.islink(path), use_recycle_bin)
+            )
+        if not jobs:
+            return
+        with _PASTE.lock:
+            if _PASTE.busy:
+                self.main_form.display.repl_display_warning(
+                    "Another paste or delete is already in progress!"
                 )
+                return
+            _PASTE.busy = True
+        try:
+            self.__delete_viewed_directory = self.current_viewed_directory
+            self.__delete_active = True
+            self.__delete_verb = "Recycling" if use_recycle_bin else "Deleting"
+            self.paste_cancel_button.setEnabled(True)
+            self._reset_progress_row()
+            self._set_progress_text("{}...".format(self.__delete_verb))
+            self.paste_progress_row.show()
+            cancel_event: threading.Event = threading.Event()
+            self.__delete_cancel_event = cancel_event
+            token: object = object()
+            self.__delete_token = token
+            self.__delete_worker = _DeleteWorker(jobs, cancel_event, token)
+            self.__delete_worker.start()
+        except BaseException:
+            self.__abort_delete()
+            self.main_form.display.repl_display_error(traceback.format_exc())
 
     def __open_items(self, model_index: qt.QModelIndex | None = None) -> None:
         try:
@@ -6050,7 +6735,8 @@ QLabel#tree_explorer_vcs_label {{
         width: int = margins.left() + margins.right()
         count: int = 0
         for index in range(layout.count()):
-            widget: qt.QWidget | None = layout.itemAt(index).widget()
+            item: qt.QLayoutItem | None = layout.itemAt(index)
+            widget: qt.QWidget | None = item.widget() if item is not None else None
             if widget is None or widget is self.vcs_label:
                 continue
             width += widget.minimumWidth()
@@ -6090,7 +6776,7 @@ QLabel#tree_explorer_vcs_label {{
         """Put the repository label where it fits.
 
         At the right end of the button row when the tab is wide enough for the
-        buttons *and* the whole label, otherwise on the line above them. The
+        buttons *and* the whole label, otherwise on the line below them. The
         label's own width asks for nothing (see the size policy), so this
         decision cannot feed back into the tab's minimum width.
         """
@@ -6122,7 +6808,7 @@ QLabel#tree_explorer_vcs_label {{
 
         It lists what `StatusSnapshot.copy_entries` offers for the repository
         (branch, upstream, commit ids, tags, path), each with a feather glyph,
-        and opens upward from the label, since the footer is at the bottom of
+        and opens downward from the label, since the footer is at the top of
         the tab.
         """
         snapshot = self.__vcs_snapshot
@@ -6149,8 +6835,9 @@ QLabel#tree_explorer_vcs_label {{
                 )
             )
             menu.addAction(action)
-        origin: qt.QPoint = self.vcs_label.mapToGlobal(qt.QPoint(0, 0))
-        origin.setY(origin.y() - menu.sizeHint().height())
+        origin: qt.QPoint = self.vcs_label.mapToGlobal(
+            qt.QPoint(0, self.vcs_label.height())
+        )
         menu.popup(origin)
 
     @staticmethod

@@ -39,7 +39,7 @@ These are the DEFAULT values, override them in the user
 configuration file!
 --------------------------------------------------------
 """
-application_version = "7.17.44"
+application_version = "7.17.48"
 # Global variables
 command_line_options: argparse.Namespace | None = None
 debug_mode: bool = False

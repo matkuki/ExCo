@@ -2179,6 +2179,9 @@
     "hover": "#367dc0",
     "passivebackground": "#295a88",
     "passiveborder": "#33aaff",
+    "progressbar": {
+      "chunk": "#ff83d6a0"
+    },
     "replace": "#5032b4ff",
     "selection": "#64c8c8c8"
   },
@@ -2188,6 +2191,7 @@
     "background": "#ff1f4661",
     "foreground": "#ffffffff"
   },
+  "menu-separator": "#ffffffff",
   "name": "Water",
   "right-arrow-hover-image": "feather/air-light-grey/chevron-right.svg",
   "right-arrow-image": "feather/air-light-grey/chevron-right.svg",

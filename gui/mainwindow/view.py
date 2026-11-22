@@ -55,6 +55,7 @@ class View:
     Functions for manipulating the application appearance
     (namespace/nested class to MainWindow)
     """
+
     __stored_layout_standard = None
     __stored_layout_one_window = None
     # Default widths and heights of the windows
@@ -519,10 +520,15 @@ QSplitter::handle {{
         for window in windows:
             window.customize_tab_bar()
             for i in range(window.count()):
-                if hasattr(window.widget(i), "refresh_lexer") == True:
-                    window.widget(i).refresh_lexer()
-                elif hasattr(window.widget(i), "set_theme") == True:
-                    window.widget(i).set_theme(settings.get_theme())
+                tab: Any = window.widget(i)
+                if hasattr(tab, "refresh_lexer") == True:
+                    tab.refresh_lexer()
+                elif hasattr(tab, "set_theme") == True:
+                    tab.set_theme(settings.get_theme())
+                elif hasattr(tab, "update_styles") == True:
+                    # Tree displays own their top bar's stylesheet; a live
+                    # theme change has to refresh it just like the lexers.
+                    tab.update_styles()
         self._parent.repl_helper.refresh_lexer()
         self.reset_entire_style_sheet()
         self._parent.statusbar.setStyleSheet(

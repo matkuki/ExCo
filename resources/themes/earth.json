@@ -2180,6 +2180,9 @@
     "hover": "#93988d",
     "passivebackground": "#585a55",
     "passiveborder": "#b3935c",
+    "progressbar": {
+      "chunk": "#ffa8c978"
+    },
     "replace": "#5032b4ff",
     "selection": "#64c8c8c8"
   },
@@ -2189,6 +2192,7 @@
     "background": "#ff2e3436",
     "foreground": "#ffffffff"
   },
+  "menu-separator": "#fff7f1c1",
   "name": "Earth",
   "right-arrow-hover-image": "feather/air-light-grey/chevron-right.svg",
   "right-arrow-image": "feather/air-light-grey/chevron-right.svg",

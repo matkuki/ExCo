@@ -171,6 +171,10 @@ QMenu {{
     color: {};
     menu-scrollable: 1;
 }}
+QMenu::separator {{
+    height: 1px;
+    background: {};
+}}
 QMenu::item {{
     background-color: transparent;
     border: none;
@@ -197,6 +201,7 @@ QMenu::right-arrow:disabled  {{
             settings.get_theme()["indication"]["passivebackground"],
             settings.get_theme()["indication"]["passiveborder"],
             settings.get_theme()["fonts"]["default"]["color"],
+            settings.get_theme()["menu-separator"],
             settings.get_theme()["indication"]["hover"],
             functions.get_resource_file(settings.get_theme()["right-arrow-menu-image"]),
             functions.get_resource_file(
